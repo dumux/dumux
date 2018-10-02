@@ -67,7 +67,7 @@ class TransportProblem2P : public OneModelProblem<TypeTag>
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
         dim = Grid::dimension,
@@ -98,7 +98,7 @@ public:
     {
         cFLFactor_ = getParam<Scalar>("Impet.CFLFactor");
 
-        spatialParams_ = std::make_shared<SpatialParams>(grid.leafGridView());
+        spatialParams_ = std::make_shared<SpatialParams>(asImp_());
 
         gravity_ = 0;
         if (getParam<bool>("Problem.EnableGravity"))

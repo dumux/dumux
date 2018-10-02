@@ -78,13 +78,18 @@
 #ifndef DUMUX_3P3C_MODEL_HH
 #define DUMUX_3P3C_MODEL_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
+
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
@@ -95,43 +100,127 @@
 #include "localresidual.hh"
 
 namespace Dumux {
+
+/*!
+ * \ingroup ThreePThreeCModel
+ * \brief Specifies a number properties of two-phase models.
+ * \param useCS if we are using the contraint solver
+ */
+template<bool useCS, bool useMol>
+struct ThreePThreeCModelTraits
+{
+    using Indices = ThreePThreeCIndices;
+
+    static constexpr int numEq() { return 3; }
+    static constexpr int numPhases() { return 3; }
+    static constexpr int numComponents() { return 3; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return true; }
+    static constexpr bool enableEnergyBalance() { return false; }
+
+    static constexpr bool useConstraintSolver() { return useCS; }
+    static constexpr bool useMoles() { return useMol; }
+
+    template <class FluidSystem, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state)
+    {
+        switch (state)
+        {
+            case Indices::threePhases:
+            {
+                const std::vector<std::string> s1 = {"p_g",
+                                                     "S_w",
+                                                     "S_n"};
+                return s1[pvIdx];
+            }
+            case Indices::wPhaseOnly:
+            {
+                const std::vector<std::string> s2 = {"p_g",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::gCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::wPhaseIdx),
+                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::wPhaseIdx)};
+                return s2[pvIdx];
+            }
+            case Indices::gnPhaseOnly:
+            {
+                const std::vector<std::string> s3 = {"p_g",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::wCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx),
+                                                     "S_n"};
+                return s3[pvIdx];
+            }
+            case Indices::wnPhaseOnly:
+            {
+                const std::vector<std::string> s4 = {"p_g",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::gCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::wPhaseIdx),
+                                                     "S_n"};
+                return s4[pvIdx];
+            }
+            case Indices::gPhaseOnly:
+            {
+                const std::vector<std::string> s5 = {"p_g",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::wCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx),
+                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx)};
+                return s5[pvIdx];
+            }
+            case Indices::wgPhaseOnly:
+            {
+                const std::vector<std::string> s6 = {"p_g",
+                                                     "S_w",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx)};
+                return s6[pvIdx];
+            }
+        }
+    }
+};
+
+/*!
+ * \ingroup ThreePThreeCModel
+ * \brief Traits class for the 3p3c model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
+struct ThreePThreeCVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+};
+
 namespace Properties {
 //! The type tags for the isothermal three-phase three-component model
 NEW_TYPE_TAG(ThreePThreeC, INHERITS_FROM(PorousMediumFlow));
 //! The type tags for the non-isothermal three-phase three-component model
-NEW_TYPE_TAG(ThreePThreeCNI, INHERITS_FROM(ThreePThreeC, NonIsothermal));
+NEW_TYPE_TAG(ThreePThreeCNI, INHERITS_FROM(ThreePThreeC));
 
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
-/*!
- * \brief Set the property for the number of components.
- *
- * We just forward the number from the fluid system and use an static
- * assert to make sure it is 3.
- */
-SET_PROP(ThreePThreeC, NumComponents)
+
+//! Set the model traits
+SET_PROP(ThreePThreeC, ModelTraits)
 {
-    static const int value = 3;
-    static_assert(value == GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents,
-                  "Only fluid systems with 3 components are supported by the 3p3c model!");
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p3c model!");
+    static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p3c model!");
+public:
+    using type = ThreePThreeCModelTraits<GET_PROP_VALUE(TypeTag, UseConstraintSolver), GET_PROP_VALUE(TypeTag, UseMoles)>;
 };
 
-/*!
- * \brief Set the property for the number of fluid phases.
- *
- * We just forward the number from the fluid system and use an static
- * assert to make sure it is 3.
- */
-SET_PROP(ThreePThreeC, NumPhases)
-{
-    static const int value = 3;
-    static_assert(value == GET_PROP_TYPE(TypeTag, FluidSystem)::numPhases,
-                  "Only fluid systems with 3 phases are supported by the 3p3c model!");
-};
+//! Determines whether a constraint solver should be used explicitly
+SET_BOOL_PROP(ThreePThreeC, UseConstraintSolver, false);
 
-//! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(ThreePThreeC, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, NumComponents));
+//! Set as default that _no_ component mass balance is replaced by the total mass balance
+SET_INT_PROP(ThreePThreeC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
 /*!
  * \brief The fluid state which is used by the volume variables to
  *        store the thermodynamic state. This should be chosen
@@ -146,85 +235,71 @@ SET_PROP(ThreePThreeC, FluidState){
         using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
-//! Set the number of equations to 3
-SET_INT_PROP(ThreePThreeC, NumEq, 3);
-
 //! The local residual function of the conservation equations
 SET_TYPE_PROP(ThreePThreeC, LocalResidual, ThreePThreeCLocalResidual<TypeTag>);
 
-//! Enable advection
-SET_BOOL_PROP(ThreePThreeC, EnableAdvection, true);
-
-//! Enable molecular diffusion
-SET_BOOL_PROP(ThreePThreeC, EnableMolecularDiffusion, true);
-
-//! Isothermal model by default
-SET_BOOL_PROP(ThreePThreeC, EnableEnergyBalance, false);
-
 //! The primary variable switch for the 3p3c model
-SET_TYPE_PROP(ThreePThreeC, PrimaryVariableSwitch, ThreePThreeCPrimaryVariableSwitch<TypeTag>);
+SET_TYPE_PROP(ThreePThreeC, PrimaryVariableSwitch, ThreePThreeCPrimaryVariableSwitch);
 
 //! The primary variables vector for the 3p3c model
-SET_TYPE_PROP(ThreePThreeC, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
-
-//! the VolumeVariables property
-SET_TYPE_PROP(ThreePThreeC, VolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);
-
-//! Determines whether a constraint solver should be used explicitly
-SET_BOOL_PROP(ThreePThreeC, UseConstraintSolver, false);
-
-//! The indices required by the isothermal 3p3c model
-SET_TYPE_PROP(ThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
-
-//! The spatial parameters to be employed.
-//! Use FVSpatialParams by default.
-SET_TYPE_PROP(ThreePThreeC, SpatialParams, FVSpatialParams<TypeTag>);
-
-//! The model after Millington (1961) is used for the effective diffusivity
-SET_PROP(ThreePThreeC, EffectiveDiffusivityModel)
-{ private :
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
- public:
-    using type = DiffusivityMillingtonQuirk<Scalar>;
+SET_PROP(ThreePThreeC, PrimaryVariables)
+{
+private:
+    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
+public:
+    using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
 
-//! Set the vtk output fields specific to the ThreeP model
-SET_TYPE_PROP(ThreePThreeC, VtkOutputFields, ThreePThreeCVtkOutputFields<TypeTag>);
+//! Set the volume variables property
+SET_PROP(ThreePThreeC, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = ThreePThreeCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+public:
+    using type = ThreePThreeCVolumeVariables<Traits>;
+};
+
+//! The model after Millington (1961) is used for the effective diffusivity
+SET_TYPE_PROP(ThreePThreeC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
+//! Set the vtk output fields specific to this model
+SET_TYPE_PROP(ThreePThreeC, VtkOutputFields, ThreePThreeCVtkOutputFields);
 
 //! Use mole fractions in the balance equations by default
 SET_BOOL_PROP(ThreePThreeC, UseMoles, true);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(ThreePThreeCNI, ThermalConductivityModel)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-public:
-    using type = ThermalConductivitySomerton<Scalar, Indices>;
-};
+SET_TYPE_PROP(ThreePThreeCNI, ThermalConductivityModel, ThermalConductivitySomerton<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
-//! Set isothermal VolumeVariables
-SET_TYPE_PROP(ThreePThreeCNI, IsothermalVolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);
+//! Set non-isothermal NumEq
+SET_PROP(ThreePThreeCNI, ModelTraits)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p3c model!");
+    static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p3c model!");
+    using IsothermalModelTraits = ThreePThreeCModelTraits<GET_PROP_VALUE(TypeTag, UseConstraintSolver), GET_PROP_VALUE(TypeTag, UseMoles)>;
+public:
+    using type = PorousMediumFlowNIModelTraits<IsothermalModelTraits>;
+};
 
-//! Set isothermal LocalResidual
-SET_TYPE_PROP(ThreePThreeCNI, IsothermalLocalResidual, ThreePThreeCLocalResidual<TypeTag>);
-
-//! Set isothermal Indices
-SET_TYPE_PROP(ThreePThreeCNI, IsothermalIndices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
-
-//! Set isothermal NumEq
-SET_INT_PROP(ThreePThreeCNI, IsothermalNumEq, 3);
-
-//! Set the vtk output fields specific to the ThreeP model
-SET_TYPE_PROP(ThreePThreeCNI, IsothermalVtkOutputFields, ThreePThreeCVtkOutputFields<TypeTag>);
+//! Set the non-isothermal vktoutputfields
+SET_TYPE_PROP(ThreePThreeCNI, VtkOutputFields, EnergyVtkOutputFields<ThreePThreeCVtkOutputFields>);
 
 } // end namespace Properties
-
 } // end namespace Dumux
 
 #endif

@@ -1,0 +1,5 @@
+[Grid]
+File = ./grids/bifurcation.msh
+Verbosity = 1 # verbose grid file parsing
+BoundarySegments = 1 # read parametrized boundary segments
+DomainMarkers = 1 # read domain markers (gmsh physical entities)

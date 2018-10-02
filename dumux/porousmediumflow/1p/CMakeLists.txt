@@ -1,9 +1,8 @@
-add_subdirectory("sequential")
+add_subdirectory(sequential)
 
-#install headers
 install(FILES
-indices.hh
 incompressiblelocalresidual.hh
+indices.hh
 model.hh
 volumevariables.hh
 vtkoutputfields.hh

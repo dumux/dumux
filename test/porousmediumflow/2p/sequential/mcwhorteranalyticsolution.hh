@@ -56,7 +56,7 @@ class McWhorterAnalytic
     using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum
     {
@@ -70,7 +70,8 @@ class McWhorterAnalytic
     };
 
     using BlockVector = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 private:
 

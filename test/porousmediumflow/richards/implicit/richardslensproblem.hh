@@ -26,18 +26,26 @@
 #ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
 #define DUMUX_RICHARDS_LENSPROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "richardslensspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup RichardsTests
  * \brief A water infiltration problem with a low-permeability lens
@@ -47,19 +55,26 @@ namespace Dumux
 template <class TypeTag>
 class RichardsLensProblem;
 
-
 // Specify the properties for the lens problem
-namespace Properties
-{
-NEW_TYPE_TAG(RichardsLensTypeTag, INHERITS_FROM(Richards, RichardsLensSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(RichardsLensTypeTag, INHERITS_FROM(Richards));
 NEW_TYPE_TAG(RichardsLensBoxTypeTag, INHERITS_FROM(BoxModel, RichardsLensTypeTag));
 NEW_TYPE_TAG(RichardsLensCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsLensTypeTag));
 
+#ifndef GRIDTYPE
 // Use 2d YaspGrid
 SET_TYPE_PROP(RichardsLensTypeTag, Grid, Dune::YaspGrid<2>);
+#else
+// Use GRIDTYPE from CMakeLists.txt
+SET_TYPE_PROP(RichardsLensTypeTag, Grid, GRIDTYPE);
+#endif
 
 // Set the physical problem to be solved
 SET_TYPE_PROP(RichardsLensTypeTag, Problem, RichardsLensProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(RichardsLensTypeTag, SpatialParams, RichardsLensSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                            typename GET_PROP_TYPE(TypeTag, Scalar)>);
 } // end namespace Dumux
 
 /*!
@@ -95,11 +110,10 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     enum {
         // copy some indices for convenience
@@ -110,8 +124,9 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
         // world dimension
         dimWorld = GridView::dimensionworld
     };
+    using Element = typename GridView::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     /*!
@@ -189,15 +204,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        // use initial values as boundary conditions
-        if (!onInlet_(globalPos))
-            return initial_(globalPos);
-        else
-        {
-            PrimaryVariables values(0.0);
-            values.setState(bothPhases);
-            return values;
-        }
+        return initial_(globalPos);
     }
 
     /*!
@@ -240,6 +247,7 @@ private:
     {
         PrimaryVariables values(0.0);
         const Scalar sw = 0.0;
+        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
         values[pressureIdx] = nonWettingReferencePressure() - pc;
         values.setState(bothPhases);

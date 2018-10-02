@@ -43,22 +43,76 @@
  *   (the phase which is not present) being greater that unity as done in the 2p2c model.
  *   The CO2VolumeVariables do not use a constraint solver for calculating the mole fractions as is the
  *   case in the 2p2c model. Instead mole fractions are calculated in the FluidSystem with a given
- *   temperature, pressurem and salinity.
+ *   temperature, pressure and salinity.
  *   The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
  *   problem file. Make sure that the according units are used in the problem setup. useMoles is set to false by default.
  *
  */
 namespace Dumux {
+
+/*!
+ * \ingroup CO2Model
+ * \brief Traits class for the two-phase two-component CO2 model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
+struct TwoPTwoCCO2VolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+};
+
 namespace Properties {
 
 NEW_TYPE_TAG(TwoPTwoCCO2, INHERITS_FROM(TwoPTwoC));
 NEW_TYPE_TAG(TwoPTwoCCO2NI, INHERITS_FROM(TwoPTwoCNI));
 
 //! the CO2 privarswitch and VolumeVariables properties
-SET_TYPE_PROP(TwoPTwoCCO2, PrimaryVariableSwitch, TwoPTwoCCO2PrimaryVariableSwitch<TypeTag>);
-SET_TYPE_PROP(TwoPTwoCCO2NI, PrimaryVariableSwitch, TwoPTwoCCO2PrimaryVariableSwitch<TypeTag>);
-SET_TYPE_PROP(TwoPTwoCCO2, VolumeVariables, TwoPTwoCCO2VolumeVariables<TypeTag>);
-SET_TYPE_PROP(TwoPTwoCCO2NI, VolumeVariables, TwoPTwoCCO2VolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoPTwoCCO2, PrimaryVariableSwitch, TwoPTwoCCO2PrimaryVariableSwitch);
+SET_TYPE_PROP(TwoPTwoCCO2NI, PrimaryVariableSwitch, TwoPTwoCCO2PrimaryVariableSwitch);
+
+//! the co2 volume variables use the same traits as the 2p2c model
+SET_PROP(TwoPTwoCCO2, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = TwoPTwoCCO2VolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+public:
+    using type = TwoPTwoCCO2VolumeVariables< Traits >;
+};
+
+SET_PROP(TwoPTwoCCO2NI, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = TwoPTwoCCO2VolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+public:
+    using type = TwoPTwoCCO2VolumeVariables< Traits >;
+};
 
 } // end namespace Properties
 } // end namespace Dumux

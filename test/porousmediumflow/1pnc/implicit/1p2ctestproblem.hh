@@ -25,6 +25,11 @@
 #ifndef DUMUX_1P2C_TEST_PROBLEM_HH
 #define DUMUX_1P2C_TEST_PROBLEM_HH
 
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
@@ -34,16 +39,17 @@
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
+
 #include "1pnctestspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class OnePTwoCTestProblem;
 
-namespace Properties
-{
+namespace Properties {
+
 NEW_TYPE_TAG(OnePTwoCTestTypeTag, INHERITS_FROM(OnePNC));
 NEW_TYPE_TAG(OnePTwoCTestBoxTypeTag, INHERITS_FROM(BoxModel, OnePTwoCTestTypeTag));
 NEW_TYPE_TAG(OnePTwoCTestCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePTwoCTestTypeTag));
@@ -60,12 +66,20 @@ SET_TYPE_PROP(OnePTwoCTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(OnePTwoCTestTypeTag, Problem, OnePTwoCTestProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(OnePTwoCTestTypeTag,
-              FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_PROP(OnePTwoCTestTypeTag, FluidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
+    using type = FluidSystems::OnePAdapter<H2ON2, H2ON2::liquidPhaseIdx>;
+};
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTwoCTestTypeTag, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
+SET_PROP(OnePTwoCTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(OnePTwoCTestTypeTag, UseMoles, true);
@@ -102,7 +116,7 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -110,9 +124,8 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
 
     // copy some indices for convenience
@@ -120,20 +133,22 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        massOrMoleFracIdx = Indices::firstMoleFracIdx,
+
+        // component indices
+        H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx),
+        N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx),
 
         // indices of the equations
-        conti0EqIdx = Indices::conti0EqIdx,
-        transportEqIdx = Indices::firstTransportEqIdx
+        contiH2OEqIdx = Indices::conti0EqIdx + H2OIdx,
+        contiN2EqIdx = Indices::conti0EqIdx + N2Idx
     };
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static const auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static const bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static const bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
     static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
     OnePTwoCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -200,7 +215,7 @@ public:
         // condition for the N2 molefraction at left boundary
         if (globalPos[0] < eps_ )
         {
-            values[massOrMoleFracIdx] = 2.0e-5;
+            values[N2Idx] = 2.0e-5;
         }
 
         return values;
@@ -245,21 +260,21 @@ public:
         // otherwise compute the acutal fluxes explicitly
         if(isBox && useNitscheTypeBc_)
         {
-            flux[conti0EqIdx] = (volVars.pressure(phaseIdx) - dirichletPressure) * 1e7;
-            flux[transportEqIdx] = flux[conti0EqIdx]  * (useMoles ? volVars.moleFraction(phaseIdx, massOrMoleFracIdx) :
-                                                                    volVars.massFraction(phaseIdx, massOrMoleFracIdx));
+            flux[contiH2OEqIdx] = (volVars.pressure() - dirichletPressure) * 1e7;
+            flux[contiN2EqIdx] = flux[contiH2OEqIdx]  * (useMoles ? volVars.moleFraction(0, N2Idx) :
+                                                                    volVars.massFraction(0, N2Idx));
             return flux;
         }
 
         // construct the element solution
-        const auto elementSolution = [&]()
+        const auto elemSol = [&]()
         {
-            ElementSolutionVector sol(element, elemVolVars, fvGeometry);
+            auto sol = elementSolution(element, elemVolVars, fvGeometry);
 
             if(isBox)
                 for(auto&& scvf : scvfs(fvGeometry))
                     if(scvf.center()[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
-                        sol[fvGeometry.scv(scvf.insideScvIdx()).indexInElement()][pressureIdx] = dirichletPressure;
+                        sol[fvGeometry.scv(scvf.insideScvIdx()).localDofIndex()][pressureIdx] = dirichletPressure;
 
             return sol;
         }();
@@ -269,14 +284,14 @@ public:
         {
             if(isBox)
             {
-                const auto grads = evalGradients(element, element.geometry(), fvGeometry.fvGridGeometry(), elementSolution, ipGlobal);
+                const auto grads = evalGradients(element, element.geometry(), fvGeometry.fvGridGeometry(), elemSol, ipGlobal);
                 return grads[pressureIdx];
             }
 
             else
             {
                 const auto& scvCenter = fvGeometry.scv(scvf.insideScvIdx()).center();
-                const Scalar scvCenterPresureSol = elementSolution[0][pressureIdx];
+                const Scalar scvCenterPresureSol = elemSol[0][pressureIdx];
                 auto grad = ipGlobal - scvCenter;
                 grad /= grad.two_norm2();
                 grad *= (dirichletPressure - scvCenterPresureSol);
@@ -285,16 +300,16 @@ public:
         }();
 
         const Scalar K = volVars.permeability();
-        const Scalar density = useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx);
+        const Scalar density = useMoles ? volVars.molarDensity() : volVars.density();
 
         // calculate the flux
         Scalar tpfaFlux = gradient * scvf.unitOuterNormal();
         tpfaFlux *= -1.0  * K;
-        tpfaFlux *=  density * volVars.mobility(phaseIdx);
-        flux[conti0EqIdx] = tpfaFlux;
+        tpfaFlux *=  density * volVars.mobility();
+        flux[contiH2OEqIdx] = tpfaFlux;
 
         // emulate an outflow condition for the component transport on the right side
-        flux[transportEqIdx] = tpfaFlux  * (useMoles ? volVars.moleFraction(phaseIdx, massOrMoleFracIdx) : volVars.massFraction(phaseIdx, massOrMoleFracIdx));
+        flux[contiN2EqIdx] = tpfaFlux  * (useMoles ? volVars.moleFraction(0, N2Idx) : volVars.massFraction(0, N2Idx));
 
         return flux;
     }
@@ -339,7 +354,7 @@ private:
     {
         PrimaryVariables priVars;
         priVars[pressureIdx] = 2e5 - 1e5*globalPos[0]; // initial condition for the pressure
-        priVars[massOrMoleFracIdx] = 0.0;  // initial condition for the N2 molefraction
+        priVars[N2Idx] = 0.0;  // initial condition for the N2 molefraction
         return priVars;
     }
         static constexpr Scalar eps_ = 1e-6;

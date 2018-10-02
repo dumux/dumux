@@ -24,35 +24,35 @@
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
  *        incompressible 1p model
  */
-template<class TypeTag>
-class OnePTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class OnePTestSpatialParams
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             OnePTestSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           OnePTestSpatialParams<FVGridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     using PermeabilityType = Scalar;
-    OnePTestSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    OnePTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
@@ -69,9 +69,10 @@ public:
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         if (isInLens_(scv.dofPosition()))
             return permeabilityLens_;
@@ -80,17 +81,11 @@ public:
     }
 
     /*!
-     * \brief Function for defining the porosity.
-     *        That is possibly solution dependent.
+     * \brief Define the porosity \f$\mathrm{[-]}\f$.
      *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     * \return the porosity
+     * \param globalPos The global position
      */
-    Scalar porosity(const Element &element,
-                        const SubControlVolume &scv,
-                        const ElementSolutionVector &elemSol) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
 private:

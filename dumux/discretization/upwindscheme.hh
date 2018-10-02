@@ -24,45 +24,43 @@
 #ifndef DUMUX_DISCRETIZATION_UPWINDSCHEME_HH
 #define DUMUX_DISCRETIZATION_UPWINDSCHEME_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 //! Forward declaration of the upwind scheme implementation
-template<class TypeTag, DiscretizationMethods Method>
-class UpwindSchemeImplementation;
+template<class FVGridGeometry, DiscretizationMethod discMethod>
+class UpwindSchemeImpl;
 
 /*!
  * \ingroup Discretization
  * \brief The upwind scheme used for the advective fluxes.
  *        This depends on the chosen discretization method.
  */
-template<class TypeTag>
-using UpwindScheme = UpwindSchemeImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+template<class FVGridGeometry>
+using UpwindScheme = UpwindSchemeImpl<FVGridGeometry, FVGridGeometry::discMethod>;
 
 //! Upwind scheme for the box method
-template<class TypeTag>
-class UpwindSchemeImplementation<TypeTag, DiscretizationMethods::Box>
+template<class FVGridGeometry>
+class UpwindSchemeImpl<FVGridGeometry, DiscretizationMethod::box>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-
 public:
     // applies a simple upwind scheme to the precalculated advective flux
-    template<class FluxVariables, class UpwindTermFunction>
+    template<class FluxVariables, class UpwindTermFunction, class Scalar>
     static Scalar apply(const FluxVariables& fluxVars,
                         const UpwindTermFunction& upwindTerm,
                         Scalar flux, int phaseIdx)
     {
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>
-            (GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        // TODO: pass this from outside?
+        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
 
-        const auto& scvf = fluxVars.scvFace();
         const auto& elemVolVars = fluxVars.elemVolVars();
-        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+        const auto& scvf = fluxVars.scvFace();
+        const auto& insideScv = fluxVars.fvGeometry().scv(scvf.insideScvIdx());
+        const auto& outsideScv = fluxVars.fvGeometry().scv(scvf.outsideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = elemVolVars[outsideScv];
 
         if (std::signbit(flux)) // if sign of flux is negative
             return flux*(upwindWeight*upwindTerm(outsideVolVars)
@@ -74,26 +72,22 @@ public:
 };
 
 //! Upwind scheme for the cell-centered tpfa scheme
-template<class TypeTag>
-class UpwindSchemeImplementation<TypeTag, DiscretizationMethods::CCTpfa>
+template<class FVGridGeometry>
+class UpwindSchemeImpl<FVGridGeometry, DiscretizationMethod::cctpfa>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-
+    using GridView = typename FVGridGeometry::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
     // For surface and network grids (dim < dimWorld) we have to do a special upwind scheme
-    template<class FluxVariables, class UpwindTermFunction, int d = dim, int dw = dimWorld>
+    template<class FluxVariables, class UpwindTermFunction, class Scalar, int d = dim, int dw = dimWorld>
     static typename std::enable_if<(d < dw), Scalar>::type
     apply(const FluxVariables& fluxVars,
           const UpwindTermFunction& upwindTerm,
           Scalar flux, int phaseIdx)
     {
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>
-            (GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
 
         // the volume variables of the inside sub-control volume
         const auto& scvf = fluxVars.scvFace();
@@ -122,6 +116,7 @@ public:
                 const auto outsideElement = fvGeometry.fvGridGeometry().element(outsideScvIdx);
                 const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
 
+                using AdvectionType = typename FluxVariables::AdvectionType;
                 const auto outsideFlux = AdvectionType::flux(fluxVars.problem(),
                                                              outsideElement,
                                                              fvGeometry,
@@ -165,14 +160,13 @@ public:
     }
 
     // For grids with dim == dimWorld we use a simple upwinding scheme
-    template<class FluxVariables, class UpwindTermFunction, int d = dim, int dw = dimWorld>
+    template<class FluxVariables, class UpwindTermFunction, class Scalar, int d = dim, int dw = dimWorld>
     static typename std::enable_if<(d == dw), Scalar>::type
     apply(const FluxVariables& fluxVars,
           const UpwindTermFunction& upwindTerm,
           Scalar flux, int phaseIdx)
     {
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>
-            (GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
 
         const auto& scvf = fluxVars.scvFace();
         const auto& elemVolVars = fluxVars.elemVolVars();
@@ -189,9 +183,9 @@ public:
 };
 
 //! Upwind scheme for cell-centered mpfa schemes
-template<class TypeTag>
-class UpwindSchemeImplementation<TypeTag, DiscretizationMethods::CCMpfa>
-: public UpwindSchemeImplementation<TypeTag, DiscretizationMethods::CCTpfa> {};
+template<class FVGridGeometry>
+class UpwindSchemeImpl<FVGridGeometry, DiscretizationMethod::ccmpfa>
+: public UpwindSchemeImpl<FVGridGeometry, DiscretizationMethod::cctpfa> {};
 
 } // end namespace Dumux
 

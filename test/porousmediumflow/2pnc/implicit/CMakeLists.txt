@@ -37,11 +37,22 @@ dune_add_test(NAME test_cc2pnc_fickslaw
                                ${CMAKE_CURRENT_BINARY_DIR}/test_cc2pnc_fickslaw-00026.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pnc_fickslaw test_2pnc_diffusion.input -Problem.Name test_cc2pnc_fickslaw")
 
+dune_add_test(NAME test_2pncni_box
+              SOURCES test_2pnc_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=FuelCellNIBoxTypeTag NONISOTHERMAL=1
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/fuelcell2pncboxni-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/fuelcell_ni_box-00015.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncni_box -ParameterFile test_2pnc_fv.input -Problem.Name fuelcell_ni_box")
+
 #install sources
 install(FILES
 fuelcellproblem.hh
+fuelcellniproblem.hh
 fuelcellspatialparams.hh
 test_2pnc_fv.cc
+test_2pnc_fvni.cc
 test_2pnc_fv.input
 test_cc2pnc_diffusion.cc
 maxwellstefandiffusion.hh

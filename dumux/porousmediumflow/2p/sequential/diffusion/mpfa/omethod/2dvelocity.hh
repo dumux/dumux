@@ -24,7 +24,6 @@
 #ifndef DUMUX_FVMPFAO2DVELOCITY2P_HH
 #define DUMUX_FVMPFAO2DVELOCITY2P_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/gridenums.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
@@ -70,7 +69,7 @@ template<class TypeTag> class FvMpfaO2dVelocity2P
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -115,7 +114,8 @@ template<class TypeTag> class FvMpfaO2dVelocity2P
         };
 
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Geometry::GlobalCoordinate;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
@@ -239,7 +239,7 @@ public:
 
 private:
     Problem& problem_;
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
+    const GravityVector& gravity_; //!< vector including the gravity constant
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
@@ -587,11 +587,7 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                     const auto referenceElement = ReferenceElements::general(element.geometry().type());
-#else
-                    const auto& referenceElement = ReferenceElements::general(element.geometry().type());
-#endif
 
                     const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 
@@ -700,11 +696,7 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                     const auto referenceElement = ReferenceElements::general(element.geometry().type());
-#else
-                    const auto& referenceElement = ReferenceElements::general(element.geometry().type());
-#endif
 
                     const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 

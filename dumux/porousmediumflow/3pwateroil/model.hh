@@ -71,14 +71,17 @@
 #ifndef DUMUX_3P2CNI_MODEL_HH
 #define DUMUX_3P2CNI_MODEL_HH
 
-#include <dumux/common/properties.hh>
+#include <dune/common/fvector.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 
 #include "indices.hh"
@@ -88,54 +91,117 @@
 #include "primaryvariableswitch.hh"
 #include "vtkoutputfields.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ThreePWaterOilModel
- * \brief Adaption of the fully implicit scheme to the three-phase two-component flow model.
- *
+ * \brief Specifies a number properties of the three-phase two-component model.
  */
+template<bool onlyGasPhase>
+struct ThreePWaterOilModelTraits
+{
+    using Indices = ThreePWaterOilIndices;
+
+    static constexpr int numEq() { return 2; }
+    static constexpr int numPhases() { return 3; }
+    static constexpr int numComponents() { return 2; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return true; }
+    static constexpr bool enableEnergyBalance() { return false; }
+
+    static constexpr bool onlyGasPhaseCanDisappear() { return onlyGasPhase; }
+
+    template <class FluidSystem, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state)
+    {
+        switch (state)
+        {
+            case Indices::threePhases:
+            {
+                const std::vector<std::string> s1 = {"p_g",
+                                                     "S_w",
+                                                     "S_n"};
+                return s1[pvIdx];
+            }
+            case Indices::wPhaseOnly:
+            {
+                const std::vector<std::string> s2 = {"p_w",
+                                                     "T",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::wPhaseIdx)};
+                return s2[pvIdx];
+            }
+            case Indices::gnPhaseOnly:
+            {
+                const std::vector<std::string> s3 = {"p_g",
+                                                     "S_n",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::wCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::nPhaseIdx)};
+                return s3[pvIdx];
+            }
+            case Indices::wnPhaseOnly:
+            {
+                const std::vector<std::string> s4 = {"p_w",
+                                                     "T",
+                                                     "S_n"};
+                return s4[pvIdx];
+            }
+            case Indices::gPhaseOnly:
+            {
+                const std::vector<std::string> s5 = {"p_g",
+                                                     "T",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx)};
+                return s5[pvIdx];
+            }
+            case Indices::wgPhaseOnly:
+            {
+                const std::vector<std::string> s6 = {"p_g",
+                                                     "S_w",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx)};
+                return s6[pvIdx];
+            }
+        }
+    }
+};
+
+/*!
+ * \ingroup ThreePWaterOilModel
+ * \brief Traits class for the two-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
+struct ThreePWaterOilVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+};
+
 namespace Properties {
 
-NEW_TYPE_TAG(ThreePWaterOilNI, INHERITS_FROM(PorousMediumFlow, NonIsothermal));
+NEW_TYPE_TAG(ThreePWaterOilNI, INHERITS_FROM(PorousMediumFlow));
 
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
 
-/*!
- * \brief Set the property for the number of components.
- *
- * We just forward the number from the fluid system and use an static
- * assert to make sure it is 2.
- */
-SET_PROP(ThreePWaterOilNI, NumComponents)
+//! Set the non-isothermal model traits property
+SET_PROP(ThreePWaterOilNI, ModelTraits)
 {
- private:
+private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
- public:
-    static const int value = FluidSystem::numComponents;
-
-    static_assert(value == 2,
-                  "Only fluid systems with 2 components are supported by the 3p2cni model!");
-};
-
-/*!
- * \brief Set the property for the number of fluid phases.
- *
- * We just forward the number from the fluid system and use an static
- * assert to make sure it is 2.
- */
-SET_PROP(ThreePWaterOilNI, NumPhases)
-{
- private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
- public:
-    static const int value = FluidSystem::numPhases;
-    static_assert(value == 3,
-                  "Only fluid systems with 3 phases are supported by the 3p2cni model!");
+    static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 3p2cni model!");
+    static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p2cni model!");
+public:
+    using type = PorousMediumFlowNIModelTraits<ThreePWaterOilModelTraits<GET_PROP_VALUE(TypeTag, OnlyGasPhaseCanDisappear)>>;
 };
 
 /*!
@@ -156,72 +222,61 @@ SET_PROP(ThreePWaterOilNI, FluidState){
 SET_TYPE_PROP(ThreePWaterOilNI, LocalResidual, ThreePWaterOilLocalResidual<TypeTag>);
 
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(ThreePWaterOilNI, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, NumComponents));
-
-//! Enable advection
-SET_BOOL_PROP(ThreePWaterOilNI, EnableAdvection, true);
-
-//! disable molecular diffusion for the 3p model
-SET_BOOL_PROP(ThreePWaterOilNI, EnableMolecularDiffusion, true);
-
-//! Isothermal model by default
-SET_BOOL_PROP(ThreePWaterOilNI, EnableEnergyBalance, true);
+SET_INT_PROP(ThreePWaterOilNI, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
 
 //! The primary variable switch for the 3p3c model
 SET_TYPE_PROP(ThreePWaterOilNI, PrimaryVariableSwitch, ThreePWaterOilPrimaryVariableSwitch<TypeTag>);
 
 //! The primary variables vector for the 3p3c model
-SET_TYPE_PROP(ThreePWaterOilNI, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
+SET_PROP(ThreePWaterOilNI, PrimaryVariables)
+{
+private:
+    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
+public:
+    using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
+};
 
 //! Determines whether a constraint solver should be used explicitly
 SET_BOOL_PROP(ThreePWaterOilNI, OnlyGasPhaseCanDisappear, true);
 
-//! the VolumeVariables property
-SET_TYPE_PROP(ThreePWaterOilNI, VolumeVariables, ThreePWaterOilVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(ThreePWaterOilNI, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-//! The spatial parameters to be employed.
-//! Use FVSpatialParams by default.
-SET_TYPE_PROP(ThreePWaterOilNI, SpatialParams, FVSpatialParams<TypeTag>);
+    using Traits = ThreePWaterOilVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+public:
+    using type = ThreePWaterOilVolumeVariables<Traits>;
+};
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(ThreePWaterOilNI, EffectiveDiffusivityModel,
              DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-// disable velocity output by default
-
-SET_BOOL_PROP(ThreePWaterOilNI, UseMoles, true); //!< Define that mole fractions are used in the balance equations per default
+// Define that mole fractions are used in the balance equations per default
+SET_BOOL_PROP(ThreePWaterOilNI, UseMoles, true);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(ThreePWaterOilNI, ThermalConductivityModel)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    using type = ThermalConductivitySomerton<Scalar, Indices>;
+    using type = ThermalConductivitySomerton<Scalar>;
 };
 
+//! Set the non-isothermal vkt output fields
+SET_TYPE_PROP(ThreePWaterOilNI, VtkOutputFields, EnergyVtkOutputFields<ThreePWaterOilVtkOutputFields>);
 
-//////////////////////////////////////////////////////////////////
-// Property values for isothermal model required for the general non-isothermal model
-//////////////////////////////////////////////////////////////////
-
-//set isothermal output fields
-SET_TYPE_PROP(ThreePWaterOilNI, IsothermalVtkOutputFields, ThreePWaterOilVtkOutputFields<TypeTag>);
-
-//set isothermal Indices
-SET_PROP(ThreePWaterOilNI, IsothermalIndices)
-{
-
-public:
-    using type = ThreePWaterOilIndices<TypeTag, /*PVOffset=*/0>;
-};
-
-//set isothermal NumEq
-SET_INT_PROP(ThreePWaterOilNI, IsothermalNumEq, 2);
-
-}
-
- }
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

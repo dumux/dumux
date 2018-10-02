@@ -31,10 +31,10 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!\ingroup TwoPModel
  * \brief  Class defining a standard, saturation dependent indicator for grid adaptation
@@ -46,9 +46,8 @@ class TwoPGridAdaptIndicator
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     enum { saturationIdx = Indices::saturationIdx };
 
@@ -56,18 +55,19 @@ public:
     /*! \brief The Constructor
      *
      * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      *
      *  Note: refineBound_, coarsenBound_ & maxSaturationDelta_ are chosen
      *        in a way such that the indicator returns false for all elements
      *        before having been calculated.
      */
-    TwoPGridAdaptIndicator(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TwoPGridAdaptIndicator(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : fvGridGeometry_(fvGridGeometry)
     , refineBound_(std::numeric_limits<Scalar>::max())
     , coarsenBound_(std::numeric_limits<Scalar>::lowest())
     , maxSaturationDelta_(fvGridGeometry_->gridView().size(0), 0.0)
-    , minLevel_(getParamFromGroup<std::size_t>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.MinLevel", 0))
-    , maxLevel_(getParamFromGroup<std::size_t>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.MaxLevel", 0))
+    , minLevel_(getParamFromGroup<std::size_t>(paramGroup, "Adaptive.MinLevel", 0))
+    , maxLevel_(getParamFromGroup<std::size_t>(paramGroup, "Adaptive.MaxLevel", 0))
     {}
 
     /*!
@@ -140,7 +140,7 @@ public:
 
             //! obtain the saturation at the center of the element
             const auto geometry = element.geometry();
-            const ElementSolution elemSol(element, sol, *fvGridGeometry_);
+            const auto elemSol = elementSolution(element, sol, *fvGridGeometry_);
             const Scalar satI = evalSolution(element, geometry, *fvGridGeometry_, elemSol, geometry.center())[saturationIdx];
 
             //! maybe update the global minimum/maximum
@@ -164,7 +164,7 @@ public:
                     {
                         //! obtain saturation in the neighbor
                         const auto outsideGeometry = outside.geometry();
-                        const ElementSolution elemSolJ(outside, sol, *fvGridGeometry_);
+                        const auto elemSolJ = elementSolution(outside, sol, *fvGridGeometry_);
                         const Scalar satJ = evalSolution(outside, outsideGeometry, *fvGridGeometry_, elemSolJ, outsideGeometry.center())[saturationIdx];
 
                         using std::abs;

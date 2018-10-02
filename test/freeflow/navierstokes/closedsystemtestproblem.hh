@@ -24,7 +24,9 @@
 #ifndef DUMUX_CLOSEDSYSTEM_TEST_PROBLEM_HH
 #define DUMUX_CLOSEDSYSTEM_TEST_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dune/grid/yaspgrid.hh>
+
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -44,7 +46,7 @@ NEW_TYPE_TAG(ClosedSystemTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, Navi
 SET_PROP(ClosedSystemTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
@@ -70,29 +72,15 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum { dimWorld = GridView::dimensionworld };
-    enum {
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        pressureIdx = Indices::pressureIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx
-    };
-
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
+    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
 public:
     ClosedSystemTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -152,13 +140,12 @@ public:
         BoundaryTypes values;
 
         // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(momentumBalanceIdx);
+        values.setDirichlet(Indices::velocityXIdx);
+        values.setDirichlet(Indices::velocityYIdx);
 
         // set a fixed pressure in one cell
         if (isLowerLeftCell_(globalPos))
-            values.setDirichletCell(massBalanceIdx);
-        else
-            values.setNeumann(massBalanceIdx);
+            values.setDirichletCell(Indices::pressureIdx);
 
         return values;
     }
@@ -171,12 +158,12 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[pressureIdx] = 1.1e+5;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
+        values[Indices::pressureIdx] = 1.1e+5;
+        values[Indices::velocityXIdx] = 0.0;
+        values[Indices::velocityYIdx] = 0.0;
 
         if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
-            values[velocityXIdx] = lidVelocity_;
+            values[Indices::velocityXIdx] = lidVelocity_;
 
         return values;
     }
@@ -189,9 +176,9 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[pressureIdx] = 1.0e+5;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
+        values[Indices::pressureIdx] = 1.0e+5;
+        values[Indices::velocityXIdx] = 0.0;
+        values[Indices::velocityYIdx] = 0.0;
 
         return values;
     }
@@ -204,7 +191,6 @@ private:
     {
         return globalPos[0] < (0.5*cellSizeX_ + eps_) && globalPos[1] < eps_;
     }
-
 
     Scalar eps_;
     Scalar lidVelocity_;

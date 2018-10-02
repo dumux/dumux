@@ -23,44 +23,55 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_GRID_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_BOX_GRID_VOLUMEVARIABLES_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/box/elementvolumevariables.hh>
+#include <type_traits>
 
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
+#include <dumux/discretization/box/elementvolumevariables.hh>
+#include <dumux/discretization/box/elementsolution.hh>
 
 namespace Dumux {
+
+template<class P, class VV>
+struct BoxDefaultGridVolumeVariablesTraits
+{
+    using Problem = P;
+    using VolumeVariables = VV;
+
+    template<class GridVolumeVariables, bool cachingEnabled>
+    using LocalView = BoxElementVolumeVariables<GridVolumeVariables, cachingEnabled>;
+};
 
 /*!
  * \ingroup BoxModel
  * \brief Base class for the grid volume variables
  */
-template<class TypeTag, bool enableGridVolVarsCache>
+template<class Problem,
+         class VolumeVariables,
+         bool enableGridVolVarsCache = false,
+         class Traits = BoxDefaultGridVolumeVariablesTraits<Problem, VolumeVariables> >
 class BoxGridVolumeVariables;
 
 // specialization in case of storing the volume variables
-template<class TypeTag>
-class BoxGridVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
+template<class P, class VV, class Traits>
+class BoxGridVolumeVariables<P, VV, /*cachingEnabled*/true, Traits>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-
-    static const int dim = GridView::dimension;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using ThisType = BoxGridVolumeVariables<P, VV, true, Traits>;
+    using Problem = typename Traits::Problem;
 
 public:
+    //! export the volume variables type
+    using VolumeVariables = typename Traits::VolumeVariables;
+
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = true;
+
     //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
     BoxGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    template<class FVGridGeometry, class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
         volumeVariables_.resize(fvGridGeometry.gridView().size(0));
@@ -72,7 +83,7 @@ public:
             fvGeometry.bindElement(element);
 
             // get the element solution
-            ElementSolutionVector elemSol(element, sol, fvGeometry);
+            auto elemSol = elementSolution(element, sol, fvGridGeometry);
 
             // update the volvars of the element
             volumeVariables_[eIdx].resize(fvGeometry.numScv());
@@ -81,16 +92,18 @@ public:
         }
     }
 
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     const VolumeVariables& volVars(const SubControlVolume& scv) const
     { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
 
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     VolumeVariables& volVars(const SubControlVolume& scv)
     { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
 
-    const VolumeVariables& volVars(const IndexType eIdx, const IndexType scvIdx) const
+    const VolumeVariables& volVars(const std::size_t eIdx, const std::size_t scvIdx) const
     { return volumeVariables_[eIdx][scvIdx]; }
 
-    VolumeVariables& volVars(const IndexType eIdx, const IndexType scvIdx)
+    VolumeVariables& volVars(const std::size_t eIdx, const std::size_t scvIdx)
     { return volumeVariables_[eIdx][scvIdx]; }
 
     const Problem& problem() const
@@ -103,20 +116,25 @@ private:
 
 
 // Specialization when the current volume variables are not stored
-template<class TypeTag>
-class BoxGridVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
+template<class P, class VV, class Traits>
+class BoxGridVolumeVariables<P, VV, /*cachingEnabled*/false, Traits>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using ThisType = BoxGridVolumeVariables<P, VV, false, Traits>;
+    using Problem = typename Traits::Problem;
 
 public:
+    //! export the volume variables type
+    using VolumeVariables = typename Traits::VolumeVariables;
+
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = false;
+
     //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
     BoxGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    template<class FVGridGeometry, class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
     const Problem& problem() const

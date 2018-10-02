@@ -40,9 +40,10 @@ class SubControlVolumeBase
     using GridIndexType = typename ScvGeometryTraits::GridIndexType;
     using LocalIndexType = typename ScvGeometryTraits::LocalIndexType;
     using Scalar = typename ScvGeometryTraits::Scalar;
-    using GlobalPosition = typename ScvGeometryTraits::GlobalPosition;
 
 public:
+    //! export the type used for global coordinates
+    using GlobalPosition = typename ScvGeometryTraits::GlobalPosition;
     //! state the traits public and thus export all types
     using Traits = ScvGeometryTraits;
 
@@ -65,9 +66,9 @@ public:
     }
 
     //! The index of the dof this scv is embedded in (box)
-    LocalIndexType indexInElement() const
+    LocalIndexType localDofIndex() const
     {
-        return asImp_().indexInElement();
+        return asImp_().localDofIndex();
     }
 
     // The position of the dof this scv is embedded in

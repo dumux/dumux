@@ -26,41 +26,79 @@
 #define DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
 
 #include <dune/common/exceptions.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/common/parameters.hh>
-#include <dumux/common/math.hh>
-
 #include <dune/common/fmatrix.hh>
 
+#include <dumux/common/parameters.hh>
+#include <dumux/common/math.hh>
+#include <dumux/common/typetraits/isvalid.hh>
+
 namespace Dumux {
+
+#ifndef DOXYGEN
+namespace Detail {
+// helper struct detecting if the user-defined spatial params class has a permeabilityAtPos function
+// for g++ > 5.3, this can be replaced by a lambda
+template<class GlobalPosition>
+struct hasPermeabilityAtPos
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.permeabilityAtPos(std::declval<GlobalPosition>()))
+    {}
+};
+
+template<class GlobalPosition, class SolidSystem>
+struct hasInertVolumeFractionAtPos
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.template inertVolumeFractionAtPos<SolidSystem>(std::declval<GlobalPosition>(), 0))
+    {}
+};
+
+template<class GlobalPosition>
+struct hasPorosityAtPos
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.porosityAtPos(std::declval<GlobalPosition>()))
+    {}
+};
+} // end namespace Detail
+#endif
 
 /*!
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of one-phase problems
  * using a fully implicit discretization method.
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar, class Implementation>
 class FVSpatialParamsOneP
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    FVSpatialParamsOneP(const Problem& problem)
-    : problemPtr_(&problem)
-    {}
+    FVSpatialParamsOneP(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : fvGridGeometry_(fvGridGeometry)
+    {
+        /* \brief default forchheimer coefficient
+         * Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90 \cite ward1964 .
+         *        Actually the Forchheimer coefficient is also a function of the dimensions of the
+         *        porous medium. Taking it as a constant is only a first approximation
+         *        (Nield, Bejan, Convection in porous media, 2006, p. 10 \cite nield2006 )
+         */
+        forchCoeffDefault_ = getParam<Scalar>("SpatialParams.ForchCoeff", 0.55);
+    }
 
     /*!
      * \brief Harmonic average of a discontinuous scalar field at discontinuity interface
@@ -122,141 +160,127 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return permeability
      */
-    decltype(auto)
-    permeability(const Element& element,
-                 const SubControlVolume& scv,
-                 const ElementSolutionVector& elemSol) const
+    template<class ElementSolution>
+    decltype(auto) permeability(const Element& element,
+                                const SubControlVolume& scv,
+                                const ElementSolution& elemSol) const
     {
+        static_assert(decltype(isValid(Detail::hasPermeabilityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        "   Your spatial params class has to either implement\n\n"
+        "         const PermeabilityType& permeabilityAtPos(const GlobalPosition& globalPos) const\n\n"
+        "   or overload this function\n\n"
+        "         template<class ElementSolution>\n"
+        "         const PermeabilityType& permeability(const Element& element,\n"
+        "                                              const SubControlVolume& scv,\n"
+        "                                              const ElementSolution& elemSol) const\n\n");
+
         return asImp_().permeabilityAtPos(scv.center());
     }
 
     /*!
-     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$
-     * \note  It is possibly solution dependent.
-     *
-     * \return permeability
-     * \param globalPos The position of the center of the scv
+     * \brief If the permeability should be evaluated directly at the scvf integration point
+     *        (for convergence tests with analytical and continuous perm functions) or is evaluated
+     *        at the scvs (for permeability fields with discontinuities) -> default
      */
-    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a permeability() or permeabilityAtPos() method.");
-    }
+    static constexpr bool evaluatePermeabilityAtScvfIP()
+    { return false; }
 
     /*!
      * \brief Function for defining the porosity.
      *        That is possibly solution dependent.
-     *
+     * \note this can only be used for solids with one inert component
+     *       (see inertVolumeFraction for the more general interface)
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      * \return the porosity
      */
+    template<class ElementSolution>
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+                    const ElementSolution& elemSol) const
     {
+        static_assert(decltype(isValid(Detail::hasPorosityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        "   Your spatial params class has to either implement\n\n"
+        "         Scalar porosityAtPos(const GlobalPosition& globalPos) const\n\n"
+        "   or overload this function\n\n"
+        "         template<class ElementSolution>\n"
+        "         Scalar porosity(const Element& element,\n"
+        "                         const SubControlVolume& scv,\n"
+        "                         const ElementSolution& elemSol) const\n\n");
+
         return asImp_().porosityAtPos(scv.center());
     }
 
     /*!
-     * \brief Function for defining the porosity.
-     *
-     * \return porosity
-     * \param globalPos The position of the center of the scv
-     */
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a porosityAtPos() method.");
-    }
-
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
+     * \brief Function for defining the solid volume fraction.
+     *        That is possibly solution dependent.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
+     * \param compIdx The solid component index
+     * \return the volume fraction of the inert solid component with index compIdx
+     *
+     * \note this overload is enable if there is only one inert solid component and the
+     *       user didn't choose to implement a inertVolumeFractionAtPos overload.
+     *       It then forwards to the simpler porosity interface.
+     *       With more than one solid components or active solid components (i.e. dissolution)
+     *       please overload the more general inertVolumeFraction/inertVolumeFractionAtPos interface.
      */
-    Scalar solidHeatCapacity(const Element &element,
-                             const SubControlVolume& scv,
-                             const ElementSolutionVector& elemSol) const
+    template<class SolidSystem, class ElementSolution,
+             typename std::enable_if_t<SolidSystem::isInert()
+                                       && SolidSystem::numInertComponents == 1
+                                       && !decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())(std::declval<Implementation>()))::value,
+                                       int> = 0>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
     {
-        return asImp_().solidHeatCapacityAtPos(scv.center());
+        return 1.0 - asImp_().porosity(element, scv, elemSol);
     }
 
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The position of the center of the element
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
+    // specialization if there are no inert components at all
+    template<class SolidSystem, class ElementSolution,
+             typename std::enable_if_t<SolidSystem::numInertComponents == 0, int> = 0>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
     {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a solidHeatCapacityAtPos() method.");
+        return 0.0;
     }
 
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     */
-    Scalar solidDensity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+    // the more general interface forwarding to inertVolumeFractionAtPos
+    template<class SolidSystem, class ElementSolution,
+             typename std::enable_if_t<(SolidSystem::numInertComponents > 1) ||
+                                       (
+                                            (SolidSystem::numInertComponents > 0) &&
+                                            (
+                                                !SolidSystem::isInert()
+                                                || decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())
+                                                        (std::declval<Implementation>()))::value
+                                            )
+                                        ),
+                                        int> = 0>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
     {
-        return asImp_().solidDensityAtPos(scv.center());
-    }
+        static_assert(decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())(this->asImp_()))::value," \n\n"
+        "   Your spatial params class has to either implement\n\n"
+        "         template<class SolidSystem>\n"
+        "         Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos, int compIdx) const\n\n"
+        "   or overload this function\n\n"
+        "         template<class SolidSystem, class ElementSolution>\n"
+        "         Scalar inertVolumeFraction(const Element& element,\n"
+        "                                    const SubControlVolume& scv,\n"
+        "                                    const ElementSolution& elemSol,\n"
+        "                                    int compIdx) const\n\n");
 
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The position of the center of the element
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a solidDensityAtPos() method.");
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     */
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume& scv,
-                                    const ElementSolutionVector& elemSol) const
-    {
-        return asImp_().solidThermalConductivityAtPos(scv.center());
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param globalPos The position of the center of the element
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a solidThermalConductivityAtPos() method.");
+        return asImp_().template inertVolumeFractionAtPos<SolidSystem>(scv.center(), compIdx);
     }
 
     /*!
@@ -275,25 +299,18 @@ public:
     /*!
      * \brief Apply the Forchheimer coefficient for inertial forces
      *        calculation.
-     *
-     *        Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90 \cite ward1964 .
-     *        Actually the Forchheimer coefficient is also a function of the dimensions of the
-     *        porous medium. Taking it as a constant is only a first approximation
-     *        (Nield, Bejan, Convection in porous media, 2006, p. 10 \cite nield2006 )
-     *
      * \param scv The sub-control volume face where the
      *           intrinsic velocity ought to be calculated.
      */
     Scalar forchCoeff(const SubControlVolumeFace &scvf) const
     {
-        static Scalar forchCoeff = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "SpatialParams.ForchCoeff", 0.55);
-        return forchCoeff;
+        return forchCoeffDefault_;
     }
 
-    //! The problem we are associated with
-    const Problem& problem() const
+    //! The finite volume grid geometry
+    const FVGridGeometry& fvGridGeometry() const
     {
-        return *problemPtr_;
+        return *fvGridGeometry_;
     }
 
 protected:
@@ -304,7 +321,8 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
 private:
-    const Problem *problemPtr_;
+    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
+    Scalar forchCoeffDefault_;
 };
 
 } // namespace Dumux

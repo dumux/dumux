@@ -25,6 +25,9 @@
 #ifndef DUMUX_MAXWELL_STEFAN_TEST_PROBLEM_HH
 #define DUMUX_MAXWELL_STEFAN_TEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
@@ -37,13 +40,11 @@
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class MaxwellStefanTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 NEW_TYPE_TAG(MaxwellStefanTestTypeTag, INHERITS_FROM(Tracer));
 NEW_TYPE_TAG(MaxwellStefanTestCCTypeTag, INHERITS_FROM(CCTpfaModel, MaxwellStefanTestTypeTag));
 NEW_TYPE_TAG(MaxwellStefanTestBoxTypeTag, INHERITS_FROM(BoxModel, MaxwellStefanTestTypeTag));
@@ -55,7 +56,12 @@ SET_TYPE_PROP(MaxwellStefanTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(MaxwellStefanTestTypeTag, Problem, MaxwellStefanTestProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(MaxwellStefanTestTypeTag, SpatialParams, MaxwellStefanTestSpatialParams<TypeTag>);
+SET_PROP(MaxwellStefanTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = MaxwellStefanTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(MaxwellStefanTestTypeTag, UseMoles, true);
@@ -65,7 +71,8 @@ SET_TYPE_PROP(MaxwellStefanTestTypeTag, MolecularDiffusionType, MaxwellStefansLa
 
 //! A simple fluid system with one MaxwellStefan component
 template<class TypeTag>
-class H2N2CO2FluidSystem: public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar), H2N2CO2FluidSystem<TypeTag>>
+class H2N2CO2FluidSystem
+: public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar), H2N2CO2FluidSystem<TypeTag>>
 
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -155,12 +162,26 @@ public:
                        "Binary diffusion coefficient of components "
                        << compIIdx << " and " << compJIdx << " is undefined!\n");
     }
+
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density for the simple relation is defined by the
+     * mass density \f$\rho_\alpha\f$ and the molar mass of the main component \f$M_\kappa\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\kappa} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        return density(fluidState, phaseIdx)/molarMass(0);
+    }
 };
 
 SET_TYPE_PROP(MaxwellStefanTestTypeTag, FluidSystem, H2N2CO2FluidSystem<TypeTag>);
 
 } // end namespace Properties
-
 
 /*!
  * \ingroup TracerTest
@@ -177,7 +198,7 @@ class MaxwellStefanTestProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -187,13 +208,12 @@ class MaxwellStefanTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
-    static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     MaxwellStefanTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -242,7 +262,7 @@ public:
                     auto fvGeometry = localView(this->fvGridGeometry());
                     fvGeometry.bindElement(element);
 
-                    ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
+                    const auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
                     for (auto&& scv : scvs(fvGeometry))
                     {
                         const auto& globalPos = scv.dofPosition();
@@ -288,8 +308,8 @@ public:
                 gnuplot_.setYRange(0.4, 0.6);
                 gnuplot_.setXlabel("time [s]");
                 gnuplot_.setYlabel("mole fraction mol/mol");
-                gnuplot_.addDataSetToPlot(x_, y_, "N2_left");
-                gnuplot_.addDataSetToPlot(x_, y2_, "N2_right");
+                gnuplot_.addDataSetToPlot(x_, y_, "N2_left.dat", "w l t 'N_2 left'");
+                gnuplot_.addDataSetToPlot(x_, y2_, "N2_right.dat", "w l t 'N_2 right'");
                 gnuplot_.plot("mole_fraction_N2");
 
                 gnuplot2_.resetPlot();
@@ -297,8 +317,8 @@ public:
                 gnuplot2_.setYRange(0.0, 0.6);
                 gnuplot2_.setXlabel("time [s]");
                 gnuplot2_.setYlabel("mole fraction mol/mol");
-                gnuplot2_.addDataSetToPlot(x_, y3_, "C02_left");
-                gnuplot2_.addDataSetToPlot(x_, y4_, "C02_right");
+                gnuplot2_.addDataSetToPlot(x_, y3_, "CO2_left.dat", "w l t 'CO_2 left'");
+                gnuplot2_.addDataSetToPlot(x_, y4_, "C02_right.dat", "w l t CO_2 right");
                 gnuplot2_.plot("mole_fraction_C02");
 
                 gnuplot3_.resetPlot();
@@ -306,8 +326,8 @@ public:
                 gnuplot3_.setYRange(0.0, 0.6);
                 gnuplot3_.setXlabel("time [s]");
                 gnuplot3_.setYlabel("mole fraction mol/mol");
-                gnuplot3_.addDataSetToPlot(x_, y5_, "H2_left");
-                gnuplot3_.addDataSetToPlot(x_, y6_, "H2_right");
+                gnuplot3_.addDataSetToPlot(x_, y5_, "H2_left.dat", "w l t 'H_2 left'");
+                gnuplot3_.addDataSetToPlot(x_, y6_, "H2_right.dat", "w l t 'H_2 right'");
                 gnuplot3_.plot("mole_fraction_H2");
            }
         }

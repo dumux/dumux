@@ -25,11 +25,10 @@
 
 #include <dumux/common/fvproblem.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup ImplicitBaseProblems
+ * \ingroup PorousmediumFlow
  * \brief Base class for all fully implicit porous media problems
  * TODO: derive from base problem property?
  */
@@ -38,7 +37,6 @@ class PorousMediumFlowProblem : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum {
@@ -46,25 +44,48 @@ class PorousMediumFlowProblem : public FVProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
+
+
 public:
+    //! export spatial parameter type
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+
     /*!
-     * \brief The constructor
+     * \brief Constructor, passing the spatial parameters
      *
      * \param fvGridGeometry The finite volume grid geometry
+     * \param spatialParams The spatial parameter class
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    PorousMediumFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    PorousMediumFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                            std::shared_ptr<SpatialParams> spatialParams,
+                            const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
     , gravity_(0.0)
-    , spatialParams_(std::make_shared<SpatialParams>(this->asImp_()))
+    , spatialParams_(spatialParams)
     {
-        // TODO: spatial params init?
-        const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        const bool enableGravity = getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity");
         if (enableGravity)
             gravity_[dimWorld-1]  = -9.81;
     }
+
+    /*!
+     * \brief Constructor, constructing the spatial parameters
+     *
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    PorousMediumFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                            const std::string& paramGroup = "")
+    : PorousMediumFlowProblem(fvGridGeometry,
+                              std::make_shared<SpatialParams>(fvGridGeometry),
+                              paramGroup)
+    {}
 
     /*!
      * \name Physical parameters for porous media problems
@@ -100,7 +121,7 @@ public:
      * This is discretization independent interface. By default it
      * just calls gravity().
      */
-    const GlobalPosition &gravityAtPos(const GlobalPosition &pos) const
+    const GravityVector &gravityAtPos(const GlobalPosition &pos) const
     { return this->asImp_().gravity(); }
 
     /*!
@@ -112,7 +133,7 @@ public:
      * property is true, \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$ holds,
      * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
      */
-    const GlobalPosition &gravity() const
+    const GravityVector &gravity() const
     { return gravity_; }
 
     /*!
@@ -131,7 +152,7 @@ public:
 
 protected:
     //! The gravity acceleration vector
-    GlobalPosition gravity_;
+    GravityVector gravity_;
 
     // material properties of the porous medium
     std::shared_ptr<SpatialParams> spatialParams_;

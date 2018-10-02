@@ -29,7 +29,6 @@
 #include <dune/geometry/type.hh>
 
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/optional.hh>
 
 #include <typeinfo>
@@ -123,9 +122,9 @@ class StaggeredSubControlVolumeFace
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
 
+public:
     using GlobalPosition = typename T::GlobalPosition;
 
-public:
     //! state the traits public and thus export all types
     using Traits = T;
 

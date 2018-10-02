@@ -30,72 +30,39 @@
 
 #include <dumux/porousmediumflow/richards/model.hh>
 
-namespace Dumux
-{
-/*!
- * \ingroup RichardsTests
- * \brief spatial parameters for the RichardsLensProblem
- */
-// forward declaration
-template<class TypeTag>
-class RichardsLensSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(RichardsLensSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(RichardsLensSpatialParams, SpatialParams, RichardsLensSpatialParams<TypeTag>);
-
-// Set the material law
-SET_PROP(RichardsLensSpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
-};
-}
+namespace Dumux {
 
 /*!
  * \ingroup RichardsModel
  * \ingroup ImplicitTestProblems
  * \brief The spatial parameters for the RichardsLensProblem
  */
-template<class TypeTag>
-class RichardsLensSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class RichardsLensSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar, RichardsLensSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ThisType = RichardsLensSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum { dimWorld=GridView::dimensionworld };
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+    enum { dimWorld = GridView::dimensionworld };
 
 public:
+    using MaterialLaw = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
+    using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
     using PermeabilityType = Scalar;
 
-    /*!
-     * \brief Constructor
-     *
-     * \param gridView The DUNE GridView representing the spatial
-     *                 domain of the problem.
-     */
-    RichardsLensSpatialParams(const Problem& problem)
-        : ParentType(problem)
+    RichardsLensSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
 
         lensLowerLeft_ = {1.0, 2.0};
-        lensUpperRight_ = {4.1, 3.1};
+        lensUpperRight_ = {4.0, 3.0};
 
         // residual saturations
         lensMaterialParams_.setSwr(0.18);
@@ -142,7 +109,17 @@ public:
      *
      * \param globalPos A global coordinate vector
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
+    template<class ElementSolution>
+    const MaterialLawParams& materialLawParams(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolution& elemSol) const
+    {
+        const auto& globalPos = scv.dofPosition();
+
+        return materialLawParamsAtPos(globalPos);
+    }
+
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
         if (isInLens_(globalPos))
             return lensMaterialParams_;
@@ -159,7 +136,7 @@ private:
         return true;
     }
 
-    static constexpr Scalar eps_ = 1.5e-7;
+    static constexpr Scalar eps_ = 1e-6;
 
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
@@ -173,4 +150,3 @@ private:
 } // end namespace Dumux
 
 #endif
-

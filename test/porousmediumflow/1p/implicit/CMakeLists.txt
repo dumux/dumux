@@ -49,19 +49,33 @@ dune_add_test(NAME test_1pnibox_conduction
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconduction-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/1pnibox_conduction-00006.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pnibox_conduction-00005.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnibox_conduction test_1pnifv_conduction.input -Problem.Name 1pnibox_conduction"
-                       --zeroThreshold {"velocity_H2O":1e-8})
+                       --zeroThreshold {"velocity_liq":1e-8})
+
+add_executable(test_1pnibox_convection EXCLUDE_FROM_ALL test_1pnifv.cc)
+target_compile_definitions(test_1pnibox_convection PUBLIC TYPETAG=OnePNIConvectionBoxTypeTag)
 
 dune_add_test(NAME test_1pnibox_convection
-              SOURCES test_1pnifv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionBoxTypeTag
+              TARGET test_1pnibox_convection
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
-                       --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconvection-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/1pnibox_convection-00010.vtu
+                       --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconvection-reference.vtp
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pnibox_convection-00009.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnibox_convection test_1pnifv_convection.input -Problem.Name 1pnibox_convection"
                        --zeroThreshold {"velocity":1e-15})
+
+dune_add_test(NAME test_1pnibox_convection_restart
+              TARGET test_1pnibox_convection
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconvection-reference.vtp
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pnibox_convection_restart-00004.vtp
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnibox_convection test_1pnifv_convection.input -Problem.Name 1pnibox_convection_restart -TimeLoop.DtInitial 1000 -Restart.Time 16768 -Restart.File 1pnibox_convection-00006.vtp"
+                       --zeroThreshold {"velocity":1e-15})
+
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_1pnibox_convection_restart PROPERTIES DEPENDS test_1pnibox_convection)
 
 dune_add_test(NAME test_1pnicctpfa_conduction
               SOURCES test_1pnifv.cc
@@ -69,7 +83,7 @@ dune_add_test(NAME test_1pnicctpfa_conduction
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/1pniccconduction-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/1pnicctpfa_conduction-00006.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pnicctpfa_conduction-00005.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnicctpfa_conduction test_1pnifv_conduction.input -Problem.Name 1pnicctpfa_conduction"
                        --zeroThreshold {"velocity":1e-8})
 
@@ -78,8 +92,8 @@ dune_add_test(NAME test_1pnicctpfa_convection
               COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCTpfaTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
-                       --files ${CMAKE_SOURCE_DIR}/test/references/1pniccconvection-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/1pnicctpfa_convection-00010.vtu
+                       --files ${CMAKE_SOURCE_DIR}/test/references/1pniccconvection-reference.vtp
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pnicctpfa_convection-00009.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnicctpfa_convection test_1pnifv_convection.input -Problem.Name 1pnicctpfa_convection")
 
 dune_add_test(NAME test_1pniccmpfa_conduction
@@ -88,17 +102,8 @@ dune_add_test(NAME test_1pniccmpfa_conduction
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfa1pniconduction-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/1pniccmpfa_conduction-00006.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pniccmpfa_conduction-00005.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pniccmpfa_conduction test_1pnifv_conduction.input -Problem.Name 1pniccmpfa_conduction")
-
-dune_add_test(NAME test_1pniccmpfa_convection
-              SOURCES test_1pnifv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCMpfaTypeTag
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy
-                       --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfa1pniconvection-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/1pniccmpfa_convection-00010.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pniccmpfa_convection test_1pnifv_convection.input -Problem.Name 1pniccmpfa_convection")
 
 # dim < dimWorld tests with Dune::Foamgrid<1,3>
 dune_add_test(NAME test_1pcctpfa_network1d3d

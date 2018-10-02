@@ -31,6 +31,7 @@
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
+#include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
@@ -44,9 +45,9 @@ namespace Dumux {
  *        Defines the scv and scvf types and the mapper types
  * \tparam the grid view type
  */
-template<class GridView>
+template<class GridView, class MapperTraits = DefaultMapperTraits<GridView>>
 struct CCTpfaDefaultGridGeometryTraits
-: public DefaultMapperTraits<GridView>
+: public MapperTraits
 {
     using SubControlVolume = CCSubControlVolume<GridView>;
     using SubControlVolumeFace = CCTpfaSubControlVolumeFace<GridView>;
@@ -61,7 +62,7 @@ struct CCTpfaDefaultGridGeometryTraits
     //! Per default, we allow for 8 branches on network/surface grids, where
     //! conformity is assumed. For normal grids, we allow a maximum of one
     //! hanging node per scvf. Use different traits if you need more.
-    static constexpr int maxNumScvfNeighbors = int(GridView::dimension)<int(GridView::dimensionworld) ? 8 : 2;
+    static constexpr int maxNumScvfNeighbors = int(GridView::dimension)<int(GridView::dimensionworld) ? 8 : 1<<(GridView::dimension-1);
 };
 
 /*!
@@ -93,8 +94,6 @@ class CCTpfaFVGridGeometry<GV, true, Traits>
 
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
-    using CoordScalar = typename GV::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
     //! export the type of the fv element geometry (the local view type)
@@ -107,7 +106,7 @@ public:
     using DofMapper = typename Traits::ElementMapper;
 
     //! export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCTpfa;
+    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;
@@ -118,7 +117,12 @@ public:
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
     : ParentType(gridView)
-    {}
+    {
+        // Check if the overlap size is what we expect
+        if (!CheckOverlapSize<DiscretizationMethod::cctpfa>::isValid(gridView))
+            DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
+                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+    }
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -146,14 +150,6 @@ public:
     //! The total number of degrees of freedom
     std::size_t numDofs() const
     { return this->gridView().size(0); }
-
-    //! Get an element from a sub control volume contained in it
-    Element element(const SubControlVolume& scv) const
-    { return this->elementMap()[scv.elementIndex()]; }
-
-    //! Get an element from a global element index
-    Element element(IndexType eIdx) const
-    { return this->elementMap()[eIdx]; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
@@ -364,9 +360,6 @@ class CCTpfaFVGridGeometry<GV, false, Traits>
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
 
-    using CoordScalar = typename GV::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
-
     using ScvfGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::GridIndexStorage;
     using NeighborVolVarIndices = typename std::conditional_t< (dim<dimWorld),
                                                                ScvfGridIndexStorage,
@@ -383,7 +376,7 @@ public:
     using DofMapper = typename Traits::ElementMapper;
 
     //! Export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCTpfa;
+    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;
@@ -394,7 +387,12 @@ public:
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
     : ParentType(gridView)
-    {}
+    {
+        // Check if the overlap size is what we expect
+        if (!CheckOverlapSize<DiscretizationMethod::cctpfa>::isValid(gridView))
+            DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
+                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+    }
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -422,14 +420,6 @@ public:
     //! The total number of degrees of freedom
     std::size_t numDofs() const
     { return this->gridView().size(0); }
-
-    // Get an element from a sub control volume contained in it
-    Element element(const SubControlVolume& scv) const
-    { return this->elementMap()[scv.elementIndex()]; }
-
-    // Get an element from a global element index
-    Element element(IndexType eIdx) const
-    { return this->elementMap()[eIdx]; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()

@@ -67,7 +67,7 @@ template<class TypeTag> class FvMpfaL3dVelocity2pAdaptive: public FvMpfaL3dVeloc
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -126,8 +126,7 @@ template<class TypeTag> class FvMpfaL3dVelocity2pAdaptive: public FvMpfaL3dVeloc
         innerEdgeFace = 2, innerSideFace = 1
     };
 
-    using LocalPosition = Dune::FieldVector<Scalar, dim>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
@@ -182,7 +181,7 @@ public:
 
 private:
     Problem& problem_;
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
+    const GravityVector& gravity_; //!< vector including the gravity constant
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];

@@ -43,13 +43,10 @@ NEW_TYPE_TAG(ModelProperties);
 SET_TYPE_PROP(ModelProperties, Scalar, double);
 
 //! Set the default vector with size number of equations to a field vector
-SET_TYPE_PROP(ModelProperties, NumEqVector, Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar), GET_PROP_VALUE(TypeTag, NumEq)>);
+SET_TYPE_PROP(ModelProperties, NumEqVector, Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar), GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
 
 //! Set the default primary variable vector to a vector of size of number of equations
 SET_TYPE_PROP(ModelProperties, PrimaryVariables, typename GET_PROP_TYPE(TypeTag, NumEqVector));
-
-//! use the global group as default for the model's parameter group
-SET_STRING_PROP(ModelProperties, ModelParameterGroup, "");
 
 //! do not specific any model-specific default parameters here
 SET_PROP(ModelProperties, ModelDefaultParameters)

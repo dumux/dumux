@@ -62,6 +62,7 @@ public:
 template<class TypeTag>
 class TestIMPESSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -72,7 +73,7 @@ class TestIMPESSpatialParams: public SequentialFVSpatialParams<TypeTag>
         {dimWorld=Grid::dimensionworld};
     using Element = typename Grid::Traits::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
@@ -98,8 +99,8 @@ public:
     }
 
 
-    TestIMPESSpatialParams(const GridView& gridView)
-    : ParentType(gridView)
+    TestIMPESSpatialParams(const Problem& problem)
+    : ParentType(problem)
     {
         // residual saturations
         materialLawParams_.setSwr(0.2);

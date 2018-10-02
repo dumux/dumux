@@ -25,7 +25,6 @@
 #define DUMUX_GRIDVIEW_GEOMETRIC_ENTITY_SET_HH
 
 #include <memory>
-#include <dune/common/version.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dumux/common/entitymap.hh>
 
@@ -37,24 +36,15 @@ namespace Dumux {
  * \note This can be used e.g. to contruct a bounding box volume hierarchy of a grid
  * It defines the minimum requirement for such a set
  */
-template <class GridView, int codim = 0>
+template <class GridView, int codim = 0, class Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>>
 class GridViewGeometricEntitySet
 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-    using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-#else
-    // Only works for codim == 0, fixed in dune version 2.6
-    using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
-#endif
-    using Entity = typename GridView::template Codim<codim>::Entity;
 public:
+    using Entity = typename GridView::template Codim<codim>::Entity;
+
     GridViewGeometricEntitySet(const GridView& gridView)
     : gridView_(gridView)
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     , mapper_(gridView, Dune::mcmgLayout(Dune::Codim<codim>()))
-#else
-    , mapper_(gridView)
-#endif
     , entityMap_(std::make_shared<EntityMap<GridView, codim>>(gridView.grid(), mapper_))
     {}
 

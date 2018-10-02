@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 
+#include <vector>
+
 #include <dune/common/exceptions.hh>
 
 namespace Dumux
@@ -87,16 +89,20 @@ public:
     { asImp().setUpLocalScope(); }
 
     //! returns the number of "primary" scvfs of this interaction volume
-    std::size_t numFaces() const { return asImp().numFaces(); }
+    std::size_t numFaces() const
+    { return asImp().numFaces(); }
 
     //! returns the number of intermediate unknowns within this interaction volume
-    std::size_t numUnknowns() const { return asImp().numUnknowns(); }
+    std::size_t numUnknowns() const
+    { return asImp().numUnknowns(); }
 
     //! returns the number of (in this context) known solution values within this interaction volume
-    std::size_t numKnowns() const { return asImp().numKnowns(); }
+    std::size_t numKnowns() const
+    { return asImp().numKnowns(); }
 
     //! returns the number of scvs embedded in this interaction volume
-    std::size_t numScvs() const { return asImp().numScvs(); }
+    std::size_t numScvs() const
+    { return asImp().numScvs(); }
 
     //! Returns a reference to the container with the local face data. The actual type of
     //! the container depends on the interaction volume implementation. At this point we throw
@@ -105,20 +111,25 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a localFaceData() funtion"); }
 
     //! returns the cell-stencil of this interaction volume
-    const NodalStencilType& stencil() const { return asImp().stencil(); }
+    const NodalStencilType& stencil() const
+    { return asImp().stencil(); }
 
     //! returns the local scvf entity corresponding to a given iv-local scvf idx
-    const LocalScvfType& localScvf(LocalIndexType ivLocalScvfIdx) const { return asImp().localScvf(ivLocalScvfIdx); }
+    const LocalScvfType& localScvf(LocalIndexType ivLocalScvfIdx) const
+    { return asImp().localScvf(ivLocalScvfIdx); }
 
     //! returns the local scv entity corresponding to a given iv-local scv idx
-    const LocalScvType& localScv(LocalIndexType ivLocalScvIdx) const { return asImp().localScv(ivLocalScvIdx); }
+    const LocalScvType& localScv(LocalIndexType ivLocalScvIdx) const
+    { return asImp().localScv(ivLocalScvIdx); }
 
     //! returns the element in which the scv with the given local idx is embedded in
-    const Element& element(LocalIndexType ivLocalScvIdx) const { return asImp().element(); }
+    const Element& element(LocalIndexType ivLocalScvIdx) const
+    { return asImp().element(); }
 
     //! returns the number of interaction volumes living around a vertex
     template< class NodalIndexSet >
-    static std::size_t numIVAtVertex(const NodalIndexSet& nodalIndexSet) { return Impl::numIVAtVertex(nodalIndexSet); }
+    static std::size_t numIVAtVertex(const NodalIndexSet& nodalIndexSet)
+    { return Impl::numIVAtVertex(nodalIndexSet); }
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf

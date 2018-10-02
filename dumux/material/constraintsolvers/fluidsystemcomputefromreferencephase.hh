@@ -33,6 +33,8 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>
 
+#include "misciblemultiphasecomposition.hh"
+
 namespace Dumux {
 /*!
  * \ingroup ConstraintSolver

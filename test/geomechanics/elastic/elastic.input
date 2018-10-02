@@ -1,0 +1,13 @@
+[Grid]
+UpperRight = 1 1
+Cells = 10 10
+
+[Problem]
+Name = elastic
+EnableGravity = false
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1e5 1e5
+
+[Component]
+SolidDensity = 2700

@@ -19,7 +19,7 @@
 /*!
  * \file
  * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ *        diffusive molar fluxes due to molecular diffusion with Maxwell Stefan
  */
 #ifndef DUMUX_DISCRETIZATION_BOX_MAXWELL_STEFAN_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_MAXWELL_STEFAN_LAW_HH
@@ -35,7 +35,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethods DM>
+template <class TypeTag, DiscretizationMethod discMethod>
 class MaxwellStefansLawImplementation;
 
 /*!
@@ -43,7 +43,7 @@ class MaxwellStefansLawImplementation;
  * \brief Specialization of Maxwell Stefan's Law for the Box method.
  */
 template <class TypeTag>
-class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethods::Box >
+class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -53,22 +53,22 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethods::Box >
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag,NumComponents)
+        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
+        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()
     };
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;
@@ -92,20 +92,15 @@ public:
 
         // evaluate gradX at integration point and interpolate density
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& jacInvT = fluxVarsCache.jacInvT();
-        const auto& shapeJacobian = fluxVarsCache.shapeJacobian();
         const auto& shapeValues = fluxVarsCache.shapeValues();
 
         Scalar rho(0.0);
-        std::vector<GlobalPosition> gradN(fvGeometry.numScv());
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
 
             // density interpolation
             rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
-            // the ansatz function gradient
-            jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradN[scv.indexInElement()]);
 
             //interpolate the mole fraction for the diffusion matrix
             for (int compIdx = 0; compIdx < numComponents; compIdx++)
@@ -114,17 +109,17 @@ public:
             }
         }
 
-         reducedDiffusionMatrix = setupMSMatrix_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, moleFrac);
+        reducedDiffusionMatrix = setupMSMatrix_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, moleFrac);
 
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
-            GlobalPosition gradX(0.0);
+            Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
 
                 // the mole/mass fraction gradient
-                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), gradN[scv.indexInElement()]);
+                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
             }
 
            normalX[compIdx] = gradX *scvf.unitOuterNormal();
@@ -132,11 +127,10 @@ public:
          reducedDiffusionMatrix.solve(reducedFlux,normalX);
          reducedFlux *= -1.0*rho*scvf.area();
 
-
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
-                componentFlux[compIdx] = reducedFlux[compIdx];
-                componentFlux[numComponents-1] -= reducedFlux[compIdx];
+            componentFlux[compIdx] = reducedFlux[compIdx];
+            componentFlux[numComponents-1] -= reducedFlux[compIdx];
         }
         return componentFlux ;
     }
@@ -144,93 +138,73 @@ public:
 private:
 
     static ReducedComponentMatrix setupMSMatrix_(const Problem& problem,
-                                                const Element& element,
-                                                const FVElementGeometry& fvGeometry,
-                                                const ElementVolumeVariables& elemVolVars,
-                                                const SubControlVolumeFace& scvf,
-                                                const int phaseIdx,
-                                                const ComponentFluxVector moleFrac)
+                                                 const Element& element,
+                                                 const FVElementGeometry& fvGeometry,
+                                                 const ElementVolumeVariables& elemVolVars,
+                                                 const SubControlVolumeFace& scvf,
+                                                 const int phaseIdx,
+                                                 const ComponentFluxVector moleFrac)
     {
-
         ReducedComponentMatrix reducedDiffusionMatrix(0.0);
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto outsideScvIdx = scvf.outsideScvIdx();
+
         //this is to not devide by 0 if the saturation in 0 and the effectiveDiffusivity becomes zero due to that
-       if(insideVolVars.saturation(phaseIdx) == 0 || outsideVolVars.saturation(phaseIdx) == 0)
+        if(insideVolVars.saturation(phaseIdx) == 0 || outsideVolVars.saturation(phaseIdx) == 0)
             return reducedDiffusionMatrix;
 
-         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
-            {
-                // effective diffusion tensors
-                using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+        for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
+        {
+            // effective diffusion tensors
+            using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
 
-                const auto xi = moleFrac[compIIdx];
+            const auto xi = moleFrac[compIIdx];
 
-                //calculate diffusivity for i,numComponents
-
-                auto tinInside = getDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1, problem, element, insideVolVars, fvGeometry.scv(insideScvIdx));
-                tinInside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tinInside);
-                auto tinOutside = getDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1, problem, element, outsideVolVars, fvGeometry.scv(outsideScvIdx));
-                tinOutside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tinOutside);
+            //calculate diffusivity for i,numComponents
+            auto tinInside = getDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1, problem, element, insideVolVars, fvGeometry.scv(insideScvIdx));
+            tinInside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tinInside);
+            auto tinOutside = getDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1, problem, element, outsideVolVars, fvGeometry.scv(outsideScvIdx));
+            tinOutside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tinOutside);
 
                             // scale by extrusion factor
-                tinInside *= insideVolVars.extrusionFactor();
-                tinOutside *= outsideVolVars.extrusionFactor();
+            tinInside *= insideVolVars.extrusionFactor();
+            tinOutside *= outsideVolVars.extrusionFactor();
+
+            // the resulting averaged diffusion tensor
+            const auto tin = problem.spatialParams().harmonicMean(tinInside, tinOutside, scvf.unitOuterNormal());
+
+            //begin the entrys of the diffusion matrix of the diagonal
+            reducedDiffusionMatrix[compIIdx][compIIdx] += xi/tin;
+
+            // now set the rest of the entries (off-diagonal and additional entries for diagonal)
+            for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
+            {
+                //we don't want to calculate e.g. water in water diffusion
+                if (compIIdx == compJIdx)
+                    continue;
+
+                //calculate diffusivity for compIIdx, compJIdx
+                const auto xj = moleFrac[compJIdx];
+                auto tijInside = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, insideVolVars, fvGeometry.scv(insideScvIdx));
+                tijInside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tijInside);
+                auto tijOutside = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, outsideVolVars, fvGeometry.scv(outsideScvIdx));
+                tijOutside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), tijOutside);
+
+                // scale by extrusion factor
+                tijInside *= insideVolVars.extrusionFactor();
+                tijOutside *= outsideVolVars.extrusionFactor();
 
                 // the resulting averaged diffusion tensor
-                const auto tin = problem.spatialParams().harmonicMean(tinInside, tinOutside, scvf.unitOuterNormal());
+                const auto tij = problem.spatialParams().harmonicMean(tijInside, tijOutside, scvf.unitOuterNormal());
 
-                //set the entrys of the diffusion matrix of the diagonal
-                reducedDiffusionMatrix[compIIdx][compIIdx] += xi/tin;
-
-                for (int compkIdx = 0; compkIdx < numComponents; compkIdx++)
-                {
-                    if (compkIdx == compIIdx)
-                                continue;
-
-                    const auto xk = moleFrac[compkIdx];
-
-                    auto tikInside = getDiffusionCoefficient(phaseIdx, compIIdx, compkIdx, problem, element, insideVolVars, fvGeometry.scv(insideScvIdx));
-                    tikInside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tikInside);
-                    auto tikOutside = getDiffusionCoefficient(phaseIdx, compIIdx, compkIdx, problem, element, outsideVolVars, fvGeometry.scv(outsideScvIdx));
-                    tikOutside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tikOutside);
-
-                    // scale by extrusion factor
-                    tikInside *= insideVolVars.extrusionFactor();
-                    tikOutside *= outsideVolVars.extrusionFactor();
-
-                    // the resulting averaged diffusion tensor
-                    const auto tik = problem.spatialParams().harmonicMean(tikInside, tikOutside, scvf.unitOuterNormal());
-
-                    reducedDiffusionMatrix[compIIdx][compIIdx] += xk/tik;
-                }
-
-                // now set the rest of the entries (off-diagonal)
-                for (int compJIdx = 0; compJIdx < numComponents-1; compJIdx++)
-                {
-                    //we don't want to calculate e.g. water in water diffusion
-                    if (compIIdx == compJIdx)
-                        continue;
-                    //calculate diffusivity for compIIdx, compJIdx
-                    auto tijInside = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, insideVolVars, fvGeometry.scv(insideScvIdx));
-                    tijInside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tijInside);
-                    auto tijOutside = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, outsideVolVars, fvGeometry.scv(outsideScvIdx));
-                    tijOutside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), tijOutside);
-
-                    // scale by extrusion factor
-                    tijInside *= insideVolVars.extrusionFactor();
-                    tijOutside *= outsideVolVars.extrusionFactor();
-
-                    // the resulting averaged diffusion tensor
-                    const auto tij = problem.spatialParams().harmonicMean(tijInside, tijOutside, scvf.unitOuterNormal());
-
+                reducedDiffusionMatrix[compIIdx][compIIdx] += xj/tij;
+                if (compJIdx < numComponents-1)
                     reducedDiffusionMatrix[compIIdx][compJIdx] +=xi*(1/tin - 1/tij);
-                }
             }
-
+        }
         return reducedDiffusionMatrix;
     }
 

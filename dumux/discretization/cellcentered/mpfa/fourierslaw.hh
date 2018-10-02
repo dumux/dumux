@@ -35,7 +35,7 @@
 namespace Dumux
 {
 //! forward declaration of the method-specific implementation
-template<class TypeTag, DiscretizationMethods discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawImplementation;
 
 /*!
@@ -43,7 +43,7 @@ class FouriersLawImplementation;
 * \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
 */
 template <class TypeTag>
-class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
+class FouriersLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -53,8 +53,8 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
 
@@ -210,7 +210,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
 public:
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCMpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
 
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFouriersLawCache;

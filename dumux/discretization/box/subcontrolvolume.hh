@@ -24,7 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_BOX_SUBCONTROLVOLUME_HH
 
-#include <dune/common/version.hh>
+#include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
@@ -91,11 +91,12 @@ class BoxSubControlVolume
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
-    using GlobalPosition = typename T::GlobalPosition;
     using CornerStorage = typename T::CornerStorage;
     enum { dim = Geometry::mydimension };
 
 public:
+    //! export the type used for global coordinates
+    using GlobalPosition = typename T::GlobalPosition;
     //! state the traits public and thus export all types
     using Traits = T;
 
@@ -112,7 +113,7 @@ public:
       center_(0.0),
       volume_(geometryHelper.scvVolume(corners_)),
       elementIndex_(elementIndex),
-      scvIdx_(scvIdx),
+      localDofIdx_(scvIdx),
       dofIndex_(dofIndex)
     {
         // compute center point
@@ -137,17 +138,20 @@ public:
     // e.g. for integration
     Geometry geometry() const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return Geometry(Dune::GeometryTypes::cube(dim), corners_);
-#else
-        return Geometry(Dune::GeometryType(Dune::GeometryType::cube, dim), corners_);
-#endif
     }
 
-    //! The global index of this scv
+    //! The element-local index of the dof this scv is embedded in
+    LocalIndexType localDofIndex() const
+    {
+        return localDofIdx_;
+    }
+
+    //! The element-local index of this scv.
+    //! For the standard box scheme this is the local dof index.
     LocalIndexType indexInElement() const
     {
-        return scvIdx_;
+        return localDofIdx_;
     }
 
     //! The index of the dof this scv is embedded in
@@ -181,7 +185,7 @@ private:
     GlobalPosition center_;
     Scalar volume_;
     GridIndexType elementIndex_;
-    LocalIndexType scvIdx_;
+    LocalIndexType localDofIdx_;
     GridIndexType dofIndex_;
 };
 

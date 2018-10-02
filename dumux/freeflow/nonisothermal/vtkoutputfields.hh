@@ -18,34 +18,40 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNIModel
- * \copydoc Dumux::NavierStokesNonIsothermalVtkOutputFields
+ * \ingroup FreeflowNIModel
+ * \copydoc Dumux::FreeflowNonIsothermalVtkOutputFields
  */
-#ifndef DUMUX_NAVIERSTOKES_NI_OUTPUT_FIELDS_HH
-#define DUMUX_NAVIERSTOKES_NI_OUTPUT_FIELDS_HH
-
-#include <dumux/common/properties.hh>
+#ifndef DUMUX_FREEFLOW_NI_OUTPUT_FIELDS_HH
+#define DUMUX_FREEFLOW_NI_OUTPUT_FIELDS_HH
 
 namespace Dumux
 {
 
 /*!
- * \ingroup NavierStokesNIModel
+ * \ingroup FreeflowNIModel
  * \brief Adds vtk output fields specific to non-isothermal free-flow models
  */
-template<class TypeTag>
-class NavierStokesNonIsothermalVtkOutputFields
+template<class IsothermalVtkOutputFields, class ModelTraits>
+class FreeflowNonIsothermalVtkOutputFields
 {
-    using IsothermalVtkOutputFields = typename GET_PROP_TYPE(TypeTag, IsothermalVtkOutputFields);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-public:
 
+public:
     //! Initialize the non-isothermal specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
         IsothermalVtkOutputFields::init(vtk);
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.temperature(); }, "temperature");
+        add(vtk);
+    }
+
+    //! Add the non-isothermal specific vtk output fields.
+    template <class VtkOutputModule>
+    static void add(VtkOutputModule& vtk)
+    {
+        vtk.addVolumeVariable([](const auto& v){ return v.temperature(); }, "T");
+        vtk.addVolumeVariable([](const auto& v){ return v.thermalConductivity(); }, "lambda");
+        if (ModelTraits::usesTurbulenceModel())
+            vtk.addVolumeVariable([](const auto& v){ return v.effectiveThermalConductivity() - v.thermalConductivity(); }, "lambda_t");
     }
 };
 

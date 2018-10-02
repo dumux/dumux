@@ -25,41 +25,30 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 #define DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
-
-// forward declaration
-template <class TypeTag, bool enableEnergyBalance>
-class PorousMediumFlowVolumeVariablesImplementation;
-
-/*!
- * \ingroup PorousmediumFlow
- * \brief Base class for the model specific class which provides
- *        access to all volume averaged quantities. The volume variables base class
- *        is specialized for isothermal and non-isothermal models.
- */
-template <class TypeTag>
-using PorousMediumFlowVolumeVariables = PorousMediumFlowVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+namespace Dumux {
 
 /*!
  * \ingroup PorousmediumFlow
  * \brief The isothermal base class
+ *
+ * \tparam Traits The volume variables traits
+ * \tparam Impl The implementation of the volume variables
  */
-template<class TypeTag>
-class PorousMediumFlowVolumeVariablesImplementation<TypeTag, false>
+template<class Traits>
+class PorousMediumFlowVolumeVariables
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using Scalar = typename Traits::PrimaryVariables::value_type;
 
 public:
+    //! export the type used for the primary variables
+    using PrimaryVariables = typename Traits::PrimaryVariables;
+    //! export the type encapsulating primary variable indices
+    using Indices = typename Traits::ModelTraits::Indices;
+
+    //! return number of phases considered by the model
+    static constexpr int numPhases() { return Traits::ModelTraits::numPhases(); }
+    //! return number of components considered by the model
+    static constexpr int numComponents() { return Traits::ModelTraits::numComponents(); }
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -70,21 +59,15 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void update(const ElementSolutionVector &elemSol,
-                const Problem &problem,
-                const Element &element,
-                const SubControlVolume &scv)
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol& elemSol,
+                const Problem& problem,
+                const Element& element,
+                const Scv& scv)
     {
-        priVars_ = extractDofPriVars(elemSol, scv);
+        priVars_ = elemSol[scv.localDofIndex()];
         extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
     }
-
-    /*!
-     * \brief Returns the primary variables at the dof associated with a given scv.
-     */
-    static const PrimaryVariables& extractDofPriVars(const ElementSolutionVector& elemSol,
-                                                     const SubControlVolume& scv)
-    { return elemSol[scv.indexInElement()]; }
 
     /*!
      * \brief Return the vector of primary variables
@@ -112,148 +95,9 @@ public:
     Scalar extrusionFactor() const
     { return extrusionFactor_; }
 
-    //! The temperature is obtained from the problem as a constant for isothermal models
-    static Scalar temperature(const ElementSolutionVector &elemSol,
-                              const Problem& problem,
-                              const Element &element,
-                              const SubControlVolume &scv)
-    {
-        return problem.temperatureAtPos(scv.dofPosition());
-    }
-
-    //! The phase enthalpy is zero for isothermal models
-    //! This is needed for completing the fluid state
-    template<class FluidState, class ParameterCache>
-    static Scalar enthalpy(const FluidState& fluidState,
-                           const ParameterCache& paramCache,
-                           const int phaseIdx)
-    {
-        return 0;
-    }
-
 private:
     PrimaryVariables priVars_;
     Scalar extrusionFactor_;
-};
-
-//! The non-isothermal implicit volume variables base class
-template <class TypeTag>
-class PorousMediumFlowVolumeVariablesImplementation<TypeTag, true>
-: public PorousMediumFlowVolumeVariablesImplementation<TypeTag, false>
-{
-    using ParentType = PorousMediumFlowVolumeVariablesImplementation<TypeTag, false>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-    static const int temperatureIdx = Indices::temperatureIdx;
-
-public:
-
-    /*!
-     * \brief Update all quantities for a given control volume
-     *
-     * \param priVars A vector containing the primary variables for the control volume
-     * \param problem The object specifying the problem which ought to
-     *                be simulated
-     * \param element An element which contains part of the control volume
-     * \param fvGeometry The finite volume geometry for the element
-     * \param scvIdx Local index of the sub control volume which is inside the element
-     */
-    void update(const ElementSolutionVector &elemSol,
-                const Problem &problem,
-                const Element &element,
-                const SubControlVolume &scv)
-    {
-        ParentType::update(elemSol, problem, element, scv);
-
-        solidHeatCapacity_ = problem.spatialParams().solidHeatCapacity(element, scv, elemSol);
-        solidDensity_ = problem.spatialParams().solidDensity(element, scv, elemSol);
-        solidThermalConductivity_ = problem.spatialParams().solidThermalConductivity(element, scv, elemSol);
-    }
-
-    /*!
-     * \brief Returns the total internal energy of a phase in the
-     *        sub-control volume.
-     *
-     * \param phaseIdx The phase index
-     */
-    Scalar internalEnergy(const int phaseIdx) const
-    { return asImp_().fluidState().internalEnergy(phaseIdx); }
-
-    /*!
-     * \brief Returns the total enthalpy of a phase in the sub-control
-     *        volume.
-     *
-     * \param phaseIdx The phase index
-     */
-    Scalar enthalpy(const int phaseIdx) const
-    { return asImp_().fluidState().enthalpy(phaseIdx); }
-
-    /*!
-     * \brief Returns the total heat capacity \f$\mathrm{[J/(kg K)]}\f$ of the rock matrix in
-     *        the sub-control volume.
-     */
-    Scalar solidHeatCapacity() const
-    { return solidHeatCapacity_; }
-
-    /*!
-     * \brief Returns the mass density \f$\mathrm{[kg/m^3]}\f$ of the rock matrix in
-     *        the sub-control volume.
-     */
-    Scalar solidDensity() const
-    { return solidDensity_; }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of a fluid phase in
-     *        the sub-control volume.
-     */
-    Scalar fluidThermalConductivity(const int phaseIdx) const
-    { return FluidSystem::thermalConductivity(asImp_().fluidState(), phaseIdx); }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the solid phase in
-     *        the sub-control volume.
-     */
-    Scalar solidThermalConductivity() const
-    { return solidThermalConductivity_; }
-
-    //! The temperature is a primary variable for non-isothermal models
-    static Scalar temperature(const ElementSolutionVector &elemSol,
-                              const Problem& problem,
-                              const Element &element,
-                              const SubControlVolume &scv)
-    {
-        return ParentType::extractDofPriVars(elemSol, scv)[temperatureIdx];
-    }
-
-    //! The phase enthalpy is zero for isothermal models
-    //! This is needed for completing the fluid state
-    template<class FluidState, class ParameterCache>
-    static Scalar enthalpy(const FluidState& fluidState,
-                           const ParameterCache& paramCache,
-                           const int phaseIdx)
-    {
-        return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
-    }
-
-protected:
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-private:
-    Scalar solidHeatCapacity_;
-    Scalar solidDensity_;
-    Scalar solidThermalConductivity_;
 };
 
 } // end namespace Dumux

@@ -31,7 +31,7 @@
 namespace Dumux
 {
 // forward declaration
-template<class TypeTag, DiscretizationMethods discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawImplementation;
 
 /*!
@@ -39,7 +39,7 @@ class FouriersLawImplementation;
  * \brief Specialization of Fourier's Law for the box method.
  */
 template <class TypeTag>
-class FouriersLawImplementation<TypeTag, DiscretizationMethods::Box>
+class FouriersLawImplementation<TypeTag, DiscretizationMethod::box>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -51,8 +51,8 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::Box>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
 
@@ -60,10 +60,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::Box>
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
+    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()} ;
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     static Scalar flux(const Problem& problem,
@@ -94,7 +93,7 @@ public:
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
         // compute the temperature gradient with the shape functions
-        GlobalPosition gradTemp(0.0);
+        Dune::FieldVector<Scalar, dimWorld> gradTemp(0.0);
         for (auto&& scv : scvs(fvGeometry))
             gradTemp.axpy(elemVolVars[scv].temperature(), fluxVarsCache.gradN(scv.indexInElement()));
 

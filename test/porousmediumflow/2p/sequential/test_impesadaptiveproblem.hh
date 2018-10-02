@@ -24,10 +24,12 @@
 #ifndef DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 #define DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/lnapl.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/impes/problem.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressurepropertiesadaptive.hh>
@@ -63,8 +65,8 @@ SET_TYPE_PROP(TestIMPESAdaptiveTypeTag, Problem, TestIMPESAdaptiveProblem<TypeTa
 SET_PROP(TestIMPESAdaptiveTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 }
@@ -88,7 +90,7 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
 
@@ -111,12 +113,11 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 
 public:
     TestIMPESAdaptiveProblem(TimeManager &timeManager, Grid& grid) :
@@ -126,7 +127,7 @@ public:
 
         // Refine the grid provided that no restart occurs. Otherwise, an
         // already refined grid will be read.
-        if (!(haveParam("Restart") || haveParam("TimeManager.Restart")))
+        if (!(hasParam("Restart") || hasParam("TimeManager.Restart")))
             grid.globalRefine(getParam<int>("GridAdapt.MaxLevel"));
 
         this->setOutputInterval(10);

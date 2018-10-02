@@ -26,12 +26,13 @@
 
 #include <dumux/material/idealgas.hh>
 
-#include "component.hh"
-
 #include <cmath>
 
-namespace Dumux
-{
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/gas.hh>
+
+namespace Dumux {
+namespace Components {
 
 /*!
  * \ingroup Componentss
@@ -40,7 +41,9 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class N2 : public Component<Scalar, N2<Scalar> >
+class N2
+: public Components::Base<Scalar, N2<Scalar> >
+, public Components::Gas<Scalar, N2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
 
@@ -54,7 +57,7 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of molecular nitrogen.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 28.0134e-3;}
 
     /*!
@@ -131,15 +134,25 @@ public:
     }
 
     /*!
+     *  \brief The molar density of \f$N_2\f$ gas in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
+
+    /*!
      * \brief Returns true if the gas phase is assumed to be compressible
      */
-    static bool gasIsCompressible()
+    static constexpr bool gasIsCompressible()
     { return true; }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be ideal
      */
-    static bool gasIsIdeal()
+    static constexpr bool gasIsIdeal()
     { return true; }
 
     /*!
@@ -271,6 +284,8 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+} // end namespace Dumux
 
 #endif

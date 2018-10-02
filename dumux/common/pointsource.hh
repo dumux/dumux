@@ -36,35 +36,23 @@
 
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
-
-// forward declarations
-template<class TypeTag>
-class PointSourceHelper;
+namespace Dumux {
 
 /*!
  * \ingroup Common
  * \brief A point source base class
+ * \tparam GlobalPosition the position type
+ * \tparam SourceValues the a vector type storing the source for all equations
  */
-template<class TypeTag>
+template<class GlobalPosition, class SourceValues>
 class PointSource
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    static const int dimworld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
-
 public:
+    //! Export the scalar type
+    using Scalar = std::decay_t<decltype(std::declval<SourceValues>()[0])>;
+
     //! Constructor for constant point sources
-    PointSource(GlobalPosition pos, PrimaryVariables values)
+    PointSource(GlobalPosition pos, SourceValues values)
       : values_(values), pos_(pos), embeddings_(1) {}
 
     //! Constructor for sol dependent point sources, when there is no
@@ -101,7 +89,7 @@ public:
     }
 
     //! Convenience = operator overload modifying only the values
-    PointSource& operator= (const PrimaryVariables& values)
+    PointSource& operator= (const SourceValues& values)
     {
         values_ = values;
         return *this;
@@ -115,7 +103,7 @@ public:
     }
 
     //! return the source values
-    PrimaryVariables values() const
+    SourceValues values() const
     { return values_; }
 
     //! return the source position
@@ -125,11 +113,12 @@ public:
     //! an update function called before adding the value
     // to the local residual in the problem in scvPointSources
     // to be overloaded by derived classes
+    template<class Problem, class FVElementGeometry, class ElementVolumeVariables>
     void update(const Problem &problem,
-                const Element &element,
+                const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity &element,
                 const FVElementGeometry &fvGeometry,
                 const ElementVolumeVariables &elemVolVars,
-                const SubControlVolume &scv)
+                const typename FVElementGeometry::SubControlVolume &scv)
     {}
 
     //! set the number of embeddings for this point source
@@ -155,7 +144,7 @@ public:
     }
 
 protected:
-    PrimaryVariables values_; //!< value of the point source for each equation
+    SourceValues values_; //!< value of the point source for each equation
 private:
     GlobalPosition pos_; //!< position of the point source
     std::size_t embeddings_; //!< how many SCVs the point source is associated with
@@ -164,34 +153,35 @@ private:
 /*!
  * \ingroup Common
  * \brief A point source class with an identifier to attach data
+ * \tparam GlobalPosition the position type
+ * \tparam SourceValues the a vector type storing the source for all equations
+ * \tparam I the ID type
  */
-template<class TypeTag, typename IdType>
-class IdPointSource : public PointSource<TypeTag>
+template<class GlobalPosition, class SourceValues, class I>
+class IdPointSource : public PointSource<GlobalPosition, SourceValues>
 {
-    using ParentType = PointSource<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-
-    static const int dimworld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using ParentType = PointSource<GlobalPosition, SourceValues>;
+    using Scalar = typename ParentType::Scalar;
 
 public:
+    //! export the id type
+    using IdType = I;
+
     //! Constructor for constant point sources
-    IdPointSource(GlobalPosition pos, PrimaryVariables values, IdType id)
+    IdPointSource(GlobalPosition pos, SourceValues values, IdType id)
       :  ParentType(pos, values), id_(id) {}
 
     //! Constructor for sol dependent point sources, when there is no
     // value known at the time of initialization
     IdPointSource(GlobalPosition pos, IdType id)
-      : ParentType(pos, PrimaryVariables(0.0)), id_(id) {}
+      : ParentType(pos, SourceValues(0.0)), id_(id) {}
 
     //! return the sources identifier
     IdType id() const
     { return id_; }
 
     //! Convenience = operator overload modifying only the values
-    IdPointSource& operator= (const PrimaryVariables& values)
+    IdPointSource& operator= (const SourceValues& values)
     {
         ParentType::operator=(values);
         return *this;
@@ -213,33 +203,36 @@ private:
  * \brief A point source class for time dependent point sources
  */
 template<class TypeTag>
-class SolDependentPointSource : public PointSource<TypeTag>
+class SolDependentPointSource : public PointSource<Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, GridView)::ctype,
+                                                           GET_PROP_TYPE(TypeTag, GridView)::dimensionworld>,
+                                                   typename GET_PROP_TYPE(TypeTag, NumEqVector)>
 {
-    using ParentType = PointSource<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
     static const int dimworld = GridView::dimensionworld;
-    using GlobalPosition = typename Dune::FieldVector<Scalar, dimworld>;
+    using GlobalPosition = typename Dune::FieldVector<typename GridView::ctype, dimworld>;
     // returns the PointSource values as PrimaryVariables
-    using ValueFunction = typename std::function<PrimaryVariables(const Problem &problem,
-                                                                  const Element &element,
-                                                                  const FVElementGeometry &fvGeometry,
-                                                                  const ElementVolumeVariables &elemVolVars,
-                                                                  const SubControlVolume &scv)>;
+    using ValueFunction = typename std::function<SourceValues(const Problem &problem,
+                                                              const Element &element,
+                                                              const FVElementGeometry &fvGeometry,
+                                                              const ElementVolumeVariables &elemVolVars,
+                                                              const SubControlVolume &scv)>;
+
+    using ParentType = PointSource<GlobalPosition, SourceValues>;
+    using Scalar = typename ParentType::Scalar;
 
 public:
     //! Constructor for sol dependent point sources, when there is no
     // value known at the time of initialization
     SolDependentPointSource(GlobalPosition pos,
                             ValueFunction valueFunction)
-      : ParentType(pos, PrimaryVariables(0.0)), valueFunction_(valueFunction) {}
+      : ParentType(pos, SourceValues(0.0)), valueFunction_(valueFunction) {}
 
     //! an update function called before adding the value
     // to the local residual in the problem in scvPointSources
@@ -252,7 +245,7 @@ public:
     { this->values_ = valueFunction_(problem, element, fvGeometry, elemVolVars, scv); }
 
     //! Convenience = operator overload modifying only the values
-    SolDependentPointSource& operator= (const PrimaryVariables& values)
+    SolDependentPointSource& operator= (const SourceValues& values)
     {
         ParentType::operator=(values);
         return *this;
@@ -275,26 +268,17 @@ private:
  * This class uses the bounding box tree implementation to indentify in which
  * sub control volume(s) a point source falls.
  */
-template<class TypeTag>
 class BoundingBoxTreePointSourceHelper
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimworld = GridView::dimensionworld;
-
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
-    static constexpr int dofCodim = isBox ? dim : 0;
-
 public:
     //! calculate a DOF index to point source map from given vector of point sources
-    template<class PointSourceMap>
+    template<class FVGridGeometry, class PointSource, class PointSourceMap>
     static void computePointSourceMap(const FVGridGeometry& fvGridGeometry,
                                       std::vector<PointSource>& sources,
                                       PointSourceMap& pointSourceMap)
     {
+        constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+
         const auto& boundingBoxTree = fvGridGeometry.boundingBoxTree();
 
         for (auto&& source : sources)

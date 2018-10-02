@@ -25,13 +25,21 @@
 #ifndef DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 #define DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/3p/model.hh>
-#include <dumux/material/fluidsystems/h2oairmesitylene.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
+#include <dumux/material/fluidsystems/3pimmiscible.hh>
+#include <dumux/material/components/tabulatedcomponent.hh>
+#include <dumux/material/components/air.hh>
+#include <dumux/material/components/mesitylene.hh>
+#include <dumux/material/components/h2o.hh>
+// #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 
 #include "infiltration3pspatialparams.hh"
 
@@ -47,7 +55,7 @@ class InfiltrationThreePProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(InfiltrationThreePTypeTag, INHERITS_FROM(ThreeP, InfiltrationThreePSpatialParams));
+NEW_TYPE_TAG(InfiltrationThreePTypeTag, INHERITS_FROM(ThreeP));
 NEW_TYPE_TAG(InfiltrationThreePBoxTypeTag, INHERITS_FROM(BoxModel, InfiltrationThreePTypeTag));
 NEW_TYPE_TAG(InfiltrationThreePCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InfiltrationThreePTypeTag));
 
@@ -58,9 +66,25 @@ SET_TYPE_PROP(InfiltrationThreePTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(InfiltrationThreePTypeTag, Problem, InfiltrationThreePProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(InfiltrationThreePTypeTag,
-              FluidSystem,
-              FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_PROP(InfiltrationThreePTypeTag, FluidSystem)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Water = Components::TabulatedComponent<Components::H2O<Scalar>>;
+    using WettingFluid = FluidSystems::OnePLiquid<Scalar, Water>;
+    using NonwettingFluid = FluidSystems::OnePLiquid<Scalar, Components::Mesitylene<Scalar>>;
+    using Gas = FluidSystems::OnePGas<Scalar, Components::Air<Scalar>>;
+public:
+    using type = FluidSystems::ThreePImmiscible<Scalar, WettingFluid, NonwettingFluid, Gas>;
+};
+
+// Set the spatial parameters
+SET_PROP(InfiltrationThreePTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = InfiltrationThreePSpatialParams<FVGridGeometry, Scalar>;
+};
 
 }// end namespace Properties
 
@@ -101,7 +125,7 @@ class InfiltrationThreePProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
         pressureIdx = Indices::pressureIdx,
@@ -118,10 +142,8 @@ class InfiltrationThreePProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     /*!
@@ -233,7 +255,7 @@ public:
                  && (globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_))
             {
                 // mol fluxes, convert with M(Mesit.)=0,120 kg/mol --> 1.2e-4  kg/(sm)
-                values[Indices::contiNEqIdx] = -0.001;
+                values[Indices::conti0EqIdx + FluidSystem::nCompIdx] = -0.001;
             }
         }
 
@@ -304,8 +326,10 @@ private:
     }
 
     // small solver inverting the pc curve
+    template<class MaterialLawParams>
     static Scalar invertPcgw_(Scalar pcIn, const MaterialLawParams &pcParams)
     {
+        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         Scalar lower,upper;
         int k;
         int maxIt = 50;

@@ -32,67 +32,39 @@
 #include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
 
-namespace Dumux
-{
-//forward declaration
-template<class TypeTag>
-class DissolutionSpatialparams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(DissolutionSpatialparams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(DissolutionSpatialparams, SpatialParams, DissolutionSpatialparams<TypeTag>);
-
-// Set the material Law
-SET_PROP(DissolutionSpatialparams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
-};
-
-} // end namespace Properties
+namespace Dumux {
 
 /*!
  * \ingroup TwoPNCMinTests
  * \brief Spatial parameters for the dissolution problem
  * where water is injected in a for flushing precipitated salt clogging a gas reservoir.
  */
-template<class TypeTag>
-class DissolutionSpatialparams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class DissolutionSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         DissolutionSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using CoordScalar = typename GridView::ctype;
-    enum { dimWorld=GridView::dimensionworld };
-
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
-    using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using PorosityLaw = PorosityPrecipitation<TypeTag>;
-    using PermeabilityLaw = PermeabilityKozenyCarman<TypeTag>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       DissolutionSpatialParams<FVGridGeometry, Scalar>>;
+
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
 public:
     // type used for the permeability (i.e. tensor or scalar)
     using PermeabilityType = Scalar;
+    //! export the material law type used
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLawParams = typename MaterialLaw::Params;
 
-    DissolutionSpatialparams(const Problem& problem)
-    : ParentType(problem)
+    DissolutionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);
@@ -109,10 +81,6 @@ public:
         // parameters of Brooks & Corey Law
         materialParams_.setPe(pEntry1_);
         materialParams_.setLambda(bcLambda1_);
-
-        //! Initialize the parameter laws
-        poroLaw_.init(*this);
-        permLaw_.init(*this);
     }
 
     /*!
@@ -121,8 +89,18 @@ public:
      *  \param element The finite element
      *  \param scv The sub-control volume
      */
-    Scalar minPorosity(const Element& element, const SubControlVolume &scv) const
+    Scalar minimalPorosity(const Element& element, const SubControlVolume &scv) const
     { return 1e-5; }
+
+    /*!
+     *  \brief Define the volume fraction of the inert component
+     *
+     *  \param globalPos The global position in the domain
+     *  \param compIdx The index of the inert solid component
+     */
+    template<class SolidSystem>
+    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos, int compIdx) const
+    { return 1.0-referencePorosity_; }
 
     /*!
      *  \brief Define the reference porosity \f$[-]\f$ distribution.
@@ -135,28 +113,6 @@ public:
     Scalar referencePorosity(const Element& element, const SubControlVolume &scv) const
     { return referencePorosity_; }
 
-    /*!
-     *  \brief Return the actual recent porosity \f$[-]\f$ accounting for
-     *  clogging caused by mineralization
-     *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     */
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
-    { return poroLaw_.evaluatePorosity(element, scv, elemSol); }
-
-    /*!
-     *  \brief Define the reference permeability \f$[m^2]\f$ distribution
-     *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     */
-    PermeabilityType referencePermeability(const Element& element, const SubControlVolume &scv) const
-    { return referencePermeability_; }
-
-
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
      *  on the position in the domain
      *
@@ -165,13 +121,23 @@ public:
      *
      *  Solution dependent permeability function
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
-                        const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
-    { return permLaw_.evaluatePermeability(element, scv, elemSol); }
+                                  const SubControlVolume& scv,
+                                  const ElementSolution& elemSol) const
+    {
+        auto priVars = evalSolution(element, element.geometry(), elemSol, scv.center());
 
-    Scalar solidity(const SubControlVolume &scv) const
-    { return 1.0 - porosityAtPos(scv.center()); }
+        Scalar sumPrecipitates = 0.0;
+        sumPrecipitates += priVars[3 /*numComp*/];
+
+         using std::max;
+         const auto poro =  max(/*minPoro*/1e-5, referencePorosity_ - sumPrecipitates);
+         return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
+    }
+
+//     Scalar solidity(const SubControlVolume &scv) const
+//     { return 1.0 - porosityAtPos(scv.center()); }
 
     Scalar solubilityLimit() const
     { return solubilityLimit_; }
@@ -183,12 +149,17 @@ public:
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     { return materialParams_; }
 
+    // define which phase is to be considered as the wetting phase
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
+
 private:
 
     MaterialLawParams materialParams_;
 
-    PorosityLaw poroLaw_;
-    PermeabilityLaw permLaw_;
+    PermeabilityKozenyCarman<PermeabilityType> permLaw_;
+
     Scalar solubilityLimit_;
     Scalar referencePorosity_;
     PermeabilityType referencePermeability_ = 0.0;

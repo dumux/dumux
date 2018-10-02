@@ -25,7 +25,6 @@
 #define DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
 
 #include <dune/common/fvector.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -36,33 +35,24 @@ namespace Dumux
  * \ingroup NavierStokesModel
  * \brief Adds vtk output fields for the Navier-Stokes model
  */
-template<class TypeTag>
+template<class FVGridGeometry>
 class NavierStokesVtkOutputFields
 {
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
-
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-
     // Helper type used for tag dispatching (to add discretization-specific fields).
-    template<DiscretizationMethods method>
-    using MethodType = std::integral_constant<DiscretizationMethods, method>;
+    template<DiscretizationMethod discMethod>
+    using discMethodTag = std::integral_constant<DiscretizationMethod, discMethod>;
 
 public:
     //! Initialize the Navier-Stokes specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(); }, "p");
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure(); }, "p");
+        vtk.addVolumeVariable([](const auto& v){ return v.molarDensity(); }, "rhoMolar");
+        vtk.addVolumeVariable([](const auto& v){ return v.density(); }, "rho");
 
         // add discretization-specific fields
-        const auto discType = MethodType<GET_PROP_VALUE(TypeTag, DiscretizationMethod)>();
-        additionalOutput_(vtk, discType);
+        additionalOutput_(vtk, discMethodTag<FVGridGeometry::discMethod>{});
     }
 
 private:
@@ -74,19 +64,29 @@ private:
 
     //! Adds discretization-specific fields (velocity vectors on the faces for the staggered discretization).
     template <class VtkOutputModule>
-    static void additionalOutput_(VtkOutputModule& vtk, MethodType<DiscretizationMethods::Staggered>)
+    static void additionalOutput_(VtkOutputModule& vtk, discMethodTag<DiscretizationMethod::staggered>)
     {
-        const bool writeFaceVars = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.WriteFaceData", false);
+        const bool writeFaceVars = getParamFromGroup<bool>(vtk.paramGroup(), "Vtk.WriteFaceData", false);
         if(writeFaceVars)
         {
-            auto faceVelocityVector = [](const SubControlVolumeFace& scvf, const FaceVariables& f)
+            auto faceVelocityVector = [](const typename FVGridGeometry::SubControlVolumeFace& scvf, const auto& faceVars)
                                       {
-                                          GlobalPosition velocity(0.0);
-                                          velocity[scvf.directionIndex()] = f.velocitySelf();
+                                          using Scalar = typename VtkOutputModule::VolumeVariables::PrimaryVariables::value_type;
+                                          using VelocityVector = Dune::FieldVector<Scalar, FVGridGeometry::GridView::dimensionworld>;
+
+                                          VelocityVector velocity(0.0);
+                                          velocity[scvf.directionIndex()] = faceVars.velocitySelf();
                                           return velocity;
                                       };
 
             vtk.addFaceVariable(faceVelocityVector, "faceVelocity");
+
+            auto faceNormalVelocity = [](const auto& faceVars)
+                                      {
+                                          return faceVars.velocitySelf();
+                                      };
+
+            vtk.addFaceVariable(faceNormalVelocity, "v");
         }
     }
 };

@@ -27,8 +27,10 @@
 #define DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 
 #include <dune/common/float_cmp.hh>
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/3p3c/model.hh>
@@ -38,8 +40,8 @@
 
 #define ISOTHERMAL 0
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ThreePThreeCTests
  * \brief Non-isothermal gas injection problem where a gas (e.g. steam/air)
@@ -49,9 +51,8 @@ namespace Dumux
 template <class TypeTag>
 class KuevetteProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(KuevetteTypeTag, INHERITS_FROM(ThreePThreeCNI, KuevetteSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(KuevetteTypeTag, INHERITS_FROM(ThreePThreeCNI));
 NEW_TYPE_TAG(KuevetteBoxTypeTag, INHERITS_FROM(BoxModel, KuevetteTypeTag));
 NEW_TYPE_TAG(KuevetteCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, KuevetteTypeTag));
 
@@ -61,12 +62,19 @@ SET_TYPE_PROP(KuevetteTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(KuevetteTypeTag, Problem, KuevetteProblem<TypeTag>);
 
+// Set the spatial parameters
+SET_PROP(KuevetteTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = KuevetteSpatialParams<FVGridGeometry, Scalar>;
+};
+
 // Set the fluid system
 SET_TYPE_PROP(KuevetteTypeTag,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-}
-
+} // end namespace Properties
 
 /*!
  * \ingroup ThreePThreeCModel
@@ -109,16 +117,17 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     enum {
 
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
         temperatureIdx = Indices::temperatureIdx,
-        contiWEqIdx = Indices::contiWEqIdx,
-        contiGEqIdx = Indices::contiGEqIdx,
-        contiNEqIdx = Indices::contiNEqIdx,
+        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::wCompIdx,
+        contiGEqIdx = Indices::conti0EqIdx + FluidSystem::gCompIdx,
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nCompIdx,
         energyEqIdx = Indices::energyEqIdx,
 
         // phase states
@@ -135,12 +144,12 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+
 public:
     /*!
      * \brief The constructor.

@@ -54,10 +54,8 @@ namespace Dumux {
  * - composition in mole and mass fractions and molarities of *all* phases
  * - mean molar masses of *all* phases
  * - fugacity coefficients of *all* components in *all* phases
- * - if the setViscosity parameter is true, also dynamic viscosities of *all* phases
- * - if the setEnthalpy parameter is true, also specific enthalpies of *all* phases
  */
-template <class Scalar, class FluidSystem, bool useKelvinEquation = false>
+template <class Scalar, class FluidSystem>
 class MiscibleMultiPhaseComposition
 {
     static constexpr int numPhases = FluidSystem::numPhases;
@@ -78,14 +76,10 @@ public:
      *
      * \param fluidState A container with the current (physical) state of the fluid
      * \param paramCache A container for iterative calculation of fluid composition
-     * \param setViscosity Should the viscosity be set in the fluidstate?
-     * \param setEnthalpy Should the enthalpy be set in the fluidstate?
      */
     template <class FluidState, class ParameterCache>
     static void solve(FluidState &fluidState,
                       ParameterCache &paramCache,
-                      bool setViscosity,
-                      bool setEnthalpy,
                       int knownPhaseIdx = 0)
     {
 #ifndef NDEBUG
@@ -140,9 +134,9 @@ public:
             }
         }
 
-        //set the additional equations for the numComponents-numMajorComponents
+        // set the additional equations for the numComponents-numMajorComponents
         // this is only relevant if numphases != numcomponents e.g. in a 2pnc system
-        //Components, of which the molefractions are known, set to molefraction(knownCompIdx)=xKnown
+        // Components, of which the molefractions are known, set to molefraction(knownCompIdx)=xKnown
         for(int knownCompIdx = 0; knownCompIdx < numComponents-numMajorComponents; ++knownCompIdx)
         {
             int rowIdx = numComponents + numPhases + knownCompIdx;
@@ -156,70 +150,31 @@ public:
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             int col1Idx = compIdx;
-            Scalar entryPhase0 = 0.0;
-            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            const auto entryPhase0 = fluidState.fugacityCoefficient(0, compIdx)*fluidState.pressure(0);
+
+            for (unsigned int phaseIdx = 1; phaseIdx < numPhases; ++phaseIdx)
             {
-                Scalar entry = fluidState.fugacityCoefficient(phaseIdx, compIdx)
-                               * fluidState.pressure(phaseIdx);
-
-                // modify the saturation vapor pressure of the wetting component by the Kelvin equation
-                if (compIdx == FluidSystem::wCompIdx
-                    && phaseIdx == FluidSystem::wPhaseIdx
-                    && useKelvinEquation)
-                {
-                    // a new fluidState is needed, because mole fractions are unknown
-                    FluidState purePhaseFluidState;
-                    // assign all phase pressures, needed for capillary pressure
-                    for (unsigned int idx = 0; idx < numPhases; ++idx)
-                    {
-                        purePhaseFluidState.setPressure(idx, fluidState.pressure(idx));
-                    }
-                    purePhaseFluidState.setTemperature(fluidState.temperature());
-                    purePhaseFluidState.setMoleFraction(phaseIdx, compIdx, 1.0);
-                    entry = FluidSystem::kelvinVaporPressure(purePhaseFluidState, phaseIdx, compIdx);
-                }
-
-                if (phaseIdx == 0)
-                {
-                    entryPhase0 = entry;
-                }
-                else
-                {
-                    int rowIdx = (phaseIdx - 1)*numComponents + compIdx;
-                    int col2Idx = phaseIdx*numComponents + compIdx;
-                    M[rowIdx][col1Idx] = entryPhase0;
-                    M[rowIdx][col2Idx] = -entry;
-                }
+                int rowIdx = (phaseIdx - 1)*numComponents + compIdx;
+                int col2Idx = phaseIdx*numComponents + compIdx;
+                M[rowIdx][col1Idx] = entryPhase0;
+                M[rowIdx][col2Idx] = -fluidState.fugacityCoefficient(phaseIdx, compIdx)*fluidState.pressure(phaseIdx);
             }
         }
 
-
-        //preconditioning of M to reduce condition number
-        //prevents matrix meeting dune's singularity criteria
+        // preconditioning of M to reduce condition number
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
+            // Multiply row of main component (Raoult's Law) with 10e-5 (order of magn. of pressure)
             if (compIdx < numMajorComponents)
-            {
-                for (int colIdx = 0; colIdx < numPhases*numComponents; colIdx++)
-                {
-                    //Multiply row of main component (Raoult's Law) with 10e-5 (order of magn. of pressure)
-                    M[compIdx][colIdx] *= 10e-5;
-                }
-            } else {
-                for (int colIdx = 0; colIdx < numPhases*numComponents; colIdx++)
-                {
-                    //Multiply row of sec. components (Henry's Law) with 10e-9 (order of magn. of Henry constant)
-                    M[compIdx][colIdx] *= 10e-9;
-                }
-            }
-        }
+                M[compIdx] *= 10e-5;
 
+            // Multiply row of sec. components (Henry's Law) with 10e-9 (order of magn. of Henry constant)
+            else
+                M[compIdx] *= 10e-9;
+        }
 
         // solve for all mole fractions
-        try
-        {
-            M.solve(x, b);
-        }
+        try { M.solve(x, b); }
         catch (Dune::FMatrixError & e) {
             DUNE_THROW(NumericalProblem,
                     "Matrix for composition of phases could not be solved. \n"
@@ -242,15 +197,8 @@ public:
             Scalar value = FluidSystem::density(fluidState, paramCache, phaseIdx);
             fluidState.setDensity(phaseIdx, value);
 
-            if (setViscosity) {
-                value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
-                fluidState.setViscosity(phaseIdx, value);
-            }
-
-            if (setEnthalpy) {
-                value = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
-                fluidState.setEnthalpy(phaseIdx, value);
-            }
+            value = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
+            fluidState.setMolarDensity(phaseIdx, value);
         }
     }
 };

@@ -19,7 +19,7 @@
 /*!
  * \file
  * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ *        diffusive molar fluxes due to molecular diffusion with Fick's law.
  */
 #ifndef DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
@@ -31,7 +31,7 @@
 namespace Dumux
 {
 // forward declaration
-template<class TypeTag, DiscretizationMethods discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FicksLawImplementation;
 
 /*!
@@ -39,7 +39,7 @@ class FicksLawImplementation;
  * \brief Specialization of Fick's Law for the box method.
  */
 template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
+class FicksLawImplementation<TypeTag, DiscretizationMethod::box>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -49,24 +49,24 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FluxVarCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag,NumComponents)
+        numPhases = ModelTraits::numPhases(),
+        numComponents = ModelTraits::numComponents()
     };
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
@@ -116,7 +116,7 @@ public:
             const auto D = problem.spatialParams().harmonicMean(insideD, outsideD, scvf.unitOuterNormal());
 
             // the mole/mass fraction gradient
-            GlobalPosition gradX(0.0);
+            Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
             for (auto&& scv : scvs(fvGeometry))
                 gradX.axpy(elemVolVars[scv].moleFraction(phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
 

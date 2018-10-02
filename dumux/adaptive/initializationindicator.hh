@@ -51,7 +51,7 @@ class GridAdaptInitializationIndicator
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
 public:
 
@@ -74,12 +74,12 @@ public:
     : problem_(problem)
     , fvGridGeometry_(fvGridGeometry)
     , gridVariables_(gridVariables)
-    , minLevel_(getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.MinLevel"))
-    , maxLevel_(getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.MaxLevel"))
-    , refineAtDirichletBC_(getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.RefineAtDirichletBC", true))
-    , refineAtFluxBC_(getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.RefineAtFluxBC", true))
-    , refineAtSource_(getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.RefineAtSource", true))
-    , eps_(getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.BCRefinementThreshold", 1e-10))
+    , minLevel_(getParamFromGroup<int>(problem->paramGroup(), "Adaptive.MinLevel"))
+    , maxLevel_(getParamFromGroup<int>(problem->paramGroup(), "Adaptive.MaxLevel"))
+    , refineAtDirichletBC_(getParamFromGroup<bool>(problem->paramGroup(), "Adaptive.RefineAtDirichletBC", true))
+    , refineAtFluxBC_(getParamFromGroup<bool>(problem->paramGroup(), "Adaptive.RefineAtFluxBC", true))
+    , refineAtSource_(getParamFromGroup<bool>(problem->paramGroup(), "Adaptive.RefineAtSource", true))
+    , eps_(getParamFromGroup<Scalar>(problem->paramGroup(), "Adaptive.BCRefinementThreshold", 1e-10))
     {}
 
     /*!
@@ -174,7 +174,8 @@ public:
                 for (const auto& scv : scvs(fvGeometry))
                 {
                     auto source = problem_->source(element, fvGeometry, elemVolVars, scv);
-                    if (source.infinity_norm() > eps_)
+                    auto pointSource = problem_->scvPointSources(element, fvGeometry, elemVolVars, scv);
+                    if (source.infinity_norm() + pointSource.infinity_norm() > eps_)
                     {
                         indicatorVector_[eIdx] = true;
                         break; // element is marked, escape scv loop
@@ -225,8 +226,8 @@ public:
                     // Get bcTypes and maybe mark for refinement on Dirichlet boundaries
                     for (const auto& scv : scvs(fvGeometry))
                     {
-                        bcTypes[scv.indexInElement()] = problem_->boundaryTypes(element, scv);
-                        if (refineAtDirichletBC_ && bcTypes[scv.indexInElement()].hasDirichlet())
+                        bcTypes[scv.localDofIndex()] = problem_->boundaryTypes(element, scv);
+                        if (refineAtDirichletBC_ && bcTypes[scv.localDofIndex()].hasDirichlet())
                         {
                             indicatorVector_[eIdx] = true;
                             break; // element is marked, escape scv loop

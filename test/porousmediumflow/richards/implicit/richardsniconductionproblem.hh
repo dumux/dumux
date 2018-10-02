@@ -25,8 +25,10 @@
 #ifndef DUMUX_RICHARDS_CONDUCTION_PROBLEM_HH
 #define DUMUX_RICHARDS_CONDUCTION_PROBLEM_HH
 
-#include <math.h>
+#include <cmath>
+#include <dune/grid/yaspgrid.hh>
 
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 
@@ -36,8 +38,8 @@
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include "richardsnispatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /**
  * \ingroup RichardsTests
  * \brief Test for the RichardsModel in combination with the NI model for a conduction problem:
@@ -46,9 +48,8 @@ namespace Dumux
 template <class TypeTag>
 class RichardsNIConductionProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(RichardsNIConductionTypeTag, INHERITS_FROM(RichardsNI, RichardsNISpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(RichardsNIConductionTypeTag, INHERITS_FROM(RichardsNI));
 NEW_TYPE_TAG(RichardsNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, RichardsNIConductionTypeTag));
 NEW_TYPE_TAG(RichardsNIConductionCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsNIConductionTypeTag));
 
@@ -60,13 +61,16 @@ SET_TYPE_PROP(RichardsNIConductionTypeTag, Problem,
               RichardsNIConductionProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(RichardsNIConductionTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(RichardsNIConductionTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsNIConductionTypeTag,
-              SpatialParams,
-              RichardsNISpatialParams<TypeTag>);
-}
+SET_PROP(RichardsNIConductionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = RichardsNISpatialParams<FVGridGeometry, Scalar>;
+};
+} // end namespace Properties
 
 /*!
  * \ingroup RichardsModel
@@ -104,23 +108,22 @@ class RichardsNIConductionProblem :public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using IapwsH2O = H2O<Scalar>;
+    using IapwsH2O = Components::H2O<Scalar>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum { dimWorld = GridView::dimensionworld };
 
     enum {
         pressureIdx = Indices::pressureIdx,
-        wPhaseOnly = Indices::wPhaseOnly,
-        wPhaseIdx = Indices::wPhaseIdx,
+        liquidPhaseOnly = Indices::liquidPhaseOnly,
+        liquidPhaseIdx = FluidSystem::liquidPhaseIdx,
         temperatureIdx = Indices::temperatureIdx
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     RichardsNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -150,7 +153,7 @@ public:
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 
-        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
+        const auto someElemSol = elementSolution(someElement, curSol, this->fvGridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
         auto fvGeometry = localView(this->fvGridGeometry());
@@ -161,10 +164,10 @@ public:
         volVars.update(someElemSol, *this, someElement, someScv);
 
         const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
-        const auto densityW = volVars.density(wPhaseIdx);
+        const auto densityW = volVars.density(liquidPhaseIdx);
         const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
-        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
-        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
+        const auto densityS =volVars.solidDensity();
+        const auto heatCapacityS = volVars.solidHeatCapacity();
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
                                                                                                          someElement, fvGeometry, someScv);
@@ -305,7 +308,7 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(wPhaseOnly);
+        priVars.setState(liquidPhaseOnly);
         priVars[pressureIdx] = 1e5; // initial condition for the pressure
 
         priVars[temperatureIdx] = 290.;

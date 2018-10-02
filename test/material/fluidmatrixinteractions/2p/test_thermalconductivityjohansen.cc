@@ -38,7 +38,8 @@ int main(int argc, char** argv)
 
     using Scalar = double;
     using ThermCondModel = ThermalConductivityJohansen<Scalar>;
-    using FluidSystem = FluidSystems::H2ON2<Scalar, false>;
+
+    using FluidSystem = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
     PlotThermalConductivityModel<Scalar, ThermCondModel, FluidSystem> plotThermalConductivityModel(293.15, 1e5);
     const std::string fileName = "johansen_lambda_eff.dat";
     const Scalar porosity = 0.3; // [-]

@@ -48,11 +48,12 @@ class MPNCLocalResidual : public CompositionalLocalResidual<TypeTag>
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
-    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
+    enum {numPhases = ModelTraits::numPhases()};
     enum {phase0NcpIdx = Indices::phase0NcpIdx};
 
 public:
@@ -70,10 +71,9 @@ public:
 
         for (auto&& scv : scvs(fvGeometry))
         {
-            //here we need to set the constraints of the mpnc model into the residual
-            const auto localScvIdx = scv.indexInElement();
+            // here we need to set the constraints of the mpnc model into the residual
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                residual[localScvIdx][phase0NcpIdx + phaseIdx] = elemVolVars[scv].phaseNcp(phaseIdx);
+                residual[scv.localDofIndex()][phase0NcpIdx + phaseIdx] = elemVolVars[scv].phaseNcp(phaseIdx);
         }
 
         return residual;

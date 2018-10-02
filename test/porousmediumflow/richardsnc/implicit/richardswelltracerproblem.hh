@@ -26,6 +26,8 @@
 #ifndef DUMUX_RICHARDS_NC_WELL_TRACER_PROBLEM_HH
 #define DUMUX_RICHARDS_NC_WELL_TRACER_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -33,8 +35,8 @@
 
 #include "richardswelltracerspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup RichardsNCTests
  * \brief A water infiltration problem with a low-permeability lens
@@ -46,9 +48,8 @@ class RichardsWellTracerProblem;
 
 
 // Specify the properties for the lens problem
-namespace Properties
-{
-NEW_TYPE_TAG(RichardsWellTracerTypeTag, INHERITS_FROM(RichardsNC, RichardsWellTracerSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(RichardsWellTracerTypeTag, INHERITS_FROM(RichardsNC));
 NEW_TYPE_TAG(RichardsWellTracerBoxTypeTag, INHERITS_FROM(BoxModel, RichardsWellTracerTypeTag));
 NEW_TYPE_TAG(RichardsWellTracerCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsWellTracerTypeTag));
 
@@ -58,10 +59,17 @@ SET_TYPE_PROP(RichardsWellTracerTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the physical problem to be solved
 SET_TYPE_PROP(RichardsWellTracerTypeTag, Problem, RichardsWellTracerProblem<TypeTag>);
 
+// Set the spatial parameters
+SET_PROP(RichardsWellTracerTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = RichardsWellTracerSpatialParams<FVGridGeometry, Scalar>;
+};
+
 // Set the physical problem to be solved
 SET_TYPE_PROP(RichardsWellTracerTypeTag, PointSource, SolDependentPointSource<TypeTag>);
-
-}
+} // end namespace Properties
 
 /*!
  * \ingroup RichardsNCModel
@@ -97,27 +105,25 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     enum {
         pressureIdx = Indices::pressureIdx,
         compIdx = Indices::compMainIdx + 1,
-        wPhaseIdx = Indices::wPhaseIdx,
-
+        liquidPhaseIdx = FluidSystem::liquidPhaseIdx,
         dimWorld = GridView::dimensionworld
     };
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
 public:
     /*!
@@ -135,6 +141,7 @@ public:
 
         // for initial conditions
         const Scalar sw = 0.4; // start with 80% saturation on top
+        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(this->fvGridGeometry().bBoxMax()), sw);
 
         // for post time step mass balance
@@ -161,8 +168,8 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
-                tracerMass += volVars.massFraction(wPhaseIdx, compIdx)*volVars.density(wPhaseIdx)
-                              * scv.volume() * volVars.saturation(wPhaseIdx) * volVars.porosity() * volVars.extrusionFactor();
+                tracerMass += volVars.massFraction(liquidPhaseIdx, compIdx)*volVars.density(liquidPhaseIdx)
+                              * scv.volume() * volVars.saturation(liquidPhaseIdx) * volVars.porosity() * volVars.extrusionFactor();
 
                 accumulatedSource_ += this->scvPointSources(element, fvGeometry, elemVolVars, scv)[compIdx]
                                        * scv.volume() * volVars.extrusionFactor()
@@ -287,8 +294,8 @@ public:
                         const auto& volVars = elemVolVars[scv];
                         //! convert pump rate from kg/s to mol/s
                         //! We assume we can't keep up the pump rate if the saturation sinks
-                        const Scalar value = pumpRate_*volVars.molarDensity(wPhaseIdx)/volVars.density(wPhaseIdx)*volVars.saturation(wPhaseIdx);
-                        return PrimaryVariables({-value, -value*volVars.moleFraction(wPhaseIdx, compIdx)});
+                        const Scalar value = pumpRate_*volVars.molarDensity(liquidPhaseIdx)/volVars.density(liquidPhaseIdx)*volVars.saturation(liquidPhaseIdx);
+                        return PrimaryVariables({-value, -value*volVars.moleFraction(liquidPhaseIdx, compIdx)});
                     });
     }
 

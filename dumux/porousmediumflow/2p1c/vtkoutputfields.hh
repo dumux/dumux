@@ -26,26 +26,23 @@
 
 #include <dumux/porousmediumflow/2p/vtkoutputfields.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup TwoPOneCModel
  * \brief Adds vtk output fields specific to two-phase one-component model.
  */
-template<class TypeTag>
 class TwoPOneCVtkOutputFields
 {
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
         // use default fields from the 2p model
-        TwoPVtkOutputFields<TypeTag>::init(vtk);
+        TwoPVtkOutputFields::init(vtk);
 
-        //output additional to TwoP output:
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.priVars().state(); }, "phasePresence");
+        // output additional to TwoP output:
+        vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phase presence");
     }
 };
 

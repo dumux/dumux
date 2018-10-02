@@ -80,7 +80,7 @@ template<class TypeTag> class BuckleyLeverettAnalytic
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum
     {
@@ -93,7 +93,8 @@ template<class TypeTag> class BuckleyLeverettAnalytic
     };
 
     using BlockVector = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 private:
 

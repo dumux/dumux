@@ -1,0 +1,34 @@
+[TimeLoop]
+DtInitial = 1e-3 # [s]
+TEnd = 100 # [s]
+
+[Grid]
+Verbosity = true
+Positions0 = 0.0 10.0
+Positions1 = 0.0 0.12345 0.2469
+Cells0 = 16
+Cells1 = 8 8
+Grading1 = 1.4 -1.4
+
+[Problem]
+Name = pipe_laufer_reference
+InletVelocity = 2.5 # [m/s]
+EnableGravity = false
+
+[RANS]
+EddyViscosityModel = "baldwinLomax"
+
+[KEpsilon]
+YPlusThreshold = 10. # should be small (10-30) for coarse grids
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 5
+MaxRelativeShift = 1e-6
+
+[Vtk]
+WriteFaceData = false

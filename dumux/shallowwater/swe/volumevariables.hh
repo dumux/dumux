@@ -54,8 +54,9 @@ class SweVolumeVariablesImplementation
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    //using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    //using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -74,8 +75,8 @@ class SweVolumeVariablesImplementation
     };
 
 public:
-
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume &scv)
@@ -96,14 +97,6 @@ public:
         auto ksH_ = computeKsH(ks,frictionlaw);
 
     }
-
-
-    /*!
-     * \brief Returns the primary variables at the dof associated with a given scv.
-     */
-    static const auto& extractDofPriVars(const ElementSolutionVector& elemSol,
-                                         const SubControlVolume& scv)
-    { return elemSol[0]; }
 
 
     Scalar extrusionFactor() const

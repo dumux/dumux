@@ -122,6 +122,79 @@ $\boldsymbol{v}_\alpha$ & velocity (Darcy or free flow)& & \\
   \label{fig:phaseMassEnergyTransfer}
 \end{figure}
 
+
+\subsection{Gas mixing laws}
+Prediction of the $p-\varrho-T$ behavior of gas mixtures is typically based on two (contradicting) concepts: Dalton's law or Amagat's law.
+In the following the two concepts will be explained in more detail.
+%
+\subsubsection{Dalton's law}
+Dalton's law assumes that the gases in the mixture are non-interacting (with each other) and each gas independently applies its own pressure (partial pressure), the sum of which is the total pressure:
+%
+\begin{equation}
+p = \sum_{i}^{}p_i.
+\end{equation}
+Here $p_i$ refers to the partial pressure of component i.
+As an example, if two equal volumes of gas A and gas B are mixed, the volume of the mixture stays the same but the pressures add up (see Figure \ref{fig:dalton1}). 
+%
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.7\textwidth]{PNG/dalton1.png}
+	\caption{Dalton's law visualized}
+	\label{fig:dalton1}
+\end{figure}
+%
+The density of the mixture, $\varrho$, can be calculated as follows:
+\begin{equation}
+\varrho = \frac{m}{V} = \frac{m_\mathrm{A} + m_\mathrm{B}}{V} = \frac{\varrho_\mathrm{A} V + \varrho_\mathrm{B} V}{V} = \varrho_\mathrm{A} + \varrho_\mathrm{B},
+\end{equation}
+%
+or for an arbitrary number of gases:
+\begin{equation}
+\varrho = \sum_{i}^{} \varrho_i ; \quad \varrho_m = \sum_{i}^{} \varrho_{m,i}.
+\end{equation}
+%
+\subsubsection{Amagat's law}
+Amagat's law assumes that the volumes of the component gases are additive; the interactions of the different gases are the same as the average interactions of the components. This is known as Amagat's law: 
+%
+\begin{equation}
+V = \sum_{i}^{}V_i.
+\end{equation}
+%
+As an example, if two volumes of gas A and B at equal pressure are mixed, the pressure of the mixture stays the same, but the volumes add up (see Figure \ref{fig:dalton2}).
+%
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.7\textwidth]{PNG/dalton2.png}
+	\caption{Amagat's law visualized}
+	\label{fig:dalton2}
+\end{figure}
+%
+The density of the mixture, $\varrho$, can be calculated as follows:
+\begin{equation}
+\varrho = \frac{m}{V} = \frac{m}{V_\mathrm{A} + V_\mathrm{B}} = \frac{m}{\frac{m_\mathrm{A}}{\varrho_\mathrm{A}} \frac{m_\mathrm{B}}{\varrho_\mathrm{B}}} = 
+\frac{m}{\frac{X_\mathrm{A} m}{\varrho_\mathrm{A}} \frac{X_\mathrm{B} m}{\varrho_\mathrm{B}}} = \frac{1}{\frac{X_\mathrm{A}}{\varrho_\mathrm{A}} \frac{X_\mathrm{B}}{\varrho_\mathrm{B}}},
+\end{equation}
+%
+or for an arbitrary number of gases:
+%
+\begin{equation}
+\varrho = \frac{1}{\sum_{i}^{}\frac{X_i}{\varrho_i}}  ; \quad  \varrho_m = \frac{1}{\sum_{i}^{}\frac{x_i}{\varrho_{m,i}}}.
+\end{equation}
+%
+\subsubsection{Ideal gases}
+An ideal gas is defined as a gas whose molecules are spaced so far apart that the behavior of a molecule is not influenced by the presence of other molecules. 
+This assumption is usually valid at low pressures and high temperatures. The ideal gas law states that, for one gas:
+%
+\begin{equation}
+p = \varrho \frac{RT}{M} ; \quad p= \varrho_m RT.
+\end{equation}
+%
+Using the assumption of ideal gases and either Dalton's law or Amagat's law lead to the density of the mixture, $\varrho$, as:
+%
+\begin{equation}
+\varrho = \frac{p}{RT} \sum_{i}^{}M_i x_i ; \quad \varrho_m = \frac{p}{RT}.
+\end{equation} 
+%
 \subsection{Available Models}
 A list of all available models can be found
 in the Doxygen documentation at

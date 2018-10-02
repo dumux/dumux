@@ -37,7 +37,7 @@ class ShallowWaterAdvectiveFluxCacheFiller
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
 public:
@@ -65,7 +65,7 @@ class ShallowWaterAdvectiveFluxCache
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
 
 public:
     using Filler = ShallowWaterAdvectiveFluxCacheFiller<TypeTag>;
@@ -87,9 +87,9 @@ class ShallowWaterAdvectiveFlux
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    //using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -103,7 +103,7 @@ class ShallowWaterAdvectiveFlux
 
   public:
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static const DiscretizationMethod myDiscretizationMethod = DiscretizationMethod::cctpfa;
 
     //! state the type for the corresponding cache
     using Cache = ShallowWaterAdvectiveFluxCache<TypeTag>;
@@ -113,8 +113,7 @@ class ShallowWaterAdvectiveFlux
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolumeFace& scvf,
-                       const ElementFluxVarsCache& elemFluxVarsCache)
+                       const SubControlVolumeFace& scvf)
     {
         NumEqVector flux(0.0);
 

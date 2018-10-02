@@ -25,6 +25,7 @@
 #ifndef DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
 #define DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
@@ -32,67 +33,35 @@
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/plotmateriallaw3p.hh>
 
-namespace Dumux
-{
-/*!
- * \ingroup ThreePTests
- * \brief Definition of the spatial parameters for the kuevette problem, which
- *        uses the three-phase fully implicit model.
- */
-//forward declaration
-template<class TypeTag>
-class InfiltrationThreePSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(InfiltrationThreePSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(InfiltrationThreePSpatialParams, SpatialParams, InfiltrationThreePSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(InfiltrationThreePSpatialParams, MaterialLaw)
-{
- private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
- public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffectiveLaw>;
-};
-}
-
+namespace Dumux {
 /*!
  * \ingroup ImplicitTestProblems
  * \ingroup ThreePModel
  *
  * \brief Definition of the spatial parameters for the infiltration problem
  */
-template<class TypeTag>
-class InfiltrationThreePSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class InfiltrationThreePSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         InfiltrationThreePSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag,ElementSolutionVector);
-    enum { dimWorld=GridView::dimensionworld };
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       InfiltrationThreePSpatialParams<FVGridGeometry, Scalar>>;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
+
+    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
 
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
     //get the material law from the property system
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     /*!
@@ -100,8 +69,8 @@ public:
      *
      * \param gridView The grid view
      */
-    InfiltrationThreePSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    InfiltrationThreePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
         fineK_ = getParam<Scalar>("SpatialParams.permeability");
@@ -155,9 +124,10 @@ public:
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         if (isFineMaterial_(scv.dofPosition()))
             return fineK_;

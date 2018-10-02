@@ -27,6 +27,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/version.hh>
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>
@@ -106,9 +107,9 @@ public:
             solveIdealMix_(fluidState, paramCache, phaseIdx, targetFug);
             return;
         }
-
+#if DUNE_VERSION_LT(DUNE_COMMON, 2, 7)
         Dune::FMatrixPrecision<Scalar>::set_singular_limit(1e-25);
-
+#endif
         // save initial composition in case something goes wrong
         Dune::FieldVector<Scalar, numComponents> xInit;
         for (int i = 0; i < numComponents; ++i) {
@@ -139,7 +140,7 @@ public:
             // Solve J*x = b
             x = 0;
             try { J.solve(x, b); }
-            catch (Dune::FMatrixError e)
+            catch (Dune::FMatrixError &e)
             { throw NumericalProblem(e.what()); }
 
             //std::cout << "original delta: " << x << "\n";
@@ -153,7 +154,9 @@ public:
 
             if (relError < 1e-9) {
                 Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+                Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
                 fluidState.setDensity(phaseIdx, rho);
+                fluidState.setMolarDensity(phaseIdx, rhoMolar);
 
                 //std::cout << "num iterations: " << nIdx << "\n";
                 return;
@@ -193,6 +196,8 @@ protected:
 
         Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
         fluidState.setDensity(phaseIdx, rho);
+        Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
+        fluidState.setMolarDensity(phaseIdx, rhoMolar);
     }
 
     template <class FluidState>

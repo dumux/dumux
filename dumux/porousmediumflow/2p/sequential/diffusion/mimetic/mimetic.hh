@@ -32,7 +32,6 @@
 #include<sstream>
 
 #include<dune/common/exceptions.hh>
-#include<dune/common/version.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/geometry/type.hh>
 #include<dune/geometry/quadraturerules.hh>
@@ -55,7 +54,7 @@ class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     // grid types
     enum

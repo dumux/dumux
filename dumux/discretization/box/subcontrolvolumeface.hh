@@ -24,8 +24,10 @@
 #define DUMUX_DISCRETIZATION_BOX_SUBCONTROLVOLUMEFACE_HH
 
 #include <utility>
+
 #include <dune/geometry/type.hh>
-#include <dune/common/version.hh>
+#include <dune/geometry/multilineargeometry.hh>
+
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
@@ -92,12 +94,13 @@ class BoxSubControlVolumeFace
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
-    using GlobalPosition = typename T::GlobalPosition;
     using CornerStorage = typename T::CornerStorage;
     using Geometry = typename T::Geometry;
     using BoundaryFlag = typename T::BoundaryFlag;
 
 public:
+    //! export the type used for global coordinates
+    using GlobalPosition = typename T::GlobalPosition;
     //! state the traits public and thus export all types
     using Traits = T;
 
@@ -135,7 +138,7 @@ public:
                             GridIndexType scvfIndex,
                             std::vector<LocalIndexType>&& scvIndices,
                             bool boundary = false)
-    : corners_(geometryHelper.getBoundaryScvfCorners(isGeometry, indexInIntersection)),
+    : corners_(geometryHelper.getBoundaryScvfCorners(intersection, isGeometry, indexInIntersection)),
       center_(0.0),
       unitOuterNormal_(intersection.centerUnitOuterNormal()),
       area_(geometryHelper.scvfArea(corners_)),
@@ -207,11 +210,7 @@ public:
     //! The geometry of the sub control volume face
     Geometry geometry() const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_);
-#else
-        return Geometry(Dune::GeometryType(Dune::GeometryType::cube, Geometry::mydimension), corners_);
-#endif
     }
 
     //! Return the boundary flag

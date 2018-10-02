@@ -64,7 +64,8 @@ public:
 
     //! \brief The constructor
     explicit GnuplotInterface(bool persist = true) :
-        pipe_(0), openPlotWindow_(true), persist_(persist), createImage_(true),
+        pipeInteractive_(0), pipeImage_(0),
+        openPlotWindow_(true), persist_(persist), createImage_(true),
         terminalType_("x11"), outputDirectory_("./"),
         datafileSeparator_(' '), linetype_("solid"),
         xRangeIsSet_(false), yRangeIsSet_(false),
@@ -141,17 +142,17 @@ public:
             plotCommandForFile += "\n";
         }
 
-        // live plot of the results if gnuplot is installed
-
+        // initialize the interactive plot
         std::string interactivePlot = "reset\n";
 
         // set the terminal if the defaults were overwritten
         if (terminalType_.compare("x11") != 0 || linetype_.compare("solid") != 0)
             interactivePlot += "set term " + terminalType_ + " " + linetype_ + " " + " \n";
 
+        // add the plot command and plot
         interactivePlot += plot;
         if (openPlotWindow_)
-            executeGnuplot(interactivePlot);
+            executeGnuplot(interactivePlot, pipeInteractive_);
 
         // create a gnuplot file if a filename is specified
         if (filename.compare("") != 0)
@@ -166,14 +167,14 @@ public:
             file << filePlot;
             file.close();
 
-          // live plot of the results
-          if (createImage_)
-              executeGnuplot(filePlot);
+            // create the image if desired
+            if (createImage_)
+                executeGnuplot(filePlot, pipeImage_);
         }
     }
 
     /*!
-     * \brief Restarts gnuplot
+     * \brief Resets all gnuplot parameters
      */
     void resetAll(const bool persist = true)
     {
@@ -198,9 +199,12 @@ public:
     void open(const bool persist = true)
     {
         if (persist)
-            pipe_ = popen((gnuplotPath_ + " -persist").c_str(), "w"); // "w" - writing
+            pipeInteractive_ = popen((gnuplotPath_ + " -persist").c_str(), "w"); // "w" - writing
         else
-            pipe_ = popen((gnuplotPath_).c_str(), "w");
+            pipeInteractive_ = popen((gnuplotPath_).c_str(), "w");
+
+        // the image pipe should not persist
+        pipeImage_ = popen((gnuplotPath_).c_str(), "w");
     }
 
     /*!
@@ -208,7 +212,7 @@ public:
      */
     void close()
     {
-        if (pclose(pipe_) == -1)
+        if (pclose(pipeInteractive_) == -1 || pclose(pipeImage_) == -1)
             assert("Could not close pipe to Gnuplot!");
     }
 
@@ -408,11 +412,11 @@ public:
 
 private:
     // Give plot command to gnuplot
-    void executeGnuplot(const std::string& plotCommand) const
+    void executeGnuplot(const std::string& plotCommand, std::FILE * pipe) const
     {
 #ifdef HAVE_GNUPLOT
-        fputs((plotCommand + "\n").c_str(), pipe_);
-        fflush(pipe_);
+        fputs((plotCommand + "\n").c_str(), pipe);
+        fflush(pipe);
 #endif
     }
 
@@ -436,7 +440,8 @@ private:
         return out.str();
     }
 
-    std::FILE * pipe_;
+    std::FILE * pipeInteractive_;
+    std::FILE * pipeImage_;
     bool openPlotWindow_;
     bool persist_;
     bool createImage_;

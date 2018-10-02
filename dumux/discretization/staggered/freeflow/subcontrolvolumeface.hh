@@ -30,8 +30,6 @@
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/common/optional.hh>
 
 #include <typeinfo>
 
@@ -56,11 +54,11 @@ class FreeFlowStaggeredSubControlVolumeFace
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
 
-    using GlobalPosition = typename T::GlobalPosition;
-
-    static constexpr int numPairs = (dimworld == 2) ? 2 : 4;
+    static constexpr int numPairs = 2 * (dimworld - 1);
 
 public:
+    using GlobalPosition = typename T::GlobalPosition;
+
     //! State the traits public and thus export all types
     using Traits = T;
 
@@ -70,10 +68,10 @@ public:
     //! Constructor with intersection
     template <class Intersection, class GeometryHelper>
     FreeFlowStaggeredSubControlVolumeFace(const Intersection& is,
-                               const typename Intersection::Geometry& isGeometry,
-                               GridIndexType scvfIndex,
-                               const std::vector<GridIndexType>& scvIndices,
-                               const GeometryHelper& geometryHelper
+                                          const typename Intersection::Geometry& isGeometry,
+                                          GridIndexType scvfIndex,
+                                          const std::vector<GridIndexType>& scvIndices,
+                                          const GeometryHelper& geometryHelper
                            )
     : ParentType(),
       geomType_(isGeometry.type()),
@@ -82,34 +80,35 @@ public:
       unitOuterNormal_(is.centerUnitOuterNormal()),
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
-      boundary_(is.boundary())
+      boundary_(is.boundary()),
+      dofIdx_(geometryHelper.dofIndex()),
+      dofIdxOpposingFace_(geometryHelper.dofIndexOpposingFace()),
+      selfToOppositeDistance_(geometryHelper.selfToOppositeDistance()),
+      pairData_(geometryHelper.pairData()),
+      localFaceIdx_(geometryHelper.localFaceIndex()),
+      dirIdx_(geometryHelper.directionIndex()),
+      outerNormalSign_(sign(unitOuterNormal_[directionIndex()])),
+      isGhostFace_(false)
       {
           corners_.resize(isGeometry.corners());
           for (int i = 0; i < isGeometry.corners(); ++i)
               corners_[i] = isGeometry.corner(i);
-
-          dofIdx_ = geometryHelper.dofIndex();
-          oppositeIdx_ = geometryHelper.dofIndexOpposingFace();
-          selfToOppositeDistance_ = geometryHelper.selfToOppositeDistance();
-
-          pairData_ = geometryHelper.pairData();
-          localFaceIdx_ = geometryHelper.localFaceIndex();
-          dirIdx_ = geometryHelper.directionIndex();
-          normalInPosCoordDir_ = unitOuterNormal()[directionIndex()] > 0.0;
-          outerNormalScalar_ = unitOuterNormal()[directionIndex()];
-          isGhostFace_ = false;
       }
 
-      //! Constructor for a ghost face outside of the domain. Only needed to retrieve the center and scvIndices
-      FreeFlowStaggeredSubControlVolumeFace(const GlobalPosition& dofPosition,
-                                    const std::vector<GridIndexType>& scvIndices)
-      {
-          isGhostFace_ = true;
-          center_ = dofPosition;
-          scvIndices_ = scvIndices;
-          scvfIndex_ = -1;
-          dofIdx_ = -1;
-      }
+    //! Constructor for a ghost face outside of the domain. Only needed to retrieve the center and scvIndices
+    FreeFlowStaggeredSubControlVolumeFace(const GlobalPosition& dofPosition,
+                                          const std::vector<GridIndexType>& scvIndices,
+                                          const unsigned int dirIdx,
+                                          const int dofIdx,
+                                          const int scvfIndex)
+    : center_(dofPosition),
+      scvfIndex_(scvfIndex),
+      scvIndices_(scvIndices),
+      dofIdx_(dofIdx),
+      selfToOppositeDistance_(0.0),
+      dirIdx_(dirIdx),
+      isGhostFace_(true)
+    {}
 
     //! The center of the sub control volume face
     const GlobalPosition& center() const
@@ -189,7 +188,7 @@ public:
     //! The global index of the dof living on the opposing face
     GridIndexType dofIndexOpposingFace() const
     {
-        return oppositeIdx_;
+        return dofIdxOpposingFace_;
     }
 
     //! The local index of this sub control volume face
@@ -199,7 +198,7 @@ public:
     }
 
     //! Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
-    int directionIndex() const
+    unsigned int directionIndex() const
     {
         return dirIdx_;
     }
@@ -213,13 +212,13 @@ public:
     //! Returns whether the unitNormal of the face points in positive coordinate direction
     bool normalInPosCoordDir() const
     {
-        return normalInPosCoordDir_;
+        return directionSign() > 0;
     }
 
     //! Returns the sign of the unit outer normal's vector
-    Scalar directionSign() const
+    int directionSign() const
     {
-        return outerNormalScalar_;
+        return outerNormalSign_;
     }
 
     //! Returns the data for one sub face
@@ -234,6 +233,21 @@ public:
         return pairData_;
     }
 
+    bool isGhostFace() const
+    {
+        return isGhostFace_;
+    }
+
+    bool hasParallelNeighbor(const int localFaceIdx) const
+    {
+        return pairData_[localFaceIdx].outerParallelFaceDofIdx >= 0;
+    }
+
+    bool hasFrontalNeighbor(const int localFaceIdx) const
+    {
+        return pairData_[localFaceIdx].normalPair.second >= 0;
+    }
+
 private:
     Dune::GeometryType geomType_;
     std::vector<GlobalPosition> corners_;
@@ -245,13 +259,12 @@ private:
     bool boundary_;
 
     int dofIdx_;
-    int oppositeIdx_;
+    int dofIdxOpposingFace_;
     Scalar selfToOppositeDistance_;
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
     int localFaceIdx_;
-    int dirIdx_;
-    bool normalInPosCoordDir_;
-    Scalar outerNormalScalar_;
+    unsigned int dirIdx_;
+    int outerNormalSign_;
     bool isGhostFace_;
 };
 

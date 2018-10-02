@@ -65,7 +65,7 @@ template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelo
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -110,8 +110,6 @@ template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelo
             numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
         };
 
-    using LocalPosition = Dune::FieldVector<Scalar, dim>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
     using DimVector = Dune::FieldVector<Scalar, dim>;
 

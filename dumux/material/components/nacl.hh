@@ -25,20 +25,25 @@
 #define DUMUX_NACL_HH
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/material/components/component.hh>
 
 #include <cmath>
 #include <iostream>
 
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/solid.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A class for the NaCl properties
  */
 template <class Scalar>
-class NaCl : public Component<Scalar, NaCl<Scalar> >
+class NaCl
+: public Components::Base<Scalar, NaCl<Scalar> >
+, public Components::Solid<Scalar, NaCl<Scalar> >
 {
 public:
     /*!
@@ -52,39 +57,47 @@ public:
     /*!
      * \brief The molar mass of NaCl in \f$\mathrm{[kg/mol]}\f$.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     {
         return 58.4428e-3 ;
     }
 
     /*!
-     * \brief The diffusion Coefficient \f$\mathrm{[m^2/s]}\f$ of NaCl in water.
-     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
-     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
-    {
-        return 2e-9;
-    }
-
-    /*!
      * \brief The mass density \f$\mathrm{[kg/m^3]}\f$ of NaCl.
      */
-    static Scalar density()
+    static Scalar solidDensity(Scalar temperature)
     {
         return 2165.0;
     }
 
     /*!
+     * \brief The mass density \f$\mathrm{[kg/m^3]}\f$ of NaCl.
+     */
+    static Scalar solidMolarDensity(Scalar temperature)
+    {
+        return solidDensity(temperature)/molarMass();
+    }
+
+    /*!
      * \brief The specific heat capacity \f$\mathrm{[J/molK]}\f$ of NaCl.
      */
-    static Scalar heatCapacity()
+    static Scalar solidHeatCapacity(Scalar temperature)
     {
         return 50.50;
     }
+
+    /*!
+     * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a solid.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     */
+    static Scalar solidThermalConductivity(Scalar temperature)
+    {
+        return 6.49;
+    }
 };
 
-} // end namespace
+} // end namespace Components
+
+} // end namespace Dumux
 
 #endif
-

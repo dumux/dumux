@@ -23,16 +23,15 @@
 #ifndef DUMUX_POROUSMEDIUM_FLUXVARIABLESCACHE_HH
 #define DUMUX_POROUSMEDIUM_FLUXVARIABLESCACHE_HH
 
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
-
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>
+#include <dumux/discretization/box/fluxvariablescache.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
-template<class TypeTag, DiscretizationMethods Method>
+template<class TypeTag, DiscretizationMethod discMethod>
 class PorousMediumFluxVariablesCacheImplementation;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,106 +48,42 @@ class PorousMediumFluxVariablesCacheImplementation;
  *        cache class are provided for different combinations of processes.
  */
 template<class TypeTag>
-using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
-//! We only store discretization-related quantities for the box method.
-//! Thus, we need no physics-dependent specialization.
+//! We only store discretization-related quantities for the box method. Thus, we need no
+//! physics-dependent specialization and simply inherit from the physics-independent implementation.
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::Box>
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
-    using TransmissibilityVector = std::vector<IndexType>;
-
-    using CoordScalar = typename GridView::ctype;
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
-    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
-    using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
-    using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
-    using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
-    using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-public:
-
-    void update(const Problem& problem,
-                const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars,
-                const SubControlVolumeFace &scvf)
-    {
-        const auto geometry = element.geometry();
-        const auto& localBasis = fvGeometry.feLocalBasis();
-
-        // evaluate shape functions and gradients at the integration point
-        const auto ipLocal = geometry.local(scvf.center());
-        jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
-        localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
-        localBasis.evaluateFunction(ipLocal, shapeValues_); // shape values for rho
-
-        // compute the gradN at for every scv/dof
-        gradN_.resize(fvGeometry.numScv());
-        for (const auto& scv: scvs(fvGeometry))
-            jacInvT_.mv(shapeJacobian_[scv.indexInElement()][0], gradN_[scv.indexInElement()]);
-
-    }
-
-    const std::vector<ShapeJacobian>& shapeJacobian() const
-    { return shapeJacobian_; }
-
-    const std::vector<ShapeValue>& shapeValues() const
-    { return shapeValues_; }
-
-    const JacobianInverseTransposed& jacInvT() const
-    { return jacInvT_; }
-
-    const GlobalPosition& gradN(unsigned int scvIdxInElement) const
-    { return gradN_[scvIdxInElement]; }
-
-private:
-    std::vector<GlobalPosition> gradN_;
-    std::vector<ShapeJacobian> shapeJacobian_;
-    std::vector<ShapeValue> shapeValues_;
-    JacobianInverseTransposed jacInvT_;
-};
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::box>
+: public BoxFluxVariablesCache<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>
+{};
 
 // the following classes choose the cache type: empty if the law disabled and the law's cache if it's enabled
 // if advections is disabled the advection type is still instatiated if we use std::conditional_t and has to be a full type
 // in order to prevent that instead of std::conditional_t we use this helper type is only dependent on the advection type
 // if advection is enabled otherwise its an empty cache type
-template<class TypeTag, bool EnableAdvection> class AdvectionCacheChooser : public FluxVariablesCaching::EmptyAdvectionCache<TypeTag> {};
+template<class TypeTag, bool EnableAdvection> class AdvectionCacheChooser : public FluxVariablesCaching::EmptyAdvectionCache {};
 template<class TypeTag> class AdvectionCacheChooser<TypeTag, true> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache {};
-template<class TypeTag, bool EnableMolecularDiffusion> class DiffusionCacheChooser : public FluxVariablesCaching::EmptyDiffusionCache<TypeTag> {};
+template<class TypeTag, bool EnableMolecularDiffusion> class DiffusionCacheChooser : public FluxVariablesCaching::EmptyDiffusionCache {};
 template<class TypeTag> class DiffusionCacheChooser<TypeTag, true> : public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache {};
-template<class TypeTag, bool EnableEnergyBalance> class EnergyCacheChooser : public FluxVariablesCaching::EmptyHeatConductionCache<TypeTag> {};
+template<class TypeTag, bool EnableEnergyBalance> class EnergyCacheChooser : public FluxVariablesCaching::EmptyHeatConductionCache {};
 template<class TypeTag> class EnergyCacheChooser<TypeTag, true> : public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
 
 
 // specialization for the cell centered tpfa method
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCTpfa>
-: public AdvectionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection)>
-, public DiffusionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>
-, public EnergyCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::cctpfa>
+: public AdvectionCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableAdvection()>
+, public DiffusionCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableMolecularDiffusion()>
+, public EnergyCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>
 {};
 
 //! specialization of the flux variables cache for the cell centered finite volume mpfa scheme
 //! stores data which is commonly used by all the different types of processes
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCMpfa>
-: public AdvectionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection)>
-, public DiffusionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>
-, public EnergyCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::ccmpfa>
+: public AdvectionCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableAdvection()>
+, public DiffusionCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableMolecularDiffusion()>
+, public EnergyCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>
 {
     using GridIndexType = typename GET_PROP_TYPE(TypeTag, GridView)::IndexSet::IndexType;
 

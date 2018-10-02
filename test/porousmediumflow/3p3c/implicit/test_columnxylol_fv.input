@@ -12,3 +12,13 @@ Name = columnxylol # name passed to the output routines
 
 [Assembly]
 NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences
+
+[1.Component]
+SolidDensity = 2650
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 850
+
+[2.Component]
+SolidDensity = 2650
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 84000

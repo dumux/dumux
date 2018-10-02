@@ -24,53 +24,22 @@
 #ifndef DUMUX_DISCRETIZATION_FLUXVAR_CACHING_HH
 #define DUMUX_DISCRETIZATION_FLUXVAR_CACHING_HH
 
-#include <dumux/common/properties.hh>
-
 namespace Dumux {
 namespace FluxVariablesCaching {
 
 #ifndef DOXYGEN // hide the empty caches from doxygen
 
 //! The empty filler class corresponding to EmptyCache
-template<class TypeTag>
-class EmptyCacheFiller
+struct EmptyCacheFiller
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-public:
-    //! Fill, signature for advection filler
-    template<class FluxVariablesCacheFiller>
-    static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                     const Problem& problem,
-                     const Element& element,
-                     const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars,
-                     const SubControlVolumeFace& scvf,
-                     const FluxVariablesCacheFiller& fluxVarsCacheFiller)
-    {}
-
-    //! Fill, signature for diffusion filler
-    template<class FluxVariablesCacheFiller>
-    static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                     unsigned int phaseIdx, unsigned int compIdx,
-                     const Problem& problem,
-                     const Element& element,
-                     const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars,
-                     const SubControlVolumeFace& scvf,
-                     const FluxVariablesCacheFiller& fluxVarsCacheFiller)
-    {}
+    template<typename... Args>
+    static void fill(Args&&... args) {}
 };
 
 // an empty cache filler
 // \note Never use the _EmptyCache directly as it lead to ambiguous definitions
-template<class TypeTag> struct _EmptyCache
-{ using Filler = EmptyCacheFiller<TypeTag>; };
+struct _EmptyCache
+{ using Filler = EmptyCacheFiller; };
 
 #endif // DOXYGEN
 
@@ -78,9 +47,9 @@ template<class TypeTag> struct _EmptyCache
  * \ingroup Discretization
  * \brief Empty caches to use in a constitutive flux law/process, e.g. Darcy's law
  */
-template<class TypeTag> class EmptyAdvectionCache : public _EmptyCache<TypeTag> {};
-template<class TypeTag> class EmptyDiffusionCache : public _EmptyCache<TypeTag> {};
-template<class TypeTag> class EmptyHeatConductionCache : public _EmptyCache<TypeTag> {};
+class EmptyAdvectionCache : public _EmptyCache {};
+class EmptyDiffusionCache : public _EmptyCache {};
+class EmptyHeatConductionCache : public _EmptyCache {};
 
 } // end namespace FluxVariablesCaching
 } // end namespace Dumux

@@ -24,6 +24,8 @@
 #ifndef DUMUX_TEST_2P2C_PROBLEM_HH
 #define DUMUX_TEST_2P2C_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/porousmediumflow/2p2c/sequential/problem.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/fvpressure.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/fvtransport.hh>
@@ -65,7 +67,7 @@ SET_INT_PROP(TestDecTwoPTwoCTypeTag, PressureFormulation, GET_PROP_TYPE(TypeTag,
 SET_PROP(TestDecTwoPTwoCTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::H2OAir<Scalar, H2O<Scalar>, /*useComplexRelations=*/true>;
+    using type = FluidSystems::H2OAir<Scalar, Components::H2O<Scalar>>;
 };
 
 SET_BOOL_PROP(TestDecTwoPTwoCTypeTag, EnableCapillarity, true);
@@ -91,7 +93,7 @@ using ParentType = IMPETProblem2P2C<TypeTag>;
 using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 using Grid = typename GridView::Grid;
 using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
 using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
@@ -107,7 +109,7 @@ using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
 using Element = typename GridView::Traits::template Codim<0>::Entity;
 using Intersection = typename GridView::Intersection;
-using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
 TestDecTwoPTwoCProblem(TimeManager& timeManager, Grid& grid) :

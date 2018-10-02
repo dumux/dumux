@@ -24,20 +24,19 @@
 #ifndef DUMUX_NAVIERSTOKES_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_PROBLEM_HH
 
+#include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/methods.hh>
 #include "model.hh"
 
-namespace Dumux
-{
-
+namespace Dumux {
 
 //! The implementation is specialized for the different discretizations
-template<class TypeTag, DiscretizationMethods DM> struct NavierStokesParentProblemImpl;
+template<class TypeTag, DiscretizationMethod discMethod> struct NavierStokesParentProblemImpl;
 
 template<class TypeTag>
-struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethods::Staggered>
+struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethod::staggered>
 {
     using type = StaggeredFVProblem<TypeTag>;
 };
@@ -46,7 +45,7 @@ struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethods::Staggered>
 template<class TypeTag>
 using NavierStokesParentProblem =
       typename NavierStokesParentProblemImpl<TypeTag,
-      GET_PROP_VALUE(TypeTag, DiscretizationMethod)>::type;
+      GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>::type;
 
 /*!
  * \ingroup NavierStokesModel
@@ -62,31 +61,44 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using ParentType = NavierStokesParentProblem<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Grid = typename GridView::Grid;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridFaceVariables = typename GridVariables::GridFaceVariables;
+    using ElementFaceVariables = typename GridFaceVariables::LocalView;
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
-        dim = Grid::dimension,
-        dimWorld = Grid::dimensionworld
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
       };
-    // TODO: dim or dimWorld appropriate here?
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    //! The constructor sets the gravity, if desired by the user.
-    NavierStokesProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry),
-          gravity_(0)
+    /*!
+     * \brief The constructor
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    NavierStokesProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
+    , gravity_(0.0)
     {
-        if (getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity"))
+        if (getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity"))
             gravity_[dim-1]  = -9.81;
     }
 
@@ -115,19 +127,112 @@ public:
      * If the <tt>Problem.EnableGravity</tt> parameter is true, this means
      * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
      */
-    const GlobalPosition &gravity() const
+    const GravityVector& gravity() const
     { return gravity_; }
 
     //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
-    template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Staggered, void>::type
-    applyInititalFaceSolution(SolutionVector& sol,
-                              const SubControlVolumeFace& scvf,
-                              const PrimaryVariables& initSol) const
+    template <class G = FVGridGeometry>
+    typename std::enable_if<G::discMethod == DiscretizationMethod::staggered, void>::type
+    applyInitialFaceSolution(SolutionVector& sol,
+                             const SubControlVolumeFace& scvf,
+                             const PrimaryVariables& initSol) const
     {
-        typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx faceIdx;
-        const auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-        sol[faceIdx][scvf.dofIndex()][numEqCellCenter] = initSol[Indices::velocity(scvf.directionIndex())];
+        sol[FVGridGeometry::faceIdx()][scvf.dofIndex()][0] = initSol[Indices::velocity(scvf.directionIndex())];
+    }
+
+
+    /*!
+     * \brief An additional drag term can be included as source term for the momentum balance
+     *        to mimic 3D flow behavior in 2D:
+     *  \f[
+     *        f_{drag} = -(8 \mu / h^2)v
+     *  \f]
+     *  Here, \f$h\f$ corresponds to the extruded height that is
+     *  bounded by the imaginary walls. See Flekkoy et al. (1995) \cite flekkoy1995a<BR>
+     *  A value of 8.0 is used as a default factor, corresponding
+     *  to the velocity profile at  the center plane
+     *  of the virtual height (maximum velocity). Setting this value to 12.0 corresponds
+     *  to an depth-averaged velocity (Venturoli and Boek, 2006) \cite venturoli2006a.
+     */
+    Scalar pseudo3DWallFriction(const Scalar velocity,
+                                const Scalar viscosity,
+                                const Scalar height,
+                                const Scalar factor = 8.0) const
+    {
+        static_assert(dim == 2, "Pseudo 3D wall friction may only be used in 2D");
+        return -factor * velocity * viscosity / (height*height);
+    }
+
+    //! Convenience function for staggered grid implementation.
+    template <class ElementVolumeVariables, class ElementFaceVariables, class G = FVGridGeometry>
+    typename std::enable_if<G::discMethod == DiscretizationMethod::staggered, Scalar>::type
+    pseudo3DWallFriction(const SubControlVolumeFace& scvf,
+                         const ElementVolumeVariables& elemVolVars,
+                         const ElementFaceVariables& elemFaceVars,
+                         const Scalar height,
+                         const Scalar factor = 8.0) const
+    {
+        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
+        const Scalar viscosity = elemVolVars[scvf.insideScvIdx()].effectiveViscosity();
+        return pseudo3DWallFriction(velocity, viscosity, height, factor);
+    }
+
+    //! \brief Checks whether a wall function should be used
+    bool useWallFunction(const Element& element,
+                         const SubControlVolumeFace& localSubFace,
+                         const int& eqIdx) const
+    { return false; }
+
+    //! \brief Returns an additional wall function momentum flux (only needed for RANS models)
+    FacePrimaryVariables wallFunction(const Element& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVolumeVariables& elemVolVars,
+                                      const ElementFaceVariables& elemFaceVars,
+                                      const SubControlVolumeFace& scvf,
+                                      const SubControlVolumeFace& localSubFace) const
+    { return FacePrimaryVariables(0.0); }
+
+    //! \brief Returns an additional wall function flux for cell-centered quantities (only needed for RANS models)
+    CellCenterPrimaryVariables wallFunction(const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const ElementFaceVariables& elemFaceVars,
+                                            const SubControlVolumeFace& scvf) const
+    { return CellCenterPrimaryVariables(0.0); }
+
+    /*!
+     * \brief Returns the intrinsic permeability of required as input parameter for the Beavers-Joseph-Saffman boundary condition
+     *
+     * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
+     */
+    Scalar permeability(const SubControlVolumeFace& scvf) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the permeability must be returned in the acutal problem");
+    }
+
+    /*!
+     * \brief Returns the alpha value required as input parameter for the Beavers-Joseph-Saffman boundary condition
+     *
+     * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
+     */
+    Scalar alphaBJ(const SubControlVolumeFace& scvf) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the alpha value must be returned in the acutal problem");
+    }
+
+    //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph-Saffman condition is used
+    const Scalar bjsVelocity(const SubControlVolumeFace& scvf,
+                             const SubControlVolumeFace& normalFace,
+                             const Scalar& localSubFaceIdx,
+                             const Scalar& velocitySelf) const
+    {
+        // du/dy = alpha/sqrt(K) * u_boundary
+        // du/dy = (u_center - u_boundary) / deltaY
+        // u_boundary = u_center / (alpha/sqrt(K)*deltaY + 1)
+        using std::sqrt;
+        const Scalar K = asImp_().permeability(normalFace);
+        const Scalar alpha = asImp_().alphaBJ(normalFace);
+        return velocitySelf / (alpha / sqrt(K) * scvf.pairData(localSubFaceIdx).parallelDistance + 1.0);
     }
 
 private:
@@ -140,9 +245,9 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
-    GlobalPosition gravity_;
+    GravityVector gravity_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

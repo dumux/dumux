@@ -24,10 +24,10 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FACE_SOLUTION_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FACE_SOLUTION_HH
 
-#include <vector>
 #include <algorithm>
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/staggered/elementvolumevariables.hh>
+#include <cassert>
+#include <type_traits>
+#include <vector>
 
 namespace Dumux
 {
@@ -36,29 +36,20 @@ namespace Dumux
  * \ingroup StaggeredDiscretization
  * \brief The global face variables class for staggered models
  */
-template<class TypeTag>
+template<class FaceSolutionVector>
 class StaggeredFaceSolution
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
+    using FacePrimaryVariables = std::decay_t<decltype(std::declval<FaceSolutionVector>()[0])>;
 
 public:
 
+    template<class SubControlVolumeFace, class FVGridGeometry>
     StaggeredFaceSolution(const SubControlVolumeFace& scvf, const FaceSolutionVector& sol,
                           const FVGridGeometry& fvGridGeometry)
     {
+
         const auto& connectivityMap = fvGridGeometry.connectivityMap();
-        const auto& stencil = connectivityMap(faceIdx, faceIdx, scvf.index());
+        const auto& stencil = connectivityMap(FVGridGeometry::faceIdx(), FVGridGeometry::faceIdx(), scvf.index());
 
         facePriVars_.reserve(stencil.size());
         map_.reserve(stencil.size());
@@ -87,7 +78,6 @@ public:
         assert (pos != map_.end());
         return facePriVars_[pos - map_.begin()];
     }
-
 
 private:
 

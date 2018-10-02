@@ -24,10 +24,10 @@
 #ifndef DUMUX_TEST_IMPES_PROBLEM_HH
 #define DUMUX_TEST_IMPES_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dune/grid/yaspgrid.hh>
+
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/dnapl.hh>
-#include <dumux/material/components/lnapl.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
@@ -87,8 +87,8 @@ SET_TYPE_PROP(IMPESTestTypeTag, Problem, IMPESTestProblem<TypeTag>);
 SET_PROP(IMPESTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
@@ -100,9 +100,8 @@ NEW_TYPE_TAG(IMPESTestWithAMGTypeTag, INHERITS_FROM(IMPESTestTypeTag));
 SET_TYPE_PROP(IMPESTestWithAMGTypeTag, LinearSolver, AMGBackend<TypeTag>);
 // Set the grid type
 SET_TYPE_PROP(IMPESTestWithAMGTypeTag, Grid, Dune::YaspGrid<2>);
-// Set the grid creator
-SET_TYPE_PROP(IMPESTestWithAMGTypeTag, GridCreator, GridCreator<TypeTag>);
-}
+
+} // end namespace Properties
 
 /*!
  * \ingroup SequentialTwoPTests
@@ -123,7 +122,7 @@ using ParentType = IMPESProblem2P<TypeTag>;
 using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 using Grid = typename GridView::Grid;
 
-using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
 using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
 
@@ -146,7 +145,7 @@ enum
 using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
 using Element = typename GridView::Traits::template Codim<0>::Entity;
-using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);

@@ -42,10 +42,10 @@ class CCLocalResidual : public FVLocalResidual<TypeTag>
     using ParentType = FVLocalResidual<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
@@ -64,19 +64,19 @@ public:
                   const SubControlVolumeFace& scvf) const
     {
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto localScvIdx = scv.indexInElement();
-        residual[localScvIdx] += evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+        const auto localScvIdx = scv.localDofIndex();
+        residual[localScvIdx] += this->asImp().evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
     }
 
     //! evaluate the flux residual for a sub control volume face
-    ResidualVector evalFlux(const Problem& problem,
-                            const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const ElementFluxVariablesCache& elemFluxVarsCache,
-                            const SubControlVolumeFace& scvf) const
+    NumEqVector evalFlux(const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const ElementFluxVariablesCache& elemFluxVarsCache,
+                         const SubControlVolumeFace& scvf) const
     {
-        ResidualVector flux(0.0);
+        NumEqVector flux(0.0);
 
         // inner faces
         if (!scvf.boundary())

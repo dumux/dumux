@@ -38,16 +38,18 @@ template<class TypeTag>
 class MineralizationLocalResidual: public CompositionalLocalResidual<TypeTag>
 {
     using ParentType = CompositionalLocalResidual<TypeTag>;
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numSPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int numSolidComps =  ModelTraits::numSolidComps();
+    static constexpr int numInertSolidComps =  ModelTraits::numInertSolidComps();
+    static constexpr int numComponents = ModelTraits::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     enum { conti0EqIdx = Indices::conti0EqIdx };
@@ -69,20 +71,20 @@ public:
      * \param volVars The volume variables (primary/secondary variables) in the scv
      * \return Amount per volume of the conserved quantities
      */
-    ResidualVector computeStorage(const Problem& problem,
-                                  const SubControlVolume& scv,
-                                  const VolumeVariables& volVars) const
+    NumEqVector computeStorage(const Problem& problem,
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
     {
         auto storage = ParentType::computeStorage(problem, scv, volVars);
 
         const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
-        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
+        { return useMoles ? volVars.solidComponentMolarDensity(phaseIdx) : volVars.solidComponentDensity(phaseIdx); };
 
         // compute storage term of all components within all fluid phases
-        for (int phaseIdx = numPhases; phaseIdx < numPhases + numSPhases; ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < numSolidComps-numInertSolidComps; ++phaseIdx)
         {
-            auto eqIdx = conti0EqIdx + numComponents-numPhases + phaseIdx;
-            storage[eqIdx] += volVars.precipitateVolumeFraction(phaseIdx)
+            auto eqIdx = conti0EqIdx + numComponents + phaseIdx;
+            storage[eqIdx] += volVars.solidVolumeFraction(phaseIdx)
                              * massOrMoleDensity(volVars, phaseIdx);
         }
 

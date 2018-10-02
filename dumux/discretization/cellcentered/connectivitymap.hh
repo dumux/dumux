@@ -30,6 +30,7 @@
 #include <utility>
 #include <algorithm>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/reservedvector.hh>
 #include <dumux/discretization/fluxstencil.hh>
 
@@ -110,8 +111,9 @@ public:
                     else
                     {
                         if (dataJForI.size() > maxElemStencilSize - 1)
-                            DUNE_THROW(Dune::InvalidStateException, "Maximum admissible stencil size is surpassed. "
-                                                                    "Please adjust the FVGridGeometry traits accordingly!");
+                            DUNE_THROW(Dune::InvalidStateException, "Maximum admissible stencil size (" << maxElemStencilSize-1
+                                                                     << ") is surpassed (" << dataJForI.size() << "). "
+                                                                     << "Please adjust the FVGridGeometry traits accordingly!");
 
                         dataJForI.push_back(std::make_pair(globalI, DataJ({globalJ, {scvf.index()}, {}})));
                     }

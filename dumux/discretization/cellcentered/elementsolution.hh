@@ -24,42 +24,44 @@
 #ifndef DUMUX_CC_ELEMENT_SOLUTION_HH
 #define DUMUX_CC_ELEMENT_SOLUTION_HH
 
-#include <dune/istl/bvector.hh>
-#include <dumux/common/properties.hh>
+#include <cassert>
+#include <utility>
+#include <type_traits>
+#include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCDiscretization
  * \brief The element solution vector
  */
-template<class TypeTag>
+template<class FVElementGeometry, class PV>
 class CCElementSolution
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    //! export the primary variables type
+    using PrimaryVariables = PV;
 
+    //! default constructor
     CCElementSolution() = default;
 
-    //! Constructor with element and solution
+    //! Constructor with element, solution vector and grid geometry
+    template<class SolutionVector>
     CCElementSolution(const Element& element, const SolutionVector& sol,
                       const FVGridGeometry& fvGridGeometry)
     : CCElementSolution(sol[fvGridGeometry.elementMapper().index(element)])
     {}
 
-    //! Constructor with element and elemVolVars and fvGeometry
+    //! Constructor with element, element volume variables and fv element geometry
+    template<class ElementVolumeVariables>
     CCElementSolution(const Element& element, const ElementVolumeVariables& elemVolVars,
                       const FVElementGeometry& fvGeometry)
     {
-        for(const auto& scv : scvs(fvGeometry))
+        for (const auto& scv : scvs(fvGeometry))
             priVars_ = elemVolVars[scv].priVars();
     }
 
@@ -72,6 +74,7 @@ public:
     : priVars_(priVars) {}
 
     //! extract the element solution from the solution vector using a mapper
+    template<class SolutionVector>
     void update(const Element& element, const SolutionVector& sol,
                 const FVGridGeometry& fvGridGeometry)
     {
@@ -97,6 +100,64 @@ public:
 private:
     PrimaryVariables priVars_;
 };
+
+/*!
+ * \ingroup CCDiscretization
+ * \brief  Make an element solution for cell-centered schemes
+ */
+template<class Element, class SolutionVector, class FVGridGeometry>
+auto elementSolution(const Element& element, const SolutionVector& sol, const FVGridGeometry& gg)
+-> std::enable_if_t<FVGridGeometry::discMethod == DiscretizationMethod::cctpfa ||
+                    FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+                    CCElementSolution<typename FVGridGeometry::LocalView,
+                                      std::decay_t<decltype(std::declval<SolutionVector>()[0])>>
+                    >
+{
+    using PrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[0])>;
+    return CCElementSolution<typename FVGridGeometry::LocalView, PrimaryVariables>(element, sol, gg);
+}
+
+/*!
+* \ingroup CCDiscretization
+* \brief  Make an element solution for cell-centered schemes
+ */
+template<class Element, class ElementVolumeVariables, class FVElementGeometry>
+auto elementSolution(const Element& element, const ElementVolumeVariables& elemVolVars, const FVElementGeometry& gg)
+-> std::enable_if_t<FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::cctpfa ||
+                    FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+                    CCElementSolution<FVElementGeometry, typename ElementVolumeVariables::VolumeVariables::PrimaryVariables>>
+{
+    using PrimaryVariables = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables;
+    return CCElementSolution<FVElementGeometry, PrimaryVariables>(element, elemVolVars, gg);
+}
+
+/*!
+ * \ingroup CCDiscretization
+ * \brief  Make an element solution for cell-centered schemes
+ * \note This is e.g. used to contruct an element solution at Dirichlet boundaries
+ */
+template<class FVElementGeometry, class PrimaryVariables>
+auto elementSolution(PrimaryVariables&& priVars)
+-> std::enable_if_t<FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::cctpfa ||
+                    FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+                    CCElementSolution<FVElementGeometry, PrimaryVariables>>
+{
+    return CCElementSolution<FVElementGeometry, PrimaryVariables>(std::move(priVars));
+}
+
+/*!
+ * \ingroup CCDiscretization
+ * \brief  Make an element solution for cell-centered schemes
+ * \note This is e.g. used to contruct an element solution at Dirichlet boundaries
+ */
+template<class FVElementGeometry, class PrimaryVariables>
+auto elementSolution(const PrimaryVariables& priVars)
+-> std::enable_if_t<FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::cctpfa ||
+                    FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+                    CCElementSolution<FVElementGeometry, PrimaryVariables>>
+{
+    return CCElementSolution<FVElementGeometry, PrimaryVariables>(priVars);
+}
 
 } // end namespace Dumux
 

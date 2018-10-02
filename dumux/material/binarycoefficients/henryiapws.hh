@@ -55,7 +55,7 @@ inline Scalar henryIAPWS(Scalar E,
                          Scalar H,
                          Scalar temperature)
 {
-    using H2O = Dumux::H2O<Scalar>;
+    using H2O = Dumux::Components::H2O<Scalar>;
 
     // regularizing temperature helps for stability.
     // Results are unphysical!

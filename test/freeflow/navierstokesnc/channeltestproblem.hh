@@ -24,23 +24,27 @@
 #ifndef DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
 #define DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#ifndef ENABLECACHING
+#define ENABLECACHING 1
+#endif
+
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
 
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
-#include <dumux/freeflow/navierstokesnc/model.hh>
+#include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 template <class TypeTag>
 class ChannelNCTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 
 #if !NONISOTHERMAL
 NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
@@ -48,18 +52,12 @@ NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierS
 NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI));
 #endif
 
-NEW_PROP_TAG(FluidSystem);
-
 // Select the fluid system
-SET_TYPE_PROP(ChannelNCTestTypeTag, FluidSystem,
-              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true*/>);
-
-SET_PROP(ChannelNCTestTypeTag, PhaseIdx)
+SET_PROP(ChannelNCTestTypeTag, FluidSystem)
 {
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-public:
-    static constexpr int value = FluidSystem::wPhaseIdx;
+    using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+    static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
+    using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
 SET_INT_PROP(ChannelNCTestTypeTag, ReplaceCompEqIdx, 0);
@@ -70,19 +68,19 @@ SET_TYPE_PROP(ChannelNCTestTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ChannelNCTestTypeTag, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(ChannelNCTestTypeTag, EnableFVGridGeometryCache, ENABLECACHING);
+SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridFluxVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridVolumeVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridFaceVariablesCache, ENABLECACHING);
 
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridVolumeVariablesCache, true);
-
-// Enable gravity
+// Use mole fraction formulation
+#if USE_MASS
+SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, false);
+#else
 SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, true);
+#endif
 
-// #if ENABLE_NAVIERSTOKES
 SET_BOOL_PROP(ChannelNCTestTypeTag, EnableInertiaTerms, true);
-// #else
-// SET_BOOL_PROP(ChannelNCTestTypeTag, EnableInertiaTerms, false);
-// #endif
 }
 
 /*!
@@ -94,39 +92,23 @@ template <class TypeTag>
 class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum { dimWorld = GridView::dimensionworld };
-    enum {
-        massBalanceIdx = Indices::massBalanceIdx,
-        transportEqIdx = 1,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        pressureIdx = Indices::pressureIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx,
-#if NONISOTHERMAL
-        temperatureIdx = Indices::temperatureIdx,
-        energyBalanceIdx = Indices::energyBalanceIdx,
-#endif
-        transportCompIdx = 1/*FluidSystem::wCompIdx*/
-    };
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
+    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+
+    static constexpr auto compIdx = 1;
+    static constexpr auto transportCompIdx = Indices::conti0EqIdx + compIdx;
+    static constexpr auto transportEqIdx = Indices::conti0EqIdx + compIdx;
 
 public:
     ChannelNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -141,7 +123,6 @@ public:
      * \name Problem parameters
      */
     // \{
-
 
     bool shouldWriteRestartFile() const
     {
@@ -165,6 +146,7 @@ public:
     {
         return NumEqVector(0.0);
     }
+
     // \}
    /*!
      * \name Boundary conditions
@@ -183,31 +165,30 @@ public:
 
         if(isInlet(globalPos))
         {
-            values.setDirichlet(momentumBalanceIdx);
-            values.setOutflow(massBalanceIdx);
-            values.setDirichlet(transportEqIdx);
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+            values.setDirichlet(transportCompIdx);
 #if NONISOTHERMAL
-            values.setDirichlet(energyBalanceIdx);
+            values.setDirichlet(Indices::temperatureIdx);
 #endif
         }
         else if(isOutlet(globalPos))
         {
-            values.setOutflow(momentumBalanceIdx);
-            values.setDirichlet(massBalanceIdx);
+            values.setDirichlet(Indices::pressureIdx);
             values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
-            values.setOutflow(energyBalanceIdx);
+            values.setOutflow(Indices::energyBalanceIdx);
 #endif
         }
-
         else
         {
             // set Dirichlet values for the velocity everywhere
-            values.setDirichlet(momentumBalanceIdx);
-            values.setOutflow(massBalanceIdx);
-            values.setOutflow(transportEqIdx);
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+            values.setNeumann(Indices::conti0EqIdx);
+            values.setNeumann(transportEqIdx);
 #if NONISOTHERMAL
-            values.setOutflow(energyBalanceIdx);
+            values.setNeumann(Indices::energyBalanceIdx);
 #endif
         }
 
@@ -229,9 +210,17 @@ public:
         {
             if(time() >= 10.0 || inletVelocity_  < eps_)
             {
-                values[transportCompIdx] = 1e-3;
+                Scalar moleFracTransportedComp = 1e-3;
+#if USE_MASS
+                Scalar averageMolarMassPhase = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
+                                               + (1. - moleFracTransportedComp)  * FluidSystem::molarMass(1-compIdx);
+                values[transportCompIdx] = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
+                                           / averageMolarMassPhase;
+#else
+                values[transportCompIdx] = moleFracTransportedComp;
+#endif
 #if NONISOTHERMAL
-            values[temperatureIdx] = 293.15;
+            values[Indices::temperatureIdx] = 293.15;
 #endif
             }
         }
@@ -254,17 +243,17 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[pressureIdx] = 1.1e+5;
+        values[Indices::pressureIdx] = 1.1e+5;
         values[transportCompIdx] = 0.0;
 #if NONISOTHERMAL
-        values[temperatureIdx] = 283.15;
+        values[Indices::temperatureIdx] = 283.15;
 #endif
 
         // parabolic velocity profile
-        values[velocityXIdx] =  inletVelocity_*(globalPos[1] - this->fvGridGeometry().bBoxMin()[1])*(this->fvGridGeometry().bBoxMax()[1] - globalPos[1])
-                               / (0.25*(this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1])*(this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]));
+        values[Indices::velocityXIdx] =  inletVelocity_*(globalPos[1] - this->fvGridGeometry().bBoxMin()[1])*(this->fvGridGeometry().bBoxMax()[1] - globalPos[1])
+                                      / (0.25*(this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1])*(this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]));
 
-        values[velocityYIdx] = 0.0;
+        values[Indices::velocityYIdx] = 0.0;
 
         return values;
     }
@@ -275,6 +264,7 @@ public:
      * \param gridVariables The grid variables
      * \param sol The solution vector
      */
+    template<class GridVariables, class SolutionVector>
     void calculateDeltaP(const GridVariables& gridVariables, const SolutionVector& sol)
     {
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -286,7 +276,7 @@ public:
                 auto ccDofIdx = scv.dofIndex();
 
                 auto elemVolVars = localView(gridVariables.curGridVolVars());
-                elemVolVars.bind(element, fvGeometry, sol);
+                elemVolVars.bindElement(element, fvGeometry, sol);
 
                 deltaP_[ccDofIdx] = elemVolVars[scv].pressure() - 1.1e5;
             }

@@ -24,21 +24,64 @@
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_GRID_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_GRID_FLUXVARSCACHE_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
-#include <dumux/discretization/cellcentered/mpfa/fluxvariablescachefiller.hh>
-
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
+#include <dumux/discretization/cellcentered/mpfa/elementfluxvariablescache.hh>
 
 namespace Dumux {
+
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Data handle physics traits
+ */
+template<class ModelTraits>
+struct IvDataHandlePhysicsTraits
+{
+    static constexpr bool enableAdvection = ModelTraits::enableAdvection();
+    static constexpr bool enableMolecularDiffusion = ModelTraits::enableMolecularDiffusion();
+    static constexpr bool enableHeatConduction = ModelTraits::enableEnergyBalance();
+
+    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int numComponents = ModelTraits::numComponents();
+};
+
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Data handle physics traits
+ */
+template<class P,
+         class FVC, class FVCF,
+         class PIV, class SIV,
+         class PDH, class SDH>
+struct CCMpfaDefaultGridFluxVariablesCacheTraits
+{
+    using Problem = P;
+    using FluxVariablesCache = FVC;
+    using FluxVariablesCacheFiller = FVCF;
+
+    using PrimaryInteractionVolume = PIV;
+    using SecondaryInteractionVolume = SIV;
+    using PrimaryIvDataHandle = PDH;
+    using SecondaryIvDataHandle = SDH;
+
+    template<class GridFluxVariablesCache, bool cachingEnabled>
+    using LocalView = CCMpfaElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
+
+    // Reserve memory (over-) estimate for interaction volumes and corresponding data.
+    // The overestimate doesn't hurt as we are not in a memory-limited configuration.
+    // We need to avoid reallocation because in the caches we store pointers to the data handles.
+    // Default -> each facet has two neighbors (local adaption) and all scvfs belongs to different ivs.
+    // If you want to use higher local differences change the parameter below.
+    static constexpr std::size_t maxLocalElementLevelDifference()
+    { return 2; };
+};
 
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Flux variable caches on a gridview
  * \note The class is specialized for a version with and without grid caching
  */
-template<class TypeTag, bool EnableGridFluxVariablesCache>
+template<class Traits, bool cachingEnabled>
 class CCMpfaGridFluxVariablesCache;
 
 /*!
@@ -46,51 +89,40 @@ class CCMpfaGridFluxVariablesCache;
  * \brief Flux variable caches on a gridview with grid caching enabled
  * \note The flux caches of the gridview are stored which is memory intensive but faster
  */
-template<class TypeTag>
-class CCMpfaGridFluxVariablesCache<TypeTag, true>
+template<class TheTraits>
+class CCMpfaGridFluxVariablesCache<TheTraits, true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-
-    using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using PrimaryMatVecTraits = typename PrimaryInteractionVolume::Traits::MatVecTraits;
-    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
-    using SecondaryMatVecTraits = typename SecondaryInteractionVolume::Traits::MatVecTraits;
-
-    //! physics traits class to define the data handles
-    struct PhysicsTraits
-    {
-        static constexpr bool enableAdvection = GET_PROP_VALUE(TypeTag, EnableAdvection);
-        static constexpr bool enableMolecularDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
-        static constexpr bool enableHeatConduction = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
-
-        static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-        static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    };
-
+    using Problem = typename TheTraits::Problem;
+    using ThisType = CCMpfaGridFluxVariablesCache<TheTraits, true>;
 public:
-    // export the data handle types used
-    using PrimaryIvDataHandle = InteractionVolumeDataHandle< PrimaryMatVecTraits, PhysicsTraits >;
-    using SecondaryIvDataHandle = InteractionVolumeDataHandle< SecondaryMatVecTraits, PhysicsTraits >;
+    //! export the Traits
+    using Traits = TheTraits;
+
+    //! export the interaction volume types
+    using PrimaryInteractionVolume = typename Traits::PrimaryInteractionVolume;
+    using SecondaryInteractionVolume = typename Traits::SecondaryInteractionVolume;
+
+    //! export the data handle types used
+    using PrimaryIvDataHandle = typename Traits::PrimaryIvDataHandle;
+    using SecondaryIvDataHandle = typename Traits::SecondaryIvDataHandle;
+
+    //! export the flux variable cache type
+    using FluxVariablesCache = typename Traits::FluxVariablesCache;
+
+    //! export the flux variable cache filler type
+    using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
+
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = true;
 
     //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
     //! The constructor
     CCMpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     //! When global caching is enabled, precompute transmissibilities for all scv faces
+    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
@@ -140,7 +172,8 @@ public:
         }
     }
 
-    void updateElement(const Element& element,
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void updateElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars)
     {
@@ -186,10 +219,12 @@ public:
     }
 
     //! access operators in the case of caching
+    template<class SubControlVolumeFace>
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return fluxVarsCache_[scvf.index()]; }
 
     //! access operators in the case of caching
+    template<class SubControlVolumeFace>
     FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
     { return fluxVarsCache_[scvf.index()]; }
 
@@ -254,37 +289,48 @@ private:
  * \ingroup CCMpfaDiscretization
  * \brief Flux variable caches on a gridview with grid caching disabled
  */
-template<class TypeTag>
-class CCMpfaGridFluxVariablesCache<TypeTag, false>
+template<class TheTraits>
+class CCMpfaGridFluxVariablesCache<TheTraits, false>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-
+    using Problem = typename TheTraits::Problem;
+    using ThisType = CCMpfaGridFluxVariablesCache<TheTraits, false>;
 public:
-    //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    //! export the Traits
+    using Traits = TheTraits;
 
-    //! export the data handle types used by the local view
-    using PrimaryIvDataHandle = typename LocalView::PrimaryIvDataHandle;
-    using SecondaryIvDataHandle = typename LocalView::SecondaryIvDataHandle;
+    //! export the interaction volume types
+    using PrimaryInteractionVolume = typename Traits::PrimaryInteractionVolume;
+    using SecondaryInteractionVolume = typename Traits::SecondaryInteractionVolume;
+
+    //! export the data handle types used
+    using PrimaryIvDataHandle = typename Traits::PrimaryIvDataHandle;
+    using SecondaryIvDataHandle = typename Traits::SecondaryIvDataHandle;
+
+    //! export the flux variable cache type
+    using FluxVariablesCache = typename Traits::FluxVariablesCache;
+
+    //! export the flux variable cache filler type
+    using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
+
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = false;
+
+    //! export the type of the local view
+    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
     //! The constructor
     CCMpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     //! When global flux variables caching is disabled, we don't need to update the cache
+    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false) {}
 
     //! When global flux variables caching is disabled, we don't need to update the cache
-    void updateElement(const Element& element,
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void updateElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars) {}
 

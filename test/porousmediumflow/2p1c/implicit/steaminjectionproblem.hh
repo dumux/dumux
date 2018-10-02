@@ -25,26 +25,26 @@
 #ifndef DUMUX_STEAM_INJECTIONPROBLEM_HH
 #define DUMUX_STEAM_INJECTIONPROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/2p1c/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidsystems/2pliquidvapor.hh>
+#include <dumux/material/fluidsystems/2p1c.hh>
 
 #include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/components/h2o.hh>
 
 #include "steaminjectionspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class InjectionProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(InjectionProblemTypeTag, INHERITS_FROM(TwoPOneCNI, InjectionProblemSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(InjectionProblemTypeTag, INHERITS_FROM(TwoPOneCNI));
 NEW_TYPE_TAG(TwoPOneCNIBoxTypeTag, INHERITS_FROM(BoxModel, InjectionProblemTypeTag));
 NEW_TYPE_TAG(TwoPOneCNICCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InjectionProblemTypeTag));
 
@@ -59,15 +59,22 @@ SET_PROP(InjectionProblemTypeTag, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> >;
+    using H2OType = Dumux::Components::TabulatedComponent<Dumux::Components::H2O<Scalar> >;
 public:
-    using type = Dumux::FluidSystems::TwoPLiquidVaporFluidsystem<Scalar, H2OType >;
+    using type = Dumux::FluidSystems::TwoPOneC<Scalar, H2OType >;
 };
 
+// Set the spatial parameters
+SET_PROP(InjectionProblemTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = InjectionProblemSpatialParams<FVGridGeometry, Scalar>;
+};
 
 //Define whether spurious cold-water flow into the steam is blocked
 SET_BOOL_PROP(InjectionProblemTypeTag, UseBlockingOfSpuriousFlow, true);
-}
+} // end namespace Properties
 
 /*!
  * \ingroup TwoPOneCTests
@@ -82,12 +89,12 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -98,17 +105,17 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     // copy some indices for convenience
     enum {
         pressureIdx = Indices::pressureIdx,
-        switch1Idx = Indices::switch1Idx,
+        switchIdx = Indices::switchIdx,
 
         conti0EqIdx = Indices::conti0EqIdx,
         energyEqIdx = Indices::energyEqIdx,
 
         // phase state
-        wPhaseOnly = Indices::wPhaseOnly
+        liquidPhaseOnly = Indices::liquidPhaseOnly
     };
 
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
 
@@ -118,9 +125,7 @@ public:
      */
     InjectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
-    {
-        FluidSystem::init();
-    }
+    { FluidSystem::init(); }
 
     /*!
      * \name Problem parameters
@@ -130,12 +135,10 @@ public:
 
     //! \copydoc Dumux::FVProblem::source()
     NumEqVector source(const Element &element,
-                   const FVElementGeometry& fvGeometry,
-                   const ElementVolumeVariables& elemVolVars,
-                   const SubControlVolume &scv) const
-    {
-          return NumEqVector(0.0);
-    }
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
+    { return NumEqVector(0.0); }
 
     /*!
      * \name Boundary conditions
@@ -229,9 +232,9 @@ public:
 
         const Scalar densityW = 1000.0;
         values[pressureIdx] = 101300.0 + (this->fvGridGeometry().bBoxMax()[1] - globalPos[1])*densityW*9.81; // hydrostatic pressure
-        values[switch1Idx] = 283.13;
+        values[switchIdx] = 283.13;
 
-        values.setState(wPhaseOnly);
+        values.setState(liquidPhaseOnly);
 
         return values;
     }

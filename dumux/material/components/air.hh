@@ -25,11 +25,14 @@
 #define DUMUX_AIR_HH
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/material/components/component.hh>
 #include <dumux/material/idealgas.hh>
 
-namespace Dumux
-{
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/gas.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A class for the air fluid properties
@@ -37,7 +40,9 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class Air : public Component<Scalar, Air<Scalar> >
+class Air
+: public Components::Base<Scalar, Air<Scalar> >
+, public Components::Gas<Scalar, Air<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
 
@@ -53,7 +58,7 @@ public:
      *
      * Taken from constrelair.hh.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 0.02896; /* [kg/mol] */ }
 
     /*!
@@ -83,15 +88,24 @@ public:
     }
 
     /*!
+     * \brief The molar density of air in \f$\mathrm{[mol/m^3]}\f$,
+     *   depending on pressure and temperature.
+     * \param temperature The temperature of the gas
+     * \param pressure The pressure of the gas
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
+
+    /*!
      * \brief Returns true, the gas phase is assumed to be compressible
      */
-    static bool gasIsCompressible()
+    static constexpr bool gasIsCompressible()
     { return true; }
 
     /*!
      * \brief Returns true, the gas phase is assumed to be ideal
      */
-    static bool gasIsIdeal()
+    static constexpr bool gasIsIdeal()
     { return true; }
 
     /*!
@@ -331,6 +345,8 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+} // end namespace Dumux
 
 #endif

@@ -26,7 +26,6 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 
 #include <dumux/common/math.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/matrixvectorhelper.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>

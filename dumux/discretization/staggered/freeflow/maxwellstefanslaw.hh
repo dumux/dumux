@@ -35,7 +35,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethods DM>
+template <class TypeTag, DiscretizationMethod discMethod>
 class MaxwellStefansLawImplementation;
 
 /*!
@@ -43,51 +43,54 @@ class MaxwellStefansLawImplementation;
  * \brief Specialization of Maxwell Stefan's Law for the Staggered method.
  */
 template <class TypeTag>
-class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethods::Staggered >
+class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    static const int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    static const int numComponents = ModelTraits::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;
 
-    static_assert(GET_PROP_VALUE(TypeTag, NumPhases) == 1, "Only one phase allowed supported!");
+    static_assert(ModelTraits::numPhases() == 1, "Only one phase allowed supported!");
 
     enum {
         pressureIdx = Indices::pressureIdx,
         conti0EqIdx = Indices::conti0EqIdx,
-        replaceCompEqIdx = Indices::replaceCompEqIdx,
-        phaseIdx = Indices::phaseIdx
     };
 
 public:
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::Staggered;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::staggered;
 
     //! state the type for the corresponding cache and its filler
     //! We don't cache anything for this law
-    using Cache = FluxVariablesCaching::EmptyDiffusionCache<TypeTag>;
-    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
+    using Cache = FluxVariablesCaching::EmptyDiffusionCache;
+    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller;
 
-    static CellCenterPrimaryVariables diffusiveFluxForCellCenter(const Problem& problem,
-                                                                 const FVElementGeometry& fvGeometry,
-                                                                 const ElementVolumeVariables& elemVolVars,
-                                                                 const SubControlVolumeFace& scvf)
+    static CellCenterPrimaryVariables flux(const Problem& problem,
+                                           const Element& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVolumeVariables& elemVolVars,
+                                           const SubControlVolumeFace& scvf)
     {
         //this is to calculate the maxwellStefan diffusion in a multicomponent system.
         //see: Multicomponent Mass Transfer. R. Taylor u. R. Krishna. J. Wiley & Sons, New York 1993
@@ -107,9 +110,9 @@ public:
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
             //calculate x_inside
-            const auto xInside = insideVolVars.moleFraction(phaseIdx, compIdx);
+            const auto xInside = insideVolVars.moleFraction(compIdx);
             //calculate outside molefraction with the respective transmissibility
-            const auto xOutside = outsideVolVars.moleFraction(phaseIdx, compIdx);
+            const auto xOutside = outsideVolVars.moleFraction(compIdx);
 
             moleFracInside[compIdx] = xInside;
             moleFracOutside[compIdx] = xOutside;
@@ -119,7 +122,7 @@ public:
 
             if(scvf.boundary())
             {
-               const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+               const auto bcTypes = problem.boundaryTypes(element, scvf);
                  if(bcTypes.isOutflow(eqIdx) && eqIdx != pressureIdx)
                     return componentFlux;
             }
@@ -183,11 +186,8 @@ public:
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
             componentFlux[compIdx] = reducedFlux[compIdx];
-            componentFlux[numComponents-1] -=reducedFlux[compIdx];
+            componentFlux[numComponents-1] -= reducedFlux[compIdx];
         }
-
-        if(useMoles && replaceCompEqIdx <= numComponents)
-            componentFlux[replaceCompEqIdx] = 0.0;
 
         return componentFlux ;
     }
@@ -216,47 +216,23 @@ private:
 
         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
         {
-            const auto xi = volVars.moleFraction(phaseIdx, compIIdx);
+            const auto xi = volVars.moleFraction(compIIdx);
+            const Scalar tin = volVars.effectiveDiffusivity(compIIdx, numComponents-1);
 
-            //calculate diffusivity for i,numComponents
-            auto fluidState = volVars.fluidState();
-            typename FluidSystem::ParameterCache paramCache;
-            paramCache.updateAll(fluidState);
-            auto tin = FluidSystem::binaryDiffusionCoefficient(fluidState,
-                                                               paramCache,
-                                                               phaseIdx,
-                                                               compIIdx,
-                                                               numComponents-1);
-            //set the entrys of the diffusion matrix of the diagonal
+            // set the entries of the diffusion matrix of the diagonal
             reducedDiffusionMatrix[compIIdx][compIIdx] += xi/tin;
 
-            for (int compkIdx = 0; compkIdx < numComponents; compkIdx++)
+            for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
             {
-                if (compkIdx == compIIdx)
-                            continue;
-
-                const auto xk = volVars.moleFraction(phaseIdx, compkIdx);
-                Scalar tik = FluidSystem::binaryDiffusionCoefficient(fluidState,
-                                                                    paramCache,
-                                                                    phaseIdx,
-                                                                    compIIdx,
-                                                                    compkIdx);
-                reducedDiffusionMatrix[compIIdx][compIIdx] += xk/tik;
-            }
-
-            // now set the rest of the entries (off-diagonal)
-            for (int compJIdx = 0; compJIdx < numComponents-1; compJIdx++)
-            {
-                //we don't want to calculate e.g. water in water diffusion
-                if (compIIdx == compJIdx)
+                // we don't want to calculate e.g. water in water diffusion
+                if (compJIdx == compIIdx)
                     continue;
-                //calculate diffusivity for compIIdx, compJIdx
-                Scalar tij = FluidSystem::binaryDiffusionCoefficient(fluidState,
-                                                                    paramCache,
-                                                                    phaseIdx,
-                                                                    compIIdx,
-                                                                    compJIdx);
-                reducedDiffusionMatrix[compIIdx][compJIdx] +=xi*(1/tin - 1/tij);
+
+                const auto xj = volVars.moleFraction(compJIdx);
+                const Scalar tij = volVars.effectiveDiffusivity(compIIdx, compJIdx);
+                reducedDiffusionMatrix[compIIdx][compIIdx] += xj/tij;
+                if (compJIdx < numComponents-1)
+                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(1/tin - 1/tij);
             }
         }
         return reducedDiffusionMatrix;

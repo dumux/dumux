@@ -26,66 +26,41 @@
 #ifndef DUMUX_TWOPNC_DIFFUSION_SPATIAL_PARAMS_HH
 #define DUMUX_TWOPNC_DIFFUSION_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-namespace Dumux
-{
-
-//forward declaration
-template<class TypeTag>
-class TwoPNCDiffusionSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(TwoPNCDiffusionSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(TwoPNCDiffusionSpatialParams, SpatialParams, TwoPNCDiffusionSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(TwoPNCDiffusionSpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffectiveLaw>;
-};
-
-} // end namespace Properties
-
+namespace Dumux {
 /*!
  * \ingroup TwoPNCTest
  * \brief Definition of the spatial parameters for the TwoPNCDiffusion
  *        problem which uses the isothermal 2p2c box model
  */
-template<class TypeTag>
-class TwoPNCDiffusionSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class TwoPNCDiffusionSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         TwoPNCDiffusionSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using CoordScalar = typename GridView::ctype;
+    using GridView = typename FVGridGeometry::GridView;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       TwoPNCDiffusionSpatialParams<FVGridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
 
 public:
     using PermeabilityType = DimWorldMatrix;
 
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     /*!
@@ -93,8 +68,8 @@ public:
      *
      * \param gridView The grid view
      */
-    TwoPNCDiffusionSpatialParams(const Problem& problem)
-    : ParentType(problem), K_(0)
+    TwoPNCDiffusionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry), K_(0)
     {
         // intrinsic permeabilities
         K_[0][0] = 5e-11;
@@ -104,7 +79,7 @@ public:
         porosity_ = 0.2;
 
         // residual saturations
-        materialParams_.setSwr(0.02); //here water, see philtophoblaw
+        materialParams_.setSwr(0.02);
         materialParams_.setSnr(0.0);
 
         //parameters for the vanGenuchten law
@@ -135,6 +110,16 @@ public:
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     { return materialParams_; }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
 
 private:
     DimWorldMatrix K_;

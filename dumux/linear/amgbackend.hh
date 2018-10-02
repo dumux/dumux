@@ -80,7 +80,6 @@ template <class GridView, class AmgTraits>
 class ParallelAMGBackend : public LinearSolver
 {
     using Grid = typename GridView::Grid;
-    enum { numEq = AmgTraits::numEq };
     using LinearOperator = typename AmgTraits::LinearOperator;
     using ScalarProduct = typename AmgTraits::ScalarProduct;
     using VType = typename AmgTraits::VType;
@@ -134,8 +133,7 @@ public:
         std::shared_ptr<Comm> comm;
         std::shared_ptr<LinearOperator> fop;
         std::shared_ptr<ScalarProduct> sp;
-        static const int dofCodim = AmgTraits::dofCodim;
-        static const bool isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v;
+        static const bool isParallel = AmgTraits::isParallel;
         prepareLinearAlgebra_<Matrix, Vector, isParallel>(A, b, rank, comm, fop, sp);
 
         using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
@@ -225,7 +223,9 @@ namespace Dumux {
  * \note This is an adaptor using a TypeTag
  */
 template<class TypeTag>
-using AMGBackend = ParallelAMGBackend<typename GET_PROP_TYPE(TypeTag, GridView), AmgTraits<TypeTag>>;
+using AMGBackend = ParallelAMGBackend<typename GET_PROP_TYPE(TypeTag, GridView), AmgTraits<typename GET_PROP_TYPE(TypeTag, JacobianMatrix),
+                                                                                           typename GET_PROP_TYPE(TypeTag, SolutionVector),
+                                                                                           typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>>;
 
 } // namespace Dumux
 

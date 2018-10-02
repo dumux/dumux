@@ -25,13 +25,15 @@
 #ifndef DUMUX_1PTEST_PROBLEM_HH
 #define DUMUX_1PTEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "1ptestspatialparams.hh"
 
@@ -42,7 +44,7 @@ class OnePTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTestTypeTag, INHERITS_FROM(OneP, OnePTestSpatialParams));
+NEW_TYPE_TAG(OnePTestTypeTag, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(OnePTestBoxTypeTag, INHERITS_FROM(BoxModel, OnePTestTypeTag));
 NEW_TYPE_TAG(OnePTestCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePTestTypeTag));
 NEW_TYPE_TAG(OnePTestCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePTestTypeTag));
@@ -51,7 +53,7 @@ NEW_TYPE_TAG(OnePTestCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePTestTypeTag))
 SET_PROP(OnePTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Set the grid type
@@ -63,7 +65,12 @@ SET_TYPE_PROP(OnePTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(OnePTestTypeTag, Problem, OnePTestProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTestTypeTag, SpatialParams, OnePTestSpatialParams<TypeTag> );
+SET_PROP(OnePTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+};
 }
 
 /*!
@@ -96,7 +103,7 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
         // index of the primary variable
@@ -109,7 +116,7 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

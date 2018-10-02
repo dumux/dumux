@@ -24,62 +24,36 @@
 #ifndef DUMUX_COLUMNXYLOL_SPATIAL_PARAMS_HH
 #define DUMUX_COLUMNXYLOL_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
 
-namespace Dumux
-{
-/*!
- * \ingroup ThreePThreeCTests
- * \brief Definition of the spatial parameters for the column problem.
- */
-//forward declaration
-template<class TypeTag>
-class ColumnSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(ColumnSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(ColumnSpatialParams, SpatialParams, ColumnSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(ColumnSpatialParams, MaterialLaw)
-{
- private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
- public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedParkerVanGen3P<Scalar>>;
-};
-} // end namespace Properties
+namespace Dumux {
 
 /*!
  * \ingroup ThreePThreeCModel
  * \brief Definition of the spatial parameters for the column problem
  */
-template<class TypeTag>
-class ColumnSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class ColumnSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         ColumnSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    enum { dimWorld=GridView::dimensionworld };
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       ColumnSpatialParams<FVGridGeometry, Scalar>>;
+
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
+    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
@@ -88,8 +62,8 @@ public:
      *
      * \param gridView The grid view
      */
-    ColumnSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    ColumnSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
         fineK_ = 1.4e-11;
@@ -102,9 +76,6 @@ public:
         // specific heat capacities
         fineHeatCap_ = 850.;
         coarseHeatCap_ = 84000.;
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
 
         // residual saturations
         fineMaterialParams_.setSwr(0.12);
@@ -139,9 +110,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
@@ -156,17 +128,25 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      */
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+    template<class SolidSystem>
+    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos,
+                                    int compIdx) const
     {
-        const auto& globalPos = scv.dofPosition();
-        if (isFineMaterial_(globalPos))
-            return finePorosity_;
+        if (compIdx == SolidSystem::comp0Idx)
+        {
+            if (isFineMaterial_(globalPos))
+                return 1-finePorosity_;
+            else
+                return 0;
+        }
         else
-            return coarsePorosity_;
+        {
+            if (isFineMaterial_(globalPos))
+                  return 0;
+            else
+                return 1-coarsePorosity_;
+        }
     }
-
 
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
@@ -176,66 +156,16 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return the material parameters object
      */
+    template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
                                                const SubControlVolume& scv,
-                                               const ElementSolutionVector& elemSol) const
+                                               const ElementSolution& elemSol) const
     {
         const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
             return fineMaterialParams_;
         else
             return coarseMaterialParams_;
-    }
-
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     */
-    Scalar solidHeatCapacity(const Element& element,
-                             const SubControlVolume& scv,
-                             const ElementSolutionVector& elemSol) const
-    {
-        const auto& globalPos = scv.dofPosition();
-        if (isFineMaterial_(globalPos))
-            return fineHeatCap_;
-        else
-            return coarseHeatCap_;
-    }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar solidDensity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
-    {
-        return 2650; // density of sand [kg/m^3]
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
-     */
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume& scv,
-                                    const ElementSolutionVector& elemSol) const
-    {
-        return lambdaSolid_;
     }
 
 private:
@@ -255,8 +185,6 @@ private:
 
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;
-
-    Scalar lambdaSolid_;
 
     static constexpr Scalar eps_ = 1e-6;
 };

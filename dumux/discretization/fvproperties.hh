@@ -34,18 +34,22 @@
 
 #include <dumux/discretization/fvgridvariables.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
+
 //! Type tag for finite-volume schemes.
 NEW_TYPE_TAG(FiniteVolumeModel, INHERITS_FROM(GridProperties));
 
 //! The grid variables
-SET_TYPE_PROP(FiniteVolumeModel, GridVariables, FVGridVariables<TypeTag>);
-
-//! The type of a solution for a whole element
-SET_TYPE_PROP(FiniteVolumeModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
+SET_PROP(FiniteVolumeModel, GridVariables)
+{
+private:
+    using GG = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GVV = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
+    using GFVC = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
+public:
+    using type = FVGridVariables<GG, GVV, GFVC>;
+};
 
 //! We do not store the FVGeometry by default
 SET_BOOL_PROP(FiniteVolumeModel, EnableFVGridGeometryCache, false);
@@ -57,7 +61,7 @@ SET_BOOL_PROP(FiniteVolumeModel, EnableGridVolumeVariablesCache, false);
 SET_BOOL_PROP(FiniteVolumeModel, EnableGridFluxVariablesCache, false);
 
 //! Boundary types at a single degree of freedom
-SET_TYPE_PROP(FiniteVolumeModel, BoundaryTypes, BoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
+SET_TYPE_PROP(FiniteVolumeModel, BoundaryTypes, BoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
 
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
@@ -70,7 +74,7 @@ SET_PROP(FiniteVolumeModel, JacobianMatrix)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
     using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
 public:
     using type = typename Dune::BCRSMatrix<MatrixBlock>;

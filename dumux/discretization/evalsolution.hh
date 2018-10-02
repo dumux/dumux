@@ -29,8 +29,7 @@
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \brief Interpolates a given box element solution at a given global position.
@@ -44,15 +43,13 @@ namespace Dumux
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
  */
-template< class Element, class FVGridGeometry, class TypeTag >
-typename BoxElementSolution<TypeTag>::PrimaryVariables
-evalSolution(const Element& element,
-             const typename Element::Geometry& geometry,
-             const FVGridGeometry& fvGridGeometry,
-             const BoxElementSolution<TypeTag>& elemSol,
-             const typename Element::Geometry::GlobalCoordinate& globalPos)
+template<class Element, class FVElementGeometry, class PrimaryVariables>
+PrimaryVariables evalSolution(const Element& element,
+                              const typename Element::Geometry& geometry,
+                              const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+                              const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                              const typename Element::Geometry::GlobalCoordinate& globalPos)
 {
-    using PrimaryVariables = typename BoxElementSolution<TypeTag>::PrimaryVariables;
     using Scalar = typename PrimaryVariables::value_type;
 
     // interpolate the solution
@@ -86,14 +83,12 @@ evalSolution(const Element& element,
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
  */
-template< class Element, class TypeTag >
-typename BoxElementSolution<TypeTag>::PrimaryVariables
-evalSolution(const Element& element,
-             const typename Element::Geometry& geometry,
-             const BoxElementSolution<TypeTag>& elemSol,
-             const typename Element::Geometry::GlobalCoordinate& globalPos)
+template<class Element, class FVElementGeometry, class PrimaryVariables>
+PrimaryVariables evalSolution(const Element& element,
+                              const typename Element::Geometry& geometry,
+                              const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                              const typename Element::Geometry::GlobalCoordinate& globalPos)
 {
-    using PrimaryVariables = typename BoxElementSolution<TypeTag>::PrimaryVariables;
     using Scalar = typename PrimaryVariables::value_type;
     using CoordScalar = typename Element::Geometry::GlobalCoordinate::value_type;
     static constexpr int dim = Element::Geometry::mydimension;
@@ -133,13 +128,12 @@ evalSolution(const Element& element,
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
  */
-template< class Element, class FVGridGeometry, class TypeTag >
-typename CCElementSolution<TypeTag>::PrimaryVariables
-evalSolution(const Element& element,
-             const typename Element::Geometry& geometry,
-             const FVGridGeometry& fvGridGeometry,
-             const CCElementSolution<TypeTag>& elemSol,
-             const typename Element::Geometry::GlobalCoordinate& globalPos)
+template<class Element, class FVElementGeometry, class PrimaryVariables>
+PrimaryVariables evalSolution(const Element& element,
+                              const typename Element::Geometry& geometry,
+                              const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+                              const CCElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                              const typename Element::Geometry::GlobalCoordinate& globalPos)
 {
     return elemSol[0];
 }
@@ -156,12 +150,11 @@ evalSolution(const Element& element,
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
  */
-template< class Element, class TypeTag >
-typename CCElementSolution<TypeTag>::PrimaryVariables
-evalSolution(const Element& element,
-            const typename Element::Geometry& geometry,
-            const CCElementSolution<TypeTag>& elemSol,
-            const typename Element::Geometry::GlobalCoordinate& globalPos)
+template< class Element, class FVElementGeometry, class PrimaryVariables>
+PrimaryVariables evalSolution(const Element& element,
+                              const typename Element::Geometry& geometry,
+                              const CCElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                              const typename Element::Geometry::GlobalCoordinate& globalPos)
 {
     return elemSol[0];
 }

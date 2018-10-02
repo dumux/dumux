@@ -42,6 +42,7 @@ namespace Dumux
 template<class TypeTag>
 class CCMpfaFluxVariablesCacheFiller
 {
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -50,8 +51,8 @@ class CCMpfaFluxVariablesCacheFiller
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using MpfaHelper = typename FVGridGeometry::MpfaHelper;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
@@ -64,9 +65,9 @@ class CCMpfaFluxVariablesCacheFiller
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    static constexpr bool doAdvection = GET_PROP_VALUE(TypeTag, EnableAdvection);
-    static constexpr bool doDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
-    static constexpr bool doHeatConduction = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
+    static constexpr bool doAdvection = ModelTraits::enableAdvection();
+    static constexpr bool doDiffusion = ModelTraits::enableMolecularDiffusion();
+    static constexpr bool doHeatConduction = ModelTraits::enableEnergyBalance();
 
     static constexpr bool soldependentAdvection = GET_PROP_VALUE(TypeTag, SolutionDependentAdvection);
     static constexpr bool soldependentDiffusion = GET_PROP_VALUE(TypeTag, SolutionDependentMolecularDiffusion);
@@ -310,8 +311,8 @@ private:
         using DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
         using DiffusionFiller = typename DiffusionType::Cache::Filler;
 
-        static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-        static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+        static constexpr int numPhases = ModelTraits::numPhases();
+        static constexpr int numComponents = ModelTraits::numComponents();
 
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
@@ -427,10 +428,10 @@ private:
     template< class InteractionVolume,
               class DataHandle,
               class AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType),
-              typename std::enable_if_t<AdvectionType::myDiscretizationMethod == DiscretizationMethods::CCMpfa, int> = 0 >
+              typename std::enable_if_t<AdvectionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
     void fillAdvectionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
-        using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethods::CCMpfa>;
+        using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
 
         // get instance of the interaction volume-local assembler
         static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
@@ -438,7 +439,7 @@ private:
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         // Use different assembly if gravity is enabled
-        static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        static const bool enableGravity = getParamFromGroup<bool>(problem().paramGroup(), "Problem.EnableGravity");
 
         // Assemble T only if permeability is sol-dependent or if update is forced
         if (forceUpdateAll || soldependentAdvection)
@@ -497,7 +498,7 @@ private:
         }
 
         // assemble pressure vectors
-        for (unsigned int pIdx = 0; pIdx < GET_PROP_VALUE(TypeTag, NumPhases); ++pIdx)
+        for (unsigned int pIdx = 0; pIdx < ModelTraits::numPhases(); ++pIdx)
         {
             const auto& evv = &elemVolVars();
             auto getPressure = [&evv, pIdx] (auto volVarIdx) { return (evv->operator[](volVarIdx)).pressure(pIdx); };
@@ -509,13 +510,13 @@ private:
     template< class InteractionVolume,
               class DataHandle,
               class DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType),
-              typename std::enable_if_t<DiffusionType::myDiscretizationMethod == DiscretizationMethods::CCMpfa, int> = 0 >
+              typename std::enable_if_t<DiffusionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
     void fillDiffusionHandle(InteractionVolume& iv,
                              DataHandle& handle,
                              bool forceUpdateAll,
                              int phaseIdx, int compIdx)
     {
-        using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethods::CCMpfa>;
+        using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
 
         // get instance of the interaction volume-local assembler
         static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
@@ -551,10 +552,10 @@ private:
     template< class InteractionVolume,
               class DataHandle,
               class HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType),
-              typename std::enable_if_t<HeatConductionType::myDiscretizationMethod == DiscretizationMethods::CCMpfa, int> = 0 >
+              typename std::enable_if_t<HeatConductionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
     void fillHeatConductionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
-        using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethods::CCMpfa>;
+        using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
 
         // get instance of the interaction volume-local assembler
         static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
@@ -567,11 +568,11 @@ private:
                 localAssembler.assemble( handle.heatConductionTout(),
                                          handle.heatConductionT(),
                                          iv,
-                                         LambdaFactory::getHeatConductionLambda() );
+                                         LambdaFactory::template getHeatConductionLambda<typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel)>() );
             else
                 localAssembler.assemble( handle.heatConductionT(),
                                          iv,
-                                         LambdaFactory::getHeatConductionLambda() );
+                                         LambdaFactory::template getHeatConductionLambda<typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel)>() );
         }
 
         // assemble vector of temperatures
@@ -584,21 +585,21 @@ private:
     template< class InteractionVolume,
               class DataHandle,
               class AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType),
-              typename std::enable_if_t<AdvectionType::myDiscretizationMethod != DiscretizationMethods::CCMpfa, int> = 0 >
+              typename std::enable_if_t<AdvectionType::discMethod != DiscretizationMethod::ccmpfa, int> = 0 >
     void fillAdvectionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll) {}
 
     //! fill handle only when diffusion uses mpfa
     template< class InteractionVolume,
               class DataHandle,
               class DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType),
-              typename std::enable_if_t<DiffusionType::myDiscretizationMethod != DiscretizationMethods::CCMpfa, int> = 0 >
+              typename std::enable_if_t<DiffusionType::discMethod != DiscretizationMethod::ccmpfa, int> = 0 >
     void fillDiffusionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll, int phaseIdx, int compIdx) {}
 
     //! fill handle only when heat conduction uses mpfa
     template< class InteractionVolume,
               class DataHandle,
               class HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType),
-              typename std::enable_if_t<HeatConductionType::myDiscretizationMethod != DiscretizationMethods::CCMpfa, int> = 0 >
+              typename std::enable_if_t<HeatConductionType::discMethod != DiscretizationMethod::ccmpfa, int> = 0 >
     void fillHeatConductionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll) {}
 
     const Problem* problemPtr_;

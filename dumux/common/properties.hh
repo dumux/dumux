@@ -38,15 +38,12 @@ namespace Properties {
 // Basic properties of numeric models:
 ///////////////////////////////////////
 NEW_PROP_TAG(Scalar);                 //!< Property to specify the type of scalar values.
-NEW_PROP_TAG(ModelParameterGroup);    //!< Property which defines the group that is queried for parameters by default
 NEW_PROP_TAG(ModelDefaultParameters); //!< Property which defines the group that is queried for parameters by default
-NEW_PROP_TAG(GridCreator);            //!< Property which provides a GridCreator (manages grids)
 NEW_PROP_TAG(Grid);                   //!< The DUNE grid type
-NEW_PROP_TAG(NumEq);                  //!< The number of equations to solve (equal to number of primary variables)
-NEW_PROP_TAG(Indices);                //!< Enumerations for the numeric model
 NEW_PROP_TAG(PrimaryVariables);       //!< A vector of primary variables
 NEW_PROP_TAG(NumEqVector);            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
 NEW_PROP_TAG(GridView);               //!< The type of the grid view according to the grid type
+NEW_PROP_TAG(ModelTraits);            //!< Traits class encapsulating model specifications
 NEW_PROP_TAG(Problem);                //!< Property to specify the type of a problem which has to be solved
 NEW_PROP_TAG(PointSource);            //!< Property defining the type of point source used
 NEW_PROP_TAG(PointSourceHelper);      //!< Property defining the class that computes which sub control volume point sources belong to
@@ -55,7 +52,6 @@ NEW_PROP_TAG(BaseLocalResidual);      //!< The type of the base class of the loc
 NEW_PROP_TAG(JacobianMatrix);         //!< Type of the global jacobian matrix
 NEW_PROP_TAG(SolutionVector);         //!< Vector containing all primary variable vector of the grid
 NEW_PROP_TAG(BoundaryTypes);          //!< Stores the boundary types of a single degree of freedom
-NEW_PROP_TAG(DiscretizationMethod);   //!< Property for the used discretization method
 
 //! The type of the local residual function, i.e. the equation to be solved. Must inherit
 //! from the BaseLocalResidual property and fulfill its interfaces.
@@ -76,18 +72,15 @@ NEW_PROP_TAG(BalanceEqOpts);          //!< A class that collects options for the
 // Properties used by finite volume schemes:
 /////////////////////////////////////////////
 NEW_PROP_TAG(ElementBoundaryTypes);                //!< Stores the boundary types on an element
-NEW_PROP_TAG(ElementSolutionVector);               //!< A vector of primary variables within an element
 
 NEW_PROP_TAG(FVGridGeometry);                      //!< The type of the global finite volume geometry
 NEW_PROP_TAG(EnableFVGridGeometryCache);           //!< specifies if geometric data is saved (faster, but more memory consuming)
 
 NEW_PROP_TAG(VolumeVariables);                     //!< The secondary variables within a sub-control volume
-NEW_PROP_TAG(ElementVolumeVariables);              //!< The type for a local (element/stencil) container for the volume variables
 NEW_PROP_TAG(GridVolumeVariables);                 //!< The type for a global container for the volume variables
 NEW_PROP_TAG(EnableGridVolumeVariablesCache);      //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
 NEW_PROP_TAG(FluxVariables);                       //!< Container storing the different types of flux variables
 NEW_PROP_TAG(FluxVariablesCache);                  //!< Stores data associated with flux vars
-NEW_PROP_TAG(ElementFluxVariablesCache);           //!< A local vector of flux variable caches per element
 NEW_PROP_TAG(GridFluxVariablesCache);              //!< The global vector of flux variable containers
 NEW_PROP_TAG(EnableGridFluxVariablesCache);        //!< specifies if data on flux vars should be saved (faster, but more memory consuming)
 NEW_PROP_TAG(GridVariables);                       //!< The grid variables object managing variable data on the grid (volvars/fluxvars cache)
@@ -103,59 +96,34 @@ NEW_PROP_TAG(DualGridNodalIndexSet);               //!< The type used for the no
 // Properties used by models involving flow in porous media:
 /////////////////////////////////////////////////////////////
 NEW_PROP_TAG(EnergyLocalResidual);                 //!< The local residual of the energy equation
-NEW_PROP_TAG(EnableAdvection);                     //!< specifies if advection is considered in the model
 NEW_PROP_TAG(AdvectionType);                       //!< The type for the calculation the advective fluxes
 NEW_PROP_TAG(SolutionDependentAdvection);          //!< specifies if the parameters for the advective fluxes depend on the solution
-NEW_PROP_TAG(EnableMolecularDiffusion);            //!< specifies if molecular diffusive fluxes are considered in the model
 NEW_PROP_TAG(MolecularDiffusionType);              //!< The type for the calculation of the molecular diffusion fluxes
 NEW_PROP_TAG(SolutionDependentMolecularDiffusion); //!< specifies if the parameters for the diffusive fluxes depend on the solution
-NEW_PROP_TAG(EnableEnergyBalance);                 //!< Specifies if the model solves an energy equation
 NEW_PROP_TAG(HeatConductionType);                  //!< The type for the calculation of the heat conduction fluxes
 NEW_PROP_TAG(SolutionDependentHeatConduction);     //!< specifies if the parameters for the heat conduction fluxes depend on the solution
 
-NEW_PROP_TAG(NumPhases);                           //!< Number of fluid phases in the system
-NEW_PROP_TAG(PhaseIdx);                            //!< A phase index to allow using a two-phase fluidsystem for one-phase models
-NEW_PROP_TAG(NumComponents);                       //!< Number of fluid phases in the system
 NEW_PROP_TAG(SpatialParams);                       //!< The type of the spatial parameters object
 NEW_PROP_TAG(FluidSystem);                         //!< The type of the fluid system to use
 NEW_PROP_TAG(FluidState);                          //!< The type of the fluid state to use
+NEW_PROP_TAG(SolidSystem);                         //!< The type of the solid system to use
+NEW_PROP_TAG(SolidState);                           //!< The type of the solid state to use
 NEW_PROP_TAG(PrimaryVariableSwitch);               //!< The primary variable switch needed for compositional models
 NEW_PROP_TAG(EffectiveDiffusivityModel);           //!< The employed model for the computation of the effective diffusivity
 NEW_PROP_TAG(ThermalConductivityModel);            //!< Model to be used for the calculation of the effective conductivity
 NEW_PROP_TAG(VelocityOutput);                      //!< specifies the velocity calculation module to be used
-
-NEW_PROP_TAG(MaterialLaw);                         //!< The material law which ought to be used (extracted from the spatial parameters)
 NEW_PROP_TAG(Formulation);                         //!< The formulation of the model
 // TODO: is this useful? -> everything is a constraint solver just a different type
 NEW_PROP_TAG(UseConstraintSolver);                 //!< Whether to use a contraint solver for computing the secondary variables
-NEW_PROP_TAG(UseKelvinEquation);                   //!< If we use Kelvin equation to lower the vapor pressure as a function of capillary pressure, temperature
 
-////////////////////////////////////////////////////////////////////////////////
-// Properties used by models involving mineralization:
-////////////////////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(NumSPhases);
-NEW_PROP_TAG(NonMineralizationVtkOutputFields);
-NEW_PROP_TAG(NonMineralizationVolumeVariables);
-
-/////////////////////////////////////////////////////////////
-// non-isothermal porous medium flow models
-/////////////////////////////////////////////////////////////
-NEW_PROP_TAG(IsothermalVtkOutputFields);
-NEW_PROP_TAG(IsothermalVolumeVariables);
-NEW_PROP_TAG(IsothermalLocalResidual);
-NEW_PROP_TAG(IsothermalIndices);
-NEW_PROP_TAG(IsothermalNumEq);
-
-// specify if we evaluate the permeability in the volume (for discontinuous fields)
-// or at the scvf center for analytical permeability fields (e.g. convergence studies)
-NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);
+// When using the box method in a multi-phase context, an interface solver might be necessary
+NEW_PROP_TAG(EnableBoxInterfaceSolver);
 
 //////////////////////////////////////////////////////////////
 // Additional properties used by the 2pnc and 2pncmin models:
 //////////////////////////////////////////////////////////////
 NEW_PROP_TAG(Chemistry);                           //!< The chemistry class with which solves equlibrium reactions
-NEW_PROP_TAG(NumMajorComponents);                  //!< Number of major fluid components which are considered in the calculation of the phase density
-NEW_PROP_TAG(SetMoleFractionsForWettingPhase);     //!< Set the mole fraction in the wetting or non-wetting phase
+NEW_PROP_TAG(SetMoleFractionsForFirstPhase);       //!< Set the mole fraction in the wetting or non-wetting phase
 
 //////////////////////////////////////////////////////////////
 // Additional properties used by the richards model
@@ -166,6 +134,11 @@ NEW_PROP_TAG(EnableWaterDiffusionInAir); //!< Property for turning Richards into
 // Additional properties used by the 3pwateroil model:
 //////////////////////////////////////////////////////////////
 NEW_PROP_TAG(OnlyGasPhaseCanDisappear); //!< reduces the phasestates to threePhases and wnPhaseOnly
+
+/////////////////////////////////////////////////////////////
+// Properties used by geomechanical models:
+/////////////////////////////////////////////////////////////
+NEW_PROP_TAG(StressType);       //!< The type used for the evaluation of stress tensors and forces
 
 /////////////////////////////////////////////////////////////
 // Properties used by the staggered-grid discretization method
@@ -179,13 +152,11 @@ NEW_PROP_TAG(GridFaceVariables);                   //!< Global vector containing
 NEW_PROP_TAG(CellCenterPrimaryVariables);          //!< The primary variables container type for cell-centered dofs
 NEW_PROP_TAG(FacePrimaryVariables);                //!< The primary variables container type for face dofs
 NEW_PROP_TAG(IntersectionMapper);                  //!< Specifies the intersection mapper
-NEW_PROP_TAG(DofTypeIndices);                      //!< Specifies index types for accessing the multi type block vectors/matrices
 NEW_PROP_TAG(StaggeredPrimaryVariables);           //!< The hybrid primary variables container type
 NEW_PROP_TAG(BaseEpsilon);                         //!< A base epsilon for numerical differentiation, can contain multiple values
 NEW_PROP_TAG(FaceVariables);                       //!< Class containing local face-related data
 NEW_PROP_TAG(BoundaryValues);                      //!< Class containing local boundary data
 NEW_PROP_TAG(StaggeredFaceSolution);               //!< A vector containing the solution for a face (similar to ElementSolution)
-NEW_PROP_TAG(ElementFaceVariables);                //!< Face related varibles (similar to volume variables)
 NEW_PROP_TAG(EnableGridFaceVariablesCache);      //!< Switch on/off caching of face variables
 
 /////////////////////////////////////////////////////////////
@@ -197,7 +168,7 @@ NEW_PROP_TAG(PressureFormulation); //! the formulation of the pressure e.g most 
 /////////////////////////////////////////////////////////////
 // Properties used by the nonequilibrium model
 /////////////////////////////////////////////////////////////
-
+NEW_PROP_TAG(EquilibriumModelTraits);
 NEW_PROP_TAG(EquilibriumLocalResidual);
 NEW_PROP_TAG(EquilibriumIndices);
 NEW_PROP_TAG(EquilibriumVtkOutputFields);
@@ -228,6 +199,11 @@ NEW_PROP_TAG(NumericalFluxType);             //!< specifies the Numerical Flux e
 NEW_PROP_TAG(TurbulenceModelType);           //!< specifies the turbulence model to use
 NEW_PROP_TAG(EnableNumericalFlux);           //!< specifies if numerical flux is considered in the model
 NEW_PROP_TAG(EnableTurbulenceModel);         //!< specifies if turbulence model is considered in the model
+
+/////////////////////////////////////////////////////////////
+// Properties used by multidomain simulations
+/////////////////////////////////////////////////////////////
+NEW_PROP_TAG(CouplingManager);
 
 } // end namespace Properties
 } // end namespace Dumux

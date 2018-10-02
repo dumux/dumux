@@ -31,13 +31,21 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declarations
-template<class TypeTag, DiscretizationMethods discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class DarcysLawImplementation;
 
-template<class TypeTag, bool isNetwork>
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief Darcy's law for cell-centered finite volume schemes with two-point flux approximation
+ * \note Darcy's law is speialized for network and surface grids (i.e. if grid dim < dimWorld)
+ * \tparam Scalar the scalar type for scalar physical quantities
+ * \tparam FVGridGeometry the grid geometry
+ * \tparam isNetwork whether we are computing on a network grid embedded in a higher world dimension
+ */
+template<class Scalar, class FVGridGeometry, bool isNetwork>
 class CCTpfaDarcysLaw;
 
 /*!
@@ -46,28 +54,28 @@ class CCTpfaDarcysLaw;
  * \note Darcy's law is speialized for network and surface grids (i.e. if grid dim < dimWorld)
  */
 template <class TypeTag>
-class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
-: public CCTpfaDarcysLaw<TypeTag, (GET_PROP_TYPE(TypeTag, Grid)::dimension < GET_PROP_TYPE(TypeTag, Grid)::dimensionworld) >
+class DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
+: public CCTpfaDarcysLaw<typename GET_PROP_TYPE(TypeTag, Scalar),
+                         typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         (GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView::dimension < GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView::dimensionworld)>
 {};
 
 /*!
  * \ingroup CCTpfaDiscretization
  * \brief Class that fills the cache corresponding to tpfa Darcy's Law
  */
-template<class TypeTag>
+template<class FVGridGeometry>
 class TpfaDarcysLawCacheFiller
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
 
 public:
     //! Function to fill a TpfaDarcysLawCache of a given scvf
     //! This interface has to be met by any advection-related cache filler class
-    template<class FluxVariablesCacheFiller>
+    //! TODO: Probably get cache type out of the filler
+    template<class FluxVariablesCache, class Problem, class ElementVolumeVariables, class FluxVariablesCacheFiller>
     static void fill(FluxVariablesCache& scvfFluxVarsCache,
                      const Problem& problem,
                      const Element& element,
@@ -84,20 +92,18 @@ public:
  * \ingroup CCTpfaDiscretization
  * \brief The cache corresponding to tpfa Darcy's Law
  */
-template<class TypeTag>
+template<class AdvectionType, class FVGridGeometry>
 class TpfaDarcysLawCache
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using Scalar = typename AdvectionType::Scalar;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
 
 public:
-    using Filler = TpfaDarcysLawCacheFiller<TypeTag>;
+    using Filler = TpfaDarcysLawCacheFiller<FVGridGeometry>;
 
+    template<class Problem, class ElementVolumeVariables>
     void updateAdvection(const Problem& problem,
                          const Element& element,
                          const FVElementGeometry& fvGeometry,
@@ -118,37 +124,33 @@ private:
  * \ingroup CCTpfaDiscretization
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
  */
-template<class TypeTag>
-class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
+template<class ScalarType, class FVGridGeometry>
+class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>
 {
-    using Implementation = DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using ThisType = CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
   public:
+    //! state the scalar type of the law
+    using Scalar = ScalarType;
+
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! state the type for the corresponding cache
-    using Cache = TpfaDarcysLawCache<TypeTag>;
+    using Cache = TpfaDarcysLawCache<ThisType, FVGridGeometry>;
 
     //! Compute the advective flux
+    template<class Problem, class ElementVolumeVariables, class ElementFluxVarsCache>
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -157,7 +159,7 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
@@ -210,6 +212,7 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
 
     // The flux variables cache has to be bound to an element prior to flux calculations
     // During the binding, the transmissibility will be computed and stored using the method below.
+    template<class Problem, class ElementVolumeVariables>
     static Scalar calculateTransmissibility(const Problem& problem,
                                             const Element& element,
                                             const FVElementGeometry& fvGeometry,
@@ -221,26 +224,9 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        // check if we evaluate the permeability in the volume (for discontinuous fields, default)
-        // or at the scvf center for analytical permeability fields (e.g. convergence studies)
-        auto getPermeability = [&problem](const VolumeVariables& volVars,
-                                          const GlobalPosition& scvfIpGlobal) -> typename SpatialParams::PermeabilityType
-                               {
-                                    if (GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP))
-                                    {
-                                        // TODO: Make PermeabilityType a property!!
-                                        // We do an implicit cast to permeability type in case EvaluatePermeabilityAtScvfIP is not true so that it compiles
-                                        // If it is true make sure that no cast is necessary and the correct return type is specified in the spatial params
-                                        static_assert(!GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP)
-                                                || std::is_same<std::decay_t<typename SpatialParams::PermeabilityType>, std::decay_t<decltype(problem.spatialParams().permeabilityAtPos(scvfIpGlobal))>>::value,
-                                                "permeabilityAtPos doesn't return PermeabilityType stated in the spatial params!");
-                                        return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
-                                    }
-                                    else
-                                        return volVars.permeability();
-                               };
 
-        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, getPermeability(insideVolVars, scvf.ipGlobal()),
+        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv,
+                                                      getPermeability_(problem, insideVolVars, scvf.ipGlobal()),
                                                       insideVolVars.extrusionFactor());
 
         // on the boundary (dirichlet) we only need ti
@@ -255,7 +241,8 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
             // refers to the scv of our element, so we use the scv method
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const Scalar tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv, getPermeability(outsideVolVars, scvf.ipGlobal()),
+            const Scalar tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv,
+                                                               getPermeability_(problem, outsideVolVars, scvf.ipGlobal()),
                                                                outsideVolVars.extrusionFactor());
 
             // harmonic mean (check for division by zero!)
@@ -268,43 +255,54 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
 
         return tij;
     }
+
+private:
+    template<class Problem, class VolumeVariables,
+             std::enable_if_t<!Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
+    static decltype(auto) getPermeability_(const Problem& problem,
+                                           const VolumeVariables& volVars,
+                                           const GlobalPosition& scvfIpGlobal)
+    { return volVars.permeability(); }
+
+    template<class Problem, class VolumeVariables,
+             std::enable_if_t<Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
+    static decltype(auto) getPermeability_(const Problem& problem,
+                                           const VolumeVariables& volVars,
+                                           const GlobalPosition& scvfIpGlobal)
+    { return problem.spatialParams().permeabilityAtPos(scvfIpGlobal); }
 };
 
 /*!
  * \ingroup CCTpfaDiscretization
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim < dimWorld (network/surface grids)
  */
-template<class TypeTag>
-class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ true>
+template<class ScalarType, class FVGridGeometry>
+class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ true>
 {
-    using Implementation = DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using ThisType = CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ true>;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
+    //! state the scalar type of the law
+    using Scalar = ScalarType;
+
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! state the type for the corresponding cache
-    using Cache = TpfaDarcysLawCache<TypeTag>;
+    using Cache = TpfaDarcysLawCache<ThisType, FVGridGeometry>;
 
     //! Compute the advective flux
+    template<class Problem, class ElementVolumeVariables, class ElementFluxVarsCache>
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -313,7 +311,7 @@ public:
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        static const bool gravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        static const bool gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
@@ -445,6 +443,7 @@ public:
 
     // The flux variables cache has to be bound to an element prior to flux calculations
     // During the binding, the transmissibility will be computed and stored using the method below.
+    template<class Problem, class ElementVolumeVariables>
     static Scalar calculateTransmissibility(const Problem& problem,
                                             const Element& element,
                                             const FVElementGeometry& fvGeometry,
@@ -456,26 +455,9 @@ public:
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        // check if we evaluate the permeability in the volume (for discontinuous fields, default)
-        // or at the scvf center for analytical permeability fields (e.g. convergence studies)
-        auto getPermeability = [&problem](const VolumeVariables& volVars,
-                                          const GlobalPosition& scvfIpGlobal) -> typename SpatialParams::PermeabilityType
-                               {
-                                    if (GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP))
-                                    {
-                                        // TODO: Make PermeabilityType a property!!
-                                        // We do an implicit cast to permeability type in case EvaluatePermeabilityAtScvfIP is not true so that it compiles
-                                        // If it is true make sure that no cast is necessary and the correct return type is specified in the spatial params
-                                        static_assert(!GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP)
-                                                || std::is_same<std::decay_t<typename SpatialParams::PermeabilityType>, std::decay_t<decltype(problem.spatialParams().permeabilityAtPos(scvfIpGlobal))>>::value,
-                                                "permeabilityAtPos doesn't return PermeabilityType stated in the spatial params!");
-                                        return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
-                                    }
-                                    else
-                                        return volVars.permeability();
-                               };
 
-        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, getPermeability(insideVolVars, scvf.ipGlobal()),
+        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv,
+                                                      getPermeability_(problem, insideVolVars, scvf.ipGlobal()),
                                                       insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
@@ -490,7 +472,8 @@ public:
             // refers to the scv of our element, so we use the scv method
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const Scalar tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, getPermeability(outsideVolVars, scvf.ipGlobal()),
+            const Scalar tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv,
+                                                          getPermeability_(problem, outsideVolVars, scvf.ipGlobal()),
                                                           outsideVolVars.extrusionFactor());
 
             // harmonic mean (check for division by zero!)
@@ -503,6 +486,21 @@ public:
 
         return tij;
     }
+
+private:
+    template<class Problem, class VolumeVariables,
+             std::enable_if_t<!Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
+    static decltype(auto) getPermeability_(const Problem& problem,
+                                           const VolumeVariables& volVars,
+                                           const GlobalPosition& scvfIpGlobal)
+    { return volVars.permeability(); }
+
+    template<class Problem, class VolumeVariables,
+             std::enable_if_t<Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
+    static decltype(auto) getPermeability_(const Problem& problem,
+                                           const VolumeVariables& volVars,
+                                           const GlobalPosition& scvfIpGlobal)
+    { return problem.spatialParams().permeabilityAtPos(scvfIpGlobal); }
 };
 
 } // end namespace Dumux

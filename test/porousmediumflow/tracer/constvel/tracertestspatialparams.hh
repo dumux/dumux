@@ -24,36 +24,35 @@
 #ifndef DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup TracerTests
  * \brief Definition of the spatial parameters for the tracer problem
  */
-template<class TypeTag>
-class TracerTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class TracerTestSpatialParams
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             TracerTestSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           TracerTestSpatialParams<FVGridGeometry, Scalar>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 
-    TracerTestSpatialParams(const Problem& problem)
-    : ParentType(problem) {}
+    TracerTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry) {}
 
     /*!
      * \brief Define the porosity \f$\mathrm{[-]}\f$.
@@ -70,9 +69,10 @@ public:
      * \param scv The sub-control volume
      * \param elemSol The solution for all dofs of the element
      */
+    template<class ElementSolution>
     Scalar dispersivity(const Element &element,
                         const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+                        const ElementSolution& elemSol) const
     { return 0; }
 
     //! Fluid properties that are spatial params in the tracer model
@@ -106,6 +106,7 @@ public:
     }
 
     //! velocity field
+    template<class ElementVolumeVariables>
     Scalar volumeFlux(const Element &element,
                       const FVElementGeometry& fvGeometry,
                       const ElementVolumeVariables& elemVolVars,

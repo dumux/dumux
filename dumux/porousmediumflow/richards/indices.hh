@@ -24,9 +24,7 @@
 #ifndef DUMUX_RICHARDS_INDICES_HH
 #define DUMUX_RICHARDS_INDICES_HH
 
-namespace Dumux
-{
-// \{
+namespace Dumux {
 
 /*!
  * \ingroup RichardsModel
@@ -35,32 +33,18 @@ namespace Dumux
 
 struct RichardsIndices
 {
-    //////////
-    // primary variable indices
-    //////////
-
     //! Primary variable index for the wetting phase pressure
     static constexpr int pressureIdx = 0;
     static constexpr int switchIdx = 0;
 
-    //////////
-    // equation indices
-    //////////
     //! Equation index for the mass conservation of the wetting phase
     static constexpr int conti0EqIdx = 0;
 
-    //////////
-    // phase indices
-    //////////
-    static constexpr int wPhaseIdx = 0; //!< Index of the wetting phase;
-    static constexpr int nPhaseIdx = 1; //!< Index of the non-wetting phase;
-
     // present phases (-> 'pseudo' primary variable)
-    static constexpr int wPhaseOnly = 1; //!< Only the non-wetting phase is present
-    static constexpr int nPhaseOnly = 2; //!< Only the wetting phase is present
+    static constexpr int liquidPhaseOnly = 1; //!< Only the liquid phase is present
+    static constexpr int gasPhaseOnly = 2; //!< Only the gas phase is present
     static constexpr int bothPhases = 3; //!< Both phases are present
 };
-// \}
 
 } // end namespace Dumux
 

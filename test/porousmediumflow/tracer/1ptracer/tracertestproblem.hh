@@ -25,6 +25,8 @@
 #ifndef DUMUX_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TRACER_TEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/tracer/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -32,8 +34,7 @@
 
 #include "tracertestspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /**
  * \ingroup TracerTests
  * \brief Definition of a problem, for the tracer problem:
@@ -42,8 +43,7 @@ namespace Dumux
 template <class TypeTag>
 class TracerTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 NEW_TYPE_TAG(TracerTestTypeTag, INHERITS_FROM(Tracer));
 NEW_TYPE_TAG(TracerTestCCTypeTag, INHERITS_FROM(CCTpfaModel, TracerTestTypeTag));
 
@@ -59,7 +59,12 @@ SET_TYPE_PROP(TracerTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(TracerTestTypeTag, Problem, TracerTestProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TracerTestTypeTag, SpatialParams, TracerTestSpatialParams<TypeTag>);
+SET_PROP(TracerTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = TracerTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(TracerTestTypeTag, UseMoles, false);
@@ -67,7 +72,7 @@ SET_BOOL_PROP(TracerTestCCTypeTag, SolutionDependentMolecularDiffusion, false);
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
-class TracerFluidSystem : public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar),
+class TracerFluidSystem : public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                TracerFluidSystem<TypeTag>>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -134,7 +139,7 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -145,8 +150,8 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
-    static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     TracerTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeom)

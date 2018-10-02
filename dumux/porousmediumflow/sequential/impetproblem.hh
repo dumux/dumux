@@ -85,7 +85,6 @@ private:
 
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 
     //private!! copy constructor
     IMPETProblem(const IMPETProblem&)
@@ -97,22 +96,23 @@ public:
      * \param gridView gridview to the grid.
      */
     IMPETProblem(TimeManager &timeManager, Grid& grid)
-        : gridView_(grid.leafGridView()),
-          grid_(nullptr),
+        : IMPETProblem(timeManager, grid, grid.leafGridView())
+    {}
+
+    IMPETProblem(TimeManager &timeManager, Grid& grid, const GridView& gridView)
+        : grid_(&grid),
+          gridView_(gridView),
           bBoxMin_(std::numeric_limits<double>::max()),
           bBoxMax_(-std::numeric_limits<double>::max()),
           timeManager_(&timeManager),
-          variables_(grid.leafGridView()),
           outputInterval_(1),
           outputTimeInterval_(0.0),
           vtkOutputLevel_(-1)
     {
-        setGrid(grid);
-
         // calculate the bounding box of the grid view
         using std::min;
         using std::max;
-        for (const auto& vertex : vertices(grid.leafGridView())) {
+        for (const auto& vertex : vertices(this->gridView())) {
             for (int i=0; i<dim; i++) {
                 bBoxMin_[i] = min(bBoxMin_[i], vertex.geometry().center()[i]);
                 bBoxMax_[i] = max(bBoxMax_[i], vertex.geometry().center()[i]);
@@ -120,12 +120,13 @@ public:
         }
 
         // communicate to get the bounding box of the whole domain
-        if (grid.leafGridView().comm().size() > 1)
+        if (this->gridView().comm().size() > 1)
             for (int i = 0; i < dim; ++i) {
-                bBoxMin_[i] = grid.leafGridView().comm().min(bBoxMin_[i]);
-                bBoxMax_[i] = grid.leafGridView().comm().max(bBoxMax_[i]);
+                bBoxMin_[i] = this->gridView().comm().min(bBoxMin_[i]);
+                bBoxMax_[i] = this->gridView().comm().max(bBoxMax_[i]);
             }
 
+        variables_ = std::make_shared<Variables>(this->gridView());
         pressModel_ = std::make_shared<PressureModel>(asImp_());
 
         transportModel_ = std::make_shared<TransportModel>(asImp_());
@@ -323,7 +324,7 @@ public:
     void init()
     {
         // set the initial condition of the model
-        variables_.initialize();
+        variables_->initialize();
         model().initialize();
         if (adaptiveGrid)
             gridAdapt().init();
@@ -381,12 +382,12 @@ public:
         if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(t, 0.0, 1.0e-30)
             && Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(timeManager().timeStepSize(), 0.0, 1.0e-30))
         {
-            if (this->gridView().comm().size() > 1)
-                dt = this->gridView().comm().min(dt);
+            if (gridView().comm().size() > 1)
+                dt = gridView().comm().min(dt);
 
             // check if assigned initialDt is in accordance with dt from first transport step
             if (timeManager().timeStepSize() > dt
-                && this->gridView().comm().rank() == 0)
+                && gridView().comm().rank() == 0)
                 Dune::dwarn << "Initial timestep of size " << timeManager().timeStepSize()
                             << " is larger then dt=" << dt <<" from transport" << std::endl;
             // internally assign next timestep size
@@ -394,8 +395,8 @@ public:
         }
 
         //make sure the right time-step is used by all processes in the parallel case
-        if (this->gridView().comm().size() > 1)
-            dt = this->gridView().comm().min(dt);
+        if (gridView().comm().size() > 1)
+            dt = gridView().comm().min(dt);
 
         // check maximum allowed time step size
         timeManager().setTimeStepSize(dt);
@@ -569,8 +570,10 @@ public:
     /*!
      * \brief The GridView which used by the problem.
      */
-    const GridView &gridView() const
-    { return gridView_; }
+    const GridView& gridView() const
+    {
+        return gridView_;
+    }
 
     /*!
      * \brief Returns the current grid which used by the problem.
@@ -630,13 +633,13 @@ public:
      * \brief Returns the mapper for vertices to indices.
      */
     const VertexMapper &vertexMapper() const
-    { return variables_.vertexMapper(); }
+    { return variables_->vertexMapper(); }
 
     /*!
      * \brief Returns the mapper for elements to indices.
      */
     const ElementMapper &elementMapper() const
-    { return variables_.elementMapper(); }
+    { return variables_->elementMapper(); }
 
     /*!
      * \brief The coordinate of the corner of the GridView's bounding
@@ -671,11 +674,11 @@ public:
      * simulation process, such as pressure, saturation etc.
      */
     Variables& variables ()
-    { return variables_; }
+    { return *variables_; }
 
     //! \copydoc IMPETProblem::variables ()
     const Variables& variables () const
-    { return variables_; }
+    { return *variables_; }
 
     /*!
      * \brief Returns numerical model used for the problem.
@@ -734,8 +737,8 @@ public:
         resultWriter().serialize(res);
 
         // do the actual serialization process: write primary variables
-        res.template serializeEntities<0> (*pressModel_, gridView_);
-        res.template serializeEntities<0> (*transportModel_, gridView_);
+        res.template serializeEntities<0> (*pressModel_, gridView());
+        res.template serializeEntities<0> (*transportModel_, gridView());
 
         res.serializeEnd();
 
@@ -772,8 +775,8 @@ public:
         resultWriter().deserialize(res);
 
         // do the actual serialization process: get primary variables
-        res.template deserializeEntities<0> (*pressModel_, gridView_);
-        res.template deserializeEntities<0> (*transportModel_, gridView_);
+        res.template deserializeEntities<0> (*pressModel_, gridView());
+        res.template deserializeEntities<0> (*transportModel_, gridView());
         pressureModel().updateMaterialLaws();
 
         res.deserializeEnd();
@@ -799,7 +802,7 @@ public:
             std::cout << "Writing result file for current time step\n";
 
         if (!resultWriter_)
-            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
+            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView(), asImp_().name());
         if (adaptiveGrid)
             resultWriter_->gridChanged();
         resultWriter_->beginWrite(timeManager().time() + timeManager().timeStepSize());
@@ -815,14 +818,14 @@ protected:
     VtkMultiWriter& resultWriter()
     {
         if (!resultWriter_)
-            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
+            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView(), asImp_().name());
         return *resultWriter_;
     }
     //! \copydoc IMPETProblem::resultWriter()
     VtkMultiWriter& resultWriter() const
     {
         if (!resultWriter_)
-            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
+            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView(), asImp_().name());
         return *resultWriter_;
     }
 
@@ -836,11 +839,11 @@ private:
     { return *static_cast<const Implementation *>(this); }
 
     std::string simname_; // a string for the name of the current simulation,
-    // which could be set by means of an program argument,
-    // for example.
-    const GridView gridView_;
+    // which could be set by means of a program argument, for example.
+
     // pointer to a possibly adaptive grid.
     Grid *grid_;
+    GridView gridView_;
 
     GlobalPosition bBoxMin_;
     GlobalPosition bBoxMax_;
@@ -848,7 +851,7 @@ private:
     TimeManager *timeManager_;
     Scalar maxTimeStepSize_;
 
-    Variables variables_;
+    std::shared_ptr<Variables> variables_;
 
     std::shared_ptr<PressureModel> pressModel_;//!< object including the pressure model
     std::shared_ptr<TransportModel> transportModel_;//!< object including the saturation model

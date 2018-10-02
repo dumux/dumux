@@ -31,7 +31,7 @@
 namespace Dumux
 {
 //! forward declaration of the method-specific implemetation
-template<class TypeTag, DiscretizationMethods discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FicksLawImplementation;
 
 /*!
@@ -39,7 +39,7 @@ class FicksLawImplementation;
  * \brief Fick's law for cell-centered finite volume schemes with multi-point flux approximation
  */
 template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
+class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -50,12 +50,12 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
 
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
+    static constexpr int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
     //! Class that fills the cache corresponding to mpfa Fick's Law
@@ -111,7 +111,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
-        static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+        static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
 
     public:
         // export filler type
@@ -220,7 +220,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
 public:
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCMpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
 
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFicksLawCache;

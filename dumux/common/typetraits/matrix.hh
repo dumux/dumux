@@ -26,6 +26,8 @@
 
 #include <type_traits>
 
+#include <dune/istl/bcrsmatrix.hh>
+
 namespace Dumux {
 
 //! Helper type to determine whether a given type is a Dune::BCRSMatrix

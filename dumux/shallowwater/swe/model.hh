@@ -47,6 +47,21 @@
 namespace Dumux
 {
 
+struct SweModelTraits
+{
+    using Indices = SweIndices;
+
+    static constexpr int numEq() { return 3; }
+    static constexpr int numPhases() { return 1; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return false; }
+    static constexpr bool enableEnergyBalance() { return false; }
+};
+
+
+
+
 ///////////////////////////////////////////////////////////////////////////
 // properties for the shallow water model
 ///////////////////////////////////////////////////////////////////////////
@@ -69,14 +84,14 @@ SET_BOOL_PROP(Swe, EnableTurbulenceModel, false); //!< The turbulence model for 
 /*!
 * \brief The two-dimensional shallow water equations have allways 3 equations.
 */
-SET_INT_PROP(Swe, NumEq, 3);
-SET_INT_PROP(Swe, NumPhases, 1);
-SET_BOOL_PROP(Swe, EnableAdvection, true);
-SET_BOOL_PROP(Swe, SolutionDependentAdvection, true);
-SET_BOOL_PROP(Swe, EnableMolecularDiffusion, false);
-SET_BOOL_PROP(Swe, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(Swe, EnableEnergyBalance, false);
-SET_BOOL_PROP(Swe, SolutionDependentHeatConduction, false);
+//SET_INT_PROP(Swe, NumEq, 3);
+//SET_INT_PROP(Swe, NumPhases, 1);
+//SET_BOOL_PROP(Swe, EnableAdvection, true);
+//SET_BOOL_PROP(Swe, SolutionDependentAdvection, true);
+//SET_BOOL_PROP(Swe, EnableMolecularDiffusion, false);
+//SET_BOOL_PROP(Swe, SolutionDependentMolecularDiffusion, false);
+//SET_BOOL_PROP(Swe, EnableEnergyBalance, false);
+//SET_BOOL_PROP(Swe, SolutionDependentHeatConduction, false);
 SET_TYPE_PROP(Swe, AdvectionType, ShallowWaterAdvectiveFlux<TypeTag>);
 
 //! Set friction law indices
@@ -99,15 +114,6 @@ SET_TYPE_PROP(Swe, FluxVariables, SweFluxVariables<TypeTag>);
 //! The flux variables cache class
 SET_TYPE_PROP(Swe, FluxVariablesCache, SweFluxVariablesCache<TypeTag>);
 
-//! The indices required for the SWEs
-SET_PROP(Swe, Indices)
-{
-private:
-    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-public:
-    using type = SweIndices<dim, numEq>;
-};
 
 //! The specific vtk output fields
 SET_TYPE_PROP(Swe, VtkOutputFields, SweVtkOutputFields<TypeTag>);

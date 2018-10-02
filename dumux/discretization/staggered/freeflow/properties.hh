@@ -33,18 +33,14 @@
 #include <dumux/common/defaultmappertraits.hh>
 
 #include <dumux/discretization/staggered/properties.hh>
+#include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/freeflow/properties.hh>
 
-#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
-#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
-#include <dumux/discretization/staggered/fvgridgeometry.hh>
-
-#include "subcontrolvolumeface.hh"
-#include "connectivitymap.hh"
 #include "facevariables.hh"
 #include "boundarytypes.hh"
 #include "velocityoutput.hh"
-#include "staggeredgeometryhelper.hh"
+#include "fvgridgeometrytraits.hh"
+#include "gridvolumevariables.hh"
 
 namespace Dumux
 {
@@ -71,10 +67,11 @@ SET_PROP(StaggeredFreeFlowModel, NumEqCellCenter)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     static constexpr auto dim = GridView::dimension;
-    static constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr auto numEq = ModelTraits::numEq();
 public:
-    static constexpr int value = GET_PROP_VALUE(TypeTag, NumEq) - dim;
+    static constexpr int value = numEq - dim;
 };
 
 //! The default fv grid geometry
@@ -82,41 +79,45 @@ SET_PROP(StaggeredFreeFlowModel, FVGridGeometry)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    using Traits = StaggeredFreeFlowDefaultFVGridGeometryTraits<GridView>;
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-
-    struct Traits : public DefaultMapperTraits<GridView>
-    {
-        using SubControlVolume = CCSubControlVolume<GridView>;
-        using SubControlVolumeFace = FreeFlowStaggeredSubControlVolumeFace<GridView>;
-        using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
-        using GeometryHelper = FreeFlowStaggeredGeometryHelper<GridView>;
-
-        template<class FVGridGeometry>
-        using ConnectivityMap = StaggeredFreeFlowConnectivityMap<FVGridGeometry, DofTypeIndices>;
-
-        template<class FVGridGeometry, bool enableCache>
-        using LocalView = StaggeredFVElementGeometry<FVGridGeometry, enableCache>;
-    };
-
 public:
     using type = StaggeredFVGridGeometry<GridView, enableCache, Traits>;
 };
 
 //! The variables living on the faces
-SET_TYPE_PROP(StaggeredFreeFlowModel, FaceVariables, StaggeredFaceVariables<TypeTag>);
+SET_PROP(StaggeredFreeFlowModel, FaceVariables)
+{
+private:
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    using type = StaggeredFaceVariables<FacePrimaryVariables, GridView::dimension>;
+};
+
+//! Set the default global volume variables cache vector class
+SET_PROP(StaggeredFreeFlowModel, GridVolumeVariables)
+{
+private:
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
+    using Traits = StaggeredGridDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
+public:
+    using type = StaggeredGridVolumeVariables<Traits, enableCache>;
+};
+
 
 //! Boundary types at a single degree of freedom
 SET_PROP(StaggeredFreeFlowModel, BoundaryTypes)
 {
-private:
-    static constexpr auto size = GET_PROP_VALUE(TypeTag, NumEqCellCenter) + GET_PROP_VALUE(TypeTag, NumEqFace);
-public:
-    using type = StaggeredFreeFlowBoundaryTypes<size>;
+    using type = StaggeredFreeFlowBoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
 };
 
 //! The velocity output
-SET_TYPE_PROP(StaggeredFreeFlowModel, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
+SET_TYPE_PROP(StaggeredFreeFlowModel, VelocityOutput,
+    StaggeredFreeFlowVelocityOutput<typename GET_PROP_TYPE(TypeTag, GridVariables),
+                                    typename GET_PROP_TYPE(TypeTag, SolutionVector)>);
 
 } // namespace Properties
 } // namespace Dumux

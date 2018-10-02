@@ -54,17 +54,17 @@ class FVLocalResidual
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using TimeLoop = TimeLoopBase<Scalar>;
 
 public:
     //! the container storing all element residuals
-    using ElementResidualVector = ReservedBlockVector<ResidualVector, FVElementGeometry::maxNumElementScvs>;
+    using ElementResidualVector = ReservedBlockVector<NumEqVector, FVElementGeometry::maxNumElementScvs>;
 
     //! the constructor
     FVLocalResidual(const Problem* problem,
@@ -112,9 +112,9 @@ public:
         // all sub control volumes
         for (auto&& scv : scvs(fvGeometry))
         {
-            auto localScvIdx = scv.indexInElement();
+            auto localScvIdx = scv.localDofIndex();
             const auto& volVars = elemVolVars[scv];
-            storage[localScvIdx] = asImp().computeStorage(scv, volVars);
+            storage[localScvIdx] = asImp().computeStorage(problem, scv, volVars);
             storage[localScvIdx] *= scv.volume() * volVars.extrusionFactor();
         }
 
@@ -269,9 +269,9 @@ public:
      * \note has to be implemented by the model specific residual class
      *
      */
-    ResidualVector computeStorage(const Problem& problem,
-                                  const SubControlVolume& scv,
-                                  const VolumeVariables& volVars) const
+    NumEqVector computeStorage(const Problem& problem,
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
     {
         DUNE_THROW(Dune::NotImplemented, "This model does not implement a storage method!");
     }
@@ -289,13 +289,13 @@ public:
      *       in the user interface of the problem
      *
      */
-    ResidualVector computeSource(const Problem& problem,
-                                 const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const SubControlVolume &scv) const
+    NumEqVector computeSource(const Problem& problem,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const ElementVolumeVariables& elemVolVars,
+                              const SubControlVolume &scv) const
     {
-        ResidualVector source(0.0);
+        NumEqVector source(0.0);
 
         // add contributions from volume flux sources
         source += problem.source(element, fvGeometry, elemVolVars, scv);
@@ -320,12 +320,12 @@ public:
      * \note has to be implemented by the model specific residual class
      *
      */
-    ResidualVector computeFlux(const Problem& problem,
-                               const Element& element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace& scvf,
-                               const ElementFluxVariablesCache& elemFluxVarsCache) const
+    NumEqVector computeFlux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace& scvf,
+                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         DUNE_THROW(Dune::NotImplemented, "This model does not implement a flux method!");
     }
@@ -372,8 +372,8 @@ public:
         // doing the time discretization...
 
         //! Compute storage with the model specific storage residual
-        ResidualVector prevStorage = asImp().computeStorage(problem, scv, prevVolVars);
-        ResidualVector storage = asImp().computeStorage(problem, scv, curVolVars);
+        NumEqVector prevStorage = asImp().computeStorage(problem, scv, prevVolVars);
+        NumEqVector storage = asImp().computeStorage(problem, scv, curVolVars);
 
         prevStorage *= prevVolVars.extrusionFactor();
         storage *= curVolVars.extrusionFactor();
@@ -382,7 +382,7 @@ public:
         storage *= scv.volume();
         storage /= timeLoop_->timeStepSize();
 
-        residual[scv.indexInElement()] += storage;
+        residual[scv.localDofIndex()] += storage;
     }
 
     /*!
@@ -407,11 +407,11 @@ public:
     {
         //! Compute source with the model specific storage residual
         const auto& curVolVars = curElemVolVars[scv];
-        ResidualVector source = asImp().computeSource(problem, element, fvGeometry, curElemVolVars, scv);
+        NumEqVector source = asImp().computeSource(problem, element, fvGeometry, curElemVolVars, scv);
         source *= scv.volume()*curVolVars.extrusionFactor();
 
         //! subtract source from local rate (sign convention in user interface)
-        residual[scv.indexInElement()] -= source;
+        residual[scv.localDofIndex()] -= source;
     }
 
     /*!
@@ -452,12 +452,12 @@ public:
      * \param elemFluxVarsCache The flux variable caches for the element stencil
      * \param scvf The sub control volume face the flux term is integrated over
      */
-    ResidualVector evalFlux(const Problem& problem,
-                            const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const ElementFluxVariablesCache& elemFluxVarsCache,
-                            const SubControlVolumeFace& scvf) const
+    NumEqVector evalFlux(const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const ElementFluxVariablesCache& elemFluxVarsCache,
+                         const SubControlVolumeFace& scvf) const
     {
         return asImp().evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
     }
@@ -495,7 +495,7 @@ public:
 
     //! Compute the derivative of the flux residual
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, void>
+    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod != DiscretizationMethod::box, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                             const Problem& problem,
                             const Element& element,
@@ -509,7 +509,7 @@ public:
 
     //! Compute the derivative of the flux residual for the box method
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, void>
+    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::box, void>
     addFluxDerivatives(JacobianMatrix& A,
                             const Problem& problem,
                             const Element& element,
@@ -562,6 +562,10 @@ public:
     //! calling this for stationary leads to undefined behaviour
     const TimeLoop& timeLoop() const
     { return *timeLoop_; }
+
+    //! returns true if the residual is stationary
+    bool isStationary() const
+    { return !timeLoop_; }
 
     // \}
 protected:

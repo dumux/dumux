@@ -26,8 +26,12 @@
 #ifndef DUMUX_ONEP_FRACTURE_TEST_PROBLEM_HH
 #define DUMUX_ONEP_FRACTURE_TEST_PROBLEM_HH
 
+#if HAVE_DUNE_FOAMGRID
+#include <dune/foamgrid/foamgrid.hh>
+#endif
+
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/discretization/box/properties.hh>
@@ -36,15 +40,13 @@
 
 #include "fracturespatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class FractureProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(FractureTypeTag, INHERITS_FROM(OneP, FractureSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(FractureTypeTag, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(FractureBoxTypeTag, INHERITS_FROM(BoxModel, FractureTypeTag));
 NEW_TYPE_TAG(FractureCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FractureTypeTag));
 NEW_TYPE_TAG(FractureCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, FractureTypeTag));
@@ -55,7 +57,9 @@ SET_BOOL_PROP(FractureTypeTag, EnableGridVolumeVariablesCache, true);
 SET_BOOL_PROP(FractureTypeTag, EnableGridFluxVariablesCache, true);
 
 //! The grid type
+#if HAVE_DUNE_FOAMGRID
 SET_TYPE_PROP(FractureTypeTag, Grid, Dune::FoamGrid<2, 3>);
+#endif
 
 // Set the problem property
 SET_TYPE_PROP(FractureTypeTag, Problem, Dumux::FractureProblem<TypeTag>);
@@ -64,7 +68,14 @@ SET_TYPE_PROP(FractureTypeTag, Problem, Dumux::FractureProblem<TypeTag>);
 SET_PROP(FractureTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+};
+// Set the spatial parameters
+SET_PROP(FractureTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FractureSpatialParams<FVGridGeometry, Scalar>;
 };
 
 } // end namespace Properties
@@ -81,7 +92,7 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum { dimWorld = GridView::dimensionworld };
 
@@ -93,7 +104,8 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:

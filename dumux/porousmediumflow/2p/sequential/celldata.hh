@@ -72,7 +72,7 @@ private:
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum
     {
@@ -406,7 +406,7 @@ private:
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum
     {

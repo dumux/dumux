@@ -28,17 +28,16 @@
 #include <vector>
 #include <iostream>
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/common/math.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
+#include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
-#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
+#include <dumux/material/solidstates/updatesolidvolumefractions.hh>
+
+#include <dumux/common/valgrind.hh>
+#include <dumux/common/exceptions.hh>
 
 namespace Dumux {
 
@@ -47,32 +46,28 @@ namespace Dumux {
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the three-phase, two-component model.
  */
-template <class TypeTag>
-class ThreePWaterOilVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
+template <class Traits>
+class ThreePWaterOilVolumeVariables
+: public PorousMediumFlowVolumeVariables<Traits>
+, public EnergyVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits> >
 {
-    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ParentType = PorousMediumFlowVolumeVariables<Traits>;
+    using EnergyVolVars = EnergyVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits> >;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using ModelTraits = typename Traits::ModelTraits;
+    using Indices = typename ModelTraits::Indices;
+    using FS = typename Traits::FluidSystem;
+    static constexpr int numFluidComps = ParentType::numComponents();
 
     enum {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
+        numPs = ParentType::numPhases(),
 
-        wCompIdx = Indices::wCompIdx,
-        nCompIdx = Indices::nCompIdx,
+        wCompIdx = FS::wCompIdx,
+        nCompIdx = FS::nCompIdx,
 
-        wPhaseIdx = Indices::wPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = FS::wPhaseIdx,
+        gPhaseIdx = FS::gPhaseIdx,
+        nPhaseIdx = FS::nPhaseIdx,
 
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
@@ -89,29 +84,33 @@ class ThreePWaterOilVolumeVariables : public PorousMediumFlowVolumeVariables<Typ
         wgPhaseOnly = Indices::wgPhaseOnly
     };
 
-    using Element = typename GridView::template Codim<0>::Entity;
-
 public:
     //! The type of the object returned by the fluidState() method
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using ParentType::enthalpy;
-
+    using FluidState = typename Traits::FluidState;
+    //! The type of the fluid system
+    using FluidSystem = typename Traits::FluidSystem;
+    //! export type of solid state
+    using SolidState = typename Traits::SolidState;
+    //! export type of solid system
+    using SolidSystem = typename Traits::SolidSystem;
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume& scv)
+                const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
-        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
 
-        bool onlyGasPhaseCanDisappear = GET_PROP_VALUE(TypeTag, OnlyGasPhaseCanDisappear);
+        bool onlyGasPhaseCanDisappear = Traits::ModelTraits::onlyGasPhaseCanDisappear();
 
         // capillary pressure parameters
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
         if(!onlyGasPhaseCanDisappear)
@@ -207,7 +206,11 @@ public:
             {
                  // temp from inverse pwsat and pnsat which have to sum up to pg
                  Scalar temp = FluidSystem::inverseVaporPressureCurve(fluidState_, gPhaseIdx, wCompIdx); // initial guess
-                 fluidState_.setTemperature(temp);
+                 for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                 {
+                    fluidState_.setTemperature(phaseIdx, temp);
+                 }
+                 solidState_.setTemperature(temp);
                  Scalar defect = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                      - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
@@ -215,17 +218,29 @@ public:
                  while(abs(defect) > 0.01) // simply a small number chosen ...
                  {
                      Scalar deltaT = 1.e-8 * temp;
-                     fluidState_.setTemperature(temp+deltaT);
+                 for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                 {
+                    fluidState_.setTemperature(phaseIdx, temp+deltaT);
+                 }
+                 solidState_.setTemperature(temp+deltaT);
                      Scalar fUp = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                       - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
-                     fluidState_.setTemperature(temp-deltaT);
+                  for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                  {
+                     fluidState_.setTemperature(phaseIdx, temp-deltaT);
+                  }
+                  solidState_.setTemperature(temp-deltaT);
                      Scalar fDown = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                       - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
                      temp = temp - defect * 2. * deltaT / (fUp - fDown);
 
-                     fluidState_.setTemperature(temp);
+                     for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                     {
+                         fluidState_.setTemperature(phaseIdx, temp);
+                     }
+                     solidState_.setTemperature(temp);
                      defect = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                   - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
                  }
@@ -244,7 +259,11 @@ public:
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
             Valgrind::CheckDefined(temp_);
 
-            fluidState_.setTemperature(temp_);
+            for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+            {
+                fluidState_.setTemperature(phaseIdx, temp_);
+            }
+            solidState_.setTemperature(temp_);
 
             // now comes the tricky part: calculate phase composition
             if (phasePresence == threePhases) {
@@ -275,10 +294,16 @@ public:
                 Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
                 Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
                 Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
+                Scalar rhoWMolar = FluidSystem::molarDensity(fluidState_, wPhaseIdx);
+                Scalar rhoGMolar = FluidSystem::molarDensity(fluidState_, gPhaseIdx);
+                Scalar rhoNMolar = FluidSystem::molarDensity(fluidState_, nPhaseIdx);
 
                 fluidState_.setDensity(wPhaseIdx, rhoW);
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
+                fluidState_.setMolarDensity(wPhaseIdx, rhoWMolar);
+                fluidState_.setMolarDensity(gPhaseIdx, rhoGMolar);
+                fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
             }
             else if (phasePresence == wPhaseOnly) {
                 // only the water phase is present, water phase composition is
@@ -312,10 +337,16 @@ public:
                 Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
                 Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
                 Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
+                Scalar rhoWMolar = FluidSystem::molarDensity(fluidState_, wPhaseIdx);
+                Scalar rhoGMolar = FluidSystem::molarDensity(fluidState_, gPhaseIdx);
+                Scalar rhoNMolar = FluidSystem::molarDensity(fluidState_, nPhaseIdx);
 
                 fluidState_.setDensity(wPhaseIdx, rhoW);
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
+                fluidState_.setMolarDensity(wPhaseIdx, rhoWMolar);
+                fluidState_.setMolarDensity(gPhaseIdx, rhoGMolar);
+                fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
             }
             else if (phasePresence == gnPhaseOnly) {
 
@@ -340,17 +371,23 @@ public:
                 Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
                 Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
                 Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
+                Scalar rhoWMolar = FluidSystem::molarDensity(fluidState_, wPhaseIdx);
+                Scalar rhoGMolar = FluidSystem::molarDensity(fluidState_, gPhaseIdx);
+                Scalar rhoNMolar = FluidSystem::molarDensity(fluidState_, nPhaseIdx);
 
                 fluidState_.setDensity(wPhaseIdx, rhoW);
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
+                fluidState_.setMolarDensity(wPhaseIdx, rhoWMolar);
+                fluidState_.setMolarDensity(gPhaseIdx, rhoGMolar);
+                fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
 
             }
             else if (phasePresence == wnPhaseOnly) {
                 // water and NAPL are present, phase compositions are a
                 // mole fractions of non-existing gas phase are used as switching criteria
                 Scalar partPressH2O = FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx);
-                Scalar partPressNAPL =  FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);;
+                Scalar partPressNAPL =  FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
                 Scalar xgn = partPressNAPL/pg_;
                 Scalar xgw = partPressH2O/pg_;
@@ -372,10 +409,16 @@ public:
                 Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
                 Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
                 Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
+                Scalar rhoWMolar = FluidSystem::molarDensity(fluidState_, wPhaseIdx);
+                Scalar rhoGMolar = FluidSystem::molarDensity(fluidState_, gPhaseIdx);
+                Scalar rhoNMolar = FluidSystem::molarDensity(fluidState_, nPhaseIdx);
 
                 fluidState_.setDensity(wPhaseIdx, rhoW);
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
+                fluidState_.setMolarDensity(wPhaseIdx, rhoWMolar);
+                fluidState_.setMolarDensity(gPhaseIdx, rhoGMolar);
+                fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
             }
             else if (phasePresence == gPhaseOnly) {
                 // only the gas phase is present, gas phase composition is
@@ -399,10 +442,16 @@ public:
                 Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
                 Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
                 Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
+                Scalar rhoWMolar = FluidSystem::molarDensity(fluidState_, wPhaseIdx);
+                Scalar rhoGMolar = FluidSystem::molarDensity(fluidState_, gPhaseIdx);
+                Scalar rhoNMolar = FluidSystem::molarDensity(fluidState_, nPhaseIdx);
 
                 fluidState_.setDensity(wPhaseIdx, rhoW);
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
+                fluidState_.setMolarDensity(wPhaseIdx, rhoWMolar);
+                fluidState_.setMolarDensity(gPhaseIdx, rhoGMolar);
+                fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
             }
             else if (phasePresence == wgPhaseOnly) {
                 // only water and gas phases are present
@@ -430,10 +479,16 @@ public:
                 Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
                 Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
                 Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
+                Scalar rhoWMolar = FluidSystem::molarDensity(fluidState_, wPhaseIdx);
+                Scalar rhoGMolar = FluidSystem::molarDensity(fluidState_, gPhaseIdx);
+                Scalar rhoNMolar = FluidSystem::molarDensity(fluidState_, nPhaseIdx);
 
                 fluidState_.setDensity(wPhaseIdx, rhoW);
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
+                fluidState_.setMolarDensity(wPhaseIdx, rhoWMolar);
+                fluidState_.setMolarDensity(gPhaseIdx, rhoGMolar);
+                fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
             }
             else
                 assert(false); // unhandled phase state
@@ -520,7 +575,11 @@ public:
                      // temp from inverse pwsat and pnsat which have to sum up to pg
                      Scalar tempOnlyNAPL = FluidSystem::inverseVaporPressureCurve(fluidState_, gPhaseIdx, nCompIdx);
                      Scalar tempOnlyWater = FluidSystem::inverseVaporPressureCurve(fluidState_, gPhaseIdx, wCompIdx);
-                     fluidState_.setTemperature(tempOnlyWater);
+                     for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                     {
+                        fluidState_.setTemperature(phaseIdx, tempOnlyWater);
+                     }
+                     solidState_.setTemperature(tempOnlyWater);
                      Scalar defect = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                          - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
@@ -530,17 +589,29 @@ public:
                      while(abs(defect) > 0.01) // simply a small number chosen ...
                      {
                          Scalar deltaT = 1.e-6; // fixed number, but T should always be in the order of a few hundred Kelvin
-                         fluidState_.setTemperature(temp+deltaT);
+                         for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                         {
+                            fluidState_.setTemperature(phaseIdx, temp+deltaT);
+                         }
+                         solidState_.setTemperature(temp+deltaT);
                          Scalar fUp = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                           - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
-                         fluidState_.setTemperature(temp-deltaT);
+                        for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                        {
+                            fluidState_.setTemperature(phaseIdx, temp-deltaT);
+                        }
+                        solidState_.setTemperature(temp-deltaT);
                          Scalar fDown = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                           - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
                          temp = temp - defect * 2. * deltaT / (fUp - fDown);
 
-                         fluidState_.setTemperature(temp);
+                         for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                         {
+                              fluidState_.setTemperature(phaseIdx, temp);
+                         }
+                         solidState_.setTemperature(temp);
                          defect = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                       - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
                          counter +=1;
@@ -556,7 +627,11 @@ public:
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
             Valgrind::CheckDefined(temp_);
 
-            fluidState_.setTemperature(temp_);
+            for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+            {
+                    fluidState_.setTemperature(phaseIdx, temp_);
+            }
+            solidState_.setTemperature(temp_);
 
             // now comes the tricky part: calculate phase composition
             if (phasePresence == threePhases) {
@@ -593,15 +668,21 @@ public:
                 Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
                 Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
                 Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
+                Scalar rhoWMolar = FluidSystem::molarDensity(fluidState_, wPhaseIdx);
+                Scalar rhoGMolar = FluidSystem::molarDensity(fluidState_, gPhaseIdx);
+                Scalar rhoNMolar = FluidSystem::molarDensity(fluidState_, nPhaseIdx);
 
                 fluidState_.setDensity(wPhaseIdx, rhoW);
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
+                fluidState_.setMolarDensity(wPhaseIdx, rhoWMolar);
+                fluidState_.setMolarDensity(gPhaseIdx, rhoGMolar);
+                fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
             }
             else if (phasePresence == wnPhaseOnly) {
                 // mole fractions of non-existing gas phase are used as switching criteria
                 Scalar partPressH2O = FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx);
-                Scalar partPressNAPL =  FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);;
+                Scalar partPressNAPL =  FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
                 Scalar xgn = partPressNAPL/pg_;
                 Scalar xgw = partPressH2O/pg_;
@@ -623,15 +704,21 @@ public:
                 Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
                 Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
                 Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
+                Scalar rhoWMolar = FluidSystem::molarDensity(fluidState_, wPhaseIdx);
+                Scalar rhoGMolar = FluidSystem::molarDensity(fluidState_, gPhaseIdx);
+                Scalar rhoNMolar = FluidSystem::molarDensity(fluidState_, nPhaseIdx);
 
                 fluidState_.setDensity(wPhaseIdx, rhoW);
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
+                fluidState_.setMolarDensity(wPhaseIdx, rhoWMolar);
+                fluidState_.setMolarDensity(gPhaseIdx, rhoGMolar);
+                fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
             }
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
             }
 
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPs; ++phaseIdx) {
             // Mobilities
             const Scalar mu =
                 FluidSystem::viscosity(fluidState_,
@@ -662,8 +749,8 @@ public:
 
 
         // porosity
-        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
-        Valgrind::CheckDefined(porosity_);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
+        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
 
         // permeability
         permeability_ =  problem.spatialParams().permeability(element, scv, elemSol);
@@ -671,7 +758,7 @@ public:
 
 //         fluidState_.setTemperature(temp_);
         // the enthalpies (internal energies are directly calculated in the fluidstate
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPs; ++phaseIdx) {
             Scalar h = FluidSystem::enthalpy(fluidState_, phaseIdx);
             fluidState_.setEnthalpy(phaseIdx, h);
 
@@ -685,6 +772,12 @@ public:
     { return fluidState_; }
 
     /*!
+     * \brief Returns the phase state for the control volume.
+     */
+    const SolidState &solidState() const
+    { return solidState_; }
+
+    /*!
      * \brief Returns the effective saturation of a given phase within
      *        the control volume.
      *
@@ -693,13 +786,13 @@ public:
     Scalar saturation(const int phaseIdx) const
     { return fluidState_.saturation(phaseIdx); }
 
-     /*!
-     * \brief Returns the mass fraction of a given component in a
-     *        given phase within the control volume in \f$[-]\f$.
-     *
-     * \param phaseIdx The phase index
-     * \param compIdx The component index
-     */
+    /*!
+    * \brief Returns the mass fraction of a given component in a
+    *        given phase within the control volume in \f$[-]\f$.
+    *
+    * \param phaseIdx The phase index
+    * \param compIdx The component index
+    */
     Scalar massFraction(const int phaseIdx, const int compIdx) const
     { return fluidState_.massFraction(phaseIdx, compIdx); }
 
@@ -729,7 +822,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar molarDensity(const int phaseIdx) const
-    { return fluidState_.density(phaseIdx) / fluidState_.averageMolarMass(phaseIdx); }
+    { return fluidState_.molarDensity(phaseIdx); }
 
     /*!
      * \brief Returns the effective pressure of a given phase within
@@ -772,7 +865,7 @@ public:
      * \brief Returns the average porosity within the control volume.
      */
     Scalar porosity() const
-    { return porosity_; }
+    { return solidState_.porosity(); }
 
     /*!
      * \brief Returns the permeability within the control volume.
@@ -781,16 +874,7 @@ public:
     { return permeability_; }
 
     /*!
-     * \brief Returns the diffusivity coefficient matrix
-     */
-    DUNE_DEPRECATED_MSG("diffusionCoefficient() is deprecated. Use diffusionCoefficient(int phaseIdx) instead.")
-    Dune::FieldVector<Scalar, numPhases> diffusionCoefficient() const
-    {
-        return diffusionCoefficient_;
-    }
-
-    /*!
-     * \brief Returns the diffusion coeffiecient
+     * \brief Returns the diffusion coefficient
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
@@ -822,30 +906,24 @@ public:
     { return fluidState_.enthalpy(phaseIdx); };
 
 protected:
+    FluidState fluidState_;
+    SolidState solidState_;
 
+private:
     Scalar sw_, sg_, sn_, pg_, pw_, pn_, temp_;
 
-    Scalar moleFrac_[numPhases][numComponents];
-    Scalar massFrac_[numPhases][numComponents];
+    Scalar moleFrac_[numPs][numFluidComps];
+    Scalar massFrac_[numPs][numFluidComps];
 
-    Scalar porosity_;        //!< Effective porosity within the control volume
     Scalar permeability_;        //!< Effective porosity within the control volume
-    Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
+    Scalar mobility_[numPs];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
     /* We need a tensor here !! */
     //!< Binary diffusion coefficients of the 3 components in the phases
-    Dune::FieldVector<Scalar, numPhases> diffusionCoefficient_;
-    FluidState fluidState_;
+    Dune::FieldVector<Scalar, numPs> diffusionCoefficient_;
+    std::array<std::array<Scalar, numFluidComps-1>, numPs> diffCoefficient_;
 
-private:
-    std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
-
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 };
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -24,43 +24,29 @@
 #ifndef DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 #define DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 
-#include <dumux/discretization/upwindscheme.hh>
+#include <vector>
 
-namespace Dumux
-{
-
-// forward declaration
-template<class TypeTag, class UpwindScheme>
-class FluxVariablesBaseImplementation;
-
-/*!
- * \ingroup Discretization
- * \brief Base class for the flux variables living on a sub control volume face
- * \note The upwind scheme is chosen depending on the discretization method
- */
-template<class TypeTag>
-using FluxVariablesBase = FluxVariablesBaseImplementation<TypeTag, UpwindScheme<TypeTag>>;
+namespace Dumux {
 
 /*!
  * \ingroup Discretization
  * \brief Base class for the flux variables living on a sub control volume face
  *
- * \tparam TypeTag The type tag
- * \tparam UpwindScheme The type of the upwind scheme used for upwinding of advective fluxes
+ * \tparam Problem the problem type to solve (for boundary conditions)
+ * \tparam FVElementGeometry the element geometry type
+ * \tparam ElementVolumeVariables the element volume variables type
+ * \tparam ElementFluxVariablesCache the element flux variables cache type
  */
-template<class TypeTag, class UpwindScheme>
-class FluxVariablesBaseImplementation
+template<class Problem,
+         class FVElementGeometry,
+         class ElementVolumeVariables,
+         class ElementFluxVariablesCache>
+class FluxVariablesBase
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVElementGeometry::FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Stencil = std::vector<IndexType>;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Stencil = std::vector<std::size_t>;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
 public:
 
@@ -97,14 +83,6 @@ public:
 
     const ElementFluxVariablesCache& elemFluxVarsCache() const
     { return *elemFluxVarsCachePtr_; }
-
-    //! Applies the upwind scheme to precalculated fluxes
-    template<class UpwindTermFunction>
-    Scalar applyUpwindScheme(const UpwindTermFunction& upwindTerm, Scalar flux, int phaseIdx) const
-    {
-        //! Give the upwind scheme access to the cached variables
-        return UpwindScheme::apply(*this, upwindTerm, flux, phaseIdx);
-    }
 
 private:
     const Problem* problemPtr_;                             //!< Pointer to the problem

@@ -24,41 +24,21 @@
 #ifndef DUMUX_2P1C_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_2P1C_PRIMARY_VARIABLE_SWITCH_HH
 
+#include <iostream>
+
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup TwoPOneCModel
  * \brief The primary variable switch for the two-phase one-component model
  */
-template<class TypeTag>
-class TwoPOneCPrimaryVariableSwitch : public PrimaryVariableSwitch<TypeTag>
+class TwoPOneCPrimaryVariableSwitch
+: public PrimaryVariableSwitch<TwoPOneCPrimaryVariableSwitch>
 {
-    friend typename Dumux::PrimaryVariableSwitch<TypeTag>;
-    using ParentType = Dumux::PrimaryVariableSwitch<TypeTag>;
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-    enum {
-        switchIdx = Indices::switch1Idx,
-
-        pressureIdx = Indices::pressureIdx,
-
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
-        twoPhases = Indices::twoPhases,
-        wPhaseOnly  = Indices::wPhaseOnly,
-        nPhaseOnly  = Indices::nPhaseOnly
-    };
+    using ParentType = PrimaryVariableSwitch<TwoPOneCPrimaryVariableSwitch>;
+    friend ParentType;
 
 public:
     using ParentType::ParentType;
@@ -73,48 +53,65 @@ protected:
      * \param dofIdxGlobal The respective dof index.
      * \param globalPos The global position of the dof.
      */
-    bool update_(PrimaryVariables& priVars,
+    template<class VolumeVariables, class GlobalPosition>
+    bool update_(typename VolumeVariables::PrimaryVariables& priVars,
                  const VolumeVariables& volVars,
-                 IndexType dofIdxGlobal,
+                 std::size_t dofIdxGlobal,
                  const GlobalPosition& globalPos)
     {
+        using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+        using Indices = typename VolumeVariables::Indices;
+
+        static constexpr auto formulation = VolumeVariables::priVarFormulation();
+        static_assert( (formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0),
+                        "Chosen TwoPFormulation not supported!");
+
         // evaluate primary variable switch
         bool wouldSwitch = false;
         int phasePresence =  priVars.state();
         int newPhasePresence = phasePresence;
 
         // check if a primary var switch is necessary
-        if (phasePresence == twoPhases)
+        if (phasePresence == Indices::twoPhases)
         {
-            Scalar Smin = 0;
+            Scalar Smin = 0.0;
             if (this->wasSwitched_[dofIdxGlobal])
                 Smin = -0.01;
 
-            if (volVars.saturation(nPhaseIdx) <= Smin)
+            if (volVars.saturation(FluidSystem::gasPhaseIdx) <= Smin)
             {
                 wouldSwitch = true;
                 // gas phase disappears
-                std::cout << "Gas phase disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sg: "
-                          << volVars.saturation(nPhaseIdx) << std::endl;
-                newPhasePresence = wPhaseOnly;
+                if (this->verbosity() > 1)
+                    std::cout << "Gas phase (" << FluidSystem::phaseName(FluidSystem::gasPhaseIdx)
+                              << ") disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", S_" << FluidSystem::phaseName(FluidSystem::gasPhaseIdx) << ": "
+                              << volVars.saturation(FluidSystem::gasPhaseIdx)
+                              << std::endl;
+                newPhasePresence = Indices::liquidPhaseOnly;
 
-                priVars[switchIdx] = volVars.fluidState().temperature();
+                priVars[Indices::switchIdx] = volVars.fluidState().temperature();
             }
-            else if (volVars.saturation(wPhaseIdx) <= Smin)
+            else if (volVars.saturation(FluidSystem::liquidPhaseIdx) <= Smin)
             {
                 wouldSwitch = true;
                 // water phase disappears
-                std::cout << "Wetting phase disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sw: "
-                          << volVars.saturation(wPhaseIdx) << std::endl;
-                newPhasePresence = nPhaseOnly;
+                if (this->verbosity() > 1)
+                    std::cout << "Liquid phase (" << FluidSystem::phaseName(FluidSystem::liquidPhaseIdx)
+                              << ") disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", S_" << FluidSystem::phaseName(FluidSystem::liquidPhaseIdx) << ": "
+                              << volVars.saturation(FluidSystem::liquidPhaseIdx)
+                              << std::endl;
+                newPhasePresence = Indices::gasPhaseOnly;
 
-                priVars[switchIdx] = volVars.fluidState().temperature();
+                priVars[Indices::switchIdx] = volVars.fluidState().temperature();
             }
 
         }
-        else if (phasePresence == wPhaseOnly)
+        else if (phasePresence == Indices::liquidPhaseOnly)
         {
             const Scalar temp = volVars.fluidState().temperature();
             const Scalar tempVap = volVars.vaporTemperature();
@@ -125,31 +122,36 @@ protected:
             {
                 wouldSwitch = true;
                 // gas phase appears
-                std::cout << "gas phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos  << std::endl;
-
-               newPhasePresence = twoPhases;
-               priVars[switchIdx] = 0.9999; //wetting phase saturation
+                if (this->verbosity() > 1)
+                    std::cout << "Gas phase (" << FluidSystem::phaseName(FluidSystem::gasPhaseIdx)
+                              << ") appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << std::endl;
+                newPhasePresence = Indices::twoPhases;
+                if (formulation == TwoPFormulation::p1s0)
+                    priVars[Indices::switchIdx] = 0.9999; // liquid phase saturation
+                else
+                    priVars[Indices::switchIdx] = 0.0001;
             }
         }
-
-
-        else if (phasePresence == nPhaseOnly)
+        else if (phasePresence == Indices::gasPhaseOnly)
         {
-
             const Scalar temp = volVars.fluidState().temperature();
             const Scalar tempVap = volVars.vaporTemperature();
 
             if (temp < tempVap)
             {
                 wouldSwitch = true;
-                // wetting phase appears
-                std::cout << "wetting phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos  << std::endl;
+                // liquid phase appears
+                if (this->verbosity() > 1)
+                    std::cout << "Liquid phase (" << FluidSystem::phaseName(FluidSystem::liquidPhaseIdx) << ") appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos  << std::endl;
 
-
-               newPhasePresence = twoPhases;
-               priVars[switchIdx] = 0.0001; //arbitrary small value
+               newPhasePresence = Indices::twoPhases;
+               if (formulation == TwoPFormulation::p1s0)
+                   priVars[Indices::switchIdx] = 0.0001;
+               else
+                   priVars[Indices::switchIdx] = 0.9999;
             }
     }
         priVars.setState(newPhasePresence);

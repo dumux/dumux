@@ -26,12 +26,15 @@
 
 #include <cmath>
 #include <dumux/material/idealgas.hh>
-#include <dumux/material/components/component.hh>
 #include <dumux/material/constants.hh>
 
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief Properties of xylene.
@@ -39,9 +42,13 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class Xylene : public Component<Scalar, Xylene<Scalar> >
+class Xylene
+: public Components::Base<Scalar, Xylene<Scalar> >
+, public Components::Liquid<Scalar, Xylene<Scalar> >
+, public Components::Gas<Scalar, Xylene<Scalar> >
 {
-    using Consts = Constants<Scalar>;;
+    using Consts = Constants<Scalar>;
+    using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:
     /*!
@@ -241,9 +248,9 @@ public:
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
-        return IdealGas<Scalar>::density(molarMass(),
-                                         temperature,
-                                         pressure);
+        return IdealGas::density(molarMass(),
+                                 temperature,
+                                 pressure);
     }
 
     /*!
@@ -252,10 +259,8 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar molarGasDensity(Scalar temperature, Scalar pressure)
-    {
-        return (gasDensity(temperature, pressure) / molarMass());
-    }
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
 
     /*!
      * \brief The molar liquid density of pure xylene at a given pressure and temperature
@@ -266,7 +271,7 @@ public:
      * \param temp temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar molarLiquidDensity(Scalar temp, Scalar pressure)
+    static Scalar liquidMolarDensity(Scalar temp, Scalar pressure)
     {
         // saturated molar volume according to Lide, CRC Handbook of
         // Thermophysical and Thermochemical Data, CRC Press, 1994
@@ -293,19 +298,19 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        return molarLiquidDensity(temperature, pressure)*molarMass(); // [kg/m^3]
+        return liquidMolarDensity(temperature, pressure)*molarMass();
     }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be compressible
      */
-    static bool gasIsCompressible()
+    static constexpr bool gasIsCompressible()
     { return true; }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be ideal
      */
-    static bool gasIsIdeal()
+    static constexpr bool gasIsIdeal()
     { return true; }
 
     /*!
@@ -383,6 +388,8 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+} // end namespace Dumux
 
 #endif

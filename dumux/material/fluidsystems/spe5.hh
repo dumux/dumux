@@ -78,7 +78,7 @@ public:
     static const int oPhaseIdx = 2;
 
     //! The component for pure water to be used
-    using H2O = Dumux::H2O<Scalar>;
+    using H2O = Dumux::Components::H2O<Scalar>;
 
     /*!
      * \brief Return the human readable name of a fluid phase
@@ -86,24 +86,30 @@ public:
      */
     static std::string phaseName(int phaseIdx)
     {
-        static std::string name[] = {
-            std::string("g"),
-            std::string("w"),
-            std::string("o"),
-        };
-
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        return name[phaseIdx];
+        switch (phaseIdx)
+        {
+            case gPhaseIdx: return "gas";
+            case wPhaseIdx: return "aq";
+            case oPhaseIdx: return "napl";
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
     /*!
-     * \brief Return whether a phase is liquid
+     * \brief Returns whether the fluids are miscible
+     */
+    static constexpr bool isMiscible()
+    { return true; }
+
+    /*!
+     * \brief Return whether a phase is gaseous
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isLiquid(int phaseIdx)
+    static constexpr bool isGas(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        return phaseIdx != gPhaseIdx;
+        return phaseIdx == gPhaseIdx;
     }
 
     /*!
@@ -386,6 +392,21 @@ public:
     }
 
     /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, const ParameterCache &paramCache, int phaseIdx)
+    {
+        return 1.0/paramCache.molarVolume(phaseIdx);
+    }
+
+    /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      * \param fs An arbitrary fluid state
      * \param paramCache Container for cache parameters
@@ -445,9 +466,8 @@ public:
                                                                    compIdx);
         else {
             assert(phaseIdx == wPhaseIdx);
-            return
-                henryCoeffWater_(compIdx, fs.temperature(wPhaseIdx))
-                / fs.pressure(wPhaseIdx);
+            return henryCoeffWater_(compIdx, fs.temperature(wPhaseIdx))
+                   / fs.pressure(wPhaseIdx);
         }
     }
 
@@ -547,17 +567,17 @@ private:
         // use henry's law for the solutes and the vapor pressure for
         // the solvent.
         switch (compIdx) {
-        case H2OIdx: return H2O::vaporPressure(temperature);
+            case H2OIdx: return H2O::vaporPressure(temperature);
 
-            // the values of the Henry constant for the solutes have
-            // are faked so far...
-        case C1Idx: return 5.57601e+09;
-        case C3Idx: return 1e10;
-        case C6Idx: return 1e10;
-        case C10Idx: return 1e10;
-        case C15Idx: return 1e10;
-        case C20Idx: return 1e10;
-        default: DUNE_THROW(Dune::InvalidStateException, "Unknown component index " << compIdx);
+                // the values of the Henry constant for the solutes have
+                // are faked so far...
+            case C1Idx: return 5.57601e+09;
+            case C3Idx: return 1e10;
+            case C6Idx: return 1e10;
+            case C10Idx: return 1e10;
+            case C15Idx: return 1e10;
+            case C20Idx: return 1e10;
+            default: DUNE_THROW(Dune::InvalidStateException, "Unknown component index " << compIdx);
         }
     }
 };

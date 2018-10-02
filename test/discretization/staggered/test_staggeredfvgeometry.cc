@@ -58,6 +58,12 @@ struct TestFVGGTraits : public DefaultMapperTraits<GridView>
     using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
     using GeometryHelper = BaseStaggeredGeometryHelper<GridView>;
 
+    struct DofTypeIndices
+    {
+        using CellCenterIdx = Dune::index_constant<0>;
+        using FaceIdx = Dune::index_constant<1>;
+    };
+
     //! Dummy connectivity map, required by FVGridGeometry
     template<class FVGridGeometry>
     struct MockConnectivityMap
@@ -119,7 +125,7 @@ int main (int argc, char *argv[]) try
 
         for (auto&& scv : scvs(fvGeometry))
         {
-            std::cout << "-- scv " << scv.indexInElement() << " center at: " << scv.center() << " , volume: " << scv.volume()  << std::endl;
+            std::cout << "-- scv " << scv.localDofIndex() << " center at: " << scv.center() << " , volume: " << scv.volume()  << std::endl;
         }
 
         auto range2 = scvfs(fvGeometry);
@@ -138,7 +144,7 @@ int main (int argc, char *argv[]) try
 // //////////////////////////////////
 //   Error handler
 // /////////////////////////////////
-catch (Dune::Exception e) {
+catch (Dune::Exception& e) {
 
     std::cout << e << std::endl;
     return 1;

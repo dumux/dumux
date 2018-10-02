@@ -18,13 +18,13 @@ dune_add_test(SOURCES test_2pni_fv.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-cube-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_cube-00007.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_cube-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_cube test_2pni.input -Problem.Name test_2pni_box_cube")
 
 dune_add_test(SOURCES test_2pni_fv.cc
               NAME test_2pni_tpfa_simplex
-              CMAKE_GUARD dune-uggrid_FOUND
-              COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
+              CMAKE_GUARD dune-alugrid_FOUND
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
               COMPILE_DEFINITIONS TYPETAG=InjectionCC2PNITypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy

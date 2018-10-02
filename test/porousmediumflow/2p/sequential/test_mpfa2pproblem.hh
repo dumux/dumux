@@ -24,10 +24,15 @@
 #ifndef DUMUX_TEST_MPFA2P_PROBLEM_HH
 #define DUMUX_TEST_MPFA2P_PROBLEM_HH
 
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/dnapl.hh>
+#include <dumux/material/components/trichloroethene.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressurepropertiesadaptive.hh>
@@ -57,7 +62,7 @@ class MPFATwoPTestProblem;
 namespace Properties
 {
 
-NEW_TYPE_TAG(MPFATwoPTestTypeTag, INHERITS_FROM(SequentialModel, Test2PSpatialParams));
+NEW_TYPE_TAG(MPFATwoPTestTypeTag, INHERITS_FROM(Test2PSpatialParams));
 
 // Set the grid type
 #if HAVE_UG
@@ -73,11 +78,11 @@ SET_TYPE_PROP(MPFATwoPTestTypeTag, Problem, MPFATwoPTestProblem<TypeTag>);
 SET_PROP(MPFATwoPTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #if PROBLEM == 2
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
 #else
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #endif
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
@@ -101,7 +106,7 @@ NEW_TYPE_TAG(MPFALAdaptiveTwoPTestTypeTag, INHERITS_FROM(FvMpfaL2dPressureTwoPAd
  * \ingroup SequentialTwoPTests
  * \brief test problem for sequential 2p models
  *
- * A DNAPL is injected from the top into a rectangular 2D domain saturated by water.
+ * Trichloroethene (a DNAPL) is injected from the top into a rectangular 2D domain saturated by water.
  * The remaining upper and the lower boundary is closed (Neumann = 0). At the sides a hydrostatic pressure condition
  * and free outflow for saturation are set. The domain is heterogeneous with a backround material and three lenses.
  *
@@ -127,7 +132,7 @@ using ParentType = IMPESProblem2P<TypeTag>;
 using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 using Grid = typename GridView::Grid;
 
-using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
 using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
 
@@ -158,7 +163,7 @@ enum
 using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
 using Element = typename GridView::Traits::template Codim<0>::Entity;
-using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
 MPFATwoPTestProblem(TimeManager &timeManager, Grid &grid) :

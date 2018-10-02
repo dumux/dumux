@@ -28,66 +28,49 @@
 #include <dumux/io/ploteffectivediffusivitymodel.hh>
 #include <dumux/io/plotmateriallaw.hh>
 #include <dumux/io/plotthermalconductivitymodel.hh>
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-namespace Dumux
-{
-
-/*!
- * \ingroup TwoPTwoCTests
- * \brief Definition of the spatial parameters for the water-air problem.
- */
-//forward declaration
-template<class TypeTag>
-class WaterAirSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(WaterAirSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(WaterAirSpatialParams, SpatialParams, WaterAirSpatialParams<TypeTag>);
-
-
-// Set the material law parameterized by absolute saturations
-SET_TYPE_PROP(WaterAirSpatialParams,
-              MaterialLaw,
-              EffToAbsLaw<RegularizedBrooksCorey<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
-}
+namespace Dumux {
 
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the water-air problem
  */
-template<class TypeTag>
-class WaterAirSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class WaterAirSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         WaterAirSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using CoordScalar = typename GridView::ctype;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       WaterAirSpatialParams<FVGridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
+    //! export the type used for the permeability
     using PermeabilityType = Scalar;
+    //! export the type used for the material law
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     /*!
      * \brief The constructor
      *
      * \param gridView The grid view
      */
-    WaterAirSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    WaterAirSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         layerBottom_ = 22.0;
 
@@ -98,9 +81,6 @@ public:
         // porosities
         finePorosity_ = 0.3;
         coarsePorosity_ = 0.3;
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
 
         // residual saturations
         fineMaterialParams_.setSwr(0.2);
@@ -136,21 +116,6 @@ public:
         plotMaterialLaw.addkrcurves(gnuplot, fineMaterialParams_, 0.2, 1.0, "fine");
         plotMaterialLaw.addkrcurves(gnuplot, coarseMaterialParams_, 0.2, 1.0, "coarse");
         gnuplot.plot("kr");
-
-        gnuplot.resetAll();
-        using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
-        PlotEffectiveDiffusivityModel<Scalar, EffDiffModel> plotEffectiveDiffusivityModel;
-        plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, finePorosity_, 0.0, 1.0, "fine");
-        plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, coarsePorosity_, 0.0, 1.0, "coarse");
-        gnuplot.plot("deff");
-
-        gnuplot.resetAll();
-        using ThermCondModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
-        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-        PlotThermalConductivityModel<Scalar, ThermCondModel, FluidSystem> plotThermalConductivityModel;
-        plotThermalConductivityModel.addlambdaeffcurve(gnuplot, finePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "fine");
-        plotThermalConductivityModel.addlambdaeffcurve(gnuplot, coarsePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "coarse");
-        gnuplot.plot("lambdaeff");
     }
 
     /*!
@@ -194,37 +159,18 @@ public:
     }
 
     /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global positio
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
      */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    { return 2700; /*density of granite [kg/m^3]*/ }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    { return lambdaSolid_; }
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
 
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
-    { return true; }
-    //{ return globalPos[dimWorld-1] > layerBottom_; }
+    { return globalPos[dimWorld-1] > layerBottom_; }
 
     Scalar fineK_;
     Scalar coarseK_;
@@ -232,9 +178,6 @@ private:
 
     Scalar finePorosity_;
     Scalar coarsePorosity_;
-
-    // heat conductivity of the solid material only
-    Scalar lambdaSolid_;
 
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;

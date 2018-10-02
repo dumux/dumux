@@ -25,34 +25,35 @@
 #ifndef DUMUX_1P_SINGULARITY_SPATIALPARAMS_HH
 #define DUMUX_1P_SINGULARITY_SPATIALPARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
  *        1p model with point sources
  */
-template<class TypeTag>
-class OnePSingularitySpatialParams : public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class OnePSingularitySpatialParams
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             OnePSingularitySpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           OnePSingularitySpatialParams<FVGridGeometry, Scalar>>;
 
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePSingularitySpatialParams(const Problem& problem)
-        : ParentType(problem)
+    OnePSingularitySpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry)
     {
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         porosity_= getParam<Scalar>("SpatialParams.Porosity");
@@ -66,26 +67,21 @@ public:
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         return permeability_;
     }
 
-    /*! \brief Define the porosity in [-].
+    /*!
+     * \brief Define the porosity \f$\mathrm{[-]}\f$.
      *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     * \return the porosity
+     * \param globalPos The global position
      */
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
-    {
-        return porosity_;
-    }
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return porosity_; }
 
 private:
     Scalar permeability_, porosity_;

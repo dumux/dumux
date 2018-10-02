@@ -77,153 +77,132 @@
 #ifndef DUMUX_2P2C_MODEL_HH
 #define DUMUX_2P2C_MODEL_HH
 
+#include <array>
+
 // property forward declarations
 #include <dumux/common/properties.hh>
-#include <dumux/porousmediumflow/properties.hh>
+
+#include <dumux/porousmediumflow/2pnc/model.hh>
+#include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
-
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
-#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
-#include <dumux/porousmediumflow/compositional/localresidual.hh>
-#include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
-
-#include "indices.hh"
 #include "volumevariables.hh"
-#include "primaryvariableswitch.hh"
-#include "vtkoutputfields.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
-namespace Properties
+/*!
+ * \ingroup TwoPTwoCModel
+ * \brief Specifies a number properties of two-phase two-component models.
+ *
+ * \tparam f The two-phase formulation used
+ * \tparam useM Boolean to specify if moles or masses are balanced
+ * \tparam replCompEqIdx the equation which is replaced by the total mass balance (none if replCompEqIdx >= numComponents)
+ */
+template<TwoPFormulation formulation, bool useMol, int replCompEqIdx = 2>
+struct TwoPTwoCModelTraits : public TwoPNCModelTraits</*numComps=*/2, useMol, /*setMFracForFirstPhase=*/true, formulation, replCompEqIdx>
 {
+    template <class FluidSystem, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state)
+    {
+        static const std::string xString = useMol ? "x" : "X";
+        static const std::array<std::string, 3> p0s1SwitchedPvNames = {{
+            xString + "^" + FluidSystem::componentName(1) + "_" + FluidSystem::phaseName(0),
+            xString + "^" + FluidSystem::componentName(0) + "_" + FluidSystem::phaseName(1),
+            "S_n"}};
+        static const std::array<std::string, 3> p1s0SwitchedPvNames = {{
+            xString + "^" + FluidSystem::componentName(1) + "_" + FluidSystem::phaseName(0),
+            xString + "^" + FluidSystem::componentName(0) + "_" + FluidSystem::phaseName(1),
+            "S_w"}};
+
+        switch (formulation)
+        {
+        case TwoPFormulation::p0s1:
+            return pvIdx == 0 ? "p_w" : p0s1SwitchedPvNames[state-1];
+        case TwoPFormulation::p1s0:
+            return pvIdx == 0 ? "p_n" : p1s0SwitchedPvNames[state-1];
+        }
+    }
+};
+
+namespace Properties {
+
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(TwoPTwoC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(TwoPTwoCNI, INHERITS_FROM(TwoPTwoC, NonIsothermal));
+NEW_TYPE_TAG(TwoPTwoC, INHERITS_FROM(TwoPNC));
+NEW_TYPE_TAG(TwoPTwoCNI, INHERITS_FROM(TwoPTwoC));
 
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
 
-//! Set the number of equations to 2
-SET_INT_PROP(TwoPTwoC, NumEq, 2);
-
 /*!
- * \brief Set the property for the number of components.
- *
- * We just forward the number from the fluid system and use a static
- * assert to make sure it is 2.
+ * \brief Set the model traits property.
  */
-SET_PROP(TwoPTwoC, NumComponents)
-{
-    static constexpr int value = 2;
-    static_assert(GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents == value,
-                  "Only fluid systems with 2 components are supported by the 2p-2c model!");
-};
-
-/*!
- * \brief Set the property for the number of fluid phases.
- *
- * We just forward the number from the fluid system and use a static
- * assert to make sure it is 2.
- */
-SET_PROP(TwoPTwoC, NumPhases)
-{
-    static constexpr int value = 2;
-    static_assert(GET_PROP_TYPE(TypeTag, FluidSystem)::numPhases == value,
-                  "Only fluid systems with 2 phases are supported by the 2p-2c model!");
-};
-
-//! Set the vtk output fields specific to the TwoPTwoC model
-SET_TYPE_PROP(TwoPTwoC, VtkOutputFields, TwoPTwoCVtkOutputFields<TypeTag>);
-
-/*!
- * \brief The fluid state which is used by the volume variables to
- *        store the thermodynamic state. This should be chosen
- *        appropriately for the model ((non-)isothermal, equilibrium, ...).
- *        This can be done in the problem.
- */
-SET_PROP(TwoPTwoC, FluidState)
+SET_PROP(TwoPTwoC, ModelTraits)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
+    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
+
 public:
-    using type = CompositionalFluidState<Scalar, FluidSystem>;
+    using type = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
+                                      GET_PROP_VALUE(TypeTag, UseMoles),
+                                      GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx) >;
 };
 
-//! Set the default formulation to pw-sn
-SET_INT_PROP(TwoPTwoC, Formulation, TwoPTwoCFormulation::pwsn);
-
-//! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, NumComponents));
-
-//! Use the compositional local residual operator
-SET_TYPE_PROP(TwoPTwoC, LocalResidual, CompositionalLocalResidual<TypeTag>);
-
-//! Enable advection
-SET_BOOL_PROP(TwoPTwoC, EnableAdvection, true);
-
-//! Enable molecular diffusion
-SET_BOOL_PROP(TwoPTwoC, EnableMolecularDiffusion, true);
-
-//! Isothermal model by default
-SET_BOOL_PROP(TwoPTwoC, EnableEnergyBalance, false);
-
-//! The primary variable switch for the 2p2c model
-SET_TYPE_PROP(TwoPTwoC, PrimaryVariableSwitch, TwoPTwoCPrimaryVariableSwitch<TypeTag>);
-
-//! The primary variables vector for the 2p2c model
-SET_TYPE_PROP(TwoPTwoC, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
-
 //! Use the 2p2c VolumeVariables
-SET_TYPE_PROP(TwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
+SET_PROP(TwoPTwoC, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-//! Set the indices required by the isothermal 2p2c
-SET_TYPE_PROP(TwoPTwoC, Indices, TwoPTwoCIndices<typename GET_PROP_TYPE(TypeTag, FluidSystem), /*PVOffset=*/0>);
+    static_assert(FSY::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
+    static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
 
-//! Use the FVSpatialParams by default
-SET_TYPE_PROP(TwoPTwoC, SpatialParams, FVSpatialParams<TypeTag>);
+    static constexpr bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
 
-//! Use the model after Millington (1961) for the effective diffusivity
-SET_TYPE_PROP(TwoPTwoC, EffectiveDiffusivityModel,
-             DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-//! Use mole fractions in the balance equations by default
-SET_BOOL_PROP(TwoPTwoC, UseMoles, true);
+    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+public:
+    using type = TwoPTwoCVolumeVariables<Traits, useConstraintSolver>;
+};
 
 //! Determines whether the constraint solver is used
 SET_BOOL_PROP(TwoPTwoC, UseConstraintSolver, true);
 
-//! Determines whether the Kelvin equation is used to adapt the saturation vapor pressure
-SET_BOOL_PROP(TwoPTwoC, UseKelvinEquation, false);
+//////////////////////////////////////////////////////////////////////
+// Properties for the non-isothermal 2p2c model (inherited from 2pnc)
+//////////////////////////////////////////////////////////////////////
 
-//! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(TwoPTwoCNI, ThermalConductivityModel)
+//! Set the non-isothermal model traits
+SET_PROP(TwoPTwoCNI, ModelTraits)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    //! we use the number of components specified by the fluid system here
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
+    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
+    using IsothermalTraits = TwoPTwoCModelTraits<GET_PROP_VALUE(TypeTag, Formulation),
+                                                 GET_PROP_VALUE(TypeTag, UseMoles),
+                                                 GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
-    using type = ThermalConductivitySomerton<Scalar, Indices>;
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
-//////////////////////////////////////////////////////////////////
-// Property values for isothermal model required for the general non-isothermal model
-//////////////////////////////////////////////////////////////////
+//! Set non-isothermal output fields
+SET_TYPE_PROP(TwoPTwoCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPNCVtkOutputFields>);
 
-//! Set isothermal Indices
-SET_TYPE_PROP(TwoPTwoCNI, IsothermalIndices, TwoPTwoCIndices<typename GET_PROP_TYPE(TypeTag, FluidSystem), /*PVOffset=*/0>);
-
-//! Set isothermal output fields
-SET_TYPE_PROP(TwoPTwoCNI, IsothermalVtkOutputFields, TwoPTwoCVtkOutputFields<TypeTag>);
-
-// Set isothermal NumEq
-SET_INT_PROP(TwoPTwoCNI, IsothermalNumEq, 2);
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_TYPE_PROP(TwoPTwoCNI, ThermalConductivityModel, ThermalConductivitySomerton<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 } // end namespace Properties
 } // end namespace Dumux

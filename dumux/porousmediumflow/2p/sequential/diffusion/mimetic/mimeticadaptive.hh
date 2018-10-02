@@ -56,7 +56,7 @@ class MimeticTwoPLocalStiffnessAdaptive: public LocalStiffness<TypeTag, 1>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     // grid types
     enum

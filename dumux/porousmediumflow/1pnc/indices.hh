@@ -26,35 +26,22 @@
 #ifndef DUMUX_1PNC_INDICES_HH
 #define DUMUX_1PNC_INDICES_HH
 
-#include <dumux/common/properties.hh>
+namespace Dumux {
 
-namespace Dumux
-{
 /*!
  * \ingroup OnePNCModel
  * \brief The indices for the isothermal one-phase n-component model.
  *
- * \tparam PVOffset The first index in a primary variable vector.
+ * \tparam phaseIdx The index of the fluid phase in the fluid system
  */
-template <class TypeTag, int PVOffset = 0>
 struct OnePNCIndices
 {
-    //! Set the default phase used by the fluid system to the first one
-    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-
-    //! Component indices
-    static const int phaseCompIdx = phaseIdx;//!< The index of the main component of the considered phase
-
-    //! Equation indices
-    static const int conti0EqIdx = PVOffset + 0; //!< Reference index for mass conservation equation.
-
-    //! Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int firstMoleFracIdx = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the fluid phase
-
-    //Component indices
-    static const int firstTransportEqIdx = PVOffset + 1; //!< transport equation index
+    //! Reference index for mass conservation equation.
+    static constexpr int conti0EqIdx = 0;
+    //! Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static constexpr int pressureIdx = 0;
 };
-}
+
+} // end namespace Dumux
 
 #endif

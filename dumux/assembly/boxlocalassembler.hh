@@ -31,8 +31,12 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
+#include <dumux/assembly/partialreassembler.hh>
+#include <dumux/assembly/entitycolor.hh>
+#include <dumux/discretization/box/elementsolution.hh>
 
 namespace Dumux {
 
@@ -52,9 +56,9 @@ class BoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Im
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
 
 public:
 
@@ -71,14 +75,55 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables)
+    template <class PartialReassembler = DefaultPartialReassembler>
+    void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables,
+                                     const PartialReassembler* partialReassembler = nullptr)
     {
         this->asImp_().bindLocalViews();
+        const auto eIdxGlobal = this->assembler().fvGridGeometry().elementMapper().index(this->element());
+        if (partialReassembler
+            && partialReassembler->elementColor(eIdxGlobal) == EntityColor::green)
+        {
+            const auto residual = this->asImp_().evalLocalResidual(); // forward to the internal implementation
+            for (const auto& scv : scvs(this->fvGeometry()))
+                res[scv.dofIndex()] += residual[scv.localDofIndex()];
+        }
+        else if (!this->elementIsGhost())
+        {
+            const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
+            for (const auto& scv : scvs(this->fvGeometry()))
+                res[scv.dofIndex()] += residual[scv.localDofIndex()];
+        }
+        else
+        {
+            using GridGeometry = typename GridVariables::GridGeometry;
+            using GridView = typename GridGeometry::GridView;
+            static constexpr auto dim = GridView::dimension;
 
-        const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables);
+            int numVerticesLocal = this->element().subEntities(dim);
 
-        for (const auto& scv : scvs(this->fvGeometry()))
-            res[scv.dofIndex()] += residual[scv.indexInElement()];
+            for (int i = 0; i < numVerticesLocal; ++i) {
+                auto vertex = this->element().template subEntity<dim>(i);
+
+                if (vertex.partitionType() == Dune::InteriorEntity ||
+                    vertex.partitionType() == Dune::BorderEntity)
+                {
+                    // do not change the non-ghost vertices
+                    continue;
+                }
+
+                // set main diagonal entries for the vertex
+                int vIdx = this->assembler().fvGridGeometry().vertexMapper().index(vertex);
+
+                typedef typename JacobianMatrix::block_type BlockType;
+                BlockType &J = jac[vIdx][vIdx];
+                for (int j = 0; j < BlockType::rows; ++j)
+                    J[j][j] = 1.0;
+
+                // set residual for the vertex
+                res[vIdx] = 0;
+            }
+        }
 
         auto applyDirichlet = [&] (const auto& scvI,
                                    const auto& dirichletValues,
@@ -89,7 +134,7 @@ public:
             for (const auto& scvJ : scvs(this->fvGeometry()))
             {
                 jac[scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
-                if (scvI.indexInElement() == scvJ.indexInElement())
+                if (scvI.localDofIndex() == scvJ.localDofIndex())
                     jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
             }
         };
@@ -114,7 +159,7 @@ public:
             for (const auto& scvJ : scvs(this->fvGeometry()))
             {
                 jac[scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
-                if (scvI.indexInElement() == scvJ.indexInElement())
+                if (scvI.localDofIndex() == scvJ.localDofIndex())
                     jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
             }
         };
@@ -131,7 +176,7 @@ public:
         const auto residual = this->evalLocalResidual();
 
         for (const auto& scv : scvs(this->fvGeometry()))
-            res[scv.dofIndex()] += residual[scv.indexInElement()];
+            res[scv.dofIndex()] += residual[scv.localDofIndex()];
 
         auto applyDirichlet = [&] (const auto& scvI,
                                    const auto& dirichletValues,
@@ -156,7 +201,7 @@ public:
         {
             for (const auto& scvI : scvs(this->fvGeometry()))
             {
-                const auto bcTypes = this->elemBcTypes()[scvI.indexInElement()];
+                const auto bcTypes = this->elemBcTypes()[scvI.localDofIndex()];
                 if (bcTypes.hasDirichlet())
                 {
                     const auto dirichletValues = this->problem().dirichlet(this->element(), scvI);
@@ -186,7 +231,7 @@ public:
  * \tparam DM The differentiation method to residual compute derivatives
  * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<class TypeTag, class Assembler, DiffMethod DM = DiffMethod::numeric, bool implicit = true>
+template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::numeric, bool implicit = true>
 class BoxLocalAssembler;
 
 /*!
@@ -202,14 +247,13 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tr
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
@@ -224,7 +268,9 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    template <class PartialReassembler = DefaultPartialReassembler>
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
+                                                          const PartialReassembler* partialReassembler = nullptr)
     {
         // get some aliases for convenience
         const auto& element = this->element();
@@ -232,7 +278,7 @@ public:
         const auto& curSol = this->curSol();
         auto&& curElemVolVars = this->curElemVolVars();
 
-        // get the vecor of the acutal element residuals
+        // get the vector of the actual element residuals
         const auto origResiduals = this->evalLocalResidual();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -244,7 +290,7 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
         // create the element solution
-        ElementSolutionVector elemSol(element, curSol, fvGeometry);
+        auto elemSol = elementSolution(element, curSol, fvGeometry.fvGridGeometry());
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));
@@ -265,33 +311,40 @@ public:
                 auto evalResiduals = [&](Scalar priVar)
                 {
                     // update the volume variables and compute element residual
-                    elemSol[scv.indexInElement()][pvIdx] = priVar;
+                    elemSol[scv.localDofIndex()][pvIdx] = priVar;
                     curVolVars.update(elemSol, this->problem(), element, scv);
                     return this->evalLocalResidual();
                 };
 
                 // derive the residuals numerically
-                static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.indexInElement()][pvIdx], partialDerivs, origResiduals, numDiffMethod);
+                static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
+                                                          eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
                 for (auto&& scvJ : scvs(fvGeometry))
                 {
-                      for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                      {
-                          // A[i][col][eqIdx][pvIdx] is the rate of change of
-                          // the residual of equation 'eqIdx' at dof 'i'
-                          // depending on the primary variable 'pvIdx' at dof
-                          // 'col'.
-                          A[scvJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
-                      }
+                    // don't add derivatives for green vertices
+                    if (!partialReassembler
+                        || partialReassembler->vertexColor(scvJ.dofIndex()) != EntityColor::green)
+                    {
+                        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                        {
+                            // A[i][col][eqIdx][pvIdx] is the rate of change of
+                            // the residual of equation 'eqIdx' at dof 'i'
+                            // depending on the primary variable 'pvIdx' at dof
+                            // 'col'.
+                            A[scvJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[scvJ.localDofIndex()][eqIdx];
+                        }
+                    }
                 }
 
                 // restore the original state of the scv's volume variables
                 curVolVars = origVolVars;
 
                 // restore the original element solution
-                elemSol[scv.indexInElement()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
+                elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
                 // TODO additional dof dependencies
             }
         }
@@ -313,14 +366,13 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fa
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
 
 public:
@@ -333,8 +385,13 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    template <class PartialReassembler = DefaultPartialReassembler>
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
+                                                          const PartialReassembler* partialReassembler = nullptr)
     {
+        if (partialReassembler)
+            DUNE_THROW(Dune::NotImplemented, "partial reassembly for explicit time discretization");
+
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
@@ -353,7 +410,7 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
         // create the element solution
-        ElementSolutionVector elemSol(element, curSol, fvGeometry);
+        auto elemSol = elementSolution(element, curSol, fvGeometry.fvGridGeometry());
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));
@@ -374,14 +431,16 @@ public:
                 auto evalStorage = [&](Scalar priVar)
                 {
                     // auto partialDerivsTmp = partialDerivs;
-                    elemSol[scv.indexInElement()][pvIdx] = priVar;
+                    elemSol[scv.localDofIndex()][pvIdx] = priVar;
                     curVolVars.update(elemSol, this->problem(), element, scv);
                     return this->evalLocalStorageResidual();
                 };
 
                 // derive the residuals numerically
-                static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalStorage, elemSol[scv.indexInElement()][pvIdx], partialDerivs, origResiduals, numDiffMethod);
+                static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                NumericDifferentiation::partialDerivative(evalStorage, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
+                                                          eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
                 for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
@@ -390,14 +449,14 @@ public:
                     // the residual of equation 'eqIdx' at dof 'i'
                     // depending on the primary variable 'pvIdx' at dof
                     // 'col'.
-                    A[dofIdx][dofIdx][eqIdx][pvIdx] += partialDerivs[scv.indexInElement()][eqIdx];
+                    A[dofIdx][dofIdx][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
                 }
 
                 // restore the original state of the scv's volume variables
                 curVolVars = origVolVars;
 
                 // restore the original element solution
-                elemSol[scv.indexInElement()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
+                elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
                 // TODO additional dof dependencies
             }
         }
@@ -432,8 +491,13 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    template <class PartialReassembler = DefaultPartialReassembler>
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
+                                                          const PartialReassembler* partialReassembler = nullptr)
     {
+        if (partialReassembler)
+            DUNE_THROW(Dune::NotImplemented, "partial reassembly for analytic differentiation");
+
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
@@ -500,7 +564,7 @@ public:
             else
             {
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-                if (this->elemBcTypes()[insideScv.indexInElement()].hasNeumann())
+                if (this->elemBcTypes()[insideScv.localDofIndex()].hasNeumann())
                 {
                     // add flux term derivatives
                     this->localResidual().addRobinFluxDerivatives(A[insideScv.dofIndex()],
@@ -546,8 +610,13 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    template <class PartialReassembler = DefaultPartialReassembler>
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
+                                                          const PartialReassembler* partialReassembler = nullptr)
     {
+        if (partialReassembler)
+            DUNE_THROW(Dune::NotImplemented, "partial reassembly for explicit time discretization");
+
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();

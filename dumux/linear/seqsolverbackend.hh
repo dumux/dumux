@@ -25,20 +25,23 @@
 #define DUMUX_SEQ_SOLVER_BACKEND_HH
 
 #include <type_traits>
+#include <tuple>
+#include <utility>
 
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/superlu.hh>
 #include <dune/istl/umfpack.hh>
 #include <dune/common/version.hh>
+#include <dune/common/hybridutilities.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/matrix.hh>
+#include <dumux/common/typetraits/utility.hh>
 #include <dumux/linear/solver.hh>
+#include <dumux/linear/amgbackend.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Linear
@@ -172,11 +175,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
-#else
-        using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, precondBlockLevel>;
-#endif
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
         return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
@@ -364,11 +363,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
-#else
-        using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, precondBlockLevel>;
-#endif
         using Solver = Dune::CGSolver<Vector>;
 
         return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
@@ -590,11 +585,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
-#else
-        using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, precondBlockLevel>;
-#endif
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
         return IterativePreconditionedSolverImpl::template solveWithILU0Prec<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
@@ -630,11 +621,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
-#else
-        using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, precondBlockLevel>;
-#endif
         using Solver = Dune::CGSolver<Vector>;
 
         return IterativePreconditionedSolverImpl::template solveWithILU0Prec<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
@@ -671,11 +658,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
-#else
-        using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, precondBlockLevel>;
-#endif
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
         return IterativePreconditionedSolverImpl::template solveWithILU0PrecGMRes<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
@@ -713,11 +696,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
-#else
-        using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, precondBlockLevel>;
-#endif
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
         return IterativePreconditionedSolverImpl::template solveWithGMRes<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
@@ -845,6 +824,335 @@ private:
     Dune::InverseOperatorResult result_;
 };
 #endif // HAVE_UMFPACK
+
+
+/*!
+ * \name Solver for MultiTypeBlockMatrix's
+ */
+// \{
+
+/*
+ * A simple ilu0 block diagonal preconditioner
+ */
+template<class M, class X, class Y, int blockLevel = 2>
+class BlockDiagILU0Preconditioner : public Dune::Preconditioner<X, Y>
+{
+    template<std::size_t i>
+    using DiagBlockType = std::decay_t<decltype(std::declval<M>()[Dune::index_constant<i>{}][Dune::index_constant<i>{}])>;
+
+    template<std::size_t i>
+    using VecBlockType = std::decay_t<decltype(std::declval<X>()[Dune::index_constant<i>{}])>;
+
+#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
+    template<std::size_t i>
+    using BlockILU = Dune::SeqILU<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>, blockLevel-1>;
+#else
+    template<std::size_t i>
+    using BlockILU = Dune::SeqILU0<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>, blockLevel-1>;
+#endif
+
+    using ILUTuple = typename makeFromIndexedType<std::tuple, BlockILU, std::make_index_sequence<M::size()> >::type;
+
+public:
+    //! \brief The matrix type the preconditioner is for.
+    using matrix_type = typename std::decay_t<M>;
+    //! \brief The domain type of the preconditioner.
+    using domain_type = X;
+    //! \brief The range type of the preconditioner.
+    using range_type = Y;
+    //! \brief The field type of the preconditioner.
+    using field_type = typename X::field_type;
+
+    /*! \brief Constructor.
+
+       Constructor gets all parameters to operate the prec.
+       \param A The (multi type block) matrix to operate on.
+       \param w The relaxation factor.
+     */
+    BlockDiagILU0Preconditioner(const M& m, double w = 1.0)
+    : BlockDiagILU0Preconditioner(m, w, std::make_index_sequence<M::size()>{})
+    {
+        static_assert(blockLevel >= 2, "Only makes sense for MultiTypeBlockMatrix!");
+    }
+
+    /*!
+       \brief Prepare the preconditioner.
+
+       \copydoc Preconditioner::pre(X&,Y&)
+     */
+    void pre (X& v, Y& d) final {}
+
+    /*!
+     * \brief Apply the preconditoner.
+     * \copydoc Preconditioner::apply(X&,const Y&)
+     */
+    void apply (X& v, const Y& d) final
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(ilu_)), [&](const auto i)
+        {
+            std::get<decltype(i)::value>(ilu_).apply(v[i], d[i]);
+        });
+    }
+
+    /*!
+     * \brief Clean up.
+     * \copydoc Preconditioner::post(X&)
+     */
+    void post (X&) final {}
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    Dune::SolverCategory::Category category() const final
+    {
+        return Dune::SolverCategory::sequential;
+    }
+
+private:
+    template<std::size_t... Is>
+    BlockDiagILU0Preconditioner (const M& m, double w, std::index_sequence<Is...> is)
+    : ilu_(std::make_tuple(BlockILU<Is>(m[Dune::index_constant<Is>{}][Dune::index_constant<Is>{}], w)...))
+    {}
+
+    ILUTuple ilu_;
+};
+
+
+/*
+ * \brief A simple ilu0 block diagonal preconditioned BiCGSTABSolver
+ * \note expects a system as a multi-type block-matrix
+ * | A  B |
+ * | C  D |
+ */
+class BlockDiagILU0BiCGSTABSolver : public LinearSolver
+{
+
+public:
+    using LinearSolver::LinearSolver;
+
+    // Solve saddle-point problem using a Schur complement based preconditioner
+    template<int precondBlockLevel = 2, class Matrix, class Vector>
+    bool solve(const Matrix& M, Vector& x, const Vector& b)
+    {
+        BlockDiagILU0Preconditioner<Matrix, Vector, Vector> preconditioner(M);
+        Dune::MatrixAdapter<Matrix, Vector, Vector> op(M);
+        Dune::BiCGSTABSolver<Vector> solver(op, preconditioner, this->residReduction(),
+                                            this->maxIter(), this->verbosity());
+        auto bTmp(b);
+        solver.apply(x, bTmp, result_);
+
+        return result_.converged;
+    }
+
+    const Dune::InverseOperatorResult& result() const
+    {
+      return result_;
+    }
+
+    std::string name() const
+    { return "block-diagonal ILU0 preconditioned BiCGSTAB solver"; }
+
+private:
+    Dune::InverseOperatorResult result_;
+};
+
+/*
+ * A simple ilu0 block diagonal preconditioner
+ */
+template<class M, class X, class Y, int blockLevel = 2>
+class BlockDiagAMGPreconditioner : public Dune::Preconditioner<X, Y>
+{
+    template<std::size_t i>
+    using DiagBlockType = std::decay_t<decltype(std::declval<M>()[Dune::index_constant<i>{}][Dune::index_constant<i>{}])>;
+
+    template<std::size_t i>
+    using VecBlockType = std::decay_t<decltype(std::declval<X>()[Dune::index_constant<i>{}])>;
+
+    template<std::size_t i>
+    using Smoother = Dune::SeqSSOR<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>>;
+
+    template<std::size_t i>
+    using LinearOperator = Dune::MatrixAdapter<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>>;
+
+    template<std::size_t i>
+    using ScalarProduct = Dune::SeqScalarProduct<VecBlockType<i>>;
+
+    template<std::size_t i>
+    using BlockAMG = Dune::Amg::AMG<LinearOperator<i>, VecBlockType<i>, Smoother<i>>;
+
+    using AMGTuple = typename makeFromIndexedType<std::tuple, BlockAMG, std::make_index_sequence<M::size()> >::type;
+
+public:
+    //! \brief The matrix type the preconditioner is for.
+    using matrix_type = typename std::decay_t<M>;
+    //! \brief The domain type of the preconditioner.
+    using domain_type = X;
+    //! \brief The range type of the preconditioner.
+    using range_type = Y;
+    //! \brief The field type of the preconditioner.
+    using field_type = typename X::field_type;
+
+    /*! \brief Constructor.
+
+       Constructor gets all parameters to operate the prec.
+       \param A The (multi type block) matrix to operate on.
+       \param w The relaxation factor.
+     */
+    template<class LOP, class Criterion, class SmootherArgs>
+    BlockDiagAMGPreconditioner(const LOP& lop, const Criterion& c, const SmootherArgs& sa)
+    : BlockDiagAMGPreconditioner(lop, c, sa, std::make_index_sequence<M::size()>{})
+    {
+        static_assert(blockLevel >= 2, "Only makes sense for MultiTypeBlockMatrix!");
+    }
+
+    /*!
+       \brief Prepare the preconditioner.
+
+       \copydoc Preconditioner::pre(X&,Y&)
+     */
+    void pre (X& v, Y& d) final
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(amg_)), [&](const auto i)
+        {
+            std::get<decltype(i)::value>(amg_).pre(v[i], d[i]);
+        });
+    }
+
+    /*!
+     * \brief Apply the preconditoner.
+     * \copydoc Preconditioner::apply(X&,const Y&)
+     */
+    void apply (X& v, const Y& d) final
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(amg_)), [&](const auto i)
+        {
+            std::get<decltype(i)::value>(amg_).apply(v[i], d[i]);
+        });
+    }
+
+    /*!
+     * \brief Clean up.
+     * \copydoc Preconditioner::post(X&)
+     */
+    void post (X& v) final
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(amg_)), [&](const auto i)
+        {
+            std::get<decltype(i)::value>(amg_).post(v[i]);
+        });
+    }
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    Dune::SolverCategory::Category category() const final
+    {
+        return Dune::SolverCategory::sequential;
+    }
+
+private:
+    template<class LOP, class Criterion, class SmootherArgs, std::size_t... Is>
+    BlockDiagAMGPreconditioner (const LOP& lop, const Criterion& c, const SmootherArgs& sa, std::index_sequence<Is...> is)
+    : amg_(std::make_tuple(BlockAMG<Is>(*std::get<Is>(lop), *std::get<Is>(c), *std::get<Is>(sa))...))
+    {}
+
+    AMGTuple amg_;
+};
+
+/*
+ * \brief A simple ilu0 block diagonal preconditioned BiCGSTABSolver
+ * \note expects a system as a multi-type block-matrix
+ * | A  B |
+ * | C  D |
+ */
+class BlockDiagAMGBiCGSTABSolver : public LinearSolver
+{
+    template<class M, std::size_t i>
+    using DiagBlockType = std::decay_t<decltype(std::declval<M>()[Dune::index_constant<i>{}][Dune::index_constant<i>{}])>;
+
+    template<class X, std::size_t i>
+    using VecBlockType = std::decay_t<decltype(std::declval<X>()[Dune::index_constant<i>{}])>;
+
+    template<class M, class X, std::size_t i>
+    using Smoother = Dune::SeqSSOR<DiagBlockType<M, i>, VecBlockType<X, i>, VecBlockType<X, i>>;
+
+    template<class M, class X, std::size_t i>
+    using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother<M, X, i>>::Arguments;
+
+    template<class M, std::size_t i>
+    using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<DiagBlockType<M, i>, Dune::Amg::FirstDiagonal>>;
+
+    template<class M, class X, std::size_t i>
+    using LinearOperator = Dune::MatrixAdapter<DiagBlockType<M, i>, VecBlockType<X, i>, VecBlockType<X, i>>;
+
+public:
+    using LinearSolver::LinearSolver;
+
+    // Solve saddle-point problem using a Schur complement based preconditioner
+    template<int precondBlockLevel = 2, class Matrix, class Vector>
+    bool solve(const Matrix& m, Vector& x, const Vector& b)
+    {
+        //! \todo Check whether the default accumulation mode atOnceAccu is needed.
+        //! \todo make parameters changeable at runtime from input file / parameter tree
+        Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
+        params.setDefaultValuesIsotropic(3);
+        params.setDebugLevel(this->verbosity());
+
+        auto criterion = makeCriterion_<Criterion, Matrix>(params, std::make_index_sequence<Matrix::size()>{});
+        auto smootherArgs = makeSmootherArgs_<SmootherArgs, Matrix, Vector>(std::make_index_sequence<Matrix::size()>{});
+
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(m)), [&](const auto i)
+        {
+            auto& args = std::get<decltype(i)::value>(smootherArgs);
+            args->iterations = 1;
+            args->relaxationFactor = 1;
+        });
+
+        auto linearOperator = makeLinearOperator_<LinearOperator, Matrix, Vector>(m, std::make_index_sequence<Matrix::size()>{});
+
+        BlockDiagAMGPreconditioner<Matrix, Vector, Vector> preconditioner(linearOperator, criterion, smootherArgs);
+
+        Dune::MatrixAdapter<Matrix, Vector, Vector> op(m);
+        Dune::BiCGSTABSolver<Vector> solver(op, preconditioner, this->residReduction(),
+                                            this->maxIter(), this->verbosity());
+        auto bTmp(b);
+        solver.apply(x, bTmp, result_);
+
+        return result_.converged;
+    }
+
+    const Dune::InverseOperatorResult& result() const
+    {
+      return result_;
+    }
+
+    std::string name() const
+    { return "block-diagonal AMG preconditioned BiCGSTAB solver"; }
+
+private:
+    template<template<class M, std::size_t i> class Criterion, class Matrix, class Params, std::size_t... Is>
+    auto makeCriterion_(const Params& p, std::index_sequence<Is...>)
+    {
+        return std::make_tuple(std::make_shared<Criterion<Matrix, Is>>(p)...);
+    }
+
+    template<template<class M, class X, std::size_t i> class SmootherArgs, class Matrix, class Vector, std::size_t... Is>
+    auto makeSmootherArgs_(std::index_sequence<Is...>)
+    {
+        return std::make_tuple(std::make_shared<SmootherArgs<Matrix, Vector, Is>>()...);
+    }
+
+    template<template<class M, class X, std::size_t i> class LinearOperator, class Matrix, class Vector, std::size_t... Is>
+    auto makeLinearOperator_(const Matrix& m, std::index_sequence<Is...>)
+    {
+        return std::make_tuple(std::make_shared<LinearOperator<Matrix, Vector, Is>>(m[Dune::index_constant<Is>{}][Dune::index_constant<Is>{}])...);
+    }
+
+    Dune::InverseOperatorResult result_;
+};
+
+// \}
 
 } // end namespace Dumux
 

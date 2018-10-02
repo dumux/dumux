@@ -24,32 +24,42 @@
 #ifndef DUMUX_BRINE_HH
 #define DUMUX_BRINE_HH
 
+#include <cmath>
 
-#include <dumux/material/components/component.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
-#include <cmath>
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A class for the brine fluid properties.
  *
  * \tparam Scalar The type used for scalar values
  * \tparam H2O Static polymorphism: the Brine class can access all properties of the H2O class
+ * \note This is an implementation of brine as a pseudo-component with a constant salinity.
  */
 template <class Scalar,
-class H2O_Tabulated = TabulatedComponent<Scalar, H2O<Scalar>>>
-class Brine : public Component<Scalar, Brine<Scalar, H2O_Tabulated> >
+          class H2O_Tabulated = Components::TabulatedComponent<Components::H2O<Scalar>>>
+class Brine
+: public Components::Base<Scalar, Brine<Scalar, H2O_Tabulated> >
+, public Components::Liquid<Scalar, Brine<Scalar, H2O_Tabulated> >
+, public Components::Gas<Scalar, Brine<Scalar, H2O_Tabulated> >
 {
 public:
-    using H2O = TabulatedComponent<Scalar, Dumux::H2O<Scalar>>;
+    using H2O = Components::TabulatedComponent<Dumux::Components::H2O<Scalar>>;
 
-    //HACK: If salinity is a pseudo-component, a constat value is used
+    // The constant salinity
     static Scalar constantSalinity;
+
+    //! The ideal gas constant \f$\mathrm{[J/mol/K]}\f$
+    static constexpr Scalar R = Constants<Scalar>::R;
 
     /*!
      * \brief A human readable name for the brine.
@@ -59,15 +69,13 @@ public:
 
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of brine.
-     *\param salinity The mass fraction of salt in brine
      * This assumes that the salt is pure NaCl.
      */
-   static Scalar molarMass(Scalar salinity = constantSalinity)
+   static constexpr Scalar molarMass()
    {
        const Scalar M1 = H2O::molarMass();
-       const Scalar M2 = NaCl<Scalar>::molarMass(); // molar mass of NaCl [kg/mol]
-       const Scalar X2 = salinity; // mass fraction of salt in brine
-       return M1*M2/(M2 + X2*(M1 - M2));
+       const Scalar M2 = Components::NaCl<Scalar>::molarMass(); // molar mass of NaCl [kg/mol]
+       return M1*M2/(M2 + constantSalinity*(M1 - M2));
    };
 
     /*!
@@ -100,8 +108,19 @@ public:
      *
      * \param T temperature of component in \f$\mathrm{[K]}\f$
      */
-    static Scalar vaporPressure(Scalar T)
-    { return H2O::vaporPressure(T); }
+    static Scalar vaporPressure(Scalar temperature)
+    {
+        Scalar ps = H2O::vaporPressure(temperature); //Saturation vapor pressure for pure water
+        Scalar pi = 0;
+        using std::log;
+        if (constantSalinity < 0.26) // here we have hard coded the solubility limit for NaCl
+            pi = (R * temperature * log(1- constantSalinity)); // simplified version of Eq 2.29 in Vishal Jambhekar's Promo
+        else
+            pi = (R * temperature * log(0.74));
+        using std::exp;
+        ps *= exp((pi)/(R*temperature));// Kelvin's law for reduction in saturation vapor pressure due to osmotic potential
+        return ps;
+    }
 
     /*!
      * \brief Specific enthalpy of gaseous brine \f$\mathrm{[J/kg]}\f$.
@@ -109,8 +128,7 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static const Scalar gasEnthalpy(Scalar temperature,
-                                    Scalar pressure)
+    static const Scalar gasEnthalpy(Scalar temperature, Scalar pressure)
     { return H2O::gasEnthalpy(temperature, pressure); }
 
     /*!
@@ -118,7 +136,6 @@ public:
      *
      * \param T temperature of component in \f$\mathrm{[K]}\f$
      * \param p pressure of component in \f$\mathrm{[Pa]}\f$
-     * \param salinity The mass fraction of salt
      *
      * Equations given in:
      * - Palliser & McKibbin (1998) \cite palliser1998 <BR>
@@ -126,8 +143,7 @@ public:
      * - Daubert & Danner (1989) \cite daubert1989
      *
      */
-    static const Scalar liquidEnthalpy(Scalar T,
-                                       Scalar p, Scalar salinity = constantSalinity)
+    static const Scalar liquidEnthalpy(Scalar T, Scalar p)
     {
         /*Numerical coefficients from PALLISER*/
         static const Scalar f[] = {
@@ -148,7 +164,7 @@ public:
         /*Regularization*/
         using std::min;
         using std::max;
-        salinity = min(max(salinity,0.0), salSat);
+        const Scalar salinity = min(max(constantSalinity,0.0), salSat);
 
         const Scalar hw = H2O::liquidEnthalpy(T, p)/1E3; /* kJ/kg */
 
@@ -179,7 +195,6 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     * \param salinity salinity in\f$\mathrm{[kg/kg]}\f$
      *
      * See:
      *
@@ -187,11 +202,10 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf  \cite IAPWS1997
      */
-    static const Scalar liquidHeatCapacity(Scalar temperature,
-                                        Scalar pressure, Scalar salinity = constantSalinity)
+    static const Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
     {
         const Scalar eps = temperature*1e-8;
-        return (liquidEnthalpy(temperature + eps, pressure, salinity) - liquidEnthalpy(temperature, pressure, salinity))/eps;
+        return (liquidEnthalpy(temperature + eps, pressure)- liquidEnthalpy(temperature, pressure))/eps;
     }
 
     /*!
@@ -229,14 +243,11 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     * \param salinity The mass fraction of salt
      */
     static const Scalar liquidInternalEnergy(Scalar temperature,
-                                             Scalar pressure, Scalar salinity = constantSalinity)
+                                             Scalar pressure)
     {
-        return
-            liquidEnthalpy(temperature, pressure) -
-            pressure/liquidDensity(temperature, pressure);
+        return liquidEnthalpy(temperature, pressure) - pressure/liquidDensity(temperature, pressure);
     }
 
     /*!
@@ -249,15 +260,26 @@ public:
     { return H2O::gasDensity(temperature, pressure); }
 
     /*!
+     *  \brief The molar density of steam in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *  We take the value of the H2O gas molar density here because salt is not in the gas phase.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return H2O::gasMolarDensity(temperature, pressure); }
+
+    /*!
      * \brief Returns true if the gas phase is assumed to be ideal
      */
-    static bool gasIsIdeal()
+    static constexpr bool gasIsIdeal()
     { return H2O::gasIsIdeal(); }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be compressible
      */
-    static bool gasIsCompressible()
+    static constexpr bool gasIsCompressible()
     { return H2O::gasIsCompressible(); }
 
     /*!
@@ -271,18 +293,17 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     * \param salinity The mass fraction of salt
      *
      * Equations given in:
      *                        - Batzle & Wang (1992) \cite batzle1992 <BR>
      *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271 \cite adams2002
      */
-    static Scalar liquidDensity(Scalar temperature, Scalar pressure, Scalar salinity = constantSalinity)
+    static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
         using std::max;
         const Scalar TempC = temperature - 273.15;
         const Scalar pMPa = pressure/1.0E6;
-        salinity = max(0.0, salinity);
+        const Scalar salinity = max(0.0, constantSalinity);
 
         const Scalar rhow = H2O::liquidDensity(temperature, pressure);
 
@@ -303,6 +324,16 @@ public:
         return density;
     }
 
+    /*!
+     * \brief The molar density of brine in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    { return liquidDensity(temperature, pressure)/molarMass(); }
+
    /*!
     * \brief The pressure of steam in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
     *
@@ -318,9 +349,8 @@ public:
     *
     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
     * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
-    * \param salinity The mass fraction of salt
     */
-   static Scalar liquidPressure(Scalar temperature, Scalar density, Scalar salinity = constantSalinity)
+   static Scalar liquidPressure(Scalar temperature, Scalar density)
    {
        // We use the Newton method for this. For the initial value we
        // assume the pressure to be 10% higher than the vapor
@@ -361,19 +391,18 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     * \param salinity The mass fraction of salt
      *
      * Equation given in:
      *                         - Batzle & Wang (1992) \cite batzle1992 <BR>
      *                         - cited by: Bachu & Adams (2002)
      *                           "Equations of State for basin geofluids" \cite adams2002
      */
-    static Scalar liquidViscosity(Scalar temperature, Scalar pressure, Scalar salinity = constantSalinity)
+    static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
         // regularisation
         using std::max;
         temperature = max(temperature, 275.0);
-        salinity = max(0.0, salinity);
+        const Scalar salinity = max(0.0, constantSalinity);
 
         using std::pow;
         using std::exp;
@@ -383,13 +412,30 @@ public:
         assert(mu_brine > 0.0);
         return mu_brine/1000.0;
     }
+
+    /*!
+     * \brief Thermal conductivity of a brine \f$\mathrm{[W/(m K)]}\f$.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     * \todo TODO: For the thermal conductivity the salinity contribution is
+     *       neglected. This contribution is probably not big, but somebody
+     *       would have to find out its influence.
+     */
+    static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
+    { return H2O::liquidThermalConductivity(temperature, pressure); }
 };
+
+template <class Scalar, class H2O>
+struct IsAqueous<Brine<Scalar, H2O>> : public std::true_type {};
 
 /*!
  * \brief Default value for the salinity of the brine (dimensionless).
  */
 template <class Scalar, class H2O>
 Scalar Brine<Scalar, H2O>::constantSalinity = 0.1;
+
+} // end namespace Components
 
 } // end namespace Dumux
 

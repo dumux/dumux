@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="1883" NumberOfPoints="980">
-      <PointData Scalars="Sn">
-        <DataArray type="Float32" Name="Sn" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="S_napl">
+        <DataArray type="Float32" Name="S_napl" NumberOfComponents="1" format="ascii">
           0.0152079 0 5.49811e-07 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0.326542 0.285021 0 0 0 0 0.35585 0 0.216695 0 0
@@ -87,7 +87,7 @@
           7.60108e-16 8.62105e-05 0 0 0.000132628 5.31774e-18 0 0 0 0 0.000481945 1
           0.000288549 1 0 0 1 0.000321633 0 0
         </DataArray>
-        <DataArray type="Float32" Name="Sw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_aq" NumberOfComponents="1" format="ascii">
           0.984792 1 0.999999 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 0.673458 0.714979 1 1 1 1 0.64415 1 0.783305 1 1
@@ -171,7 +171,7 @@
           1 0.999914 1 1 0.999867 1 1 1 1 1 0.999518 0
           0.999711 0 1 1 0 0.999678 1 1
         </DataArray>
-        <DataArray type="Float32" Name="pn" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_napl" NumberOfComponents="1" format="ascii">
           22782.3 22479.9 22766.7 21909.9 11230.2 10971.3 10971.3 10444.4 14860.1 14992.2 14083.8 13853.1
           14706.3 13609.6 13041.2 15769 14615.2 15678.8 13000.3 15477.4 13501.2 12416.5 15591.5 16645.6
           16416.3 15607.3 14564.9 12447.1 12171 14177.3 16595.7 16634.9 12845.7 13557.7 17332.6 17573.1
@@ -255,7 +255,7 @@
           16480.2 18572.4 2443.71 2001 19859.8 21157.8 21094.5 21503.9 2686.06 2001 20389.6 30002
           20187.4 30002 2001 2816.88 30002 18587 4019.1 2001
         </DataArray>
-        <DataArray type="Float32" Name="pw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_aq" NumberOfComponents="1" format="ascii">
           20767 20479.9 20766.7 19909.9 9230.22 8971.3 8971.25 8444.39 12860.1 12992.2 12083.8 11853.1
           12706.3 11609.6 11041.2 13769 12615.2 13678.8 11000.3 13477.4 11501.2 10416.5 13591.5 14645.6
           14416.3 13170.2 12199.6 10447.1 10171 12177.3 14595.7 14142.9 10845.7 11297.9 15332.6 15573.1
@@ -591,7 +591,7 @@
           1460 1460 1460 1460 1460 1460 1460 1460 1460 1460 1460 1460
           1460 1460 1460 1460 1460 1460 1460 1460
         </DataArray>
-        <DataArray type="Float32" Name="mobW" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_aq" NumberOfComponents="1" format="ascii">
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
@@ -675,7 +675,7 @@
           1000 999.655 1000 1000 999.47 1000 1000 1000 1000 1000 998.074 0
           998.846 0 1000 1000 0 998.714 1000 1000
         </DataArray>
-        <DataArray type="Float32" Name="mobN" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_napl" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -843,7 +843,7 @@
           0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25
           0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25
         </DataArray>
-        <DataArray type="Float32" Name="temperature" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="T" NumberOfComponents="1" format="ascii">
           293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15
           293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15
           293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15

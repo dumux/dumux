@@ -34,7 +34,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethods DM>
+template <class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawNonEquilibriumImplementation;
 
 /*!
@@ -42,7 +42,7 @@ class FouriersLawNonEquilibriumImplementation;
  * \brief Specialization of Fourier's Law for the box method for thermal nonequilibrium models.
  */
 template <class TypeTag>
-class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethods::Box>
+class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -53,8 +53,8 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethods::Bo
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
@@ -63,12 +63,11 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethods::Bo
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
+    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()} ;
     enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
-    enum {sPhaseIdx = FluidSystem::sPhaseIdx};
+    enum {sPhaseIdx = FluidSystem::numPhases};
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     static Scalar flux(const Problem& problem,
@@ -117,12 +116,12 @@ public:
         // evaluate gradTemp at integration point
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
-        GlobalPosition gradTemp(0.0);
+        Dune::FieldVector<Scalar, dimWorld> gradTemp(0.0);
         for (auto&& scv : scvs(fvGeometry))
         {
             // compute the temperature gradient with the shape functions
             if (phaseIdx < numEnergyEqFluid)
-                gradTemp.axpy(elemVolVars[scv].temperature(phaseIdx), fluxVarsCache.gradN(scv.indexInElement()));
+                gradTemp.axpy(elemVolVars[scv].temperatureFluid(phaseIdx), fluxVarsCache.gradN(scv.indexInElement()));
             else
                gradTemp.axpy(elemVolVars[scv].temperatureSolid(), fluxVarsCache.gradN(scv.indexInElement()));
         }

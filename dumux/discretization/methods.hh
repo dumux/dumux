@@ -24,8 +24,8 @@
 #ifndef DUMUX_DISCRETIZARION_METHODS_HH
 #define DUMUX_DISCRETIZARION_METHODS_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
     /*!
      * \brief The available discretization methods in Dumux
      * \ingroup Discretization
@@ -33,9 +33,9 @@ namespace Dumux
      *       the class in question is not specific to a a discretization method
      *       or the classification is non-applicable
      */
-    enum class DiscretizationMethods : unsigned int
+    enum class DiscretizationMethod
     {
-        None, Box, CCTpfa, CCMpfa, Staggered
+        none, box, cctpfa, ccmpfa, staggered
     };
 
 } // end namespace Dumux

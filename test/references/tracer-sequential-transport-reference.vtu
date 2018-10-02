@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="2500" NumberOfPoints="2601">
-      <CellData Scalars="x_tracer_0" Vectors="velocity_Groundwater (m/s)">
-        <DataArray type="Float32" Name="x_tracer_0" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="x^tracer_0" Vectors="velocity_Groundwater (m/s)">
+        <DataArray type="Float32" Name="x^tracer_0" NumberOfComponents="1" format="ascii">
           2.50468e-11 2.55786e-11 2.45958e-11 3.96359e-12 1.61904e-14 4.17954e-10 1.88905e-15 6.23649e-16 7.41016e-18 3.03097e-18 1.59963e-11 5.08641e-10
           2.59435e-10 2.58697e-12 3.41529e-10 2.66201e-19 1.12872e-10 1.02254e-11 8.75145e-10 8.38877e-12 9.23308e-10 1.92903e-11 1.61749e-10 7.88538e-10
           7.13977e-10 1.4116e-11 2.16079e-11 2.53995e-12 4.37433e-10 4.93932e-15 1.01188e-11 4.01725e-11 4.88887e-12 6.31969e-11 1.58099e-10 2.63913e-14
@@ -214,7 +214,7 @@
           3.8149e-24 1.93092e-23 5.38689e-20 5.442e-19 2.63823e-18 2.74714e-19 2.96745e-19 2.61456e-19 4.48102e-17 3.68616e-15 9.62048e-16 3.43464e-17
           3.84133e-17 1.55783e-16 1.52386e-18 1.3212e-17
         </DataArray>
-        <DataArray type="Float32" Name="X_tracer_0" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="X^tracer_0" NumberOfComponents="1" format="ascii">
           4.17447e-13 4.2631e-13 4.0993e-13 6.60598e-14 2.69839e-16 6.9659e-12 3.14842e-17 1.03942e-17 1.23503e-19 5.05161e-20 2.66604e-13 8.47736e-12
           4.32392e-12 4.31162e-14 5.69215e-12 4.43668e-21 1.88121e-12 1.70423e-13 1.45858e-11 1.39813e-13 1.53885e-11 3.21505e-13 2.69581e-12 1.31423e-11
           1.18996e-11 2.35267e-13 3.60132e-13 4.23325e-14 7.29054e-12 8.2322e-17 1.68647e-13 6.69542e-13 8.14811e-14 1.05328e-12 2.63499e-12 4.39855e-16

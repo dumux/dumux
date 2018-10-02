@@ -46,14 +46,15 @@ class SweResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    //using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    //old using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
 
@@ -108,17 +109,15 @@ public:
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars The volume variables of the current element
      * \param scvf The sub control volume face to compute the flux on
-     * \param elemFluxVarsCache The cache related to flux compuation
-     */
+    */
     ResidualVector computeFlux(const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
                                const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace& scvf,
-                               const ElementFluxVariablesCache& elemFluxVarsCache) const
+                               const SubControlVolumeFace& scvf) const
     {
         ResidualVector flux(0.0);
-        auto numFlux = AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        auto numFlux = AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
         flux = numFlux;// + turbFlux;
 
         return flux;

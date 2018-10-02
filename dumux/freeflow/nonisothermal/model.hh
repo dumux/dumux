@@ -18,63 +18,61 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNIModel
+ * \ingroup FreeflowNIModel
  *
- * \brief A single-phase, non-isothermal Navier-Stokes model
+ * \brief A single-phase, non-isothermal free-flow model
  *
  * In addition to the momentum and mass/mole balance equations, this model also solves the <B> energy balance equation </B>:
  * \f[
  *    \frac{\partial (\varrho  v)}{\partial t}
  *    + \nabla \cdot \left( \varrho h {\boldsymbol{v}}
- *    - \lambda \textbf{grad}\, T \right) - q_T = 0
+ *    - \lambda_\text{eff} \textbf{grad}\, T \right) - q_T = 0
  * \f]
  *
+ *
+ * For laminar Navier-Stokes flow the effective thermal conductivity is the fluid
+ * thermal conductivity: \f$ \lambda_\text{eff} = \lambda \f$.
+ *
+ * For turbulent Reynolds-averaged Navier-Stokes flow the eddy thermal conductivity is added:
+ *  \f$ \lambda_\text{eff} = \lambda + \lambda_\text{t} \f$.
+ * The eddy thermal conductivity \f$ \lambda_\text{t} \f$ is related to the eddy viscosity \f$ \nu_\text{t} \f$
+ * by the turbulent Prandtl number:
+ * \f[ \lambda_\text{t} = \frac{\nu_\text{t} \varrho c_\text{p}}{\mathrm{Pr}_\text{t}} \f]
  */
 
-#ifndef DUMUX_STAGGERED_NI_MODEL_HH
-#define DUMUX_STAGGERED_NI_MODEL_HH
+#ifndef DUMUX_FREEFLOW_NI_MODEL_HH
+#define DUMUX_FREEFLOW_NI_MODEL_HH
 
-#include <dumux/common/properties.hh>
 #include "indices.hh"
-#include "vtkoutputfields.hh"
-#include <dumux/discretization/fourierslaw.hh>
 
+namespace Dumux {
 
-namespace Dumux
+/*!
+ * \ingroup FreeflowNIModel
+ * \brief Specifies a number properties of non-isothermal free-flow
+ *        flow models based on the specifics of a given isothermal model.
+ * \tparam IsothermalTraits Model traits of the isothermal model
+ */
+template<class IsothermalTraits>
+struct FreeflowNIModelTraits : public IsothermalTraits
 {
+    //! We solve for one more equation, i.e. the energy balance
+    static constexpr int numEq() { return IsothermalTraits::numEq()+1; }
+    //! We additionally solve for the equation balance
+    static constexpr bool enableEnergyBalance() { return true; }
+    //! the indices
+    using Indices = FreeflowNonIsothermalIndices<typename IsothermalTraits::Indices, numEq()>;
 
-namespace Properties {
-
-//! The type tags for the non-isothermal Navier Stokes model
-NEW_TYPE_TAG(NavierStokesNonIsothermal);
-
-///////////////////////////////////////////////////////////////////////////
-// default property values for the non-isothermal single phase model
-///////////////////////////////////////////////////////////////////////////
-
-//! The non-isothermal model has one more balance equation (energy balance) compared to the non-isothermal ones
-SET_PROP(NavierStokesNonIsothermal, NumEq)
-{
-private:
-    static constexpr auto isothermalNumEq = GET_PROP_VALUE(TypeTag, IsothermalNumEq);
-public:
-    static constexpr int value = isothermalNumEq + 1;
+    template <class FluidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        if (pvIdx < numEq() - 1)
+            return IsothermalTraits::template primaryVariableName<FluidSystem>(pvIdx, state);
+        else
+            return "T";
+    }
 };
 
-//! Enable the energy balance
-SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
-
-//! The non-isothermal indices
-SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
-
-//! The non-isothermal vtk output fields
-SET_TYPE_PROP(NavierStokesNonIsothermal, VtkOutputFields, NavierStokesNonIsothermalVtkOutputFields<TypeTag>);
-
-//! Use Fourier's Law as default heat conduction type
-SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
-
-} // end namespace Properties
-
-}
+} // end  namespace Dumux
 
 #endif

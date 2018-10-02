@@ -33,9 +33,13 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
+#include <dumux/assembly/entitycolor.hh>
+#include <dumux/assembly/partialreassembler.hh>
 #include <dumux/discretization/fluxstencil.hh>
+#include <dumux/discretization/cellcentered/elementsolution.hh>
 
 namespace Dumux {
 
@@ -46,7 +50,7 @@ namespace Dumux {
  * \tparam TypeTag The TypeTag
  * \tparam Assembler The assembler type
  * \tparam Implementation The actual implementation
- * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ * \tparam implicit Specifies whether the time discretization is implicit or not (i.e. explicit)
  */
 template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
@@ -56,8 +60,8 @@ class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Imp
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
 public:
 
@@ -67,11 +71,21 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables)
+    template <class PartialReassembler = DefaultPartialReassembler>
+    void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables,
+                                     const PartialReassembler* partialReassembler)
     {
         this->asImp_().bindLocalViews();
         const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
-        res[globalI] = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
+        if (partialReassembler
+            && partialReassembler->elementColor(globalI) == EntityColor::green)
+        {
+            res[globalI] = this->asImp_().evalLocalResidual()[0]; // forward to the internal implementation
+        }
+        else
+        {
+            res[globalI] = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
+        }
     }
 
     /*!
@@ -103,7 +117,7 @@ public:
  * \tparam DM The differentiation method to residual compute derivatives
  * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<class TypeTag, class Assembler, DiffMethod DM = DiffMethod::numeric, bool implicit = true>
+template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::numeric, bool implicit = true>
 class CCLocalAssembler;
 
 /*!
@@ -119,15 +133,14 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
 
     using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
@@ -144,7 +157,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
@@ -169,7 +182,7 @@ public:
         neighborElements.resize(numNeighbors);
 
         // assemble the undeflected residual
-        using Residuals = ReservedBlockVector<LocalResidualValues, maxElementStencilSize>;
+        using Residuals = ReservedBlockVector<NumEqVector, maxElementStencilSize>;
         Residuals origResiduals(numNeighbors + 1); origResiduals = 0.0;
         origResiduals[0] = this->evalLocalResidual()[0];
 
@@ -206,7 +219,7 @@ public:
         const auto origVolVars = curVolVars;
 
         // element solution container to be deflected
-        ElementSolutionVector elemSol(origPriVars);
+        auto elemSol = elementSolution(element, curSol, fvGridGeometry);
 
         // derivatives in the neighbors with repect to the current elements
         // in index 0 we save the derivative of the element residual with respect to it's own dofs
@@ -214,13 +227,7 @@ public:
 
         for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
         {
-
-            // for ghost elements we assemble a 1.0 where the primary variable and zero everywhere else
-            // as we always solve for a delta of the solution with repect to the initial solution this
-            // results in a delta of zero for ghosts, we still need to do the neighbor derivatives though
-            // so we are not done yet here.
             partialDerivs = 0.0;
-            if (this->elementIsGhost()) partialDerivs[0][pvIdx] = 1.0;
 
             auto evalResiduals = [&](Scalar priVar)
             {
@@ -235,7 +242,7 @@ public:
                     elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 // calculate the residual with the deflected primary variables
-                if (!this->elementIsGhost()) partialDerivsTmp[0] = this->evalLocalResidual()[0];
+                partialDerivsTmp[0] = this->evalLocalResidual()[0];
 
                 // calculate the fluxes in the neighbors with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
@@ -246,8 +253,19 @@ public:
             };
 
             // derive the residuals numerically
-            static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-            NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals, numDiffMethod);
+            static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
+            static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+            NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals,
+                                                      eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);
+
+            // Correct derivative for ghost elements, i.e. set a 1 for the derivative w.r.t. the
+            // current primary variable and a 0 elsewhere. As we always solve for a delta of the
+            // solution with repect to the initial one, this results in a delta of 0 for ghosts.
+            if (this->elementIsGhost())
+            {
+                partialDerivs[0] = 0.0;
+                partialDerivs[0][pvIdx] = 1.0;
+            }
 
             // add the current partial derivatives to the global jacobian matrix
             for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
@@ -296,13 +314,12 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fal
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
 
 public:
     using ParentType::ParentType;
@@ -313,7 +330,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
         if (this->assembler().isStationaryProblem())
             DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
@@ -345,8 +362,9 @@ public:
         const auto origVolVars = curVolVars;
 
         // element solution container to be deflected
-        ElementSolutionVector elemSol(origPriVars);
-        LocalResidualValues partialDeriv;
+        auto elemSol = elementSolution(element, curSol, fvGridGeometry);
+
+        NumEqVector partialDeriv;
 
         // derivatives in the neighbors with repect to the current elements
         for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
@@ -366,8 +384,10 @@ public:
             // for non-ghosts compute the derivative numerically
             if (!this->elementIsGhost())
             {
-                static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalStorage, elemSol[0][pvIdx], partialDeriv, residual, numDiffMethod);
+                static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                NumericDifferentiation::partialDerivative(evalStorage, elemSol[0][pvIdx], partialDeriv, residual,
+                                                          eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);
             }
 
             // for ghost elements we assemble a 1.0 where the primary variable and zero everywhere else
@@ -404,7 +424,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/tr
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
@@ -417,7 +437,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
+    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
     {
         // assemble the undeflected residual
         const auto residual = this->evalLocalResidual()[0];
@@ -483,7 +503,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/fa
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
@@ -496,7 +516,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
+    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
     {
         // assemble the undeflected residual
         const auto residual = this->evalLocalResidual()[0];

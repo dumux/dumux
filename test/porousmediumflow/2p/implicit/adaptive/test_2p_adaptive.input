@@ -1,10 +1,11 @@
 [TimeLoop]
-DtInitial = 250 # [s]
-TEnd = 3000 # [s]
+DtInitial = 100 # [s]
+TEnd = 100 # [s]
 
 [Grid]
 UpperRight = 6 4
 Cells = 48 32
+Refinement = 1
 CellType = Cube
 ClosureType = Green
 

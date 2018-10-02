@@ -24,6 +24,11 @@
 #ifndef DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
 #define DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
 
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/common/math.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/adaptiveproperties.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/problem.hh>
@@ -61,7 +66,7 @@ SET_TYPE_PROP(Adaptive2p2c2d, Problem, Adaptive2p2c2d<TTAG(Adaptive2p2c2d)>);
 SET_PROP(Adaptive2p2c2d, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::H2OAir<Scalar, H2O<Scalar>, /*useComplexRelations=*/true>;
+    using type = FluidSystems::H2OAir<Scalar, Components::H2O<Scalar>>;
 };
 
 // Set the 2d Transport and Pressure model (already set as default in properties file)
@@ -104,7 +109,7 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
 using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
 using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -124,7 +129,7 @@ using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
 using Element = typename GridView::Traits::template Codim<0>::Entity;
 using Intersection = typename GridView::Intersection;
-using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
 Adaptive2p2c2d(TimeManager& timeManager, Grid& grid)

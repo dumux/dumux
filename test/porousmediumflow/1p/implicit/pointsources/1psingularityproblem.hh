@@ -25,12 +25,14 @@
 #ifndef DUMUX_1P_SINGULARITY_PROBLEM_HH
 #define DUMUX_1P_SINGULARITY_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "1psingularityspatialparams.hh"
 
@@ -49,7 +51,7 @@ NEW_TYPE_TAG(OnePSingularityCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePSingul
 SET_PROP(OnePSingularityTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Set the grid type
@@ -60,7 +62,12 @@ SET_TYPE_PROP(OnePSingularityTypeTag, Grid,
 SET_TYPE_PROP(OnePSingularityTypeTag, Problem, OnePSingularityProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePSingularityTypeTag, SpatialParams, OnePSingularitySpatialParams<TypeTag> );
+SET_PROP(OnePSingularityTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePSingularitySpatialParams<FVGridGeometry, Scalar>;
+};
 }
 
 /*!
@@ -84,7 +91,7 @@ class OnePSingularityProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum { dimWorld = GridView::dimensionworld };
     enum {
         // index of the primary variable
@@ -95,7 +102,8 @@ class OnePSingularityProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     OnePSingularityProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

@@ -27,8 +27,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
 * \ingroup CCTpfaDiscretization
@@ -37,19 +36,20 @@ namespace Dumux
 template<class TypeTag>
 class CCTpfaFluxVariablesCacheFiller
 {
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static constexpr bool doAdvection = GET_PROP_VALUE(TypeTag, EnableAdvection);
-    static constexpr bool doDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
-    static constexpr bool doHeatConduction = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
+    static constexpr bool doAdvection = ModelTraits::enableAdvection();
+    static constexpr bool doDiffusion = ModelTraits::enableMolecularDiffusion();
+    static constexpr bool doHeatConduction = ModelTraits::enableEnergyBalance();
 
     static constexpr bool soldependentAdvection = GET_PROP_VALUE(TypeTag, SolutionDependentAdvection);
     static constexpr bool soldependentDiffusion = GET_PROP_VALUE(TypeTag, SolutionDependentMolecularDiffusion);
@@ -145,8 +145,8 @@ private:
         using DiffusionFiller = typename DiffusionType::Cache::Filler;
         using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-        static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-        static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+        static constexpr int numPhases = ModelTraits::numPhases();
+        static constexpr int numComponents = ModelTraits::numComponents();
 
         // forward to the filler of the diffusive quantities
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)

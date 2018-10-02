@@ -30,47 +30,37 @@
 #ifndef DUMUX_MINERALIZATION_MODEL_HH
 #define DUMUX_MINERALIZATION_MODEL_HH
 
-#include <dumux/common/properties.hh>
-#include "localresidual.hh"
-#include "volumevariables.hh"
-#include "vtkoutputfields.hh"
-
 namespace Dumux {
-namespace Properties {
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(Mineralization);
 
-//! Set the general mineralization volume variables
-SET_TYPE_PROP(Mineralization, VolumeVariables, MineralizationVolumeVariables<TypeTag>);
-
-//! Set the general mineralization compositional local residual
-SET_TYPE_PROP(Mineralization, LocalResidual, MineralizationLocalResidual<TypeTag>);
-
-//! VTK outputs for mineralization models
-SET_TYPE_PROP(Mineralization, VtkOutputFields, MineralizationVtkOutputFields<TypeTag>);
-
-//! Set the property for the number of solid phases, excluding the non-reactive matrix.
-SET_PROP(Mineralization, NumSPhases)
+/*!
+ * \ingroup OnePModel
+ * \brief Specifies a number properties of
+ *        models that consider mineralization proceses.
+ *
+ * \ţparam NonMinTraits traits class of the underlying model
+ *                      not considering mineralization.
+ * \tparam numPS number of solid phases to be considered.
+ * \tparam numInertSP number of inert solid phases to be considered.
+ */
+template<class NonMinTraits, int numSC, int numInertSC>
+struct MineralizationModelTraits : public NonMinTraits
 {
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-public:
-    static const int value = FluidSystem::numSPhases;
-};
+    //! the number of mineral phases
+    static constexpr int numSolidComps() { return numSC; }
+     //! the number of inert mineral phases
+    static constexpr int numInertSolidComps() { return numInertSC; }
+    //! we additionally solve one equation per precipitating mineral phase
+    static constexpr int numEq() { return NonMinTraits::numEq() + numSC - numInertSC; }
 
-//! Set the property for the number of equations. For each component and each
-//precipitated mineral/solid phase one equation has to be solved.
-SET_PROP(Mineralization, NumEq)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-public:
-    static const int value = FluidSystem::numComponents + FluidSystem::numSPhases;
+    template <class FluidSystem, class SolidSystem>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        if (pvIdx < NonMinTraits::numEq())
+            return NonMinTraits::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state);
+        else
+            return "precipitateVolumeFraction^" + SolidSystem::componentName(pvIdx -NonMinTraits::numEq());
+    }
 };
-
-} // end namespace Properties
 } // end namespace Dumux
 
 #endif

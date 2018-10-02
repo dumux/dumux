@@ -26,12 +26,13 @@
 
 #include <dumux/material/idealgas.hh>
 
-#include "component.hh"
-
 #include <cmath>
 
-namespace Dumux
-{
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/gas.hh>
+
+namespace Dumux {
+namespace Components {
 
 /*!
  * \ingroup Components
@@ -40,7 +41,9 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class H2 : public Component<Scalar, H2<Scalar> >
+class H2
+: public Components::Base<Scalar, H2<Scalar> >
+, public Components::Gas<Scalar, H2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
 
@@ -54,7 +57,7 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of molecular hydrogen.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 2.01588e-3; }
 
     /*!
@@ -117,15 +120,24 @@ public:
     }
 
     /*!
+     * \brief The molar density of \f$H_2\f$ in \f$\mathrm{[mol/m^3]}\f$,
+     *   depending on pressure and temperature.
+     * \param temperature The temperature of the gas
+     * \param pressure The pressure of the gas
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
+
+    /*!
      * \brief Returns true if the gas phase is assumed to be compressible
      */
-    static bool gasIsCompressible()
+    static constexpr bool gasIsCompressible()
     { return true; }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be ideal
      */
-    static bool gasIsIdeal()
+    static constexpr bool gasIsIdeal()
     { return true; }
 
     /*!
@@ -220,6 +232,8 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+} // end namespace Dumux
 
 #endif

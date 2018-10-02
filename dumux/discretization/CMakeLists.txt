@@ -1,10 +1,13 @@
-add_subdirectory("box")
-add_subdirectory("cellcentered")
-add_subdirectory("staggered")
+add_subdirectory(box)
+add_subdirectory(cellcentered)
+add_subdirectory(staggered)
 
 install(FILES
 basefvgridgeometry.hh
+checkoverlapsize.hh
 darcyslaw.hh
+effectivestresslaw.hh
+elementsolution.hh
 evalgradients.hh
 evalsolution.hh
 fickslaw.hh
@@ -12,14 +15,16 @@ fluxstencil.hh
 fluxvariablesbase.hh
 fluxvariablescaching.hh
 fourierslaw.hh
+fourierslawnonequilibrium.hh
 fvgridvariables.hh
 fvproperties.hh
+hookeslaw.hh
+localview.hh
+maxwellstefanslaw.hh
 methods.hh
 scvandscvfiterators.hh
-scvoperator.hh
 stationaryvelocityfield.hh
 subcontrolvolumebase.hh
 subcontrolvolumefacebase.hh
 upwindscheme.hh
-volumevariables.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization)

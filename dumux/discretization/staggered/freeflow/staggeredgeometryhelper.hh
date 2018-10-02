@@ -24,11 +24,9 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GEOMETRY_HELPER_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GEOMETRY_HELPER_HH
 
-#include <dune/common/version.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 #include <type_traits>
 #include <algorithm>
@@ -58,7 +56,7 @@ struct PairData
  * \brief Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
  */
 template<class Vector>
-inline static int directionIndex(Vector&& vector)
+inline static unsigned int directionIndex(Vector&& vector)
 {
     const auto eps = 1e-8;
     const int idx = std::find_if(vector.begin(), vector.end(), [eps](const auto& x) { return std::abs(x) > eps; } ) - vector.begin();
@@ -91,7 +89,7 @@ class FreeFlowStaggeredGeometryHelper
     static constexpr int codimIntersection =  1;
     static constexpr int codimCommonEntity = 2;
     static constexpr int numFacetSubEntities = (dim == 2) ? 2 : 4;
-    static constexpr int numPairs = (dimWorld == 2) ? 2 : 4;
+    static constexpr int numPairs = 2 * (dimWorld - 1);
 
 public:
 
@@ -294,11 +292,7 @@ private:
 
     void setPairInfo_(const int isIdx, const Element& element, const bool isParallel)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(element_.geometry().type());
-#else
-        const auto& referenceElement = ReferenceElements::general(element_.geometry().type());
-#endif
 
         // iterate over facets sub-entities
         for(int i = 0; i < numFacetSubEntities; ++i)
@@ -381,6 +375,8 @@ private:
         };
 
         Indices indices;
+        if (dim == 1)
+            return indices;
 
         switch(localFacetIdx)
         {

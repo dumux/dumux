@@ -23,52 +23,52 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_BOX_ELEMENT_VOLUMEVARIABLES_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
+#include <type_traits>
 
-namespace Dumux
-{
+#include <dumux/discretization/box/elementsolution.hh>
+
+namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the volume variables vector
+ * \ingroup BoxDiscretization
+ * \brief The local (stencil) volume variables class for box models
+ * \note The class is specilized for versions with and without caching
+ * \tparam GVV the grid volume variables type
+ * \tparam cachingEnabled if the cache is enabled
  */
-template<class TypeTag, bool enableGridVolVarsCache>
-class BoxElementVolumeVariables
-{};
+template<class GVV, bool cachingEnabled>
+class BoxElementVolumeVariables;
 
-// specialization in case of storing the volume variables
-template<class TypeTag>
-class BoxElementVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
+/*!
+ * \ingroup BoxDiscretization
+ * \brief The local (stencil) volume variables class for box models with caching
+ * \note the volume variables are stored for the whole grid view in the corresponding GridVolumeVariables class
+ */
+template<class GVV>
+class BoxElementVolumeVariables<GVV, /*cachingEnabled*/true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using IndexType = typename GridView::IndexSet::IndexType;
-
-    static const int dim = GridView::dimension;
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
-
 public:
+    //! export type of the grid volume variables
+    using GridVolumeVariables = GVV;
+
+    //! export type of the volume variables
+    using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
+
     //! Constructor
     BoxElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
 
-    const VolumeVariables& operator [](IndexType scvIdx) const
+    const VolumeVariables& operator [](std::size_t scvIdx) const
     { return gridVolVars().volVars(eIdx_, scvIdx); }
 
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return gridVolVars().volVars(eIdx_, scv.indexInElement()); }
 
     // For compatibility reasons with the case of not storing the vol vars.
     // function to be called before assembling an element, preparing the vol vars within the stencil
-    void bind(const Element& element,
+    template<class FVElementGeometry, class SolutionVector>
+    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
@@ -76,7 +76,8 @@ public:
     }
 
     // function to prepare the vol vars within the element
-    void bindElement(const Element& element,
+    template<class FVElementGeometry, class SolutionVector>
+    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
@@ -89,34 +90,31 @@ public:
 
 private:
     const GridVolumeVariables* gridVolVarsPtr_;
-    IndexType eIdx_;
+    std::size_t eIdx_;
 };
 
 
-// Specialization when the current volume variables are not stored
-template<class TypeTag>
-class BoxElementVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
+/*!
+ * \ingroup BoxDiscretization
+ * \brief The local (stencil) volume variables class for box models without caching
+ */
+template<class GVV>
+class BoxElementVolumeVariables<GVV, /*cachingEnabled*/false>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-
-    static const int dim = GridView::dimension;
-    using Element = typename GridView::template Codim<0>::Entity;
-
 public:
+    //! export type of the grid volume variables
+    using GridVolumeVariables = GVV;
+
+    //! export type of the volume variables
+    using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
+
     //! Constructor
     BoxElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
 
     // specialization for box models, simply forwards to the bindElement method
-    void bind(const Element& element,
+    template<class FVElementGeometry, class SolutionVector>
+    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
@@ -124,32 +122,31 @@ public:
     }
 
     // specialization for box models
-    void bindElement(const Element& element,
+    template<class FVElementGeometry, class SolutionVector>
+    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
         // get the solution at the dofs of the element
-        ElementSolutionVector elemSol(element, sol, fvGeometry);
+        auto elemSol = elementSolution(element, sol, fvGeometry.fvGridGeometry());
 
         // resize volume variables to the required size
         volumeVariables_.resize(fvGeometry.numScv());
         for (auto&& scv : scvs(fvGeometry))
-        {
-            // TODO: INTERFACE SOLVER
-            // gridVolVars().problem().model().boxInterfaceConditionSolver().updateScvVolVars(element, scv, sol);
             volumeVariables_[scv.indexInElement()].update(elemSol, gridVolVars().problem(), element, scv);
-        }
     }
 
-    const VolumeVariables& operator [](IndexType scvIdx) const
+    const VolumeVariables& operator [](std::size_t scvIdx) const
     { return volumeVariables_[scvIdx]; }
 
-    VolumeVariables& operator [](IndexType scvIdx)
+    VolumeVariables& operator [](std::size_t scvIdx)
     { return volumeVariables_[scvIdx]; }
 
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return volumeVariables_[scv.indexInElement()]; }
 
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     VolumeVariables& operator [](const SubControlVolume& scv)
     { return volumeVariables_[scv.indexInElement()]; }
 
@@ -162,6 +159,6 @@ private:
     std::vector<VolumeVariables> volumeVariables_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

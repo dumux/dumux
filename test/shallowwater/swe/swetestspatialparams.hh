@@ -51,7 +51,7 @@ class SweTestSpatialParams //: public FVSpatialParamsSwe<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    //using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexSet = typename GridView::IndexSet;
@@ -83,8 +83,7 @@ public:
     * \return the material parameters object
     */
     Scalar ks(const Element& element,
-             const SubControlVolume& scv,
-             const ElementSolutionVector& elemSol) const
+             const SubControlVolume& scv) const
     {
         // Get the global index of the element
         //const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);

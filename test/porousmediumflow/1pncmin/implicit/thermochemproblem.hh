@@ -24,45 +24,65 @@
 #ifndef DUMUX_THERMOCHEM_PROBLEM_HH
 #define DUMUX_THERMOCHEM_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/porousmediumflow/1pncmin/model.hh>
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+#include <dumux/material/components/cao2h2.hh>
+#include <dumux/material/solidsystems/compositionalsolidphase.hh>
 
 #include "thermochemspatialparams.hh"
 #include "thermochemreaction.hh"
-#include "modifiedsteamn2cao2h2.hh"
+#include "modifiedcao.hh"
 
-
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class ThermoChemProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(ThermoChemTypeTag, INHERITS_FROM(OnePNCMinNI, ThermoChemSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(ThermoChemTypeTag, INHERITS_FROM(OnePNCMinNI));
 NEW_TYPE_TAG(ThermoChemBoxTypeTag, INHERITS_FROM(BoxModel, ThermoChemTypeTag));
 
 // Set the grid type
 SET_TYPE_PROP(ThermoChemTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ThermoChemTypeTag, Problem, ThermoChemProblem<TypeTag>);
-// Set fluid configuration
+
+// The fluid system
 SET_PROP(ThermoChemTypeTag, FluidSystem)
-{ /*private:*/
+{
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::ModifiedSteamN2CaO2H2<Scalar>;
+    using H2ON2 = FluidSystems::H2ON2<Scalar>;
+    static constexpr auto phaseIdx = H2ON2::gasPhaseIdx; // simulate the air phase
+    using type = FluidSystems::OnePAdapter<H2ON2, phaseIdx>;
+};
+
+SET_PROP(ThermoChemTypeTag, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ComponentOne = Components::ModifiedCaO<Scalar>;
+    using ComponentTwo = Components::CaO2H2<Scalar>;
+    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo>;
 };
 
 // // Enable velocity output
 // SET_BOOL_PROP(ThermoChemTypeTag, VtkAddVelocity, false);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThermoChemTypeTag, SpatialParams, ThermoChemSpatialParams<TypeTag>);
+SET_PROP(ThermoChemTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = ThermoChemSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(ThermoChemTypeTag, UseMoles, true);
@@ -87,11 +107,12 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -99,8 +120,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using ReactionRate =ThermoChemReaction<TypeTag>;
+    using ReactionRate = ThermoChemReaction;
 
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
@@ -109,7 +129,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     {
         // Indices of the primary variables
         pressureIdx = Indices::pressureIdx, //gas-phase pressure
-        firstMoleFracIdx = Indices::firstMoleFracIdx, // mole fraction water
+        H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx), // mole fraction water
 
         CaOIdx = FluidSystem::numComponents,
         CaO2H2Idx = FluidSystem::numComponents+1,
@@ -118,13 +138,13 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
         conti0EqIdx = Indices::conti0EqIdx,
 
         // Phase Indices
-        cPhaseIdx = FluidSystem::cPhaseIdx,
+        cPhaseIdx = SolidSystem::comp0Idx,
 
         temperatureIdx = Indices::temperatureIdx,
         energyEqIdx = Indices::energyEqIdx
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
     /*!
@@ -136,13 +156,19 @@ public:
         : ParentType(fvGridGeometry)
     {
         name_      = getParam<std::string>("Problem.Name");
+        FluidSystem::init(/*tempMin=*/473.15,
+                          /*tempMax=*/623.0,
+                          /*numTemptempSteps=*/25,
+                          /*startPressure=*/0,
+                          /*endPressure=*/9e6,
+                          /*pressureSteps=*/200);
 
         // obtain BCs
         boundaryPressure_ = getParam<Scalar>("Problem.BoundaryPressure");
         boundaryVaporMoleFrac_ = getParam<Scalar>("Problem.BoundaryMoleFraction");
         boundaryTemperature_ = getParam<Scalar>("Problem.BoundaryTemperature");
 
-        unsigned int codim = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box ? dim : 0;
+        unsigned int codim = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box ? dim : 0;
         permeability_.resize(fvGridGeometry->gridView().size(codim));
         porosity_.resize(fvGridGeometry->gridView().size(codim));
         reactionRate_.resize(fvGridGeometry->gridView().size(codim));
@@ -180,7 +206,7 @@ public:
 
         // we don't set any BCs for the solid phases
         values.setDirichlet(pressureIdx);
-        values.setDirichlet(firstMoleFracIdx);
+        values.setDirichlet(H2OIdx);
         values.setDirichlet(temperatureIdx);
 
         return values;
@@ -197,7 +223,7 @@ public:
         PrimaryVariables priVars(0.0);
 
         priVars[pressureIdx] = boundaryPressure_;
-        priVars[firstMoleFracIdx] = boundaryVaporMoleFrac_;
+        priVars[H2OIdx] = boundaryVaporMoleFrac_;
         priVars[temperatureIdx] = boundaryTemperature_;
         priVars[CaO2H2Idx] = 0.0;
         priVars[CaOIdx] = 0.2;
@@ -250,7 +276,7 @@ public:
         CaO2H2Init = getParam<Scalar>("Problem.CaO2H2Initial");
 
         priVars[pressureIdx] = pInit;
-        priVars[firstMoleFracIdx]   = h2oInit;
+        priVars[H2OIdx]   = h2oInit;
         priVars[temperatureIdx] = tInit;
 
         // these values are not used, as we didn't set BCs
@@ -290,20 +316,18 @@ public:
         const auto& volVars = elemVolVars[scv];
 
         Scalar qMass = rrate_.thermoChemReaction(volVars);
-
-        ElementSolutionVector elemSol(element, elemVolVars, fvGeometry);
-        Scalar qMole = qMass/FluidSystem::molarMass(firstMoleFracIdx)*(1-this->spatialParams().porosity(element, scv, elemSol));
+        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+        Scalar qMole = qMass/FluidSystem::molarMass(H2OIdx)*(1-volVars.porosity());
 
         // make sure not more solid reacts than present
         // In this test, we only consider discharge. Therefore, we use the cPhaseIdx for CaO.
-        if (-qMole*timeStepSize_ + volVars.precipitateVolumeFraction(cPhaseIdx)* volVars.molarDensity(cPhaseIdx) < 0 + eps_)
+        if (-qMole*timeStepSize_ + volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidComponentMolarDensity(cPhaseIdx) < 0 + eps_)
         {
-            qMole = -volVars.precipitateVolumeFraction(cPhaseIdx)* volVars.molarDensity(cPhaseIdx)/timeStepSize_;
+            qMole = -volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidComponentMolarDensity(cPhaseIdx)/timeStepSize_;
         }
-
         source[conti0EqIdx+CaO2H2Idx] = qMole;
         source[conti0EqIdx+CaOIdx] = - qMole;
-        source[conti0EqIdx+firstMoleFracIdx] = - qMole;
+        source[conti0EqIdx+H2OIdx] = - qMole;
 
         Scalar deltaH = 108e3; // J/mol
         source[energyEqIdx] = qMole * deltaH;
@@ -343,7 +367,7 @@ public:
     {
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
+            const auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
 
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
@@ -354,8 +378,7 @@ public:
                 volVars.update(elemSol, *this, element, scv);
                 const auto dofIdxGlobal = scv.dofIndex();
                 permeability_[dofIdxGlobal] = this->spatialParams().permeability(element, scv, elemSol);
-                porosity_[dofIdxGlobal] = this->spatialParams().porosity(element, scv, elemSol);
-                PrimaryVariables reactionRate;
+                porosity_[dofIdxGlobal] = volVars.porosity();
                 reactionRate_[dofIdxGlobal] = rrate_.thermoChemReaction(volVars);
             }
         }

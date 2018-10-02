@@ -32,7 +32,7 @@
 namespace Dumux
 {
 // forward declaration
-template <class TypeTag, DiscretizationMethods Method>
+template <class TypeTag, DiscretizationMethod discMethod>
 class FicksLawImplementation;
 
 /*!
@@ -40,7 +40,7 @@ class FicksLawImplementation;
  * \brief Evaluates the diffusive mass flux according to Fick's law
  */
 template <class TypeTag>
-using FicksLaw = FicksLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using FicksLaw = FicksLawImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 } // end namespace Dumux
 

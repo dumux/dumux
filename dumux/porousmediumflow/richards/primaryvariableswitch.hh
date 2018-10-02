@@ -26,7 +26,6 @@
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 
@@ -36,56 +35,36 @@ namespace Dumux {
  * \ingroup RichardsModel
  * \brief The primary variable switch controlling the phase presence state variable.
  */
-template<class TypeTag>
-class ExtendedRichardsPrimaryVariableSwitch : public PrimaryVariableSwitch<TypeTag>
+class ExtendedRichardsPrimaryVariableSwitch
+: public PrimaryVariableSwitch<ExtendedRichardsPrimaryVariableSwitch>
 {
-    friend typename Dumux::PrimaryVariableSwitch<TypeTag>;
-    using ParentType = Dumux::PrimaryVariableSwitch<TypeTag>;
+    using ParentType = PrimaryVariableSwitch<ExtendedRichardsPrimaryVariableSwitch>;
+    friend ParentType;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-    enum {
-        switchIdx = Indices::switchIdx,
-
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
-        wCompIdx = FluidSystem::wCompIdx,
-
-        wPhaseOnly = Indices::wPhaseOnly,
-        nPhaseOnly = Indices::nPhaseOnly,
-        bothPhases = Indices::bothPhases
-    };
-
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-
-    static constexpr bool enableWaterDiffusionInAir
-        = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
-    static constexpr bool useKelvinVaporPressure
-        = GET_PROP_VALUE(TypeTag, UseKelvinEquation);
+public:
+    using ParentType::ParentType;
 
 protected:
 
     // perform variable switch at a degree of freedom location
-    bool update_(PrimaryVariables& priVars,
+    template<class VolumeVariables, class GlobalPosition>
+    bool update_(typename VolumeVariables::PrimaryVariables& priVars,
                  const VolumeVariables& volVars,
-                 IndexType dofIdxGlobal,
+                 std::size_t dofIdxGlobal,
                  const GlobalPosition& globalPos)
     {
-        static const bool usePriVarSwitch = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.UsePrimaryVariableSwitch");
+        using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
+        using Indices = typename VolumeVariables::Indices;
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+
+        static const bool usePriVarSwitch = getParam<bool>("Problem.UsePrimaryVariableSwitch");
         if (!usePriVarSwitch)
             return false;
 
-        if (!enableWaterDiffusionInAir)
+        if (!VolumeVariables::enableWaterDiffusionInAir())
             DUNE_THROW(Dune::InvalidStateException, "The Richards primary variable switch only works with water diffusion in air enabled!");
+
+        static constexpr int liquidCompIdx = FluidSystem::liquidPhaseIdx;
 
         // evaluate primary variable switch
         bool wouldSwitch = false;
@@ -93,20 +72,13 @@ protected:
         int newPhasePresence = phasePresence;
 
         // check if a primary var switch is necessary
-        if (phasePresence == nPhaseOnly)
+        if (phasePresence == Indices::gasPhaseOnly)
         {
             // if the mole fraction of water is larger than the one
             // predicted by a liquid-vapor equilibrium
-            Scalar xnw = volVars.moleFraction(nPhaseIdx, wCompIdx);
+            Scalar xnw = volVars.moleFraction(FluidSystem::gasPhaseIdx, liquidCompIdx);
             Scalar xnwPredicted = FluidSystem::H2O::vaporPressure(volVars.temperature())
-                                  / volVars.pressure(nPhaseIdx);
-            if (useKelvinVaporPressure)
-            {
-                using std::exp;
-                xnwPredicted *= exp(-volVars.capillaryPressure()
-                                     * FluidSystem::H2O::molarMass() / volVars.density(wPhaseIdx)
-                                     / Constants<Scalar>::R / volVars.temperature());
-            }
+                                  / volVars.pressure(FluidSystem::gasPhaseIdx);
 
             Scalar xwMax = 1.0;
             if (xnw / xnwPredicted > xwMax)
@@ -119,34 +91,36 @@ protected:
             if (xnw / xnwPredicted > xwMax)
             {
                 // wetting phase appears
-                std::cout << "wetting phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xnw / xnwPredicted * 100: "
-                          << xnw / xnwPredicted * 100 << "%"
-                          << ", at x_n^w: " << priVars[switchIdx] << std::endl;
-                newPhasePresence = bothPhases;
-                priVars[switchIdx] = 0.0;
+                if (this->verbosity() > 1)
+                    std::cout << "Liquid phase appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", xnw / xnwPredicted * 100: "
+                              << xnw / xnwPredicted * 100 << "%"
+                              << ", at x_n^w: " << priVars[Indices::switchIdx] << std::endl;
+                newPhasePresence = Indices::bothPhases;
+                priVars[Indices::switchIdx] = 0.0;
             }
         }
-        else if (phasePresence == bothPhases)
+        else if (phasePresence == Indices::bothPhases)
         {
             Scalar Smin = 0.0;
             if (this->wasSwitched_[dofIdxGlobal])
                 Smin = -0.01;
 
-            if (volVars.saturation(wPhaseIdx) <= Smin)
+            if (volVars.saturation(FluidSystem::liquidPhaseIdx) <= Smin)
             {
                 wouldSwitch = true;
                 // wetting phase disappears
-                newPhasePresence = nPhaseOnly;
-                priVars[switchIdx] = volVars.moleFraction(nPhaseIdx, wCompIdx);
+                newPhasePresence = Indices::gasPhaseOnly;
+                priVars[Indices::switchIdx] = volVars.moleFraction(FluidSystem::gasPhaseIdx, liquidCompIdx);
 
-                std::cout << "Wetting phase disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sw: "
-                          << volVars.saturation(wPhaseIdx)
-                          << ", x_n^w: " << priVars[switchIdx] << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "Liquid phase disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", sw: "
+                              << volVars.saturation(FluidSystem::liquidPhaseIdx)
+                              << ", x_n^w: " << priVars[Indices::switchIdx] << std::endl;
             }
         }
-        else if (phasePresence == wPhaseOnly)
+        else if (phasePresence == Indices::liquidPhaseOnly)
         {
             DUNE_THROW(Dune::NotImplemented, "Water phase only phase presence!");
         }

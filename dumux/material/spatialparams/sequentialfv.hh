@@ -28,8 +28,10 @@
 #include <dumux/common/properties.hh>
 #include "sequentialfv1p.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Properties
+{ NEW_PROP_TAG( MaterialLaw ); }
+
 /*!
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of a multi-phase problem using the
@@ -38,6 +40,7 @@ namespace Dumux
 template<class TypeTag>
 class SequentialFVSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
 {
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
@@ -48,14 +51,14 @@ class SequentialFVSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     /// @cond false
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
     /// @endcond
 
 public:
-    SequentialFVSpatialParams(const GridView &gridView)
-    :SequentialFVSpatialParamsOneP<TypeTag>(gridView)
+    SequentialFVSpatialParams(const Problem& problem)
+    :SequentialFVSpatialParamsOneP<TypeTag>(problem)
     {
     }
 

@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 #include <dune/common/typetraits.hh>
 #include <dune/common/fvector.hh>
@@ -36,17 +37,40 @@ namespace Dumux
 {
 /*!
  * \ingroup Common
- * \brief Calculate the harmonic mean of two scalar values.
+ * \brief Calculate the (weighted) arithmetic mean of two scalar values.
  *
  * \param x The first input value
  * \param y The second input value
+ * \param wx The first weight
+ * \param wy The second weight
  */
 template <class Scalar>
-Scalar harmonicMean(Scalar x, Scalar y)
+constexpr Scalar arithmeticMean(Scalar x, Scalar y, Scalar wx = 1.0, Scalar wy = 1.0) noexcept
 {
+    static_assert(Dune::IsNumber<Scalar>::value, "The arguments x, y, wx, and wy have to be numbers!");
+
     if (x*y <= 0)
         return 0;
-    return (2*x*y)/(x + y);
+    return (x * wx + y * wy)/(wx + wy);
+}
+
+/*!
+ * \ingroup Common
+ * \brief Calculate the (weighted) harmonic mean of two scalar values.
+ *
+ * \param x The first input value
+ * \param y The second input value
+ * \param wx The first weight
+ * \param wy The second weight
+ */
+template <class Scalar>
+constexpr Scalar harmonicMean(Scalar x, Scalar y, Scalar wx = 1.0, Scalar wy = 1.0) noexcept
+{
+    static_assert(Dune::IsNumber<Scalar>::value, "The arguments x, y, wx, and wy have to be numbers!");
+
+    if (x*y <= 0)
+        return 0;
+    return (wx + wy) * x * y / (wy * x + wx * y);
 }
 
 /*!
@@ -55,10 +79,13 @@ Scalar harmonicMean(Scalar x, Scalar y)
  *
  * \param x The first input value
  * \param y The second input value
+ * \note as std::sqrt is not constexpr this function is not constexpr
  */
 template <class Scalar>
-Scalar geometricMean(Scalar x, Scalar y)
+Scalar geometricMean(Scalar x, Scalar y) noexcept
 {
+    static_assert(Dune::IsNumber<Scalar>::value, "The arguments x and y have to be numbers!");
+
     if (x*y <= 0)
         return 0;
     using std::sqrt;
@@ -463,6 +490,78 @@ bool isBetween(const Dune::FieldVector<Scalar, dim> &pos,
        return false;
 }
 
+//! forward declaration of the linear interpolation policy (default)
+namespace InterpolationPolicy { struct Linear; }
+
+/*!
+ * \ingroup Common
+ * \brief a generic function to interpolate given a set of parameters and an interpolation point
+ * \param params the parameters used for interpolation (depends on the policy used)
+ * \param ip the interpolation point
+ * \param policy the interpolation policy
+ */
+template <class Policy = InterpolationPolicy::Linear, class Scalar, class Parameter>
+Scalar interpolate(Scalar ip, Parameter&& params)
+{ return Policy::interpolate(ip, std::forward<Parameter>(params)); }
+
+/*!
+ * \ingroup Common
+ * \brief Interpolation policies
+ */
+namespace InterpolationPolicy  {
+
+/*!
+ * \ingroup Common
+ * \brief interpolate linearly between two given values
+ */
+struct Linear
+{
+    /*!
+     * \brief interpolate linearly between two given values
+     * \param ip the interpolation point in [0,1]
+     * \param array with the lower and upper bound
+     */
+    template<class Scalar>
+    static constexpr Scalar interpolate(Scalar ip, const std::array<Scalar, 2>& params)
+    {
+        return params[0]*(1.0 - ip) + params[1]*ip;
+    }
+};
+
+/*!
+ * \ingroup Common
+ * \brief interpolate linearly in a piecewise linear function (tabularized function)
+ */
+struct LinearTable
+{
+    /*!
+     * \brief interpolate linearly in a piecewise linear function (tabularized function)
+     * \param ip the interpolation point
+     * \param table the table as a pair of sorted vectors (have to be same size)
+     * \note if the interpolation point is out of bounds this will return the bounds
+     */
+    template<class Scalar, class RandomAccessContainer>
+    static constexpr Scalar interpolate(Scalar ip, const std::pair<RandomAccessContainer, RandomAccessContainer>& table)
+    {
+        const auto& range = table.first;
+        const auto& values = table.second;
+
+        // check bounds
+        if (ip > range.back()) return values.back();
+        if (ip < range[0]) return values[0];
+
+        // if we are within bounds find the index of the lower bound
+        const auto lookUpIndex = std::distance(range.begin(), std::lower_bound(range.begin(), range.end(), ip));
+        if (lookUpIndex == 0)
+            return values[0];
+
+        const auto ipLinear = (ip - range[lookUpIndex-1])/(range[lookUpIndex] - range[lookUpIndex-1]);
+        return Dumux::interpolate<Linear>(ipLinear, std::array<Scalar, 2>{{values[lookUpIndex-1], values[lookUpIndex]}});
+    }
+};
+
+} // end namespace InterpolationPolicy
+
 
 /*!
  * \ingroup Common
@@ -496,7 +595,7 @@ Scalar antoine(Scalar temperature,
  * Returns 0 if the argument is zero.
  */
 template<class ValueType>
-int sign(const ValueType& value)
+constexpr int sign(const ValueType& value) noexcept
 {
     return (ValueType(0) < value) - (value < ValueType(0));
 }
@@ -632,20 +731,21 @@ Dune::FieldMatrix<Scalar, rows1, cols2> multiplyMatrices(const Dune::FieldMatrix
 
 /*!
  * \ingroup Common
- * \brief Trace of dynamic matrix
+ * \brief Trace of a dense matrix
  *
- * \param M The dynamic matrix
+ * \param M The dense matrix
  */
-template <class Scalar>
-Scalar trace(const Dune::DynamicMatrix<Scalar>& M)
+template <class MatrixType>
+typename Dune::DenseMatrix<MatrixType>::field_type
+trace(const Dune::DenseMatrix<MatrixType>& M)
 {
-    std::size_t rows_T = M.M();
+    const auto rows = M.N();
+    DUNE_ASSERT_BOUNDS(rows == M.M()); // rows == cols
 
-    DUNE_ASSERT_BOUNDS(rows_T == M.N());
+    using MatType = Dune::DenseMatrix<MatrixType>;
+    typename MatType::field_type trace = 0.0;
 
-    Scalar trace = 0.0;
-
-    for (std::size_t i = 0; i < rows_T; ++i)
+    for (typename MatType::size_type i = 0; i < rows; ++i)
         trace += M[i][i];
 
     return trace;

@@ -37,6 +37,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
+#include <dumux/io/grid/gridmanager.hh>
+
 #include "test_diffusionproblem3d.hh"
 #include "resultevaluation3d.hh"
 
@@ -86,18 +88,17 @@ int start(int argc,
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    try { GridCreator::makeGrid(); }
+    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    try { gridManager.init(); }
     catch (...) {
         std::string usageMessage = "\n\t -> Creation of the grid failed! <- \n\n";
         usageMessage += defaultUsageMessage(argv[0]);
         usage(argv[0], usageMessage);
         throw;
     }
-    GridCreator::loadBalance();
 
     // print grid info
-    auto& grid = GridCreator::grid();
+    auto& grid = gridManager.grid();
     Dune::gridinfo(grid);
 
     //////////////////////////////////////////////////////////////////////

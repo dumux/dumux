@@ -60,8 +60,7 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     try {
-        auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TTAG(MPFATwoPTestTypeTag), ModelDefaultParameters)::defaultParams(p);};
-        Parameters::init(argc, argv, defaultParams, usage);
+        Parameters::init(argc, argv, usage);
 
         const auto modelType = getParam<std::string>("ModelType", "MPFAL");
 

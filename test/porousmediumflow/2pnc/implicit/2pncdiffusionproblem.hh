@@ -24,6 +24,8 @@
 #ifndef DUMUX_TWOPNC_DIFFUSION_PROBLEM_HH
 #define DUMUX_TWOPNC_DIFFUSION_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/2pnc/model.hh>
@@ -37,15 +39,13 @@
 #define DIFFUSIONTYPE FicksLaw<TypeTag>
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class TwoPNCDiffusionProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(TwoPNCDiffusionTypeTag, INHERITS_FROM(TwoPNC, TwoPNCDiffusionSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(TwoPNCDiffusionTypeTag, INHERITS_FROM(TwoPNC));
 NEW_TYPE_TAG(TwoPNCDiffusionCCTypeTag, INHERITS_FROM(CCTpfaModel, TwoPNCDiffusionTypeTag));
 
 // Set the grid type
@@ -57,7 +57,15 @@ SET_TYPE_PROP(TwoPNCDiffusionTypeTag, Problem, TwoPNCDiffusionProblem<TypeTag>);
 // // Set fluid configuration
 SET_TYPE_PROP(TwoPNCDiffusionTypeTag,
               FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false /*useComplexRelations*/>);
+              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+
+// Set the spatial parameters
+SET_PROP(TwoPNCDiffusionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = TwoPNCDiffusionSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(TwoPNCDiffusionTypeTag, UseMoles, true);
@@ -66,8 +74,10 @@ SET_BOOL_PROP(TwoPNCDiffusionTypeTag, UseMoles, true);
 SET_TYPE_PROP(TwoPNCDiffusionTypeTag, MolecularDiffusionType, DIFFUSIONTYPE);
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
-SET_INT_PROP(TwoPNCDiffusionTypeTag, Formulation, TwoPNCFormulation::pwsn);
-}
+SET_PROP(TwoPNCDiffusionTypeTag, Formulation)
+{ static constexpr auto value = TwoPFormulation::p0s1; };
+
+} // end namespace Properties
 
 
 /*!
@@ -88,28 +98,12 @@ class TwoPNCDiffusionProblem : public PorousMediumFlowProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
-
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
-
-        wPhaseOnly = Indices::wPhaseOnly,
-
-        contiH2OEqIdx = Indices::contiWEqIdx,
-        contiN2EqIdx = Indices::contiNEqIdx
-    };
-
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     //! property that defines whether mole or mass fractions are used
@@ -192,12 +186,12 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
          PrimaryVariables priVars;
-         priVars.setState(wPhaseOnly);
-         priVars[pressureIdx] = 1e5;
-         priVars[switchIdx] = 1e-5 ;
+         priVars.setState(Indices::firstPhaseOnly);
+         priVars[Indices::pressureIdx] = 1e5;
+         priVars[Indices::switchIdx] = 1e-5 ;
 
          if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
-             priVars[switchIdx] = 1e-3;
+             priVars[Indices::switchIdx] = 1e-3;
 
         return priVars;
     }
@@ -252,11 +246,11 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(wPhaseOnly);
+        priVars.setState(Indices::firstPhaseOnly);
 
         //mole-fraction formulation
-        priVars[switchIdx] = 1e-5;
-        priVars[pressureIdx] = 1e5;
+        priVars[Indices::switchIdx] = 1e-5;
+        priVars[Indices::pressureIdx] = 1e5;
         return priVars;
     }
 

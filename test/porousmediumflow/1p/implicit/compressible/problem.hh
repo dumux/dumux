@@ -21,12 +21,14 @@
  * \ingroup OnePTests
  * \brief The properties for the incompressible test
  */
-#ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
-#define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
+#ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_PROBLEM_HH
+#define DUMUX_COMPRESSIBLE_ONEP_TEST_PROBLEM_HH
+
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
@@ -57,7 +59,12 @@ SET_TYPE_PROP(OnePCompressible, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(OnePCompressible, Problem, OnePTestProblem<TypeTag>);
 
 // set the spatial params
-SET_TYPE_PROP(OnePCompressible, SpatialParams, OnePTestSpatialParams<TypeTag>);
+SET_PROP(OnePCompressible, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // the fluid system
 SET_PROP(OnePCompressible, FluidSystem)
@@ -65,7 +72,7 @@ SET_PROP(OnePCompressible, FluidSystem)
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    using type = FluidSystems::LiquidPhase<Scalar, TabulatedComponent<Scalar, H2O<Scalar>>>;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::TabulatedComponent<Components::H2O<Scalar>>>;
 };
 
 // Disable caching (for testing purposes)
@@ -92,13 +99,13 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        TabulatedComponent<Scalar, H2O<Scalar>>::init(272.15, 294.15, 10,
+        Components::TabulatedComponent<Components::H2O<Scalar>>::init(272.15, 294.15, 10,
                                                       1.0e4, 1.0e6, 200);
     }
 

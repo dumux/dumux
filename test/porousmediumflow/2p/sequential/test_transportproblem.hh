@@ -24,9 +24,10 @@
 #ifndef DUMUX_TEST_TRANSPORT_PROBLEM_HH
 #define DUMUX_TEST_TRANSPORT_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
@@ -60,8 +61,8 @@ SET_TYPE_PROP(TransportTestTypeTag, Problem, TestTransportProblem<TypeTag>);
 SET_PROP(TransportTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
@@ -91,7 +92,7 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Grid = typename GridView::Grid;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -112,8 +113,9 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 public:
     TestTransportProblem(TimeManager& timeManager, Grid& grid) :
         ParentType(timeManager, grid)
@@ -125,7 +127,7 @@ public:
     {
         ParentType::init();
 
-        GlobalPosition vel(0);
+        VelocityVector vel(0);
         vel[0] = 1e-5;
 
         // compute update vector

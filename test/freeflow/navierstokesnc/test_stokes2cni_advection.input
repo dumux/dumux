@@ -11,10 +11,12 @@ Name = test_stokes2cni_advection # name passed to the output routines
 InletVelocity = 1e-2
 EnableGravity = false
 
-[ Newton ]
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-8
 
 [Vtk]
-AddVelocity = true
 WriteFaceData = false

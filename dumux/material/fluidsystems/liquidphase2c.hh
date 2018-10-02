@@ -31,10 +31,8 @@
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/binarycoefficients/h2o_constant.hh>
 
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
 
 /*!
  * \ingroup Fluidsystems
@@ -43,37 +41,48 @@ namespace FluidSystems
  */
 template <class Scalar, class MainComponent, class SecondComponent>
 class LiquidPhaseTwoC
-: public BaseFluidSystem<Scalar, LiquidPhaseTwoC<Scalar, MainComponent, SecondComponent> >
+: public Base<Scalar, LiquidPhaseTwoC<Scalar, MainComponent, SecondComponent> >
 {
     using ThisType = LiquidPhaseTwoC<Scalar, MainComponent, SecondComponent>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
     using BinaryCoefficients = BinaryCoeff::H2O_Component<Scalar, SecondComponent>;
 
 public:
     using ParameterCache = NullParameterCache;
 
+    static constexpr int numPhases = 1; //!< Number of phases in the fluid system
+    static constexpr int numComponents = 2; //!< Number of components in the fluid system
+
+    static constexpr int liquidPhaseIdx = 0; //!< index of the liquid phase
+    static constexpr int phase0Idx = liquidPhaseIdx; //!< index of the only phase
+
+    static constexpr int comp0Idx = 0; //!< index of the frist component
+    static constexpr int comp1Idx = 1; //!< index of the second component
+    static constexpr int mainCompIdx = comp0Idx; //!< index of the main component
+    static constexpr int secondCompIdx = comp1Idx; //!< index of the secondary component
+
+    /*!
+    * \brief Initialize the fluid system's static parameters generically
+    */
+    static void init() {}
+
     /****************************************
      * Fluid phase related static parameters
      ****************************************/
-    static constexpr int mainCompIdx = 0;
-    static constexpr int secondCompIdx = 1;
-    static constexpr int wPhaseIdx = 0;
-    static constexpr int numPhases = 1;
-    static constexpr int numComponents = 2;
-
-    /*!
-     * \brief Initialize the fluid system's static parameters generically
-     */
-    static void init()
-    {}
-
     /*!
      * \brief Return the human readable name of a fluid phase
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
     static std::string phaseName(int phaseIdx = 0)
-    { return MainComponent::name(); }
+    { return "liq"; }
+
+    /*!
+     * \brief Returns whether the fluids are miscible
+     * \note There is only one phase, so miscibility makes no sense
+     */
+    static constexpr bool isMiscible()
+    { return false; }
 
     /*!
      * \brief A human readable name for the component.
@@ -90,10 +99,10 @@ public:
     { return "LiquidPhaseTwoC"; }
 
     /*!
-     * \brief Returns whether the fluid is a liquid
+     * \brief Returns whether the fluid is gaseous
      */
-    static bool isLiquid(int phaseIdx = 0)
-    { return true; }
+    static constexpr bool isGas(int phaseIdx = 0)
+    { return false; }
 
     /*!
      * \brief Returns true if and only if a fluid phase is assumed to
@@ -179,23 +188,35 @@ public:
         const Scalar p = fluidState.pressure(phaseIdx);
 
         // See: Eq. (7) in Class et al. (2002a)
-        // We assume each tracer molecule replaces on main component molecule
-        // this is consistent with the assumption in Fick's law and the computation
-        // of the composition molar mass in the compositional fluid state
-        const Scalar densityMain = MainComponent::liquidDensity(T, p);
-        const Scalar molarDensity = densityMain/MainComponent::molarMass();
+        // This assumes each gas molecule displaces exactly one
+        // molecule in the liquid.
+        const Scalar pureComponentMolarDensity = MainComponent::liquidMolarDensity(T, p);
 
-        return molarDensity * (MainComponent::molarMass()*fluidState.moleFraction(wPhaseIdx, mainCompIdx)
-                               + SecondComponent::molarMass()*fluidState.moleFraction(wPhaseIdx, secondCompIdx));
+        return pureComponentMolarDensity
+               * (MainComponent::molarMass()*fluidState.moleFraction(phase0Idx, mainCompIdx)
+                  + SecondComponent::molarMass()*fluidState.moleFraction(phase0Idx, secondCompIdx));
     }
 
+    using Base::molarDensity;
     /*!
-     * \brief The molar density \f$\mathrm{[mol/m^3]}\f$ of the phase at a given pressure and temperature.
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the molar mass \f$M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
      */
     template <class FluidState>
-    static Scalar molarDensity(const FluidState &fluidState,
-                               const int phaseIdx = 0)
-    { return fluidState.molarDensity(phaseIdx); }
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
+
+        // assume pure component or that each gas molecule displaces exactly one
+        // molecule in the liquid.
+        return MainComponent::liquidMolarDensity(T, p);
+    }
 
     /*!
      * \brief The pressure \f$\mathrm{[Pa]}\f$ of the component at a given density and temperature.

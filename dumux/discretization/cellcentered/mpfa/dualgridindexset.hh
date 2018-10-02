@@ -32,6 +32,30 @@
 
 namespace Dumux
 {
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Default traits to be used in conjuntion
+ *        with the dual grid nodal index set.
+ *
+ * \tparam GV The grid view type
+ */
+template<class GV>
+struct NodalIndexSetDefaultTraits
+{
+    using GridView = GV;
+    using GridIndexType = typename GV::IndexSet::IndexType;
+    using LocalIndexType = std::uint8_t;
+
+    //! per default, we use dynamic data containers (iv size unknown)
+    template< class T > using NodalScvDataStorage = std::vector< T >;
+    template< class T > using NodalScvfDataStorage = std::vector< T >;
+
+    //! store data on neighbors of scvfs in static containers if possible
+    template< class T >
+    using ScvfNeighborDataStorage = typename std::conditional_t< (int(GV::dimension)<int(GV::dimensionworld)),
+                                                                 std::vector< T >,
+                                                                 Dune::ReservedVector< T, 2 > >;
+};
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -112,19 +136,24 @@ public:
     }
 
     //! returns the number of scvs around the node
-    std::size_t numScvs() const { return scvIndices_.size(); }
+    std::size_t numScvs() const
+    { return scvIndices_.size(); }
 
     //! returns the number of scvfs around the node
-    std::size_t numScvfs() const { return scvfIndices_.size(); }
+    std::size_t numScvfs() const
+    { return scvfIndices_.size(); }
 
     //! returns the number of boundary scvfs around the node
-    std::size_t numBoundaryScvfs() const { return numBoundaryScvfs_; }
+    std::size_t numBoundaryScvfs() const
+    { return numBoundaryScvfs_; }
 
     //! returns the grid scv indices connected to this dual grid node
-    const NodalGridStencilType& globalScvIndices() const { return scvIndices_; }
+    const NodalGridStencilType& globalScvIndices() const
+    { return scvIndices_; }
 
     //! returns the grid scvf indices connected to this dual grid node
-    const NodalGridScvfStencilType& globalScvfIndices() const { return scvfIndices_; }
+    const NodalGridScvfStencilType& globalScvfIndices() const
+    { return scvfIndices_; }
 
     //! returns whether or not the i-th scvf is on a domain boundary
     bool scvfIsOnBoundary(unsigned int i) const
@@ -198,7 +227,9 @@ public:
 
     //! Constructor taking a grid view
     template< class GridView >
-    CCMpfaDualGridIndexSet(const GridView& gridView) : nodalIndexSets_(gridView.size(GridView::dimension)) {}
+    CCMpfaDualGridIndexSet(const GridView& gridView)
+    : nodalIndexSets_(gridView.size(GridView::dimension))
+    {}
 
     //! Access with an scvf
     template< class SubControlVolumeFace >
@@ -210,8 +241,11 @@ public:
     { return nodalIndexSets_[scvf.vertexIndex()]; }
 
     //! Access with an index
-    const NodalIndexSet& operator[] (GridIndexType i) const { return nodalIndexSets_[i]; }
-    NodalIndexSet& operator[] (GridIndexType i) { return nodalIndexSets_[i]; }
+    const NodalIndexSet& operator[] (GridIndexType i) const
+    { return nodalIndexSets_[i]; }
+
+    NodalIndexSet& operator[] (GridIndexType i)
+    { return nodalIndexSets_[i]; }
 
 private:
     std::vector<NodalIndexSet> nodalIndexSets_;

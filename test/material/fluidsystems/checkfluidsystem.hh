@@ -28,6 +28,9 @@
 #ifndef DUMUX_CHECK_FLUIDSYSTEM_HH
 #define DUMUX_CHECK_FLUIDSYSTEM_HH
 
+#include <exception>
+#include <string>
+
 #include <dune/common/classname.hh>
 
 // include all fluid systems in dumux-stable
@@ -35,15 +38,14 @@
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
-#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/fluidsystems/purewatersimple.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states
@@ -65,18 +67,15 @@ namespace Dumux
 /*! \brief This fluid state ensures that only the allowed quantities
  * are accessed
  */
-template<class Scalar, class FluidSystem, class BaseFluidState = CompositionalFluidState<Scalar, FluidSystem> >
+template<class ScalarType, class FluidSystem, class BaseFluidState = CompositionalFluidState<ScalarType, FluidSystem> >
 class HairSplittingFluidState: protected BaseFluidState
 {
 public:
-    enum
-    {
-        numPhases = FluidSystem::numPhases
-    };
-    enum
-    {
-        numComponents = FluidSystem::numComponents
-    };
+    //! export the type used for scalars
+    using typename BaseFluidState::Scalar;
+
+    static constexpr int numPhases = FluidSystem::numPhases;
+    static constexpr int numComponents = FluidSystem::numComponents;
 
     HairSplittingFluidState()
     {
@@ -87,12 +86,10 @@ public:
             BaseFluidState::setSaturation(phaseIdx, 1.0 / numPhases);
             BaseFluidState::setPressure(phaseIdx, 1e5);
             BaseFluidState::setDensity(phaseIdx, 1.0);
+            BaseFluidState::setMolarDensity(phaseIdx, 1.0);
 
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
                 BaseFluidState::setMoleFraction(phaseIdx, compIdx, 1.0 / numComponents);
-
-            }
         }
 
         // initially, do not allow anything
@@ -135,6 +132,12 @@ public:
         assert(allowTemperature_);
         assert(restrictPhaseIdx_ < 0 || restrictPhaseIdx_ == phaseIdx);
         return BaseFluidState::temperature(phaseIdx);
+    }
+
+    Scalar wettingPhase() const
+    {
+        assert(allowComposition_);
+        return BaseFluidState::wettingPhase();
     }
 
     Scalar partialPressure(int phaseIdx, int compIdx) const
@@ -257,9 +260,6 @@ int checkFluidState(const BaseFluidState &fs)
     BaseFluidState tmpFs(fs);
     tmpFs = fs;
 
-    // a fluid state must provide a checkDefined() method
-    fs.checkDefined();
-
     // output strings
     std::string collectedErrors;
     std::string collectedWarnings;
@@ -354,7 +354,7 @@ int checkFluidState(const BaseFluidState &fs)
     try
     {
         val = fs.enthalpy(/*phaseIdx=*/0);
-    } catch (Dune::NotImplemented)
+    } catch (Dune::NotImplemented&)
     {
         collectedWarnings += "warning: fluidState.enthalpy() is not implemented\n";
     } catch (...)
@@ -364,7 +364,7 @@ int checkFluidState(const BaseFluidState &fs)
     try
     {
         val = fs.internalEnergy(/*phaseIdx=*/0);
-    } catch (Dune::NotImplemented)
+    } catch (Dune::NotImplemented&)
     {
         collectedWarnings += "warning: fluidState.internalEnergy() is not implemented\n";
     } catch (...)
@@ -395,8 +395,16 @@ int checkFluidState(const BaseFluidState &fs)
     }
 }
 
+/*!
+ * \brief This is a consistency check for FluidSystems.
+ * \param enablePhaseRestriction Parameter passed to the fluidState. If set to true,
+ *        the fluidState will only allow calls to properties of the current phase.
+ * \note While this is very common, it is not necessarily the case for all FluidSystems.
+ *       We keep this, because it might help finding mistakes in FluidSystems that have this invariant.
+ *       If you verified that a fluid system does not have this invariant you can set this option to false.
+ */
 template<class Scalar, class FluidSystem>
-int checkFluidSystem()
+int checkFluidSystem(bool enablePhaseRestriction = true)
 {
     int success = 0;
     std::cout << "Testing fluid system '" << Dune::className<FluidSystem>() << "'\n";
@@ -457,7 +465,8 @@ int checkFluidSystem()
 
     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
     {
-        fs.restrictToPhase(phaseIdx);
+        if (enablePhaseRestriction)
+            fs.restrictToPhase(phaseIdx);
         try
         {
             paramCache.updatePhase(fs, phaseIdx);
@@ -516,56 +525,63 @@ int checkFluidSystem()
     // actually check the fluid system API
     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
     {
-        fs.restrictToPhase(phaseIdx);
         fs.allowPressure(FluidSystem::isCompressible(phaseIdx));
         fs.allowComposition(true);
         fs.allowDensity(false);
+        if (enablePhaseRestriction)
+            fs.restrictToPhase(phaseIdx);
         try
         {
             val = FluidSystem::density(fs, paramCache, phaseIdx);
-        } catch (Dune::Exception e)
+        } catch (const std::exception& e)
         {
-            collectedErrors += "error: FluidSystem::density() throws exception!\n";
+            collectedErrors += "error: FluidSystem::density() throws exception: " + std::string(e.what()) + "\n";
         }
-
+        try
+        {
+            val = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
+        } catch (const std::exception& e)
+        {
+            collectedErrors += "error: FluidSystem::molarDensity() throws exception: " + std::string(e.what()) + "\n";
+        }
         fs.allowPressure(true);
         fs.allowDensity(true);
         try
         {
             val = FluidSystem::viscosity(fs, paramCache, phaseIdx);
-        } catch (...)
+        } catch (const std::exception& e)
         {
-            collectedErrors += "error: FluidSystem::viscosity() throws exception!\n";
+            collectedErrors += "error: FluidSystem::viscosity() throws exception: " + std::string(e.what()) + "\n";
         }
         try
         {
             val = FluidSystem::enthalpy(fs, paramCache, phaseIdx);
-        } catch (Dune::NotImplemented)
+        } catch (Dune::NotImplemented&)
         {
             collectedWarnings += "warning: FluidSystem::enthalpy() is not implemented\n";
-        } catch (...)
+        } catch (const std::exception& e)
         {
-            collectedErrors += "error: FluidSystem::enthalpy() throws exception!\n";
+            collectedErrors += "error: FluidSystem::enthalpy() throws exception: " + std::string(e.what()) + "\n";
         }
         try
         {
             val = FluidSystem::heatCapacity(fs, paramCache, phaseIdx);
-        } catch (Dune::NotImplemented)
+        } catch (Dune::NotImplemented&)
         {
             collectedWarnings += "warning: FluidSystem::heatCapacity() is not implemented\n";
-        } catch (...)
+        } catch (const std::exception& e)
         {
-            collectedErrors += "error: FluidSystem::heatCapacity() throws exception!\n";
+            collectedErrors += "error: FluidSystem::heatCapacity() throws exception: " + std::string(e.what()) + "\n";
         }
         try
         {
             val = FluidSystem::thermalConductivity(fs, paramCache, phaseIdx);
-        } catch (Dune::NotImplemented)
+        } catch (Dune::NotImplemented&)
         {
             collectedWarnings += "warning: FluidSystem::thermalConductivity() is not implemented\n";
-        } catch (...)
+        } catch (const std::exception& e)
         {
-            collectedErrors += "error: FluidSystem::thermalConductivity() throws exception!\n";
+            collectedErrors += "error: FluidSystem::thermalConductivity() throws exception: " + std::string(e.what()) + "\n";
         }
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
@@ -574,53 +590,53 @@ int checkFluidSystem()
             try
             {
                 val = FluidSystem::fugacityCoefficient(fs, paramCache, phaseIdx, compIdx);
-            } catch (Dune::NotImplemented)
+            } catch (Dune::NotImplemented&)
             {
                 collectedWarnings += "warning: FluidSystem::fugacityCoefficient() is not implemented\n";
-            } catch (...)
+            } catch (const std::exception& e)
             {
-                collectedErrors += "error: FluidSystem::fugacityCoefficient() throws exception!\n";
+                collectedErrors += "error: FluidSystem::fugacityCoefficient() throws exception: " + std::string(e.what()) + "\n";
             }
             fs.allowComposition(true);
             try
             {
                 val = FluidSystem::diffusionCoefficient(fs, paramCache, phaseIdx, compIdx);
-            } catch (Dune::NotImplemented)
+            } catch (Dune::NotImplemented&)
             {
                 collectedWarnings += "warning: FluidSystem::diffusionCoefficient() is not implemented\n";
-            } catch (Dune::InvalidStateException)
+            } catch (Dune::InvalidStateException&)
             {
                 collectedWarnings += "warning: FluidSystem::diffusionCoefficient() gives invalid state exception\n";
-            } catch (...)
+            } catch (const std::exception& e)
             {
-                collectedErrors += "error: FluidSystem::diffusionCoefficient() throws exception!\n";
+                collectedErrors += "error: FluidSystem::diffusionCoefficient() throws exception: " + std::string(e.what()) + "\n";
             }
             for (int comp2Idx = 0; comp2Idx < numComponents; ++comp2Idx)
             {
                 try
                 {
                     val = FluidSystem::binaryDiffusionCoefficient(fs, paramCache, phaseIdx, compIdx, comp2Idx);
-                } catch (Dune::NotImplemented)
+                } catch (Dune::NotImplemented&)
                 {
                     collectedWarnings += "warning: FluidSystem::binaryDiffusionCoefficient() is not implemented\n";
-                } catch (Dune::InvalidStateException)
+                } catch (Dune::InvalidStateException&)
                 {
                     collectedWarnings += "warning: FluidSystem::binaryDiffusionCoefficient() gives invalid state exception\n";
-                } catch (...)
+                } catch (const std::exception& e)
                 {
-                    collectedErrors += "error: FluidSystem::binaryDiffusionCoefficient() throws exception!\n";
+                    collectedErrors += "error: FluidSystem::binaryDiffusionCoefficient() throws exception: " + std::string(e.what()) + "\n";
                 }
             }
         }
     }
 
-    // test for phaseName(), isLiquid() and isIdealGas()
+    // test for phaseName(), isGas() and isIdealGas()
     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
     {
         std::string
         DUNE_UNUSED name = FluidSystem::phaseName(phaseIdx);
         bool DUNE_UNUSED
-        bVal = FluidSystem::isLiquid(phaseIdx);
+        bVal = FluidSystem::isGas(phaseIdx);
         bVal = FluidSystem::isIdealGas(phaseIdx);
     }
 

@@ -9,9 +9,10 @@ Cells = 60 40
 [Problem]
 Name = sagd # name passed to the output routines
 
-[Implicit]
-MaxTimeStepDivisions = 100
-
 [Newton]
 MaxSteps = 8
-WriteConvergence = 0
+
+[Component]
+SolidDensity = 2650
+solidThermalConductivity = 2.8
+solidHeatCapacity = 850

@@ -61,8 +61,8 @@ SET_TYPE_PROP(FVVelocity2PTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_PROP(FVVelocity2PTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
@@ -78,8 +78,8 @@ SET_TYPE_PROP(FVMPFAOVelocity2PTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_PROP(FVMPFAOVelocity2PTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
@@ -94,8 +94,8 @@ SET_TYPE_PROP(MimeticPressure2PTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_PROP(MimeticPressure2PTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
@@ -116,7 +116,7 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Grid = typename GridView::Grid;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
 
@@ -137,7 +137,7 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:

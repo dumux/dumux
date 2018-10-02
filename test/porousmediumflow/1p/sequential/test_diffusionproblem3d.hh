@@ -22,6 +22,14 @@
 #ifndef DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 #define DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
@@ -63,8 +71,8 @@ SET_TYPE_PROP(DiffusionTestTypeTag, Problem, TestDiffusion3DProblem<TypeTag>);
 SET_PROP(DiffusionTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
@@ -72,10 +80,6 @@ SET_PROP(DiffusionTestTypeTag, FluidSystem)
 SET_TYPE_PROP(DiffusionTestTypeTag, LinearSolver, SuperLUBackend);
 #else
 SET_TYPE_PROP(DiffusionTestTypeTag, LinearSolver, ILUnRestartedGMResBackend);
-SET_INT_PROP(DiffusionTestTypeTag, LinearSolverGMResRestart, 80);
-SET_INT_PROP(DiffusionTestTypeTag, LinearSolverMaxIterations, 1000);
-SET_SCALAR_PROP(DiffusionTestTypeTag, LinearSolverResidualReduction, 1e-8);
-SET_SCALAR_PROP(DiffusionTestTypeTag, LinearSolverPreconditionerIterations, 1);
 #endif
 
 // set the types for the 2PFA FV method
@@ -100,7 +104,7 @@ class TestDiffusion3DProblem: public DiffusionProblem2P<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Grid = typename GridView::Grid;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -125,7 +129,7 @@ class TestDiffusion3DProblem: public DiffusionProblem2P<TypeTag>
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);

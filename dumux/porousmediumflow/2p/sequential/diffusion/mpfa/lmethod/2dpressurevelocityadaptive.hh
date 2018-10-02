@@ -22,7 +22,6 @@
 #ifndef DUMUX_MPFAL2DPRESSUREVELOCITIES2P_ADAPTIVE_HH
 #define DUMUX_MPFAL2DPRESSUREVELOCITIES2P_ADAPTIVE_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/float_cmp.hh>
 
 #include "2dpressureadaptive.hh"
@@ -68,7 +67,7 @@ template<class TypeTag> class FvMpfaL2dPressureVelocity2pAdaptive: public FvMpfa
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -100,7 +99,9 @@ template<class TypeTag> class FvMpfaL2dPressureVelocity2pAdaptive: public FvMpfa
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
@@ -342,11 +343,7 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     const auto referenceElement = ReferenceElements::general(elementI.geometry().type());
-#else
-    const auto& referenceElement = ReferenceElements::general(elementI.geometry().type());
-#endif
 
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();

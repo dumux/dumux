@@ -1,5 +1,5 @@
-add_subdirectory("tpfa")
-add_subdirectory("mpfa")
+add_subdirectory(mpfa)
+add_subdirectory(tpfa)
 
 install(FILES
 connectivitymap.hh

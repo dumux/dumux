@@ -53,7 +53,6 @@ class SweProblem : public FVProblem<TypeTag>
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum {

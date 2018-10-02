@@ -33,7 +33,7 @@
 namespace Dumux
 {
 // forward declaration
-template<class TypeTag, DiscretizationMethods discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawImplementation;
 
 /*!
@@ -41,9 +41,9 @@ class FouriersLawImplementation;
 * \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
 */
 template <class TypeTag>
-class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
+class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 {
-    using Implementation = FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
+    using Implementation = FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
@@ -51,16 +51,15 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
 
@@ -107,7 +106,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 
 public:
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! export the type for the corresponding cache
     using Cache = TpfaFouriersLawCache;

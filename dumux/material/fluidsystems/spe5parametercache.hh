@@ -129,12 +129,12 @@ public:
     {
         switch (phaseIdx)
         {
-        case oPhaseIdx: return oilPhaseParams_.a();
-        case gPhaseIdx: return gasPhaseParams_.a();
-        default:
-            DUNE_THROW(Dune::InvalidStateException,
-                       "The a() parameter is only defined for "
-                       "oil and gas phases");
+            case oPhaseIdx: return oilPhaseParams_.a();
+            case gPhaseIdx: return gasPhaseParams_.a();
+            default:
+                DUNE_THROW(Dune::InvalidStateException,
+                           "The a() parameter is only defined for "
+                           "oil and gas phases");
         }
     }
 
@@ -146,12 +146,12 @@ public:
     {
         switch (phaseIdx)
         {
-        case oPhaseIdx: return oilPhaseParams_.b();
-        case gPhaseIdx: return gasPhaseParams_.b();
-        default:
-            DUNE_THROW(Dune::InvalidStateException,
-                       "The b() parameter is only defined for "
-                       "oil and gas phases");
+            case oPhaseIdx: return oilPhaseParams_.b();
+            case gPhaseIdx: return gasPhaseParams_.b();
+            default:
+                DUNE_THROW(Dune::InvalidStateException,
+                           "The b() parameter is only defined for "
+                           "oil and gas phases");
         }
     }
 
@@ -166,12 +166,12 @@ public:
     {
         switch (phaseIdx)
         {
-        case oPhaseIdx: return oilPhaseParams_.pureParams(compIdx).a();
-        case gPhaseIdx: return gasPhaseParams_.pureParams(compIdx).a();
-        default:
-            DUNE_THROW(Dune::InvalidStateException,
-                       "The a() parameter is only defined for "
-                       "oil and gas phases");
+            case oPhaseIdx: return oilPhaseParams_.pureParams(compIdx).a();
+            case gPhaseIdx: return gasPhaseParams_.pureParams(compIdx).a();
+            default:
+                DUNE_THROW(Dune::InvalidStateException,
+                           "The a() parameter is only defined for "
+                           "oil and gas phases");
         }
     }
 
@@ -185,12 +185,12 @@ public:
     {
         switch (phaseIdx)
         {
-        case oPhaseIdx: return oilPhaseParams_.pureParams(compIdx).b();
-        case gPhaseIdx: return gasPhaseParams_.pureParams(compIdx).b();
-        default:
-            DUNE_THROW(Dune::InvalidStateException,
-                       "The b() parameter is only defined for "
-                       "oil and gas phases");
+            case oPhaseIdx: return oilPhaseParams_.pureParams(compIdx).b();
+            case gPhaseIdx: return gasPhaseParams_.pureParams(compIdx).b();
+            default:
+                DUNE_THROW(Dune::InvalidStateException,
+                           "The b() parameter is only defined for "
+                           "oil and gas phases");
         }
     }
 
@@ -277,14 +277,14 @@ protected:
         Valgrind::CheckDefined(fs.averageMolarMass(phaseIdx));
         switch (phaseIdx)
         {
-        case oPhaseIdx:
-            oilPhaseParams_.updateMix(fs);
-            break;
-        case gPhaseIdx:
-            gasPhaseParams_.updateMix(fs);
-            break;
-        case wPhaseIdx:
-            break;
+            case oPhaseIdx:
+                oilPhaseParams_.updateMix(fs);
+                break;
+            case gPhaseIdx:
+                gasPhaseParams_.updateMix(fs);
+                break;
+            case wPhaseIdx:
+                break;
         }
     }
 
@@ -297,49 +297,49 @@ protected:
         // calculate molar volume of the phase (we will need this for the
         // fugacity coefficients and the density anyway)
         switch (phaseIdx) {
-        case gPhaseIdx: {
-            // calculate molar volumes for the given composition. although
-            // this isn't a Peng-Robinson parameter strictly speaking, the
-            // molar volume appears in basically every quantity the fluid
-            // system can get queried, so it is okay to calculate it
-            // here...
-            Vm_[gPhaseIdx] =
-                PengRobinson::computeMolarVolume(fs,
-                                                 *this,
-                                                 phaseIdx,
-                                                 /*isGasPhase=*/true);
-            break;
-        }
-        case oPhaseIdx: {
-            // calculate molar volumes for the given composition. although
-            // this isn't a Peng-Robinson parameter strictly speaking, the
-            // molar volume appears in basically every quantity the fluid
-            // system can get queried, so it is okay to calculate it
-            // here...
-            Vm_[oPhaseIdx] =
-                PengRobinson::computeMolarVolume(fs,
-                                                 *this,
-                                                 phaseIdx,
-                                                 /*isGasPhase=*/false);
-            break;
-        }
-        case wPhaseIdx: {
-            // Density of water in the stock tank (i.e. atmospheric
-            // pressure) is specified as 62.4 lb/ft^3 by the SPE-5
-            // paper. Also 1 lb = 0.4535923 and 1 ft = 0.3048 m.
-            const Scalar stockTankWaterDensity = 62.4 * 0.45359237 / 0.028316847;
-            // Water compressibility is specified as 3.3e-6 per psi
-            // overpressure, where 1 psi = 6894.7573 Pa
-            Scalar overPressure = fs.pressure(wPhaseIdx) - 1.013e5; // [Pa]
-            Scalar waterDensity =
-                stockTankWaterDensity * (1 + 3.3e-6*overPressure/6894.7573);
+            case gPhaseIdx: {
+                // calculate molar volumes for the given composition. although
+                // this isn't a Peng-Robinson parameter strictly speaking, the
+                // molar volume appears in basically every quantity the fluid
+                // system can get queried, so it is okay to calculate it
+                // here...
+                Vm_[gPhaseIdx] =
+                    PengRobinson::computeMolarVolume(fs,
+                                                     *this,
+                                                     phaseIdx,
+                                                     /*isGasPhase=*/true);
+                break;
+            }
+            case oPhaseIdx: {
+                // calculate molar volumes for the given composition. although
+                // this isn't a Peng-Robinson parameter strictly speaking, the
+                // molar volume appears in basically every quantity the fluid
+                // system can get queried, so it is okay to calculate it
+                // here...
+                Vm_[oPhaseIdx] =
+                    PengRobinson::computeMolarVolume(fs,
+                                                     *this,
+                                                     phaseIdx,
+                                                     /*isGasPhase=*/false);
+                break;
+            }
+            case wPhaseIdx: {
+                // Density of water in the stock tank (i.e. atmospheric
+                // pressure) is specified as 62.4 lb/ft^3 by the SPE-5
+                // paper. Also 1 lb = 0.4535923 and 1 ft = 0.3048 m.
+                const Scalar stockTankWaterDensity = 62.4 * 0.45359237 / 0.028316847;
+                // Water compressibility is specified as 3.3e-6 per psi
+                // overpressure, where 1 psi = 6894.7573 Pa
+                Scalar overPressure = fs.pressure(wPhaseIdx) - 1.013e5; // [Pa]
+                Scalar waterDensity =
+                    stockTankWaterDensity * (1 + 3.3e-6*overPressure/6894.7573);
 
-            // convert water density [kg/m^3] to molar volume [m^3/mol]
-            Vm_[wPhaseIdx] = fs.averageMolarMass(wPhaseIdx)/waterDensity;
-            break;
-        }
-        default:
-            DUNE_THROW(Dune::InvalidStateException, "invalid phaseIdx " << phaseIdx);
+                // convert water density [kg/m^3] to molar volume [m^3/mol]
+                Vm_[wPhaseIdx] = fs.averageMolarMass(wPhaseIdx)/waterDensity;
+                break;
+            }
+            default:
+                DUNE_THROW(Dune::InvalidStateException, "invalid phaseIdx " << phaseIdx);
         }
     }
 

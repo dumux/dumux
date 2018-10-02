@@ -24,42 +24,33 @@
 #ifndef DUMUX_NAVIERSTOKES_INDICES_HH
 #define DUMUX_NAVIERSTOKES_INDICES_HH
 
-#include <dumux/common/properties.hh>
+namespace Dumux {
 
-namespace Dumux
-{
-// \{
 /*!
  * \ingroup NavierStokesModel
  * \brief The common indices for the isothermal Navier-Stokes model.
  *
- * \tparam PVOffset The first index in a primary variable vector.
+ * \tparam dimension The dimension of the problem
  */
-template <class TypeTag, int PVOffset = 0>
+template <int dimension>
 struct NavierStokesIndices
 {
-
     static constexpr int dimXIdx = 0; //!< Index of the x-component of a vector of size dim
     static constexpr int dimYIdx = 1; //!< Index of the y-component of a vector of size dim
     static constexpr int dimZIdx = 2; //!< Index of the z-component of a vector of size dim
 
-    static constexpr int massBalanceIdx = PVOffset + 0; //!< Index of the mass balance equation
-    static constexpr int conti0EqIdx = massBalanceIdx; //!< Index of the mass balance equation
-    static constexpr int pressureIdx = massBalanceIdx; //!< Index of the pressure in a solution vector
+    static constexpr int conti0EqIdx = dimension; //!< Index of the total mass balance equation
+    static constexpr int pressureIdx = conti0EqIdx; //!< Index of the pressure in a solution vector
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr auto dim = GridView::dimension;
-    static constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
-    static constexpr auto momentumBalanceOffset = GET_PROP_VALUE(TypeTag, NumEq) - dim;
+    static constexpr auto dim = dimension;
 
-    static constexpr int momentumBalanceIdx = PVOffset + momentumBalanceOffset; //!< Index of the momentum balance equation
-    static constexpr int momentumXBalanceIdx = momentumBalanceIdx; //!< Index of the momentum balance equation
-    static constexpr int momentumYBalanceIdx = momentumBalanceIdx + 1; //!< Index of the momentum balance equation
-    static constexpr int momentumZBalanceIdx = momentumBalanceIdx + 2; //!< Index of the momentum balance equation
+    static constexpr int momentumXBalanceIdx = 0; //!< Index of the momentum balance equation
+    static constexpr int momentumYBalanceIdx = 1; //!< Index of the momentum balance equation
+    static constexpr int momentumZBalanceIdx = 2; //!< Index of the momentum balance equation
 
-    static constexpr int velocityXIdx = momentumBalanceIdx; //!< Index of the velocity in a solution vector
-    static constexpr int velocityYIdx = momentumBalanceIdx + 1; //!< Index of the velocity in a solution vector
-    static constexpr int velocityZIdx = momentumBalanceIdx + 2; //!< Index of the velocity in a solution vector
+    static constexpr int velocityXIdx = 0; //!< Index of the velocity in a solution vector
+    static constexpr int velocityYIdx = 1; //!< Index of the velocity in a solution vector
+    static constexpr int velocityZIdx = 2; //!< Index of the velocity in a solution vector
 
     /*!
      * \brief Index of the velocity in a solution vector given a certain direction.
@@ -68,11 +59,10 @@ struct NavierStokesIndices
      */
     static constexpr int velocity(int dirIdx)
     {
-        return dirIdx + momentumBalanceIdx;
+        return dirIdx;
     }
 };
 
-// \}
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -25,27 +25,27 @@
 #ifndef DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup OnePNCTests
  * \brief Definition of the spatial parameters for the 1pnc
  *        test problems.
  */
-template<class TypeTag>
-class OnePNCTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class OnePNCTestSpatialParams
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             OnePNCTestSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           OnePNCTestSpatialParams<FVGridGeometry, Scalar>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
@@ -54,14 +54,11 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePNCTestSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    OnePNCTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
     }
 
     /*!
@@ -87,57 +84,15 @@ public:
      * \param scv The sub-control volume
      * \param elemSol The solution for all dofs of the element
      */
+    template<class ElementSolution>
     Scalar dispersivity(const Element &element,
                         const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+                        const ElementSolution& elemSol) const
     { return 0; }
-
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     */
-    Scalar solidHeatCapacity(const Element &element,
-                             const SubControlVolume& scv,
-                             const ElementSolutionVector& elemSol) const
-    { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     */
-    Scalar solidDensity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
-    { return 2700; /*density of granite [kg/m^3]*/ }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     */
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume& scv,
-                                    const ElementSolutionVector& elemSol) const
-    { return lambdaSolid_; }
-
-
 
 private:
     Scalar permeability_;
     Scalar porosity_;
-    Scalar lambdaSolid_;
 };
 
 } // end namespace Dumux

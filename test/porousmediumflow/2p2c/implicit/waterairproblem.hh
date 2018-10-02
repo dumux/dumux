@@ -25,6 +25,8 @@
 #ifndef DUMUX_WATER_AIR_PROBLEM_HH
 #define DUMUX_WATER_AIR_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/methods.hh>
@@ -36,8 +38,7 @@
 
 #include "waterairspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup TwoPTwoCTests
  * \brief Non-isothermal gas injection problem where a gas (e.g. air)
@@ -46,9 +47,8 @@ namespace Dumux
 template <class TypeTag>
 class WaterAirProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(WaterAirTypeTag, INHERITS_FROM(TwoPTwoCNI, WaterAirSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(WaterAirTypeTag, INHERITS_FROM(TwoPTwoCNI));
 NEW_TYPE_TAG(WaterAirBoxTypeTag, INHERITS_FROM(BoxModel, WaterAirTypeTag));
 NEW_TYPE_TAG(WaterAirCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, WaterAirTypeTag));
 
@@ -59,12 +59,19 @@ SET_TYPE_PROP(WaterAirTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(WaterAirTypeTag, Problem, WaterAirProblem<TypeTag>);
 
 // Set the wetting phase
-SET_TYPE_PROP(WaterAirTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
+SET_TYPE_PROP(WaterAirTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
+// Set the spatial parameters
+SET_PROP(WaterAirTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = WaterAirSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(WaterAirTypeTag, UseMoles, true);
-}
-
+} // end namespace Dumux
 
 /*!
  * \ingroup TwoPTwoCModel
@@ -103,43 +110,47 @@ SET_BOOL_PROP(WaterAirTypeTag, UseMoles, true);
 template <class TypeTag >
 class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
 {
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
+
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    // primary variable indices
+    enum
+    {
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
-
-        nCompIdx = FluidSystem::nCompIdx,
-
         temperatureIdx = Indices::temperatureIdx,
-        energyEqIdx = Indices::energyEqIdx,
-
-        // phase state
-        wPhaseOnly = Indices::wPhaseOnly,
-
-        // world dimension
-        dimWorld = GridView::dimensionworld,
-
-        conti0EqIdx = Indices::conti0EqIdx,
-        contiNEqIdx = conti0EqIdx + Indices::nCompIdx
+        energyEqIdx = Indices::energyEqIdx
     };
+
+    // equation indices
+    enum
+    {
+        contiH2OEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx,
+        contiN2EqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx
+    };
+
+    // phase presence
+    enum { wPhaseOnly = Indices::firstPhaseOnly };
+    // component index
+    enum { N2Idx = FluidSystem::N2Idx };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
     //! property that defines whether mole or mass fractions are used
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = ModelTraits::useMoles();
 
 public:
     /*!
@@ -205,13 +216,9 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluate the boundary conditions for a Dirichlet boundary segment.
      *
-     * \param values The dirichlet values for the primary variables
-     * \param globalPos The position for which the bc type should be evaluated
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param globalPos The position for which the Dirichlet condition should be evaluated
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
@@ -219,41 +226,31 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluate the boundary conditions for a Neumann boundary segment.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param elemVolVars The stencil volume variables
-     * \param scvf The sub control volume boundary face
+     * \param globalPos The position for which the Neumann condition should be evaluated
      *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
+     * \return the mole/mass flux of each component. Negative values mean influx.
      *
-     * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
+     * The units must be according to using either mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
      */
-    NumEqVector neumann(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         NumEqVector values(0.0);
-
-        const auto& globalPos = scvf.ipGlobal();
 
         // we inject pure gasious nitrogen at the initial condition temperature and pressure  from the bottom (negative values mean injection)
         if (globalPos[0] > 14.8 - eps_ && globalPos[0] < 25.2 + eps_ && globalPos[1] < eps_)
         {
-            values[contiNEqIdx] = useMoles ? -1e-3/FluidSystem::molarMass(nCompIdx) : -1e-3; // kg/(m^2*s) or mole/(m^2*s)
+            values[contiN2EqIdx] = useMoles ? -1e-3/FluidSystem::molarMass(N2Idx) : -1e-3; // kg/(m^2*s) or mole/(m^2*s)
 
-            const auto initial = initial_(globalPos);
+            const auto initialValues = initial_(globalPos);
             const auto& mParams = this->spatialParams().materialLawParamsAtPos(globalPos);
-            using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-            const auto pn = initial[pressureIdx] + MaterialLaw::endPointPc(mParams);
-            const auto t = initial[temperatureIdx];
+            using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
+            const auto pn = initialValues[pressureIdx] + MaterialLaw::endPointPc(mParams);
+            const auto t = initialValues[temperatureIdx];
 
             // note: energy equation is always formulated in terms of mass specific quantities, not per mole
-            values[energyEqIdx] = -1e-3*N2<Scalar>::gasEnthalpy(t, pn);
+            values[energyEqIdx] = -1e-3*Components::N2<Scalar>::gasEnthalpy(t, pn);
         }
 
         return values;

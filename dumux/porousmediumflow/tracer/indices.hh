@@ -25,15 +25,14 @@
 #ifndef DUMUX_TRACER_INDICES_HH
 #define DUMUX_TRACER_INDICES_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
 // \{
 
 /*!
  * \ingroup TracerModel
  * \brief Defines the primary variable and equation indices used by the isothermal tracer model.
  */
-template <class TypeTag, int PVOffset = 0>
 struct TracerIndices
 {
     /*!
@@ -41,7 +40,7 @@ struct TracerIndices
      * primary variable indices are just numbered by component index
      * Equation indices
      */
-    static const int transportEqIdx = PVOffset + 0; //!< transport equation index
+    static const int transportEqIdx = 0; //!< transport equation index
 };
 
 // \}

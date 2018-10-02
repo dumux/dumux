@@ -24,12 +24,18 @@
 #ifndef DUMUX_HETEROGENEOUS_PROBLEM_HH
 #define DUMUX_HETEROGENEOUS_PROBLEM_HH
 
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/co2/model.hh>
 
+#include <dumux/material/components/tabulatedcomponent.hh>
+#include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
 #include <dumux/discretization/box/scvftoscvboundarytypes.hh>
 
@@ -41,8 +47,7 @@
 #define ISOTHERMAL 1
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup CO2Tests
  * \brief Definition of a problem, where CO2 is injected in a reservoir.
@@ -50,27 +55,33 @@ namespace Dumux
 template <class TypeTag>
 class HeterogeneousProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(HeterogeneousTypeTag, INHERITS_FROM(TwoPTwoCCO2, HeterogeneousSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(HeterogeneousTypeTag, INHERITS_FROM(TwoPTwoCCO2));
 NEW_TYPE_TAG(HeterogeneousBoxTypeTag, INHERITS_FROM(BoxModel, HeterogeneousTypeTag));
 NEW_TYPE_TAG(HeterogeneousCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, HeterogeneousTypeTag));
 
-// Set the grid type
+//Set the grid type
 SET_TYPE_PROP(HeterogeneousTypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 
 // Set the problem property
 SET_TYPE_PROP(HeterogeneousTypeTag, Problem, HeterogeneousProblem<TypeTag>);
 
+// Set the spatial parameters
+SET_TYPE_PROP(HeterogeneousTypeTag, SpatialParams, HeterogeneousSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                              typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
 // Set fluid configuration
-SET_TYPE_PROP(HeterogeneousTypeTag, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                        HeterogeneousCO2Tables::CO2Tables>);
+SET_TYPE_PROP(HeterogeneousTypeTag, FluidSystem,
+    FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
+                           HeterogeneousCO2Tables::CO2Tables,
+                           Components::TabulatedComponent<Components::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>>,
+                           FluidSystems::BrineCO2DefaultPolicy</*constantSalinity=*/true, /*simpleButFast=*/true>>);
 
 // Use Moles
 SET_BOOL_PROP(HeterogeneousTypeTag, UseMoles, false);
 
 #if !ISOTHERMAL
-NEW_TYPE_TAG(HeterogeneousNITypeTag, INHERITS_FROM(TwoPTwoCCO2NI, HeterogeneousSpatialParams));
+NEW_TYPE_TAG(HeterogeneousNITypeTag, INHERITS_FROM(TwoPTwoCCO2NI));
 NEW_TYPE_TAG(HeterogeneousNIBoxTypeTag, INHERITS_FROM(BoxModel, HeterogeneousNITypeTag));
 NEW_TYPE_TAG(HeterogeneousNICCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, HeterogeneousNITypeTag));
 
@@ -80,6 +91,10 @@ SET_TYPE_PROP(HeterogeneousNITypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune
 // Set the problem property
 SET_TYPE_PROP(HeterogeneousNITypeTag, Problem, HeterogeneousProblem<TypeTag>);
 
+// Set the spatial parameters
+SET_TYPE_PROP(HeterogeneousNITypeTag, SpatialParams,HeterogeneousSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                               typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
 // Set fluid configuration
 SET_TYPE_PROP(HeterogeneousNITypeTag, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                         HeterogeneousCO2Tables::CO2Tables>);
@@ -87,8 +102,7 @@ SET_TYPE_PROP(HeterogeneousNITypeTag, FluidSystem, FluidSystems::BrineCO2<typena
 // Use Moles
 SET_BOOL_PROP(HeterogeneousNITypeTag, UseMoles, false);
 #endif
-}
-
+} // end namespace Properties
 
 /*!
  * \ingroup CO2Model
@@ -121,26 +135,26 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
-    enum { dimWorld = GridView::dimensionworld };
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
     // copy some indices for convenience
-    enum {
+    enum
+    {
+        // primary variable indices
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
 
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        // phase presence index
+        firstPhaseOnly = Indices::firstPhaseOnly,
 
-        wPhaseOnly = Indices::wPhaseOnly,
-
-        nCompIdx = FluidSystem::nCompIdx,
+        // component indices
         BrineIdx = FluidSystem::BrineIdx,
-        CO2Idx = FluidSystem::CO2Idx
-    };
-    enum {
+        CO2Idx = FluidSystem::CO2Idx,
+
+        // equation indices
         conti0EqIdx = Indices::conti0EqIdx,
         contiCO2EqIdx = conti0EqIdx + CO2Idx
     };
@@ -156,18 +170,22 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using CO2 = Dumux::CO2<Scalar, HeterogeneousCO2Tables::CO2Tables>;
+
+    using CO2 = Components::CO2<Scalar, HeterogeneousCO2Tables::CO2Tables>;
 
     //! property that defines whether mole or mass fractions are used
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = ModelTraits::useMoles();
 
     // the discretization method we are using
-    static constexpr auto discMethod = GET_PROP_VALUE(TypeTag, DiscretizationMethod);
+    static constexpr auto discMethod = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod;
+
+    // world dimension to access gravity vector
+    static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
     /*!
@@ -176,8 +194,9 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    HeterogeneousProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    template<class SpatialParams>
+    HeterogeneousProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, std::shared_ptr<SpatialParams> spatialParams)
+    : ParentType(fvGridGeometry, spatialParams)
     , injectionTop_(1)
     , injectionBottom_(2)
     , dirichletBoundary_(3)
@@ -239,11 +258,11 @@ public:
         vtk.addField(vtkBoxVolume_, "boxVolume");
 
 #if !ISOTHERMAL
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(wPhaseIdx); }, "enthalpyW");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(nPhaseIdx); }, "enthalpyN");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(BrineIdx); }, "enthalpyW");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(CO2Idx); }, "enthalpyN");
 #else
         vtkTemperature_.resize(numDofs, 0.0);
-        vtk.addField(vtkTemperature_, "temperature");
+        vtk.addField(vtkTemperature_, "T");
 #endif
 
         const auto& gridView = this->fvGridGeometry().gridView();
@@ -263,7 +282,7 @@ public:
             }
 
             vtkKxx_[eIdx] = this->spatialParams().permeability(eIdx);
-            vtkPorosity_[eIdx] = this->spatialParams().porosity(eIdx);
+            vtkPorosity_[eIdx] = 1- this->spatialParams().inertVolumeFraction(eIdx);
         }
     }
 
@@ -374,7 +393,7 @@ public:
          // kg/(m^2*s) or mole/(m^2*s) depending on useMoles
         if (boundaryId == injectionBottom_)
         {
-            fluxes[contiCO2EqIdx] = useMoles ? -injectionRate_/FluidSystem::molarMass(nCompIdx) : -injectionRate_;
+            fluxes[contiCO2EqIdx] = useMoles ? -injectionRate_/FluidSystem::molarMass(CO2Idx) : -injectionRate_;
 #if !ISOTHERMAL
             // energy fluxes are always mass specific
             fluxes[energyEqIdx] = -injectionRate_/*kg/(m^2 s)*/*CO2::gasEnthalpy(
@@ -419,7 +438,7 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values.setState(wPhaseOnly);
+        values.setState(firstPhaseOnly);
 
         const Scalar temp = initialTemperatureField_(globalPos);
         const Scalar densityW = FluidSystem::Brine::liquidDensity(temp, 1e7);

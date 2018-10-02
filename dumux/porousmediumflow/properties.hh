@@ -40,10 +40,13 @@
 #include <dumux/discretization/fickslaw.hh>
 #include <dumux/discretization/fourierslaw.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+#include <dumux/material/solidstates/inertsolidstate.hh>
+#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/components/constant.hh>
+
+namespace Dumux {
+namespace Properties {
+
 //! Type tag for models involving flow in porous media
 NEW_TYPE_TAG(PorousMediumFlow, INHERITS_FROM(ModelProperties));
 
@@ -67,19 +70,40 @@ SET_BOOL_PROP(PorousMediumFlow, SolutionDependentAdvection, true);
 SET_BOOL_PROP(PorousMediumFlow, SolutionDependentMolecularDiffusion, true);
 SET_BOOL_PROP(PorousMediumFlow, SolutionDependentHeatConduction, true);
 
-//! By default, we evaluate the permeability in the volume
-SET_BOOL_PROP(PorousMediumFlow, EvaluatePermeabilityAtScvfIP, false);
-
 //! The default implementation of the energy balance equation for flow problems in porous media.
 SET_TYPE_PROP(PorousMediumFlow, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
 
 //! Velocity output
-SET_TYPE_PROP(PorousMediumFlow, VelocityOutput, PorousMediumFlowVelocityOutput<TypeTag>);
+SET_TYPE_PROP(PorousMediumFlow, VelocityOutput,
+    PorousMediumFlowVelocityOutput<typename GET_PROP_TYPE(TypeTag, GridVariables),
+                                   typename GET_PROP_TYPE(TypeTag, FluxVariables)>);
 
 //! By default, we set an empty primary variables switch
-SET_TYPE_PROP(PorousMediumFlow, PrimaryVariableSwitch, NoPrimaryVariableSwitch<TypeTag>);
+SET_TYPE_PROP(PorousMediumFlow, PrimaryVariableSwitch, NoPrimaryVariableSwitch);
 
 SET_BOOL_PROP(PorousMediumFlow, EnableThermalNonEquilibrium, false);
+
+//! Per default, we disable the box interface solver
+SET_BOOL_PROP(PorousMediumFlow, EnableBoxInterfaceSolver, false);
+
+//! per default solid state is inert
+SET_PROP(PorousMediumFlow, SolidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+public:
+    using type = InertSolidState<Scalar, SolidSystem>;
+};
+
+// per default the solid system is inert with one constant component
+SET_PROP(PorousMediumFlow, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1, Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+};
+
 } // namespace Properties
 } // namespace Dumux
 

@@ -24,7 +24,6 @@
 #ifndef DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
 #define DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
 
-#include <dune/common/version.hh>
 
 // dumux environment
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>
@@ -70,7 +69,7 @@ template<class TypeTag> class MimeticPressure2PAdaptive
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -304,15 +303,12 @@ public:
                 }
 
                 const typename Element::Geometry& geometry = element.geometry();
+
                 // get corresponding reference element
                 using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                 const auto refElement = ReferenceElements::general(geometry.type());
-#else
-                const auto& refElement = ReferenceElements::general(geometry.type());
-#endif
-                const int numberOfFaces=refElement.size(1);
 
+                const int numberOfFaces=refElement.size(1);
                 std::vector<Scalar> fluxW(numberOfFaces,0);
                 std::vector<Scalar> fluxNw(numberOfFaces,0);
 

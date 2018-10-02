@@ -25,6 +25,7 @@
 #ifndef DUMUX_OBSTACLE_SPATIAL_PARAMS_HH
 #define DUMUX_OBSTACLE_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -32,38 +33,7 @@
 #include <dumux/material/fluidmatrixinteractions/mp/mplinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
 
-namespace Dumux
-{
-/*!
- * \ingroup MPNCTests
- * \brief The spatial parameters for the ObstacleProblem
- */
-//forward declaration
-template<class TypeTag>
-class ObstacleSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(ObstacleSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(ObstacleSpatialParams, SpatialParams, ObstacleSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(ObstacleSpatialParams, MaterialLaw)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    // define the material law
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffMaterialLaw = RegularizedLinearMaterial<Scalar>;
-    using TwoPMaterialLaw = EffToAbsLaw<EffMaterialLaw>;
-public:
-    using type = TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
-};
-}
+namespace Dumux {
 
 /**
  * \ingroup MPNCModel
@@ -71,29 +41,34 @@ public:
  * \brief Definition of the spatial params properties for the obstacle problem
  *
  */
-template<class TypeTag>
-class ObstacleSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar, class FluidSystem>
+class ObstacleSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         ObstacleSpatialParams<FVGridGeometry, Scalar, FluidSystem>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       ObstacleSpatialParams<FVGridGeometry, Scalar, FluidSystem>>;
 
     enum {dimWorld=GridView::dimensionworld};
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
+
+    enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
+
+    using EffectiveLaw = RegularizedLinearMaterial<Scalar>;
 
 public:
-     using PermeabilityType = Scalar;
+    //! export the type used for the permeability
+    using PermeabilityType = Scalar;
+    //! export the material law type used
+    using MaterialLaw = TwoPAdapter<liquidPhaseIdx, EffToAbsLaw<EffectiveLaw>>;
+    using MaterialLawParams = typename MaterialLaw::Params;
 
-
-    ObstacleSpatialParams(const Problem &problem)
-        : ParentType(problem)
+    //! the constructor
+    ObstacleSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;
@@ -116,12 +91,10 @@ public:
         coarseMaterialParams_.setMaxPc(0.0);
     }
 
-    ~ObstacleSpatialParams()
-    {}
-
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         if (isFineMaterial_(scv.dofPosition()))
             return fineK_;
@@ -137,12 +110,8 @@ public:
      * \param scvIdx      The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    Scalar porosity(const Element &element,
-                    const SubControlVolume &scv,
-                    const ElementSolutionVector &elemSol) const
-    {
-        return porosity_;
-    }
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return porosity_; }
 
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
@@ -178,6 +147,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 };
 
-}
+} // end namespace Dumux
 
 #endif

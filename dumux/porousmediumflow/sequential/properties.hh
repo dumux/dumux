@@ -26,7 +26,6 @@
 #include <dumux/porousmediumflow/sequential/gridadaptproperties.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptinitializationindicatordefault.hh>
 
-#include <dune/common/version.hh>
 
 /*!
  * \ingroup Sequential
@@ -76,6 +75,12 @@ NEW_PROP_TAG( TimeManager );  //!< Manages the simulation time
 NEW_PROP_TAG( BoundaryTypes ); //!< Stores the boundary types of a single degree of freedom
 NEW_PROP_TAG( MaxIntersections ); //!< Gives maximum number of intersections of an element and neighboring elements
 NEW_PROP_TAG( PressureCoefficientMatrix ); //!< Gives maximum number of intersections of an element and neighboring elements
+
+//! Some properties that became obsolete in dumux, but are still necessary
+//! for sequential models until they are integrated in the general framework
+NEW_PROP_TAG( NumEq );         //!< The number of equations to solve (equal to number of primary variables)
+NEW_PROP_TAG( NumPhases );     //!< Number of fluid phases in the system
+NEW_PROP_TAG( NumComponents ); //!< Number of fluid components in the system
 }
 }
 
@@ -100,13 +105,22 @@ namespace Properties
 // Properties
 //////////////////////////////////////////////////////////////////
 
-SET_PROP(SequentialModel, DiscretizationMethod)
-{
-    static const DiscretizationMethods value = DiscretizationMethods::CCTpfa;
-};
-
 //! Type of the jacobian matrix needed for compatibility with implicit models for the amg backend
 SET_TYPE_PROP(SequentialModel, JacobianMatrix, typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix));
+
+//! Dummy model traits for compatibility with the rest of dumux
+//! until the sequential models are incorporated into the general framework
+SET_PROP(SequentialModel, ModelTraits)
+{
+private:
+    struct DummyTraits
+    {
+        using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+        static constexpr int numEq() { return GET_PROP_VALUE(TypeTag, NumEq); }
+    };
+public:
+    using type = DummyTraits;
+};
 
 //! Use the leaf grid view if not defined otherwise
 SET_PROP(SequentialModel, GridView)
@@ -132,7 +146,25 @@ public:
 };
 
 //! A simplified grid geometry for compatibility with new style models
-SET_TYPE_PROP(SequentialModel, FVGridGeometry, DefaultMapperTraits<typename GET_PROP_TYPE(TypeTag, GridView)>);
+SET_PROP(SequentialModel, FVGridGeometry)
+{
+    struct FVGridGeometry
+    : public DefaultMapperTraits<typename GET_PROP_TYPE(TypeTag, GridView)>
+    {
+        static constexpr DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+        using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    };
+
+public:
+    using type = FVGridGeometry;
+};
+
+//! For compatibility with new style models we need a solution vector type
+SET_PROP(SequentialModel, SolutionVector)
+{
+public:
+    using type = typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution;
+};
 
 /*!
  * \brief Specifies the types which are assoicated with a solution.
@@ -159,20 +191,12 @@ public:
     /*!
      * \brief Mapper for the grid view's vertices.
      */
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-#else
-    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout>;
-#endif
 
     /*!
      * \brief Mapper for the grid view's elements.
      */
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-#else
-    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
-#endif
 
     /*!
      * \brief The type of a solution at a fixed time.

@@ -1,17 +1,17 @@
-add_subdirectory(properties)
 add_subdirectory(geometry)
+add_subdirectory(properties)
+add_subdirectory(typetraits)
 
-#install headers
 install(FILES
 balanceequationopts.hh
 boundaryconditions.hh
 boundaryflag.hh
 boundarytypes.hh
 boundingboxtree.hh
+defaultmappertraits.hh
 defaultusagemessage.hh
 dimensionlessnumbers.hh
 dumuxmessage.hh
-eigenvalues.hh
 entitymap.hh
 exceptions.hh
 fixedlengthspline_.hh
@@ -21,20 +21,21 @@ intrange.hh
 loggingparametertree.hh
 math.hh
 matrixvectorhelper.hh
-optional.hh
 numericdifferentiation.hh
+optional.hh
 parameters.hh
 pointsource.hh
 properties.hh
 quad.hh
 reorderingdofmapper.hh
+reservedblockvector.hh
 spline.hh
 splinecommon_.hh
 staggeredfvproblem.hh
 start.hh
 tabulated2dfunction.hh
+timeloop.hh
 timemanager.hh
-timesteppingscheme.hh
 valgrind.hh
 variablelengthspline_.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/common)

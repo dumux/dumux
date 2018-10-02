@@ -26,33 +26,46 @@
 #define DUMUX_FV_SPATIAL_PARAMS_HH
 
 #include <dune/common/exceptions.hh>
-#include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/isvalid.hh>
 #include "fv1p.hh"
 
 namespace Dumux {
+
+#ifndef DOXYGEN
+namespace Detail {
+// helper struct detecting if the user-defined spatial params class has a materialLawParamsAtPos function
+// for g++ > 5.3, this can be replaced by a lambda
+template<class GlobalPosition>
+struct hasMaterialLawParamsAtPos
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.materialLawParamsAtPos(std::declval<GlobalPosition>()))
+    {}
+};
+} // end namespace Detail
+#endif
+
 
 /*!
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of multi-phase problems
  * using a fully implicit discretization method.
  */
-template<class TypeTag>
-class FVSpatialParams: public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar, class Implementation>
+class FVSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar, Implementation>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, Implementation>;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    FVSpatialParams(const Problem& problem)
-    : FVSpatialParamsOneP<TypeTag>(problem)
+    FVSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {}
 
     /*!
@@ -63,24 +76,51 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return the material parameters object
      */
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolutionVector& elemSol) const
+    template<class ElementSolution>
+    decltype(auto) materialLawParams(const Element& element,
+                                     const SubControlVolume& scv,
+                                     const ElementSolution& elemSol) const
     {
+        static_assert(decltype(isValid(Detail::hasMaterialLawParamsAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        "   Your spatial params class has to either implement\n\n"
+        "         const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const\n\n"
+        "   or overload this function\n\n"
+        "         template<class ElementSolution>\n"
+        "         const MaterialLawParams& materialLawParams(const Element& element,\n"
+        "                                                    const SubControlVolume& scv,\n"
+        "                                                    const ElementSolution& elemSol) const\n\n");
+
         return this->asImp_().materialLawParamsAtPos(scv.center());
     }
 
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
+     * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the material parameters object
-     * \param globalPos The position of the center of the element
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the wetting phase index
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    template<class FluidSystem, class ElementSolution>
+    int wettingPhase(const Element& element,
+                     const SubControlVolume& scv,
+                     const ElementSolution& elemSol) const
+    {
+        return this->asImp_().template wettingPhaseAtPos<FluidSystem>(scv.center());
+    }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "
-                   "a materialLawParamsAtPos() method.");
+                   "a wettingPhaseAtPos() method.");
     }
 };
 

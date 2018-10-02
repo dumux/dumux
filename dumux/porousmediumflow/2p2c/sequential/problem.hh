@@ -45,7 +45,7 @@ class IMPETProblem2P2C : public IMPESProblem2P<TypeTag>
     using ParentType = IMPESProblem2P<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Grid = typename GridView::Grid;

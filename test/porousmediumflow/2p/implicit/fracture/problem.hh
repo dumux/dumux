@@ -25,10 +25,14 @@
 #ifndef DUMUX_TWOP_FRACTURE_TEST_PROBLEM_HH
 #define DUMUX_TWOP_FRACTURE_TEST_PROBLEM_HH
 
+#if HAVE_DUNE_FOAMGRID
+#include <dune/foamgrid/foamgrid.hh>
+#endif
+
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/dnapl.hh>
+#include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -39,21 +43,21 @@
 
 #include "spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class FractureProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(FractureTypeTag, INHERITS_FROM(TwoP, FractureSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(FractureTypeTag, INHERITS_FROM(TwoP));
 NEW_TYPE_TAG(FractureBoxTypeTag, INHERITS_FROM(BoxModel, FractureTypeTag));
 NEW_TYPE_TAG(FractureCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FractureTypeTag));
 NEW_TYPE_TAG(FractureCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, FractureTypeTag));
 
 // set the grid property
+#if HAVE_DUNE_FOAMGRID
 SET_TYPE_PROP(FractureTypeTag, Grid, Dune::FoamGrid<2, 3>);
+#endif
 
 // Set the problem property
 SET_TYPE_PROP(FractureTypeTag, Problem, Dumux::FractureProblem<TypeTag>);
@@ -62,9 +66,17 @@ SET_TYPE_PROP(FractureTypeTag, Problem, Dumux::FractureProblem<TypeTag>);
 SET_PROP(FractureTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
+};
+
+// Set the spatial parameters
+SET_PROP(FractureTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FractureSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Use global caching
@@ -74,11 +86,11 @@ SET_BOOL_PROP(FractureTypeTag, EnableGridFluxVariablesCache, true);
 
 // permeablility is solution-independent
 SET_BOOL_PROP(FractureTypeTag, SolutionDependentAdvection, false);
-}
+} // end namespace Properties
 
 /*!
  * \ingroup TwoPTests
- * \brief DNAPL transport through a fracture network (2d in 3d).
+ * \brief Trichloroethene (DNAPL) transport through a fracture network (2d in 3d).
  */
 template <class TypeTag>
 class FractureProblem : public PorousMediumFlowProblem<TypeTag>
@@ -86,52 +98,36 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
-    enum {
-
+    enum
+    {
         // primary variable indices
-        pwIdx = Indices::pwIdx,
-        snIdx = Indices::snIdx,
+        pressureIdx = Indices::pressureIdx,
+        saturationIdx = Indices::saturationIdx,
 
         // equation indices
-        contiNEqIdx = Indices::contiNEqIdx,
+        contiTCEEqIdx = Indices::conti0EqIdx + FluidSystem::comp1Idx,
 
         // world dimension
         dimWorld = GridView::dimensionworld
     };
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-  FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-  : ParentType(fvGridGeometry) {}
+    FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry) {}
 
     /*!
      * \name Problem parameters
      */
     // \{
-
-    /*!
-     * \brief User defined output after the time integration
-     *
-     * Will be called diretly after the time integration.
-     */
-    void postTimeStep()
-    {
-        // // Calculate storage terms
-        // PrimaryVariables storage;
-        // this->model().globalStorage(storage);
-        //
-        // // Write mass balance information for rank 0
-        // if (this->gridView().comm().rank() == 0) {
-        //     std::cout<<"Storage: " << storage << std::endl;
-        // }
-    }
 
     /*!
      * \brief Returns the temperature \f$ K \f$
@@ -140,18 +136,6 @@ public:
      */
     Scalar temperature() const
     { return 273.15 + 20; }
-
-    /*!
-     * \brief Returns the source term
-     *
-     * \param values Stores the source values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
-     * \param globalPos The global position
-     */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return NumEqVector(0.0);
-    }
 
     // \}
 
@@ -193,8 +177,8 @@ public:
         const auto g = this->gravityAtPos(globalPos)[dimWorld-1];
 
         PrimaryVariables values;
-        values[pwIdx] = 1e5 + 1000*g*depth;
-        values[snIdx] = 0.0;
+        values[pressureIdx] = 1e5 + 1000*g*depth;
+        values[saturationIdx] = 0.0;
         return values;
     }
 
@@ -213,7 +197,7 @@ public:
     {
         NumEqVector values(0.0);
         if (onInlet_(globalPos)) {
-            values[contiNEqIdx] = -0.04; // kg / (m * s)
+            values[contiTCEEqIdx] = -0.04; // kg / (m * s)
         }
         return values;
     }

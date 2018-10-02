@@ -45,7 +45,7 @@ class FluxData2P2C
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum
     {
@@ -78,7 +78,7 @@ public:
     //! Constructor
     FluxData2P2C()
     {
-        isUpwindCell_.resize(2*dim, 0.0);
+        isUpwindCell_.resize(2*dim);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             for (int fIdx = 0; fIdx < 2*dim; ++fIdx)
                 velocity_[phaseIdx][fIdx] = 0.0;

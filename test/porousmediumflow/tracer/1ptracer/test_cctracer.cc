@@ -39,12 +39,12 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 int main(int argc, char** argv) try
 {
@@ -73,16 +73,11 @@ int main(int argc, char** argv) try
     /////////////////////////////////////////////////////////////////////
 
     // only create the grid once using the 1p type tag
-    using GridCreator = typename GET_PROP_TYPE(OnePTypeTag, GridCreator);
-    try { GridCreator::makeGrid(); }
-    catch (...) {
-        std::cout << "\n\t -> Creation of the grid failed! <- \n\n";
-        throw;
-    }
-    GridCreator::loadBalance();
+    GridManager<typename GET_PROP_TYPE(OnePTypeTag, Grid)> gridManager;
+    gridManager.init();
 
     //! we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     ////////////////////////////////////////////////////////////
     // setup & solve 1p problem on this grid
@@ -140,7 +135,7 @@ int main(int argc, char** argv) try
     //! write output to vtk
     using GridView = typename GET_PROP_TYPE(OnePTypeTag, GridView);
     Dune::VTKWriter<GridView> onepWriter(leafGridView);
-    onepWriter.addCellData(p, "pressure");
+    onepWriter.addCellData(p, "p");
     const auto& k = problemOneP->spatialParams().getKField();
     onepWriter.addCellData(k, "permeability");
     onepWriter.write("1p");
@@ -230,9 +225,11 @@ int main(int argc, char** argv) try
     assembler->setLinearSystem(A, r);
 
     //! intialize the vtk output module
-    VtkOutputModule<TracerTypeTag> vtkWriter(*tracerProblem, *fvGridGeometry, *gridVariables, x, tracerProblem->name());
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, tracerProblem->name());
     using VtkOutputFields = typename GET_PROP_TYPE(TracerTypeTag, VtkOutputFields);
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
+    using VelocityOutput = typename GET_PROP_TYPE(TracerTypeTag, VelocityOutput);
+    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     vtkWriter.write(0.0);
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -286,7 +283,7 @@ int main(int argc, char** argv) try
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        // set new dt as suggested by newton controller
+        // set new dt
         timeLoop->setTimeStepSize(dt);
 
     } while (!timeLoop->finished());

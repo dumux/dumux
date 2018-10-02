@@ -26,15 +26,17 @@
 #ifndef DUMUX_1PNI_CONVECTION_PROBLEM_HH
 #define DUMUX_1PNI_CONVECTION_PROBLEM_HH
 
-#include <math.h>
+#include <cmath>
+#include <dune/grid/yaspgrid.hh>
 
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/h2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 #include "1pnispatialparams.hh"
 
@@ -53,21 +55,23 @@ NEW_TYPE_TAG(OnePNIConvectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePNICon
 NEW_TYPE_TAG(OnePNIConvectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePNIConvectionTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(OnePNIConvectionTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(OnePNIConvectionTypeTag, Grid, Dune::YaspGrid<1>);
 
 // Set the problem property
 SET_TYPE_PROP(OnePNIConvectionTypeTag, Problem, OnePNIConvectionProblem<TypeTag>);
 
 // Set the fluid system
 SET_TYPE_PROP(OnePNIConvectionTypeTag, FluidSystem,
-              FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                           H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+              FluidSystems::OnePLiquid<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                           Components::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePNIConvectionTypeTag, SpatialParams, OnePNISpatialParams<TypeTag>);
-
-// Set the model parameter group for the mpfa case (velocity disabled in input file)
-SET_STRING_PROP(OnePNIConvectionCCMpfaTypeTag, ModelParameterGroup, "MpfaTest");
+SET_PROP(OnePNIConvectionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePNISpatialParams<FVGridGeometry, Scalar>;
+};
 } // end namespace Properties
 
 
@@ -104,16 +108,15 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using IapwsH2O = H2O<Scalar>;
+    using IapwsH2O = Components::H2O<Scalar>;
 
     enum { dimWorld = GridView::dimensionworld };
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
@@ -127,12 +130,12 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    OnePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup)
+    : ParentType(fvGridGeometry, paramGroup)
     {
         //initialize fluid system
         FluidSystem::init();
@@ -159,7 +162,7 @@ public:
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 
-        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
+        auto someElemSol = elementSolution(someElement, curSol, this->fvGridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
         auto fvGeometry = localView(this->fvGridGeometry());
@@ -173,8 +176,8 @@ public:
         const auto densityW = volVars.density();
         const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
         const auto storageW =  densityW*heatCapacityW*porosity;
-        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
-        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
+        const auto densityS = volVars.solidDensity();
+        const auto heatCapacityS = volVars.solidHeatCapacity();
         const auto storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
         std::cout << "storage: " << storageTotal << '\n';
 
@@ -270,9 +273,9 @@ public:
      * Negative values indicate an inflow.
      */
     NumEqVector neumann(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolvars,
-                             const SubControlVolumeFace& scvf) const
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolvars,
+                        const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
         const auto globalPos = scvf.ipGlobal();

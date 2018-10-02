@@ -25,39 +25,27 @@
 #ifndef DUMUX_ONEP_FRACTURE_TEST_SPATIALPARAMS_HH
 #define DUMUX_ONEP_FRACTURE_TEST_SPATIALPARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
-//forward declaration
-template<class TypeTag>
-class FractureSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(FractureSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(FractureSpatialParams, SpatialParams, Dumux::FractureSpatialParams<TypeTag>);
-
-}
 /*!
  * \ingroup OnePTests
  * \brief The spatial parameters for the LensProblem which uses the
  *        two-phase fully implicit model
  */
-template<class TypeTag>
-class FractureSpatialParams : public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class FractureSpatialParams
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             FractureSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename FVGridGeometry::GridView;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           FractureSpatialParams<FVGridGeometry, Scalar>>;
 
-    static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     // export permeability type
@@ -68,8 +56,8 @@ public:
      *
      * \param gridView The grid view
      */
-    FractureSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    FractureSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {}
 
     /*!

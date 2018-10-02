@@ -24,36 +24,31 @@
 #ifndef DUMUX_THREEP_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_THREEP_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ThreePModel
  * \brief Adds vtk output fields specific to the three-phase model
  */
-template<class TypeTag>
 class ThreePVtkOutputFields
 {
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
+        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+
         // register standardized vtk output fields
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.saturation(Indices::wPhaseIdx); }, "sw");
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.saturation(Indices::nPhaseIdx); },"sn");
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.saturation(Indices::gPhaseIdx); },"sg");
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.pressure(Indices::wPhaseIdx); },"pw");
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.pressure(Indices::nPhaseIdx); },"pn");
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.pressure(Indices::gPhaseIdx); },"pg");
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.density(Indices::wPhaseIdx); },"rhow");
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.density(Indices::nPhaseIdx); },"rhon");
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.density(Indices::gPhaseIdx); },"rhog");
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.porosity(); },"porosity");
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.permeability(); },"permeability");
+        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+        {
+            vtk.addVolumeVariable([i](const auto& v){ return v.saturation(i); }, "S_"+ FluidSystem::phaseName(i));
+            vtk.addVolumeVariable([i](const auto& v){ return v.pressure(i); }, "p_"+ FluidSystem::phaseName(i));
+            vtk.addVolumeVariable([i](const auto& v){ return v.density(i); }, "rho_"+ FluidSystem::phaseName(i));
+        }
+
+        vtk.addVolumeVariable( [](const auto& v){ return v.porosity(); },"porosity");
+        vtk.addVolumeVariable( [](const auto& v){ return v.permeability(); },"permeability");
     }
 };
 

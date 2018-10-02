@@ -25,6 +25,8 @@
 #ifndef DUMUX_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TRACER_TEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
@@ -38,8 +40,7 @@
 #define USEMOLES true
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
 /**
  * \ingroup TracerTests
  * \brief Definition of a problem, for the tracer problem:
@@ -48,8 +49,7 @@ namespace Dumux
 template <class TypeTag>
 class TracerTest;
 
-namespace Properties
-{
+namespace Properties {
 NEW_TYPE_TAG(TracerTest, INHERITS_FROM(Tracer));
 NEW_TYPE_TAG(TracerTestTpfa, INHERITS_FROM(CCTpfaModel, TracerTest));
 NEW_TYPE_TAG(TracerTestMpfa, INHERITS_FROM(CCMpfaModel, TracerTest));
@@ -67,14 +67,19 @@ SET_TYPE_PROP(TracerTest, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(TracerTest, Problem, TracerTest<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TracerTest, SpatialParams, TracerTestSpatialParams<TypeTag>);
+SET_PROP(TracerTest, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = TracerTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(TracerTest, UseMoles, USEMOLES);
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
-class TracerFluidSystem : public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar),
+class TracerFluidSystem : public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                TracerFluidSystem<TypeTag>>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -124,13 +129,13 @@ public:
     }
 
     /*!
-     * \copydoc BaseFluidSystem::isCompressible
+     * \copydoc Base::isCompressible
      */
     static constexpr bool isCompressible(int phaseIdx)
     { return false; }
 
      /*!
-     * \copydoc BaseFluidSystem::viscosityIsConstant
+     * \copydoc Base::viscosityIsConstant
      */
     static constexpr bool viscosityIsConstant(int phaseIdx)
     { return true; }
@@ -160,7 +165,7 @@ class TracerTest : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -170,9 +175,8 @@ class TracerTest : public PorousMediumFlowProblem<TypeTag>
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-
-    static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     TracerTest(std::shared_ptr<const FVGridGeometry> fvGridGeom)

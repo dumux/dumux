@@ -27,7 +27,6 @@
 #include <memory>
 #include <map>
 
-#include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/gridenums.hh>
 
@@ -53,7 +52,7 @@ class FVProblem
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -62,20 +61,18 @@ class FVProblem
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using PointSourceHelper = typename GET_PROP_TYPE(TypeTag, PointSourceHelper);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
     enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
+        dim = GridView::dimension
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
+    static constexpr bool isStaggered = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::staggered;
 
     using PointSourceMap = std::map<std::pair<std::size_t, std::size_t>,
                                     std::vector<PointSource> >;
@@ -84,12 +81,14 @@ public:
     /*!
      * \brief Constructor
      * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    FVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    FVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : fvGridGeometry_(fvGridGeometry)
+    , paramGroup_(paramGroup)
     {
         // set a default name for the problem
-        problemName_ = getParamFromGroup<std::string>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.Name");
+        problemName_ = getParamFromGroup<std::string>(paramGroup, "Problem.Name");
     }
 
     /*!
@@ -208,9 +207,9 @@ public:
     PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
     {
         // forward it to the method which only takes the global coordinate
-        if (!isBox)
+        if (!isBox && !isStaggered)
         {
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for cell-centered method.");
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for other than box or staggered method.");
         }
         else
             return asImp_().dirichletAtPos(scv.dofPosition());
@@ -249,10 +248,10 @@ public:
      * Negative values mean influx.
      * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    ResidualVector neumann(const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const ElementVolumeVariables& elemVolVars,
-                           const SubControlVolumeFace& scvf) const
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolumeFace& scvf) const
     {
         // forward it to the interface with only the global position
         return asImp_().neumannAtPos(scvf.ipGlobal());
@@ -267,11 +266,11 @@ public:
      * Negative values mean influx.
      * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    ResidualVector neumannAtPos(const GlobalPosition &globalPos) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         //! As a default, i.e. if the user's problem does not overload any neumann method
         //! return no-flow Neumann boundary conditions at all Neumann boundaries
-        return ResidualVector(0.0);
+        return NumEqVector(0.0);
     }
 
     /*!
@@ -292,10 +291,10 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    ResidualVector source(const Element &element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolume &scv) const
+    NumEqVector source(const Element &element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
     {
         // forward to solution independent, fully-implicit specific interface
         return asImp_().sourceAtPos(scv.center());
@@ -314,11 +313,11 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    ResidualVector sourceAtPos(const GlobalPosition &globalPos) const
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
         //! As a default, i.e. if the user's problem does not overload any source method
         //! return 0.0 (no source terms)
-        return ResidualVector(0.0);
+        return NumEqVector(0.0);
     }
 
     /*!
@@ -400,12 +399,12 @@ public:
      *        Caution: Only overload this method in the implementation if you know
      *                 what you are doing.
      */
-    ResidualVector scvPointSources(const Element &element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const ElementVolumeVariables& elemVolVars,
-                                   const SubControlVolume &scv) const
+    NumEqVector scvPointSources(const Element &element,
+                                const FVElementGeometry& fvGeometry,
+                                const ElementVolumeVariables& elemVolVars,
+                                const SubControlVolume &scv) const
     {
-        ResidualVector source(0);
+        NumEqVector source(0);
         auto scvIdx = scv.indexInElement();
         auto key = std::make_pair(fvGridGeometry_->elementMapper().index(element), scvIdx);
         if (pointSourceMap_.count(key))
@@ -520,9 +519,10 @@ public:
      * thought as pipes with a cross section of 1 m^2 and 2D problems
      * are assumed to extend 1 m to the back.
      */
-    Scalar extrusionFactor(const Element &element,
-                           const SubControlVolume &scv,
-                           const ElementSolutionVector &elemSol) const
+    template<class ElementSolution>
+    Scalar extrusionFactor(const Element& element,
+                           const SubControlVolume& scv,
+                           const ElementSolution& elemSol) const
     {
         // forward to generic interface
         return asImp_().extrusionFactorAtPos(scv.center());
@@ -550,6 +550,10 @@ public:
     const FVGridGeometry& fvGridGeometry() const
     { return *fvGridGeometry_; }
 
+    //! The parameter group in which to retrieve runtime parameters
+    const std::string& paramGroup() const
+    { return paramGroup_; }
+
 protected:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -565,10 +569,38 @@ private:
      */
     void applyInitialSolutionImpl_(SolutionVector& sol, /*isBox=*/std::true_type) const
     {
-        for (const auto& vertex : vertices(fvGridGeometry_->gridView()))
+        const auto numDofs = fvGridGeometry_->vertexMapper().size();
+        const auto numVert = fvGridGeometry_->gridView().size(dim);
+
+        // if there are more dofs than vertices (enriched nodal dofs), we have to
+        // call initial for all dofs at the nodes, coming from all neighboring elements.
+        if (numDofs != numVert)
         {
-            const auto dofIdxGlobal = fvGridGeometry_->vertexMapper().index(vertex);
-            sol[dofIdxGlobal] = asImp_().initial(vertex);
+            std::vector<bool> dofVisited(numDofs, false);
+            for (const auto& element : elements(fvGridGeometry_->gridView()))
+            {
+                for (int i = 0; i < element.subEntities(dim); ++i)
+                {
+                    const auto dofIdxGlobal = fvGridGeometry_->vertexMapper().subIndex(element, i, dim);
+
+                    // forward to implementation if value at dof is not set yet
+                    if (!dofVisited[dofIdxGlobal])
+                    {
+                        sol[dofIdxGlobal] = asImp_().initial(element.template subEntity<dim>(i));
+                        dofVisited[dofIdxGlobal] = true;
+                    }
+                }
+            }
+        }
+
+        // otherwise we directly loop over the vertices
+        else
+        {
+            for (const auto& vertex : vertices(fvGridGeometry_->gridView()))
+            {
+                const auto dofIdxGlobal = fvGridGeometry_->vertexMapper().index(vertex);
+                sol[dofIdxGlobal] = asImp_().initial(vertex);
+            }
         }
     }
 
@@ -586,6 +618,9 @@ private:
 
     //! The finite volume grid geometry
     std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
+
+    //! The parameter group in which to retrieve runtime parameters
+    std::string paramGroup_;
 
     //! The name of the problem
     std::string problemName_;

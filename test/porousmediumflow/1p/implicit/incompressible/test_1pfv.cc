@@ -26,6 +26,9 @@
 #include <ctime>
 #include <iostream>
 
+// Support for quad precision has to be included before any other Dune module:
+#include <dumux/common/quad.hh>
+
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
@@ -34,11 +37,13 @@
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/common/properties.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
+
+#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
@@ -68,12 +73,11 @@ int main(int argc, char** argv) try
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    GridCreator::makeGrid();
-    GridCreator::loadBalance();
+    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    gridManager.init();
 
     // we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -94,13 +98,15 @@ int main(int argc, char** argv) try
     gridVariables->init(x);
 
     // intialize the vtk output module
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 
     // make assemble and attach linear system
-    using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
+    using Assembler = FVAssembler<TypeTag, NUMDIFFMETHOD>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     auto A = std::make_shared<JacobianMatrix>();

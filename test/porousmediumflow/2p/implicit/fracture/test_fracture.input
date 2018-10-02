@@ -8,6 +8,3 @@ File = grids/fracture.msh
 [Problem]
 Name = fracture
 EnableGravity = false
-
-[Implicit]
-UpwindWeight = 1.0

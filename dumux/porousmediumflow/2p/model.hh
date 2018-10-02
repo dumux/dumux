@@ -65,15 +65,78 @@
 #include <dumux/material/spatialparams/fv.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
+#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
+#include "formulation.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "vtkoutputfields.hh"
+#include "saturationreconstruction.hh"
 
 namespace Dumux
 {
+/*!
+ * \ingroup TwoPModel
+ * \brief Specifies a number properties of two-phase models.
+ */
+template<TwoPFormulation formulation>
+struct TwoPModelTraits
+{
+    using Indices = TwoPIndices;
+
+    static constexpr TwoPFormulation priVarFormulation()
+    { return formulation; }
+
+    static constexpr int numEq() { return 2; }
+    static constexpr int numPhases() { return 2; }
+    static constexpr int numComponents() { return 2; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return false; }
+    static constexpr bool enableEnergyBalance() { return false; }
+
+    template <class FluidSystem, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        if (priVarFormulation() == TwoPFormulation::p0s1)
+            return pvIdx == 0 ? "p_" + FluidSystem::phaseName(FluidSystem::phase0Idx)
+                              : "S_" + FluidSystem::phaseName(FluidSystem::phase1Idx) ;
+        else
+            return pvIdx == 0 ? "p_" + FluidSystem::phaseName(FluidSystem::phase1Idx)
+                              : "S_" + FluidSystem::phaseName(FluidSystem::phase0Idx);
+    }
+};
+
+/*!
+ * \ingroup TwoPModel
+ * \brief Traits class for the two-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam SSY The solid system type
+ * \tparam SST The solid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ * \tparam SR The class used for reconstruction of
+ *            non-wetting phase saturations in scvs
+ */
+template<class PV, class FSY, class FST,class SSY, class SST, class PT, class MT, class SR>
+struct TwoPVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+    using SaturationReconstruction = SR;
+};
 
 ////////////////////////////////
 // properties
@@ -88,26 +151,44 @@ namespace Properties
 //! The type tag for the isothermal two-phase model
 NEW_TYPE_TAG(TwoP, INHERITS_FROM(PorousMediumFlow));
 //! The type tag for the non-isothermal two-phase model
-NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP, NonIsothermal));
+NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP));
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal two-phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_INT_PROP(TwoP, NumEq, 2);                                                 //!< Set the number of equations to 2
-SET_INT_PROP(TwoP, NumPhases, 2);                                             //!< The number of phases in the 2p model is 2
-SET_INT_PROP(TwoP, NumComponents, 2);                                         //!< The number of components in the 2p model is 2
-SET_INT_PROP(TwoP, Formulation, TwoPFormulation::pwsn);                       //!< Set the default formulation to pWsN
-SET_BOOL_PROP(TwoP, EnableAdvection, true);                                   //!< Enable advection
-SET_BOOL_PROP(TwoP, EnableMolecularDiffusion, false);                         //!< The two-phase model has no molecular diffusion
-SET_BOOL_PROP(TwoP, EnableEnergyBalance, false);                              //!< Isothermal model (non-isothermal type tag is below)
-SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
-SET_TYPE_PROP(TwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);           //!< the VolumeVariables property
-SET_TYPE_PROP(TwoP, SpatialParams, FVSpatialParams<TypeTag>);                 //!< The spatial parameters. Use FVSpatialParams by default.
-SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields<TypeTag>);           //!< Set the vtk output fields specific to the twop model
+ //!< Set the default formulation to pwsn
+SET_PROP(TwoP, Formulation)
+{ static constexpr auto value = TwoPFormulation::p0s1; };
 
-SET_TYPE_PROP(TwoP,
-              Indices,
-              TwoPIndices<TypeTag, GET_PROP_VALUE(TypeTag, Formulation), 0>); //!< The indices required by the isothermal 2p model
+SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
+
+//! The model traits class
+SET_TYPE_PROP(TwoP, ModelTraits, TwoPModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
+
+//! Set the vtk output fields specific to the twop model
+SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields);
+
+//! Set the volume variables property
+SET_PROP(TwoP, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    static constexpr auto DM = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod;
+    static constexpr bool enableIS = GET_PROP_VALUE(TypeTag, EnableBoxInterfaceSolver);
+    // class used for scv-wise reconstruction of non-wetting phase saturations
+    using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
+
+    using Traits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
+public:
+    using type = TwoPVolumeVariables<Traits>;
+};
 
 //! The two-phase model uses the immiscible fluid state
 SET_PROP(TwoP, FluidState)
@@ -122,28 +203,20 @@ public:
 ////////////////////////////////////////////////////////
 // properties for the non-isothermal two-phase model
 ////////////////////////////////////////////////////////
-SET_INT_PROP(TwoPNI, IsothermalNumEq, 2);                                         //!< set isothermal NumEq
-SET_TYPE_PROP(TwoPNI, IsothermalVolumeVariables, TwoPVolumeVariables<TypeTag>);   //!< set isothermal VolumeVariables
-SET_TYPE_PROP(TwoPNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>); //!< set isothermal LocalResidual
-SET_TYPE_PROP(TwoPNI, IsothermalVtkOutputFields, TwoPVtkOutputFields<TypeTag>);   //!< set isothermal output fields
 
-//! Set isothermal Indices
-SET_PROP(TwoPNI, IsothermalIndices)
-{
-private:
-    enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
-public:
-    using type = TwoPIndices<TypeTag, Formulation, 0>;
-};
+//! The non-isothermal model traits class
+SET_TYPE_PROP(TwoPNI, ModelTraits, PorousMediumFlowNIModelTraits<TwoPModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>>);
+
+//! Set the vtk output fields specific to the non-isothermal twop model
+SET_TYPE_PROP(TwoPNI, VtkOutputFields, EnergyVtkOutputFields<TwoPVtkOutputFields>);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNI, ThermalConductivityModel)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    using type = ThermalConductivitySomerton<Scalar, Indices>;
+    using type = ThermalConductivitySomerton<Scalar>;
 };
 
 } // end namespace Properties

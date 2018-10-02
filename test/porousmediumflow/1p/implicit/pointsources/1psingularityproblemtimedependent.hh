@@ -69,7 +69,7 @@ class OnePSingularityProblemTimeDependent : public OnePSingularityProblem<TypeTa
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 

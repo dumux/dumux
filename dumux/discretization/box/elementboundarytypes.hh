@@ -23,38 +23,20 @@
 #ifndef DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 
-#include <dumux/common/properties.hh>
+#include <cassert>
+#include <vector>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup BoxModel
  * \brief This class stores an array of BoundaryTypes objects
  */
-template<class TypeTag>
+template<class BTypes>
 class BoxElementBoundaryTypes
 {
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using LocalIndexType = typename SubControlVolume::Traits::LocalIndexType;
-
-    enum { dim = GridView::dimension };
-
 public:
-    /*!
-     * \brief Default constructor.
-     */
-    BoxElementBoundaryTypes()
-    {
-        hasDirichlet_ = false;
-        hasNeumann_ = false;
-        hasOutflow_ = false;
-    }
+    using BoundaryTypes = BTypes;
 
     /*!
      * \brief Update the boundary types for all vertices of an element.
@@ -64,11 +46,15 @@ public:
      *                types should be collected
      * \param fvGeometry The element's finite volume geometry
      */
+    template<class Problem, class Element, class FVElementGeometry>
     void update(const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry)
     {
-        vertexBCTypes_.resize( element.subEntities(dim) );
+        using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
+        using GridView = typename FVGridGeometry::GridView;
+
+        vertexBCTypes_.resize( element.subEntities(GridView::dimension) );
 
         hasDirichlet_ = false;
         hasNeumann_ = false;
@@ -76,7 +62,7 @@ public:
 
         for (const auto& scv : scvs(fvGeometry))
         {
-            int scvIdxLocal = scv.indexInElement();
+            int scvIdxLocal = scv.localDofIndex();
             vertexBCTypes_[scvIdxLocal].reset();
 
             if (fvGeometry.fvGridGeometry().dofOnBoundary(scv.dofIndex()))
@@ -88,20 +74,6 @@ public:
                 hasOutflow_ = hasOutflow_ || vertexBCTypes_[scvIdxLocal].hasOutflow();
             }
         }
-    }
-
-    /*!
-     * \brief Update the boundary types for all vertices of an element.
-     *
-     * \param problem The problem object which needs to be simulated
-     * \param element The DUNE Codim<0> entity for which the boundary
-     *                types should be collected
-     */
-    void update(const Problem &problem,
-                const Element &element)
-    {
-        const auto& fvGeometry = problem.model().fvGeometries(element);
-        update(problem, element, fvGeometry);
     }
 
     /*!
@@ -129,7 +101,7 @@ public:
      * \brief Access operator
      * \return BoundaryTypes
      */
-    const BoundaryTypes& operator[] (LocalIndexType i) const
+    const BoundaryTypes& operator[] (std::size_t i) const
     {
         assert(i < vertexBCTypes_.size());
         return vertexBCTypes_[i];
@@ -137,9 +109,9 @@ public:
 
 protected:
     std::vector< BoundaryTypes > vertexBCTypes_;
-    bool hasDirichlet_;
-    bool hasNeumann_;
-    bool hasOutflow_;
+    bool hasDirichlet_ = false;
+    bool hasNeumann_ = false;
+    bool hasOutflow_ = false;
 };
 
 } // namespace Dumux

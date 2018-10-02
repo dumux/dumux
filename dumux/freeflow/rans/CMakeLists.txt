@@ -1,0 +1,10 @@
+add_subdirectory(oneeq)
+add_subdirectory(twoeq)
+add_subdirectory(zeroeq)
+
+install(FILES
+model.hh
+problem.hh
+volumevariables.hh
+vtkoutputfields.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/rans)

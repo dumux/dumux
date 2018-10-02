@@ -143,29 +143,27 @@ void completeReferenceFluidState(FluidState &fs,
     typename FluidSystem::ParameterCache paramCache;
     ComputeFromReferencePhase::solve(fs,
                                      paramCache,
-                                     refPhaseIdx,
-                                     /*setViscosity=*/false,
-                                     /*setEnthalpy=*/false);
+                                     refPhaseIdx);
 }
 
 
 int main()
 {
     using Scalar = double;
-    using FluidSystem = Dumux::FluidSystems::H2ON2<Scalar, false>;
+    using FluidSystem = Dumux::FluidSystems::H2ON2<Scalar, Dumux::FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
     using CompositionalFluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem>;
 
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
-    enum { wPhaseIdx = FluidSystem::wPhaseIdx };
-    enum { nPhaseIdx = FluidSystem::nPhaseIdx };
+    enum { liquidPhaseIdx = FluidSystem::liquidPhaseIdx };
+    enum { gasPhaseIdx = FluidSystem::gasPhaseIdx };
 
     enum { H2OIdx = FluidSystem::H2OIdx };
     enum { N2Idx = FluidSystem::N2Idx };
 
     using EffMaterialLaw = Dumux::RegularizedBrooksCorey<Scalar>;
     using TwoPMaterialLaw = Dumux::EffToAbsLaw<EffMaterialLaw>;
-    using MaterialLaw = Dumux::TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
+    using MaterialLaw = Dumux::TwoPAdapter<liquidPhaseIdx, TwoPMaterialLaw>;
     using MaterialLawParams = MaterialLaw::Params;
 
     Scalar T = 273.15 + 25;
@@ -201,17 +199,17 @@ int main()
     std::cout << "testing single-phase liquid\n";
 
     // set liquid saturation
-    fsRef.setSaturation(wPhaseIdx, 1.0);
+    fsRef.setSaturation(liquidPhaseIdx, 1.0);
 
     // set pressure of the liquid phase
-    fsRef.setPressure(wPhaseIdx, 2e5);
+    fsRef.setPressure(liquidPhaseIdx, 2e5);
 
     // set the liquid composition to pure water
-    fsRef.setMoleFraction(wPhaseIdx, N2Idx, 0.0);
-    fsRef.setMoleFraction(wPhaseIdx, H2OIdx, 1.0);
+    fsRef.setMoleFraction(liquidPhaseIdx, N2Idx, 0.0);
+    fsRef.setMoleFraction(liquidPhaseIdx, H2OIdx, 1.0);
 
     // "complete" the fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams, wPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams, liquidPhaseIdx);
 
     // check the flash calculation
     checkNcpFlash<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams);
@@ -221,17 +219,17 @@ int main()
     ////////////////
     std::cout << "testing single-phase gas\n";
     // set gas saturation
-    fsRef.setSaturation(nPhaseIdx, 1.0);
+    fsRef.setSaturation(gasPhaseIdx, 1.0);
 
     // set pressure of the gas phase
-    fsRef.setPressure(nPhaseIdx, 1e6);
+    fsRef.setPressure(gasPhaseIdx, 1e6);
 
     // set the gas composition to 99.9% nitrogen and 0.1% water
-    fsRef.setMoleFraction(nPhaseIdx, N2Idx, 0.999);
-    fsRef.setMoleFraction(nPhaseIdx, H2OIdx, 0.001);
+    fsRef.setMoleFraction(gasPhaseIdx, N2Idx, 0.999);
+    fsRef.setMoleFraction(gasPhaseIdx, H2OIdx, 0.001);
 
     // "complete" the fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams, nPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams, gasPhaseIdx);
 
     // check the flash calculation
     checkNcpFlash<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams);
@@ -242,18 +240,16 @@ int main()
     std::cout << "testing two-phase\n";
 
     // set saturations
-    fsRef.setSaturation(wPhaseIdx, 0.5);
-    fsRef.setSaturation(nPhaseIdx, 0.5);
+    fsRef.setSaturation(liquidPhaseIdx, 0.5);
+    fsRef.setSaturation(gasPhaseIdx, 0.5);
 
     // set pressures
-    fsRef.setPressure(wPhaseIdx, 1e6);
-    fsRef.setPressure(nPhaseIdx, 1e6);
+    fsRef.setPressure(liquidPhaseIdx, 1e6);
+    fsRef.setPressure(gasPhaseIdx, 1e6);
 
     FluidSystem::ParameterCache paramCache;
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
-    MiscibleMultiPhaseComposition::solve(fsRef, paramCache,
-                                         /*setViscosity=*/false,
-                                         /*setEnthalpy=*/false);
+    MiscibleMultiPhaseComposition::solve(fsRef, paramCache);
 
     // check the flash calculation
     checkNcpFlash<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams);
@@ -269,24 +265,22 @@ int main()
     matParams2.setLambda(2.0);
 
     // set gas saturation
-    fsRef.setSaturation(nPhaseIdx, 0.5);
-    fsRef.setSaturation(wPhaseIdx, 0.5);
+    fsRef.setSaturation(gasPhaseIdx, 0.5);
+    fsRef.setSaturation(liquidPhaseIdx, 0.5);
 
     // set pressure of the liquid phase
-    fsRef.setPressure(wPhaseIdx, 1e6);
+    fsRef.setPressure(liquidPhaseIdx, 1e6);
 
     // calulate the capillary pressure
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
     PhaseVector pc;
     MaterialLaw::capillaryPressures(pc, matParams2, fsRef);
-    fsRef.setPressure(nPhaseIdx,
-                      fsRef.pressure(wPhaseIdx)
-                      + (pc[nPhaseIdx] - pc[wPhaseIdx]));
+    fsRef.setPressure(gasPhaseIdx,
+                      fsRef.pressure(liquidPhaseIdx)
+                      + (pc[gasPhaseIdx] - pc[liquidPhaseIdx]));
 
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
-    MiscibleMultiPhaseComposition::solve(fsRef, paramCache,
-                                         /*setViscosity=*/false,
-                                         /*setEnthalpy=*/false);
+    MiscibleMultiPhaseComposition::solve(fsRef, paramCache);
 
 
     // check the flash calculation

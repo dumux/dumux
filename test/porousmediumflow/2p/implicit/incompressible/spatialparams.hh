@@ -20,70 +20,47 @@
  * \ingroup TwoPTests
  * \brief The spatial params for the incompressible 2p test
  */
-#ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
-#define DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
+#ifndef DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
+#define DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/fv.hh>
-
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-namespace Dumux
-{
+#include <dumux/porousmediumflow/2p/boxmaterialinterfaceparams.hh>
 
-//forward declaration
-template<class TypeTag>
-class TwoPTestSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(SpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(SpatialParams, SpatialParams, TwoPTestSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(SpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffectiveLaw>;
-};
-}
+namespace Dumux {
 
 /*!
  * \ingroup TwoPTests
  * \brief The spatial params for the incompressible 2p test
  */
-template<class TypeTag>
-class TwoPTestSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class TwoPTestSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar, TwoPTestSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using ThisType = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
 
 public:
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    TwoPTestSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    TwoPTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
+        lensIsOilWet_ = getParam<bool>("SpatialParams.LensIsOilWet", false);
+
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
 
@@ -113,11 +90,14 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
-        if (isInLens_(element.geometry().center()))
+
+        // do not use a less permeable lens in the test with inverted wettability
+        if (isInLens_(element.geometry().center()) && !lensIsOilWet_)
             return lensK_;
         return outerK_;
     }
@@ -139,14 +119,45 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return the material parameters object
      */
+    template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
                                                const SubControlVolume& scv,
-                                               const ElementSolutionVector& elemSol) const
+                                               const ElementSolution& elemSol) const
     {
-        if (isInLens_(element.geometry().center()))
+        // do not use different parameters in the test with inverted wettability
+        if (isInLens_(element.geometry().center()) && !lensIsOilWet_)
             return lensMaterialParams_;
         return outerMaterialParams_;
     }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        if (isInLens_(globalPos) && lensIsOilWet_)
+            return FluidSystem::phase1Idx;
+        return FluidSystem::phase0Idx;
+    }
+
+    //! Updates the map of which material parameters are associated with a nodal dof.
+    template<class SolutionVector>
+    void updateMaterialInterfaceParams(const SolutionVector& x)
+    {
+        if (FVGridGeometry::discMethod == DiscretizationMethod::box)
+            materialInterfaceParams_.update(this->fvGridGeometry(), *this, x);
+    }
+
+    //! Returns the material parameters associated with a nodal dof
+    const BoxMaterialInterfaceParams<ThisType>& materialInterfaceParams() const
+    { return materialInterfaceParams_; }
+
+    //! Returns whether or not the lens is oil wet
+    bool lensIsOilWet() const { return lensIsOilWet_; }
 
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
@@ -158,6 +169,7 @@ private:
         return true;
     }
 
+    bool lensIsOilWet_;
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
 
@@ -165,6 +177,9 @@ private:
     Scalar outerK_;
     MaterialLawParams lensMaterialParams_;
     MaterialLawParams outerMaterialParams_;
+
+    // Determines the parameters associated with the dofs at material interfaces
+    BoxMaterialInterfaceParams<ThisType> materialInterfaceParams_;
 
     static constexpr Scalar eps_ = 1.5e-7;
 };

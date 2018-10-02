@@ -28,13 +28,16 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
+#include <dumux/discretization/fourierslaw.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
+
 //! Type tag for free-flow models
 NEW_TYPE_TAG(FreeFlow, INHERITS_FROM(ModelProperties));
+
+//! Use Fourier's Law as default heat conduction type
+SET_TYPE_PROP(FreeFlow, HeatConductionType, FouriersLaw<TypeTag>);
 
 } // namespace Properties
 } // namespace Dumux

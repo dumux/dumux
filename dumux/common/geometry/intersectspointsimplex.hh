@@ -82,18 +82,20 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
 {
     // adapted from the algorithm from from "Real-Time Collision Detection" by Christer Ericson,
     // published by Morgan Kaufmann Publishers, (c) 2005 Elsevier Inc. (Chapter 5.4.2)
-    static constexpr ctype eps_ = 1.0e-7;
+    constexpr ctype eps_ = 1.0e-7;
 
     // compute the normal of the triangle
     const auto v1 = p0 - p2;
     auto n = crossProduct(v1, p1 - p0);
-    n /= n.two_norm();
+    const ctype nnorm = n.two_norm();
+    const ctype eps4 = eps_*nnorm*nnorm; // compute an epsilon for later
+    n /= nnorm; // normalize
 
     // first check if we are in the plane of the triangle
     // if not we can return early
     using std::abs;
     auto x = p0 - point;
-    x /= x.two_norm();
+    x /= x.two_norm(); // normalize
 
     if (abs(x*n) > eps_)
         return false;
@@ -107,14 +109,16 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
     const auto u = crossProduct(b, c);
     const auto v = crossProduct(c, a);
 
-    // they have to point in the same direction
-    if (u*v < 0.0) return false;
+    // they have to point in the same direction or be orthogonal
+    if (u*v < 0.0 - eps4)
+        return false;
 
     // compute the normal vector for triangle P->C->A
     const auto w = crossProduct(a, b);
 
-    // it also has to point in the same direction
-    if (u*w < 0.0) return false;
+    // it also has to point in the same direction or be orthogonal
+    if (u*w < 0.0 - eps4)
+        return false;
 
     // now the point must be in the triangle (or on the faces)
     return true;

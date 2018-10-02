@@ -61,6 +61,7 @@ template<class TypeTag>
 class Test2PSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
     using ParentType = SequentialFVSpatialParams<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -72,7 +73,7 @@ class Test2PSpatialParams: public SequentialFVSpatialParams<TypeTag>
     };
     using Element = typename Grid::Traits::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
@@ -115,8 +116,8 @@ public:
             return materialLawParamsBackground_;
     }
 
-    Test2PSpatialParams(const GridView& gridView) :
-            ParentType(gridView), permBackground_(0), permLenses_(0),
+    Test2PSpatialParams(const Problem& problem) :
+            ParentType(problem), permBackground_(0), permLenses_(0),
             lensOneLowerLeft_(0), lensOneUpperRight_(0), lensTwoLowerLeft_(0), lensTwoUpperRight_(0), lensThreeLowerLeft_(0), lensThreeUpperRight_(0)
     {
 #if PROBLEM == 0

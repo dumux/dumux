@@ -25,15 +25,18 @@
 #define DUMUX_CO2_HH
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/material/components/component.hh>
 #include <dumux/material/constants.hh>
-#include <dumux/material/idealgas.hh>
 
 #include <cmath>
 #include <iostream>
 
-namespace Dumux
-{
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A class for the CO2 fluid properties
@@ -41,16 +44,17 @@ namespace Dumux
  * Under reservoir conditions, CO2 is typically in supercritical state. These
  * properties can be provided in tabulated form, which is necessary for this
  * component implementation. The template is passed through the fluidsystem
- * brineco2fluidsystem.hh
- * If only gaseous co2 is regarded, one can use SimpleCO2 instead.
+ * brineco2fluidsystem.hh.
+ * Depending on the used tabulation, the fluidsystem can also be used for gaseous CO2
  */
 
-// TODO: Is this component limited to supercritical conditions?
 template <class Scalar, class CO2Tables>
-class CO2 : public Component<Scalar, CO2<Scalar, CO2Tables> >
+class CO2
+: public Components::Base<Scalar, CO2<Scalar, CO2Tables> >
+, public Components::Liquid<Scalar, CO2<Scalar, CO2Tables> >
+, public Components::Gas<Scalar, CO2<Scalar, CO2Tables> >
 {
     static const Scalar R;
-    using IdealGas = Dumux::IdealGas<Scalar>;
 
     static bool warningThrown;
 
@@ -64,7 +68,7 @@ public:
     /*!
      * \brief The mass in \f$\mathrm{[kg/mol]}\f$ of one mole of CO2.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 44e-3; /* [kg/mol] */ }
 
     /*!
@@ -92,28 +96,34 @@ public:
     { return 5.11e5; /* [N/m^2] */ }
 
     /*!
-     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at CO2's triple point.
+     * \brief Returns the minimal tabulated pressure \f$\mathrm{[Pa]}\f$ of the used table
      */
     static Scalar minTabulatedPressure()
     { return CO2Tables::tabulatedEnthalpy.minPress(); /* [Pa] */ }
 
     /*!
-     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at CO2's triple point.
+     * \brief Returns the maximal tabulated pressure \f$\mathrm{[Pa]}\f$ of the used table
      */
     static Scalar maxTabulatedPressure()
     { return CO2Tables::tabulatedEnthalpy.maxPress(); /* [Pa] */ }
 
     /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at CO2's triple point.
+     * \brief Returns the minimal tabulated temperature \f$\mathrm{[K]}\f$ of the used table
      */
     static Scalar minTabulatedTemperature()
     { return CO2Tables::tabulatedEnthalpy.minTemp(); /* [K] */ }
 
     /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at CO2's triple point.
+     * \brief Returns the maximal tabulated temperature \f$\mathrm{[K]}\f$ of the used table
      */
     static Scalar maxTabulatedTemperature()
     { return CO2Tables::tabulatedEnthalpy.maxTemp(); /* [K] */ }
+
+    /*!
+     * \brief Returns true if the gas phase is assumed to be ideal
+     */
+    static constexpr bool gasIsIdeal()
+    { return false; }
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure CO2
@@ -123,7 +133,6 @@ public:
      *
      * R. Span and W. Wagner (1996, pp. 1509-1596) \cite span1996
      */
-
     static Scalar vaporPressure(Scalar T)
     {
         static const Scalar a[4] =
@@ -221,9 +230,18 @@ public:
                         <<"Tables with sufficient resolution!"<< std::endl;
             warningThrown=true;
         }
-
         return CO2Tables::tabulatedDensity.at(temperature, pressure);
     }
+
+    /*!
+     *  \brief The molar density of CO2 gas in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return gasDensity(temperature, pressure)/molarMass(); }
 
     /*!
      * \brief The density of pure CO2 at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
@@ -240,6 +258,17 @@ public:
         }
         return CO2Tables::tabulatedDensity.at(temperature, pressure);
     }
+
+    /*!
+     * \brief The molar density of CO2 in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    { return liquidDensity(temperature, pressure)/molarMass(); }
+
     /*!
      * \brief The pressure of steam in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
      *
@@ -341,15 +370,6 @@ public:
         dmu = d11*rho + d21*rho*rho + d64*pow(rho,6)/(TStar*TStar*TStar)
             + d81*pow(rho,8) + d82*pow(rho,8)/TStar;
 
-        /* dmucrit : viscosity increase near the critical point */
-
-        // False (Lybke 2July2007)
-        //e1 = 5.5930E-3;
-        //e2 = 6.1757E-5;
-        //e4 = 2.6430E-11;
-        //dmucrit = e1*rho + e2*rho*rho + e4*rho*rho*rho;
-        //visco_CO2 = (mu0 + dmu + dmucrit)/1.0E6;   /* conversion to [Pa s] */
-
         visco_CO2 = (mu0 + dmu)/1.0E6;   /* conversion to [Pa s] */
 
         return visco_CO2;
@@ -387,6 +407,8 @@ const Scalar CO2<Scalar, CO2Tables>::R = Constants<Scalar>::R;
 template <class Scalar, class CO2Tables>
 bool CO2<Scalar, CO2Tables>::warningThrown = false;
 
-} // end namespace
+} // end namespace Components
+
+} // end namespace Dumux
 
 #endif

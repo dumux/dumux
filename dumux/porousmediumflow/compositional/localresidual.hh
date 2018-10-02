@@ -45,25 +45,26 @@ class CompositionalLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidua
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int numComponents = ModelTraits::numComponents();
+    static constexpr bool useMoles = ModelTraits::useMoles();
 
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
     //! The index of the component balance equation that gets replaced with the total mass balance
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static constexpr int replaceCompEqIdx = ModelTraits::replaceCompEqIdx();
     static constexpr bool useTotalMoleOrMassBalance = replaceCompEqIdx < numComponents;
 
 public:
@@ -80,11 +81,11 @@ public:
      * \param scv The sub control volume
      * \param volVars The current or previous volVars
      */
-    ResidualVector computeStorage(const Problem& problem,
-                                  const SubControlVolume& scv,
-                                  const VolumeVariables& volVars) const
+    NumEqVector computeStorage(const Problem& problem,
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
     {
-        ResidualVector storage(0.0);
+        NumEqVector storage(0.0);
 
         const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
         { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
@@ -132,17 +133,17 @@ public:
      * \param scvf The sub control volume face to compute the flux on
      * \param elemFluxVarsCache The cache related to flux compuation
      */
-    ResidualVector computeFlux(const Problem& problem,
-                               const Element& element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace& scvf,
-                               const ElementFluxVariablesCache& elemFluxVarsCache) const
+    NumEqVector computeFlux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace& scvf,
+                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         // get upwind weights into local scope
-        ResidualVector flux(0.0);
+        NumEqVector flux(0.0);
 
         const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
         { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };

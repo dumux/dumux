@@ -1,4 +1,3 @@
-#install sources
 install(FILES
 adapt.hh
 griddatatransfer.hh

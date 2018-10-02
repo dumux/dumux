@@ -1,10 +1,8 @@
-
-#install headers
 install(FILES
+linteractionvolume.hh
+linteractionvolume3d.hh
+linteractionvolume3dadaptive.hh
+ointeractionvolume.hh
 properties.hh
 velocityintransport.hh
-linteractionvolume3dadaptive.hh
-linteractionvolume3d.hh
-linteractionvolume.hh
-ointeractionvolume.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/sequential/cellcentered/mpfa)

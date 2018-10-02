@@ -24,43 +24,27 @@
 #ifndef DUMUX_NONEQUILIBRIUM_INDICES_HH
 #define DUMUX_NONEQUILIBRIUM_INDICES_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup PorousmediumNonEquilibriumModel
  * \brief The primary variable and equation indices for the MpNc model.
  */
-template <class TypeTag, int BasePVOffset = 0>
-class NonEquilbriumIndices: public GET_PROP_TYPE(TypeTag, EquilibriumIndices)
+template <class EquilibriumIndices, int numEnergyEqFluid, int numEnergyEqSolid, int numEq>
+class NonEquilbriumIndices : public EquilibriumIndices
 {
 public:
-     using FluidSystem  = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-     enum { numPhases = FluidSystem::numPhases };
-     enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
-     enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
-     /*! \todo Replacing the sum below with GET_PROP_VALUE(TypeTag, NumEq)
-      *        yields a compilation error with clang, due to complex
-      *        interdependencies of MPNC and NonEquilibrium type tags and
-      *        Indices classes. This should be fixed.
-      */
-     static const unsigned int numEq = GET_PROP_VALUE(TypeTag, NumEqBalance)
-                                     + GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)
-                                     + GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
-
     /*!
      * \brief Index for the temperature of the wetting phase in a vector of primary
      *        variables.
      */
-    static constexpr unsigned int temperature0Idx = BasePVOffset + numEq - numEnergyEqFluid - numEnergyEqSolid;
+    static constexpr unsigned int temperature0Idx = numEq - numEnergyEqFluid - numEnergyEqSolid;
 
     /*!
      * \brief Index for the temperature of the solid phase in a vector of primary
      *        variables.
      */
-    static constexpr unsigned int temperatureSolidIdx = BasePVOffset + numEq - numEnergyEqSolid;
+    static constexpr unsigned int temperatureSolidIdx = numEq - numEnergyEqSolid;
     /*!
      * \brief Compatibility with non kinetic models
      */
@@ -68,7 +52,7 @@ public:
     /*!
      * \brief Equation index of the energy equation.
      */
-    static constexpr unsigned int energyEq0Idx = BasePVOffset + numEq - numEnergyEqFluid - numEnergyEqSolid;
+    static constexpr unsigned int energyEq0Idx = numEq - numEnergyEqFluid - numEnergyEqSolid;
     /*!
      * \brief Compatibility with non kinetic models
      */
@@ -77,7 +61,7 @@ public:
     /*!
      * \brief Equation index of the energy equation.
      */
-    static constexpr unsigned int energyEqSolidIdx = BasePVOffset + numEq - numEnergyEqSolid;
+    static constexpr unsigned int energyEqSolidIdx = numEq - numEnergyEqSolid;
 };
 
 } // end namespace Dumux

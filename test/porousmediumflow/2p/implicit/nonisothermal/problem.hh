@@ -27,6 +27,14 @@
 #ifndef DUMUX_INJECTION_PROBLEM_2PNI_HH
 #define DUMUX_INJECTION_PROBLEM_2PNI_HH
 
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -50,7 +58,7 @@ namespace Dumux {
 template <class TypeTag> class InjectionProblem2PNI;
 
 namespace Properties {
-NEW_TYPE_TAG(Injection2PNITypeTag, INHERITS_FROM(TwoPNI, InjectionSpatialParams));
+NEW_TYPE_TAG(Injection2PNITypeTag, INHERITS_FROM(TwoPNI));
 NEW_TYPE_TAG(InjectionBox2PNITypeTag, INHERITS_FROM(BoxModel, Injection2PNITypeTag));
 NEW_TYPE_TAG(InjectionCC2PNITypeTag, INHERITS_FROM(CCTpfaModel, Injection2PNITypeTag));
 
@@ -61,7 +69,16 @@ SET_TYPE_PROP(Injection2PNITypeTag, Grid, GRIDTYPE);
 SET_TYPE_PROP(Injection2PNITypeTag, Problem, InjectionProblem2PNI<TypeTag>);
 
 // Use the same fluid system as the 2p2c injection problem
-SET_TYPE_PROP(Injection2PNITypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(Injection2PNITypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+
+// Set the spatial parameters
+SET_PROP(Injection2PNITypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = InjectionSpatialParams<FVGridGeometry, Scalar>;
+};
+
 } // namespace Properties
 
 /*!
@@ -99,7 +116,11 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
     enum
     {
@@ -109,12 +130,12 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
         temperatureIdx = Indices::temperatureIdx,
 
         //! equation indices
-        contiNEqIdx = Indices::contiNEqIdx,
+        contiN2EqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx,
         energyEqIdx = Indices::energyEqIdx,
 
         //! phase indices
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = FluidSystem::H2OIdx,
+        nPhaseIdx = FluidSystem::N2Idx,
 
         // world dimension
         dimWorld = GridView::dimensionworld
@@ -123,14 +144,10 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     /*!
@@ -204,8 +221,6 @@ public:
         else
             values.setAllNeumann();
 
-        //! Use Dirichlet BCs everywhere for the temperature
-        // values.setDirichlet(temperatureIdx);
         return values;
     }
 
@@ -233,38 +248,32 @@ public:
      *
      * \param values Stores the Neumann values for the conservation equations in
      *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param elemVolVars The element volume variables
-     * \param scvf The sub-control volume face on which the BC is evaluated
+     * \param globalPos The global position
      *
      * The \a values store the mass flux of each phase normal to the boundary.
      * Negative values indicate an inflow.
      */
-    NumEqVector neumann(const Element &element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         NumEqVector values(0.0);
-        const auto globalPos = scvf.ipGlobal();
 
         if (globalPos[1] < 13.75 + eps_ && globalPos[1] > 6.875 - eps_)
         {
             // inject air. negative values mean injection
-            values[contiNEqIdx] = -1e-3; // kg/(s*m^2)
+            values[contiN2EqIdx] = -1e-3; // kg/(s*m^2)
 
             // compute enthalpy flux associated with this injection [(J/(kg*s)]
             using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
             FluidState fs;
 
-            const auto ic = initialAtPos(scvf.ipGlobal());
-            fs.setPressure(wPhaseIdx, ic[pressureIdx]);
-            fs.setPressure(nPhaseIdx, ic[pressureIdx]); // assume pressure equality here
-            fs.setTemperature(ic[temperatureIdx]);
+            const auto initialValues = initialAtPos(globalPos);
+            fs.setPressure(wPhaseIdx, initialValues[pressureIdx]);
+            fs.setPressure(nPhaseIdx, initialValues[pressureIdx]); // assume pressure equality here
+            fs.setTemperature(wPhaseIdx,initialValues[temperatureIdx]);
+            fs.setTemperature(nPhaseIdx,initialValues[temperatureIdx]);
 
             // energy flux is mass flux times specific enthalpy
-            values[energyEqIdx] = values[contiNEqIdx]*FluidSystem::enthalpy(fs, nPhaseIdx);
+            values[energyEqIdx] = values[contiN2EqIdx]*FluidSystem::enthalpy(fs, nPhaseIdx);
         }
 
         return values;

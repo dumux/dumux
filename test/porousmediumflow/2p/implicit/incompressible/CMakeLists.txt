@@ -1,14 +1,28 @@
 dune_symlink_to_source_files(FILES "test_2p.input")
 
 # using tpfa
+add_executable(test_2p_incompressible_tpfa EXCLUDE_FROM_ALL test_2p_fv.cc)
+target_compile_definitions(test_2p_incompressible_tpfa PUBLIC TYPETAG=TwoPIncompressibleTpfa)
+
 dune_add_test(NAME test_2p_incompressible_tpfa
-              SOURCES test_2p_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleTpfa
+              TARGET test_2p_incompressible_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/lenscc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/2p_tpfa-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa test_2p.input -Problem.Name 2p_tpfa")
+
+# using tpfa
+dune_add_test(NAME test_2p_incompressible_tpfa_restart
+              TARGET test_2p_incompressible_tpfa
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/lenscc-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/2p_tpfa_restart-00003.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa test_2p.input -Problem.Name 2p_tpfa_restart  -TimeLoop.DtInitial 526.62 -Restart.Time 1859.95 -Restart.File 2p_tpfa-00005.vtu")
+
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_2p_incompressible_tpfa_restart PROPERTIES DEPENDS test_2p_incompressible_tpfa)
 
 # using box
 dune_add_test(NAME test_2p_incompressible_box
@@ -19,6 +33,32 @@ dune_add_test(NAME test_2p_incompressible_box
                        --files ${CMAKE_SOURCE_DIR}/test/references/lensbox-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/2p_box-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box test_2p.input -Problem.Name 2p_box")
+
+# using box with interface solver
+dune_add_test(NAME test_2p_incompressible_box_ifsolver
+              SOURCES test_2p_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox
+              COMPILE_DEFINITIONS ENABLEINTERFACESOLVER=true
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/lensbox_ifsolver-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/2p_box_ifsolver-00018.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box_ifsolver test_2p.input
+                                                                                                  -Problem.Name 2p_box_ifsolver
+                                                                                                  -Problem.UseNonConformingOutput true")
+
+# using tpfa with an oil-wet lens
+dune_add_test(NAME test_2p_incompressible_tpfa_oilwet
+              SOURCES test_2p_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleTpfa
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/lenscc_oilwet-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/2p_tpfa_oilwet-00009.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa_oilwet test_2p.input
+                                                                                                 -Problem.Name 2p_tpfa_oilwet
+                                                                                                 -Problem.EnableGravity false
+                                                                                                 -SpatialParams.LensIsOilWet true")
 
 # using mpfa
 dune_add_test(NAME test_2p_incompressible_mpfa

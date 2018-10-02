@@ -26,19 +26,24 @@
 
 #include <dumux/common/exceptions.hh>
 #include <dune/common/deprecated.hh>
-#include <dumux/material/components/component.hh>
 
 #include <cmath>
 #include <iostream>
 
-namespace Dumux
-{
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/solid.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A class for the CaO2H2 properties
  */
 template <class Scalar>
-class CaO2H2 : public Component<Scalar, CaO2H2<Scalar> >
+class CaO2H2
+: public Components::Base<Scalar, CaO2H2<Scalar> >
+, public Components::Solid<Scalar, CaO2H2<Scalar> >
 {
 public:
     /*!
@@ -52,7 +57,7 @@ public:
     /*!
      * \brief The molar mass of CaOH2 in \f$\mathrm{[kg/mol]}\f$.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     {
         return 74.093e-3 ;
     }
@@ -60,20 +65,39 @@ public:
     /*!
      * \brief The mass density \f$\mathrm{[kg/m^3]}\f$ of CaO2H2.
      */
-    static Scalar density()
+    static Scalar solidDensity(Scalar temperature)
     {
         return 2200.0; //at 293 K ; Shao et al. (2013)
     }
 
     /*!
+     * \brief The molar density \f$\mathrm{[mol/m^3]}\f$ of CaO2H2.
+     * Molar density at 293 K. Literature value from Shao et al. (2013).
+     */
+    static Scalar solidMolarDensity(Scalar temperature)
+    {
+        return solidDensity(temperature)/molarMass();
+    }
+
+    /*!
      * \brief The specific heat capacity \f$\mathrm{[J/kgK]}\f$ of CaO2H2.
      */
-    static Scalar heatCapacity()
+    static Scalar solidHeatCapacity(Scalar temperature)
     {
         return 1530;  //Nagel et al. (2014) : 1530 J/kgK
     }
+
+    /*!
+     * \brief The thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
+     */
+    static Scalar solidThermalConductivity(Scalar temperature)
+    {
+        return  0.4;  //Nagel et al. (2014)
+    }
 };
 
-} // end namespace
+} // end namespace Components
+
+} // end namespace Dumux
 
 #endif

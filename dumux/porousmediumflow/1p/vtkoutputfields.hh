@@ -30,14 +30,13 @@ namespace Dumux {
  * \ingroup OnePModel
  * \brief Adds vtk output fields specific to the one phase model
  */
-template<class TypeTag>
 class OnePVtkOutputFields
 {
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(); }, "pressure");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(); }, "p");
     }
 };
 

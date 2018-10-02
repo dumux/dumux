@@ -1,0 +1,19 @@
+[Grid]
+UpperRight = 1
+Cells = 32
+
+[Problem]
+Name = test_navierstokes_1d
+EnableGravity = false
+PrintL2Error = true
+
+[Component]
+LiquidKinematicViscosity = 1.
+LiquidDensity = 1.
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-9
+
+[Vtk]
+WriteFaceData = false

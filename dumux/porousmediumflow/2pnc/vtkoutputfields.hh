@@ -24,7 +24,6 @@
 #ifndef DUMUX_TWOP_NC_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_TWOP_NC_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p/vtkoutputfields.hh>
 
 namespace Dumux
@@ -34,34 +33,39 @@ namespace Dumux
  * \ingroup TwoPNCModel
  * \brief Adds vtk output fields specific to the TwoPNC model
  */
-template<class TypeTag>
 class TwoPNCVtkOutputFields
 {
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-
 public:
-    template <class VtkOutputModule>
+   template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
+        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+
         // use default fields from the 2p model
-        TwoPVtkOutputFields<TypeTag>::init(vtk);
+        TwoPVtkOutputFields::init(vtk);
 
         //output additional to TwoP output:
-        for (int i = 0; i < numPhases; ++i)
-            for (int j = 0; j < numComponents; ++j)
-                vtk.addVolumeVariable([i,j](const VolumeVariables& v){ return v.moleFraction(i,j); },"x_"+ FluidSystem::phaseName(i) + "^" + FluidSystem::componentName(j));
+        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+            for (int j = 0; j < VolumeVariables::numComponents(); ++j)
+                vtk.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },
+                                    "x^"+ FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i));
 
-        for (int j = 0; j < numComponents; ++j)
-            vtk.addVolumeVariable([j](const VolumeVariables& v){ return v.molarity(Indices::wPhaseIdx,j); },"m_"+ FluidSystem::phaseName(Indices::wPhaseIdx) + "^" + FluidSystem::componentName(j));
+        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+            vtk.addVolumeVariable([i](const auto& v){ return v.molarDensity(i); },
+                                    "rhoMolar_" + FluidSystem::phaseName(i));
 
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.priVars().state(); }, "phasePresence");
+        if (VolumeVariables::numComponents() < 3){
+            for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+                for (int j = 0; j < VolumeVariables::numComponents(); ++j)
+                    vtk.addVolumeVariable([i,j](const auto& v){ return v.massFraction(i,j); },
+                                    "X^"+ FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i));
+        }
+
+        vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phase presence");
     }
 };
+
 
 } // end namespace Dumux
 

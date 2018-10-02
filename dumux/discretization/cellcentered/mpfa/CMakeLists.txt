@@ -1,7 +1,7 @@
-add_subdirectory("omethod")
+add_subdirectory(omethod)
 
 install(FILES
-computetransmissibility
+computetransmissibility.hh
 connectivitymap.hh
 darcyslaw.hh
 dualgridindexset.hh
@@ -12,9 +12,10 @@ fluxvariablescachefiller.hh
 fourierslaw.hh
 fvelementgeometry.hh
 fvgridgeometry.hh
-generalconnectivitymap.hh
+fvgridgeometrytraits.hh
 gridfluxvariablescache.hh
 gridinteractionvolumeindexsets.hh
+gridvolumevariables.hh
 helper.hh
 interactionvolumebase.hh
 interactionvolumedatahandle.hh

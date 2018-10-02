@@ -26,54 +26,47 @@
 #ifndef DUMUX_TEMPERATURE_OVERLAY_FLUID_STATE_HH
 #define DUMUX_TEMPERATURE_OVERLAY_FLUID_STATE_HH
 
-#include <dumux/common/valgrind.hh>
+namespace Dumux {
 
-namespace Dumux
-{
 /*!
  * \ingroup FluidStates
  * \brief This is a fluid state which allows to set the fluid
  *        temperatures and takes all other quantities from an other
  *        fluid state.
  */
-template <class Scalar, class FluidState>
+template <class FluidState>
 class TemperatureOverlayFluidState
 {
 public:
-    enum { numPhases = FluidState::numPhases };
-    enum { numComponents = FluidState::numComponents };
+    static constexpr int numPhases = FluidState::numPhases;
+    static constexpr int numComponents = FluidState::numComponents;
+
+    //! export the scalar type
+    using Scalar = typename FluidState::Scalar;
 
     /*!
      * \brief Constructor
      *
-     * The overlay fluid state copies the temperature from the first
-     * fluid phase of the argument, so it initially behaves exactly
-     * like the underlying fluid state, provided that the underlying
-     * fluid state is in thermal equilibrium.
+     * \param fs Fluidstate
+     * The overlay fluid state copies the saturation from the argument,
+     * so it initially behaves exactly like the underlying fluid
+     * state.
      */
     TemperatureOverlayFluidState(const FluidState &fs)
-        : fs_(&fs)
+    : fs_(&fs)
     {
         temperature_ = fs.temperature(/*phaseIdx=*/0);
     }
 
     TemperatureOverlayFluidState(Scalar T, const FluidState &fs)
-        : temperature_(T), fs_(&fs)
-    { }
-
-    // copy constructor
-    TemperatureOverlayFluidState(const TemperatureOverlayFluidState &fs)
-        : fs_(fs.fs_)
-        , temperature_(fs.temperature_)
+    : fs_(&fs), temperature_(T)
     {}
 
-    // assignment operator
-    TemperatureOverlayFluidState &operator=(const TemperatureOverlayFluidState &fs)
-    {
-        fs_ = fs.fs_;
-        temperature_ = fs.temperature_;
-        return *this;
-    }
+    // copy & move constructor / assignment operators
+    TemperatureOverlayFluidState(const TemperatureOverlayFluidState &fs) = default;
+    TemperatureOverlayFluidState(TemperatureOverlayFluidState &&fs) = default;
+    TemperatureOverlayFluidState& operator=(const TemperatureOverlayFluidState &fs) = default;
+    TemperatureOverlayFluidState& operator=(TemperatureOverlayFluidState &&fs) = default;
 
     /*****************************************************
      * Generic access to fluid properties (No assumptions
@@ -180,19 +173,6 @@ public:
      */
     void setTemperature(Scalar value)
     { temperature_ = value; }
-
-    /*!
-     * \brief Make sure that all attributes are defined.
-     *
-     * This method does not do anything if the program is not run
-     * under valgrind. If it is, then valgrind will print an error
-     * message if some attributes of the object have not been properly
-     * defined.
-     */
-    void checkDefined() const
-    {
-        Valgrind::CheckDefined(temperature_);
-    }
 
 protected:
     const FluidState *fs_;

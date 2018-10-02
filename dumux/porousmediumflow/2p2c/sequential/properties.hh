@@ -66,6 +66,7 @@ NEW_TYPE_TAG(SequentialTwoPTwoC, INHERITS_FROM(Pressure, Transport, IMPET));
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG( Indices );
 NEW_PROP_TAG( SpatialParams ); //!< The type of the soil properties object
+NEW_PROP_TAG( MaterialLaw ); //!< The type of the material law
 NEW_PROP_TAG( PressureFormulation); //!< The formulation of the model
 NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the model
 NEW_PROP_TAG( VelocityFormulation); //!< The formulation of the model
@@ -170,8 +171,8 @@ private:
 
 public:
     // Component indices
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx;
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx;
+    static const int wPhaseIdx = FluidSystem::phase0Idx;
+    static const int nPhaseIdx = FluidSystem::phase1Idx;
 
     // Component indices
     static const int wCompIdx = wPhaseIdx; //!< Component index equals phase index

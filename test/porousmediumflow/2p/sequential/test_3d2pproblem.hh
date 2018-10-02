@@ -24,9 +24,12 @@
 #ifndef DUMUX_TEST_3D2P_PROBLEM_HH
 #define DUMUX_TEST_3D2P_PROBLEM_HH
 
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/components/simpleh2o.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/3dpressureproperties.hh>
@@ -58,7 +61,7 @@ class Test3D2PProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(ThreeDTwoPTestTypeTag, INHERITS_FROM(SequentialModel, Test3d2pSpatialParams));
+NEW_TYPE_TAG(ThreeDTwoPTestTypeTag, INHERITS_FROM(Test3d2pSpatialParams));
 
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
@@ -72,27 +75,13 @@ SET_TYPE_PROP(ThreeDTwoPTestTypeTag, Problem, Test3D2PProblem<TypeTag>);
 SET_PROP(ThreeDTwoPTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 #if PROBLEM == 1
 SET_INT_PROP(ThreeDTwoPTestTypeTag, Formulation, SequentialTwoPCommonIndices::pnSw);
-#endif
-
-// Set the spatial parameters
-SET_PROP(ThreeDTwoPTestTypeTag, SpatialParams)
-{
-private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-
-public:
-    using type = Test3d2pSpatialParams<TypeTag>;
-};
-
-#if PROBLEM == 1
 SET_TYPE_PROP(ThreeDTwoPTestTypeTag, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
 #endif
 
@@ -125,7 +114,7 @@ using ParentType = IMPESProblem2P<TypeTag>;
 using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 using Grid = typename GridView::Grid;
 
-using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
 using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -158,7 +147,7 @@ using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
 using Element = typename GridView::Traits::template Codim<0>::Entity;
 using Intersection = typename GridView::Intersection;
-using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:
@@ -167,7 +156,7 @@ Test3D2PProblem(TimeManager& timeManager, Grid& grid) :
 ParentType(timeManager, grid), inflowEdge_(0), outflowEdge_(0)
 {
     int refinementFactor = 0;
-    if (haveParam("Grid.RefinementFactor") && !GET_PROP_VALUE(TypeTag, AdaptiveGrid))
+    if (hasParam("Grid.RefinementFactor") && !GET_PROP_VALUE(TypeTag, AdaptiveGrid))
     {
         refinementFactor = getParam<Scalar>("Grid.RefinementFactor");
         grid.globalRefine(refinementFactor);
@@ -194,14 +183,14 @@ ParentType(timeManager, grid), inflowEdge_(0), outflowEdge_(0)
     }
 
     int outputInterval = 0;
-    if (haveParam("Problem.OutputInterval"))
+    if (hasParam("Problem.OutputInterval"))
     {
         outputInterval = getParam<int>("Problem.OutputInterval");
     }
     this->setOutputInterval(outputInterval);
 
     Scalar outputTimeInterval = 1e6;
-    if (haveParam("Problem.OutputTimeInterval"))
+    if (hasParam("Problem.OutputTimeInterval"))
     {
         outputTimeInterval = getParam<Scalar>("Problem.OutputTimeInterval");
     }

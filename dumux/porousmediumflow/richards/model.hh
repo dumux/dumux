@@ -91,6 +91,8 @@
 #ifndef DUMUX_RICHARDS_MODEL_HH
 #define DUMUX_RICHARDS_MODEL_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/properties.hh>
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
@@ -104,6 +106,8 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -111,8 +115,60 @@
 #include "localresidual.hh"
 #include "primaryvariableswitch.hh"
 
-namespace Dumux
+namespace Dumux {
+
+/*!
+ * \ingroup RichardsModel
+ * \brief Specifies a number properties of the Richards model.
+ *
+ * \tparam enableDiff specifies if diffusion of water in air is to be considered.
+ */
+template<bool enableDiff>
+struct RichardsModelTraits
 {
+    using Indices = RichardsIndices;
+
+    static constexpr int numEq() { return 1; }
+    static constexpr int numPhases() { return 2; }
+    static constexpr int numComponents() { return 1; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return enableDiff; }
+    static constexpr bool enableEnergyBalance() { return false; }
+
+    template<class FluidSystem, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state)
+    {
+        if (state == Indices::gasPhaseOnly)
+            return "x^" + FluidSystem::componentName(FluidSystem::comp0Idx)
+                   + "_" + FluidSystem::phaseName(FluidSystem::phase1Idx);
+        else
+            return "p_" + FluidSystem::phaseName(FluidSystem::phase0Idx);
+    }
+};
+
+/*!
+ * \ingroup RichardsModel
+ * \brief Traits class for the Richards model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
+struct RichardsVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+};
+
 // \{
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal Richards model.
@@ -125,63 +181,69 @@ namespace Properties {
 
 //! The type tags for the implicit isothermal one-phase two-component problems
 NEW_TYPE_TAG(Richards, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(RichardsNI, INHERITS_FROM(Richards, NonIsothermal));
+NEW_TYPE_TAG(RichardsNI, INHERITS_FROM(Richards));
 
 //////////////////////////////////////////////////////////////////
 // Properties values
 //////////////////////////////////////////////////////////////////
-//! Number of equations required by the model
-SET_INT_PROP(Richards, NumEq, 1);
-
-//! Number of fluid phases considered
-SET_INT_PROP(Richards, NumPhases, 2);
-
-//! Number of components considered (only water)
-SET_INT_PROP(Richards, NumComponents, 1);
 
 //! The local residual operator
 SET_TYPE_PROP(Richards, LocalResidual, RichardsLocalResidual<TypeTag>);
 
-SET_TYPE_PROP(Richards, VtkOutputFields, RichardsVtkOutputFields<TypeTag>);           //!< Set the vtk output fields specific to the twop model
+//! Set the vtk output fields specific to this model
+SET_PROP(Richards, VtkOutputFields)
+{
+private:
+   static constexpr bool enableWaterDiffusionInAir
+        = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
 
-//! The class for the volume averaged quantities
-SET_TYPE_PROP(Richards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
+public:
+    using type = RichardsVtkOutputFields<enableWaterDiffusionInAir>;
+};
 
-//! Enable advection
-SET_BOOL_PROP(Richards, EnableAdvection, true);
+//! The model traits
+SET_TYPE_PROP(Richards, ModelTraits, RichardsModelTraits<GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir)>);
+
+//! Set the volume variables property
+SET_PROP(Richards, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = RichardsVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+public:
+    using type = RichardsVolumeVariables<Traits>;
+};
 
 //! The default richards model computes no diffusion in the air phase
 //! Turning this on leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
 SET_BOOL_PROP(Richards, EnableWaterDiffusionInAir, false);
 
-//! we need to set this to true so that we can calculate the WaterDiffusionInAir whenever we want and still use the same fluxVarsCache for all models
-SET_BOOL_PROP(Richards, EnableMolecularDiffusion, GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir));
-
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(Richards, EffectiveDiffusivityModel,
               DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-//! The default is not to use the kelvin equation for the water vapor pressure (dependency on pc)
-SET_BOOL_PROP(Richards, UseKelvinEquation, false);
-
-//! Isothermal model by default
-SET_BOOL_PROP(Richards, EnableEnergyBalance, false);
-
-//! The class with all index definitions for the model
-SET_TYPE_PROP(Richards, Indices, RichardsIndices);
-
-//! The class with all index definitions for the model
-SET_TYPE_PROP(Richards, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
+//! The primary variables vector for the richards model
+SET_PROP(Richards, PrimaryVariables)
+{
+private:
+    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
+public:
+    using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
+};
 
 //! The primary variable switch for the richards model
-SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch<TypeTag>);
+SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch);
 
 //! The primary variable switch for the richards model
-//SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
-
-//! The spatial parameters to be employed.
-//! Use FVSpatialParams by default.
-SET_TYPE_PROP(Richards, SpatialParams, FVSpatialParams<TypeTag>);
+// SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
 
 /*!
  *\brief The fluid system used by the model.
@@ -191,7 +253,9 @@ SET_TYPE_PROP(Richards, SpatialParams, FVSpatialParams<TypeTag>);
 SET_PROP(Richards, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::H2OAir<Scalar, SimpleH2O<Scalar>, false>;
+    using type = FluidSystems::H2OAir<Scalar,
+                                      Components::SimpleH2O<Scalar>,
+                                      FluidSystems::H2OAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;
 };
 
 /*!
@@ -214,28 +278,32 @@ SET_PROP(RichardsNI, ThermalConductivityModel)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    using type = ThermalConductivitySomerton<Scalar, Indices>;
+    using type = ThermalConductivitySomerton<Scalar>;
 };
 
-//////////////////////////////////////////////////////////////////
-// Property values for isothermal model required for the general non-isothermal model
-//////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+// Property values for non-isothermal Richars model
+/////////////////////////////////////////////////////
 
-//set isothermal VolumeVariables
-SET_TYPE_PROP(RichardsNI, IsothermalVolumeVariables, RichardsVolumeVariables<TypeTag>);
+//! set non-isothermal model traits
+SET_PROP(RichardsNI, ModelTraits)
+{
+private:
+    using IsothermalTraits = RichardsModelTraits<GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir)>;
+public:
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
+};
 
-//set isothermal LocalResidual
-SET_TYPE_PROP(RichardsNI, IsothermalLocalResidual, RichardsLocalResidual<TypeTag>);
-
-//set isothermal Indices
-SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices);
-
-//set isothermal NumEq
-SET_INT_PROP(RichardsNI, IsothermalNumEq, 1);
-
-SET_TYPE_PROP(RichardsNI, IsothermalVtkOutputFields, RichardsVtkOutputFields<TypeTag>);
+//! Set the vtk output fields specific to th non-isothermal model
+SET_PROP(RichardsNI, VtkOutputFields)
+{
+private:
+   static constexpr bool enableWaterDiffusionInAir = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
+   using IsothermalFields = RichardsVtkOutputFields<enableWaterDiffusionInAir>;
+public:
+    using type = EnergyVtkOutputFields<IsothermalFields>;
+};
 
 // \}
 } // end namespace Properties

@@ -25,8 +25,10 @@
 #ifndef DUMUX_3PNI_CONVECTION_PROBLEM_HH
 #define DUMUX_3PNI_CONVECTION_PROBLEM_HH
 
-#include <math.h>
+#include <cmath>
+#include <dune/grid/yaspgrid.hh>
 
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
@@ -38,8 +40,7 @@
 
 #include "3pnispatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /**
  * \ingroup ThreePTests
  * \brief Definition of a 1p2cni problem:
@@ -48,9 +49,8 @@ namespace Dumux
 template <class TypeTag>
 class ThreePNIConvectionProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(ThreePNIConvectionTypeTag, INHERITS_FROM(ThreePNI, ThreePNISpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(ThreePNIConvectionTypeTag, INHERITS_FROM(ThreePNI));
 NEW_TYPE_TAG(ThreePNIConvectionBoxTypeTag, INHERITS_FROM(BoxModel, ThreePNIConvectionTypeTag));
 NEW_TYPE_TAG(ThreePNIConvectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ThreePNIConvectionTypeTag));
 NEW_TYPE_TAG(ThreePNIConvectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, ThreePNIConvectionTypeTag));
@@ -68,11 +68,13 @@ SET_TYPE_PROP(ThreePNIConvectionTypeTag,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThreePNIConvectionTypeTag,
-              SpatialParams,
-              ThreePNISpatialParams<TypeTag>);
-}
-
+SET_PROP(ThreePNIConvectionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = ThreePNISpatialParams<FVGridGeometry, Scalar>;
+};
+} // end namespace Properties
 
 /*!
  * \ingroup ThreePModel
@@ -112,21 +114,20 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using IapwsH2O = H2O<Scalar>;
+    using IapwsH2O = Components::H2O<Scalar>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
         // index of the primary variables
         pressureIdx = Indices::pressureIdx,
         swIdx = Indices::swIdx,
         snIdx = Indices::snIdx,
         temperatureIdx = Indices::temperatureIdx,
-        wPhaseIdx = Indices::wPhaseIdx,
+        wPhaseIdx = FluidSystem::wPhaseIdx,
         conti0EqIdx = Indices::conti0EqIdx,
         energyEqIdx = Indices::energyEqIdx
     };
@@ -134,7 +135,7 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     enum { dimWorld = GridView::dimensionworld };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
     ThreePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -166,7 +167,7 @@ public:
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 
-        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
+        const auto someElemSol = elementSolution(someElement, curSol, this->fvGridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
         auto fvGeometry = localView(this->fvGridGeometry());
@@ -180,8 +181,8 @@ public:
         const auto densityW = volVars.density(wPhaseIdx);
         const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
         const auto storageW =  densityW*heatCapacityW*porosity;
-        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
-        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
+        const auto densityS = volVars.solidDensity();
+        const auto heatCapacityS = volVars.solidHeatCapacity();
         const auto storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
         std::cout << "storage: " << storageTotal << '\n';
 

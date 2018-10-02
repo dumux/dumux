@@ -1,4 +1,3 @@
-#install headers
 install(FILES
 localresidual.hh
 model.hh

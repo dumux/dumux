@@ -45,13 +45,11 @@ namespace Properties
     NEW_PROP_TAG(GridView);
     NEW_PROP_TAG(DofMapper);
     NEW_PROP_TAG(FluidSystem);
-    NEW_PROP_TAG(ElementSolutionVector);
+    NEW_PROP_TAG(ElementSolution);
     NEW_PROP_TAG(SolutionVector);
     NEW_PROP_TAG(FVElementGeometry);
     NEW_PROP_TAG(TwoPIAIndices);
     NEW_PROP_TAG(NumEq);
-    NEW_PROP_TAG(MaterialLaw);
-    NEW_PROP_TAG(ElementVolumeVariables);
     NEW_PROP_TAG(AwnSurface);
     NEW_PROP_TAG(AwnSurfaceParams);
 }
@@ -65,12 +63,9 @@ class PlotOverLine2D
 
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using DofMapper = typename GET_PROP_TYPE(TypeTag, DofMapper);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using aterialLawParams = typename MaterialLaw::Params;
 
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {
@@ -84,8 +79,9 @@ class PlotOverLine2D
         dim         = GridView::dimension,
         dimWorld    = GridView::dimensionworld,
     };
+    using Element = typename GridView::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     /*!

@@ -26,66 +26,38 @@
 
 #include <dune/common/float_cmp.hh>
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
 
-namespace Dumux
-{
-/*!
- * \ingroup ThreePThreeCTests
- * \brief Definition of the spatial parameters for the kuevette problem.
- */
-//forward declaration
-template<class TypeTag>
-class KuevetteSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(KuevetteSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(KuevetteSpatialParams, SpatialParams, KuevetteSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(KuevetteSpatialParams, MaterialLaw)
-{
- private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
- public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedParkerVanGen3P<Scalar>>;
-};
-} // end namespace Dumux
+namespace Dumux {
 
 /*!
  * \ingroup ThreePThreeCModel
  * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the kuevette problem
  */
-template<class TypeTag>
-class KuevetteSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class KuevetteSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         KuevetteSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-
-    enum { dimWorld=GridView::dimensionworld };
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       KuevetteSpatialParams<FVGridGeometry, Scalar>>;
+
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
+
+    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
@@ -94,8 +66,8 @@ public:
      *
      * \param gridView The grid view
      */
-    KuevetteSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    KuevetteSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
         fineK_ = 6.28e-12;
@@ -104,9 +76,6 @@ public:
         // porosities
         finePorosity_ = 0.42;
         coarsePorosity_ = 0.42;
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
 
         // residual saturations
         fineMaterialParams_.setSwr(0.12);
@@ -141,9 +110,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
@@ -158,11 +128,8 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      */
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
-        const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
             return finePorosity_;
         else
@@ -178,60 +145,16 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return the material parameters object
      */
+    template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
                                                const SubControlVolume& scv,
-                                               const ElementSolutionVector& elemSol) const
+                                               const ElementSolution& elemSol) const
     {
         const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
             return fineMaterialParams_;
         else
             return coarseMaterialParams_;
-    }
-
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 850; // specific heat capacity of sand [J / (kg K)]
-    }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar solidDensity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
-    {
-        return 2650; // density of sand [kg/m^3]
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
-     */
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume& scv,
-                                    const ElementSolutionVector& elemSol) const
-    {
-        return lambdaSolid_;
     }
 
 private:
@@ -254,7 +177,6 @@ private:
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;
 
-    Scalar lambdaSolid_;
 };
 
 } // end namespace Dumux

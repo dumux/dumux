@@ -24,7 +24,9 @@
 #ifndef DUMUX_CHANNEL_TEST_PROBLEM_HH
 #define DUMUX_CHANNEL_TEST_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dune/grid/yaspgrid.hh>
+
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/constant.hh>
 
@@ -50,9 +52,9 @@ SET_PROP(ChannelTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 #if NONISOTHERMAL
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #else
-    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 #endif
 };
 
@@ -85,32 +87,17 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum { dimWorld = GridView::dimensionworld };
-    enum {
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        pressureIdx = Indices::pressureIdx,
-#if NONISOTHERMAL
-        temperatureIdx = Indices::temperatureIdx,
-        energyBalanceIdx = Indices::energyBalanceIdx,
-#endif
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx
-    };
+    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
@@ -165,24 +152,29 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(momentumBalanceIdx);
-
-#if NONISOTHERMAL
         if(isInlet(globalPos))
-            values.setDirichlet(energyBalanceIdx);
-        else
-            values.setOutflow(energyBalanceIdx);
-#endif
-
-        // set a fixed pressure in one cell
-        if (isOutlet(globalPos))
         {
-            values.setDirichlet(massBalanceIdx);
-            values.setOutflow(momentumBalanceIdx);
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+#if NONISOTHERMAL
+            values.setDirichlet(Indices::temperatureIdx);
+#endif
+        }
+        else if(isOutlet(globalPos))
+        {
+            values.setDirichlet(Indices::pressureIdx);
+#if NONISOTHERMAL
+            values.setOutflow(Indices::energyBalanceIdx);
+#endif
         }
         else
-            values.setOutflow(massBalanceIdx);
+        {
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+#if NONISOTHERMAL
+            values.setNeumann(Indices::energyBalanceIdx);
+#endif
+        }
 
         return values;
     }
@@ -199,11 +191,11 @@ public:
 
         if(isInlet(globalPos))
         {
-            values[velocityXIdx] = inletVelocity_;
+            values[Indices::velocityXIdx] = inletVelocity_;
 #if NONISOTHERMAL
         // give the system some time so that the pressure can equilibrate, then start the injection of the hot liquid
         if(time() >= 200.0)
-            values[temperatureIdx] = 293.15;
+            values[Indices::temperatureIdx] = 293.15;
 #endif
         }
 
@@ -225,12 +217,12 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[pressureIdx] = 1.1e+5;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
+        values[Indices::pressureIdx] = 1.1e+5;
+        values[Indices::velocityXIdx] = 0.0;
+        values[Indices::velocityYIdx] = 0.0;
 
 #if NONISOTHERMAL
-        values[temperatureIdx] = 283.15;
+        values[Indices::temperatureIdx] = 283.15;
 #endif
 
         return values;

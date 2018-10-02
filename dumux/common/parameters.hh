@@ -19,9 +19,7 @@
 /*!
  * \file
  * \ingroup Common
- * \brief The infrastructure to retrieve run-time parameters from
- *        Dune::ParameterTrees with the defaul value taken from the
- *        property system.
+ * \brief The infrastructure to retrieve run-time parameters from Dune::ParameterTrees.
  */
 #ifndef DUMUX_PARAMETERS_HH
 #define DUMUX_PARAMETERS_HH
@@ -36,142 +34,9 @@
 #include <dune/common/parametertreeparser.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
-#include <dumux/common/properties/propertysystem.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/loggingparametertree.hh>
-
-#ifndef DOXYGEN // hide deprecated macros from doxygen
-/*!
- * \ingroup Common
- * \brief Retrieve a runtime parameter which _does_ have a default value taken from
- *        the Dumux property system.
- *
- * Example:
- *
- * \code
- * // -> retrieves scalar value UpwindWeight, default
- * // is taken from the property UpwindWeight
- * GET_PARAM(TypeTag, Scalar, UpwindWeight);
- * \endcode
- */
-// #define GET_PARAM(TypeTag, ParamType, ParamName)
-//     ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#ParamName), GET_PROP_VALUE(TypeTag, ParamName))
-
-/*!
- * \ingroup Common
- * \brief Retrieve a runtime parameter which _does_ have a default value taken from
- *        the Dumux property system.
- *
- * The third argument is group name which must be the prefix to the
- * property name which provides the default value for the parameter
- *
- * Example:
- *
- * \code
- * // -> retrieves Boolean value Newton.WriteConvergence, default
- * // is taken from the property NewtonWriteConvergence
- * GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence);
- * \endcode
- */
-#define GET_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName)  \
-    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#GroupName) + "." + std::string(#ParamName), ParamType(GET_PROP_VALUE(TypeTag, GroupName##ParamName)))
-
-
-/*!
- * \ingroup Common
- * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
- *        the Dumux property system.
- *
- * Example:
- *
- * \code
- * // -> retrieves global integer value NumberOfCellsX
- * GET_RUNTIME_PARAM(TypeTag, int, NumberOfCellsX);
- * \endcode
- */
-#define GET_RUNTIME_PARAM(TypeTag, ParamType, ParamName) \
-    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#ParamName))
-
-/*!
- * \ingroup Common
- * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
- *        the Dumux property system.
- *
- * The third argument is the complete parameter name, which has to be a c-string.
- * This allows to use string variables as parameter name.
- *
- * Example with a temporary c-string:
- *
- * \code
- * // -> retrieves global integer value "NumberOfCellsX" which is
- * // located in the parameter group "Grid"
- * GET_RUNTIME_PARAM_CSTRING(TypeTag, int, "Grid.NumberOfCellsX");
- * \endcode
- *
- * Example with a string variable:
- *
- * \code
- * // -> retrieves global integer value "NumberOfCellsX" which is
- * // located in the parameter group "Grid"
- * std::string paramName = "Grid";
- * paramName += ".NumberOfCellsX";
- * GET_RUNTIME_PARAM_CSTRING(TypeTag, int, paramName.c_str());
- * \endcode
- */
-#define GET_RUNTIME_PARAM_CSTRING(TypeTag, ParamType, ParamName) \
-    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(ParamName))
-
-/*!
- * \ingroup Common
- * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
- *        the Dumux property system.
- *
- * The third argument is group name.
- *
- * Example:
- *
- * \code
- * // -> retrieves global integer value "NumberOfCellsX" which is
- * // located in the parameter group "Grid"
- * GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NumberOfCellsX);
- * \endcode
- */
-#define GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName) \
-    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#GroupName) + "." + std::string(#ParamName))
-
-/*!
- * \ingroup Common
- * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
- *        the Dumux property system.
- *
- * The third argument is group name, which has to be a c-string.
- * This allows to use string variables as group name. The functionality of having variables as
- * group name is no problem when directly using the Dune::ParameterTree. For consistency with the
- * macro way of reading in the parameters this macro is necessary e.g. in the gridcreator to reach
- * a satisfying level of generality.
- *
- * Example with a temporary c-string:
- *
- * \code
- * // -> retrieves global integer value "NumberOfCellsX" which is
- * // located in the parameter group "Grid"
- * GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, "Grid", NumberOfCellsX);
- * \endcode
- *
- * Example with a string variable:
- *
- * \code
- * // -> retrieves global integer value "NumberOfCellsX" which is
- * // located in the parameter group "Grid"
- * std::string groupName = "Grid";
- * GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, groupName.c_str(), NumberOfCellsX);
- * \endcode
- */
-#define GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, ParamType, GroupName, ParamName) \
-    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(GroupName) + "." + std::string(#ParamName))
-
-#endif // DOXYGEN
 
 namespace Dumux {
 
@@ -352,7 +217,6 @@ private:
     {
         // parameters in the implicit group
         params["Implicit.UpwindWeight"] = "1.0";
-        params["Implicit.EnablePartialReassemble"] = "false";
         params["Implicit.EnableJacobianRecycling"] = "false";
 
         // parameters in the assembly group
@@ -369,7 +233,7 @@ private:
         // parameters in the problem group
         params["Problem.EnableGravity"] = "true";
 
-        // parameters in the newton group
+        // parameters in the Newton group
         params["Newton.MaxSteps"] = "18";
         params["Newton.TargetSteps"] = "10";
         params["Newton.UseLineSearch"] = "false";
@@ -381,6 +245,7 @@ private:
         params["Newton.EnableAbsoluteResidualCriterion"] = "false";
         params["Newton.MaxAbsoluteResidual"] = "1e-5";
         params["Newton.SatisfyResidualAndShiftCriterion"] = "false";
+        params["Newton.EnablePartialReassembly"] = "false";
 
         // parameters in the time loop group
         params["TimeLoop.MaxTimeStepSize"] = "1e300";
@@ -395,7 +260,10 @@ private:
     }
 };
 
-// a free function to set model- or problem-specific default parameters
+/*!
+ * \ingroup Common
+ * \brief a free function to set model- or problem-specific default parameters
+ */
 void setParam(Dune::ParameterTree& params,
               const std::string& group,
               const std::string& key,
@@ -435,7 +303,7 @@ T getParamFromGroup(Args&&... args)
  * \ingroup Common
  * \brief Check whether a key exists in the parameter tree
  */
-bool haveParam(const std::string& param)
+bool hasParam(const std::string& param)
 {
     const auto& p = Parameters::getTree();
     return p.hasKey(param);
@@ -446,7 +314,7 @@ bool haveParam(const std::string& param)
  * \brief Check whether a key exists in the parameter tree with a model group prefix
  */
 template<typename... Args>
-bool haveParamInGroup(const std::string& paramGroup, const std::string& param)
+bool hasParamInGroup(const std::string& paramGroup, const std::string& param)
 {
     const auto& p = Parameters::getTree();
     if (paramGroup == "")
@@ -455,15 +323,14 @@ bool haveParamInGroup(const std::string& paramGroup, const std::string& param)
         return p.hasKey(paramGroup + "." + param);
 }
 
-#ifndef DOXYGEN
-template<typename T, typename... Args>
-DUNE_DEPRECATED_MSG("Using preprocessor MACROS for getting parameters is deprecated on next. Please use the new getParam method.")
-T getParam_UsingDeprecatedMacro(Args&&... args)
-{
-    const auto& p = Parameters::getTree();
-    return p.template get<T>(std::forward<Args>(args)... );
-}
-#endif
+DUNE_DEPRECATED_MSG("haveParam is deprecated, please use hasParam instead.")
+bool haveParam(const std::string& param)
+{ return hasParam(param); }
+
+template<typename... Args>
+DUNE_DEPRECATED_MSG("haveParamInGroup is deprecated, please use hasParamInGroup instead.")
+bool haveParamInGroup(const std::string& paramGroup, const std::string& param)
+{ return hasParamInGroup(paramGroup, param); }
 
 } // namespace Dumux
 

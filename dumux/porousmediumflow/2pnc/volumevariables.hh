@@ -29,79 +29,85 @@
 #include <vector>
 
 #include <dumux/common/math.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
-#include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
+#include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
+
+#include <dumux/material/fluidstates/compositional.hh>
+#include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
-#include "indices.hh" // for formulation
+#include <dumux/porousmediumflow/2p/formulation.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup TwoPNCModel
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase, n-component model.
  */
-template <class TypeTag>
-class TwoPNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
+template <class Traits>
+class TwoPNCVolumeVariables
+: public PorousMediumFlowVolumeVariables<Traits>
+, public EnergyVolumeVariables<Traits, TwoPNCVolumeVariables<Traits> >
 {
-    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
+    using ParentType = PorousMediumFlowVolumeVariables<Traits>;
+    using EnergyVolVars = EnergyVolumeVariables<Traits, TwoPNCVolumeVariables<Traits> >;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using PermeabilityType = typename Traits::PermeabilityType;
+    using FS = typename Traits::FluidSystem;
+    using ModelTraits = typename Traits::ModelTraits;
+    static constexpr int numFluidComps = ParentType::numComponents();
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-        numMajorComponents = GET_PROP_VALUE(TypeTag, NumMajorComponents),
-
-        // formulations
-        formulation = GET_PROP_VALUE(TypeTag, Formulation),
-        pwsn = TwoPNCFormulation::pwsn,
-        pnsw = TwoPNCFormulation::pnsw,
+        numMajorComponents = ModelTraits::numPhases(),
 
         // phase indices
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
+        phase0Idx = FS::phase0Idx,
+        phase1Idx = FS::phase1Idx,
 
         // component indices
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
+        comp0Idx = FS::comp0Idx,
+        comp1Idx = FS::comp1Idx,
 
         // phase presence enums
-        nPhaseOnly = Indices::nPhaseOnly,
-        wPhaseOnly = Indices::wPhaseOnly,
-        bothPhases = Indices::bothPhases,
+        secondPhaseOnly = ModelTraits::Indices::secondPhaseOnly,
+        firstPhaseOnly = ModelTraits::Indices::firstPhaseOnly,
+        bothPhases = ModelTraits::Indices::bothPhases,
 
         // primary variable indices
-        pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
+        pressureIdx = ModelTraits::Indices::pressureIdx,
+        switchIdx = ModelTraits::Indices::switchIdx
     };
 
-    using Element = typename GridView::template Codim<0>::Entity;
-    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
-    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static_assert(useMoles, "use moles has to be set true in the 2pnc model");
+    static constexpr auto formulation = ModelTraits::priVarFormulation();
+    static constexpr bool setFirstPhaseMoleFractions = ModelTraits::setMoleFractionsForFirstPhase();
+
+    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FS>;
+    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FS>;
+
 
 public:
+    //! export fluid state type
+    using FluidState = typename Traits::FluidState;
+    //! export fluid system type
+    using FluidSystem = typename Traits::FluidSystem;
+    //! export type of solid state
+    using SolidState = typename Traits::SolidState;
+    //! export type of solid system
+    using SolidSystem = typename Traits::SolidSystem;
 
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    //! return whether moles or masses are balanced
+    static constexpr bool useMoles() { return Traits::ModelTraits::useMoles(); }
+    //! return the two-phase formulation used here
+    static constexpr TwoPFormulation priVarFormulation() { return formulation; }
+
+    // check for permissive specifications
+    static_assert(useMoles(), "use moles has to be set true in the 2pnc model");
+    static_assert(ModelTraits::numPhases() == 2, "NumPhases set in the model is not two!");
+    static_assert((formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0), "Chosen TwoPFormulation not supported!");
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -112,54 +118,57 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub control volume
     */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume& scv)
+                const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
         /////////////
         // calculate the remaining quantities
         /////////////
-        const auto &materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
+        const auto& matParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        const int nPhaseIdx = 1 - wPhaseIdx;
+
+        // mobilities -> require wetting phase saturation as parameter!
+        mobility_[wPhaseIdx] = MaterialLaw::krw(matParams, saturation(wPhaseIdx))/fluidState_.viscosity(wPhaseIdx);
+        mobility_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx))/fluidState_.viscosity(nPhaseIdx);
+
+        // binary diffusion coefficients
+        for (unsigned int compJIdx = 0; compJIdx < ModelTraits::numComponents(); ++compJIdx)
         {
-            // relative permeabilities
-            Scalar kr;
-            if (phaseIdx == wPhaseIdx)
-                kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
-            else // ATTENTION: krn requires the wetting-phase saturation as parameter!
-                kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
-
-            mobility_[phaseIdx] = kr / fluidState_.viscosity(phaseIdx);
-
-            int compIIdx = phaseIdx;
-            for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
-            {
-                // binary diffusion coefficients
-                if(compIIdx!= compJIdx)
-                {
-                    setDiffusionCoefficient_(phaseIdx, compJIdx,
-                                             FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                                                     paramCache,
-                                                                                     phaseIdx,
-                                                                                     compIIdx,
-                                                                                     compJIdx));
-                }
-            }
+            if(compJIdx != comp0Idx)
+                setDiffusionCoefficient_( phase0Idx, compJIdx,
+                                          FluidSystem::binaryDiffusionCoefficient(fluidState_,
+                                                                                  paramCache,
+                                                                                  phase0Idx,
+                                                                                  comp0Idx,
+                                                                                  compJIdx) );
+            if(compJIdx != comp1Idx)
+                setDiffusionCoefficient_( phase1Idx, compJIdx,
+                                          FluidSystem::binaryDiffusionCoefficient(fluidState_,
+                                                                                  paramCache,
+                                                                                  phase1Idx,
+                                                                                  comp1Idx,
+                                                                                  compJIdx) );
         }
 
-        // porosity & permeability
-        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        // calculate the remaining quantities
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
+        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 
@@ -174,184 +183,152 @@ public:
      *
      * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */
-    static void completeFluidState(const ElementSolutionVector& elemSol,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const SubControlVolume& scv,
-                                   FluidState& fluidState)
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void completeFluidState(const ElemSol& elemSol,
+                            const Problem& problem,
+                            const Element& element,
+                            const Scv& scv,
+                            FluidState& fluidState,
+                            SolidState& solidState)
     {
-        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
-        fluidState.setTemperature(t);
+        EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
-        auto&& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
 
-        /////////////
-        // set the saturations
-        /////////////
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        fluidState.setWettingPhase(wPhaseIdx);
 
-        Scalar Sn;
-        if (phasePresence == nPhaseOnly)
+        // set the saturations
+        if (phasePresence == secondPhaseOnly)
         {
-            Sn = 1.0;
+            fluidState.setSaturation(phase0Idx, 0.0);
+            fluidState.setSaturation(phase1Idx, 1.0);
         }
-        else if (phasePresence == wPhaseOnly)
+        else if (phasePresence == firstPhaseOnly)
         {
-            Sn = 0.0;
+            fluidState.setSaturation(phase0Idx, 1.0);
+            fluidState.setSaturation(phase1Idx, 0.0);
         }
         else if (phasePresence == bothPhases)
         {
-            if (formulation == pwsn)
-                Sn = priVars[switchIdx];
-            else if (formulation == pnsw)
-                Sn = 1.0 - priVars[switchIdx];
-            else
-                DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
-        }
-        else
-        {
-            DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-        }
-
-        fluidState.setSaturation(nPhaseIdx, Sn);
-        fluidState.setSaturation(wPhaseIdx, 1.0 - Sn);
-
-        /////////////
-        // set the pressures of the fluid phases
-        /////////////
-
-        // calculate capillary pressure
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        auto pc = MaterialLaw::pc(materialParams, 1 - Sn);
-
-        // extract the pressures
-        if (formulation == pwsn)
-        {
-            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
-            if (priVars[pressureIdx] + pc < 0.0)
-                 DUNE_THROW(NumericalProblem,"Capillary pressure is too low");
-            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
-        }
-        else if (formulation == pnsw)
-        {
-            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx]);
-            // Here we check for (p_g - pc) in order to ensure that (p_l > 0)
-            if (priVars[pressureIdx] - pc < 0.0)
+            if (formulation == TwoPFormulation::p0s1)
             {
-                std::cout<< "p_n: "<< priVars[pressureIdx]<<" Cap_press: "<< pc << std::endl;
-                DUNE_THROW(NumericalProblem,"Capillary pressure is too high");
+                fluidState.setSaturation(phase1Idx, priVars[switchIdx]);
+                fluidState.setSaturation(phase0Idx, 1 - priVars[switchIdx]);
             }
-            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
+            else
+            {
+                fluidState.setSaturation(phase0Idx, priVars[switchIdx]);
+                fluidState.setSaturation(phase1Idx, 1 - priVars[switchIdx]);
+            }
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
+
+        // set pressures of the fluid phases
+        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+        if (formulation == TwoPFormulation::p0s1)
+        {
+            fluidState.setPressure(phase0Idx, priVars[pressureIdx]);
+            fluidState.setPressure(phase1Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] + pc_
+                                                                       : priVars[pressureIdx] - pc_);
         }
         else
         {
-            DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
+            fluidState.setPressure(phase1Idx, priVars[pressureIdx]);
+            fluidState.setPressure(phase0Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] - pc_
+                                                                       : priVars[pressureIdx] + pc_);
         }
 
-        /////////////
         // calculate the phase compositions
-        /////////////
-
         typename FluidSystem::ParameterCache paramCache;
 
         // now comes the tricky part: calculate phase composition
         if (phasePresence == bothPhases)
         {
             // both phases are present, phase composition results from
-            // the nonwetting <-> wetting equilibrium. This is
-            // the job of the "MiscibleMultiPhaseComposition"
-            // constraint solver
+            // the first <-> second phase equilibrium. This is the job
+            // of the "MiscibleMultiPhaseComposition" constraint solver
 
             // set the known mole fractions in the fluidState so that they
             // can be used by the MiscibleMultiPhaseComposition constraint solver
-            unsigned int knownPhaseIdx = nPhaseIdx;
-            if (GET_PROP_VALUE(TypeTag, SetMoleFractionsForWettingPhase))
-            {
-                knownPhaseIdx = wPhaseIdx;
-            }
 
-            for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-            {
+            const int knownPhaseIdx = setFirstPhaseMoleFractions ? phase0Idx : phase1Idx;
+            for (int compIdx = numMajorComponents; compIdx < ModelTraits::numComponents(); ++compIdx)
                 fluidState.setMoleFraction(knownPhaseIdx, compIdx, priVars[compIdx]);
-            }
 
             MiscibleMultiPhaseComposition::solve(fluidState,
-                                           paramCache,
-                                           /*setViscosity=*/true,
-                                           /*setEnthalpy=*/false,
-                                           knownPhaseIdx);
+                                                 paramCache,
+                                                 knownPhaseIdx);
         }
-        else if (phasePresence == nPhaseOnly)
+        else if (phasePresence == secondPhaseOnly)
         {
-            Dune::FieldVector<Scalar, numComponents> moleFrac;
 
-            moleFrac[wCompIdx] = priVars[switchIdx];
+            Dune::FieldVector<Scalar, ModelTraits::numComponents()> moleFrac;
 
-            for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                moleFrac[compIdx] = priVars[compIdx];
+            moleFrac[comp0Idx] = priVars[switchIdx];
+            Scalar sumMoleFracOtherComponents = moleFrac[comp0Idx];
 
-            Scalar sumMoleFracOtherComponents = 0;
-            for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                sumMoleFracOtherComponents += moleFrac[compIdx];
-
-            sumMoleFracOtherComponents += moleFrac[wCompIdx];
-            moleFrac[nCompIdx] = 1 - sumMoleFracOtherComponents;
-
-            // Set fluid state mole fractions
-            for (int compIdx=0; compIdx<numComponents; ++compIdx)
-                fluidState.setMoleFraction(nPhaseIdx, compIdx, moleFrac[compIdx]);
-
-            // calculate the composition of the remaining phases (as
-            // well as the densities of all phases). this is the job
-            // of the "ComputeFromReferencePhase" constraint solver
-            ComputeFromReferencePhase::solve(fluidState,
-                                             paramCache,
-                                             nPhaseIdx,
-                                             /*setViscosity=*/true,
-                                             /*setEnthalpy=*/false);
-        }
-        else if (phasePresence == wPhaseOnly)
-        {
-        // only the wetting phase is present, i.e. wetting phase
-        // composition is stored explicitly.
-        // extract _mass_ fractions in the non-wetting phase
-            Dune::FieldVector<Scalar, numComponents> moleFrac;
-
-            moleFrac[nCompIdx] = priVars[switchIdx];
-
-            for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                moleFrac[compIdx] = priVars[compIdx];
-
-            Scalar sumMoleFracOtherComponents = 0;
-            for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                sumMoleFracOtherComponents += moleFrac[compIdx];
-
-            sumMoleFracOtherComponents += moleFrac[nCompIdx];
-            moleFrac[wCompIdx] = 1 - sumMoleFracOtherComponents;
-
-            // convert mass to mole fractions and set the fluid state
-            for (int compIdx=0; compIdx<numComponents; ++compIdx)
+            for (int compIdx = numMajorComponents; compIdx < ModelTraits::numComponents(); ++compIdx)
             {
-                fluidState.setMoleFraction(wPhaseIdx, compIdx, moleFrac[compIdx]);
+                moleFrac[compIdx] = priVars[compIdx];
+                sumMoleFracOtherComponents += moleFrac[compIdx];
             }
 
+            moleFrac[comp1Idx] = 1 - sumMoleFracOtherComponents;
+
+            // Set fluid state mole fractions
+            for (int compIdx = 0; compIdx < ModelTraits::numComponents(); ++compIdx)
+                fluidState.setMoleFraction(phase1Idx, compIdx, moleFrac[compIdx]);
+
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
             // of the "ComputeFromReferencePhase" constraint solver
             ComputeFromReferencePhase::solve(fluidState,
                                              paramCache,
-                                             wPhaseIdx,
-                                             /*setViscosity=*/true,
-                                             /*setEnthalpy=*/false);
+                                             phase1Idx);
+        }
+        else if (phasePresence == firstPhaseOnly)
+        {
+            // only the first phase is present, i.e. first phase composition
+            // is stored explicitly. extract _mass_ fractions in the second phase
+            Dune::FieldVector<Scalar, ModelTraits::numComponents()> moleFrac;
+
+            moleFrac[comp1Idx] = priVars[switchIdx];
+            Scalar sumMoleFracOtherComponents = moleFrac[comp1Idx];
+            for (int compIdx = numMajorComponents; compIdx < ModelTraits::numComponents(); ++compIdx)
+            {
+                moleFrac[compIdx] = priVars[compIdx];
+
+                sumMoleFracOtherComponents += moleFrac[compIdx];
+            }
+
+            moleFrac[comp0Idx] = 1 - sumMoleFracOtherComponents;
+
+            // convert mass to mole fractions and set the fluid state
+            for (int compIdx = 0; compIdx < ModelTraits::numComponents(); ++compIdx)
+                fluidState.setMoleFraction(phase0Idx, compIdx, moleFrac[compIdx]);
+
+            // calculate the composition of the remaining phases (as
+            // well as the densities of all phases). this is the job
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(fluidState,
+                                             paramCache,
+                                             phase0Idx);
         }
         paramCache.updateAll(fluidState);
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
         {
             Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
             Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
-            Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
+            Scalar h = EnergyVolVars::enthalpy(fluidState, paramCache, phaseIdx);
 
             fluidState.setDensity(phaseIdx, rho);
+            fluidState.setMolarDensity(phaseIdx, rhoMolar);
             fluidState.setViscosity(phaseIdx, mu);
             fluidState.setEnthalpy(phaseIdx, h);
         }
@@ -362,6 +339,12 @@ public:
      */
     const FluidState &fluidState() const
     { return fluidState_; }
+
+    /*!
+     * \brief Returns the phase state for the control-volume.
+     */
+    const SolidState &solidState() const
+    { return solidState_; }
 
     /*!
      * \brief Returns the saturation of a given phase within
@@ -379,12 +362,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar density(int phaseIdx) const
-    {
-        if (phaseIdx < numPhases)
-            return fluidState_.density(phaseIdx);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
-    }
+    { return fluidState_.density(phaseIdx); }
 
     /*!
      * \brief Returns the kinematic viscosity of a given phase within the
@@ -393,23 +371,19 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar viscosity(int phaseIdx) const
-    {
-        if (phaseIdx < numPhases)
-            return fluidState_.viscosity(phaseIdx);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
-    }
+    { return fluidState_.viscosity(phaseIdx); }
 
     /*!
-     * \brief Returns the mass density of a given phase within the
+     * \brief Returns the molar density of a given phase within the
      *        control volume.
      *
      * \param phaseIdx The phase index
      */
     Scalar molarDensity(int phaseIdx) const
     {
-        if (phaseIdx < numPhases)
+        if (phaseIdx < ModelTraits::numPhases())
             return fluidState_.molarDensity(phaseIdx);
+
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -447,13 +421,13 @@ public:
      *        in \f$[kg/(m*s^2)=N/m^2=Pa]\f$.
      */
     Scalar capillaryPressure() const
-    { return fluidState_.pressure(FluidSystem::nPhaseIdx) - fluidState_.pressure(FluidSystem::wPhaseIdx); }
+    { return pc_; }
 
     /*!
      * \brief Returns the average porosity within the control volume.
      */
     Scalar porosity() const
-    { return porosity_; }
+    { return solidState_.porosity();  }
 
     /*!
      * \brief Returns the permeability within the control volume.
@@ -472,17 +446,8 @@ public:
         else if (compIdx > phaseIdx)
             return diffCoefficient_[phaseIdx][compIdx-1];
         else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
-
-    /*!
-     * \brief Returns the molarity of a component in the phase
-     *
-     * \param phaseIdx the index of the fluid phase
-     * \param compIdx the index of the component
-     */
-     Scalar molarity(int phaseIdx, int compIdx) const // [moles/m^3]
-    { return fluidState_.molarity(phaseIdx, compIdx);}
 
      /*!
       * \brief Returns the mass fraction of a component in the phase
@@ -503,10 +468,8 @@ public:
      { return fluidState_.moleFraction(phaseIdx, compIdx); }
 
 protected:
-    Scalar porosity_;               //!< Effective porosity within the control volume
-    PermeabilityType permeability_; //!> Effective permeability within the control volume
-    Scalar mobility_[numPhases];    //!< Effective mobility within the control volume
     FluidState fluidState_;
+    SolidState solidState_;
 
 private:
     void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
@@ -516,10 +479,15 @@ private:
         else if (compIdx > phaseIdx)
             diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
         else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
     }
 
-    std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
+    Scalar pc_;                     //!< The capillary pressure
+    Scalar porosity_;               //!< Effective porosity within the control volume
+    PermeabilityType permeability_; //!> Effective permeability within the control volume
+    Scalar mobility_[ModelTraits::numPhases()]; //!< Effective mobility within the control volume
+    std::array<std::array<Scalar, ModelTraits::numComponents()-1>, ModelTraits::numPhases()> diffCoefficient_;
+
 };
 
 } // end namespace Dumux

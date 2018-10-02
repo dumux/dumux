@@ -26,7 +26,6 @@
 
 #include <cmath>
 #include <dune/common/fmatrix.hh>
-#include <dumux/common/properties.hh>
 
 namespace Dumux {
 
@@ -35,71 +34,27 @@ namespace Dumux {
  * \brief The Kozeny-Carman relationship for the calculation of a porosity-dependent permeability.
  *        When the porosity is implemented as solution-independent, using this relationship for the
  *        permeability leads to unnecessary overhead.
+ *
+ * \tparam PermeabilityType The type used for the intrinsic permeability
  */
-template<class TypeTag>
+template<class PermeabilityType>
 class PermeabilityKozenyCarman
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Tensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-
-    using PermType = typename SpatialParams::PermeabilityType;
-
 public:
-
-    /*!
-     * \brief The initial parameter distribution.
-     * \param spatialParams the spatial parameters
-     */
-    void init(const SpatialParams& spatialParams)
-    {
-        spatialParamsPtr_ = &spatialParams;
-    }
-
     /*!
      * \brief calculates the permeability for a given sub-control volume
-     * \param element element
-     * \param elemSol the element solution
-     * \param scv sub control volume
+     * \param refPerm Reference permeability before porosity changes
+     * \param refPoro The poro corresponding to the reference permeability
+     * \param poro The porosity for which permeability is to be evaluated
      */
-    PermType evaluatePermeability(const Element& element,
-                                  const SubControlVolume& scv,
-                                  const ElementSolution& elemSol) const
+    template<class Scalar>
+    PermeabilityType evaluatePermeability(PermeabilityType refPerm, Scalar refPoro, Scalar poro) const
     {
-        auto refPoro = spatialParams().referencePorosity(element, scv);
-        auto poro = spatialParams().porosity(element, scv, elemSol);
-
         using std::pow;
         auto factor = pow((1.0 - refPoro)/(1.0 - poro), 2) * pow(poro/refPoro, 3);
-        return applyFactorToPermeability_(spatialParams().referencePermeability(element, scv), factor);
+        refPerm *= factor;
+        return refPerm;
     }
-
-private:
-    const SpatialParams& spatialParams() const
-    { return *spatialParamsPtr_; }
-
-    Scalar applyFactorToPermeability_(Scalar k, Scalar factor) const
-    { return k*factor; }
-
-    Tensor applyFactorToPermeability_(Tensor K, Scalar factor) const
-    {
-        Tensor result(K);
-        for (int i = 0; i < dim; ++i)
-            result[i][i] *= factor;
-        return result;
-    }
-
-    const SpatialParams* spatialParamsPtr_;
 };
 
 } // namespace Dumux

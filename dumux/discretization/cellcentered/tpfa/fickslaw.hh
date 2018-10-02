@@ -33,7 +33,7 @@
 namespace Dumux
 {
 // forward declaration
-template<class TypeTag, DiscretizationMethods discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FicksLawImplementation;
 
 /*!
@@ -41,9 +41,9 @@ class FicksLawImplementation;
  * \brief Fick's law for cell-centered finite volume schemes with two-point flux approximation
  */
 template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
+class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 {
-    using Implementation = FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
+    using Implementation = FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
@@ -52,21 +52,22 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static const int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
+    static const int numPhases = ModelTraits::numPhases();
+    static const int numComponents = ModelTraits::numComponents();
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
     //! Class that fills the cache corresponding to tpfa Fick's Law
@@ -115,7 +116,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 
 public:
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! state the type for the corresponding cache and its filler
     using Cache = TpfaFicksLawCache;
@@ -240,7 +241,8 @@ private:
             sumTi += outsideTi;
             sumXTi += outsideTi*outsideVolVars.moleFraction(phaseIdx, compIdx);
         }
-        return sumXTi/sumTi;
+
+        return sumTi > 0 ? sumXTi/sumTi : 0;
     }
 
     //! compute the density at branching facets for network grids as arithmetic mean

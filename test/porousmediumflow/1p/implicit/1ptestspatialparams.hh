@@ -25,62 +25,52 @@
 #ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
 #define DUMUX_1P_TEST_SPATIALPARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/material/spatialparams/gstatrandomfield.hh>
 
-namespace Dumux
-{
-
-//forward declaration
-template<class TypeTag>
-class OnePTestSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(OnePTestSpatialParams);
-}
+namespace Dumux {
 
 /*!
  * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
  *        1p box model
  */
-template<class TypeTag>
-class OnePTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class OnePTestSpatialParams
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             OnePTestSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexSet = typename GridView::IndexSet;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           OnePTestSpatialParams<FVGridGeometry, Scalar>>;
 
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePTestSpatialParams(const Problem& problem)
-        : ParentType(problem),
-          randomPermeability_(problem.fvGridGeometry().gridView().size(dim), 0.0),
-          indexSet_(problem.fvGridGeometry().gridView().indexSet())
+    OnePTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry),
+          randomPermeability_(fvGridGeometry->gridView().size(dim), 0.0),
+          indexSet_(fvGridGeometry->gridView().indexSet())
     {
         randomField_ = getParam<bool>("SpatialParams.RandomField", false);
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         if(!randomField_)
             permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
         else
-            initRandomField(problem.fvGridGeometry());
+            initRandomField(*fvGridGeometry);
 
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
@@ -94,9 +84,10 @@ public:
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         if (isInLens_(scv.dofPosition()))
         {
@@ -121,7 +112,6 @@ public:
      *
      * \param gridView The GridView used by the problem
      */
-    template<class FVGridGeometry>
     void initRandomField(const FVGridGeometry& gg)
     {
         const auto& gridView = gg.gridView();

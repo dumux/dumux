@@ -91,7 +91,7 @@ class FvMpfaL3dPressure2pAdaptive: public FvMpfaL3dPressure2p<TypeTag>
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -143,8 +143,8 @@ class FvMpfaL3dPressure2pAdaptive: public FvMpfaL3dPressure2p<TypeTag>
     using Grid = typename GridView::Grid;
     using Geometry = typename Element::Geometry;
 
-    using LocalPosition = Dune::FieldVector<Scalar, dim>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
     using DimVector = Dune::FieldVector<Scalar, dim>;
@@ -253,7 +253,7 @@ private:
     const Implementation &asImp_() const
     {   return *static_cast<const Implementation *>(this);}
 
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
+    const GravityVector& gravity_; //!< vector including the gravity constant
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];

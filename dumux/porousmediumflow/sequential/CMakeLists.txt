@@ -1,11 +1,10 @@
-add_subdirectory("cellcentered")
-add_subdirectory("mimetic")
+add_subdirectory(cellcentered)
+add_subdirectory(mimetic)
 
-#install headers
 install(FILES
 gridadapt.hh
-gridadaptinitializationindicatordefault.hh
 gridadaptinitializationindicator.hh
+gridadaptinitializationindicatordefault.hh
 gridadaptproperties.hh
 impet.hh
 impetproblem.hh
@@ -14,6 +13,6 @@ onemodelproblem.hh
 pressureproperties.hh
 properties.hh
 transportproperties.hh
-variableclassadaptive.hh
 variableclass.hh
+variableclassadaptive.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/sequential)

@@ -1,11 +1,11 @@
-add_subdirectory("thermal")
-#install headers
+add_subdirectory(thermal)
+
 install(FILES
-localresidual.hh
 gridvariables.hh
 indices.hh
-newtoncontroller.hh
+localresidual.hh
+model.hh
+newtonsolver.hh
 volumevariables.hh
 vtkoutputfields.hh
-model.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/nonequilibrium)

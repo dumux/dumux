@@ -24,9 +24,12 @@
 #ifndef DUMUX_COMPONENTS_CONSTANT_HH
 #define DUMUX_COMPONENTS_CONSTANT_HH
 
-#include <dune/common/deprecated.hh>
 #include <dumux/common/parameters.hh>
-#include "component.hh"
+
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
+#include <dumux/material/components/solid.hh>
 
 namespace Dumux {
 namespace Components {
@@ -47,7 +50,11 @@ namespace Components {
  * \note If you only have one component you can also omit the "1.".
  */
 template<int id, class Scalar>
-class Constant : public Component<Scalar, Constant<id, Scalar> >
+class Constant
+: public Components::Base<Scalar, Constant<id, Scalar> >
+, public Components::Liquid<Scalar, Constant<id, Scalar> >
+, public Components::Gas<Scalar, Constant<id, Scalar> >
+, public Components::Solid<Scalar, Constant<id, Scalar> >
 {
 
 public:
@@ -112,6 +119,16 @@ public:
     }
 
     /*!
+     * \brief The molar density in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    { return liquidDensity(temperature, pressure)/molarMass(); }
+
+    /*!
      * \brief Sets the liquid dynamic viscosity in \f$\mathrm{[Pa*s]}\f$.
      *
      * Although the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ is returned,
@@ -139,6 +156,17 @@ public:
     }
 
     /*!
+     * \brief The molar density in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return gasDensity(temperature, pressure)/molarMass(); }
+
+
+    /*!
      * \brief Sets the gas dynamic viscosity in \f$\mathrm{[Pa*s]}\f$.
      *
      * Although the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ is returned,
@@ -152,12 +180,44 @@ public:
         static const Scalar kinematicViscosity = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasKinematicViscosity", 1.0);
         return kinematicViscosity * gasDensity(temperature, pressure);
     }
+
+        /*!
+     * \brief The density in \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure in
+     *          \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar solidDensity(Scalar temperature)
+    {
+        static const Scalar density = getParamFromGroup<Scalar>(std::to_string(id), "Component.SolidDensity", 1.0);
+        return density;
+    }
+
+    /*!
+     * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a solid.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar solidThermalConductivity(Scalar temperature)
+    {
+        static const Scalar solidThermalConductivity = getParamFromGroup<Scalar>(std::to_string(id), "Component.SolidThermalConductivity", 1.0);
+        return solidThermalConductivity;
+    }
+
+    /*!
+     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a solid.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar solidHeatCapacity(Scalar temperature)
+    {
+        static const Scalar solidHeatCapacity = getParamFromGroup<Scalar>(std::to_string(id), "Component.SolidHeatCapacity", 1.0);
+        return solidHeatCapacity;
+    }
 };
 
 } // end namespace Components
-
-template<class TypeTag, class Scalar>
-using Constant DUNE_DEPRECATED_MSG("Use Components::Constant<id, Scalar> instead") = Dumux::Components::Constant<1, Scalar>;
 
 } // end namespace Dumux
 

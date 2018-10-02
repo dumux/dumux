@@ -26,72 +26,45 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/elementsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ImplicitModel
  * \brief Empty class for models without pri var switch
  */
-template<class TypeTag>
 class NoPrimaryVariableSwitch
 {
 public:
     template<typename... Args>
-    void init(Args&&... args) {};
+    NoPrimaryVariableSwitch(Args&&...) {}
 
-    template<typename... Args>
-    bool wasSwitched(Args&&... args) const { return false; };
-
-    template<typename... Args>
-    bool update(Args&&... args) { return false; };
-
-    template<typename... Args>
-    bool update_(Args&&... args) {return false; };
+    template<typename... Args> void init(Args&&...) {}
+    template<typename... Args> bool wasSwitched(Args&&...) const { return false; }
+    template<typename... Args> bool update(Args&&...) { return false; }
+    template<typename... Args> void updateSwitchedVolVars(Args&&...) {}
+    template<typename... Args> void updateSwitchedFluxVarsCache(Args&&...) {}
+    template<typename... Args> bool update_(Args&&...) {return false; }
 };
 
 /*!
  * \ingroup PorousmediumCompositional
  * \brief The primary variable switch controlling the phase presence state variable
  */
-template<class TypeTag>
+template<class Implementation>
 class PrimaryVariableSwitch
 {
-    using Implementation = typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
-    enum { dim = GridView::dimension };
-
 public:
-
-    PrimaryVariableSwitch(const std::size_t& numDofs)
+    PrimaryVariableSwitch(const std::size_t& numDofs, int verbosity = 1)
+    : verbosity_(verbosity)
     {
         wasSwitched_.resize(numDofs, false);
     }
 
     //! If the primary variables were recently switched
-    bool wasSwitched(IndexType dofIdxGlobal) const
+    bool wasSwitched(std::size_t dofIdxGlobal) const
     {
         return wasSwitched_[dofIdxGlobal];
     }
@@ -104,13 +77,15 @@ public:
      * \param problem The problem
      * \param fvGridGeometry The finite-volume grid geometry
      */
+    template<class SolutionVector, class GridVariables, class Problem>
     bool update(SolutionVector& curSol,
                 GridVariables& gridVariables,
                 const Problem& problem,
-                const FVGridGeometry& fvGridGeometry)
+                const typename GridVariables::GridGeometry& fvGridGeometry)
     {
         bool switched = false;
         visited_.assign(wasSwitched_.size(), false);
+        std::size_t countSwitched = 0;
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
@@ -120,7 +95,7 @@ public:
             auto elemVolVars = localView(gridVariables.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, curSol);
 
-            const ElementSolution curElemSol(element, curSol, fvGridGeometry);
+            const auto curElemSol = elementSolution(element, curSol, fvGridGeometry);
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
@@ -135,11 +110,17 @@ public:
                     volVars.update(curElemSol, problem, element, scv);
 
                     if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
+                    {
                         switched = true;
-
+                        ++countSwitched;
+                    }
                 }
             }
         }
+
+        if (verbosity_ > 0 && countSwitched > 0)
+            std::cout << "Switched primary variables at " << countSwitched << " dof locations on processor "
+                      << fvGridGeometry.gridView().comm().rank() << "." << std::endl;
 
         // make sure that if there was a variable switch in an
         // other partition we will also set the switch flag for our partition.
@@ -149,6 +130,84 @@ public:
         return switched;
     }
 
+    /*!
+     * \brief Update the volume variables whose primary variables were
+              switched. Required when volume variables are cached globally.
+     */
+    template<class Problem, class GridVariables, class SolutionVector,
+             std::enable_if_t<GridVariables::GridVolumeVariables::cachingEnabled, int> = 0>
+    void updateSwitchedVolVars(const Problem& problem,
+                               const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
+                               const typename GridVariables::GridGeometry& fvGridGeometry,
+                               GridVariables& gridVariables,
+                               const SolutionVector& sol)
+    {
+        // make sure FVElementGeometry is bound to the element
+        auto fvGeometry = localView(fvGridGeometry);
+        fvGeometry.bindElement(element);
+
+        // update the secondary variables if global caching is enabled
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            const auto dofIdxGlobal = scv.dofIndex();
+            if (asImp_().wasSwitched(dofIdxGlobal))
+            {
+                const auto elemSol = elementSolution(element, sol, fvGridGeometry);
+                auto& volVars = gridVariables.curGridVolVars().volVars(scv);
+                volVars.update(elemSol, problem, element, scv);
+            }
+        }
+    }
+
+    /*!
+     * \brief Update the fluxVars cache for dof whose primary variables were
+              switched. Required when flux variables are cached globally (not for box method).
+     */
+     template<class Problem, class GridVariables, class SolutionVector,
+              std::enable_if_t<(GridVariables::GridFluxVariablesCache::cachingEnabled &&
+                                GridVariables::GridGeometry::discMethod != DiscretizationMethod::box), int> = 0>
+     void updateSwitchedFluxVarsCache(const Problem& problem,
+                                const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                const typename GridVariables::GridGeometry& fvGridGeometry,
+                                GridVariables& gridVariables,
+                                const SolutionVector& sol)
+    {
+        // update the flux variables if global caching is enabled
+        const auto dofIdxGlobal = fvGridGeometry.dofMapper().index(element);
+
+        if (asImp_().wasSwitched(dofIdxGlobal))
+        {
+            // make sure FVElementGeometry and the volume variables are bound
+            auto fvGeometry = localView(fvGridGeometry);
+            fvGeometry.bind(element);
+            auto curElemVolVars = localView(gridVariables.curGridVolVars());
+            curElemVolVars.bind(element, fvGeometry, sol);
+            gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
+        }
+    }
+
+     //! brief Do nothing when volume variables are not cached globally.
+     template<class Problem, class GridVariables, class SolutionVector,
+              std::enable_if_t<!GridVariables::GridVolumeVariables::cachingEnabled, int> = 0>
+    void updateSwitchedVolVars(const Problem& problem,
+                               const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
+                               const typename GridVariables::GridGeometry& fvGridGeometry,
+                               GridVariables& gridVariables,
+                               const SolutionVector &uCurrentIter) const {}
+
+    //! brief Do nothing when flux variables are not cached globally or the box method is used.
+    template<class Problem, class GridVariables, class SolutionVector,
+             std::enable_if_t<(!GridVariables::GridFluxVariablesCache::cachingEnabled ||
+                               GridVariables::GridGeometry::discMethod == DiscretizationMethod::box), int> = 0>
+    void updateSwitchedFluxVarsCache(const Problem& problem,
+                               const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
+                               const typename GridVariables::GridGeometry& fvGridGeometry,
+                               GridVariables& gridVariables,
+                               const SolutionVector& sol) const {}
+
+    //!
+    int verbosity() const
+    { return verbosity_; }
 protected:
 
     //! return actual implementation (static polymorphism)
@@ -160,9 +219,10 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
     // perform variable switch at a degree of freedom location
-    bool update_(PrimaryVariables& priVars,
+    template<class VolumeVariables, class GlobalPosition>
+    bool update_(typename VolumeVariables::PrimaryVariables& priVars,
                  const VolumeVariables& volVars,
-                 IndexType dofIdxGlobal,
+                 std::size_t dofIdxGlobal,
                  const GlobalPosition& globalPos)
     {
         // evaluate if the primary variable switch would switch
@@ -174,15 +234,17 @@ protected:
     std::vector<bool> visited_;
 
 private:
-    template<class T = TypeTag>
-    static typename std::enable_if<!GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), VolumeVariables&>::type
-    getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    template<class GridVolumeVariables, class ElementVolumeVariables, class SubControlVolume>
+    static auto getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    -> std::enable_if_t<!GridVolumeVariables::cachingEnabled, decltype(elemVolVars[scv])>
     { return elemVolVars[scv]; }
 
-    template<class T = TypeTag>
-    static typename std::enable_if<GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), VolumeVariables&>::type
-    getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    template<class GridVolumeVariables, class ElementVolumeVariables, class SubControlVolume>
+    static auto getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    -> std::enable_if_t<GridVolumeVariables::cachingEnabled, decltype(gridVolVars.volVars(scv))>
     { return gridVolVars.volVars(scv); }
+
+    int verbosity_; //!< The verbosity level of the primary variable switch
 };
 
 } // end namespace dumux

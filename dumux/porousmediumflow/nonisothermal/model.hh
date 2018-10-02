@@ -53,27 +53,38 @@
 #ifndef DUMUX_NONISOTHERMAL_MODEL_HH
 #define DUMUX_NONISOTHERMAL_MODEL_HH
 
-#include <dumux/common/properties.hh>
-#include "indices.hh"
-#include "vtkoutputfields.hh"
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
 
 namespace Dumux {
-namespace Properties {
 
-NEW_TYPE_TAG(NonIsothermal);
+/*!
+ * \ingroup NIModel
+ * \brief Specifies a number properties of non-isothermal porous medium
+ *        flow models based on the specifics of a given isothermal model.
+ * \tparam IsothermalTraits Model traits of the isothermal model
+ */
+template<class IsothermalTraits>
+struct PorousMediumFlowNIModelTraits : public IsothermalTraits
+{
+    //! We solve for one more equation, i.e. the energy balance
+    static constexpr int numEq() { return IsothermalTraits::numEq()+1; }
+    //! only one energy equation is needed when assuming thermal equilibrium
+    static constexpr int numEnergyEq() { return 1; }
+    //! We additionally solve for the equation balance
+    static constexpr bool enableEnergyBalance() { return true; }
+    //! The indices related to the non-isothermal model
+    using Indices = EnergyIndices< typename IsothermalTraits::Indices, numEq()>;
 
-SET_BOOL_PROP(NonIsothermal, EnableEnergyBalance, true);
+    template <class FluidSystem = void, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        if (pvIdx < numEq() - 1)
+            return IsothermalTraits::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state);
+        else
+            return "T";
+    }
+};
 
-//! add the energy balance
-SET_INT_PROP(NonIsothermal, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq) + 1);
-
-//! indices for non-isothermal models
-SET_TYPE_PROP(NonIsothermal, Indices, EnergyIndices<TypeTag, 0>);
-
-//! indices for non-isothermal models
-SET_TYPE_PROP(NonIsothermal, VtkOutputFields, EnergyVtkOutputFields<TypeTag>);
-
-} // end namespace Properties
 } // end namespace Dumux
 
 #endif

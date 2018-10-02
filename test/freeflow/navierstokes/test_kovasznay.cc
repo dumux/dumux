@@ -42,16 +42,14 @@
 #include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/nonlinear/staggerednewtoncontroller.hh>
 
-#include <dumux/discretization/methods.hh>
 
 #include <dumux/io/staggeredvtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -103,16 +101,15 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv, usage);
 
     // try to create a grid (from the given grid file or the input file)
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    GridCreator::makeGrid();
-    GridCreator::loadBalance();
+    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    gridManager.init();
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -125,14 +122,11 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
     const auto numDofsCellCenter = leafGridView.size(0);
     const auto numDofsFace = leafGridView.size(1);
     SolutionVector x;
-    x[cellCenterIdx].resize(numDofsCellCenter);
-    x[faceIdx].resize(numDofsFace);
+    x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
+    x[FVGridGeometry::faceIdx()].resize(numDofsFace);
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -141,7 +135,7 @@ int main(int argc, char** argv) try
 
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    StaggeredVtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
     vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");
@@ -157,11 +151,8 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NewtonController = StaggeredNewtonController<Scalar>;
-    using NewtonMethod = Dumux::NewtonMethod<NewtonController, Assembler, LinearSolver>;
-    auto newtonController = std::make_shared<NewtonController>();
-    NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
+    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // linearize & solve
     Dune::Timer timer;
@@ -169,6 +160,7 @@ int main(int argc, char** argv) try
 
     // write vtk output
     vtkWriter.write(1.0);
+    problem->postTimeStep(x);
 
     timer.stop();
 

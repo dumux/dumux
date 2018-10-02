@@ -119,10 +119,10 @@ int main (int argc, char *argv[]) try
     using Grid = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>;
 
     constexpr int dim = Grid::dimension;
-    constexpr int dimworld = Grid::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<typename Grid::ctype, dimworld>;
     using FVGridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, ENABLE_CACHING>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     //! make a grid
     GlobalPosition lower(0.0);
@@ -382,7 +382,7 @@ int main (int argc, char *argv[]) try
 // //////////////////////////////////
 //   Error handler
 // /////////////////////////////////
-catch (Dune::Exception e) {
+catch (Dune::Exception& e) {
 
     std::cout << e << std::endl;
     return 1;

@@ -24,7 +24,6 @@
 #ifndef DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_HH
 #define DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_HH
 
-#include <dune/common/version.hh>
 
 // dumux environment
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
@@ -58,7 +57,7 @@ class FvMpfaL3dInteractionVolumeContainer
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
@@ -71,7 +70,7 @@ class FvMpfaL3dInteractionVolumeContainer
     using Intersection = typename GridView::Intersection;
     using IntersectionGeometry = typename Intersection::Geometry;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename ElementGeometry::GlobalCoordinate;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
     using DimVector = Dune::FieldVector<Scalar, dim>;
@@ -375,11 +374,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
 
     const ElementGeometry& geometry = element.geometry();
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     const auto referenceElement = ReferenceElements::general(geometry.type());
-#else
-    const auto& referenceElement = ReferenceElements::general(geometry.type());
-#endif
 
     int levelI = element.level();
 
@@ -1355,11 +1350,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(I
         const ElementGeometry& geometry1 = element1.geometry();
         const ElementGeometry& geometry8 = element8.geometry();
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(geometry1.type());
-#else
-        const auto& referenceElement = ReferenceElements::general(geometry1.type());
-#endif
 
         DimVector edgeCoord(geometry1.global(referenceElement.position(9, dim - 1)));
         interactionVolume.setEdgePosition(edgeCoord, 2);

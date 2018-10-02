@@ -23,47 +23,60 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_FLUXVARIABLES_HH
 #define DUMUX_POROUSMEDIUMFLOW_FLUXVARIABLES_HH
 
+#include <bitset>
+#include <array>
+
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
+#include <dumux/discretization/upwindscheme.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ImplicitModel
  * \brief The porous medium flux variables class that computes advective / convective,
  *        molecular diffusive and heat conduction fluxes.
+ *
+ * \param TypeTag The type tag for access to type traits
+ * \param UpwindScheme The upwind scheme to be applied to advective fluxes
  * \note  Not all specializations are currently implemented
  */
-template<class TypeTag>
-class PorousMediumFluxVariables : public FluxVariablesBase<TypeTag>
+template<class TypeTag,
+         class UpwindScheme = UpwindScheme<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)> >
+class PorousMediumFluxVariables
+: public FluxVariablesBase<typename GET_PROP_TYPE(TypeTag, Problem),
+                           typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView,
+                           typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView,
+                           typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView>
 {
-    using ParentType = FluxVariablesBase<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
+
+    enum
+    {
+        numPhases = ModelTraits::numPhases(),
+        numComponents = ModelTraits::numComponents()
+    };
+
+public:
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-           numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
-    };
-
-    static constexpr bool enableAdvection = GET_PROP_VALUE(TypeTag, EnableAdvection);
-    static constexpr bool enableMolecularDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
-    static constexpr bool enableEnergyBalance = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
+    static constexpr bool enableAdvection = ModelTraits::enableAdvection();
+    static constexpr bool enableMolecularDiffusion = ModelTraits::enableMolecularDiffusion();
+    static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
     static constexpr bool enableThermalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
-
-public:
 
     //! The constructor
     PorousMediumFluxVariables()
@@ -92,7 +105,8 @@ public:
             advFluxIsCached_.set(phaseIdx, true);
         }
 
-        return this->applyUpwindScheme(upwindTerm, advFluxBeforeUpwinding_[phaseIdx], phaseIdx);
+        //! Give the upwind scheme access to the cached variables
+        return UpwindScheme::apply(*this, upwindTerm, advFluxBeforeUpwinding_[phaseIdx], phaseIdx);
     }
 
     /*!

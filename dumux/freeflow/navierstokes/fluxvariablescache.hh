@@ -30,7 +30,7 @@
 namespace Dumux
 {
 // forward declaration
-template<class TypeTag, DiscretizationMethods Method>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FreeFlowFluxVariablesCacheImplementation
 {};
 
@@ -40,7 +40,7 @@ class FreeFlowFluxVariablesCacheImplementation
  *        Store flux stencils and data required for flux calculation
  */
 template<class TypeTag>
-using FreeFlowFluxVariablesCache = FreeFlowFluxVariablesCacheImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using FreeFlowFluxVariablesCache = FreeFlowFluxVariablesCacheImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 /*!
  * \ingroup NavierStokesModel
@@ -49,12 +49,12 @@ using FreeFlowFluxVariablesCache = FreeFlowFluxVariablesCacheImplementation<Type
  *        Specialization for the staggered grid discretization.
  */
 template<class TypeTag>
-class FreeFlowFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::Staggered>
+class FreeFlowFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::staggered>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
 

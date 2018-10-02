@@ -35,7 +35,7 @@ template<class TypeTag, bool enableThermalNonEquilibrium, bool enableChemicalNon
 class NonEquilibriumLocalResidualImplementation;
 
 template <class TypeTag>
-using NonEquilibriumLocalResidual = NonEquilibriumLocalResidualImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium), GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium)>;
+using NonEquilibriumLocalResidual = NonEquilibriumLocalResidualImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableThermalNonEquilibrium(), GET_PROP_TYPE(TypeTag, ModelTraits)::enableChemicalNonEquilibrium()>;
 
 /*!
  * \ingroup PorousmediumNonEquilibriumModel
@@ -47,20 +47,21 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, false>: public GE
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ParentType = typename GET_PROP_TYPE(TypeTag, EquilibriumLocalResidual);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int numComponents = ModelTraits::numComponents();
     enum { conti0EqIdx = Indices::conti0EqIdx };
 public:
     using ParentType::ParentType;
@@ -74,17 +75,17 @@ public:
      *
      */
 
-    ResidualVector computeFlux(const Problem& problem,
-                               const Element& element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace& scvf,
-                               const ElementFluxVariablesCache& elemFluxVarsCache) const
+    NumEqVector computeFlux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace& scvf,
+                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         // get upwind weights into local scope
-        ResidualVector flux(0.0);
+        NumEqVector flux(0.0);
 
         const auto moleDensity = [](const auto& volVars, const int phaseIdx)
         { return volVars.molarDensity(phaseIdx); };
@@ -122,13 +123,13 @@ public:
 
     }
 
-    ResidualVector computeSource(const Problem& problem,
-                                 const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const SubControlVolume &scv) const
+    NumEqVector computeSource(const Problem& problem,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const ElementVolumeVariables& elemVolVars,
+                              const SubControlVolume &scv) const
     {
-        ResidualVector source(0.0);
+        NumEqVector source(0.0);
 
         // add contributions from volume flux sources
         source += problem.source(element, fvGeometry, elemVolVars, scv);
@@ -161,30 +162,31 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public GET
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int numComponents = ModelTraits::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
     enum { conti0EqIdx = Indices::conti0EqIdx };
-    enum { nCompIdx = FluidSystem::nCompIdx } ;
-    enum { wCompIdx = FluidSystem::wCompIdx } ;
-    enum { wPhaseIdx = FluidSystem::wPhaseIdx} ;
-    enum { nPhaseIdx = FluidSystem::nPhaseIdx} ;
-    enum { sPhaseIdx = FluidSystem::sPhaseIdx} ;
+    enum { comp1Idx = FluidSystem::comp1Idx } ;
+    enum { comp0Idx = FluidSystem::comp0Idx } ;
+    enum { phase0Idx = FluidSystem::phase0Idx} ;
+    enum { phase1Idx = FluidSystem::phase1Idx} ;
 
 public:
      using ParentType::ParentType;
@@ -194,11 +196,11 @@ public:
      *    \param storage The mass of the component within the sub-control volume
      *    \param volVars The volume variables
      */
-    ResidualVector computeStorage(const Problem& problem,
-                                  const SubControlVolume& scv,
-                                  const VolumeVariables& volVars) const
+    NumEqVector computeStorage(const Problem& problem,
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
     {
-       ResidualVector storage(0.0);
+       NumEqVector storage(0.0);
 
      // compute storage term of all components within all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -226,17 +228,17 @@ public:
      *        \param fluxVars The flux Variables
      *        \param elemVolVars The volume variables of the current element
      */
-    ResidualVector computeFlux(const Problem& problem,
-                               const Element& element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace& scvf,
-                               const ElementFluxVariablesCache& elemFluxVarsCache) const
+    NumEqVector computeFlux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace& scvf,
+                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         // get upwind weights into local scope
-        ResidualVector flux(0.0);
+        NumEqVector flux(0.0);
 
         // advective fluxes
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -268,26 +270,25 @@ public:
     }
 
 
-    ResidualVector computeSource(const Problem& problem,
-                                 const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const SubControlVolume &scv) const
+    NumEqVector computeSource(const Problem& problem,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const ElementVolumeVariables& elemVolVars,
+                              const SubControlVolume &scv) const
     {
-         ResidualVector source(0.0);
+         NumEqVector source(0.0);
         // In the case of a kinetic consideration, mass transfer
         // between phases is realized via source terms there is a
         // balance equation for each component in each phase
-        const auto& localScvIdx = scv.indexInElement();
-        const auto& volVars = elemVolVars[localScvIdx];
+        const auto& volVars = elemVolVars[scv];
         ComponentVector componentIntoPhaseMassTransfer[numPhases];
 #define FUNKYMASSTRANSFER 0
 #if FUNKYMASSTRANSFER
-        const Scalar mu_nPhaseNCompEquil = volVars.chemicalPotentialEquil(nPhaseIdx, nCompIdx) ;   // very 2p2c
-        const Scalar mu_wPhaseWCompEquil = volVars.chemicalPotentialEquil(wPhaseIdx, wCompIdx);    // very 2p2c
+        const Scalar mu_nPhaseNCompEquil = volVars.chemicalPotentialEquil(phase1Idx, comp1Idx) ;   // very 2p2c
+        const Scalar mu_wPhaseWCompEquil = volVars.chemicalPotentialEquil(phase0Idx, comp0Idx);    // very 2p2c
 
-        const Scalar mu_wPhaseNComp = volVars.chemicalPotential(wPhaseIdx, nCompIdx) ;   // very 2p2c
-        const Scalar mu_nPhaseWComp = volVars.chemicalPotential(nPhaseIdx, wCompIdx);    // very 2p2c
+        const Scalar mu_wPhaseNComp = volVars.chemicalPotential(phase0Idx, comp1Idx) ;   // very 2p2c
+        const Scalar mu_nPhaseWComp = volVars.chemicalPotential(phase1Idx, comp0Idx);    // very 2p2c
 
         Valgrind::CheckDefined(mu_nPhaseNCompEquil);
         Valgrind::CheckDefined(mu_wPhaseWCompEquil);
@@ -295,8 +296,8 @@ public:
         Valgrind::CheckDefined(mu_nPhaseWComp);
 
         const Scalar characteristicLength   = volVars.characteristicLength()  ;
-        const Scalar temperature            = volVars.temperature(wPhaseIdx);
-        const Scalar pn                     = volVars.pressure(nPhaseIdx);
+        const Scalar temperature            = volVars.temperatureFluid(phase0Idx);
+        const Scalar pn                     = volVars.pressure(phase1Idx);
         const Scalar henry                  = FluidSystem::henry(temperature) ;
         const Scalar gradNinWApprox  = ( mu_wPhaseNComp - mu_nPhaseNCompEquil) / characteristicLength;    // very 2p2c // 1. / henry *
         const Scalar gradWinNApprox  = ( mu_nPhaseWComp - mu_wPhaseWCompEquil) / characteristicLength;    // very 2p2c // 1. / pn *
@@ -311,13 +312,13 @@ public:
         Valgrind::CheckDefined(x);
 
 //      "equilibrium" values: calculated in volume variables
-        const Scalar x_wPhaseNCompEquil = volVars.xEquil(wPhaseIdx, nCompIdx) ;   // very 2p2c
-        const Scalar x_nPhaseWCompEquil = volVars.xEquil(nPhaseIdx, wCompIdx);    // very 2p2c
+        const Scalar x_wPhaseNCompEquil = volVars.xEquil(phase0Idx, comp1Idx) ;   // very 2p2c
+        const Scalar x_nPhaseWCompEquil = volVars.xEquil(phase1Idx, comp0Idx);    // very 2p2c
         Valgrind::CheckDefined(x_wPhaseNCompEquil);
         Valgrind::CheckDefined(x_nPhaseWCompEquil);
         const Scalar characteristicLength   = volVars.characteristicLength()  ;
-        const Scalar gradNinWApprox  =  (x[wPhaseIdx][nCompIdx] - x_wPhaseNCompEquil) / characteristicLength;    // very 2p2c
-        const Scalar gradWinNApprox  =  (x[nPhaseIdx][wCompIdx] - x_nPhaseWCompEquil) / characteristicLength;    // very 2p2c
+        const Scalar gradNinWApprox  =  (x[phase0Idx][comp1Idx] - x_wPhaseNCompEquil) / characteristicLength;    // very 2p2c
+        const Scalar gradWinNApprox  =  (x[phase1Idx][comp0Idx] - x_nPhaseWCompEquil) / characteristicLength;    // very 2p2c
 #endif
         Scalar phaseDensity[numPhases];
         for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx){
@@ -325,31 +326,31 @@ public:
         }
 
         // diffusion coefficients in wetting phase
-        const Scalar diffCoeffNinW = volVars.diffusionCoefficient(wPhaseIdx, nCompIdx) ;
+        const Scalar diffCoeffNinW = volVars.diffusionCoefficient(phase0Idx, comp1Idx) ;
         Valgrind::CheckDefined(diffCoeffNinW);
         // diffusion coefficients in non-wetting phase
-        const Scalar diffCoeffWinN = volVars.diffusionCoefficient(nPhaseIdx, wCompIdx) ;
+        const Scalar diffCoeffWinN = volVars.diffusionCoefficient(phase1Idx, comp0Idx) ;
         Valgrind::CheckDefined(diffCoeffWinN);
 
         const Scalar factorMassTransfer     = volVars.factorMassTransfer()  ;
-        const Scalar awn = volVars.interfacialArea(wPhaseIdx, nPhaseIdx);
+        const Scalar awn = volVars.interfacialArea(phase0Idx, phase1Idx);
 
-        const Scalar sherwoodWPhase  = volVars.sherwoodNumber(wPhaseIdx);
-        const Scalar sherwoodNPhase  = volVars.sherwoodNumber(nPhaseIdx);
+        const Scalar sherwoodWPhase  = volVars.sherwoodNumber(phase0Idx);
+        const Scalar sherwoodNPhase  = volVars.sherwoodNumber(phase1Idx);
 
         //      actual diffusion is always calculated for eq's 2,3
         //      Eq's 1,4 have to be the same with different sign, because no mass is accumulated in the interface
         //      i.e. automatically conserving mass that mvoes across the interface
 
-        const Scalar nCompIntoWPhase  = - factorMassTransfer * gradNinWApprox * awn * phaseDensity[wPhaseIdx] * diffCoeffNinW * sherwoodWPhase;
+        const Scalar nCompIntoWPhase  = - factorMassTransfer * gradNinWApprox * awn * phaseDensity[phase0Idx] * diffCoeffNinW * sherwoodWPhase;
         const Scalar nCompIntoNPhase  = - nCompIntoWPhase ;
-        const Scalar wCompIntoNPhase  = - factorMassTransfer * gradWinNApprox * awn * phaseDensity[nPhaseIdx] * diffCoeffWinN * sherwoodNPhase;
+        const Scalar wCompIntoNPhase  = - factorMassTransfer * gradWinNApprox * awn * phaseDensity[phase1Idx] * diffCoeffWinN * sherwoodNPhase;
         const Scalar wCompIntoWPhase  = - wCompIntoNPhase ;
 
-        componentIntoPhaseMassTransfer[wPhaseIdx][nCompIdx] = nCompIntoWPhase;
-        componentIntoPhaseMassTransfer[nPhaseIdx][nCompIdx] = nCompIntoNPhase;
-        componentIntoPhaseMassTransfer[nPhaseIdx][wCompIdx] = wCompIntoNPhase;
-        componentIntoPhaseMassTransfer[wPhaseIdx][wCompIdx] = wCompIntoWPhase;
+        componentIntoPhaseMassTransfer[phase0Idx][comp1Idx] = nCompIntoWPhase;
+        componentIntoPhaseMassTransfer[phase1Idx][comp1Idx] = nCompIntoNPhase;
+        componentIntoPhaseMassTransfer[phase1Idx][comp0Idx] = wCompIntoNPhase;
+        componentIntoPhaseMassTransfer[phase0Idx][comp0Idx] = wCompIntoWPhase;
 
         Valgrind::CheckDefined(componentIntoPhaseMassTransfer);
 

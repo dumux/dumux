@@ -24,16 +24,18 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_FLUXVARSCACHE_HH
 
-#include <dumux/common/properties.hh>
+#include <algorithm>
+#include <cassert>
+#include <iterator>
+#include <vector>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
  * \brief Base class for the stencil local flux variables cache for the staggered model
  */
-template<class TypeTag, bool EnableGridFluxVariablesCache>
+template<class GridFluxVariablesCache, bool cachingEnabled>
 class StaggeredElementFluxVariablesCache;
 
 /*!
@@ -41,40 +43,52 @@ class StaggeredElementFluxVariablesCache;
  * \brief Class for the stencil local flux variables cache for the staggered model.
           Specialization for the case of storing the fluxvars cache globally.
  */
-template<class TypeTag>
-class StaggeredElementFluxVariablesCache<TypeTag, true>
+template<class GFVC>
+class StaggeredElementFluxVariablesCache<GFVC, true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-
 public:
+    //! export the type of the grid flux variables cache
+    using GridFluxVariablesCache = GFVC;
+
+    //! export the type of the flux variables cache
+    using FluxVariablesCache = typename GFVC::FluxVariablesCache;
+
+    //! export the type of the flux variables cache filler
+    using FluxVariablesCacheFiller = typename GFVC::FluxVariablesCacheFiller;
+
     StaggeredElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
     //! Specialization for the global caching being enabled - do nothing here
-    void bindElement(const Element& element,
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars) {}
 
     //! Specialization for the global caching being enabled - do nothing here
-    void bind(const Element& element,
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars) {}
 
     //! Specialization for the global caching being enabled - do nothing here
-    void bindScvf(const Element& element,
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindScvf(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
-                  const SubControlVolumeFace& scvf) {}
+                  const typename FVElementGeometry::SubControlVolumeFace& scvf) {}
+
+    //! Specialization for the global caching being enabled - do nothing here
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void update(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
+    {
+        DUNE_THROW(Dune::InvalidStateException, "In case of enabled caching, the grid flux variables cache must not to be updated");
+    }
 
     //! operators in the case of caching
+    template<class SubControlVolumeFace>
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return (*gridFluxVarsCachePtr_)[scvf.index()]; }
 
@@ -91,26 +105,29 @@ private:
  * \brief Class for the stencil local flux variables cache for the staggered model.
           Specialization for the case of not storing the fluxvars cache globally.
  */
-template<class TypeTag>
-class StaggeredElementFluxVariablesCache<TypeTag, false>
+template<class GFVC>
+class StaggeredElementFluxVariablesCache<GFVC, false>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-
 public:
+    //! export the type of the grid flux variables cache
+    using GridFluxVariablesCache = GFVC;
+
+    //! export the type of the flux variables cache
+    using FluxVariablesCache = typename GFVC::FluxVariablesCache;
+
+    //! export the type of the flux variables cache filler
+    using FluxVariablesCacheFiller = typename GFVC::FluxVariablesCacheFiller;
+
     StaggeredElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
-    //! This function has to be called prior to flux calculations on the element.
-    //! Prepares the transmissibilities of the scv faces in an element. The FvGeometry is assumed to be bound.
-    void bindElement(const Element& element,
+    /*!
+     * \brief Prepares the transmissibilities of the scv faces in an element
+     * \note the fvGeometry is assumed to be bound to the same element
+     * \note this function has to be called prior to flux calculations on the element.
+     */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars)
     {
@@ -118,78 +135,110 @@ public:
         const auto numScvf = fvGeometry.numScvf();
         fluxVarsCache_.resize(numScvf);
         globalScvfIndices_.resize(numScvf);
-        IndexType localScvfIdx = 0;
 
+        // instantiate helper class to fill the caches
+        // FluxVariablesCacheFiller filler(gridFluxVarsCache().problem()); TODO: use proper ctor
+        FluxVariablesCacheFiller filler;
+
+        std::size_t localScvfIdx = 0;
         // fill the containers
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            fluxVarsCache_[localScvfIdx].update(gridFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
+            filler.fill(*this, fluxVarsCache_[localScvfIdx], element, fvGeometry, elemVolVars, scvf, true);
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
     }
 
-    //! This function is called by the StaggeredLocalResidual before flux calculations during assembly.
-    //! Prepares the transmissibilities of the scv faces in the stencil. The FvGeometries are assumed to be bound.
-    void bind(const Element& element,
+    /*!
+     * \brief Prepares the transmissibilities of the scv faces in the stencil of an element
+     * \note the fvGeometry is assumed to be bound to the same element
+     * \note this function has to be called prior to flux calculations on the element.
+     */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
     {
-        const auto globalI = gridFluxVarsCache().problem_().elementMapper().index(element);
-        const auto& neighborStencil = gridFluxVarsCache().problem_().model().stencils(element).neighborStencil();
-        const auto numNeighbors = neighborStencil.size();
+        // instantiate helper class to fill the caches
+        // FluxVariablesCacheFiller filler(problem); TODO: use proper ctor
+        FluxVariablesCacheFiller filler;
 
         // find the number of scv faces that need to be prepared
-        auto numScvf = fvGeometry.numScvf();
-        for (IndexType localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
-        {
-            const auto& fluxVarIndicesJ = gridFluxVarsCache().problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
-            numScvf += fluxVarIndicesJ.size();
-        }
+        const auto numScvf = fvGeometry.numScvf();
 
         // fill the containers with the data on the scv faces inside the actual element
         fluxVarsCache_.resize(numScvf);
         globalScvfIndices_.resize(numScvf);
-        IndexType localScvfIdx = 0;
+        unsigned int localScvfIdx = 0;
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            fluxVarsCache_[localScvfIdx].update(gridFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
+            filler.fill(*this, fluxVarsCache_[localScvfIdx], element, fvGeometry, elemVolVars, scvf, true);
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
-
-        // add required data on the scv faces in the neighboring elements
-        for (IndexType localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
-        {
-            const auto& fluxVarIndicesJ = gridFluxVarsCache().problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
-            const auto elementJ = fvGeometry.fvGridGeometry().element(neighborStencil[localIdxJ]);
-
-            for (auto fluxVarIdx : fluxVarIndicesJ)
-            {
-                auto&& scvfJ = fvGeometry.scvf(fluxVarIdx);
-                fluxVarsCache_[localScvfIdx].update(gridFluxVarsCache().problem_(), elementJ, fvGeometry, elemVolVars, scvfJ);
-                globalScvfIndices_[localScvfIdx] = scvfJ.index();
-                localScvfIdx++;
-            }
-        }
     }
 
-    void bindScvf(const Element& element,
+    /*!
+     * \brief Prepares the transmissibilities of a single scv face
+     * \note the fvGeometry is assumed to be bound to the same element
+     * \note this function has to be called prior to flux calculations on the element.
+     */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindScvf(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
-                  const SubControlVolumeFace& scvf)
+                  const typename FVElementGeometry::SubControlVolumeFace& scvf)
     {
         fluxVarsCache_.resize(1);
         globalScvfIndices_.resize(1);
 
-        fluxVarsCache_[0].update(gridFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
+        // instantiate helper class to fill the caches
+        // FluxVariablesCacheFiller filler(gridFluxVarsCache().problem());
+        FluxVariablesCacheFiller filler; // TODO: use proper ctor
+
+        filler.fill(*this, fluxVarsCache_[0], element, fvGeometry, elemVolVars, scvf, true);
         globalScvfIndices_[0] = scvf.index();
     }
 
+    /*!
+     * \brief Update the transmissibilities if the volume variables have changed
+     * \note Results in undefined behaviour if called before bind() or with a different element
+     */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void update(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
+    {
+        // if (FluxVariablesCacheFiller::isSolDependent) TODO
+        // {
+        //     const auto& problem = gridFluxVarsCache().problem();
+        //     const auto globalI = fvGeometry.fvGridGeometry().elementMapper().index(element);
+        //
+        //     // instantiate filler class
+        //     FluxVariablesCacheFiller filler(problem);
+        //
+        //     // let the filler class update the caches
+        //     for (unsigned int localScvfIdx = 0; localScvfIdx < fluxVarsCache_.size(); ++localScvfIdx)
+        //     {
+        //         const auto& scvf = fvGeometry.scvf(globalScvfIndices_[localScvfIdx]);
+        //
+        //         const auto scvfInsideScvIdx = scvf.insideScvIdx();
+        //         const auto& insideElement = scvfInsideScvIdx == globalI ?
+        //                                     element :
+        //                                     fvGeometry.fvGridGeometry().element(scvfInsideScvIdx);
+        //
+        //         filler.fill(*this, fluxVarsCache_[localScvfIdx], insideElement, fvGeometry, elemVolVars, scvf);
+        //     }
+        // }
+    }
+
     //! access operators in the case of no caching
+    template<class SubControlVolumeFace>
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
 
+    template<class SubControlVolumeFace>
     FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
     { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
 
@@ -209,9 +258,9 @@ private:
     }
 
     std::vector<FluxVariablesCache> fluxVarsCache_;
-    std::vector<IndexType> globalScvfIndices_;
+    std::vector<std::size_t> globalScvfIndices_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -46,40 +46,63 @@ template<class TypeTag, class Assembler, class Implementation, bool isImplicit>
 class FVLocalAssemblerBase
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using SolutionVector = typename Assembler::ResidualType;
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     /*!
-     * \brief The constructor
+     * \brief The constructor. Delegates to the general constructor.
      */
     explicit FVLocalAssemblerBase(const Assembler& assembler,
                                   const Element& element,
                                   const SolutionVector& curSol)
+    : FVLocalAssemblerBase(assembler,
+                           element,
+                           curSol,
+                           localView(assembler.fvGridGeometry()),
+                           localView(assembler.gridVariables().curGridVolVars()),
+                           localView(assembler.gridVariables().prevGridVolVars()),
+                           localView(assembler.gridVariables().gridFluxVarsCache()),
+                           assembler.localResidual(),
+                           element.partitionType() == Dune::GhostEntity)
+    {}
+
+    /*!
+     * \brief The constructor. General version explicitly expecting each argument.
+     */
+    explicit FVLocalAssemblerBase(const Assembler& assembler,
+                                  const Element& element,
+                                  const SolutionVector& curSol,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& curElemVolVars,
+                                  const ElementVolumeVariables& prevElemVolVars,
+                                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                                  const LocalResidual& localResidual,
+                                  const bool elementIsGhost)
     : assembler_(assembler)
     , element_(element)
     , curSol_(curSol)
-    , fvGeometry_(localView(assembler.fvGridGeometry()))
-    , curElemVolVars_(localView(assembler.gridVariables().curGridVolVars()))
-    , prevElemVolVars_(localView(assembler.gridVariables().prevGridVolVars()))
-    , elemFluxVarsCache_(localView(assembler.gridVariables().gridFluxVarsCache()))
-    , localResidual_(assembler.localResidual())
-    , elementIsGhost_((element.partitionType() == Dune::GhostEntity))
+    , fvGeometry_(fvGeometry)
+    , curElemVolVars_(curElemVolVars)
+    , prevElemVolVars_(prevElemVolVars)
+    , elemFluxVarsCache_(elemFluxVarsCache)
+    , localResidual_(localResidual)
+    , elementIsGhost_(elementIsGhost)
     {}
 
     /*!

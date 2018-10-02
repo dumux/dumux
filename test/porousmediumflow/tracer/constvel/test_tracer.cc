@@ -37,10 +37,10 @@
 #include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 #include "tracertestproblem.hh"
 
@@ -62,20 +62,19 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    try { GridCreator::makeGrid(); }
+    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    try { gridManager.init(); }
     catch (...) {
         std::cout << "\n\t -> Creation of the grid failed! <- \n\n";
         throw;
     }
-    GridCreator::loadBalance();
 
     ////////////////////////////////////////////////////////////
     // setup instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     //! we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     //! create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -103,13 +102,8 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
-    //! check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (haveParam("Restart") || haveParam("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
-
     //! instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     //! the assembler with time loop for instationary problem
@@ -125,7 +119,9 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     //! intialize the vtk output module
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
@@ -183,7 +179,7 @@ int main(int argc, char** argv) try
         if (timeLoop->isCheckPoint() || timeLoop->finished())
             vtkWriter.write(timeLoop->time());
 
-        // set new dt as suggested by newton controller
+        // set new dt
         timeLoop->setTimeStepSize(dt);
     }
 

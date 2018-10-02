@@ -37,8 +37,7 @@
 #include <dumux/common/timeloop.hh>
 
 #include <dumux/linear/amgbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/porousmediumflow/compositional/privarswitchnewtoncontroller.hh>
+#include <dumux/nonlinear/privarswitchnewtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -46,6 +45,7 @@
 #include <dumux/discretization/methods.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 #include "infiltration3p3cproblem.hh"
 #include "kuevetteproblem.hh"
@@ -99,16 +99,15 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv, usage);
 
     // try to create a grid (from the given grid file or the input file)
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    GridCreator::makeGrid();
-    GridCreator::loadBalance();
+    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    gridManager.init();
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -133,23 +132,19 @@ int main(int argc, char** argv) try
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
-
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
     timeLoop->setPeriodicCheckPoint(getParam<Scalar>("TimeLoop.EpisodeLength", std::numeric_limits<Scalar>::max()));
 
@@ -162,10 +157,9 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonController = PriVarSwitchNewtonController<TypeTag>;
-    using NewtonMethod = Dumux::NewtonMethod<NewtonController, Assembler, LinearSolver>;
-    auto newtonController = std::make_shared<NewtonController>(timeLoop);
-    NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
+    using NewtonSolver = PriVarSwitchNewtonSolver<Assembler, LinearSolver,
+                                                  typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch)>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
     timeLoop->start();
@@ -174,24 +168,8 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
-        // try solving the non-linear system
-        for (int i = 0; i < maxDivisions; ++i)
-        {
-            // linearize & solve
-            auto converged = nonLinearSolver.solve(x);
-
-            if (converged)
-                break;
-
-            if (!converged && i == maxDivisions-1)
-                DUNE_THROW(Dune::MathError,
-                            "Newton solver didn't converge after "
-                            << maxDivisions
-                            << " time-step divisions. dt="
-                            << timeLoop->timeStepSize()
-                            << ".\nThe solutions of the current and the previous time steps "
-                            << "have been saved to restart files.");
-        }
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(x, *timeLoop);
 
         // make the new solution the old solution
         xOld = x;
@@ -202,14 +180,14 @@ int main(int argc, char** argv) try
 
         // write vtk output
         // if episode length was specificied output only at the end of episodes
-        if (!haveParam("TimeLoop.EpisodeLength") || timeLoop->isCheckPoint() || timeLoop->finished() || timeLoop->timeStepIndex() == 1)
+        if (!hasParam("TimeLoop.EpisodeLength") || timeLoop->isCheckPoint() || timeLoop->finished() || timeLoop->timeStepIndex() == 1)
             vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        // set new dt as suggested by newton controller
-        timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+        // set new dt as suggested by the newton solver
+        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
     }
 
     timeLoop->finalize(leafGridView.comm());

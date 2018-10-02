@@ -67,7 +67,7 @@ struct TestFVGGTraits : public DefaultMapperTraits<GridView>
     };
 
     template<class FVGridGeometry>
-    using ConnectivityMap = StaggeredFreeFlowConnectivityMap<FVGridGeometry, DofTypeIndices>;
+    using ConnectivityMap = StaggeredFreeFlowConnectivityMap<FVGridGeometry>;
 
     template<class FVGridGeometry, bool enableCache>
     using LocalView = StaggeredFVElementGeometry<FVGridGeometry, enableCache>;
@@ -88,14 +88,13 @@ int main (int argc, char *argv[]) try
     using Grid = Dune::YaspGrid<2>;
 
     constexpr int dim = Grid::dimension;
-    constexpr int dimworld = Grid::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<typename Grid::ctype, dimworld>;
     using FVGridGeometry = StaggeredFVGridGeometry<typename Grid::LeafGridView, /*enable caching=*/ true,
                                                    TestFVGGTraits<typename Grid::LeafGridView> >;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     // make a grid
     GlobalPosition lower(0.0);
@@ -164,7 +163,7 @@ int main (int argc, char *argv[]) try
 // //////////////////////////////////
 //   Error handler
 // /////////////////////////////////
-catch (Dune::Exception e) {
+catch (Dune::Exception &e) {
 
     std::cout << e << std::endl;
     return 1;

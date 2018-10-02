@@ -24,6 +24,8 @@
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
@@ -33,7 +35,7 @@
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "spatialparams.hh"
 
@@ -57,7 +59,12 @@ SET_TYPE_PROP(OnePIncompressible, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(OnePIncompressible, Problem, OnePTestProblem<TypeTag>);
 
 // set the spatial params
-SET_TYPE_PROP(OnePIncompressible, SpatialParams, OnePTestSpatialParams<TypeTag>);
+SET_PROP(OnePIncompressible, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // use the incompressible local residual (provides analytic jacobian)
 SET_TYPE_PROP(OnePIncompressible, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
@@ -66,7 +73,7 @@ SET_TYPE_PROP(OnePIncompressible, LocalResidual, OnePIncompressibleLocalResidual
 SET_PROP(OnePIncompressible, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Enable caching
@@ -74,6 +81,11 @@ SET_BOOL_PROP(OnePIncompressible, EnableGridVolumeVariablesCache, false);
 SET_BOOL_PROP(OnePIncompressible, EnableGridFluxVariablesCache, false);
 SET_BOOL_PROP(OnePIncompressible, EnableFVGridGeometryCache, false);
 
+// define a TypeTag for a quad precision test
+#if HAVE_QUAD
+NEW_TYPE_TAG(OnePIncompressibleTpfaQuad, INHERITS_FROM(OnePIncompressibleTpfa));
+SET_TYPE_PROP(OnePIncompressibleTpfaQuad, Scalar, Quad);
+#endif
 } // end namespace Properties
 /*!
  * \ingroup OnePTests
@@ -93,7 +105,7 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

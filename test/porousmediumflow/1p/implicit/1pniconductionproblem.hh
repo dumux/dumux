@@ -25,8 +25,10 @@
 #ifndef DUMUX_1PNI_CONDUCTION_PROBLEM_HH
 #define DUMUX_1PNI_CONDUCTION_PROBLEM_HH
 
-#include <math.h>
+#include <cmath>
+#include <dune/grid/yaspgrid.hh>
 
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
@@ -34,7 +36,7 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/h2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
 #include "1pnispatialparams.hh"
@@ -52,6 +54,7 @@ NEW_TYPE_TAG(OnePNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, OnePNIConductio
 NEW_TYPE_TAG(OnePNIConductionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePNIConductionTypeTag));
 NEW_TYPE_TAG(OnePNIConductionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePNIConductionTypeTag));
 
+
 // Set the grid type
 SET_TYPE_PROP(OnePNIConductionTypeTag, Grid, Dune::YaspGrid<2>);
 
@@ -61,15 +64,15 @@ SET_TYPE_PROP(OnePNIConductionTypeTag, Problem,
 
 // Set the fluid system
 SET_TYPE_PROP(OnePNIConductionTypeTag, FluidSystem,
-            FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                           H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+            FluidSystems::OnePLiquid<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                           Components::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 // Set the spatial parameters
-SET_TYPE_PROP(OnePNIConductionTypeTag,
-              SpatialParams,
-              OnePNISpatialParams<TypeTag>);
-
-// Set the model parameter group for the mpfa case (velocity disabled in input file)
-SET_STRING_PROP(OnePNIConductionCCMpfaTypeTag, ModelParameterGroup, "MpfaTest");
+SET_PROP(OnePNIConductionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePNISpatialParams<FVGridGeometry, Scalar>;
+};
 }
 
 
@@ -105,25 +108,25 @@ class OnePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using IapwsH2O = H2O<Scalar>;
+    using IapwsH2O = Components::H2O<Scalar>;
 
     enum { dimWorld = GridView::dimensionworld };
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
         temperatureIdx = Indices::temperatureIdx
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    OnePNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup)
+    : ParentType(fvGridGeometry, paramGroup)
     {
         //initialize fluid system
         FluidSystem::init();
@@ -144,7 +147,7 @@ public:
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 
-        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
+        auto someElemSol = elementSolution(someElement, curSol, this->fvGridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
         auto fvGeometry = localView(this->fvGridGeometry());
@@ -157,8 +160,8 @@ public:
         const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
         const auto densityW = volVars.density();
         const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
-        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
-        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
+        const auto densityS = volVars.solidDensity();
+        const auto heatCapacityS = volVars.solidHeatCapacity();
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
                                                                                                          someElement, fvGeometry, someScv);

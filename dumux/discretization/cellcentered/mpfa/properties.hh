@@ -34,61 +34,33 @@
 
 #include <dumux/discretization/fvproperties.hh>
 
-#include <dumux/discretization/cellcentered/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
-#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
+#include <dumux/discretization/cellcentered/mpfa/fvgridgeometrytraits.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
+#include <dumux/discretization/cellcentered/mpfa/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/mpfa/gridfluxvariablescache.hh>
-#include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
-#include <dumux/discretization/cellcentered/mpfa/subcontrolvolumeface.hh>
-#include <dumux/discretization/cellcentered/mpfa/elementvolumevariables.hh>
-#include <dumux/discretization/cellcentered/mpfa/elementfluxvariablescache.hh>
+#include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
+#include <dumux/discretization/cellcentered/mpfa/fluxvariablescachefiller.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
-#include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
-#include <dumux/discretization/cellcentered/mpfa/gridinteractionvolumeindexsets.hh>
-#include <dumux/discretization/cellcentered/mpfa/helper.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
+
 //! Type tag for the cell-centered mpfa scheme.
 NEW_TYPE_TAG(CCMpfaModel, INHERITS_FROM(FiniteVolumeModel));
-
-//! Set the corresponding discretization method property
-SET_PROP(CCMpfaModel, DiscretizationMethod)
-{
-    static const DiscretizationMethods value = DiscretizationMethods::CCMpfa;
-};
 
 //! Set the index set type used on the dual grid nodes
 SET_PROP(CCMpfaModel, DualGridNodalIndexSet)
 {
-    using GV = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr int dim = GV::dimension;
-    static constexpr int dimWorld = GV::dimensionworld;
 private:
-    struct Traits
-    {
-        using GridView = GV;
-        using GridIndexType = typename GV::IndexSet::IndexType;
-        using LocalIndexType = std::uint8_t;
+    using GV = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Traits = NodalIndexSetDefaultTraits< GV >;
 
-        //! per default, we use dynamic data containers (iv size unknown)
-        template< class T > using NodalScvDataStorage = std::vector< T >;
-        template< class T > using NodalScvfDataStorage = std::vector< T >;
-
-        //! store data on neighbors of scvfs in static containers if possible
-        template< class T >
-        using ScvfNeighborDataStorage = typename std::conditional_t< (dim<dimWorld),
-                                                                     std::vector< T >,
-                                                                     Dune::ReservedVector< T, 2 > >;
-    };
 public:
     using type = CCMpfaDualGridNodalIndexSet< Traits >;
 };
@@ -120,60 +92,52 @@ private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using PrimaryIV = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using SecondaryIV = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
-
-    struct Traits : public DefaultMapperTraits<GridView>
-    {
-        using SubControlVolume = CCSubControlVolume<GridView>;
-        using SubControlVolumeFace = CCMpfaSubControlVolumeFace<GridView>;
-        using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
-
-        //! State the maximum admissible element stencil size
-        //! Per default, we use high values that are hopefully enough for all cases
-        //! We assume simplex grids where stencils can get quite large but the size is unknown
-        static constexpr int maxElementStencilSize = int(GridView::dimension) == 3 ? 150 :
-                                                     (int(GridView::dimension)<int(GridView::dimensionworld) ? 45 : 15);
-
-        //! type definitions depending on the FVGridGeometry itself
-        template< class FVGridGeom >
-        using MpfaHelper = CCMpfaHelper< FVGridGeom >;
-
-        template< class FVGridGeom >
-        using ConnectivityMap = CCMpfaConnectivityMap<FVGridGeom, FVGridGeom::GridIVIndexSets::PrimaryInteractionVolume::MpfaMethod>;
-
-        template< class FVGridGeom >
-        using GridIvIndexSets = CCMpfaGridInteractionVolumeIndexSets< FVGridGeom, NodalIndexSet, PrimaryIV, SecondaryIV >;
-
-        template< class FVGridGeom, bool enableCache >
-        using LocalView = CCMpfaFVElementGeometry<FVGridGeom, enableCache>;
-    };
+    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+    using Traits = CCMpfaFVGridGeometryTraits<GridView, NodalIndexSet, PrimaryIV, SecondaryIV>;
 public:
     using type = CCMpfaFVGridGeometry<GridView, Traits, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>;
 };
 
-//! The global flux variables cache vector class
-SET_TYPE_PROP(CCMpfaModel,
-              GridFluxVariablesCache,
-              CCMpfaGridFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
+//! The grid volume variables vector class
+SET_PROP(CCMpfaModel, GridVolumeVariables)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+public:
+    using type = CCMpfaGridVolumeVariables<Problem, VolumeVariables, enableCache>;
+};
 
-//! The local flux variables cache vector class
-SET_TYPE_PROP(CCMpfaModel,
-              ElementFluxVariablesCache,
-              CCMpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
+//! The grid volume variables vector class
+SET_PROP(CCMpfaModel, GridFluxVariablesCache)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
 
+    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
 
-//! The global previous volume variables vector class
-SET_TYPE_PROP(CCMpfaModel,
-              ElementVolumeVariables,
-              CCMpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
+    using PhysicsTraits = IvDataHandlePhysicsTraits<typename GET_PROP_TYPE(TypeTag, ModelTraits)>;
+    using PrimaryMatVecTraits = typename PrimaryInteractionVolume::Traits::MatVecTraits;
+    using SecondaryMatVecTraits = typename SecondaryInteractionVolume::Traits::MatVecTraits;
 
-//! The global current volume variables vector class
-SET_TYPE_PROP(CCMpfaModel, GridVolumeVariables, CCGridVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
+    using PrimaryIvDataHandle = InteractionVolumeDataHandle<PrimaryMatVecTraits, PhysicsTraits>;
+    using SecondaryIvDataHandle = InteractionVolumeDataHandle<SecondaryMatVecTraits, PhysicsTraits>;
 
-//! Set the solution vector type for an element
-SET_TYPE_PROP(CCMpfaModel, ElementSolutionVector, CCElementSolution<TypeTag>);
+    using Traits = CCMpfaDefaultGridFluxVariablesCacheTraits<Problem,
+                                                             FluxVariablesCache, FluxVariablesCacheFiller,
+                                                             PrimaryInteractionVolume, SecondaryInteractionVolume,
+                                                             PrimaryIvDataHandle, SecondaryIvDataHandle>;
+public:
+    using type = CCMpfaGridFluxVariablesCache<Traits, enableCache>;
+};
 
 //! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(CCMpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
+SET_TYPE_PROP(CCMpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes);
 
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCMpfaModel, BaseLocalResidual, CCLocalResidual<TypeTag>);

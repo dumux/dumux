@@ -35,10 +35,10 @@ namespace Dumux {
 
 /*!
  * \brief Writes a container to file
- * \param v The container, requires being() and end() method
+ * \param v The container, requires begin() and end() method
  * \param filename The filename to write to
  *
- * usage: std::vector<double>(5, 0.0) v; writeContainerToFile(v, "myvector.txt");
+ * usage: std::vector<double> v(5, 0.0); writeContainerToFile(v, "myvector.txt");
  */
 template<typename Container>
 void writeContainerToFile(const Container& v,
@@ -52,7 +52,7 @@ void writeContainerToFile(const Container& v,
 /*!
  * \brief Read a simple text file into a container
  * \param filename The filename to write to
- * \tparam Container  The container type, requires being(), end(), push_back() method
+ * \tparam Container  The container type, requires begin(), end(), push_back() method
  *
  * usage: auto v = readFileToContainer<std::vector<double>>("myvector.txt");
  */

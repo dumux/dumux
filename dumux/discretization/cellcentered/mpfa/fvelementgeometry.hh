@@ -26,7 +26,6 @@
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_FV_ELEMENT_GEOMETRY_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/iteratorrange.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -179,7 +178,6 @@ class CCMpfaFVElementGeometry<GG, false>
     static const int dimWorld = GridView::dimensionworld;
     using CoordScalar = typename GridView::ctype;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
     //! export type of subcontrol volume
@@ -368,11 +366,7 @@ private:
             const auto& e = useNeighbor ? is.outside() : element;
             const auto indexInElement = useNeighbor ? is.indexInOutside() : is.indexInInside();
             const auto eg = e.geometry();
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
             const auto refElement = ReferenceElements::general(eg.type());
-#else
-            const auto& refElement = ReferenceElements::general(eg.type());
-#endif
 
             // Set up a container with all relevant positions for scvf corner computation
             const auto numCorners = is.geometry().corners();
@@ -452,11 +446,7 @@ private:
             const auto& e = useNeighbor ? is.outside() : element;
             const auto indexInElement = useNeighbor ? is.indexInOutside() : is.indexInInside();
             const auto eg = e.geometry();
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
             const auto refElement = ReferenceElements::general(eg.type());
-#else
-            const auto& refElement = ReferenceElements::general(eg.type());
-#endif
 
             // Set up a container with all relevant positions for scvf corner computation
             const auto numCorners = is.geometry().corners();
@@ -506,8 +496,8 @@ private:
     }
 
     //! map a global index to the local storage index
-    const unsigned int findLocalIndex(const GridIndexType idx,
-                                      const std::vector<GridIndexType>& indices) const
+    unsigned int findLocalIndex(const GridIndexType idx,
+                                const std::vector<GridIndexType>& indices) const
     {
         auto it = std::find(indices.begin(), indices.end(), idx);
         assert(it != indices.end() && "Could not find the scv/scvf! Make sure to properly bind this class!");

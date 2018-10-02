@@ -50,7 +50,6 @@ namespace Dumux {
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class FVAssembler
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
@@ -58,7 +57,8 @@ class FVAssembler
     using TimeLoop = TimeLoopBase<typename GET_PROP_TYPE(TypeTag, Scalar)>;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static constexpr DiscretizationMethod discMethod = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod;
+    static constexpr bool isBox = discMethod == DiscretizationMethod::box;
 
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;
     using LocalAssembler = std::conditional_t<isBox, BoxLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>,
@@ -68,6 +68,8 @@ public:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+
     using ResidualType = SolutionVector;
 
     /*!
@@ -100,23 +102,24 @@ public:
     , fvGridGeometry_(fvGridGeometry)
     , gridVariables_(gridVariables)
     , timeLoop_(timeLoop)
-    , isStationaryProblem_(false)
+    , isStationaryProblem_(!timeLoop)
     {}
 
     /*!
      * \brief Assembles the global Jacobian of the residual
      *        and the residual for the current solution.
      */
-    void assembleJacobianAndResidual(const SolutionVector& curSol)
+    template<class PartialReassembler = DefaultPartialReassembler>
+    void assembleJacobianAndResidual(const SolutionVector& curSol, const PartialReassembler* partialReassembler = nullptr)
     {
         checkAssemblerState_();
-        resetJacobian_();
+        resetJacobian_(partialReassembler);
         resetResidual_();
 
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, curSol);
-            localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_);
+            localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
         });
     }
 
@@ -278,8 +281,8 @@ public:
      * \brief Set time loop for instationary problems
      * \note calling this turns this into a stationary assembler
      */
-    void setTimeManager(std::shared_ptr<const TimeLoop> timeLoop)
-    { timeLoop_ = timeLoop_; isStationaryProblem_ = true; }
+    void setTimeLoop(std::shared_ptr<const TimeLoop> timeLoop)
+    { timeLoop_ = timeLoop; isStationaryProblem_ = !static_cast<bool>(timeLoop); }
 
     /*!
      * \brief Sets the solution from which to start the time integration. Has to be
@@ -329,8 +332,9 @@ private:
         (*residual_) = 0.0;
     }
 
-    // reset the jacobian vector to 0.0
-    void resetJacobian_()
+    // reset the Jacobian matrix to 0.0
+    template <class PartialReassembler = DefaultPartialReassembler>
+    void resetJacobian_(const PartialReassembler *partialReassembler = nullptr)
     {
         if(!jacobian_)
         {
@@ -339,7 +343,10 @@ private:
             setJacobianPattern();
         }
 
-       (*jacobian_)  = 0.0;
+        if (partialReassembler)
+            partialReassembler->resetJacobian(*this);
+        else
+            *jacobian_ = 0.0;
     }
 
     // check if the assembler is in a correct state for assembly

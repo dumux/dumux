@@ -24,33 +24,32 @@
 #ifndef DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/common/properties.hh>
+#include <string>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup TracerModel
  * \brief Adds vtk output fields specific to the tracer model
  */
-template<class TypeTag>
 class TracerVtkOutputFields
 {
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
+        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+
         // register standardized vtk output fields
-        for (int compIdx = 0; compIdx < FluidSystem::numComponents; ++compIdx)
+        for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
         {
-            vtk.addVolumeVariable( [compIdx](const VolumeVariables& v){  return v.moleFraction(0, compIdx); },
-                                   "x_" + std::string(FluidSystem::componentName(compIdx)));
-            vtk.addVolumeVariable( [compIdx](const VolumeVariables& v){  return v.massFraction(0, compIdx); },
-                                   "X_" + std::string(FluidSystem::componentName(compIdx)));
+            vtk.addVolumeVariable( [compIdx](const auto& v){  return v.moleFraction(0, compIdx); },
+                                   "x^" + std::string(FluidSystem::componentName(compIdx)));
+            vtk.addVolumeVariable( [compIdx](const auto& v){  return v.massFraction(0, compIdx); },
+                                   "X^" + std::string(FluidSystem::componentName(compIdx)));
         }
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.density(); }, "rho");
+        vtk.addVolumeVariable( [](const auto& v){ return v.density(); }, "rho");
     }
 };
 

@@ -1,0 +1,32 @@
+[TimeLoop]
+DtInitial = 10e-3 # [s]
+TEnd = 43200 # [s]
+
+[Grid]
+Verbosity = true
+Positions0 = 0.0 10.0
+Positions1 = 0.0 1.2345 2.469
+Cells0 = 16
+Cells1 = 8 8
+Grading1 = 1.5 -1.5
+
+[Problem]
+Name = pipe_zeroeqni
+InletVelocity = 0.25 # [m/s]
+InletTemperature = 283.15 # [K]
+WallTemperature = 303.15 # [K]
+EnableGravity = false
+
+[RANS]
+EddyViscosityModel = "baldwinLomax"
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false

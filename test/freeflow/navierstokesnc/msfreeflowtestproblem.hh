@@ -24,7 +24,9 @@
 #ifndef DUMUX_CHANNEL_MAXWELL_STEFAN_TEST_PROBLEM_HH
 #define DUMUX_CHANNEL_MAXWELL_STEFAN_TEST_PROBLEM_HH
 
-#include <dumux/freeflow/navierstokesnc/model.hh>
+#include <dune/grid/yaspgrid.hh>
+
+#include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
@@ -43,8 +45,6 @@ class MaxwellStefanNCTestProblem;
 namespace Properties {
 
 NEW_TYPE_TAG(MaxwellStefanNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
-
-NEW_PROP_TAG(FluidSystem);
 
 SET_INT_PROP(MaxwellStefanNCTestTypeTag, ReplaceCompEqIdx, 0);
 
@@ -74,12 +74,13 @@ SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, MolecularDiffusionType, MaxwellStefans
  * \todo doc me!
  */
 template<class TypeTag>
-class MaxwellStefanFluidSystem: public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar),MaxwellStefanFluidSystem<TypeTag>>
+class MaxwellStefanFluidSystem
+: public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar), MaxwellStefanFluidSystem<TypeTag>>
 
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ThisType = MaxwellStefanFluidSystem<TypeTag>;
-    using Base = FluidSystems::BaseFluidSystem<Scalar, ThisType>;
+    using Base = FluidSystems::Base<Scalar, ThisType>;
 
 public:
     //! The number of phases
@@ -117,8 +118,8 @@ public:
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,
                                              int phaseIdx,
-                                             unsigned int compIIdx,
-                                             unsigned int compJIdx)
+                                             int compIIdx,
+                                             int compJIdx)
     {
         if (compIIdx > compJIdx)
         {
@@ -164,6 +165,22 @@ public:
     {
         return 1e-6;
     }
+
+    using Base::molarDensity;
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density for the simple relation is defined by the
+     * mass density \f$\rho_\alpha\f$ and the molar mass of the main component \f$M_\kappa\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\kappa} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        return density(fluidState, phaseIdx)/molarMass(0);
+    }
 };
 
 SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, FluidSystem, MaxwellStefanFluidSystem<TypeTag>);
@@ -177,32 +194,24 @@ template <class TypeTag>
 class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        massBalanceIdx = Indices::massBalanceIdx,
-        compTwoIdx = FluidSystem::N2Idx,
-        compThreeIdx = FluidSystem::CO2Idx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        pressureIdx = Indices::pressureIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx,
-    };
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
+
+    enum {
+        compTwoIdx =  Indices::conti0EqIdx + FluidSystem::N2Idx,
+        compThreeIdx = Indices::conti0EqIdx + FluidSystem::CO2Idx,
+    };
 
 public:
     MaxwellStefanNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -225,6 +234,7 @@ public:
      * \param gridVariables The grid variables
      * \param time The time
      */
+     template<class SolutionVector, class GridVariables>
      void postTimeStep(const SolutionVector& curSol,
                        const GridVariables& gridVariables,
                        const Scalar time)
@@ -253,17 +263,16 @@ public:
 
                     if (globalPos[0] < 0.5)
                     {
-                        x_co2_left += elemVolVars[scv].moleFraction(0,2);
-
-                        x_n2_left += elemVolVars[scv].moleFraction(0,1);
-                        x_h2_left += elemVolVars[scv].moleFraction(0,0);
+                        x_co2_left += elemVolVars[scv].moleFraction(FluidSystem::CO2Idx);
+                        x_n2_left += elemVolVars[scv].moleFraction(FluidSystem::N2Idx);
+                        x_h2_left += elemVolVars[scv].moleFraction(FluidSystem::H2Idx);
                         i +=1;
                     }
                     else
                     {
-                        x_co2_right += elemVolVars[scv].moleFraction(0,2);
-                        x_n2_right += elemVolVars[scv].moleFraction(0,1);
-                        x_h2_right += elemVolVars[scv].moleFraction(0,0);
+                        x_co2_right += elemVolVars[scv].moleFraction(FluidSystem::CO2Idx);
+                        x_n2_right += elemVolVars[scv].moleFraction(FluidSystem::N2Idx);
+                        x_h2_right += elemVolVars[scv].moleFraction(FluidSystem::H2Idx);
                         j +=1;
                     }
 
@@ -278,7 +287,7 @@ public:
 
             //do a gnuplot
             x_.push_back(time); // in seconds
-            y_.push_back(x_n2_left);
+            y1_.push_back(x_n2_left);
             y2_.push_back(x_n2_right);
             y3_.push_back(x_co2_left);
             y4_.push_back(x_co2_right);
@@ -290,8 +299,8 @@ public:
             gnuplot_.setYRange(0.4, 0.6);
             gnuplot_.setXlabel("time [s]");
             gnuplot_.setYlabel("mole fraction mol/mol");
-            gnuplot_.addDataSetToPlot(x_, y_, "N2 left");
-            gnuplot_.addDataSetToPlot(x_, y2_, "N2 right");
+            gnuplot_.addDataSetToPlot(x_, y1_, "N2_left.dat", "w l t 'N_2 left'");
+            gnuplot_.addDataSetToPlot(x_, y2_, "N2_right.dat", "w l t 'N_2 right'");
             gnuplot_.plot("mole_fraction_N2");
 
             gnuplot2_.resetPlot();
@@ -299,8 +308,8 @@ public:
             gnuplot2_.setYRange(0.0, 0.6);
             gnuplot2_.setXlabel("time [s]");
             gnuplot2_.setYlabel("mole fraction mol/mol");
-            gnuplot2_.addDataSetToPlot(x_, y3_, "C02 left");
-            gnuplot2_.addDataSetToPlot(x_, y4_, "C02 right");
+            gnuplot2_.addDataSetToPlot(x_, y3_, "CO2_left.dat", "w l t 'CO_2 left'");
+            gnuplot2_.addDataSetToPlot(x_, y4_, "CO2_right.dat", "w l t 'CO_2 right'");
             gnuplot2_.plot("mole_fraction_C02");
 
             gnuplot3_.resetPlot();
@@ -308,8 +317,8 @@ public:
             gnuplot3_.setYRange(0.0, 0.6);
             gnuplot3_.setXlabel("time [s]");
             gnuplot3_.setYlabel("mole fraction mol/mol");
-            gnuplot3_.addDataSetToPlot(x_, y5_, "H2 left");
-            gnuplot3_.addDataSetToPlot(x_, y6_, "H2 right");
+            gnuplot3_.addDataSetToPlot(x_, y5_, "H2_left.dat", "w l t 'H_2 left'");
+            gnuplot3_.addDataSetToPlot(x_, y6_, "H2_right.dat", "w l t 'H_2 right'");
             gnuplot3_.plot("mole_fraction_H2");
         }
 
@@ -349,10 +358,10 @@ public:
     {
         BoundaryTypes values;
         // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(momentumBalanceIdx);
+        values.setDirichlet(Indices::velocityXIdx);
+        values.setDirichlet(Indices::velocityYIdx);
         values.setOutflow(compTwoIdx);
         values.setOutflow(compThreeIdx);
-        values.setOutflow(massBalanceIdx);
         return values;
     }
 
@@ -391,9 +400,9 @@ public:
            initialValues[compThreeIdx] = 0.0;
         }
 
-        initialValues[pressureIdx] = 1.1e+5;
-        initialValues[velocityXIdx] = 0.0;
-        initialValues[velocityYIdx] = 0.0;
+        initialValues[Indices::pressureIdx] = 1.1e+5;
+        initialValues[Indices::velocityXIdx] = 0.0;
+        initialValues[Indices::velocityYIdx] = 0.0;
 
         return initialValues;
     }
@@ -409,7 +418,7 @@ private:
     Dumux::GnuplotInterface<Scalar> gnuplot3_;
 
     std::vector<Scalar> x_;
-    std::vector<Scalar> y_;
+    std::vector<Scalar> y1_;
     std::vector<Scalar> y2_;
     std::vector<Scalar> y3_;
     std::vector<Scalar> y4_;

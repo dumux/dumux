@@ -25,12 +25,19 @@
 #ifndef DUMUX_1P2CNI_CONDUCTION_TEST_PROBLEM_HH
 #define DUMUX_1P2CNI_CONDUCTION_TEST_PROBLEM_HH
 
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+#include <dune/grid/yaspgrid.hh>
+
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
+#include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/components/h2o.hh>
 #include "1pnctestspatialparams.hh"
@@ -59,12 +66,20 @@ SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, Problem, OnePTwoCNIConductionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(OnePTwoCNIConductionTypeTag,
-              FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
+SET_PROP(OnePTwoCNIConductionTypeTag, FluidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
+    using type = FluidSystems::OnePAdapter<H2ON2, H2ON2::liquidPhaseIdx>;
+};
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
+SET_PROP(OnePTwoCNIConductionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(OnePTwoCNIConductionTypeTag, UseMoles, true);
@@ -101,35 +116,33 @@ class OnePTwoCNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using IapwsH2O = H2O<Scalar>;
+    using IapwsH2O = Components::H2O<Scalar>;
 
     // copy some indices for convenience
     enum
     {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        massOrMoleFracIdx = Indices::firstMoleFracIdx,
         temperatureIdx = Indices::temperatureIdx,
+
+        N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx)
     };
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static const auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-
     static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     OnePTwoCNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -158,7 +171,7 @@ public:
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 
-        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
+        auto someElemSol = elementSolution(someElement, curSol, this->fvGridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
         auto fvGeometry = localView(this->fvGridGeometry());
@@ -169,10 +182,10 @@ public:
         volVars.update(someElemSol, *this, someElement, someScv);
 
         const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
-        const auto densityW = volVars.density(phaseIdx);
+        const auto densityW = volVars.density();
         const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
-        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
-        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
+        const auto densityS = volVars.solidDensity();
+        const auto heatCapacityS = volVars.solidHeatCapacity();
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
                                                                                                          someElement, fvGeometry, someScv);
@@ -302,7 +315,7 @@ private:
     {
         PrimaryVariables priVars;
         priVars[pressureIdx] = 1e5; // initial condition for the pressure
-        priVars[massOrMoleFracIdx] = 1e-5;  // initial condition for the N2 molefraction
+        priVars[N2Idx] = 1e-5;  // initial condition for the N2 molefraction
         priVars[temperatureIdx] = 290.;
         return priVars;
     }

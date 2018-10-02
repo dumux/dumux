@@ -19,3 +19,8 @@ ResidualReduction = 1e-10
 
 [Newton]
 MaxRelativeShift = 1e-13
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790

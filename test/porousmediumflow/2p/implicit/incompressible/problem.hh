@@ -23,13 +23,15 @@
 #ifndef DUMUX_INCOMPRESSIBLE_TWOP_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_TWOP_TEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 
-#include <dumux/material/components/dnapl.hh>
+#include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
@@ -38,17 +40,19 @@
 
 #include "spatialparams.hh"
 
-namespace Dumux
-{
+#ifndef ENABLEINTERFACESOLVER
+#define ENABLEINTERFACESOLVER 0
+#endif
+
+namespace Dumux {
 // forward declarations
 template<class TypeTag> class TwoPTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 NEW_TYPE_TAG(TwoPIncompressible, INHERITS_FROM(TwoP));
-NEW_TYPE_TAG(TwoPIncompressibleTpfa, INHERITS_FROM(CCTpfaModel, TwoPIncompressible, SpatialParams));
-NEW_TYPE_TAG(TwoPIncompressibleMpfa, INHERITS_FROM(CCMpfaModel, TwoPIncompressible, SpatialParams));
-NEW_TYPE_TAG(TwoPIncompressibleBox, INHERITS_FROM(BoxModel, TwoPIncompressible, SpatialParams));
+NEW_TYPE_TAG(TwoPIncompressibleTpfa, INHERITS_FROM(CCTpfaModel, TwoPIncompressible));
+NEW_TYPE_TAG(TwoPIncompressibleMpfa, INHERITS_FROM(CCMpfaModel, TwoPIncompressible));
+NEW_TYPE_TAG(TwoPIncompressibleBox, INHERITS_FROM(BoxModel, TwoPIncompressible));
 
 // Set the grid type
 SET_TYPE_PROP(TwoPIncompressible, Grid, Dune::YaspGrid<2>);
@@ -63,15 +67,28 @@ SET_TYPE_PROP(TwoPIncompressible, LocalResidual, TwoPIncompressibleLocalResidual
 SET_PROP(TwoPIncompressible, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
+};
+
+// Set the spatial parameters
+SET_PROP(TwoPIncompressible, SpatialParams)
+{
+private:
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+public:
+    using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Enable caching
 SET_BOOL_PROP(TwoPIncompressible, EnableGridVolumeVariablesCache, false);
 SET_BOOL_PROP(TwoPIncompressible, EnableGridFluxVariablesCache, false);
 SET_BOOL_PROP(TwoPIncompressible, EnableFVGridGeometryCache, false);
+
+// Maybe enable the box-interface solver
+SET_BOOL_PROP(TwoPIncompressible, EnableBoxInterfaceSolver, ENABLEINTERFACESOLVER);
 } // end namespace Properties
 
 /*!
@@ -89,13 +106,15 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
-        pwIdx = Indices::pwIdx,
-        snIdx = Indices::snIdx,
-        contiNEqIdx = Indices::contiNEqIdx
+        pressureH2OIdx = Indices::pressureIdx,
+        saturationDNAPLIdx = Indices::saturationIdx,
+        contiDNAPLEqIdx = Indices::conti0EqIdx + FluidSystem::comp1Idx,
+        waterPhaseIdx = FluidSystem::phase0Idx,
+        dnaplPhaseIdx = FluidSystem::phase1Idx
     };
 
 public:
@@ -132,10 +151,10 @@ public:
         PrimaryVariables values;
         typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
         fluidState.setTemperature(temperature());
-        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
-        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);
 
-        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
+        Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
 
         Scalar height = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
         Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
@@ -144,8 +163,8 @@ public:
         Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
 
         // hydrostatic pressure scaled by alpha
-        values[pwIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
-        values[snIdx] = 0.0;
+        values[pressureH2OIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
+        values[saturationDNAPLIdx] = 0.0;
 
         return values;
     }
@@ -165,7 +184,12 @@ public:
     {
         NumEqVector values(0.0);
         if (onInlet_(globalPos))
-            values[contiNEqIdx] = -0.04; // kg / (m * s)
+            values[contiDNAPLEqIdx] = -0.04; // kg / (m * s)
+
+        // in the test with the oil wet lens, use higher injection rate
+        if (this->spatialParams().lensIsOilWet())
+            values[contiDNAPLEqIdx] *= 10;
+
         return values;
     }
 
@@ -181,16 +205,16 @@ public:
         PrimaryVariables values;
         typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
         fluidState.setTemperature(temperature());
-        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
-        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);
 
-        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
+        Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
 
         Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
 
         // hydrostatic pressure
-        values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
-        values[snIdx] = 0.0;
+        values[pressureH2OIdx] = 1e5 - densityW*this->gravity()[1]*depth;
+        values[saturationDNAPLIdx] = 0;
         return values;
     }
 

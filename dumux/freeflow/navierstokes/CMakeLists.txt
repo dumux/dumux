@@ -1,6 +1,5 @@
-add_subdirectory("staggered")
+add_subdirectory(staggered)
 
-#install headers
 install(FILES
 fluxvariables.hh
 fluxvariablescache.hh

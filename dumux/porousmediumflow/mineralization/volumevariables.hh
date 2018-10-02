@@ -25,60 +25,23 @@
 #ifndef DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
 #define DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
 
-#include <dumux/common/math.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/material/fluidstates/compositional.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup MineralizationModel
  * \brief Contains the quantities which are are constant within a sub-control volume
  *        of the finite volume grid in an m-phase, n-component, mineralization model.
  */
-template <class TypeTag>
-class MineralizationVolumeVariables : public GET_PROP_TYPE(TypeTag, NonMineralizationVolumeVariables)
+template <class Traits, class NonMineralizationVolVars>
+class MineralizationVolumeVariables : public NonMineralizationVolVars
 {
-    using ParentType = typename GET_PROP_TYPE(TypeTag, NonMineralizationVolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    enum
-    {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numSPhases =  GET_PROP_VALUE(TypeTag, NumSPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
-    };
+    using ParentType = NonMineralizationVolVars;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using ModelTraits = typename Traits::ModelTraits;
+    using SolidState = typename Traits::SolidState;
 
 public:
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-
-    //! updates all required quantities inside the given scv
-    void update(const ElementSolutionVector &elemSol,
-                const Problem &problem,
-                const Element &element,
-                const SubControlVolume& scv)
-    {
-        // Update parent type (also completes the fluid state)
-        ParentType::update(elemSol, problem, element, scv);
-
-        // calculate the remaining quantities
-        auto&& priVars = elemSol[scv.indexInElement()];
-
-        sumPrecipitates_ = 0.0;
-        for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
-        {
-           precipitateVolumeFraction_[sPhaseIdx] = priVars[numComponents + sPhaseIdx];
-           sumPrecipitates_+= precipitateVolumeFraction_[sPhaseIdx];
-        }
-    }
+    using SolidSystem = typename Traits::SolidSystem;
 
     /*!
      * \brief Returns the volume fraction of the precipitate (solid phase)
@@ -86,58 +49,29 @@ public:
      *
      * \param phaseIdx the index of the solid phase
      */
-    Scalar precipitateVolumeFraction(int phaseIdx) const
-    { return precipitateVolumeFraction_[phaseIdx - numPhases]; }
+    Scalar solidVolumeFraction(int sCompIdx) const
+    { return this->solidState_.volumeFraction(sCompIdx); }
 
     /*!
      * \brief Returns the density of the phase for all fluid and solid phases
      *
      * \param phaseIdx the index of the fluid phase
      */
-    Scalar density(int phaseIdx) const
+    Scalar solidComponentDensity(int sCompIdx) const
     {
-        if (phaseIdx < numPhases)
-            return this->fluidState_.density(phaseIdx);
-        else
-            return FluidSystem::precipitateDensity(phaseIdx);
+        return SolidSystem::density(this->solidState_, sCompIdx);
     }
 
     /*!
-     * \brief Returns the mass density of a given phase within the
-     *        control volume.
-     *
-     * \param phaseIdx The phase index
-     */
-    Scalar molarDensity(int phaseIdx) const
-    {
-        if (phaseIdx < numPhases)
-            return this->fluidState_.molarDensity(phaseIdx);
-        else
-            return FluidSystem::precipitateMolarDensity(phaseIdx);
-    }
-
-    /*!
-     * \brief Returns the molality of a component in the phase
+     * \brief Returns the density of the phase for all fluid and solid phases
      *
      * \param phaseIdx the index of the fluid phase
-     * \param compIdx the index of the component
-     * \f$\mathrm{molality}
-     *  = \frac{n_\mathrm{component}}{m_\mathrm{solvent}}
-     *  = \frac{n_\mathrm{component}}{n_\mathrm{solvent}*M_\mathrm{solvent}}\f$
-     *
-     * \note compIdx of the main component (solvent) in the
-     *       phase is equal to the phaseIdx
      */
-    Scalar molality(int phaseIdx, int compIdx) const // [moles/Kg]
+    Scalar solidComponentMolarDensity(int sCompIdx) const
     {
-        return this->fluidState_.moleFraction(phaseIdx, compIdx)
-                  /(this->fluidState_.moleFraction(phaseIdx, phaseIdx)
-                  * FluidSystem::molarMass(phaseIdx));
+        return SolidSystem::molarDensity(this->solidState_, sCompIdx);
     }
 
-protected:
-    Scalar precipitateVolumeFraction_[numSPhases];
-    Scalar sumPrecipitates_;
 };
 } // end namespace Dumux
 

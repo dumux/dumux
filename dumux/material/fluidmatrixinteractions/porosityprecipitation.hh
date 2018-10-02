@@ -26,64 +26,44 @@
 
 #include <dumux/discretization/evalsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Calculates the porosity depending on the volume fractions of precipitated minerals.
+ *
+ * \tparam Scalar The type used for scalar values
+ * \numComp The number of components in the fluid phases
+ * \numSolidPhases The number of precipitating solid phases
  */
-template<class TypeTag>
+template<class Scalar, int numComp, int numSolidPhases>
 class PorosityPrecipitation
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-    static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static const int numSolidPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
-
-    using Element = typename GridView::template Codim<0>:: Entity;
-
 public:
-    void init(const SpatialParams& spatialParams)
-    {
-        spatialParamsPtr_ = &spatialParams;
-    }
-
     /*!
      * \brief calculates the porosity in a sub-control volume
      * \param element element
      * \param elemSol the element solution
      * \param scv sub control volume
+     * \param refPoro The solid matrix porosity without precipitates
+     * \param minPoro A minimum porosity value
      */
+    template<class Element, class SubControlVolume, class ElemSol>
     Scalar evaluatePorosity(const Element& element,
                             const SubControlVolume& scv,
-                            const ElementSolution& elemSol) const
+                            const ElemSol& elemSol,
+                            Scalar refPoro,
+                            Scalar minPoro = 0.0) const
     {
         auto priVars = evalSolution(element, element.geometry(), elemSol, scv.center());
 
         Scalar sumPrecipitates = 0.0;
         for (unsigned int solidPhaseIdx = 0; solidPhaseIdx < numSolidPhases; ++solidPhaseIdx)
-            sumPrecipitates += priVars[numComponents + solidPhaseIdx];
-
-        auto minPoro = spatialParams_().minPorosity(element, scv);
+            sumPrecipitates += priVars[numComp + solidPhaseIdx];
 
         using std::max;
-        return max(minPoro, spatialParams_().referencePorosity(element, scv) - sumPrecipitates);
+        return max(minPoro, refPoro - sumPrecipitates);
     }
-
-private:
-    const SpatialParams& spatialParams_() const
-    { return *spatialParamsPtr_; }
-
-    const SpatialParams* spatialParamsPtr_;
 };
 
 } // namespace Dumux

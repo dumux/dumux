@@ -52,7 +52,7 @@ private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
       using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
       using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-      using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+      using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
       using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
       using MaterialLaw = typename SpatialParams::MaterialLaw;

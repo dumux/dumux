@@ -28,18 +28,19 @@
 
 // include all fluid systems in dumux-stable
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/base.hh>
+#include <dumux/material/fluidsystems/brine.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
-#include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/fluidsystems/purewatersimple.hh>
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states
@@ -55,14 +56,19 @@
 #include <dumux/material/fluidstates/saturationoverlay.hh>
 #include <dumux/material/fluidstates/temperatureoverlay.hh>
 
+// for co2, include the tables of the co2 test
+#include <test/porousmediumflow/co2/implicit/heterogeneousco2tables.hh>
+
 int main()
 {
-    using Scalar = double;
-    using H2O = Dumux::H2O<Scalar>;
-    using N2 = Dumux::N2<Scalar>;
+    using namespace Dumux;
 
-    using Liquid = Dumux::FluidSystems::LiquidPhase<Scalar, H2O>;
-    using Gas = Dumux::FluidSystems::GasPhase<Scalar, N2>;
+    using Scalar = double;
+    using H2O = Components::H2O<Scalar>;
+    using N2 = Components::N2<Scalar>;
+
+    using Liquid = FluidSystems::OnePLiquid<Scalar, H2O>;
+    using Gas = FluidSystems::OnePGas<Scalar, N2>;
 
     int success = 0;
     std::vector<std::string> collectedExceptions;
@@ -70,49 +76,49 @@ int main()
     /////////////////////////
     // check all fluid states
     {
-        using FluidSystem = Dumux::FluidSystems::H2ON2<Scalar, /*enableComplexRelations=*/false>;
-        using BaseFluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem>;
+        using FluidSystem = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+        using BaseFluidState = CompositionalFluidState<Scalar, FluidSystem>;
         BaseFluidState baseFs;
 
         // TwoPTwoCFluidState TODO: doesn't fulfill interface!
-        // Dumux::TwoPTwoCFluidState<Scalar, FluidSystem> fluidStateTwoPTwoC;
-        // success += Dumux::checkFluidState<Scalar>(fluidStateTwoPTwoC);
+        // TwoPTwoCFluidState<Scalar, FluidSystem> fluidStateTwoPTwoC;
+        // success += checkFluidState<Scalar>(fluidStateTwoPTwoC);
 
         // CompositionalFluidState
-        Dumux::CompositionalFluidState<Scalar, FluidSystem> compositionalFluidState;
-        success += Dumux::checkFluidState<Scalar>(compositionalFluidState);
+        CompositionalFluidState<Scalar, FluidSystem> compositionalFluidState;
+        success += checkFluidState<Scalar>(compositionalFluidState);
 
         // ImmiscibleFluidState
-        Dumux::ImmiscibleFluidState<Scalar, FluidSystem> immiscibleFluidState;
-        success += Dumux::checkFluidState<Scalar>(immiscibleFluidState);
+        ImmiscibleFluidState<Scalar, FluidSystem> immiscibleFluidState;
+        success += checkFluidState<Scalar>(immiscibleFluidState);
 
         // IsothermalImmiscibleFluidState
-        Dumux::IsothermalImmiscibleFluidState<Scalar, FluidSystem> isothermalImmiscibleFluidState;
-        success += Dumux::checkFluidState<Scalar>(isothermalImmiscibleFluidState);
+        IsothermalImmiscibleFluidState<Scalar, FluidSystem> isothermalImmiscibleFluidState;
+        success += checkFluidState<Scalar>(isothermalImmiscibleFluidState);
 
         // NonEquilibriumFluidState
-        Dumux::NonEquilibriumFluidState<Scalar, FluidSystem> nonEquilibriumFluidState;
-        success += Dumux::checkFluidState<Scalar>(nonEquilibriumFluidState);
+        NonEquilibriumFluidState<Scalar, FluidSystem> nonEquilibriumFluidState;
+        success += checkFluidState<Scalar>(nonEquilibriumFluidState);
 
         // NonEquilibriumEnergyFluidState TODO: fails the test
-        // Dumux::NonEquilibriumEnergyFluidState<Scalar, FluidSystem> nonEquilibriumEnergyFluidState;
-        // success += Dumux::checkFluidState<Scalar>(nonEquilibriumEnergyFluidState);
+        // NonEquilibriumEnergyFluidState<Scalar, FluidSystem> nonEquilibriumEnergyFluidState;
+        // success += checkFluidState<Scalar>(nonEquilibriumEnergyFluidState);
 
         // NonEquilibriumMassFluidState
-        Dumux::NonEquilibriumMassFluidState<Scalar, FluidSystem> nonEquilibriumMassFluidState;
-        success += Dumux::checkFluidState<Scalar>(nonEquilibriumMassFluidState);
+        NonEquilibriumMassFluidState<Scalar, FluidSystem> nonEquilibriumMassFluidState;
+        success += checkFluidState<Scalar>(nonEquilibriumMassFluidState);
 
         // PressureOverlayFluidState
-        Dumux::PressureOverlayFluidState<Scalar, BaseFluidState> pressureOverlayFluidState(baseFs);
-        success += Dumux::checkFluidState<Scalar>(pressureOverlayFluidState);
+        PressureOverlayFluidState<BaseFluidState> pressureOverlayFluidState(baseFs);
+        success += checkFluidState<Scalar>(pressureOverlayFluidState);
 
         // SaturationOverlayFluidState
-        Dumux::SaturationOverlayFluidState<Scalar, BaseFluidState> saturationOverlayFluidState(baseFs);
-        success += Dumux::checkFluidState<Scalar>(saturationOverlayFluidState);
+        SaturationOverlayFluidState<BaseFluidState> saturationOverlayFluidState(baseFs);
+        success += checkFluidState<Scalar>(saturationOverlayFluidState);
 
         // TemperatureOverlayFluidState
-        Dumux::TemperatureOverlayFluidState<Scalar, BaseFluidState> temperatureOverlayFluidState(baseFs);
-        success += Dumux::checkFluidState<Scalar>(temperatureOverlayFluidState);
+        TemperatureOverlayFluidState<BaseFluidState> temperatureOverlayFluidState(baseFs);
+        success += checkFluidState<Scalar>(temperatureOverlayFluidState);
     }
 
 
@@ -120,96 +126,136 @@ int main()
     // check all fluid systems
 
     // 2p-immiscible
-    {   using FluidSystem = Dumux::FluidSystems::TwoPImmiscible<Scalar, Liquid, Liquid>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using FluidSystem = Dumux::FluidSystems::TwoPImmiscible<Scalar, Liquid, Gas>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using FluidSystem = Dumux::FluidSystems::TwoPImmiscible<Scalar, Gas, Liquid>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::TwoPImmiscible<Scalar, Liquid, Liquid>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::TwoPImmiscible<Scalar, Liquid, Gas>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::TwoPImmiscible<Scalar, Gas, Liquid>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // base
 
+    // Brine
+    {   using H2OType = Components::SimpleH2O<Scalar>;
+        using FluidSystem = FluidSystems::Brine<Scalar, H2OType>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+
     // Brine -- Air
-    {   using H2OType =  Dumux::SimpleH2O<Scalar>;
-        const bool enableComplexRelations=false;
-        using FluidSystem = Dumux::FluidSystems::BrineAir<Scalar, H2OType, enableComplexRelations>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using H2OType =  Dumux::SimpleH2O<Scalar>;
-        const bool enableComplexRelations=true;
-        using FluidSystem = Dumux::FluidSystems::BrineAir<Scalar, H2OType, enableComplexRelations>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using H2OType = Components::SimpleH2O<Scalar>;
+        using FluidSystem = FluidSystems::BrineAir<Scalar, H2OType, FluidSystems::BrineAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using H2OType = Components::SimpleH2O<Scalar>;
+        using FluidSystem = FluidSystems::BrineAir<Scalar, H2OType>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // Brine -- CO2
+    // BrineCO2 does not fulfill the restrictToPhase-assertion where we assume that for all
+    // functions depending on a phase index only fluid properties of this phase are used
+    // that is why checkFluidSystem() needs to be called with "false" here.
+    // Also see the checkFluidSystem documentation.
+    {   using H2OType = Components::SimpleH2O<Scalar>;
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
+                                                    H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
+    {   using H2OType = Components::SimpleH2O<Scalar>;
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
+                                                    H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false> >;
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
+    {   using H2OType = Components::H2O<Scalar>;
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
+                                                    H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
+    {   using H2OType = Components::H2O<Scalar>;
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
+                                                    H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false> >;
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
+                                                    H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
+                                                    H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false> >;
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
+                                                    H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true,
+                                                    /*fastButSimplifiedRelations*/true> >;
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
+                                                    H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false,
+                                                    /*fastButSimplifiedRelations*/true> >;
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
 
     // H2O -- Air
-    {   using H2OType =  Dumux::SimpleH2O<Scalar>;
-        const bool enableComplexRelations=false;
-        using FluidSystem = Dumux::FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using H2OType =  Dumux::SimpleH2O<Scalar>;
-        const bool enableComplexRelations=true;
-        using FluidSystem = Dumux::FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using H2OType =  Dumux::H2O<Scalar>;
-        const bool enableComplexRelations=false;
-        using FluidSystem = Dumux::FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using H2OType =  Dumux::H2O<Scalar>;
-        const bool enableComplexRelations=true;
-        using FluidSystem = Dumux::FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>>;
-        const bool enableComplexRelations=false;
-        using FluidSystem = Dumux::FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>>;
-        const bool enableComplexRelations=true;
-        using FluidSystem = Dumux::FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using H2OType = Components::SimpleH2O<Scalar>;
+        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, FluidSystems::H2OAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using H2OType = Components::SimpleH2O<Scalar>;
+        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using H2OType =  Components::H2O<Scalar>;
+        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, FluidSystems::H2OAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using H2OType =  Components::H2O<Scalar>;
+        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
+        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, FluidSystems::H2OAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
+        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // gas phase
-    {   using FluidSystem = Dumux::FluidSystems::GasPhase<Scalar, H2O>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::OnePGas<Scalar, H2O>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- Air -- Mesitylene
-    {   using FluidSystem = Dumux::FluidSystems::H2OAirMesitylene<Scalar>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::H2OAirMesitylene<Scalar>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- Air -- Xylene
-    {   using FluidSystem = Dumux::FluidSystems::H2OAirXylene<Scalar>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::H2OAirXylene<Scalar>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- N2
-    {   using FluidSystem = Dumux::FluidSystems::H2ON2<Scalar, /*enableComplexRelations=*/false>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using FluidSystem = Dumux::FluidSystems::H2ON2<Scalar, /*enableComplexRelations=*/true>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::H2ON2<Scalar>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- N2 -- kinetic
-    {   using FluidSystem = Dumux::FluidSystems::H2ON2Kinetic<Scalar, /*enableComplexRelations=*/false>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using FluidSystem = Dumux::FluidSystems::H2ON2Kinetic<Scalar, /*enableComplexRelations=*/true>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::H2ON2Kinetic<Scalar, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::H2ON2Kinetic<Scalar>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- N2 -- o2
-    {   using FluidSystem = Dumux::FluidSystems::H2ON2O2<Scalar, /*enableComplexRelations=*/false>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using FluidSystem = Dumux::FluidSystems::H2ON2O2<Scalar, /*enableComplexRelations=*/true>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::H2ON2O2<Scalar, FluidSystems::H2ON2O2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::H2ON2O2<Scalar>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // liquid phase
-    {   using FluidSystem = Dumux::FluidSystems::LiquidPhase<Scalar, H2O>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-
-    // pure water simple
-    {   using FluidSystem = Dumux::FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*enableComplexRelations=*/false>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using FluidSystem = Dumux::FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*enableComplexRelations=*/true>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::OnePLiquid<Scalar, H2O>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // spe5
-    {   using FluidSystem = Dumux::FluidSystems::Spe5<Scalar>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::Spe5<Scalar>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+
+    // 1p adapter
+    {   using FluidSystem = FluidSystems::OnePAdapter<FluidSystems::TwoPImmiscible<Scalar, Gas, Liquid>, 0>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::OnePAdapter<FluidSystems::TwoPImmiscible<Scalar, Gas, Liquid>, 1>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
+        using FluidSystem = FluidSystems::OnePAdapter<FluidSystems::H2OAir<Scalar, H2OType>, 0>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::OnePAdapter<FluidSystems::H2ON2O2<Scalar>, 1>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     return success;
 }

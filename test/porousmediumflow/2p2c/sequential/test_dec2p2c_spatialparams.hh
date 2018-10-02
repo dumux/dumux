@@ -61,6 +61,7 @@ public:
 template<class TypeTag>
 class Test2P2CSpatialParams : public SequentialFVSpatialParams<TypeTag>
 {
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
@@ -91,7 +92,7 @@ public:
     }
 
 
-    Test2P2CSpatialParams(const GridView& gridView) : SequentialFVSpatialParams<TypeTag>(gridView),
+    Test2P2CSpatialParams(const Problem& problem) : SequentialFVSpatialParams<TypeTag>(problem),
             constPermeability_(0)
     {
         // residual saturations

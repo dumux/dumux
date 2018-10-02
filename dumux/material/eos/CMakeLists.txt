@@ -1,5 +1,3 @@
-
-#install headers
 install(FILES
 pengrobinson.hh
 pengrobinsonmixture.hh

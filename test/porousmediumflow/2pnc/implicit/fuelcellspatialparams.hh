@@ -26,73 +26,40 @@
 #ifndef DUMUX_FUELCELL_SPATIAL_PARAMS_HH
 #define DUMUX_FUELCELL_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/philtophoblaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-namespace Dumux
-{
-/*!
- * \ingroup TwoPNCTests
- * \brief Definition of the spatial parameters for the fuel cell
- *        problem which uses the isothermal/non-insothermal 2pnc box model
- */
-//forward declaration
-template<class TypeTag>
-class FuelCellSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(FuelCellSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(FuelCellSpatialParams, SpatialParams, FuelCellSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(FuelCellSpatialParams, MaterialLaw)
-{
- private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffMaterialLaw = RegularizedVanGenuchten<Scalar>;
-
- public:
-    // define the material law parameterized by absolute saturations
-    using type = PhilToPhobLaw<EffMaterialLaw>;
-};
-
-} // end namespace Properties
-
+namespace Dumux {
 /*!
  * \ingroup TwoPNCMinModel
- * \ingroup BoxTestProblems
  * \brief Definition of the spatial parameters for the FuelCell
  *        problem which uses the isothermal 2p2c box model
  */
-template<class TypeTag>
-class FuelCellSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class FuelCellSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         FuelCellSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using CoordScalar = typename GridView::ctype;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using GridView = typename FVGridGeometry::GridView;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       FuelCellSpatialParams<FVGridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+
 public:
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
     /*!
@@ -100,8 +67,8 @@ public:
      *
      * \param gridView The grid view
      */
-    FuelCellSpatialParams(const Problem& problem)
-    : ParentType(problem), K_(0)
+    FuelCellSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry), K_(0)
     {
         // intrinsic permeabilities
         K_[0][0] = 5e-11;
@@ -111,8 +78,8 @@ public:
         porosity_ = 0.2;
 
         // residual saturations
-        materialParams_.setSwr(0.12); //here water, see philtophoblaw
-        materialParams_.setSnr(0.0);
+        materialParams_.setSwr(0.12); // air is wetting phase
+        materialParams_.setSnr(0.0); // water is non-wetting
 
         //parameters for the vanGenuchten law
         materialParams_.setVgAlpha(6.66e-5); // alpha = 1/pcb
@@ -148,6 +115,17 @@ public:
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     { return materialParams_; }
 
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
+     * \note we set a hydrophobic material
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::gasPhaseIdx; }
+
 private:
     DimWorldMatrix K_;
     Scalar porosity_;
@@ -155,6 +133,6 @@ private:
     MaterialLawParams materialParams_;
 };
 
-}//end namespace
+} // end namespace Dumux
 
 #endif

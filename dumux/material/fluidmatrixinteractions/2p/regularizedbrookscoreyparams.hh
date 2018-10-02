@@ -25,6 +25,8 @@
 #ifndef DUMUX_REGULARIZED_BROOKS_COREY_PARAMS_HH
 #define DUMUX_REGULARIZED_BROOKS_COREY_PARAMS_HH
 
+#include <dune/common/float_cmp.hh>
+
 #include "brookscoreyparams.hh"
 
 namespace Dumux
@@ -52,6 +54,16 @@ public:
         : BrooksCoreyParams(pe, lambda)
     {
         setThresholdSw(0.01);
+    }
+
+    /*!
+     * \brief Equality comparison with another set of params
+     */
+    template<class OtherParams>
+    bool operator== (const OtherParams& otherParams) const
+    {
+        return Dune::FloatCmp::eq(thresholdSw_, otherParams.thresholdSw(), /*eps*/1e-6*thresholdSw_)
+               && BrooksCoreyParams::operator==(otherParams);
     }
 
     /*!

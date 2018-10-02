@@ -42,11 +42,11 @@ class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -54,15 +54,15 @@ class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using Element = typename GridView::template Codim<0>::Entity;
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     // first index for the mass balance
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
     // phase indices
     enum {
-           wPhaseIdx = FluidSystem::wPhaseIdx,
-           nPhaseIdx = FluidSystem::nPhaseIdx,
-           wCompIdx = FluidSystem::wCompIdx
+           liquidPhaseIdx = FluidSystem::liquidPhaseIdx,
+           gasPhaseIdx = FluidSystem::gasPhaseIdx,
+           liquidCompIdx = FluidSystem::liquidCompIdx
     };
 
     static constexpr bool enableWaterDiffusionInAir
@@ -81,27 +81,27 @@ public:
      * \note The volVars can be different to allow computing
      *       the implicit euler time derivative here
      */
-    ResidualVector computeStorage(const Problem& problem,
-                                  const SubControlVolume& scv,
-                                  const VolumeVariables& volVars) const
+    NumEqVector computeStorage(const Problem& problem,
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
     {
         // partial time derivative of the phase mass
-        ResidualVector storage(0.0);
+        NumEqVector storage(0.0);
         storage[conti0EqIdx] = volVars.porosity()
-                               * volVars.density(wPhaseIdx)
-                               * volVars.saturation(wPhaseIdx);
+                               * volVars.density(liquidPhaseIdx)
+                               * volVars.saturation(liquidPhaseIdx);
 
         // for extended Richards we consider water in air
         if (enableWaterDiffusionInAir)
             storage[conti0EqIdx] += volVars.porosity()
-                                    * volVars.molarDensity(nPhaseIdx)
-                                    * volVars.moleFraction(nPhaseIdx, wCompIdx)
-                                    * FluidSystem::molarMass(wCompIdx)
-                                    * volVars.saturation(nPhaseIdx);
+                                    * volVars.molarDensity(gasPhaseIdx)
+                                    * volVars.moleFraction(gasPhaseIdx, liquidCompIdx)
+                                    * FluidSystem::molarMass(liquidCompIdx)
+                                    * volVars.saturation(gasPhaseIdx);
 
         //! The energy storage in the water, air and solid phase
-        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, wPhaseIdx);
-        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, nPhaseIdx);
+        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, liquidPhaseIdx);
+        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, gasPhaseIdx);
         EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
 
         return storage;
@@ -118,29 +118,29 @@ public:
      * \param scvf The sub control volume face to compute the flux on
      * \param elemFluxVarsCache The cache related to flux compuation
      */
-    ResidualVector computeFlux(const Problem& problem,
-                               const Element& element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace& scvf,
-                               const ElementFluxVariablesCache& elemFluxVarsCache) const
+    NumEqVector computeFlux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace& scvf,
+                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
-        ResidualVector flux(0.0);
+        NumEqVector flux(0.0);
         // the physical quantities for which we perform upwinding
         auto upwindTerm = [](const auto& volVars)
-                          { return volVars.density(wPhaseIdx)*volVars.mobility(wPhaseIdx); };
+                          { return volVars.density(liquidPhaseIdx)*volVars.mobility(liquidPhaseIdx); };
 
-        flux[conti0EqIdx] = fluxVars.advectiveFlux(wPhaseIdx, upwindTerm);
+        flux[conti0EqIdx] = fluxVars.advectiveFlux(liquidPhaseIdx, upwindTerm);
 
         // for extended Richards we consider water vapor diffusion in air
         if (enableWaterDiffusionInAir)
-            flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(nPhaseIdx)[wCompIdx]*FluidSystem::molarMass(wCompIdx);
+            flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(gasPhaseIdx)[liquidCompIdx]*FluidSystem::molarMass(liquidCompIdx);
 
         //! Add advective phase energy fluxes for the water phase only. For isothermal model the contribution is zero.
-        EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, wPhaseIdx);
+        EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, liquidPhaseIdx);
 
         //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
         //! The effective lambda is averaged over both fluid phases and the solid phase

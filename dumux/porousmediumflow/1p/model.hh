@@ -50,32 +50,95 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "vtkoutputfields.hh"
 
-namespace Dumux
+namespace Dumux {
+
+/*!
+ * \ingroup OnePModel
+ * \brief Specifies a number properties of single-phase models.
+ */
+struct OnePModelTraits
 {
+    //! Per default, we use the indices without offset
+    using Indices = OnePIndices<>;
+
+    static constexpr int numEq() { return 1; }
+    static constexpr int numPhases() { return 1; }
+    static constexpr int numComponents() { return 1; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return false; }
+    static constexpr bool enableEnergyBalance() { return false; }
+
+    template <class FluidSystem = void, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        return "p";
+    }
+};
+
+/*!
+ * \ingroup OnePModel
+ * \brief Traits class for the volume variables of the single-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ */
+template<class PV,
+         class FSY,
+         class FST,
+         class SSY,
+         class SST,
+         class PT,
+         class MT>
+struct OnePVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+};
+
 namespace Properties {
 //! The type tags for the isothermal single phase model
 NEW_TYPE_TAG(OneP, INHERITS_FROM(PorousMediumFlow));
 //! The type tags for the non-isothermal single phase model
-NEW_TYPE_TAG(OnePNI, INHERITS_FROM(OneP, NonIsothermal));
+NEW_TYPE_TAG(OnePNI, INHERITS_FROM(OneP));
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_INT_PROP(OneP, NumEq, 1);                                         //!< set the number of equations to 1
-SET_INT_PROP(OneP, NumPhases, 1);                                     //!< The number of phases in the 1p model is 1
-SET_INT_PROP(OneP, NumComponents, 1);                                 //!< The number of components in the 1p model is 1
-SET_TYPE_PROP(OneP, LocalResidual, ImmiscibleLocalResidual<TypeTag>); //!< The local residual function
-SET_TYPE_PROP(OneP, VolumeVariables, OnePVolumeVariables<TypeTag>);   //!< the VolumeVariables property
-SET_BOOL_PROP(OneP, EnableAdvection, true);                           //!< The one-phase model considers advection
-SET_BOOL_PROP(OneP, EnableMolecularDiffusion, false);                 //!< The one-phase model has no molecular diffusion
-SET_BOOL_PROP(OneP, EnableEnergyBalance, false);                      //!< Isothermal model by default
-SET_TYPE_PROP(OneP, Indices, OnePIndices);                            //!< The indices required by the isothermal single-phase model
-SET_TYPE_PROP(OneP, VtkOutputFields, OnePVtkOutputFields<TypeTag>);   //!< Set the vtk output fields specific to this model
+SET_TYPE_PROP(OneP, VtkOutputFields, OnePVtkOutputFields);            //!< default vtk output fields specific to this model
+SET_TYPE_PROP(OneP, LocalResidual, ImmiscibleLocalResidual<TypeTag>); //!< the local residual function
+SET_TYPE_PROP(OneP, ModelTraits, OnePModelTraits);                    //!< states some specifics of the one-phase model
+
+//! Set the volume variables property
+SET_PROP(OneP, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+public:
+    using type = OnePVolumeVariables<Traits>;
+};
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -95,15 +158,17 @@ public:
 ///////////////////////////////////////////////////////////////////////////
 // properties for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_INT_PROP(OnePNI, IsothermalNumEq, 1);                                           //!< set number of equations of isothermal model
-SET_BOOL_PROP(OnePNI, EnableEnergyBalance, true);                                   //!< we do solve for the energy balance here
-SET_TYPE_PROP(OnePNI, IsothermalVtkOutputFields, OnePVtkOutputFields<TypeTag>);     //!< the isothermal vtk output fields
-SET_TYPE_PROP(OnePNI, IsothermalVolumeVariables, OnePVolumeVariables<TypeTag>);     //!< Vol vars of the isothermal model
-SET_TYPE_PROP(OnePNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);   //!< Local residual of the isothermal model
-SET_TYPE_PROP(OnePNI, IsothermalIndices, OnePIndices);                              //!< Indices of the isothermal model
+
+//! Add temperature to the output
+SET_TYPE_PROP(OnePNI, VtkOutputFields, EnergyVtkOutputFields<OnePVtkOutputFields>);
+
+//! The model traits of the non-isothermal model
+SET_TYPE_PROP(OnePNI, ModelTraits, PorousMediumFlowNIModelTraits<OnePModelTraits>);
+
+//! Use the average for effective conductivities
 SET_TYPE_PROP(OnePNI,
               ThermalConductivityModel,
-              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>); //!< Use the average for effective conductivities
+              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 } // end namespace Properties
 } // end namespace Dumux

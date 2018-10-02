@@ -24,73 +24,46 @@
 #ifndef DUMUX_THREEPNI_SPATIAL_PARAMS_HH
 #define DUMUX_THREEPNI_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the 3pni problems.
  */
-
-//forward declaration
-template<class TypeTag>
-class ThreePNISpatialParams;
-
-namespace Properties
+template<class FVGridGeometry, class Scalar>
+class ThreePNISpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         ThreePNISpatialParams<FVGridGeometry, Scalar>>
 {
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(ThreePNISpatialParams);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       ThreePNISpatialParams<FVGridGeometry, Scalar>>;
 
-// Set the spatial parameters
-SET_TYPE_PROP(ThreePNISpatialParams, SpatialParams, ThreePNISpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(ThreePNISpatialParams, MaterialLaw)
-{
- private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
- public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffectiveLaw>;
-};
-}
 
-
-template<class TypeTag>
-class ThreePNISpatialParams : public FVSpatialParams<TypeTag>
-{
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    enum { dimWorld=GridView::dimensionworld };
-    using CoordScalar = typename Grid::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    ThreePNISpatialParams(const Problem& problem)
-    : ParentType(problem)
+    ThreePNISpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
 
         // residual saturations
         materialParams_.setSwr(0.12);
@@ -137,49 +110,11 @@ public:
         return materialParams_;
     }
 
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 790; // specific heat capacity of granite [J / (kg K)]
-    }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 2700; // density of granite [kg/m^3]
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    {
-        return lambdaSolid_;
-    }
-
-
 private:
 
     MaterialLawParams materialParams_;
     Scalar permeability_;
     Scalar porosity_;
-    Scalar lambdaSolid_;
 };
 
 } // end namespace Dumux

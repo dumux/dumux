@@ -24,7 +24,6 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_HELPER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_HELPER_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
@@ -52,7 +51,9 @@ class MpfaDimensionHelper<FVGridGeometry, /*dim*/2, /*dimWorld*/2>
 {
     using GridView = typename FVGridGeometry::GridView;
     using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, GridView::dimensionworld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
@@ -106,7 +107,6 @@ public:
      */
     static std::size_t getGlobalNumScvf(const GridView& gridView)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         assert(gridView.size(Dune::GeometryTypes::triangle)
                + gridView.size(Dune::GeometryTypes::quadrilateral) == gridView.size(0));
 
@@ -114,13 +114,6 @@ public:
                  * getNumLocalScvfs(Dune::GeometryTypes::triangle)
                + gridView.size(Dune::GeometryTypes::quadrilateral)
                  * getNumLocalScvfs(Dune::GeometryTypes::quadrilateral);
-#else
-        assert(gridView.size(Dune::GeometryType(Dune::GeometryType::simplex, 2))
-               + gridView.size(Dune::GeometryType(Dune::GeometryType::cube, 2)) == gridView.size(0));
-
-        return gridView.size(Dune::GeometryType(Dune::GeometryType::simplex, 2))*6
-               + gridView.size(Dune::GeometryType(Dune::GeometryType::cube, 2))*8;
-#endif
     }
 
     /*!
@@ -200,21 +193,12 @@ public:
      */
     static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         if (gt == Dune::GeometryTypes::triangle)
             return 6;
         else if (gt == Dune::GeometryTypes::quadrilateral)
             return 8;
         else
             DUNE_THROW(Dune::NotImplemented, "Mpfa for 2d geometry type " << gt);
-#else
-        if (gt.isTriangle())
-            return 6;
-        else if (gt.isQuadrilateral())
-            return 8;
-        else
-            DUNE_THROW(Dune::NotImplemented, "Mpfa for 2d geometry type " << gt);
-#endif
     }
 };
 
@@ -292,8 +276,9 @@ class MpfaDimensionHelper<FVGridGeometry, /*dim*/3, /*dimWorld*/3>
 
     // Be picky about the dimensions
     using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, /*dimworld*/3>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     // container to store the positions of intersections required for
     // scvf corner computation. Maximum number of points needed is 9
@@ -347,7 +332,6 @@ public:
      */
     static std::size_t getGlobalNumScvf(const GridView& gridView)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         assert(gridView.size(Dune::GeometryTypes::tetrahedron)
                + gridView.size(Dune::GeometryTypes::pyramid)
                + gridView.size(Dune::GeometryTypes::prism)
@@ -361,17 +345,6 @@ public:
                  * getNumLocalScvfs(Dune::GeometryTypes::prism)
                + gridView.size(Dune::GeometryTypes::hexahedron)
                  * getNumLocalScvfs(Dune::GeometryTypes::hexahedron);
-#else
-        assert(gridView.size(Dune::GeometryType(Dune::GeometryType::simplex, 3))
-               + gridView.size(Dune::GeometryType(Dune::GeometryType::pyramid, 3))
-               + gridView.size(Dune::GeometryType(Dune::GeometryType::prism, 3))
-               + gridView.size(Dune::GeometryType(Dune::GeometryType::cube, 3)) == gridView.size(0));
-
-        return gridView.size(Dune::GeometryType(Dune::GeometryType::simplex, 3))*12
-               + gridView.size(Dune::GeometryType(Dune::GeometryType::pyramid, 3))*16
-               + gridView.size(Dune::GeometryType(Dune::GeometryType::prism, 3))*18
-               + gridView.size(Dune::GeometryType(Dune::GeometryType::cube, 3))*24;
-#endif
     }
 
     /*!
@@ -522,7 +495,6 @@ public:
      */
     static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         if (gt == Dune::GeometryTypes::tetrahedron)
             return 12;
         else if (gt == Dune::GeometryTypes::pyramid)
@@ -531,16 +503,6 @@ public:
             return 18;
         else if (gt == Dune::GeometryTypes::hexahedron)
             return 24;
-#else
-        if (gt == Dune::GeometryType(Dune::GeometryType::simplex, 3))
-            return 12;
-        else if (gt == Dune::GeometryType(Dune::GeometryType::pyramid, 3))
-            return 16;
-        else if (gt == Dune::GeometryType(Dune::GeometryType::prism, 3))
-            return 18;
-        else if (gt == Dune::GeometryType(Dune::GeometryType::cube, 3))
-            return 24;
-#endif
         else
             DUNE_THROW(Dune::NotImplemented, "Mpfa for 3d geometry type " << gt);
     }
@@ -567,10 +529,10 @@ class CCMpfaHelper : public MpfaDimensionHelper<FVGridGeometry,
 
     using GridView = typename FVGridGeometry::GridView;
     static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
 
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
@@ -617,11 +579,8 @@ public:
             {
                 if (!is.neighbor() && !is.boundary())
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                     const auto refElement = ReferenceElements::general(element.geometry().type());
-#else
-                    const auto& refElement = ReferenceElements::general(element.geometry().type());
-#endif
+
                     for (int isVertex = 0; isVertex < is.geometry().corners(); ++isVertex)
                     {
                         const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, isVertex, dim);

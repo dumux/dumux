@@ -1,0 +1,24 @@
+[Grid]
+UpperRight = 0.005 0.002
+Cells = 3 20
+
+[Problem]
+Name = test_stokes_channel_pseudo3d # name passed to the output routines
+DeltaP = 10
+EnableGravity = false
+Height = 0.00025
+
+[Component]
+LiquidDensity = 1e3
+LiquidKinematicViscosity = 1e-6
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+
+[Vtk]
+WriteFaceData = false

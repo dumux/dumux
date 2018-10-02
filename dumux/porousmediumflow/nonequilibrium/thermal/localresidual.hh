@@ -44,33 +44,32 @@ template<class TypeTag>
 class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
-    enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
+    enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
     enum { energyEq0Idx = Indices::energyEq0Idx };
     enum { energyEqSolidIdx = Indices::energyEqSolidIdx};
 
-    enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
-    enum { wPhaseIdx        = FluidSystem::wPhaseIdx};
-    enum { nPhaseIdx        = FluidSystem::nPhaseIdx};
-    enum { sPhaseIdx        = FluidSystem::sPhaseIdx};
+    enum { numComponents    = ModelTraits::numComponents() };
+    enum { phase0Idx        = FluidSystem::phase0Idx};
+    enum { phase1Idx        = FluidSystem::phase1Idx};
 
 public:
-
-
     //! The energy storage in the fluid phase with index phaseIdx
-    static void fluidPhaseStorage(ResidualVector& storage,
+    static void fluidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
@@ -85,7 +84,7 @@ public:
 
 
     //! The energy storage in the solid matrix
-    static void solidPhaseStorage(ResidualVector& storage,
+    static void solidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars)
     {
@@ -100,14 +99,14 @@ public:
     }
 
      // this is to make nonequilibrium work with compositional local residual, compositional calls that for non-isothermal models
-    static void heatConvectionFlux(ResidualVector& flux,
+    static void heatConvectionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars,
                                    int phaseIdx)
     {}
 
 
    //! The advective phase energy fluxes
-    static void heatConvectionFlux(ResidualVector& flux,
+    static void heatConvectionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars,
                                    const ElementVolumeVariables& elemVolVars,
                                    const SubControlVolumeFace& scvf,
@@ -142,14 +141,16 @@ public:
     }
 
     //! The diffusive energy fluxes
-    static void heatConductionFlux(ResidualVector& flux,
+    static void heatConductionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars)
     {
         //in case we have one energy equation for more than one fluid phase we use an effective law in the nonequilibrium fourierslaw
          flux[energyEq0Idx] += fluxVars.heatConductionFlux(0);
-
-       //heat conduction for solid phase
-        flux[energyEqSolidIdx] += fluxVars.heatConductionFlux(sPhaseIdx);
+         //heat conduction for the solid phases
+       for(int sPhaseIdx=0; sPhaseIdx<numEnergyEqSolid; ++sPhaseIdx)
+       {
+            flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(sPhaseIdx);
+       }
     }
 
     /*!
@@ -157,15 +158,14 @@ public:
      *
      * \param scv The sub-control volume over which we integrate the source term
      */
-    static void computeSourceEnergy(ResidualVector& source,
+    static void computeSourceEnergy(NumEqVector& source,
                                     const Element& element,
                                     const FVElementGeometry& fvGeometry,
                                     const ElementVolumeVariables& elemVolVars,
                                     const SubControlVolume &scv)
     {
         //specialization for 2 fluid phases
-        const auto& localScvIdx = scv.indexInElement();
-        const auto& volVars = elemVolVars[localScvIdx];
+        const auto& volVars = elemVolVars[scv];
         const auto& fs = volVars.fluidState() ;
         const Scalar characteristicLength = volVars.characteristicLength()  ;
 
@@ -174,20 +174,20 @@ public:
         const Scalar as = 6.0 * (1.0-volVars.porosity()) / characteristicLength ;
 
         //temperature fluid is the same for both fluids
-        const Scalar TFluid     = volVars.temperature(0);
+        const Scalar TFluid     = volVars.temperatureFluid(0);
         const Scalar TSolid     = volVars.temperatureSolid();
 
-        const Scalar satW       = fs.saturation(wPhaseIdx) ;
-        const Scalar satN       = fs.saturation(nPhaseIdx) ;
+        const Scalar satW       = fs.saturation(phase0Idx) ;
+        const Scalar satN       = fs.saturation(phase1Idx) ;
 
         const Scalar eps = 1e-6 ;
         Scalar solidToFluidEnergyExchange ;
 
         Scalar fluidConductivity ;
             if (satW < 1.0 - eps)
-                fluidConductivity = volVars.fluidThermalConductivity(nPhaseIdx) ;
+                fluidConductivity = volVars.fluidThermalConductivity(phase1Idx) ;
             else if (satW >= 1.0 - eps)
-                fluidConductivity = volVars.fluidThermalConductivity(wPhaseIdx) ;
+                fluidConductivity = volVars.fluidThermalConductivity(phase0Idx) ;
             else
                 DUNE_THROW(Dune::NotImplemented,
                         "wrong range");
@@ -199,11 +199,11 @@ public:
 
         if (satW < (0 + eps) )
         {
-                solidToFluidEnergyExchange *=  volVars.nusseltNumber(nPhaseIdx) ;
+                solidToFluidEnergyExchange *=  volVars.nusseltNumber(phase1Idx) ;
         }
         else if ( (satW >= 0 + eps) and (satW < 1.0-eps) )
         {
-            solidToFluidEnergyExchange *=  (volVars.nusseltNumber(nPhaseIdx) * satN );
+            solidToFluidEnergyExchange *=  (volVars.nusseltNumber(phase1Idx) * satN );
             Scalar qBoil ;
             if (satW<=epsRegul)
             {// regularize
@@ -233,7 +233,7 @@ public:
         }
         else if (satW >= 1.0-eps)
         {
-            solidToFluidEnergyExchange *=  volVars.nusseltNumber(wPhaseIdx) ;
+            solidToFluidEnergyExchange *=  volVars.nusseltNumber(phase0Idx) ;
         }
         else
             DUNE_THROW(Dune::NotImplemented,
@@ -278,17 +278,17 @@ public:
         const Scalar characteristicLength   = volVars.characteristicLength()  ;
         using std::pow;
         const Scalar as = 6.0 * (1.0-volVars.porosity()) / characteristicLength ;
-        const Scalar mul = fs.viscosity(wPhaseIdx) ;
-        const Scalar deltahv = fs.enthalpy(nPhaseIdx) - fs.enthalpy(wPhaseIdx);
-        const Scalar deltaRho = fs.density(wPhaseIdx) - fs.density(nPhaseIdx) ;
+        const Scalar mul = fs.viscosity(phase0Idx) ;
+        const Scalar deltahv = fs.enthalpy(phase1Idx) - fs.enthalpy(phase0Idx);
+        const Scalar deltaRho = fs.density(phase0Idx) - fs.density(phase1Idx) ;
         const Scalar firstBracket = pow(g * deltaRho / gamma, 0.5);
-        const Scalar cp = FluidSystem::heatCapacity(fs, wPhaseIdx) ;
+        const Scalar cp = FluidSystem::heatCapacity(fs, phase0Idx) ;
         // This use of Tsat is only justified if the fluid is always boiling (tsat equals boiling conditions)
         // If a different state is to be simulated, please use the actual fluid temperature instead.
-        const Scalar Tsat = FluidSystem::vaporTemperature(fs, nPhaseIdx ) ;
+        const Scalar Tsat = FluidSystem::vaporTemperature(fs, phase1Idx ) ;
         const Scalar deltaT = TSolid - Tsat ;
         const Scalar secondBracket = pow( (cp *deltaT / (0.006 * deltahv)  ) , 3.0 ) ;
-        const Scalar Prl = volVars.prandtlNumber(wPhaseIdx) ;
+        const Scalar Prl = volVars.prandtlNumber(phase0Idx) ;
         const Scalar thirdBracket = pow( 1/Prl , (1.7/0.33) );
         const Scalar QBoil = satW * as * mul * deltahv * firstBracket * secondBracket * thirdBracket ;
             return QBoil;
@@ -313,36 +313,39 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2 /*numEnergyEqFluid*/>
 : public EnergyLocalResidualNonEquilibrium<TypeTag, 1 /*numEnergyEqFluid*/>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
-    enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
-    enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    enum { numPhases        = ModelTraits::numPhases() };
+    enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
+    enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
     enum { energyEq0Idx = Indices::energyEq0Idx };
     enum { energyEqSolidIdx = Indices::energyEqSolidIdx};
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
-    enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
-    enum { wPhaseIdx        = FluidSystem::wPhaseIdx};
-    enum { nPhaseIdx        = FluidSystem::nPhaseIdx};
-    enum { sPhaseIdx        = FluidSystem::sPhaseIdx};
+    enum { numComponents    = ModelTraits::numComponents() };
+    enum { phase0Idx        = FluidSystem::phase0Idx};
+    enum { phase1Idx        = FluidSystem::phase1Idx};
+    enum { sPhaseIdx        = numPhases};
 
-    static constexpr bool enableChemicalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
+    static constexpr bool enableChemicalNonEquilibrium = ModelTraits::enableChemicalNonEquilibrium();
 
 public:
 
     //! The energy storage in the fluid phase with index phaseIdx
-    static void fluidPhaseStorage(ResidualVector& storage,
+    static void fluidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
@@ -355,7 +358,7 @@ public:
 
 
    //! The advective phase energy fluxes
-    static void heatConvectionFlux(ResidualVector& flux,
+    static void heatConvectionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars,
                                    const ElementVolumeVariables& elemVolVars,
                                    const SubControlVolumeFace& scvf,
@@ -390,7 +393,7 @@ public:
     }
 
     //! The diffusive energy fluxes
-    static void heatConductionFlux(ResidualVector& flux,
+    static void heatConductionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars)
     {
 
@@ -398,34 +401,35 @@ public:
         {
             flux[energyEq0Idx+phaseIdx] += fluxVars.heatConductionFlux(phaseIdx);
         }
-       //heat conduction for solid phase
-       flux[energyEqSolidIdx] += fluxVars.heatConductionFlux(sPhaseIdx);
+       for(int sPhaseIdx=0; sPhaseIdx<numEnergyEqSolid; ++sPhaseIdx)
+       {
+            flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(sPhaseIdx);
+       }
     }
     /*!
      * \brief Calculate the source term of the equation
      *
      * \param scv The sub-control volume over which we integrate the source term
      */
-    static void computeSourceEnergy(ResidualVector& source,
+    static void computeSourceEnergy(NumEqVector& source,
                                     const Element& element,
                                     const FVElementGeometry& fvGeometry,
                                     const ElementVolumeVariables& elemVolVars,
                                     const SubControlVolume &scv)
     {
         //specialization for 2 fluid phases
-        const auto &localScvIdx = scv.indexInElement();
-        const auto &volVars = elemVolVars[localScvIdx];
+        const auto &volVars = elemVolVars[scv];
 
-        const Scalar awn = volVars.interfacialArea(wPhaseIdx, nPhaseIdx);
-        const Scalar aws = volVars.interfacialArea(wPhaseIdx, sPhaseIdx);
-        const Scalar ans = volVars.interfacialArea(nPhaseIdx, sPhaseIdx);
+        const Scalar awn = volVars.interfacialArea(phase0Idx, phase1Idx);
+        const Scalar aws = volVars.interfacialArea(phase0Idx, sPhaseIdx);
+        const Scalar ans = volVars.interfacialArea(phase1Idx, sPhaseIdx);
 
-        const Scalar Tw = volVars.temperature(wPhaseIdx);
-        const Scalar Tn = volVars.temperature(nPhaseIdx);
+        const Scalar Tw = volVars.temperatureFluid(phase0Idx);
+        const Scalar Tn = volVars.temperatureFluid(phase1Idx);
         const Scalar Ts = volVars.temperatureSolid();
 
-        const  Scalar lambdaWetting     = volVars.fluidThermalConductivity(wPhaseIdx);
-        const  Scalar lambdaNonWetting  = volVars.fluidThermalConductivity(nPhaseIdx);
+        const  Scalar lambdaWetting     = volVars.fluidThermalConductivity(phase0Idx);
+        const  Scalar lambdaNonWetting  = volVars.fluidThermalConductivity(phase1Idx);
         const  Scalar lambdaSolid       = volVars.solidThermalConductivity();
 
         const Scalar lambdaWN      = harmonicMean(lambdaWetting, lambdaNonWetting);
@@ -435,9 +439,9 @@ public:
         const Scalar characteristicLength   = volVars.characteristicLength()  ;
         const Scalar factorEnergyTransfer   = volVars.factorEnergyTransfer()  ;
 
-        const Scalar nusseltWN      = harmonicMean(volVars.nusseltNumber(wPhaseIdx), volVars.nusseltNumber(nPhaseIdx));
-        const Scalar nusseltWS      = volVars.nusseltNumber(wPhaseIdx);
-        const Scalar nusseltNS      = volVars.nusseltNumber(nPhaseIdx);
+        const Scalar nusseltWN      = harmonicMean(volVars.nusseltNumber(phase0Idx), volVars.nusseltNumber(phase1Idx));
+        const Scalar nusseltWS      = volVars.nusseltNumber(phase0Idx);
+        const Scalar nusseltNS      = volVars.nusseltNumber(phase1Idx);
 
         const Scalar wettingToNonWettingEnergyExchange = factorEnergyTransfer * (Tw - Tn) / characteristicLength * awn * lambdaWN * nusseltWN  ;
         const Scalar wettingToSolidEnergyExchange      = factorEnergyTransfer * (Tw - Ts) / characteristicLength * aws * lambdaWS * nusseltWS  ;
@@ -446,10 +450,10 @@ public:
         for(int phaseIdx =0; phaseIdx<numEnergyEqFluid+numEnergyEqSolid; ++phaseIdx){
             switch (phaseIdx)
             {
-            case wPhaseIdx:
+            case phase0Idx:
                 source[energyEq0Idx + phaseIdx] +=  ( - wettingToNonWettingEnergyExchange - wettingToSolidEnergyExchange);
                 break;
-            case nPhaseIdx:
+            case phase1Idx:
                 source[energyEq0Idx + phaseIdx] +=  (+ wettingToNonWettingEnergyExchange - nonWettingToSolidEnergyExchange);
                 break;
             case sPhaseIdx:
@@ -487,24 +491,24 @@ public:
             {
                 switch (phaseIdx)
                 {
-                case wPhaseIdx:
+                case phase0Idx:
                 //sum up the transfered energy by the components into the wetting phase
                     for(int compIdx =0; compIdx<numComponents; ++compIdx)
                     {
                         const unsigned int eqIdx = conti0EqIdx + compIdx + phaseIdx*numComponents;
                         source[energyEq0Idx + phaseIdx] += (source[eqIdx]
                                                             * FluidSystem::molarMass(compIdx)
-                                                            * FluidSystem::componentEnthalpy(fluidState, nPhaseIdx, compIdx) );
+                                                            * FluidSystem::componentEnthalpy(fluidState, phase1Idx, compIdx) );
                     }
                 break;
-                case nPhaseIdx:
+                case phase1Idx:
                 //sum up the transfered energy by the components into the nonwetting phase
                     for(int compIdx =0; compIdx<numComponents; ++compIdx)
                     {
                         const unsigned int eqIdx = conti0EqIdx + compIdx + phaseIdx*numComponents;
                         source[energyEq0Idx + phaseIdx] += (source[eqIdx]
                                                             * FluidSystem::molarMass(compIdx)
-                                                            *FluidSystem::componentEnthalpy(fluidState, wPhaseIdx, compIdx));
+                                                            *FluidSystem::componentEnthalpy(fluidState, phase0Idx, compIdx));
                     }
                     break;
                 case sPhaseIdx:

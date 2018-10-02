@@ -34,7 +34,7 @@ template<class TypeTag, bool enableEneryBalance>
 class EnergyLocalResidualImplementation;
 
 template<class TypeTag>
-using EnergyLocalResidual = EnergyLocalResidualImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+using EnergyLocalResidual = EnergyLocalResidualImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>;
 
 /*!
  * \ingroup NIModel
@@ -44,7 +44,7 @@ template<class TypeTag>
 class EnergyLocalResidualImplementation<TypeTag, false>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -59,7 +59,7 @@ public:
      * \param volVars The volume variables
      * \param phaseIdx The phase index
      */
-    static void fluidPhaseStorage(ResidualVector& storage,
+    static void fluidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
@@ -72,7 +72,7 @@ public:
      * \param scv The sub-control volume
      * \param volVars The volume variables
      */
-    static void solidPhaseStorage(ResidualVector& storage,
+    static void solidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars)
     {}
@@ -84,7 +84,7 @@ public:
      * \param fluxVars The flux variables.
      * \param phaseIdx The phase index
      */
-    static void heatConvectionFlux(ResidualVector& flux,
+    static void heatConvectionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars,
                                    int phaseIdx)
     {}
@@ -95,7 +95,7 @@ public:
      * \param flux TODO docme!
      * \param fluxVars The flux variables.
      */
-    static void heatConductionFlux(ResidualVector& flux,
+    static void heatConductionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars)
     {}
 };
@@ -108,12 +108,12 @@ template<class TypeTag>
 class EnergyLocalResidualImplementation<TypeTag, true>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum { energyEqIdx = Indices::energyEqIdx };
 
@@ -127,7 +127,7 @@ public:
      * \param volVars The volume variables
      * \param phaseIdx The phase index
      */
-    static void fluidPhaseStorage(ResidualVector& storage,
+    static void fluidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
@@ -145,7 +145,7 @@ public:
      * \param scv The sub-control volume
      * \param volVars The volume variables
      */
-    static void solidPhaseStorage(ResidualVector& storage,
+    static void solidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars)
     {
@@ -162,7 +162,7 @@ public:
      * \param fluxVars The flux variables.
      * \param phaseIdx The phase index
      */
-    static void heatConvectionFlux(ResidualVector& flux,
+    static void heatConvectionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars,
                                    int phaseIdx)
     {
@@ -178,7 +178,7 @@ public:
      * \param flux TODO docme!
      * \param fluxVars The flux variables.
      */
-    static void heatConductionFlux(ResidualVector& flux,
+    static void heatConductionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars)
     {
         flux[energyEqIdx] += fluxVars.heatConductionFlux();

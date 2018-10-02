@@ -24,7 +24,9 @@
 #ifndef DUMUX_TEST_1P_PROBLEM_HH
 #define DUMUX_TEST_1P_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dune/grid/yaspgrid.hh>
+
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/1p/sequential/diffusion/cellcentered/pressureproperties.hh>
@@ -53,7 +55,7 @@ SET_TYPE_PROP(TestOnePTypeTag, Grid, Dune::YaspGrid<2>);
 SET_PROP(TestOnePTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the spatial parameters
@@ -91,7 +93,7 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 

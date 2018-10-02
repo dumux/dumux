@@ -28,41 +28,83 @@
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 #include <dune/geometry/quadraturerules.hh>
 
+#if HAVE_DUNE_FOAMGRID
+#include <dune/foamgrid/foamgrid.hh>
+#endif
+
+#include <dumux/common/reorderingdofmapper.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "tubesspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 template <class TypeTag>
 class TubesTestProblem;
 
-namespace Properties
-{
+namespace Properties {
+
 NEW_TYPE_TAG(TubesTestTypeTag, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(TubesTestCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, TubesTestTypeTag));
 NEW_TYPE_TAG(TubesTestBoxTypeTag, INHERITS_FROM(BoxModel, TubesTestTypeTag));
 
 // Set the grid type
+#if HAVE_DUNE_FOAMGRID
 SET_TYPE_PROP(TubesTestTypeTag, Grid, Dune::FoamGrid<1, 3>);
+#endif
+
+// if we have pt scotch use the reordering dof mapper to optimally sort the dofs (cc)
+SET_PROP(TubesTestCCTpfaTypeTag, FVGridGeometry)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
+    using ElementMapper = ReorderingDofMapper<GridView>;
+    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+    using MapperTraits = DefaultMapperTraits<GridView, ElementMapper, VertexMapper>;
+public:
+    using type = CCTpfaFVGridGeometry<GridView, enableCache, CCTpfaDefaultGridGeometryTraits<GridView, MapperTraits>>;
+};
+
+// if we have pt scotch use the reordering dof mapper to optimally sort the dofs (box)
+SET_PROP(TubesTestBoxTypeTag, FVGridGeometry)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+    using VertexMapper = ReorderingDofMapper<GridView>;
+    using MapperTraits = DefaultMapperTraits<GridView, ElementMapper, VertexMapper>;
+public:
+    using type = BoxFVGridGeometry<Scalar, GridView, enableCache, BoxDefaultGridGeometryTraits<GridView, MapperTraits>>;
+};
 
 // Set the problem property
 SET_TYPE_PROP(TubesTestTypeTag, Problem, TubesTestProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TubesTestTypeTag, SpatialParams, TubesTestSpatialParams<TypeTag>);
+SET_PROP(TubesTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = TubesTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // the fluid system
 SET_PROP(TubesTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 } // end namespace Properties
 
@@ -77,14 +119,13 @@ class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
     // Grid and world dimension
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
         // indices of the primary variables
         conti0EqIdx = Indices::conti0EqIdx,
@@ -99,9 +140,9 @@ class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
+    enum { isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box };
 
 public:
     TubesTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -146,9 +187,10 @@ public:
      * thought as pipes with a cross section of 1 m^2 and 2D problems
      * are assumed to extend 1 m to the back.
      */
+    template<class ElementSolution>
     Scalar extrusionFactor(const Element &element,
                            const SubControlVolume &scv,
-                           const ElementSolutionVector& elemSol) const
+                           const ElementSolution& elemSol) const
     {
         const auto radius = this->spatialParams().radius(scv);
         return M_PI*radius*radius;
@@ -212,15 +254,15 @@ public:
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     NumEqVector source(const Element &element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume &scv) const
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
     {
         NumEqVector source(0.0);
 
         const auto& globalPos = scv.center();
         const auto& volVars = elemVolVars[scv];
-        const auto K = this->spatialParams().permeability(element, scv, ElementSolutionVector());
+        const auto K = this->spatialParams().permeability(element, scv, EmptyElementSolution{});
 
         using std::sin;
         if (globalPos[2] > 0.5 - eps_)

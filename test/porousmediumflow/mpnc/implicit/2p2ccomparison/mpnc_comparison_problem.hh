@@ -25,6 +25,7 @@
 #define DUMUX_MPNC_TWOPTWOC_COMPARISON_OBSTACLEPROBLEM_HH
 
 #include <dune/common/parametertreeparser.hh>
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
@@ -39,8 +40,8 @@
 
 #include "mpnc_comparison_spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup MPNCTests
  * \brief Problem where air is injected in a unsaturated porous medium. This test compares a mpnc problem with a 2p2c problem
@@ -48,9 +49,8 @@ namespace Dumux
 template <class TypeTag>
 class MPNCComparisonProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(MPNCComparisonTypeTag, INHERITS_FROM(MPNC, MPNCComparisonSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(MPNCComparisonTypeTag, INHERITS_FROM(MPNC));
 NEW_TYPE_TAG(MPNCComparisonBoxTypeTag, INHERITS_FROM(BoxModel, MPNCComparisonTypeTag));
 NEW_TYPE_TAG(MPNCComparisonCCTypeTag, INHERITS_FROM(CCTpfaModel, MPNCComparisonTypeTag));
 
@@ -58,25 +58,27 @@ NEW_TYPE_TAG(MPNCComparisonCCTypeTag, INHERITS_FROM(CCTpfaModel, MPNCComparisonT
 SET_TYPE_PROP(MPNCComparisonTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(MPNCComparisonTypeTag,
-              Problem,
-              MPNCComparisonProblem<TypeTag>);
+SET_TYPE_PROP(MPNCComparisonTypeTag, Problem, MPNCComparisonProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_PROP(MPNCComparisonTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using type = MPNCComparisonSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+};
 
 // Set fluid configuration
 SET_TYPE_PROP(MPNCComparisonTypeTag,
               FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
+              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(MPNCComparisonTypeTag, Scalar, double);
-
-SET_BOOL_PROP(MPNCComparisonTypeTag, EnableMolecularDiffusion, true);
-
 SET_BOOL_PROP(MPNCComparisonTypeTag, UseMoles, true);
-SET_TYPE_PROP(MPNCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields<TypeTag>);
-
-}
-
+SET_TYPE_PROP(MPNCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields);
+} // end namespace Dumux
 
 /*!
  * \ingroup MPNCTests
@@ -89,37 +91,36 @@ class MPNCComparisonProblem
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ParameterCache = typename FluidSystem::ParameterCache;
 
     // world dimension
     enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
-    enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
-    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {wCompIdx = FluidSystem::wCompIdx};
-    enum {nCompIdx = FluidSystem::nCompIdx};
+    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
+    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
+    enum {gasPhaseIdx = FluidSystem::gasPhaseIdx};
+    enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
+    enum {wCompIdx = FluidSystem::H2OIdx};
+    enum {nCompIdx = FluidSystem::N2Idx};
     enum {fug0Idx = Indices::fug0Idx};
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
 
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
 public:
     /*!
@@ -262,34 +263,33 @@ private:
         fs.setTemperature(this->temperatureAtPos(globalPos));
 
         // set water saturation
-        fs.setSaturation(wPhaseIdx, 0.8);
-        fs.setSaturation(nPhaseIdx, 1.0 - fs.saturation(wPhaseIdx));
+        fs.setSaturation(liquidPhaseIdx, 0.8);
+        fs.setSaturation(gasPhaseIdx, 1.0 - fs.saturation(liquidPhaseIdx));
         // set pressure of the gas phase
-        fs.setPressure(nPhaseIdx, 1e5);
+        fs.setPressure(gasPhaseIdx, 1e5);
         // calulate the capillary pressure
         const auto& matParams =
             this->spatialParams().materialLawParamsAtPos(globalPos);
         PhaseVector pc;
+        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         MaterialLaw::capillaryPressures(pc, matParams, fs);
-        fs.setPressure(wPhaseIdx,
-                       fs.pressure(nPhaseIdx) + pc[wPhaseIdx] - pc[nPhaseIdx]);
+        fs.setPressure(liquidPhaseIdx,
+                       fs.pressure(gasPhaseIdx) + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
 
         // make the fluid state consistent with local thermodynamic
         // equilibrium
-         using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem, /*useKelvinEquation*/false>;
+         using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
         ParameterCache paramCache;
-        MiscibleMultiPhaseComposition::solve(fs,
-                                            paramCache,
-                                            /*setViscosity=*/true,
-                                            /*setEnthalpy=*/false);
+        MiscibleMultiPhaseComposition::solve(fs, paramCache);
+
         ///////////
         // assign the primary variables
         ///////////
 
         // all N component fugacities
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            values[fug0Idx + compIdx] = fs.fugacity(nPhaseIdx, compIdx);
+            values[fug0Idx + compIdx] = fs.fugacity(gasPhaseIdx, compIdx);
 
         // first M - 1 saturations
         for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)

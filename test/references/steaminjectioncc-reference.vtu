@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="800" NumberOfPoints="861">
-      <CellData Scalars="Sw">
-        <DataArray type="Float32" Name="Sw" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="S_liq">
+        <DataArray type="Float32" Name="S_liq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -72,7 +72,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="Sn" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_gas" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -141,7 +141,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="pw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_liq" NumberOfComponents="1" format="ascii">
           178915 178914 178912 178909 178906 178902 178897 178891 178885 178879 178872 178865
           178857 178849 178842 178834 178826 178818 178810 178803 176954 176953 176951 176949
           176945 176941 176936 176930 176924 176918 176911 176903 176896 176888 176880 176872
@@ -210,7 +210,7 @@
           102283 102283 102283 102283 102283 102283 102283 102283 102283 102283 102283 102282
           102282 102282 102282 102282 102282 102281 102281 102281
         </DataArray>
-        <DataArray type="Float32" Name="pn" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_gas" NumberOfComponents="1" format="ascii">
           178915 178914 178912 178909 178906 178902 178897 178891 178885 178879 178872 178865
           178857 178849 178842 178834 178826 178818 178810 178803 176954 176953 176951 176949
           176945 176941 176936 176930 176924 176918 176911 176903 176896 176888 176880 176872
@@ -348,7 +348,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="rhoW" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_liq" NumberOfComponents="1" format="ascii">
           999.728 999.728 999.728 999.728 999.728 999.728 999.728 999.728 999.728 999.728 999.728 999.728
           999.728 999.728 999.728 999.728 999.728 999.728 999.728 999.728 999.727 999.727 999.727 999.727
           999.727 999.727 999.727 999.727 999.727 999.727 999.727 999.727 999.727 999.727 999.727 999.727
@@ -417,7 +417,7 @@
           999.692 999.692 999.692 999.692 999.692 999.692 999.692 999.692 999.692 999.692 999.692 999.692
           999.692 999.692 999.692 999.692 999.692 999.692 999.692 999.692
         </DataArray>
-        <DataArray type="Float32" Name="rhoN" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_gas" NumberOfComponents="1" format="ascii">
           1.37174 1.37173 1.37172 1.3717 1.37167 1.37164 1.3716 1.37156 1.37151 1.37146 1.37141 1.37135
           1.3713 1.37124 1.37118 1.37112 1.37106 1.371 1.37094 1.37088 1.35671 1.3567 1.35668 1.35666
           1.35664 1.3566 1.35657 1.35652 1.35648 1.35643 1.35637 1.35632 1.35626 1.3562 1.35614 1.35608
@@ -486,7 +486,7 @@
           0.784203 0.784203 0.784203 0.784202 0.784202 0.784201 0.7842 0.784199 0.784199 0.784198 0.784196 0.784195
           0.784194 0.784193 0.784191 0.78419 0.784189 0.784187 0.784186 0.784185
         </DataArray>
-        <DataArray type="Float32" Name="mobW" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_liq" NumberOfComponents="1" format="ascii">
           764.38 764.38 764.38 764.38 764.38 764.38 764.38 764.38 764.38 764.38 764.38 764.38
           764.38 764.38 764.38 764.38 764.38 764.38 764.38 764.38 764.379 764.379 764.379 764.379
           764.379 764.379 764.379 764.379 764.379 764.379 764.379 764.379 764.379 764.379 764.379 764.379
@@ -555,7 +555,7 @@
           764.34 764.34 764.34 764.34 764.34 764.34 764.34 764.34 764.339 764.339 764.339 764.339
           764.339 764.339 764.339 764.339 764.339 764.339 764.339 764.339
         </DataArray>
-        <DataArray type="Float32" Name="mobN" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_gas" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -831,7 +831,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="temperature" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="T" NumberOfComponents="1" format="ascii">
           283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13
           283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13
           283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13 283.13

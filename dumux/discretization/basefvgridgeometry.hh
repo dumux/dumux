@@ -24,10 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_BASE_FV_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_BASE_FV_GRID_GEOMETRY_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/entitymap.hh>
 #include <dumux/common/geometry/boundingboxtree.hh>
 #include <dumux/common/geometry/geometricentityset.hh>
@@ -48,17 +46,23 @@ template<class Impl, class GV, class Traits>
 class BaseFVGridGeometry
 {
     using ElementMap = EntityMap<GV, 0>;
-    using ElementSet = GridViewGeometricEntitySet<GV, 0>;
+    using ElementSet = GridViewGeometricEntitySet<GV, 0, typename Traits::ElementMapper>;
     using BoundingBoxTree = Dumux::BoundingBoxTree<ElementSet>;
 
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
-    using CoordScalar = typename GV::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+
+    using IndexType = typename GV::IndexSet::IndexType;
+    using Element = typename GV::template Codim<0>::Entity;
+    using SubControlVolume = typename Traits::SubControlVolume;
 
 public:
+    //! export the grid type
+    using Grid = typename GV::Grid;
     //! export the grid view type
     using GridView = GV;
+    //! export the global coordinate type
+    using GlobalCoordinate = typename Element::Geometry::GlobalCoordinate;
     //! export the element mapper type
     using ElementMapper = typename Traits::ElementMapper;
     //! export the vertex mapper type
@@ -67,13 +71,8 @@ public:
     //! Constructor computes the bouding box of the entire domain, for e.g. setting boundary conditions
     BaseFVGridGeometry(const GridView& gridView)
     : gridView_(gridView)
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     , elementMapper_(gridView, Dune::mcmgElementLayout())
     , vertexMapper_(gridView, Dune::mcmgVertexLayout())
-#else
-    , elementMapper_(gridView)
-    , vertexMapper_(gridView)
-#endif
     , bBoxMin_(std::numeric_limits<double>::max())
     , bBoxMax_(-std::numeric_limits<double>::max())
     {
@@ -153,18 +152,26 @@ public:
         return *elementMap_;
     }
 
+    //! Get an element from a sub control volume contained in it
+    Element element(const SubControlVolume& scv) const
+    { return elementMap()[scv.elementIndex()]; }
+
+    //! Get an element from a global element index
+    Element element(IndexType eIdx) const
+    { return elementMap()[eIdx]; }
+
     /*!
      * \brief The coordinate of the corner of the GridView's bounding
      *        box with the smallest values.
      */
-    const GlobalPosition &bBoxMin() const
+    const GlobalCoordinate &bBoxMin() const
     { return bBoxMin_; }
 
     /*!
      * \brief The coordinate of the corner of the GridView's bounding
      *        box with the largest values.
      */
-    const GlobalPosition &bBoxMax() const
+    const GlobalCoordinate &bBoxMax() const
     { return bBoxMax_; }
 
 private:
@@ -209,8 +216,8 @@ private:
     mutable std::shared_ptr<ElementMap> elementMap_;
 
     //! the bounding box of the whole domain
-    GlobalPosition bBoxMin_;
-    GlobalPosition bBoxMax_;
+    GlobalCoordinate bBoxMin_;
+    GlobalCoordinate bBoxMax_;
 };
 
 } // end namespace Dumux

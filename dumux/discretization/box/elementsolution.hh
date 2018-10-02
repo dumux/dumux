@@ -23,57 +23,51 @@
 #ifndef DUMUX_BOX_ELEMENT_SOLUTION_HH
 #define DUMUX_BOX_ELEMENT_SOLUTION_HH
 
+#include <type_traits>
 #include <dune/istl/bvector.hh>
-#include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup BoxModel
  * \brief The element solution vector
  */
-template<class TypeTag>
+template<class FVElementGeometry, class PV>
 class BoxElementSolution
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
 
 public:
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    //! export the primary variables type
+    using PrimaryVariables = PV;
 
-    //! Default constructors
+    //! Default constructor
     BoxElementSolution() = default;
 
-    //! Constructor with element and solution and gridgeometry
+    //! Constructor with element and solution and grid geometry
+    template<class SolutionVector>
     BoxElementSolution(const Element& element, const SolutionVector& sol,
                        const FVGridGeometry& fvGridGeometry)
     {
         update(element, sol, fvGridGeometry);
     }
 
-    //! Constructor with element and solution and elementgeometry (only works for box)
-    BoxElementSolution(const Element& element, const SolutionVector& sol,
-                       const FVElementGeometry& fvGeometry)
-    {
-        update(element, sol, fvGeometry);
-    }
-
     //! Constructor with element and elemVolVars and fvGeometry
+    template<class ElementVolumeVariables>
     BoxElementSolution(const Element& element, const ElementVolumeVariables& elemVolVars,
                        const FVElementGeometry& fvGeometry)
     {
         const auto numVert = element.subEntities(GridView::dimension);
         priVars_.resize(numVert);
         for (const auto& scv : scvs(fvGeometry))
-            priVars_[scv.indexInElement()] = elemVolVars[scv].priVars();
+            priVars_[scv.localDofIndex()] = elemVolVars[scv].priVars();
     }
 
     //! extract the element solution from the solution vector using a mapper
+    template<class SolutionVector>
     void update(const Element& element, const SolutionVector& sol,
                 const FVGridGeometry& fvGridGeometry)
     {
@@ -84,13 +78,14 @@ public:
     }
 
     //! extract the element solution from the solution vector using a local fv geometry
+    template<class SolutionVector>
     void update(const Element& element, const SolutionVector& sol,
                 const FVElementGeometry& fvGeometry)
     {
         const auto numVert = element.subEntities(GridView::dimension);
         priVars_.resize(numVert);
         for (const auto& scv : scvs(fvGeometry))
-            priVars_[scv.indexInElement()] = sol[scv.dofIndex()];
+            priVars_[scv.localDofIndex()] = sol[scv.dofIndex()];
     }
 
     //! bracket operator const access
@@ -106,6 +101,35 @@ public:
 private:
     Dune::BlockVector<PrimaryVariables> priVars_;
 };
+
+/*!
+ * \ingroup BoxDiscretization
+ * \brief  Make an element solution for box schemes
+ */
+template<class Element, class SolutionVector, class FVGridGeometry>
+auto elementSolution(const Element& element, const SolutionVector& sol, const FVGridGeometry& gg)
+-> std::enable_if_t<FVGridGeometry::discMethod == DiscretizationMethod::box,
+                    BoxElementSolution<typename FVGridGeometry::LocalView,
+                                      std::decay_t<decltype(std::declval<SolutionVector>()[0])>>
+                    >
+{
+    using PrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[0])>;
+    return BoxElementSolution<typename FVGridGeometry::LocalView, PrimaryVariables>(element, sol, gg);
+}
+
+/*!
+ * \ingroup BoxDiscretization
+ * \brief  Make an element solution for box schemes
+ */
+template<class Element, class ElementVolumeVariables, class FVElementGeometry>
+auto elementSolution(const Element& element, const ElementVolumeVariables& elemVolVars, const FVElementGeometry& gg)
+-> std::enable_if_t<FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::box,
+                    BoxElementSolution<FVElementGeometry,
+                                       typename ElementVolumeVariables::VolumeVariables::PrimaryVariables>>
+{
+    using PrimaryVariables = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables;
+    return BoxElementSolution<FVElementGeometry, PrimaryVariables>(element, elemVolVars, gg);
+}
 
 } // end namespace Dumux
 

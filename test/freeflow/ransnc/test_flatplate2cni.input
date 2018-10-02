@@ -1,0 +1,29 @@
+[TimeLoop]
+DtInitial = 1e-3 # [s]
+TEnd = 1000 # [s]
+
+[Grid]
+Verbosity = true
+Positions0 = 0.0 6.0
+Positions1 = 0.0 0.5
+Cells0 = 10
+Cells1 = 20
+Grading1 = 1.4
+
+[Problem]
+Name = test_flatplate2cni # name passed to the output routines
+InletVelocity = 0.1 # [m/s]
+EnableGravity = false
+
+[RANS]
+EddyViscosityModel = "prandtl"
+TurbulentSchmidtNumber = 0.7
+TurbulentPrandtlNumber = 0.85
+
+[Assembly]
+NumericDifferenceMethod = 0
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 8
+MaxRelativeShift = 1e-5

@@ -25,43 +25,14 @@
 #ifndef DUMUX_MPNC_COMPARISON_SPATIAL_PARAMS_HH
 #define DUMUX_MPNC_COMPARISON_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 
-namespace Dumux
-{
-/*!
- * \ingroup MPNCTests
- * \brief The spatial parameters for the ObstacleProblem
- */
-//forward declaration
-template<class TypeTag>
-class TwoPTwoCComparisonSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(TwoPTwoCComparisonSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(TwoPTwoCComparisonSpatialParams, SpatialParams, TwoPTwoCComparisonSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(TwoPTwoCComparisonSpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffectiveLaw>;
-};
-}
+namespace Dumux {
 
 /**
  * \ingroup MPNCModel
@@ -69,29 +40,34 @@ public:
  * \brief Definition of the spatial params properties for the obstacle problem
  *
  */
-template<class TypeTag>
-class TwoPTwoCComparisonSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class TwoPTwoCComparisonSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         TwoPTwoCComparisonSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       TwoPTwoCComparisonSpatialParams<FVGridGeometry, Scalar>>;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     enum {dimWorld=GridView::dimensionworld};
 
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+
 public:
-     using PermeabilityType = Scalar;
+    //! export permeability type
+    using PermeabilityType = Scalar;
+    //! export the type used for the material law
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLawParams = typename MaterialLaw::Params;
 
 
-    TwoPTwoCComparisonSpatialParams(const Problem &problem)
-        : ParentType(problem)
+    TwoPTwoCComparisonSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;
@@ -113,11 +89,10 @@ public:
         coarseMaterialParams_.setLambda(2.0);
     }
 
-
-
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         if (isFineMaterial_(scv.dofPosition()))
             return fineK_;
@@ -128,14 +103,10 @@ public:
     /*!
      * \brief Define the porosity \f$[-]\f$ of the soil
      *
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     * \param pos The global position of the sub-control volume.
+     * \return the material parameters object
      */
-    Scalar porosity(const Element &element,
-                    const SubControlVolume &scv,
-                    const ElementSolutionVector &elemSol) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
         return porosity_;
     }
@@ -153,6 +124,16 @@ public:
         else
             return coarseMaterialParams_;
     }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
 
 private:
     /*!
@@ -174,6 +155,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 };
 
-}
+} // end namespace Dumux
 
 #endif

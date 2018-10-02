@@ -29,9 +29,10 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
+#include <dumux/material/components/base.hh>
 
 #include "base.hh"
 
@@ -45,33 +46,38 @@ namespace FluidSystems {
  *
  * The fluid phases are completely specified by means of their
  * constituting components.
- * The wetting and the non-wetting phase can be defined individually
- * via FluidSystem::LiquidPhase<Component> and
- * FluidSystem::GasPhase<Component>. These phases consist of one pure
- * component.
+ * The fluids can be defined individually via FluidSystem::OnePLiquid<Scalar, Component> and
+ * FluidSystem::OnePGas<Scalar, Component>. These fluids consist of one component.
  * \tparam Scalar the scalar type
- * \tparam WettingPhase the wetting phase fluid system (use FluidSystem::LiquidPhase<Component> / FluidSystem::GasPhase<Component>)
- * \tparam NonwettingPhase the wetting phase fluid system (use FluidSystem::LiquidPhase<Component> / FluidSystem::GasPhase<Component>)
+ * \tparam Fluid0 a one-phase fluid system (use FluidSystem::OnePLiquid<Scalar, Component> / FluidSystem::OnePGas<Scalar, Component>)
+ * \tparam Fluid1 a one-phase fluid system (use FluidSystem::OnePLiquid<Scalar, Component> / FluidSystem::OnePGas<Scalar, Component>)
  */
-template <class Scalar, class WettingPhase, class NonwettingPhase>
+template <class Scalar, class Fluid0, class Fluid1>
 class TwoPImmiscible
-: public BaseFluidSystem<Scalar, TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase> >
+: public Base<Scalar, TwoPImmiscible<Scalar, Fluid0, Fluid1> >
 {
-    using ThisType = TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    static_assert((Fluid0::numPhases == 1), "Fluid0 has more than one phase");
+    static_assert((Fluid1::numPhases == 1), "Fluid1 has more than one phase");
+    static_assert((Fluid0::numComponents == 1), "Fluid0 has more than one component");
+    static_assert((Fluid1::numComponents == 1), "Fluid1 has more than one component");
+    // two gaseous phases at once do not make sense physically! (but two liquids are fine)
+    static_assert(!Fluid0::isGas() || !Fluid1::isGas(), "One phase has to be a liquid!");
+
+    using ThisType = TwoPImmiscible<Scalar, Fluid0, Fluid1>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
+
 public:
+    static constexpr int numPhases = 2; //!< Number of phases in the fluid system
+    static constexpr int numComponents = 2; //!< Number of components in the fluid system
+
+    static constexpr int phase0Idx = 0; //!< index of the first phase
+    static constexpr int phase1Idx = 1; //!< index of the second phase
+    static constexpr int comp0Idx = 0; //!< index of the frist component
+    static constexpr int comp1Idx = 1; //!< index of the second component
+
     /****************************************
      * Fluid phase related static parameters
      ****************************************/
-
-    //! Number of phases in the fluid system
-    static constexpr int numPhases = 2;
-
-    //! Index of the wetting phase
-    static constexpr int wPhaseIdx = 0;
-    //! Index of the non-wetting phase
-    static constexpr int nPhaseIdx = 1;
-
     /*!
      * \brief Return the human readable name of a fluid phase
      * \param phaseIdx The index of the fluid phase to consider
@@ -80,24 +86,39 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        static std::string name[] = {
-            std::string("w"),
-            std::string("n")
-        };
-        return name[phaseIdx];
+        if (!Fluid0::isGas() && !Fluid1::isGas())
+        {
+            if (phaseIdx == phase0Idx)
+                return Components::IsAqueous<typename Fluid0::Component>::value ? "aq" : "napl";
+            else
+                return Components::IsAqueous<typename Fluid1::Component>::value ? "aq" : "napl";
+        }
+        else
+        {
+            if (phaseIdx == phase0Idx)
+                return Fluid0::isGas() ? "gas" : "liq";
+            else
+                return Fluid1::isGas() ? "gas" : "liq";
+        }
     }
 
     /*!
-     * \brief Return whether a phase is liquid
+     * \brief Returns whether the fluids are miscible
+     */
+    static constexpr bool isMiscible()
+    { return false; }
+
+    /*!
+     * \brief Return whether a phase is gaseous
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isLiquid(int phaseIdx)
+    static constexpr bool isGas(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        if (phaseIdx == wPhaseIdx)
-            return WettingPhase::isLiquid();
-        return NonwettingPhase::isLiquid();
+        if (phaseIdx == phase0Idx)
+            return Fluid0::isGas();
+        return Fluid1::isGas();
     }
 
     /*!
@@ -123,6 +144,22 @@ public:
 
     /*!
      * \brief Returns true if and only if a fluid phase is assumed to
+     *        be an ideal gas.
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr bool isIdealGas(int phaseIdx)
+    {
+        assert(0 <= phaseIdx && phaseIdx < numPhases);
+
+        // let the fluids decide
+        if (phaseIdx == phase0Idx)
+            return Fluid0::isIdealGas();
+        return Fluid1::isIdealGas();
+    }
+
+    /*!
+     * \brief Returns true if and only if a fluid phase is assumed to
      *        be compressible.
      *
      * Compressible means. that the partial derivative of the density
@@ -135,9 +172,24 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
         // let the fluids decide
-        if (phaseIdx == wPhaseIdx)
-            return WettingPhase::isCompressible();
-        return NonwettingPhase::isCompressible();
+        if (phaseIdx == phase0Idx)
+            return Fluid0::isCompressible();
+        return Fluid1::isCompressible();
+    }
+
+    /*!
+     * \brief Returns true if the liquid phase viscostiy is constant
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr bool viscosityIsConstant(int phaseIdx)
+    {
+        assert(0 <= phaseIdx && phaseIdx < numPhases);
+
+        // let the fluids decide
+        if (phaseIdx == phase0Idx)
+            return Fluid0::viscosityIsConstant();
+        return Fluid1::viscosityIsConstant();
     }
 
     /*!
@@ -146,28 +198,19 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isIdealGas(int phaseIdx)
+    static bool isIdealFluid1(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
         // let the fluids decide
-        if (phaseIdx == wPhaseIdx)
-            return WettingPhase::isIdealGas();
-        return NonwettingPhase::isIdealGas();
+        if (phaseIdx == phase0Idx)
+            return Fluid0::isIdealFluid1();
+        return Fluid1::isIdealFluid1();
     }
 
     /****************************************
      * Component related static parameters
      ****************************************/
-
-    //! Number of components in the fluid system
-    static constexpr int numComponents = 2;
-
-    //! Index of the wetting phase's component
-    static constexpr int wCompIdx = 0;
-    //! Index of the non-wetting phase's component
-    static constexpr int nCompIdx = 1;
-
     /*!
      * \brief Return the human readable name of a component
      *
@@ -177,9 +220,9 @@ public:
     {
         assert(0 <= compIdx && compIdx < numComponents);
 
-        if (compIdx == wCompIdx)
-            return WettingPhase::name();
-        return NonwettingPhase::name();
+        if (compIdx == comp0Idx)
+            return Fluid0::name();
+        return Fluid1::name();
     }
 
     /*!
@@ -190,9 +233,9 @@ public:
     {
         assert(0 <= compIdx && compIdx < numComponents);
 
-        if (compIdx == wCompIdx)
-            return WettingPhase::molarMass();
-        return NonwettingPhase::molarMass();
+        if (compIdx == comp0Idx)
+            return Fluid0::molarMass();
+        return Fluid1::molarMass();
     }
 
     /*!
@@ -203,9 +246,9 @@ public:
     {
         assert(0 <= compIdx && compIdx < numComponents);
 
-        if (compIdx == wCompIdx)
-            return WettingPhase::criticalTemperature();
-        return NonwettingPhase::criticalTemperature();
+        if (compIdx == comp0Idx)
+            return Fluid0::criticalTemperature();
+        return Fluid1::criticalTemperature();
     }
 
     /*!
@@ -216,9 +259,9 @@ public:
     {
         assert(0 <= compIdx && compIdx < numComponents);
 
-        if (compIdx == wCompIdx)
-            return WettingPhase::criticalPressure();
-        return NonwettingPhase::criticalPressure();
+        if (compIdx == comp0Idx)
+            return Fluid0::criticalPressure();
+        return Fluid1::criticalPressure();
     }
 
     /*!
@@ -229,9 +272,9 @@ public:
     {
         assert(0 <= compIdx && compIdx < numComponents);
 
-        if (compIdx == wCompIdx)
-            return WettingPhase::acentricFactor();
-        return NonwettingPhase::acentricFactor();
+        if (compIdx == comp0Idx)
+            return Fluid0::acentricFactor();
+        return Fluid1::acentricFactor();
     }
 
     /****************************************
@@ -243,9 +286,30 @@ public:
      */
     static void init()
     {
-        // two gaseous phases at once do not make sense physically!
-        // (But two liquids are fine)
-        assert(WettingPhase::isLiquid() || NonwettingPhase::isLiquid());
+        // initialize with some default values
+        init(/*tempMin=*/273.15, /*tempMax=*/623.15, /*numTemp=*/100,
+             /*pMin=*/-10.0, /*pMax=*/20e6, /*numP=*/200);
+    }
+
+    /*!
+     * \brief Initialize the fluid system's static parameters using
+     *        problem specific temperature and pressure ranges
+     *
+     * \param tempMin The minimum temperature used for tabulation of water \f$\mathrm{[K]}\f$
+     * \param tempMax The maximum temperature used for tabulation of water\f$\mathrm{[K]}\f$
+     * \param nTemp The number of ticks on the temperature axis of the  table of water
+     * \param pressMin The minimum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
+     * \param pressMax The maximum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
+     * \param nPress The number of ticks on the pressure axis of the  table of water
+     */
+    static void init(Scalar tempMin, Scalar tempMax, std::size_t nTemp,
+                     Scalar pressMin, Scalar pressMax, std::size_t nPress)
+    {
+        if (Fluid0::Component::isTabulated)
+            Fluid0::Component::init(tempMin, tempMax, nTemp, pressMin, pressMax, nPress);
+
+        if (Fluid1::Component::isTabulated)
+            Fluid1::Component::init(tempMin, tempMax, nTemp, pressMin, pressMax, nPress);
     }
 
     using Base::density;
@@ -261,9 +325,29 @@ public:
 
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
-        if (phaseIdx == wPhaseIdx)
-            return WettingPhase::density(temperature, pressure);
-        return NonwettingPhase::density(temperature, pressure);
+        if (phaseIdx == phase0Idx)
+            return Fluid0::density(temperature, pressure);
+        return Fluid1::density(temperature, pressure);
+    }
+
+    using Base::molarDensity;
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the component molar mass \f$M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+       Scalar temperature = fluidState.temperature(phaseIdx);
+       Scalar pressure = fluidState.pressure(phaseIdx);
+       if (phaseIdx == phase0Idx)
+           return Fluid0::molarDensity(temperature, pressure);
+       return Fluid1::molarDensity(temperature, pressure);
     }
 
     using Base::viscosity;
@@ -280,9 +364,9 @@ public:
 
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
-        if (phaseIdx == wPhaseIdx)
-            return WettingPhase::viscosity(temperature, pressure);
-        return NonwettingPhase::viscosity(temperature, pressure);
+        if (phaseIdx == phase0Idx)
+            return Fluid0::viscosity(temperature, pressure);
+        return Fluid1::viscosity(temperature, pressure);
     }
 
     using Base::fugacityCoefficient;
@@ -388,9 +472,9 @@ public:
 
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
-        if (phaseIdx == wPhaseIdx)
-            return WettingPhase::enthalpy(temperature, pressure);
-        return NonwettingPhase::enthalpy(temperature, pressure);
+        if (phaseIdx == phase0Idx)
+            return Fluid0::enthalpy(temperature, pressure);
+        return Fluid1::enthalpy(temperature, pressure);
     }
 
     using Base::thermalConductivity;
@@ -407,9 +491,9 @@ public:
 
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
-        if (phaseIdx == wPhaseIdx)
-            return WettingPhase::thermalConductivity(temperature, pressure);
-        return NonwettingPhase::thermalConductivity(temperature, pressure);
+        if (phaseIdx == phase0Idx)
+            return Fluid0::thermalConductivity(temperature, pressure);
+        return Fluid1::thermalConductivity(temperature, pressure);
     }
 
     using Base::heatCapacity;
@@ -432,9 +516,9 @@ public:
 
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
-        if (phaseIdx == wPhaseIdx)
-            return WettingPhase::heatCapacity(temperature, pressure);
-        return NonwettingPhase::heatCapacity(temperature, pressure);
+        if (phaseIdx == phase0Idx)
+            return Fluid0::heatCapacity(temperature, pressure);
+        return Fluid1::heatCapacity(temperature, pressure);
     }
 };
 

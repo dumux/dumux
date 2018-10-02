@@ -40,6 +40,9 @@
 /* Define to the revision of dumux */
 #define DUMUX_VERSION_REVISION ${DUMUX_VERSION_REVISION}
 
+/* Define the path to dumux */
+#define DUMUX_SOURCE_DIR "${CMAKE_SOURCE_DIR}"
+
 /* Define to 1 if Valgrind was found */
 #cmakedefine HAVE_VALGRIND 1
 
@@ -57,6 +60,21 @@
 
 /* Define to true if we have parallel HDF5 support */
 #cmakedefine DUMUX_HAVE_PARALLEL_HDF5 @DUMUX_HAVE_PARALLEL_HDF5@
+
+/* Define to 1 if gmsh was found */
+#cmakedefine HAVE_GMSH 1
+
+/* Define path to gmsh executable */
+#cmakedefine GMSH_EXECUTABLE "@GMSH_EXECUTABLE@"
+
+/* Defines whether pvpython has been found */
+#cmakedefine HAVE_PVPYTHON 1
+
+/* Define the path to pvpython */
+#define PVPYTHON_EXECUTABLE "${PVPYTHON_EXECUTABLE}"
+
+/* Define to 1 if quadmath was found */
+#cmakedefine HAVE_QUAD 1
 
 /* end dumux
    Everything below here will be overwritten

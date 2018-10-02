@@ -51,6 +51,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/nonisothermal/model.hh>
+#include <dumux/freeflow/nonisothermal/indices.hh>
+#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
@@ -61,9 +63,82 @@
 
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/fourierslaw.hh>
 
-namespace Dumux
+namespace Dumux {
+
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Traits for the Navier-Stokes model
+ *
+ * \tparam dimension The dimension of the problem
+ */
+template<int dimension>
+struct NavierStokesModelTraits
 {
+    //! The dimension of the model
+    static constexpr int dim() { return dimension; }
+
+    //! There are as many momentum balance equations as dimensions
+    //! and one mass balance equation.
+    static constexpr int numEq() { return dimension+1; }
+
+    //! The number of phases is 1
+    static constexpr int numPhases() { return 1; }
+
+    //! The number of components is 1
+    static constexpr int numComponents() { return 1; }
+
+    //! Enable advection
+    static constexpr bool enableAdvection() { return true; }
+
+    //! The one-phase model has no molecular diffusion
+    static constexpr bool enableMolecularDiffusion() { return false; }
+
+    //! The model is isothermal
+    static constexpr bool enableEnergyBalance() { return false; }
+
+    //! The model does not include a turbulence model
+    static constexpr bool usesTurbulenceModel() { return false; }
+
+    //! the indices
+    using Indices = NavierStokesIndices<dim()>;
+
+    //! return the names of the primary variables in cells
+    template <class FluidSystem = void>
+    static std::string primaryVariableNameCell(int pvIdx = 0, int state = 0)
+    {
+        return "p";
+    }
+
+    //! return the names of the primary variables on faces
+    template <class FluidSystem = void>
+    static std::string primaryVariableNameFace(int pvIdx = 0, int state = 0)
+    {
+        return "v";
+    }
+};
+
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Traits class for the volume variables of the Navier-Stokes model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam MT The model traits
+ */
+template<class PV,
+         class FSY,
+         class FST,
+         class MT>
+struct NavierStokesVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using ModelTraits = MT;
+};
 
 // \{
 ///////////////////////////////////////////////////////////////////////////
@@ -79,33 +154,22 @@ namespace Properties {
 NEW_TYPE_TAG(NavierStokes, INHERITS_FROM(FreeFlow));
 
 //! The type tag for the corresponding non-isothermal model
-NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NavierStokesNonIsothermal));
+NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes));
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_INT_PROP(NavierStokes, NumPhases, 1); //!< The number of phases in the 1p model is 1
-SET_INT_PROP(NavierStokes, NumComponents, 1); //!< The number of components in the 1p model is 1
-SET_INT_PROP(NavierStokes, PhaseIdx, 0); //!< The default phase index
-
-SET_BOOL_PROP(NavierStokes, EnableAdvection, true); //!< Enable advection
-SET_BOOL_PROP(NavierStokes, EnableMolecularDiffusion, false); //!< The one-phase model has no molecular diffusion
-SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, false); //!< The model is isothermal
 SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true); //!< Consider inertia terms by default
 SET_BOOL_PROP(NavierStokes, NormalizePressure, true); //!< Normalize the pressure term in the momentum balance by default
 
-/*!
-* \brief The number of equations.
-*         There are as many momentum balance equations as dimensions
-*         and one mass balance equation.
-*/
-SET_PROP(NavierStokes, NumEq)
+//!< states some specifics of the Navier-Stokes model
+SET_PROP(NavierStokes, ModelTraits)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr auto dim = GridView::dimension;
 public:
-    static constexpr int value = dim + 1;
+    using type = NavierStokesModelTraits<dim>;
 };
 
 /*!
@@ -125,8 +189,23 @@ public:
 //! The local residual
 SET_TYPE_PROP(NavierStokes, LocalResidual, NavierStokesResidual<TypeTag>);
 
-//! The volume variables
-SET_TYPE_PROP(NavierStokes, VolumeVariables, NavierStokesVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(NavierStokes, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
+    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
+
+    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
+public:
+    using type = NavierStokesVolumeVariables<Traits>;
+};
 
 //! The flux variables
 SET_TYPE_PROP(NavierStokes, FluxVariables, NavierStokesFluxVariables<TypeTag>);
@@ -134,30 +213,40 @@ SET_TYPE_PROP(NavierStokes, FluxVariables, NavierStokesFluxVariables<TypeTag>);
 //! The flux variables cache class, by default the one for free flow
 SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
-//! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(NavierStokes, Indices, NavierStokesIndices<TypeTag>);
-
 //! The specific vtk output fields
-SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
-
-//////////////////////////////////////////////////////////////////
-// Property values for isothermal model required for the general non-isothermal model
-//////////////////////////////////////////////////////////////////
-//! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesIndices<TypeTag>);
-
-//! The specific isothermal vtk output fields
-SET_TYPE_PROP(NavierStokesNI, IsothermalVtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
-
-//! The number of equations for the isothermal model
-SET_PROP(NavierStokesNI, IsothermalNumEq)
+SET_PROP(NavierStokes, VtkOutputFields)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr auto dim = GridView::dimension;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 public:
-    static constexpr int value = dim + 1;
+     using type = NavierStokesVtkOutputFields<FVGridGeometry>;
 };
+//////////////////////////////////////////////////////////////////
+// Property values for non-isothermal Navier-Stokes model
+//////////////////////////////////////////////////////////////////
+
+//! The model traits of the non-isothermal model
+SET_PROP(NavierStokesNI, ModelTraits)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    static constexpr auto dim = GridView::dimension;
+    using IsothermalTraits = NavierStokesModelTraits<dim>;
+public:
+    using type = FreeflowNIModelTraits<IsothermalTraits>;
+};
+
+//! The specific non-isothermal vtk output fields
+SET_PROP(NavierStokesNI, VtkOutputFields)
+{
+private:
+     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+     using IsothermalFields = NavierStokesVtkOutputFields<FVGridGeometry>;
+public:
+     using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
+};
+
  // \}
 }
 

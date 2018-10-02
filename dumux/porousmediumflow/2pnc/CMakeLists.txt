@@ -1,9 +1,6 @@
-
-#install headers
 install(FILES
 indices.hh
 model.hh
-newtoncontroller.hh
 primaryvariableswitch.hh
 volumevariables.hh
 vtkoutputfields.hh

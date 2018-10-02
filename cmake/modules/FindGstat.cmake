@@ -28,7 +28,7 @@ find_program(GSTAT_EXECUTABLE
   NAMES gstat
   PATHS "${GSTAT_ROOT}"
         "${CMAKE_SOURCE_DIR}/../"
-        "usr/bin/"
+        "/usr/bin/"
   PATH_SUFFIXES "src" "external/gstat/src" "gstat/src" "gstat"
   NO_DEFAULT_PATH
 )

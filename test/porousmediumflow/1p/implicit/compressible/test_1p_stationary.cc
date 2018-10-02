@@ -39,13 +39,13 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
-#include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 int main(int argc, char** argv) try
 {
@@ -71,16 +71,15 @@ int main(int argc, char** argv) try
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    GridCreator::makeGrid();
-    GridCreator::loadBalance();
+    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    gridManager.init();
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -102,7 +101,9 @@ int main(int argc, char** argv) try
 
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 
@@ -115,10 +116,8 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NewtonController = Dumux::NewtonController<Scalar>;
-    auto newtonController = std::make_shared<NewtonController>();
-    NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
+    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // linearize & solve
     Dune::Timer timer;

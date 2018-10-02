@@ -39,21 +39,31 @@
 // setting it here, because it impacts volume variables and spatialparameters
 #define USE_PCMAX 1
 
-#include <dune/common/parametertreeparser.hh>
+#include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/box/properties.hh>
+
 #include <dumux/porousmediumflow/mpnc/model.hh>
+#include <dumux/porousmediumflow/mpnc/pressureformulation.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include "plotoverline2d.hh"
+#include <dumux/material/components/constant.hh>
 
 #include "evaporationatmospherespatialparams.hh"
 
+// material laws for interfacial area
+#include <dumux/material/fluidmatrixinteractions/2pia/efftoabslawia.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomial2ndorder.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomialedgezero2ndorder.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpfct.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepcmaxfct.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpswpcto3.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup MPNCTests
  *
@@ -62,33 +72,76 @@ namespace Dumux
 template <class TypeTag>
 class EvaporationAtmosphereProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(EvaporationAtmosphereTypeTag,
-             INHERITS_FROM(MPNCNonequil, EvaporationAtmosphereSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(EvaporationAtmosphereTypeTag, INHERITS_FROM(MPNCNonequil));
 NEW_TYPE_TAG(EvaporationAtmosphereBoxTypeTag, INHERITS_FROM(BoxModel, EvaporationAtmosphereTypeTag));
 
 // Set the grid type
 SET_TYPE_PROP(EvaporationAtmosphereTypeTag, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(EvaporationAtmosphereTypeTag,
-              Problem,
-              EvaporationAtmosphereProblem<TypeTag>);
+SET_TYPE_PROP(EvaporationAtmosphereTypeTag, Problem, EvaporationAtmosphereProblem<TypeTag>);
 
 // Set fluid configuration
 SET_TYPE_PROP(EvaporationAtmosphereTypeTag,
               FluidSystem,
-              FluidSystems::H2ON2Kinetic<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
+              FluidSystems::H2ON2Kinetic<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 //! Set the default pressure formulation: either pw first or pn first
-SET_INT_PROP(EvaporationAtmosphereTypeTag,
-             PressureFormulation,
-             MpNcPressureFormulation::leastWettingFirst);
+SET_PROP(EvaporationAtmosphereTypeTag, PressureFormulation)
+{
+public:
+    static const MpNcPressureFormulation value = MpNcPressureFormulation::leastWettingFirst;
+};
 
 // Set the type used for scalar values
 SET_TYPE_PROP(EvaporationAtmosphereTypeTag, Scalar, double);
-}
+
+// Set the fluid system
+SET_PROP(EvaporationAtmosphereTypeTag, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1, Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+};
+
+// Set the spatial parameters
+SET_TYPE_PROP(EvaporationAtmosphereTypeTag, SpatialParams, EvaporationAtmosphereSpatialParams<TypeTag>);
+
+// Set the interfacial area relation: wetting -- non-wetting
+SET_PROP(EvaporationAtmosphereTypeTag, AwnSurface)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
+    using MaterialLawParams = typename MaterialLaw::Params;
+    using EffectiveIALaw = AwnSurfacePcMaxFct<Scalar>;
+public:
+    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
+};
+
+
+// Set the interfacial area relation: wetting -- solid
+SET_PROP(EvaporationAtmosphereTypeTag, AwsSurface)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
+    using MaterialLawParams = typename MaterialLaw::Params;
+    using EffectiveIALaw = AwnSurfacePolynomial2ndOrder<Scalar>;
+public:
+    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
+};
+
+// Set the interfacial area relation: non-wetting -- solid
+SET_PROP(EvaporationAtmosphereTypeTag, AnsSurface)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
+    using MaterialLawParams = typename MaterialLaw::Params;
+    using EffectiveIALaw = AwnSurfaceExpSwPcTo3<Scalar>;
+public:
+    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
+};
+} // end namespace Properties
 
 /*!
  * \ingroup MpNcBoxproblems
@@ -101,48 +154,47 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ParameterCache = typename FluidSystem::ParameterCache;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    enum { dimWorld = GridView::dimensionworld};
-    enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
-    enum { numComponents   = GET_PROP_VALUE(TypeTag, NumComponents)};
-    enum { s0Idx = Indices::s0Idx};
-    enum { p0Idx = Indices::p0Idx};
+
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    enum { dimWorld = GridView::dimensionworld };
+    enum { numPhases       = ModelTraits::numPhases() };
+    enum { numComponents   = ModelTraits::numComponents() };
+    enum { s0Idx = Indices::s0Idx };
+    enum { p0Idx = Indices::p0Idx };
     enum { conti00EqIdx    = Indices::conti0EqIdx };
-    enum { energyEq0Idx    = Indices::energyEqIdx};
-    enum { wPhaseIdx       = FluidSystem::wPhaseIdx};
-    enum { nPhaseIdx       = FluidSystem::nPhaseIdx};
-    enum { wCompIdx        = FluidSystem::H2OIdx};
-    enum { nCompIdx        = FluidSystem::N2Idx};
-    enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)};
-    enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid)};
+    enum { energyEq0Idx    = Indices::energyEqIdx };
+    enum { liquidPhaseIdx       = FluidSystem::liquidPhaseIdx };
+    enum { gasPhaseIdx       = FluidSystem::gasPhaseIdx };
+    enum { wCompIdx        = FluidSystem::H2OIdx };
+    enum { nCompIdx        = FluidSystem::N2Idx };
+    enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
+    enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
 
     static constexpr bool enableChemicalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
     using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
     // formulations
-    enum {
-        pressureFormulation = GET_PROP_VALUE(TypeTag, PressureFormulation),
-        mostWettingFirst    = MpNcPressureFormulation::mostWettingFirst,
-        leastWettingFirst   = MpNcPressureFormulation::leastWettingFirst
-    };
-
-   using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
+    static constexpr auto mostWettingFirst = MpNcPressureFormulation::mostWettingFirst;
+    static constexpr auto leastWettingFirst = MpNcPressureFormulation::leastWettingFirst;
 
 public:
     /*!
@@ -266,24 +318,26 @@ public:
             fluidState.setPressure(phaseIdx, pnInitial_);
         }
 
-        fluidState.setTemperature(nPhaseIdx, TInject_ );
-        fluidState.setTemperature(wPhaseIdx, TInitial_ ); // this value is a good one, TInject does not work
+        fluidState.setTemperature(gasPhaseIdx, TInject_ );
+        fluidState.setTemperature(liquidPhaseIdx, TInitial_ ); // this value is a good one, TInject does not work
 
         // This solves the system of equations defining x=x(p,T)
         ConstraintSolver::solve(fluidState,
-                                dummyCache,
-                                /*setViscosity=*/false,
-                                /*setEnthalpy=*/false) ;
+                                dummyCache) ;
 
         // Now let's make the air phase less than fully saturated with water
-        fluidState.setMoleFraction(nPhaseIdx, wCompIdx, fluidState.moleFraction(nPhaseIdx, wCompIdx)*percentOfEquil_ ) ;
-        fluidState.setMoleFraction(nPhaseIdx, nCompIdx, 1.-fluidState.moleFraction(nPhaseIdx, wCompIdx) ) ;
+        fluidState.setMoleFraction(gasPhaseIdx, wCompIdx, fluidState.moleFraction(gasPhaseIdx, wCompIdx)*percentOfEquil_ ) ;
+        fluidState.setMoleFraction(gasPhaseIdx, nCompIdx, 1.-fluidState.moleFraction(gasPhaseIdx, wCompIdx) ) ;
 
         // compute density of injection phase
         const Scalar density = FluidSystem::density(fluidState,
-                                                     dummyCache,
-                                                     nPhaseIdx);
-        fluidState.setDensity(nPhaseIdx, density);
+                                                    dummyCache,
+                                                    gasPhaseIdx);
+        fluidState.setDensity(gasPhaseIdx, density);
+        const Scalar molarDensity = FluidSystem::molarDensity(fluidState,
+                                                              dummyCache,
+                                                              gasPhaseIdx);
+        fluidState.setMolarDensity(gasPhaseIdx, molarDensity);
 
         for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
         {
@@ -293,18 +347,18 @@ public:
                 fluidState.setEnthalpy(phaseIdx, h);
         }
 
-        const Scalar molarFlux = massFluxInjectedPhase / fluidState.averageMolarMass(nPhaseIdx);
+        const Scalar molarFlux = massFluxInjectedPhase / fluidState.averageMolarMass(gasPhaseIdx);
 
         // actually setting the fluxes
         if (onLeftBoundary_(globalPos) && this->spatialParams().inFF_(globalPos))
         {
-            values[conti00EqIdx + nPhaseIdx * numComponents + wCompIdx]
-             = -molarFlux * fluidState.moleFraction(nPhaseIdx, wCompIdx);
-            values[conti00EqIdx + nPhaseIdx * numComponents + nCompIdx]
-             = -molarFlux * fluidState.moleFraction(nPhaseIdx, nCompIdx);
+            values[conti00EqIdx + gasPhaseIdx * numComponents + wCompIdx]
+             = -molarFlux * fluidState.moleFraction(gasPhaseIdx, wCompIdx);
+            values[conti00EqIdx + gasPhaseIdx * numComponents + nCompIdx]
+             = -molarFlux * fluidState.moleFraction(gasPhaseIdx, nCompIdx);
             // energy equations are specified mass specifically
-            values[energyEq0Idx + nPhaseIdx] = - massFluxInjectedPhase
-                                                    * fluidState.enthalpy(nPhaseIdx) ;
+            values[energyEq0Idx + gasPhaseIdx] = - massFluxInjectedPhase
+                                                    * fluidState.enthalpy(gasPhaseIdx) ;
         }
         return values;
     }
@@ -357,12 +411,12 @@ private:
         Scalar S[numPhases];
 
         if (this->spatialParams().inPM_(globalPos)){
-            S[wPhaseIdx]    = SwPMInitial_;
-            S[nPhaseIdx]    = 1. - S[wPhaseIdx] ;
+            S[liquidPhaseIdx]    = SwPMInitial_;
+            S[gasPhaseIdx]    = 1. - S[liquidPhaseIdx] ;
         }
         else if (this->spatialParams().inFF_(globalPos)){
-            S[wPhaseIdx]    = SwFFInitial_;
-            S[nPhaseIdx]    = 1. - S[wPhaseIdx] ;
+            S[liquidPhaseIdx]    = SwFFInitial_;
+            S[gasPhaseIdx]    = 1. - S[liquidPhaseIdx] ;
         }
         else
             DUNE_THROW(Dune::InvalidStateException,
@@ -386,18 +440,19 @@ private:
         Scalar capPress[numPhases];
 
         //obtain pc according to saturation
+        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         MaterialLaw::capillaryPressures(capPress, materialParams, equilibriumFluidState);
 
         Scalar p[numPhases];
         if (this->spatialParams().inPM_(globalPos)){
             // Use homogenous pressure in the domain and let the newton find the pressure distribution
             using std::abs;
-            p[wPhaseIdx] = pnInitial_  - abs(capPress[wPhaseIdx]);
-            p[nPhaseIdx] = p[wPhaseIdx] + abs(capPress[wPhaseIdx]);
+            p[liquidPhaseIdx] = pnInitial_  - abs(capPress[liquidPhaseIdx]);
+            p[gasPhaseIdx] = p[liquidPhaseIdx] + abs(capPress[liquidPhaseIdx]);
         }
         else if (this->spatialParams().inFF_(globalPos)){
-            p[nPhaseIdx] = pnInitial_ ;
-            p[wPhaseIdx] = pnInitial_  ;
+            p[gasPhaseIdx] = pnInitial_ ;
+            p[liquidPhaseIdx] = pnInitial_  ;
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
@@ -405,14 +460,14 @@ private:
         if(pressureFormulation == mostWettingFirst){
             // This means that the pressures are sorted from the most wetting to the least wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pw
-            priVars[p0Idx] = p[wPhaseIdx];
+            priVars[p0Idx] = p[liquidPhaseIdx];
         }
         else if(pressureFormulation == leastWettingFirst){
             // This means that the pressures are sorted from the least wetting to the most wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pn
-            priVars[p0Idx] = p[nPhaseIdx];
+            priVars[p0Idx] = p[gasPhaseIdx];
         }
-        else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << pressureFormulation << " is invalid.");
+        else DUNE_THROW(Dune::InvalidStateException, "EvaporationAtmosphereProblem does not support the chosen pressure formulation.");
 
         for (int energyEqIdx=0; energyEqIdx< numEnergyEqFluid+numEnergyEqSolid; ++energyEqIdx)
                 priVars[energyEq0Idx + energyEqIdx] = T;
@@ -423,14 +478,12 @@ private:
          // This solves the system of equations defining x=x(p,T)
         ParameterCache dummyCache;
         ConstraintSolver::solve(equilibriumFluidState,
-                                dummyCache,
-                                /*setViscosity=*/false,
-                                /*setEnthalpy=*/false) ;
+                                dummyCache) ;
 
         FluidState dryFluidState(equilibriumFluidState);
         // Now let's make the air phase less than fully saturated with vapor
-        dryFluidState.setMoleFraction(nPhaseIdx, wCompIdx, dryFluidState.moleFraction(nPhaseIdx, wCompIdx) * percentOfEquil_ ) ;
-        dryFluidState.setMoleFraction(nPhaseIdx, nCompIdx, 1.0-dryFluidState.moleFraction(nPhaseIdx, wCompIdx) ) ;
+        dryFluidState.setMoleFraction(gasPhaseIdx, wCompIdx, dryFluidState.moleFraction(gasPhaseIdx, wCompIdx) * percentOfEquil_ ) ;
+        dryFluidState.setMoleFraction(gasPhaseIdx, nCompIdx, 1.0-dryFluidState.moleFraction(gasPhaseIdx, wCompIdx) ) ;
 
         /* Difference between kinetic and MPNC:
          * number of component related primVar and how they are calculated (mole fraction, fugacities, resp.)
@@ -456,7 +509,7 @@ private:
         {
             // in the case I am using the "standard" mpnc model, the variables to be set are the "fugacities"
             const Scalar fugH2O = FluidSystem::H2O::vaporPressure(T) ;
-            const Scalar fugN2 = p[nPhaseIdx] - fugH2O ;
+            const Scalar fugN2 = p[gasPhaseIdx] - fugH2O ;
 
             priVars[conti00EqIdx + FluidSystem::N2Idx] = fugN2 ;
             priVars[conti00EqIdx + FluidSystem::H2OIdx] = fugH2O ;
@@ -466,8 +519,8 @@ private:
 
             const Scalar Henry              = BinaryCoeff::H2O_N2::henry(TInitial_);
             const Scalar satVapPressure     = FluidSystem::H2O::vaporPressure(TInitial_);
-            xl[FluidSystem::H2OIdx]         = x_[wPhaseIdx][wCompIdx];
-            xl[FluidSystem::N2Idx]          = x_[wPhaseIdx][nCompIdx];
+            xl[FluidSystem::H2OIdx]         = x_[liquidPhaseIdx][wCompIdx];
+            xl[FluidSystem::N2Idx]          = x_[liquidPhaseIdx][nCompIdx];
             beta[FluidSystem::H2OIdx]       = satVapPressure ;
             beta[FluidSystem::N2Idx]        = Henry ;
 

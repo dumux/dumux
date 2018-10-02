@@ -26,7 +26,6 @@
 
 #include <vector>
 #include <array>
-#include <dune/common/version.hh>
 #include <dune/common/reservedvector.hh>
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
@@ -94,12 +93,13 @@ class CCMpfaSubControlVolumeFace
 {
     using GridIndexType = typename T::GridIndexType;
     using Scalar = typename T::Scalar;
-    using GlobalPosition = typename T::GlobalPosition;
     using CornerStorage = typename T::CornerStorage;
     using OutsideGridIndexStorage = typename T::OutsideGridIndexStorage;
     using Geometry = typename T::Geometry;
 
 public:
+    //! export the type used for global coordinates
+    using GlobalPosition = typename T::GlobalPosition;
     //! state the traits public and thus export all types
     using Traits = T;
 
@@ -149,35 +149,45 @@ public:
     }
 
     //! The area of the sub control volume face
-    Scalar area() const { return area_; }
+    Scalar area() const
+    { return area_; }
 
     //! returns bolean if the sub control volume face is on the domain boundary
-    bool boundary() const { return boundary_; }
+    bool boundary() const
+    { return boundary_; }
 
     //! The global index of this sub control volume face
-    GridIndexType index() const { return scvfIndex_; }
+    GridIndexType index() const
+    { return scvfIndex_; }
 
     //! Returns the index of the vertex the scvf is connected to
-    GridIndexType vertexIndex() const { return vertexIndex_; }
+    GridIndexType vertexIndex() const
+    { return vertexIndex_; }
 
     //! Returns the element-local vertex index the scvf is connected to
-    unsigned int vertexIndexInElement() const { return vIdxInElement_; }
+    unsigned int vertexIndexInElement() const
+    { return vIdxInElement_; }
 
     //! index of the inside sub control volume
-    GridIndexType insideScvIdx() const { return insideScvIdx_; }
+    GridIndexType insideScvIdx() const
+    { return insideScvIdx_; }
 
     //! The number of outside scvs connection via this scv face
-    std::size_t numOutsideScvs() const { return outsideScvIndices_.size(); }
+    std::size_t numOutsideScvs() const
+    { return outsideScvIndices_.size(); }
 
     //! index of the outside sub control volume or boundary scv index
     //! returns undefined behaviour if index exceeds numOutsideScvs
-    GridIndexType outsideScvIdx(int i = 0) const { return outsideScvIndices_[i]; }
+    GridIndexType outsideScvIdx(int i = 0) const
+    { return outsideScvIndices_[i]; }
 
     //! returns the outside scv indices (can be more than one index for dim < dimWorld)
-    const OutsideGridIndexStorage& outsideScvIndices() const { return outsideScvIndices_; }
+    const OutsideGridIndexStorage& outsideScvIndices() const
+    { return outsideScvIndices_; }
 
     //! Returns the number of corners
-    std::size_t corners() const { return corners_.size(); }
+    std::size_t corners() const
+    { return corners_.size(); }
 
     //! Returns the corner for a given local index
     const GlobalPosition& corner(unsigned int localIdx) const
@@ -187,26 +197,28 @@ public:
     }
 
     //! Returns the global position of the vertex the scvf is connected to
-    const GlobalPosition& vertexCorner() const { return corners_.back(); }
+    const GlobalPosition& vertexCorner() const
+    { return corners_.back(); }
 
     //! Returns the global position of the center of the element facet this scvf is embedded in
-    const GlobalPosition& facetCorner() const { return corner(0); }
+    const GlobalPosition& facetCorner() const
+    { return corner(0); }
 
     //! The center of the sub control volume face
-    const GlobalPosition& center() const { return center_; }
+    const GlobalPosition& center() const
+    { return center_; }
 
     //! The integration point for flux evaluations in global coordinates
-    const GlobalPosition& ipGlobal() const { return ipGlobal_; }
+    const GlobalPosition& ipGlobal() const
+    { return ipGlobal_; }
 
     //! returns the unit outer normal vector (assumes non-curved geometries)
-    const GlobalPosition& unitOuterNormal() const { return unitOuterNormal_; }
+    const GlobalPosition& unitOuterNormal() const
+    { return unitOuterNormal_; }
 
     //! The geometry of the sub control volume face
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-    Geometry geometry() const { return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_); }
-#else
-    Geometry geometry() const { return Geometry(Dune::GeometryType(Dune::GeometryType::cube, Geometry::mydimension), corners_); }
-#endif
+    Geometry geometry() const
+    { return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_); }
 
 private:
     bool boundary_;

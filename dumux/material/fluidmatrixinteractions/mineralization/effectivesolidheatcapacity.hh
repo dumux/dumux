@@ -24,30 +24,31 @@
 #ifndef DUMUX_EFFECTIVE_SOLID_HEATCAPACITY_HH
 #define DUMUX_EFFECTIVE_SOLID_HEATCAPACITY_HH
 
+#include <dune/common/deprecated.hh>
+
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/evalsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Calculates the effective solid heat capacity
  */
 template<class TypeTag>
-class EffectiveSolidHeatCapacity
+class DUNE_DEPRECATED_MSG("Implement SolidSystems instead!") EffectiveSolidHeatCapacity
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static const int numSolidPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
+    static const int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
+    static const int numSolidPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numSPhases();
 
     using Element = typename GridView::template Codim<0>:: Entity;
 
@@ -59,9 +60,10 @@ public:
 
     // calculates the effective solid heat capacity of multiple solid phases accordin to
     // their volume fractions
+    template<class ElementSolution>
     Scalar effectiveSolidHeatCapacity(const Element& element,
-                            const SubControlVolume& scv,
-                            const ElementSolution& elemSol) const
+                                      const SubControlVolume& scv,
+                                      const ElementSolution& elemSol) const
     {
         auto priVars = evalSolution(element, element.geometry(), elemSol, scv.center());
 

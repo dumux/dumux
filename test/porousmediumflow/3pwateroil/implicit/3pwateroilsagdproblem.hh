@@ -24,15 +24,21 @@
 #ifndef DUMUX_SAGDPROBLEM_HH
 #define DUMUX_SAGDPROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/3pwateroil/model.hh>
-#include <dumux/material/fluidsystems/h2oheavyoilfluidsystem.hh>
+
+#include <dumux/material/fluidsystems/h2oheavyoil.hh>
+#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/components/constant.hh>
+
 #include "3pwateroilsagdspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \file
  * \ingroup ThreePWaterOilTests
@@ -41,9 +47,8 @@ namespace Dumux
 template <class TypeTag>
 class SagdProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(SagdTypeTag, INHERITS_FROM(ThreePWaterOilNI, SagdSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(SagdTypeTag, INHERITS_FROM(ThreePWaterOilNI));
 NEW_TYPE_TAG(ThreePWaterOilSagdBoxTypeTag, INHERITS_FROM(BoxModel, SagdTypeTag));
 
 // Set the grid type
@@ -51,6 +56,14 @@ SET_TYPE_PROP(SagdTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(SagdTypeTag, Problem, Dumux::SagdProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_PROP(SagdTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = SagdSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Set the fluid system
 SET_TYPE_PROP(SagdTypeTag,
@@ -60,7 +73,15 @@ SET_TYPE_PROP(SagdTypeTag,
 SET_BOOL_PROP(SagdTypeTag, OnlyGasPhaseCanDisappear, true);
 
 SET_BOOL_PROP(SagdTypeTag, UseMoles, true);
-}
+
+// Set the fluid system
+SET_PROP(SagdTypeTag, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1, Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+};
+} // end namespace Properties
 
 
 /*!
@@ -79,19 +100,19 @@ class SagdProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
 
-        contiWEqIdx = Indices::contiWEqIdx,
-        contiNEqIdx = Indices::contiNEqIdx,
+        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::wCompIdx,
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nCompIdx,
         energyEqIdx = Indices::energyEqIdx,
 
         // phase indices
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
 
         // phase state
         wnPhaseOnly = Indices::wnPhaseOnly,
@@ -102,57 +123,23 @@ class SagdProblem : public PorousMediumFlowProblem<TypeTag>
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-
-    /*!
-     * \brief The constructor
-     *
-     * \param timeManager The time manager
-     * \param gridView The grid view
-     */
 
     SagdProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), pOut_(4e6)
     {
-
         maxDepth_ = 400.0; // [m]
         FluidSystem::init();
-        totalMassProducedOil_ =0;
-        totalMassProducedWater_ =0;
-
-        name_ = getParam<std::string>("Problem.Name");
+        totalMassProducedOil_ = 0.0;
+        totalMassProducedWater_ = 0.0;
     }
-
-
-    void episodeEnd()
-    {
-        // Start new episode if episode is over
-        // for first 10 year episode length is 1 year
-        this->timeManager().startNextEpisode(3600*24*1.);   //episode length sent to 1 day
-            std::cout<<"Episode index is set to: "<<this->timeManager().episodeIndex()<<std::endl;
-    }
-
-    /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    /*!
-     * \brief The problem name.
-     *
-     * This is used as a prefix for files generated by the simulation.
-     */
-    const std::string name() const
-    { return name_; }
-
-    // \}
 
     /*!
      * \name Boundary conditions
@@ -161,10 +148,9 @@ public:
 
     /*!
      * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
+     *        used for which equation on a given boundary control volume.
      *
-     * \param bcTypes The boundary types for the conservation equations
-     * \param globalPos The position for which the bc type should be evaluated
+     * \param globalPos The position for which the boundary types are evaluated
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
@@ -189,12 +175,9 @@ public:
 
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     *        control volume.
      *
-     * \param values The dirichlet values for the primary variables
-     * \param globalPos The position for which the bc type should be evaluated
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param globalPos The center of the finite volume which ought to be set.
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
@@ -205,25 +188,23 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values The neumann values for the conservation equations
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param is The intersection between element and boundary
-     * \param scvIdx The local vertex index
-     * \param boundaryFaceIdx The index of the boundary face
-     * \param elemVolVars Element volume variables
+     * \param elemVolVars The element volume variables
+     * \param scvf The sub control volume face
      *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
+     * Negative values mean influx.
      */
     NumEqVector neumann(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
 
-         const auto& globalPos = scvf.ipGlobal();
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& globalPos = insideScv.dofPosition();
+
         // negative values for injection at injection well
         if (globalPos[1] > 8.5 - eps_ && globalPos[1] < 9.5 + eps_)
         {
@@ -294,11 +275,7 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The position for which the initial condition should be evaluated
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
      */
      PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {

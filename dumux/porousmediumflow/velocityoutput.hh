@@ -24,125 +24,97 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 #define DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 
-#include <dune/common/version.hh>
-#include <dune/common/fvector.hh>
-#include <dune/istl/bvector.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/io/velocityoutput.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/elementsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \brief Velocity output for implicit (porous media) models
+ * \brief Velocity output policy for implicit (porous media) models
  */
-template<class TypeTag>
-class PorousMediumFlowVelocityOutput
+template<class GridVariables, class FluxVariables>
+class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
-    static const bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
-    static const int dofCodim = isBox ? dim : 0;
-
-    using Vertex = typename GridView::template Codim<dim>::Entity;
+    using ParentType = VelocityOutput<GridVariables>;
+    using FVGridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using CoordScalar = typename GridView::ctype;
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using VolumeVariables = typename GridVariables::VolumeVariables;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using FluidSystem = typename VolumeVariables::FluidSystem;
+    using Scalar = typename GridVariables::Scalar;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using ReferenceElements = Dune::ReferenceElements<CoordScalar, dim>;
+    // TODO should be possible to get this
+    using Problem = typename std::decay_t<decltype(std::declval<GridVolumeVariables>().problem())>;
+    using BoundaryTypes = typename std::decay_t<decltype(std::declval<GridVolumeVariables>().problem()
+                                                         .boundaryTypes(std::declval<Element>(), std::declval<SubControlVolumeFace>()))>;
+
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr int dofCodim = isBox ? dim : 0;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using ReferenceElements = Dune::ReferenceElements<typename GridView::ctype, dim>;
 
 public:
+    using VelocityVector = typename ParentType::VelocityVector;
+
     /*!
      * \brief Constructor initializes the static data with the initial solution.
      *
-     * \param problem The problem to be solved
+     * \param gridVariables The grid variables
      */
-    PorousMediumFlowVelocityOutput(const Problem& problem,
-                                   const FVGridGeometry& fvGridGeometry,
-                                   const GridVariables& gridVariables,
-                                   const SolutionVector& sol)
-    : problem_(problem)
-    , fvGridGeometry_(fvGridGeometry)
+    PorousMediumFlowVelocityOutput(const GridVariables& gridVariables)
+    : problem_(gridVariables.curGridVolVars().problem())
+    , fvGridGeometry_(gridVariables.fvGridGeometry())
     , gridVariables_(gridVariables)
-    , sol_(sol)
     {
         // check, if velocity output can be used (works only for cubes so far)
-        const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        velocityOutput_ = getParamFromGroup<bool>(modelParamGroup, "Vtk.AddVelocity");
-        if (velocityOutput_)
+        enableOutput_ = getParamFromGroup<bool>(problem_.paramGroup(), "Vtk.AddVelocity");
+        if (enableOutput_)
         {
             // set the number of scvs the vertices are connected to
             if (isBox && dim > 1)
             {
                 // resize to the number of vertices of the grid
-                cellNum_.assign(fvGridGeometry.gridView().size(dim), 0);
+                cellNum_.assign(fvGridGeometry_.gridView().size(dim), 0);
 
-                for (const auto& element : elements(fvGridGeometry.gridView()))
+                for (const auto& element : elements(fvGridGeometry_.gridView()))
                     for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
-                        ++cellNum_[fvGridGeometry.vertexMapper().subIndex(element, vIdx, dim)];
+                        ++cellNum_[fvGridGeometry_.vertexMapper().subIndex(element, vIdx, dim)];
             }
         }
     }
 
-    bool enableOutput()
-    { return velocityOutput_; }
+    //! returns whether or not velocity output is enabled
+    bool enableOutput() const override { return enableOutput_; }
 
-    // The following SFINAE enable_if usage allows compilation, even if only a
-    //
-    // boundaryTypes(const Element&, const scv&)
-    //
-    // is provided in the problem file. In that case, the compiler cannot detect
-    // (without additional measures like "using...") the signature
-    //
-    // boundaryTypes(const Element&, const scvf&)
-    //
-    // in the problem base class. Therefore, calls to this method trigger a
-    // compiler error. However, that call is needed for calculating velocities
-    // if the cell-centered discretization is used. By proceeding as in the
-    // following lines, that call will only be compiled if cell-centered
-    // actually is used.
-    template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, BoundaryTypes>::type
-    problemBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
-    { return problem_.boundaryTypes(element, scvf); }
+    //! returns the phase name of a given phase index
+    std::string phaseName(int phaseIdx) const override { return FluidSystem::phaseName(phaseIdx); }
 
-    //! we should never call this method for box models
-    template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, BoundaryTypes>::type
-    problemBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
-    { return BoundaryTypes(); }
+    //! returns the number of phases
+    int numPhases() const override { return VolumeVariables::numPhases(); }
 
     //! Calculate the velocities for the scvs in the element
     //! We assume the local containers to be bound to the complete stencil
-    template<class VelocityVector>
     void calculateVelocity(VelocityVector& velocity,
                            const ElementVolumeVariables& elemVolVars,
                            const FVElementGeometry& fvGeometry,
                            const Element& element,
-                           int phaseIdx)
+                           int phaseIdx) const override
     {
-        if (!velocityOutput_) return;
+        using Velocity = typename VelocityVector::value_type;
+
+        if (!enableOutput_) return;
 
         const auto geometry = element.geometry();
         const Dune::GeometryType geomType = geometry.type();
@@ -156,7 +128,7 @@ public:
 
         if(isBox && dim == 1)
         {
-            GlobalPosition tmpVelocity(0.0);
+            Velocity tmpVelocity(0.0);
             tmpVelocity = (geometry.corner(1) - geometry.corner(0));
             tmpVelocity /= tmpVelocity.two_norm();
 
@@ -175,7 +147,7 @@ public:
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
                 flux /= problem_.extrusionFactor(element,
                                                  fvGeometry.scv(scvf.insideScvIdx()),
-                                                 ElementSolution(element, sol_, fvGridGeometry_));
+                                                 elementSolution(element, elemVolVars, fvGeometry));
                 tmpVelocity *= flux;
 
                 const int eIdxGlobal = fvGridGeometry_.elementMapper().index(element);
@@ -185,17 +157,13 @@ public:
         }
 
         // get the transposed Jacobian of the element mapping
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(geomType);
-#else
-        const auto& referenceElement = ReferenceElements::general(geomType);
-#endif
         const auto& localPos = referenceElement.position(0, 0);
         const auto jacobianT2 = geometry.jacobianTransposed(localPos);
 
         if(isBox)
         {
-            using ScvVelocities = Dune::BlockVector<Dune::FieldVector<Scalar, dimWorld> >;
+            using ScvVelocities = Dune::BlockVector<Velocity>;
             ScvVelocities scvVelocities(fvGeometry.numScv());
             scvVelocities = 0;
 
@@ -225,7 +193,7 @@ public:
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
 
                 // transform the volume flux into a velocity vector
-                GlobalPosition tmpVelocity = localNormal;
+                Velocity tmpVelocity = localNormal;
                 tmpVelocity *= flux;
 
                 scvVelocities[scvf.insideScvIdx()] += tmpVelocity;
@@ -238,7 +206,7 @@ public:
                 int vIdxGlobal = scv.dofIndex();
 
                 // calculate the subcontrolvolume velocity by the Piola transformation
-                Dune::FieldVector<CoordScalar, dimWorld> scvVelocity(0);
+                Velocity scvVelocity(0);
 
                 jacobianT2.mtv(scvVelocities[scv.indexInElement()], scvVelocity);
                 scvVelocity /= geometry.integrationElement(localPos)*cellNum_[vIdxGlobal];
@@ -287,11 +255,11 @@ public:
                     scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                     scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
                                                                                             fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                            ElementSolution(element, sol_, fvGridGeometry_));
+                                                                                            elementSolution(element, elemVolVars, fvGeometry));
                 }
                 else
                 {
-                    auto bcTypes = problemBoundaryTypes(element, scvf);
+                    auto bcTypes = problemBoundaryTypes_(element, scvf);
                     if (bcTypes.hasOnlyDirichlet())
                     {
                         FluxVariables fluxVars;
@@ -299,7 +267,7 @@ public:
                         scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                         scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
                                                                                                 fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                                ElementSolution(element, sol_, fvGridGeometry_));
+                                                                                                elementSolution(element, elemVolVars, fvGeometry));
                     }
                 }
 
@@ -318,7 +286,7 @@ public:
             {
                 if (scvf.boundary())
                 {
-                    auto bcTypes = problemBoundaryTypes(element, scvf);
+                    auto bcTypes = problemBoundaryTypes_(element, scvf);
                     if (bcTypes.hasNeumann())
                     {
                         // cubes
@@ -338,7 +306,7 @@ public:
                 localScvfIdx++;
             }
 
-            Dune::FieldVector <Scalar, dim> refVelocity;
+            Velocity refVelocity;
             // cubes: On the reference element simply average over opposite fluxes
             // note that this is equal to a corner velocity interpolation method
             if (dim == 1 || geomType.isCube())
@@ -360,7 +328,7 @@ public:
             else
                 DUNE_THROW(Dune::NotImplemented, "velocity output for cell-centered and prism/pyramid");
 
-            Dune::FieldVector<Scalar, dimWorld> scvVelocity(0);
+            Velocity scvVelocity(0);
             jacobianT2.mtv(refVelocity, scvVelocity);
 
             scvVelocity /= geometry.integrationElement(localPos);
@@ -430,12 +398,34 @@ private:
     }
 
 private:
+    // The following SFINAE enable_if usage allows compilation, even if only a
+    //
+    // boundaryTypes(const Element&, const scv&)
+    //
+    // is provided in the problem file. In that case, the compiler cannot detect
+    // (without additional measures like "using...") the signature
+    //
+    // boundaryTypes(const Element&, const scvf&)
+    //
+    // in the problem base class. Therefore, calls to this method trigger a
+    // compiler error. However, that call is needed for calculating velocities
+    // if the cell-centered discretization is used. By proceeding as in the
+    // following lines, that call will only be compiled if cell-centered
+    // actually is used.
+    template <bool enable = isBox, typename std::enable_if_t<!enable, int> = 0>
+    BoundaryTypes problemBoundaryTypes_(const Element& element, const SubControlVolumeFace& scvf) const
+    { return problem_.boundaryTypes(element, scvf); }
+
+    //! we should never call this method for box models
+    template <bool enable = isBox, typename std::enable_if_t<enable, int> = 0>
+    BoundaryTypes problemBoundaryTypes_(const Element& element, const SubControlVolumeFace& scvf) const
+    { return BoundaryTypes(); }
+
     const Problem& problem_;
     const FVGridGeometry& fvGridGeometry_;
     const GridVariables& gridVariables_;
-    const SolutionVector& sol_;
 
-    bool velocityOutput_;
+    bool enableOutput_;
     std::vector<int> cellNum_;
 };
 

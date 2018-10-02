@@ -27,30 +27,12 @@
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMS_HH
 #define DUMUX_INJECTION_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-namespace Dumux
-{
-
-//forward declaration
-template<class TypeTag>
-class InjectionSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(InjectionSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(InjectionSpatialParams, SpatialParams, InjectionSpatialParams<TypeTag>);
-
-// Set the material law parameterized by absolute saturations
-SET_TYPE_PROP(InjectionSpatialParams,
-              MaterialLaw,
-              EffToAbsLaw<RegularizedBrooksCorey<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
-}
+namespace Dumux {
 
 /*!
  * \ingroup TwoPTwoCTests
@@ -58,32 +40,37 @@ SET_TYPE_PROP(InjectionSpatialParams,
  *        which uses the isothermal two-phase two-component
  *        fully implicit model.
  */
-template<class TypeTag>
-class InjectionSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class InjectionSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         InjectionSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, InjectionSpatialParams<FVGridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using CoordScalar = typename Grid::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
+    //! export the type used for the permeability
     using PermeabilityType = Scalar;
+    //! export the material law type used
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     /*!
      * \brief The constructor
      *
      * \param gridView The grid view
      */
-    InjectionSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    InjectionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         layerBottom_ = 22.5;
 
@@ -94,9 +81,6 @@ public:
         // porosities
         finePorosity_ = 0.3;
         coarsePorosity_ = 0.3;
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
 
         // residual saturations
         fineMaterialParams_.setSwr(0.2);
@@ -150,34 +134,14 @@ public:
     }
 
     /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
      */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    { return 2700; /*density of granite [kg/m^3]*/ }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the solid
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    { return lambdaSolid_; }
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
 
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
@@ -189,8 +153,6 @@ private:
 
     Scalar finePorosity_;
     Scalar coarsePorosity_;
-
-    Scalar lambdaSolid_;
 
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;

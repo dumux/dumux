@@ -22,7 +22,6 @@
 #ifndef DUMUX_MPFAO2DPRESSUREVELOCITIES2P_HH
 #define DUMUX_MPFAO2DPRESSUREVELOCITIES2P_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/float_cmp.hh>
 #include "2dpressure.hh"
 #include "2dvelocity.hh"
@@ -73,7 +72,7 @@ template<class TypeTag> class FvMpfaO2dPressureVelocity2p: public FvMpfaO2dPress
 
     using InteractionVolume = FVMPFAOInteractionVolume<TypeTag>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum
         {
             wPhaseIdx = Indices::wPhaseIdx,
@@ -91,7 +90,9 @@ template<class TypeTag> class FvMpfaO2dPressureVelocity2p: public FvMpfaO2dPress
             numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
         };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
@@ -303,11 +304,7 @@ void FvMpfaO2dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     const auto referenceElement = ReferenceElements::general(elementI.geometry().type());
-#else
-    const auto& referenceElement = ReferenceElements::general(elementI.geometry().type());
-#endif
 
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();

@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <array>
+#include <vector>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/iteratorrange.hh>

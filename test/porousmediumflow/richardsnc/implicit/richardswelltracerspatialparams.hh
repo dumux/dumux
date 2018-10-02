@@ -33,64 +33,36 @@
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/plotmateriallaw.hh>
 
-namespace Dumux
-{
-/*!
- * \ingroup RichardsNCTests
- * \brief spatial parameters for the RichardsWellTracerProblem
- */
-// forward declaration
-template<class TypeTag>
-class RichardsWellTracerSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(RichardsWellTracerSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(RichardsWellTracerSpatialParams, SpatialParams, RichardsWellTracerSpatialParams<TypeTag>);
-
-// Set the material law
-SET_PROP(RichardsWellTracerSpatialParams, MaterialLaw)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    // define the material law parameterized by effective saturations
-    using type = EffToAbsLaw<VanGenuchten<Scalar>>;
-};
-}
+namespace Dumux {
 
 /*!
  * \ingroup RichardsModel
  * \ingroup ImplicitTestProblems
  * \brief The spatial parameters for the RichardsWellTracerProblem
  */
-template<class TypeTag>
-class RichardsWellTracerSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class RichardsWellTracerSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         RichardsWellTracerSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename FVGridGeometry::GridView;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       RichardsWellTracerSpatialParams<FVGridGeometry, Scalar>>;
 
     enum { dimWorld=GridView::dimensionworld };
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using EffectiveLaw = VanGenuchten<Scalar>;
 
 public:
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
     using PermeabilityType = Scalar;
 
-    /*!
-     * \brief Constructor
-     *
-     * \param gridView The DUNE GridView representing the spatial
-     *                 domain of the problem.
-     */
-    RichardsWellTracerSpatialParams(const Problem& problem)
-        : ParentType(problem)
+    RichardsWellTracerSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry)
     {
 
         lensLowerLeft_ = getParam<GlobalPosition>("Problem.LensLowerLeft");

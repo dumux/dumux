@@ -24,37 +24,32 @@
 #ifndef DUMUX_DENSITY_FLOW_NC_TEST_PROBLEM_HH
 #define DUMUX_DENSITY_FLOW_NC_TEST_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
 
 #include <dumux/discretization/staggered/freeflow/properties.hh>
-#include <dumux/freeflow/navierstokesnc/model.hh>
+#include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
 
-namespace Dumux
-{
+namespace Dumux {
+
 template <class TypeTag>
 class DensityDrivenFlowProblem;
 
-namespace Properties
-{
+namespace Properties {
+
 NEW_TYPE_TAG(DensityDrivenFlowTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 
-NEW_PROP_TAG(FluidSystem);
-
 // Select the fluid system
-SET_TYPE_PROP(DensityDrivenFlowTypeTag, FluidSystem,
-              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false*/>);
-
-SET_PROP(DensityDrivenFlowTypeTag, PhaseIdx)
+SET_PROP(DensityDrivenFlowTypeTag, FluidSystem)
 {
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-public:
-    static constexpr int value = FluidSystem::wPhaseIdx;
+    using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+    static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
+    using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
 SET_INT_PROP(DensityDrivenFlowTypeTag, ReplaceCompEqIdx, 0);
@@ -88,33 +83,24 @@ template <class TypeTag>
 class DensityDrivenFlowProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum { dimWorld = GridView::dimensionworld };
-    enum {
-        massBalanceIdx = Indices::massBalanceIdx,
-        transportEqIdx = 1,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        pressureIdx = Indices::pressureIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx,
-        transportCompIdx = 1/*FluidSystem::wCompIdx*/
-    };
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
+
+    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+
+    static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
+    static constexpr auto transportEqIdx = Indices::conti0EqIdx + 1;
 
 public:
     DensityDrivenFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -156,6 +142,7 @@ public:
     {
         return NumEqVector(0.0);
     }
+
     // \}
    /*!
      * \name Boundary conditions
@@ -173,20 +160,21 @@ public:
         BoundaryTypes values;
 
         // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(momentumBalanceIdx);
-        values.setOutflow(transportEqIdx);
-        values.setOutflow(massBalanceIdx);
+        values.setDirichlet(Indices::velocityXIdx);
+        values.setDirichlet(Indices::velocityYIdx);
+        values.setNeumann(Indices::conti0EqIdx);
+        values.setNeumann(transportEqIdx);
 
         if(isLowerLeftCell_(globalPos))
-            values.setDirichletCell(massBalanceIdx);
+            values.setDirichletCell(Indices::pressureIdx);
 
         if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
         {
             if(useWholeLength_)
-                values.setDirichlet(transportEqIdx);
+                values.setDirichlet(transportCompIdx);
             else
                 if(globalPos[0] > 0.4 && globalPos[0] < 0.6)
-                    values.setDirichlet(transportEqIdx);
+                    values.setDirichlet(transportCompIdx);
         }
 
         return values;
@@ -202,10 +190,10 @@ public:
     {
         PrimaryVariables values;
 
-        values[pressureIdx] = 1.1e+5;
+        values[Indices::pressureIdx] = 1.1e+5;
         values[transportCompIdx] = 1e-3;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
+        values[Indices::velocityXIdx] = 0.0;
+        values[Indices::velocityYIdx] = 0.0;
 
         return values;
     }
@@ -225,10 +213,10 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[pressureIdx] = 1.1e+5;
+        values[Indices::pressureIdx] = 1.1e+5;
         values[transportCompIdx] = 0.0;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
+        values[Indices::velocityXIdx] = 0.0;
+        values[Indices::velocityYIdx] = 0.0;
 
         return values;
     }
@@ -239,6 +227,7 @@ public:
      * \param gridVariables The grid variables
      * \param sol The solution vector
      */
+    template<class GridVariables, class SolutionVector>
     void calculateDeltaRho(const GridVariables& gridVariables, const SolutionVector& sol)
     {
         for (const auto& element : elements(this->fvGridGeometry().gridView()))

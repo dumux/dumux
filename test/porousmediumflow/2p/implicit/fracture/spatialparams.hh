@@ -32,61 +32,38 @@
 
 #include <dumux/porousmediumflow/2p/model.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
-//forward declaration
-template<class TypeTag>
-class FractureSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(FractureSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(FractureSpatialParams, SpatialParams, Dumux::FractureSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(FractureSpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffectiveLaw>;
-};
-}
 /*!
  * \ingroup TwoPTests
  * \brief The spatial parameters for the LensProblem which uses the
  *        two-phase fully implicit model
  */
-template<class TypeTag>
-class FractureSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class FractureSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         FractureSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       FractureSpatialParams<FVGridGeometry, Scalar>>;
 
-    enum { dimWorld=GridView::dimensionworld };
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    //get the material law from the property system
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
 
 public:
-    // export permeability type
+    //! export permeability type
     using PermeabilityType = Scalar;
+    //! export the type used for the material law
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLawParams = typename MaterialLaw::Params;
 
-     FractureSpatialParams(const Problem& problem)
-     : ParentType(problem)
+    FractureSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         // residual saturations
         materialParams_.setSwr(0.05);
@@ -104,9 +81,7 @@ public:
      * \param globalPos The global position
      */
     Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 1e-10;
-    }
+    { return 1e-10; }
 
     /*!
      * \brief Returns the porosity \f$[-]\f$
@@ -122,10 +97,17 @@ public:
      * \param globalPos The position at which we evaluate
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    {
-        return materialParams_;
-    }
+    { return materialParams_; }
 
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::phase0Idx; }
 
 private:
     MaterialLawParams materialParams_;

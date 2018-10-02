@@ -36,9 +36,12 @@ namespace Dumux
  *
  */
 template<class TypeTag> //LEO TypeTag ist der Template parameter es ginge auch template<typename TypeTag>
-class SweFluxVariables : public FluxVariablesBase<TypeTag>
+class SweFluxVariables : public FluxVariablesBase<typename GET_PROP_TYPE(TypeTag, Problem),
+                           typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView,
+                           typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView,
+                           typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView>
 {
-    using ParentType = FluxVariablesBase<TypeTag>;
+    //using ParentType = FluxVariablesBase<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -48,8 +51,8 @@ class SweFluxVariables : public FluxVariablesBase<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
+    //using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
 //    using NumericalFluxType = typename GET_PROP_TYPE(TypeTag, NumericalFluxType);
 //    using TurbulenceModelType = typename GET_PROP_TYPE(TypeTag, TurbulenceModelType);

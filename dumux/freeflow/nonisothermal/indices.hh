@@ -18,34 +18,29 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNIModel
- * \copydoc Dumux::NavierStokesNonIsothermalIndices
+ * \ingroup FreeflowNIModel
+ * \copydoc Dumux::FreeflowNonIsothermalIndices
  */
-#ifndef DUMUX_NAVIERSTOKES_NI_INDICES_HH
-#define DUMUX_NAVIERSTOKES_NI_INDICES_HH
+#ifndef DUMUX_FREEFLOW_NI_INDICES_HH
+#define DUMUX_FREEFLOW_NI_INDICES_HH
 
-#include <dumux/common/properties.hh>
+namespace Dumux {
 
-namespace Dumux
-{
-// \{
 /*!
- * \ingroup NavierStokesNIModel
+ * \ingroup FreeflowNIModel
  * \brief Indices for the non-isothermal Navier-Stokes model.
  *
- * \tparam PVOffset The first index in a primary variable vector.
+ * \tparam IsothermalIndices The isothermal indices class
+ * \tparam numEq the number of equations of the non-isothermal model
  */
-template <class TypeTag, int PVOffset = 0>
-class NavierStokesNonIsothermalIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
+template <class IsothermalIndices, int numEq>
+class FreeflowNonIsothermalIndices : public IsothermalIndices
 {
 public:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr auto dim = GridView::dimension;
-    static constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
-
-    static constexpr auto energyBalanceIdx = PVOffset + GET_PROP_VALUE(TypeTag, NumEq) - dim - 1;
-    static constexpr int temperatureIdx = energyBalanceIdx;
+    static constexpr int energyBalanceIdx = numEq - 1;
+    static constexpr int temperatureIdx = numEq - 1;
 };
-} // end namespace
+
+} // end namespace Dumux
 
 #endif // DUMUX_NAVIERSTOKES_NI_INDICES_HH

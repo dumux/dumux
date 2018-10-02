@@ -25,34 +25,36 @@
 #ifndef DUMUX_ONEP_TUBES_TEST_SPATIALPARAMS_HH
 #define DUMUX_ONEP_TUBES_TEST_SPATIALPARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup OnePTests
  * \brief A test problem for the 1p model. A pipe system with circular cross-section
  *        and a branching point embedded in a three-dimensional world
  */
-template<class TypeTag>
-class TubesTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class TubesTestSpatialParams
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             TubesTestSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           TubesTestSpatialParams<FVGridGeometry, Scalar>>;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    TubesTestSpatialParams(const Problem& problem)
-        : ParentType(problem)
+    TubesTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry)
     {
         radius_ = 1.0;
 
@@ -81,9 +83,10 @@ public:
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         const Scalar radius = this->radius(scv);
         const Scalar gamma = 2; // quadratic velocity profile (Poiseuille flow)
@@ -91,17 +94,12 @@ public:
     }
 
     /*!
-     * \brief Returns the porosity \f$[-]\f$
+     * \brief Define the porosity \f$\mathrm{[-]}\f$.
      *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     * \return the porosity
+     * \param globalPos The global position
      */
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
-    { return 1.0; }
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return 1; }
 
 private:
     Scalar radius_, radiusMain_;

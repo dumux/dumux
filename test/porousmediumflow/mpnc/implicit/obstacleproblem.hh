@@ -27,6 +27,7 @@
 #define DUMUX_OBSTACLEPROBLEM_HH
 
 #include <dune/common/parametertreeparser.hh>
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
@@ -40,8 +41,8 @@
 
 #include "obstaclespatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup MPNCTests
  * \brief Problem where liquid water is injected -- by means of a
@@ -51,9 +52,8 @@ namespace Dumux
 template <class TypeTag>
 class ObstacleProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(ObstacleTypeTag, INHERITS_FROM(MPNC, ObstacleSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(ObstacleTypeTag, INHERITS_FROM(MPNC));
 NEW_TYPE_TAG(ObstacleBoxTypeTag, INHERITS_FROM(BoxModel, ObstacleTypeTag));
 NEW_TYPE_TAG(ObstacleCCTypeTag, INHERITS_FROM(CCTpfaModel, ObstacleTypeTag));
 
@@ -61,14 +61,21 @@ NEW_TYPE_TAG(ObstacleCCTypeTag, INHERITS_FROM(CCTpfaModel, ObstacleTypeTag));
 SET_TYPE_PROP(ObstacleTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ObstacleTypeTag,
-              Problem,
-              ObstacleProblem<TypeTag>);
+SET_TYPE_PROP(ObstacleTypeTag, Problem, ObstacleProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_PROP(ObstacleTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using type = ObstacleSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+};
 
 // Set fluid configuration
 SET_TYPE_PROP(ObstacleTypeTag,
               FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
+              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(ObstacleTypeTag, Scalar, double);
@@ -109,12 +116,11 @@ class ObstacleProblem
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -122,21 +128,23 @@ class ObstacleProblem
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ParameterCache = typename FluidSystem::ParameterCache;
 
-    enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
-    enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
-    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {wCompIdx = FluidSystem::wCompIdx};
-    enum {nCompIdx = FluidSystem::nCompIdx};
-    enum {fug0Idx = Indices::fug0Idx};
-    enum {s0Idx = Indices::s0Idx};
-    enum {p0Idx = Indices::p0Idx};
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    enum { dimWorld = GridView::dimensionworld };
+    enum { numPhases = ModelTraits::numPhases() };
+    enum { numComponents = ModelTraits::numComponents() };
+    enum { gasPhaseIdx = FluidSystem::gasPhaseIdx };
+    enum { liquidPhaseIdx = FluidSystem::liquidPhaseIdx };
+    enum { H2OIdx = FluidSystem::H2OIdx };
+    enum { N2Idx = FluidSystem::N2Idx };
+    enum { fug0Idx = Indices::fug0Idx };
+    enum { s0Idx = Indices::s0Idx };
+    enum { p0Idx = Indices::p0Idx };
+
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
 
 public:
@@ -308,42 +316,42 @@ private:
         if (onInlet_(globalPos))
         {
             // only liquid on inlet
-            refPhaseIdx = wPhaseIdx;
-            otherPhaseIdx = nPhaseIdx;
+            refPhaseIdx = liquidPhaseIdx;
+            otherPhaseIdx = gasPhaseIdx;
 
             // set liquid saturation
-            fs.setSaturation(wPhaseIdx, 1.0);
+            fs.setSaturation(liquidPhaseIdx, 1.0);
 
             // set pressure of the liquid phase
-            fs.setPressure(wPhaseIdx, 2e5);
+            fs.setPressure(liquidPhaseIdx, 2e5);
 
             // set the liquid composition to pure water
-            fs.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
-            fs.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
+            fs.setMoleFraction(liquidPhaseIdx, N2Idx, 0.0);
+            fs.setMoleFraction(liquidPhaseIdx, H2OIdx, 1.0);
         }
         else {
             // elsewhere, only gas
-            refPhaseIdx = nPhaseIdx;
-            otherPhaseIdx = wPhaseIdx;
+            refPhaseIdx = gasPhaseIdx;
+            otherPhaseIdx = liquidPhaseIdx;
 
             // set gas saturation
-            fs.setSaturation(nPhaseIdx, 1.0);
+            fs.setSaturation(gasPhaseIdx, 1.0);
 
             // set pressure of the gas phase
-            fs.setPressure(nPhaseIdx, 1e5);
+            fs.setPressure(gasPhaseIdx, 1e5);
 
             // set the gas composition to 99% nitrogen and 1% steam
-            fs.setMoleFraction(nPhaseIdx, nCompIdx, 0.99);
-            fs.setMoleFraction(nPhaseIdx, wCompIdx, 0.01);
+            fs.setMoleFraction(gasPhaseIdx, N2Idx, 0.99);
+            fs.setMoleFraction(gasPhaseIdx, H2OIdx, 0.01);
         }
 
         // set the other saturation
         fs.setSaturation(otherPhaseIdx, 1.0 - fs.saturation(refPhaseIdx));
 
         // calulate the capillary pressure
-        const auto& matParams =
-            this->spatialParams().materialLawParamsAtPos(globalPos);
+        const auto& matParams = this->spatialParams().materialLawParamsAtPos(globalPos);
         PhaseVector pc;
+        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         MaterialLaw::capillaryPressures(pc, matParams, fs);
         fs.setPressure(otherPhaseIdx,
                        fs.pressure(refPhaseIdx)
@@ -356,9 +364,7 @@ private:
         ParameterCache paramCache;
         ComputeFromReferencePhase::solve(fs,
                                          paramCache,
-                                         refPhaseIdx,
-                                         /*setViscosity=*/false,
-                                         /*setEnthalpy=*/false);
+                                         refPhaseIdx);
 
         ///////////
         // assign the primary variables

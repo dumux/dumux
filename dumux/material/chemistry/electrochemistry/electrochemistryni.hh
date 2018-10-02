@@ -24,51 +24,36 @@
 #ifndef DUMUX_ELECTROCHEMISTRY_NI_HH
 #define DUMUX_ELECTROCHEMISTRY_NI_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/chemistry/electrochemistry/electrochemistry.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Chemistry
  * \brief Class calculating source terms and current densities for fuel cells
  * with the electrochemical models suggested by Ochs (2008) \cite ochs2008 or Acosta (2006) \cite A3:acosta:2006
  * for the non-isothermal case.
+ * \todo TODO: Scalar type should be extracted from VolumeVariables!
+ * \todo TODO: This shouldn't depend on discretization and grid!!
  */
-template <class TypeTag, ElectroChemistryModel electroChemistryModel>
-class ElectroChemistryNI : public ElectroChemistry<TypeTag, electroChemistryModel>
+template <class Scalar, class Indices, class FluidSystem, class FVGridGeometry, ElectroChemistryModel electroChemistryModel>
+class ElectroChemistryNI : public ElectroChemistry<Scalar, Indices, FluidSystem, FVGridGeometry, electroChemistryModel>
 {
-    using ParentType = ElectroChemistry<TypeTag, electroChemistryModel>;
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-
+    using ParentType = ElectroChemistry<Scalar, Indices, FluidSystem, FVGridGeometry, electroChemistryModel>;
     using Constant = Constants<Scalar>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
-        //indices of the components
-        wCompIdx = FluidSystem::wCompIdx, //major component of the liquid phase
-        nCompIdx = FluidSystem::nCompIdx, //major component of the gas phase
-        O2Idx = wCompIdx + 2
-    };
-    enum { //equation indices
-            conti0EqIdx = Indices::conti0EqIdx,
-            contiH2OEqIdx = conti0EqIdx + wCompIdx,
-            contiO2EqIdx = conti0EqIdx + wCompIdx + 2,
-            energyEqIdx = FluidSystem::numComponents, //energy equation
+        //equation indices
+        contiH2OEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx,
+        contiO2EqIdx = Indices::conti0EqIdx + FluidSystem::O2Idx,
+        energyEqIdx = Indices::energyEqIdx, //energy equation
     };
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
-    enum { dofCodim = isBox ? GridView::dimension : 0 };
-
-    using GlobalPosition = typename Dune::FieldVector<Scalar, GridView::dimensionworld>;
-    using CellVector = typename Dune::FieldVector<Scalar, GridView::dimension>;
+    using GridView = typename FVGridGeometry::GridView;
+    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    using GlobalPosition = typename Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
+    using CellVector = typename Dune::FieldVector<typename GridView::ctype, GridView::dimension>;
 
 public:
     /*!
@@ -79,14 +64,15 @@ public:
      *
      * For this method, the \a values parameter stores source values
      */
-    static void reactionSource(SourceValues &values,
-                               Scalar currentDensity)
+    template<class SourceValues>
+    static void reactionSource(SourceValues &values, Scalar currentDensity,
+                               const std::string& paramGroup = "")
     {
         //correction to account for actually relevant reaction area
         //current density has to be devided by the half length of the box
         //\todo Do we have multiply with the electrochemically active surface area (ECSA) here instead?
-        static Scalar gridYMax =getParamFromGroup<GlobalPosition>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Grid.UpperRight")[1];
-        static Scalar nCellsY = getParamFromGroup<GlobalPosition>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Grid.Cells")[1];
+        static Scalar gridYMax = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.UpperRight")[1];
+        static Scalar nCellsY = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.Cells")[1];
 
         // Warning: This assumes the reaction layer is always just one cell (cell-centered) or half a box (box) thick
         const auto lengthBox = gridYMax/nCellsY;
@@ -95,9 +81,9 @@ public:
         else
             currentDensity *= 1.0/lengthBox;
 
-        static Scalar transportNumberH2O = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.TransportNumberH20");
-        static Scalar thermoneutralVoltage = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.ThermoneutralVoltage");
-        static Scalar cellVoltage = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.CellVoltage");
+        static Scalar transportNumberH2O = getParam<Scalar>("ElectroChemistry.TransportNumberH20");
+        static Scalar thermoneutralVoltage = getParam<Scalar>("ElectroChemistry.ThermoneutralVoltage");
+        static Scalar cellVoltage = getParam<Scalar>("ElectroChemistry.CellVoltage");
 
         //calculation of flux terms with faraday equation
         values[contiH2OEqIdx] = currentDensity/(2*Constant::F);                  //reaction term in reaction layer

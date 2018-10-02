@@ -32,6 +32,7 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
+#include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>
 #include <dumux/discretization/box/subcontrolvolume.hh>
@@ -45,9 +46,9 @@ namespace Dumux {
  *        Defines the scv and scvf types and the mapper types
  * \tparam the grid view type
  */
-template<class GridView>
+template<class GridView, class MapperTraits = DefaultMapperTraits<GridView>>
 struct BoxDefaultGridGeometryTraits
-: public DefaultMapperTraits<GridView>
+: public MapperTraits
 {
     using SubControlVolume = BoxSubControlVolume<GridView>;
     using SubControlVolumeFace = BoxSubControlVolumeFace<GridView>;
@@ -95,7 +96,7 @@ class BoxFVGridGeometry<Scalar, GV, true, Traits>
 
 public:
     //! export discretization method
-    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::Box;
+    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::box;
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
@@ -112,7 +113,13 @@ public:
 
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
-    : ParentType(gridView) {}
+    : ParentType(gridView)
+    {
+        // Check if the overlap size is what we expect
+        if (!CheckOverlapSize<DiscretizationMethod::box>::isValid(gridView))
+            DUNE_THROW(Dune::InvalidStateException, "The box discretization method only works with zero overlap for parallel computations. "
+                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+    }
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -148,7 +155,7 @@ public:
         scvs_.resize(numElements);
         scvfs_.resize(numElements);
 
-        boundaryDofIndices_.resize(numDofs(), false);
+        boundaryDofIndices_.assign(numDofs(), false);
 
         numScv_ = 0;
         numScvf_ = 0;
@@ -165,11 +172,7 @@ public:
 
             // get the element geometry
             auto elementGeometry = element.geometry();
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
             const auto referenceElement = ReferenceElements::general(elementGeometry.type());
-#else
-            const auto& referenceElement = ReferenceElements::general(elementGeometry.type());
-#endif
 
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
@@ -303,7 +306,7 @@ class BoxFVGridGeometry<Scalar, GV, false, Traits>
 
 public:
     //! export discretization method
-    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::Box;
+    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::box;
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, false>;
@@ -320,7 +323,13 @@ public:
 
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
-    : ParentType(gridView) {}
+    : ParentType(gridView)
+    {
+        // Check if the overlap size is what we expect
+        if (!CheckOverlapSize<DiscretizationMethod::box>::isValid(gridView))
+            DUNE_THROW(Dune::InvalidStateException, "The box discretization method only works with zero overlap for parallel computations. "
+                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+    }
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -349,7 +358,7 @@ public:
     {
         ParentType::update();
 
-        boundaryDofIndices_.resize(numDofs(), false);
+        boundaryDofIndices_.assign(numDofs(), false);
 
         // save global data on the grid's scvs and scvfs
         // TODO do we need those information?
@@ -362,11 +371,7 @@ public:
             numScvf_ += element.subEntities(dim-1);
 
             const auto elementGeometry = element.geometry();
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
             const auto referenceElement = ReferenceElements::general(elementGeometry.type());
-#else
-            const auto& referenceElement = ReferenceElements::general(elementGeometry.type());
-#endif
 
             // store the sub control volume face indices on the domain boundary
             for (const auto& intersection : intersections(this->gridView(), element))

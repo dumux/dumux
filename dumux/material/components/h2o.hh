@@ -31,15 +31,18 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>
 
-#include "component.hh"
-
 #include "iapws/common.hh"
 #include "iapws/region1.hh"
 #include "iapws/region2.hh"
 #include "iapws/region4.hh"
 
-namespace Dumux
-{
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief Material properties of pure water \f$H_2O\f$.
@@ -51,7 +54,10 @@ namespace Dumux
  * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
  */
 template <class Scalar>
-class H2O : public Component<Scalar, H2O<Scalar> >
+class H2O
+: public Components::Base<Scalar, H2O<Scalar> >
+, public Components::Liquid<Scalar, H2O<Scalar> >
+, public Components::Gas<Scalar, H2O<Scalar> >
 {
 
     using Common = IAPWS::Common<Scalar>;
@@ -540,6 +546,16 @@ public:
     }
 
     /*!
+     *  \brief The molar density of steam in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return gasDensity(temperature, pressure)/molarMass(); }
+
+    /*!
      * \brief Returns true if the gas phase is assumed to be ideal
      */
     static constexpr bool gasIsIdeal()
@@ -643,6 +659,16 @@ public:
 
         return 1/volumeRegion1_(temperature, pressure);
     }
+
+    /*!
+     * \brief The molar density of water in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    { return liquidDensity(temperature, pressure)/molarMass(); }
 
     /*!
      * \brief The pressure of liquid water in \f$\mathrm{[Pa]}\f$ at a given density and
@@ -888,6 +914,12 @@ private:
             Rs * temperature / pressure;
     }
 }; // end class
-} // end namespace
+
+template <class Scalar>
+struct IsAqueous<H2O<Scalar>> : public std::true_type {};
+
+} // end namespace Components
+
+} // end namespace Dumux
 
 #endif

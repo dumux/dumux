@@ -30,7 +30,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethods Method>
+template <class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawNonEquilibriumImplementation
 {};
 
@@ -39,7 +39,7 @@ class FouriersLawNonEquilibriumImplementation
  * \brief Evaluates the heat conduction flux according to Fouriers's law
  */
 template <class TypeTag>
-using FouriersLawNonEquilibrium = FouriersLawNonEquilibriumImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using FouriersLawNonEquilibrium = FouriersLawNonEquilibriumImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 } // end namespace Dumux
 

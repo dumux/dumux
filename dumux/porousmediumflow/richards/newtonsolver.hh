@@ -25,29 +25,29 @@
 #define DUMUX_RICHARDS_NEWTON_SOLVER_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/porousmediumflow/richards/privarswitchnewtonsolver.hh>
+#include <dumux/discretization/elementsolution.hh>
 
 namespace Dumux {
 /*!
  * \ingroup RichardsModel
  * \brief A Richards model specific newton solver.
  *
- * This controller 'knows' what a 'physically meaningful' solution is
+ * This solver 'knows' what a 'physically meaningful' solution is
  * and can thus do update smarter than the plain Newton solver.
  *
  * \todo make this typetag independent by extracting anything model specific from assembler
  *       or from possible ModelTraits.
  */
 template <class TypeTag, class Assembler, class LinearSolver>
-class RichardsNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
+class RichardsNewtonSolver : public RichardsPrivarSwitchNewtonSolver<TypeTag, Assembler, LinearSolver>
 {
     using Scalar = typename Assembler::Scalar;
-    using ParentType = NewtonSolver<Assembler, LinearSolver>;
+    using ParentType = RichardsPrivarSwitchNewtonSolver<TypeTag, Assembler, LinearSolver>;
     using SolutionVector = typename Assembler::ResidualType;
 
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using ElementSolution =  typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using MaterialLaw = typename Assembler::Problem::SpatialParams::MaterialLaw;
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum { pressureIdx = Indices::pressureIdx };
 
 public:
@@ -88,7 +88,7 @@ private:
 
                     // calculate the old wetting phase saturation
                     const auto& spatialParams = this->assembler().problem().spatialParams();
-                    const ElementSolution elemSol(element, uCurrentIter, fvGridGeometry);
+                    const auto elemSol = elementSolution(element, uCurrentIter, fvGridGeometry);
                     const auto& materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
                     const Scalar pcMin = MaterialLaw::pc(materialLawParams, 1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];

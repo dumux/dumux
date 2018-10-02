@@ -25,63 +25,39 @@
 #ifndef DUMUX_STEAMINJECTION_SPATIAL_PARAMS_HH
 #define DUMUX_STEAMINJECTION_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-namespace Dumux
-{
-
-//forward declaration
-template<class TypeTag>
-class InjectionProblemSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(InjectionProblemSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(InjectionProblemSpatialParams, SpatialParams, Dumux::InjectionProblemSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(InjectionProblemSpatialParams, MaterialLaw)
-{
- private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffMaterialLaw = RegularizedVanGenuchten<Scalar>;
- public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffMaterialLaw>;
-};
-}
-
+namespace Dumux {
 /*!
  * \ingroup TwoPOneCTests
  * \brief Definition of the spatial parameters for various steam injection problems
  */
-template<class TypeTag>
-class InjectionProblemSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class InjectionProblemSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         InjectionProblemSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using CoordScalar = typename GridView::ctype;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       InjectionProblemSpatialParams<FVGridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+
 public:
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
     /*!
@@ -89,9 +65,11 @@ public:
      *
      * \param gridView The grid view
      */
-    InjectionProblemSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    InjectionProblemSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
+        gasWetting_ = getParam<bool>("SpatialParams.GasWetting", false);
+
         // set Van Genuchten Parameters
         materialParams_.setSwr(0.1);
         materialParams_.setSnr(0.0);
@@ -135,47 +113,24 @@ public:
     {
         return materialParams_;
     }
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     */
-    Scalar solidHeatCapacity(const Element &element,
-                             const SubControlVolume& scv,
-                             const ElementSolutionVector& elemSol) const
-    { return 850.0; /*specific heat capacity of granite [J / (kg K)]*/ }
 
     /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
      */
-    Scalar solidDensity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
-    { return 2650; /*density of granite [kg/m^3]*/ }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the solid
-     *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     */
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume& scv,
-                                    const ElementSolutionVector& elemSol) const
-    { return 2.8; }
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        if (gasWetting_)
+            return FluidSystem::gasPhaseIdx;
+        else
+            return FluidSystem::liquidPhaseIdx;
+    }
 
 private:
+    bool gasWetting_;
     MaterialLawParams materialParams_;
 };
 

@@ -63,6 +63,7 @@ template<class TypeTag>
 class TestDiffusionSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
     using ParentType = SequentialFVSpatialParams<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexSet = typename GridView::IndexSet;
@@ -75,7 +76,7 @@ class TestDiffusionSpatialParams: public SequentialFVSpatialParams<TypeTag>
         {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
     using Element = typename Grid::Traits::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
@@ -133,8 +134,8 @@ public:
         return;
     }
 
-    TestDiffusionSpatialParams(const GridView& gridView)
-    : ParentType(gridView),gridView_(gridView), indexSet_(gridView.indexSet()), permeability_(0)
+    TestDiffusionSpatialParams(const Problem& problem)
+    : ParentType(problem),gridView_(problem.gridView()), indexSet_(problem.gridView().indexSet()), permeability_(0)
     {
         // residual saturations
         materialLawParams_.setSwr(0.0);

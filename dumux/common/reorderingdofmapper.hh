@@ -23,41 +23,43 @@
  * \brief An SCSG element mapper that sorts the indices in order to optimize the matrix sparsity pattern
  * \note The reordering needs the SCOTCH library
  */
-#ifndef DUMUX_REORDERING_DOF_MAPPER_HH
-#define DUMUX_REORDERING_DOF_MAPPER_HH
+#ifndef DUMUX_COMMON_REORDERING_DOF_MAPPER_HH
+#define DUMUX_COMMON_REORDERING_DOF_MAPPER_HH
+
+#if HAVE_PTSCOTCH
 
 #include <dune/common/timer.hh>
 #include <dune/grid/common/mapper.hh>
 
 #include <dumux/linear/scotchbackend.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Common
  * \brief An SCSG element mapper that sorts the indices in order to optimize the matrix sparsity pattern
  * \note The reordering needs the SCOTCH library
  */
-template<class GridView, int codimension>
+template<class GridView>
 class ReorderingDofMapper
-: public Dune::Mapper<typename GridView::Grid, ReorderingDofMapper<GridView, codimension>, typename GridView::IndexSet::IndexType>
+: public Dune::Mapper<typename GridView::Grid, ReorderingDofMapper<GridView>, typename GridView::IndexSet::IndexType>
 {
     using Index = typename GridView::IndexSet::IndexType;
-    using ParentType = typename Dune::Mapper<typename GridView::Grid, ReorderingDofMapper<GridView, codimension>, Index>;
+    using ParentType = typename Dune::Mapper<typename GridView::Grid, ReorderingDofMapper<GridView>, Index>;
     using Element = typename GridView::template Codim<0>::Entity;
-
 public:
 
     /*!
      * \brief Construct mapper from grid and one of its index sets.
      * \param gridView A Dune GridView object.
+     * \param layout a layout object (we just check whether it contains elements -> element mapper, else it's a vertex mapper)
      */
-    ReorderingDofMapper (const GridView& gridView)
-    : gridView_(gridView),
-      indexSet_(gridView.indexSet())
+    template<class Layout>
+    ReorderingDofMapper (const GridView& gridView, Layout&& layout)
+    : gridView_(gridView)
+    , indexSet_(gridView.indexSet())
+    , codimension_(layout(indexSet_.types(0)[0], GridView::dimension) ? 0 : GridView::dimension)
     {
-        static_assert(codimension == 0 || codimension == GridView::dimension, "The reordering dofMapper is only implemented for element or vertex dofs");
         update();
     }
 
@@ -97,7 +99,7 @@ public:
      */
     std::size_t size () const
     {
-        return indexSet_.size(codimension);
+        return indexSet_.size(codimension_);
     }
 
     /** @brief Returns true if the entity is contained in the index set
@@ -138,7 +140,7 @@ public:
         std::vector<std::vector<Index>> graph(size());
 
         // dofs on element centers (cell-centered methods)
-        if (codimension == 0)
+        if (codimension_ == 0)
         {
             for (const auto& element : elements(gridView_))
             {
@@ -156,9 +158,9 @@ public:
             for (const auto& element : elements(gridView_))
             {
                 auto eIdx = indexSet_.index(element);
-                for (int vIdxLocal = 0; vIdxLocal < element.subEntities(codimension); ++vIdxLocal)
+                for (int vIdxLocal = 0; vIdxLocal < element.subEntities(codimension_); ++vIdxLocal)
                 {
-                    auto vIdxGlobal = indexSet_.subIndex(element, vIdxLocal, codimension);
+                    auto vIdxGlobal = indexSet_.subIndex(element, vIdxLocal, codimension_);
                     graph[vIdxGlobal].push_back(eIdx);
                 }
             }
@@ -173,18 +175,21 @@ private:
     // GridView is needed to keep the IndexSet valid
     const GridView gridView_;
     const typename GridView::IndexSet& indexSet_;
+    const int codimension_;
     // the map resulting from the reordering
     std::vector<int> permutation_;
 };
 
-//! Redordering dof mapper for vertex-centered methods, box method
-template<class GridView>
-using BoxReorderingDofMapper = ReorderingDofMapper<GridView, GridView::dimension>;
-
-//! Reordering dof mapper for the cell-centered methods
-template<class GridView>
-using CCReorderingDofMapper = ReorderingDofMapper<GridView, 0>;
-
 } // end namespace Dumux
 
-#endif
+#else
+
+#warning "PTSCOTCH was not found on your system. Dumux::ReorderingDofMapper needs it to work -> fallback to MCMGMapper without reordering!"
+#include <dune/grid/common/mcmgmapper.hh>
+namespace Dumux {
+template<class GridView>
+using ReorderingDofMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+} // end namespace Dumux
+
+#endif // HAVE_PTSCOTCH
+#endif // DUMUX_COMMON_REORDERING_DOF_MAPPER_HH

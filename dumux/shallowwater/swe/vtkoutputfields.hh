@@ -39,7 +39,9 @@ namespace Dumux
 template<class TypeTag>
 class SweVtkOutputFields
 {
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    //using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);

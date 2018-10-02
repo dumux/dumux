@@ -27,44 +27,14 @@
 #ifndef DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
 #define DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
 
+#include <dumux/io/grid/griddata.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 #include <dumux/porousmediumflow/co2/model.hh>
 
-namespace Dumux
-{
-/*!
- * \ingroup CO2Tests
- * \brief Definition of the spatial parameters for the heterogeneous
- *        problem which uses the non-isothermal or isothermal CO2
- *        fully implicit model.
- */
-//forward declaration
-template<class TypeTag>
-class HeterogeneousSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(HeterogeneousSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(HeterogeneousSpatialParams, SpatialParams, HeterogeneousSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(HeterogeneousSpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
-};
-}
+namespace Dumux {
 
 /*!
  * \ingroup CO2Model
@@ -73,25 +43,25 @@ public:
  *        problem which uses the non-isothermal or isothermal CO2
  *        fully implicit model.
  */
-template<class TypeTag>
-class HeterogeneousSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class HeterogeneousSpatialParams
+: public FVSpatialParams<FVGridGeometry,
+                         Scalar,
+                         HeterogeneousSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Grid = typename FVGridGeometry::Grid;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    enum { dimWorld = GridView::dimensionworld };
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, HeterogeneousSpatialParams<FVGridGeometry, Scalar>>;
+
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
+
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
@@ -100,11 +70,10 @@ public:
      *
      * \param gridView The grid view
      */
-    HeterogeneousSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    HeterogeneousSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                               std::shared_ptr<const GridData<Grid>> gridData)
+    : ParentType(fvGridGeometry), gridData_(gridData)
     {
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
 
         //Set the permeability for the layers
         barrierTopK_ = 1e-17; //sqm
@@ -129,13 +98,13 @@ public:
      */
     void getParamsFromGrid()
     {
-        const auto& gridView = this->problem().fvGridGeometry().gridView();
+        const auto& gridView = this->fvGridGeometry().gridView();
         paramIdx_.resize(gridView.size(0));
 
         for (const auto& element : elements(gridView))
         {
-            const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);
-            paramIdx_[eIdx] = GridCreator::parameters(element)[0];
+            const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+            paramIdx_[eIdx] = gridData_->parameters(element)[0];
         }
     }
 
@@ -148,12 +117,13 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return instrinsic permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         // Get the global index of the element
-        const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
         return permeability(eIdx);
     }
 
@@ -174,20 +144,23 @@ public:
     }
 
     /*!
-     * \brief Returns the porosity \f$[-]\f$
+     * \brief Returns the volume fraction of the inert component with index compIdx \f$[-]\f$
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     * \return porosity
+     * \param elemSol The element solution
+     * \param compIdx The solid component index
+     * \return solid volume fraction
      */
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+    template<class SolidSystem, class ElementSolution>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
     {
         // Get the global index of the element
-        const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);
-        return porosity(eIdx);
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        return inertVolumeFraction(eIdx);
     }
 
     /*!
@@ -195,14 +168,14 @@ public:
      *
      * \param eIdx The element index
      */
-    Scalar porosity(std::size_t eIdx) const
+    Scalar inertVolumeFraction(std::size_t eIdx) const
     {
         if (paramIdx_[eIdx] == barrierTop_)
-            return barrierTopPorosity_;
+            return 1- barrierTopPorosity_;
         else if (paramIdx_[eIdx] == barrierMiddle_)
-            return barrierMiddlePorosity_;
+            return 1- barrierMiddlePorosity_;
         else
-            return reservoirPorosity_;
+            return 1- reservoirPorosity_;
 
     }
 
@@ -219,40 +192,19 @@ public:
     }
 
     /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * This is only required for non-isothermal models.
-     *
+     * \return the wetting phase index
      * \param globalPos The position of the center of the element
      */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 790; // specific heat capacity of granite [J / (kg K)]
-    }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The position of the center of the element
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 2700; // density of granite [kg/m^3]
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param globalPos The position of the center of the element
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    {
-        return lambdaSolid_;
-    }
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::BrineIdx; }
 
 private:
+
+    std::shared_ptr<const GridData<Grid>> gridData_;
+
     int barrierTop_ = 1;
     int barrierMiddle_ = 2;
     int reservoir_ = 3;
@@ -264,7 +216,6 @@ private:
     Scalar barrierTopK_;
     Scalar barrierMiddleK_;
     Scalar reservoirK_;
-    Scalar lambdaSolid_;
 
     MaterialLawParams materialParams_;
     std::vector<int> paramIdx_;

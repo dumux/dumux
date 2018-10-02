@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="80" NumberOfPoints="162">
-      <CellData Scalars="Sn" Vectors="velocity">
-        <DataArray type="Float32" Name="Sn" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="S_gas" Vectors="velocity">
+        <DataArray type="Float32" Name="S_gas" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -12,7 +12,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="Sw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_liq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -21,7 +21,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="pn" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_gas" NumberOfComponents="1" format="ascii">
           121447 121183 120919 120654 120390 120126 119862 119597 119333 119069 118804 118539
           118274 118009 117743 117476 117209 116942 116673 116405 116136 115866 115596 115326
           115055 114784 114514 114243 113972 113700 113429 113158 112887 112615 112344 112073
@@ -30,7 +30,7 @@
           105290 105019 104748 104476 104205 103934 103663 103391 103120 102849 102577 102306
           102035 101763 101492 101221 100950 100678 100407 100136
         </DataArray>
-        <DataArray type="Float32" Name="pw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_liq" NumberOfComponents="1" format="ascii">
           121447 121183 120919 120654 120390 120126 119862 119597 119333 119069 118804 118539
           118274 118009 117743 117476 117209 116942 116673 116405 116136 115866 115596 115326
           115055 114784 114514 114243 113972 113700 113429 113158 112887 112615 112344 112073
@@ -48,7 +48,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="density" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_liq" NumberOfComponents="1" format="ascii">
           998.631 998.631 998.631 998.631 998.631 998.631 998.632 998.634 998.637 998.642 998.649 998.658
           998.668 998.678 998.69 998.702 998.715 998.727 998.738 998.749 998.758 998.766 998.773 998.779
           998.783 998.786 998.789 998.791 998.792 998.793 998.794 998.794 998.794 998.794 998.794 998.794
@@ -57,7 +57,7 @@
           998.792 998.791 998.791 998.791 998.791 998.791 998.791 998.791 998.791 998.79 998.79 998.79
           998.79 998.79 998.79 998.79 998.79 998.789 998.789 998.789
         </DataArray>
-        <DataArray type="Float32" Name="mobility" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_liq" NumberOfComponents="1" format="ascii">
           946.105 946.106 946.105 946.098 946.075 946.018 945.9 945.683 945.321 944.771 944 942.989
           941.669 939.994 938.14 936.18 934.194 932.256 930.432 928.771 927.302 926.041 924.985 924.123
           923.435 922.898 922.488 922.18 921.954 921.79 921.674 921.592 921.536 921.498 921.472 921.455
@@ -84,7 +84,7 @@
           0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4
           0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4
         </DataArray>
-        <DataArray type="Float32" Name="temperature" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="T" NumberOfComponents="1" format="ascii">
           291 291 291 291 290.999 290.996 290.991 290.981 290.965 290.941 290.906 290.861
           290.805 290.74 290.667 290.591 290.512 290.436 290.363 290.297 290.238 290.188 290.145 290.11
           290.083 290.061 290.044 290.032 290.023 290.016 290.011 290.008 290.006 290.004 290.003 290.002
@@ -102,7 +102,7 @@
           0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4
           0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4
         </DataArray>
-        <DataArray type="Float32" Name="phasePresence" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="phase presence" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1

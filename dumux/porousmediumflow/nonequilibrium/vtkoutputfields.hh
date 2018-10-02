@@ -24,38 +24,30 @@
 #ifndef DUMUX_NONEQUILBRIUM_OUTPUT_FIELDS_HH
 #define DUMUX_NONEQUILBRIUM_OUTPUT_FIELDS_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup PorousmediumNonEquilibriumModel
  * \brief Adds vtk output fields specific to non-isothermal models
  */
-template<class TypeTag>
+template<class ModelTraits, class EquilibriumVtkOutputFields>
 class NonEquilibriumVtkOutputFields
 {
-    using EquilibriumVtkOutputFields = typename GET_PROP_TYPE(TypeTag, EquilibriumVtkOutputFields);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
-    static constexpr int numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
+        using FluidSystem = typename VtkOutputModule::VolumeVariables::FluidSystem;
+
         EquilibriumVtkOutputFields::init(vtk);
-         for (int i = 0; i < numEnergyEqFluid; ++i)
-        vtk.addVolumeVariable( [i](const VolumeVariables& v){ return v.temperature(i); }, "T_" + FluidSystem::phaseName(i) );
-         for (int i = 0; i < numEnergyEqSolid; ++i)
-        vtk.addVolumeVariable( [i](const VolumeVariables& v){ return v.temperatureSolid(); }, "T_solid" );
-        for (int i = 0; i < numPhases; ++i){
-        vtk.addVolumeVariable( [i](const VolumeVariables& v){ return v.reynoldsNumber(i); }, "reynoldsNumber_" + FluidSystem::phaseName(i) );
-        vtk.addVolumeVariable( [i](const VolumeVariables& v){ return v.nusseltNumber(i); }, "nusseltNumber_" + FluidSystem::phaseName(i) );
-        vtk.addVolumeVariable( [i](const VolumeVariables& v){ return v.prandtlNumber(i); }, "prandtlNumber_" + FluidSystem::phaseName(i) );
+        for (int i = 0; i < ModelTraits::numEnergyEqFluid(); ++i)
+            vtk.addVolumeVariable( [i](const auto& v){ return v.temperatureFluid(i); }, "T_" + FluidSystem::phaseName(i) );
+        for (int i = 0; i < ModelTraits::numEnergyEqSolid(); ++i)
+            vtk.addVolumeVariable( [i](const auto& v){ return v.temperatureSolid(); }, "T_s" );
+        for (int i = 0; i < ModelTraits::numPhases(); ++i){
+            vtk.addVolumeVariable( [i](const auto& v){ return v.reynoldsNumber(i); }, "reynoldsNumber_" + FluidSystem::phaseName(i) );
+            vtk.addVolumeVariable( [i](const auto& v){ return v.nusseltNumber(i); }, "nusseltNumber_" + FluidSystem::phaseName(i) );
+            vtk.addVolumeVariable( [i](const auto& v){ return v.prandtlNumber(i); }, "prandtlNumber_" + FluidSystem::phaseName(i) );
         }
     }
 };

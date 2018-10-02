@@ -26,12 +26,13 @@
 
 #include <dumux/material/idealgas.hh>
 
-#include "component.hh"
-
 #include <cmath>
 
-namespace Dumux
-{
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/gas.hh>
+
+namespace Dumux {
+namespace Components {
 
 /*!
  * \ingroup Components
@@ -40,7 +41,9 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class O2 : public Component<Scalar, O2<Scalar> >
+class O2
+: public Components::Base<Scalar, O2<Scalar> >
+, public Components::Gas<Scalar, O2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
 
@@ -133,6 +136,15 @@ public:
         // Assume an ideal gas
         return IdealGas::density(molarMass(), temperature, pressure);
     }
+
+    /*!
+     * \brief The molar density of pure \f$O_2\f$ in \f$\mathrm{[mol/m^3]}\f$,
+     *   depending on pressure and temperature.
+     * \param temperature The temperature of the gas
+     * \param pressure The pressure of the gas
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be ideal
@@ -247,6 +259,8 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+} // end namespace Dumux
 
 #endif

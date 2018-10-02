@@ -25,7 +25,13 @@
 #ifndef DUMUX_COLUMNXYLOLPROBLEM_HH
 #define DUMUX_COLUMNXYLOLPROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
+#include <dumux/material/solidstates/compositionalsolidstate.hh>
+#include <dumux/material/solidsystems/compositionalsolidphase.hh>
+#include <dumux/material/components/constant.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/3p3c/model.hh>
@@ -35,8 +41,7 @@
 
 #define ISOTHERMAL 0
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup ThreePThreeCTests
  * \brief Non-isothermal injection problem where water is injected into a
@@ -45,9 +50,8 @@ namespace Dumux
 template <class TypeTag>
 class ColumnProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(ColumnTypeTag, INHERITS_FROM(ThreePThreeCNI, ColumnSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(ColumnTypeTag, INHERITS_FROM(ThreePThreeCNI));
 NEW_TYPE_TAG(ColumnBoxTypeTag, INHERITS_FROM(BoxModel, ColumnTypeTag));
 NEW_TYPE_TAG(ColumnCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ColumnTypeTag));
 
@@ -61,8 +65,35 @@ SET_TYPE_PROP(ColumnTypeTag, Problem, ColumnProblem<TypeTag>);
 SET_TYPE_PROP(ColumnTypeTag,
               FluidSystem,
               FluidSystems::H2OAirXylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-}
 
+SET_PROP(ColumnTypeTag, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ComponentOne = Dumux::Components::Constant<1, Scalar>;
+    using ComponentTwo = Dumux::Components::Constant<2, Scalar>;
+    static constexpr int numInertComponents = 2;
+    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo, numInertComponents>;
+};
+
+
+//! The two-phase model uses the immiscible fluid state
+SET_PROP(ColumnTypeTag, SolidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+public:
+    using type = CompositionalSolidState<Scalar, SolidSystem>;
+};
+
+// Set the spatial parameters
+SET_PROP(ColumnTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = ColumnSpatialParams<FVGridGeometry, Scalar>;
+};
+} // end namespace Properties
 
 /*!
  * \ingroup ThreePThreeCModel
@@ -95,34 +126,38 @@ class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
+
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    enum
+    {
+        // primary variable indices
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
         temperatureIdx = Indices::temperatureIdx,
-        contiWEqIdx = Indices::contiWEqIdx,
-        contiGEqIdx = Indices::contiGEqIdx,
-        contiNEqIdx = Indices::contiNEqIdx,
+
+        // equation indices
         energyEqIdx = Indices::energyEqIdx,
+        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::wCompIdx, //!< Index of the mass conservation equation for the water component,
+        contiGEqIdx = Indices::conti0EqIdx + FluidSystem::gCompIdx, //!< Index of the mass conservation equation for the gas component,
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nCompIdx, //!< Index of the mass conservation equation for the contaminant component
 
         // Phase State
-        threePhases = Indices::threePhases,
-
-        // world dimension
-        dimWorld = GridView::dimensionworld
+        threePhases = Indices::threePhases
     };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
 public:
     /*!
@@ -184,7 +219,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    PrimaryVariables dirichletAtPos( const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
        return initial_(globalPos);
     }
@@ -202,13 +237,9 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    NumEqVector neumann(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         NumEqVector values(0.0);
-        const auto& globalPos = scvf.ipGlobal();
 
         // negative values for injection
         if (globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)

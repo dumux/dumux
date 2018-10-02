@@ -23,8 +23,6 @@
  */
 #include <config.h>
 
-#include "richardslensproblem.hh"
-
 #include <ctime>
 #include <iostream>
 
@@ -46,31 +44,10 @@
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeManager.TEnd      End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial Initial timestep size [s] \n"
-                                        "\t-Grid.File             Name of the file containing the grid \n"
-                                        "\t                       definition in DGF format\n";
+#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/loadsolution.hh>
 
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
+#include "richardslensproblem.hh"
 
 ////////////////////////
 // the main function
@@ -90,19 +67,18 @@ int main(int argc, char** argv) try
         DumuxMessage::print(/*firstCall=*/true);
 
     // parse command line arguments and input file
-    Parameters::init(argc, argv, usage);
+    Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    GridCreator::makeGrid();
-    GridCreator::loadBalance();
+    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    gridManager.init();
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -113,10 +89,25 @@ int main(int argc, char** argv) try
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
+    // check if we are about to restart a previously interrupted simulation
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    const auto restartTime = getParam<Scalar>("Restart.Time", 0);
+
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     SolutionVector x(fvGridGeometry->numDofs());
-    problem->applyInitialSolution(x);
+    if (restartTime > 0)
+    {
+        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+        const auto fileName = getParam<std::string>("Restart.File");
+        loadSolution(x, fileName, createPVNameFunction<ModelTraits, FluidSystem>(), *fvGridGeometry);
+    }
+    else
+    {
+        problem->applyInitialSolution(x);
+    }
+
     auto xOld = x;
 
     // the grid variables
@@ -124,23 +115,18 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
-    // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
-
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
-    vtkWriter.write(0.0);
+    vtkWriter.write(restartTime);
+
+    // get some time loop parameters
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -156,7 +142,7 @@ int main(int argc, char** argv) try
 
     // the non-linear solver
     using NewtonSolver = Dumux::RichardsNewtonSolver<TypeTag, Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, timeLoop);
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
     timeLoop->start(); do
@@ -164,24 +150,8 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
-        // try solving the non-linear system
-        for (int i = 0; i < maxDivisions; ++i)
-        {
-            // linearize & solve
-            auto converged = nonLinearSolver.solve(x);
-
-            if (converged)
-                break;
-
-            if (!converged && i == maxDivisions-1)
-                DUNE_THROW(Dune::MathError,
-                            "Newton solver didn't converge after "
-                            << maxDivisions
-                            << " time-step divisions. dt="
-                            << timeLoop->timeStepSize()
-                            << ".\nThe solutions of the current and the previous time steps "
-                            << "have been saved to restart files.");
-        }
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(x, *timeLoop);
 
         // make the new solution the old solution
         xOld = x;
@@ -196,7 +166,7 @@ int main(int argc, char** argv) try
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        // set new dt as suggested by newton controller
+        // set new dt as suggested by the newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());

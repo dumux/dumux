@@ -24,7 +24,6 @@
 #ifndef DUMUX_FVVELOCITY2P_HH
 #define DUMUX_FVVELOCITY2P_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/common/gridenums.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
@@ -66,7 +65,7 @@ class FVVelocity2P
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -109,7 +108,8 @@ class FVVelocity2P
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
@@ -135,7 +135,7 @@ public:
         viscosity_[wPhaseIdx] = 0.;
         viscosity_[nPhaseIdx] = 0.;
 
-        vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");;
+        vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");
     }
 
     // For initialization
@@ -200,15 +200,12 @@ public:
                 CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
                 const typename Element::Geometry& geometry = element.geometry();
+
                 // get corresponding reference element
                 using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                 const auto refElement = ReferenceElements::general(geometry.type());
-#else
-                const auto& refElement = ReferenceElements::general(geometry.type());
-#endif
-                const int numberOfFaces=refElement.size(1);
 
+                const int numberOfFaces=refElement.size(1);
                 std::vector<Scalar> fluxW(numberOfFaces,0);
                 std::vector<Scalar> fluxNw(numberOfFaces,0);
 
@@ -309,7 +306,7 @@ public:
 
 private:
     Problem& problem_;
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
+    const GravityVector& gravity_; //!< vector including the gravity constant
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
 

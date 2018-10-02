@@ -27,6 +27,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/version.hh>
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>
@@ -120,7 +121,9 @@ public:
                       const typename MaterialLaw::Params &matParams,
                       const ComponentVector &globalMolarities)
     {
+#if DUNE_VERSION_LT(DUNE_COMMON, 2, 7)
         Dune::FMatrixPrecision<Scalar>::set_singular_limit(1e-25);
+#endif
 
         /////////////////////////
         // Check if all fluid phases are incompressible
@@ -137,7 +140,9 @@ public:
             paramCache.updateAll(fluidState);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+                Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
                 fluidState.setDensity(phaseIdx, rho);
+                fluidState.setMolarDensity(phaseIdx, rhoMolar);
 
                 Scalar saturation =
                     globalMolarities[/*compIdx=*/phaseIdx]
@@ -174,7 +179,7 @@ public:
             deltaX = 0;
 
             try { J.solve(deltaX, b); }
-            catch (Dune::FMatrixError e)
+            catch (Dune::FMatrixError& e)
             {
                 /*
                 std::cout << "error: " << e << "\n";
@@ -400,7 +405,9 @@ protected:
         // update all densities
         for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
             Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
             fluidState.setDensity(phaseIdx, rho);
+            fluidState.setMolarDensity(phaseIdx, rhoMolar);
         }
     }
 
@@ -452,7 +459,9 @@ protected:
             // update all densities
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 Scalar rho = FluidSystem::density(fs, paramCache, phaseIdx);
+                Scalar rhoMolar = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
                 fs.setDensity(phaseIdx, rho);
+                fs.setMolarDensity(phaseIdx, rhoMolar);
             }
         }
         else {
@@ -480,7 +489,10 @@ protected:
             // update all densities
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 Scalar rho = FluidSystem::density(fs, paramCache, phaseIdx);
+                Scalar rhoMolar = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
                 fs.setDensity(phaseIdx, rho);
+                fs.setMolarDensity(phaseIdx, rhoMolar);
+
             }
         }
     }

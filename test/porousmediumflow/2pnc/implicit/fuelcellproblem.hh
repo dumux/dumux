@@ -24,17 +24,23 @@
 #ifndef DUMUX_FUELCELL_PROBLEM_HH
 #define DUMUX_FUELCELL_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/2pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
+#ifdef NONISOTHERMAL
+#include <dumux/material/chemistry/electrochemistry/electrochemistryni.hh>
+#else
 #include <dumux/material/chemistry/electrochemistry/electrochemistry.hh>
-
+#endif
 #include "fuelcellspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup TwoPNCTests
  * \brief Definition of a problem for water management in PEM fuel cells.
@@ -42,27 +48,41 @@ namespace Dumux
 template <class TypeTag>
 class FuelCellProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(FuelCellTypeTag, INHERITS_FROM(TwoPNC, FuelCellSpatialParams));
+namespace Properties {
+#ifdef NONISOTHERMAL
+NEW_TYPE_TAG(FuelCellTypeTag, INHERITS_FROM(TwoPNCNI));
+NEW_TYPE_TAG(FuelCellNIBoxTypeTag, INHERITS_FROM(BoxModel, FuelCellTypeTag));
+#else
+NEW_TYPE_TAG(FuelCellTypeTag, INHERITS_FROM(TwoPNC));
 NEW_TYPE_TAG(FuelCellBoxTypeTag, INHERITS_FROM(BoxModel, FuelCellTypeTag));
 NEW_TYPE_TAG(FuelCellCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FuelCellTypeTag));
+#endif
 
 // Set the grid type
 SET_TYPE_PROP(FuelCellTypeTag, Grid, Dune::YaspGrid<2>);
+
 // Set the problem property
 SET_TYPE_PROP(FuelCellTypeTag, Problem, FuelCellProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_PROP(FuelCellTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FuelCellSpatialParams<FVGridGeometry, Scalar>;
+};
+
 // Set the primary variable combination for the 2pnc model
-SET_INT_PROP(FuelCellTypeTag, Formulation, TwoPNCFormulation::pnsw);
+SET_PROP(FuelCellTypeTag, Formulation)
+{ static constexpr auto value = TwoPFormulation::p1s0; };
 
 // Set fluid configuration
 SET_PROP(FuelCellTypeTag, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    static const bool useComplexRelations = true;
 public:
-    using type = FluidSystems::H2ON2O2<Scalar, useComplexRelations>;
+    using type = FluidSystems::H2ON2O2<Scalar>;
 };
 } // end namespace Properties
 
@@ -80,12 +100,12 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -93,27 +113,16 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     // Select the electrochemistry method
-    using ElectroChemistry = typename Dumux::ElectroChemistry<TypeTag, ElectroChemistryModel::Ochs>;
-
-    enum { numComponents = FluidSystem::numComponents };
-
-    enum { wPhaseIdx = Indices::wPhaseIdx };
-
-    enum { bothPhases = Indices::bothPhases };
-
-    // privar indices
-    enum
-    {
-        pressureIdx = Indices::pressureIdx, //gas-phase pressure
-        switchIdx = Indices::switchIdx //liquid saturation or mole fraction
-    };
-
+#ifdef NONISOTHERMAL
+    using ElectroChemistry = typename Dumux::ElectroChemistryNI<Scalar, Indices, FluidSystem, FVGridGeometry, ElectroChemistryModel::Ochs>;
+#else
+    using ElectroChemistry = typename Dumux::ElectroChemistry<Scalar, Indices, FluidSystem, FVGridGeometry, ElectroChemistryModel::Ochs>;
+#endif
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     enum { dofCodim = isBox ? dim : 0 };
 public:
@@ -222,9 +231,12 @@ public:
         if(onUpperBoundary_(globalPos))
         {
             Scalar pn = 1.0e5;
-            priVars[pressureIdx] = pn;
-            priVars[switchIdx] = 0.3;//Sw for bothPhases
-            priVars[switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
+            priVars[Indices::pressureIdx] = pn;
+            priVars[Indices::switchIdx] = 0.3;//Sw for bothPhases
+            priVars[Indices::switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
+#ifdef NONISOTHERMAL
+            priVars[Indices::temperatureIdx] = 293.15;
+#endif
         }
 
         return priVars;
@@ -268,7 +280,7 @@ public:
     {
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
+            auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
 
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
@@ -287,8 +299,8 @@ public:
                     auto i = ElectroChemistry::calculateCurrentDensity(volVars);
                     ElectroChemistry::reactionSource(source, i);
 
-                    reactionSourceH2O_[dofIdxGlobal] = source[wPhaseIdx];
-                    reactionSourceO2_[dofIdxGlobal] = source[numComponents-1];
+                    reactionSourceH2O_[dofIdxGlobal] = source[Indices::conti0EqIdx + FluidSystem::H2OIdx];
+                    reactionSourceO2_[dofIdxGlobal] = source[Indices::conti0EqIdx + FluidSystem::O2Idx];
 
                     //Current Output in A/cm^2
                     currentDensity_[dofIdxGlobal] = i/10000;
@@ -310,12 +322,15 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(bothPhases);
+        priVars.setState(Indices::bothPhases);
 
         Scalar pn = 1.0e5;
-        priVars[pressureIdx] = pn;
-        priVars[switchIdx] = 0.3;//Sw for bothPhases
-        priVars[switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
+        priVars[Indices::pressureIdx] = pn;
+        priVars[Indices::switchIdx] = 0.3;//Sw for bothPhases
+        priVars[Indices::switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
+#ifdef NONISOTHERMAL
+        priVars[Indices::temperatureIdx] = 293.15;
+#endif
 
         return priVars;
     }

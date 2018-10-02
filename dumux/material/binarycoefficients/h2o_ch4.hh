@@ -43,7 +43,7 @@ class H2O_CH4
 {
 public:
     /*!
-     * \brief Henry coefficent \f$[N/m^2]\f$  for molecular methane in liquid water.
+     * \brief Henry coefficient \f$[N/m^2]\f$  for molecular methane in liquid water.
      *
      * See:
      *
@@ -74,8 +74,8 @@ public:
     {
         //         DUNE_THROW(Dune::NotImplemented, "diffusion coefficient for gasous water and methane");
 
-        typedef Dumux::H2O<Scalar> H2O;
-        typedef Dumux::CH4<Scalar> CH4;
+        typedef Dumux::Components::H2O<Scalar> H2O;
+        typedef Dumux::Components::CH4<Scalar> CH4;
 
         // atomic diffusion volumes
         // Vch4 = sum(ni*Vi) = 15.9 + 4*2.31 = 25.14 (Tang et al., 2015)--> method, (Poling et al., 2001, p.11.11)--> values

@@ -32,6 +32,7 @@
 
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
+#include <dumux/discretization/fluxvariablescaching.hh>
 
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
 #include <dumux/assembly/staggeredlocalresidual.hh>
@@ -39,84 +40,83 @@
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/gridvariables.hh>
 #include <dumux/discretization/staggered/gridfluxvariablescache.hh>
-#include <dumux/discretization/staggered/elementfluxvariablescache.hh>
-#include <dumux/discretization/staggered/gridvolumevariables.hh>
-#include <dumux/discretization/staggered/elementvolumevariables.hh>
 #include <dumux/discretization/staggered/fvgridgeometry.hh>
-#include <dumux/discretization/staggered/fvelementgeometry.hh>
 #include <dumux/discretization/staggered/gridfacevariables.hh>
 #include <dumux/discretization/staggered/facesolution.hh>
-#include <dumux/discretization/staggered/elementfacevariables.hh>
 #include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declarations
-template<class TypeTag> class CCElementBoundaryTypes;
+class CCElementBoundaryTypes;
 
 namespace Properties
 {
 //! Type tag for the staggered scheme.
 NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel));
 
-//! Set the corresponding discretization method property
-SET_PROP(StaggeredModel, DiscretizationMethod)
-{
-    static const DiscretizationMethods value = DiscretizationMethods::Staggered;
-};
-
 //! Set the default global face variables cache vector class
-SET_TYPE_PROP(StaggeredModel, GridFaceVariables, StaggeredGridFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache)>);
-
-//! Set the default element face variables
-SET_TYPE_PROP(StaggeredModel, ElementFaceVariables, StaggeredElementFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache)>);
+SET_PROP(StaggeredModel, GridFaceVariables)
+{
+private:
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+    static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache);
+public:
+    using type = StaggeredGridFaceVariables<Problem, FaceVariables, enableCache>;
+};
 
 //! Cache the face variables per default
 SET_BOOL_PROP(StaggeredModel, EnableGridFaceVariablesCache, true);
 
-//! Set the default global volume variables cache vector class
-SET_TYPE_PROP(StaggeredModel, GridVolumeVariables, StaggeredGridVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
-
-//! Set the element volume variables class
-SET_TYPE_PROP(StaggeredModel, ElementVolumeVariables, StaggeredElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
-
 //! Set the global flux variables cache vector class
-SET_TYPE_PROP(StaggeredModel, GridFluxVariablesCache, StaggeredGridFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
-
-//! Set the local flux variables cache vector class
-SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, StaggeredElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
+SET_PROP(StaggeredModel, GridFluxVariablesCache)
+{
+private:
+    static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FluxVariablesCacheFiller = FluxVariablesCaching::EmptyCacheFiller;
+public:
+    using type = StaggeredGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
+};
 
 //! Set the face solution type
-SET_TYPE_PROP(StaggeredModel, StaggeredFaceSolution, StaggeredFaceSolution<TypeTag>);
-
-//! Set the element solution type
-SET_TYPE_PROP(StaggeredModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables)>);
+SET_PROP(StaggeredModel, StaggeredFaceSolution)
+{
+private:
+    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+public:
+    using type = StaggeredFaceSolution<FaceSolutionVector>;
+};
 
 //! Set the grid variables (volume, flux and face variables)
-SET_TYPE_PROP(StaggeredModel, GridVariables, StaggeredGridVariables<TypeTag>);
+SET_PROP(StaggeredModel, GridVariables)
+{
+private:
+    using GG = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GVV = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
+    using GFVC = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
+    using GFV = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
+public:
+    using type = StaggeredGridVariables<GG, GVV, GFVC, GFV>;
+};
 
 //! Use the cell center element boundary types per default
-SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, CCElementBoundaryTypes);
 
 //! Set the BaseLocalResidual to StaggeredLocalResidual
 SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, StaggeredLocalResidual<TypeTag>);
-
-//! Definition of the indices for cell center and face dofs in the global solution vector
-SET_PROP(StaggeredModel, DofTypeIndices)
-{
-    using CellCenterIdx = Dune::index_constant<0>;
-    using FaceIdx = Dune::index_constant<1>;
-};
 
 //! The cell center primary variables
 SET_TYPE_PROP(StaggeredModel,
               CellCenterPrimaryVariables,
               Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
                                 GET_PROP_VALUE(TypeTag, NumEqCellCenter)>);
+
 //! The face primary variables
 SET_TYPE_PROP(StaggeredModel,
               FacePrimaryVariables,
@@ -124,32 +124,7 @@ SET_TYPE_PROP(StaggeredModel,
                                 GET_PROP_VALUE(TypeTag, NumEqFace)>);
 
 //! Boundary types at a single degree of freedom
-SET_PROP(StaggeredModel, BoundaryTypes)
-{
-private:
-    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-    static constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
-public:
-    using type = BoundaryTypes<numEqCellCenter + numEqFace>;
-};
-
-//! Set one or different base epsilons for the calculations of the localJacobian's derivatives
-SET_PROP(StaggeredModel, BaseEpsilon)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    static constexpr Scalar dCCdCC = 1e-8;
-    static constexpr Scalar dCCdFace = 1e-8;
-    static constexpr Scalar dFacedCC = 1e-8;
-    static constexpr Scalar dFacedFace = 1e-8;
-
-public:
-    static constexpr auto getEps()
-    {
-        return std::array<std::array<Scalar, 2>, 2>{{{dCCdCC, dCCdFace},
-                                                     {dFacedCC, dFacedFace}}};
-    }
-};
+SET_TYPE_PROP(StaggeredModel, BoundaryTypes, BoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
 
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits

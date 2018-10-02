@@ -25,8 +25,6 @@
 #define DUMUX_DISCRETIZATION_BOX_GEOMETRY_HELPER_HH
 
 #include <array>
-#include <dune/common/version.hh>
-#include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/math.hh>
@@ -82,7 +80,8 @@ public:
     }
 
     //! Create the sub control volume face geometries on the boundary
-    ScvfCornerStorage getBoundaryScvfCorners(const typename Intersection::Geometry& geometry,
+    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
+                                             const typename Intersection::Geometry& geometry,
                                              unsigned int indexInIntersection) const
     {
         return ScvfCornerStorage{{geometry.corner(0)}};
@@ -109,7 +108,7 @@ public:
         return 1.0;
     }
 
-private:
+protected:
     const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
     std::array<GlobalPosition, maxPoints> p; // the points needed for construction of the geometries
@@ -127,8 +126,9 @@ class BoxGeometryHelper<GridView, 2, ScvType, ScvfType>
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
 
-    using ReferenceElements = typename Dune::ReferenceElements<Scalar, GridView::dimension>;
-    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto dimWorld = GridView::dimensionworld;
+    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
 
     //! the maximum number of helper points used to construct the geometries
     //! Using a statically sized point array is much faster than dynamic allocation
@@ -137,14 +137,10 @@ class BoxGeometryHelper<GridView, 2, ScvType, ScvfType>
 public:
 
     BoxGeometryHelper(const typename Element::Geometry& geometry)
-    : elementGeometry_(geometry), corners_(geometry.corners())
+    : elementGeometry_(geometry)
+    , corners_(geometry.corners())
     {
-        // extract the corners of the sub control volumes
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(geometry.type());
-#else
-        const auto& referenceElement = ReferenceElements::general(geometry.type());
-#endif
 
         // the element center
         p[0] = geometry.center();
@@ -200,8 +196,8 @@ public:
                                       p[map[localScvIdx][3]]} };
         }
         default:
-            DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << GridView::dimension
-                                                            << " dimWorld=" << GridView::dimensionworld
+            DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
+                                                            << " dimWorld=" << dimWorld
                                                             << " corners=" << corners_);
         }
     }
@@ -243,20 +239,24 @@ public:
                                        p[map[localScvfIdx][1]]} };
         }
         default:
-            DUNE_THROW(Dune::NotImplemented, "Box scvf geometries for dim=" << GridView::dimension
-                                                            << " dimWorld=" << GridView::dimensionworld
+            DUNE_THROW(Dune::NotImplemented, "Box scvf geometries for dim=" << dim
+                                                            << " dimWorld=" << dimWorld
                                                             << " corners=" << corners_);
         }
     }
 
     //! Create the sub control volume face geometries on the boundary
-    ScvfCornerStorage getBoundaryScvfCorners(const typename Intersection::Geometry& geometry,
+    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
+                                             const typename Intersection::Geometry& isGeom,
                                              unsigned int indexInIntersection) const
     {
+        const auto referenceElement = ReferenceElements::general(elementGeometry_.type());
+
+        const auto vIdxLocal = referenceElement.subEntity(is.indexInInside(), 1, indexInIntersection, dim);
         if (indexInIntersection == 0)
-            return ScvfCornerStorage({geometry.corner(0), geometry.center()});
+            return ScvfCornerStorage({p[vIdxLocal+1], isGeom.center()});
         else if (indexInIntersection == 1)
-            return ScvfCornerStorage({geometry.center(), geometry.corner(1)});
+            return ScvfCornerStorage({isGeom.center(), p[vIdxLocal+1]});
         else
             DUNE_THROW(Dune::InvalidStateException, "local index exceeds the number of corners of 2d intersections");
     }
@@ -328,7 +328,7 @@ public:
         return (p[1]-p[0]).two_norm();
     }
 
-private:
+protected:
     const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
     std::array<GlobalPosition, maxPoints> p; // the points needed for construction of the geometries
@@ -356,14 +356,10 @@ class BoxGeometryHelper<GridView, 3, ScvType, ScvfType>
     static constexpr int maxPoints = 27;
 public:
     BoxGeometryHelper(const typename Element::Geometry& geometry)
-    : elementGeometry_(geometry), corners_(geometry.corners())
+    : elementGeometry_(geometry)
+    , corners_(geometry.corners())
     {
-        // extract the corners of the sub control volumes
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(geometry.type());
-#else
-        const auto& referenceElement = ReferenceElements::general(geometry.type());
-#endif
 
         // the element center
         p[0] = geometry.center();
@@ -458,7 +454,7 @@ public:
             static const std::uint8_t map[6][4] =
             {
                 {eo+0, fo+0, fo+1,    0},
-                {fo+1, eo+1,    0, fo+2},
+                {fo+0, eo+1,    0, fo+2},
                 {eo+2, fo+0, fo+3,    0},
                 {fo+2, eo+3,    0, fo+1},
                 {fo+3,    0, eo+4, fo+1},
@@ -504,29 +500,33 @@ public:
     }
 
     //! Create the sub control volume face geometries on the boundary
-    ScvfCornerStorage getBoundaryScvfCorners(const typename Intersection::Geometry& geometry,
+    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
+                                             const typename Intersection::Geometry& geometry,
                                              unsigned int indexInIntersection) const
     {
-        // extract the corners of the sub control volumes
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-        const auto referenceElement = FaceReferenceElements::general(geometry.type());
-#else
-        const auto& referenceElement = FaceReferenceElements::general(geometry.type());
-#endif
+        const auto referenceElement = ReferenceElements::general(elementGeometry_.type());
+        const auto faceRefElem = FaceReferenceElements::general(geometry.type());
 
         GlobalPosition pi[9];
         auto corners = geometry.corners();
 
-        // the element center
+        // the facet center
         pi[0] = geometry.center();
 
-        // vertices
+        // corners
+        const auto idxInInside = is.indexInInside();
         for (int i = 0; i < corners; ++i)
-            pi[i+1] = geometry.corner(i);
+        {
+            const auto vIdxLocal = referenceElement.subEntity(idxInInside, 1, i, dim);
+            pi[i+1] = elementGeometry_.corner(vIdxLocal);
+        }
 
-        // face midpoints
-        for (int i = 0; i < referenceElement.size(1); ++i)
-            pi[i+corners+1] = geometry.global(referenceElement.position(i, 1));
+        // edge midpoints
+        for (int i = 0; i < faceRefElem.size(1); ++i)
+        {
+            const auto edgeIdxLocal = referenceElement.subEntity(idxInInside, 1, i, dim-1);
+            pi[i+corners+1] = p[edgeIdxLocal+corners_+1];
+        }
 
         // procees according to number of corners
         switch (corners)
@@ -534,13 +534,13 @@ public:
         case 3: // triangle
         {
             //! Only build the maps the first time we encounter a triangle
-            static const std::uint8_t vo = 1; //!< vertex offset in point vector p
-            static const std::uint8_t fo = 4; //!< face offset in point vector p
+            static const std::uint8_t vo = 1; //!< vertex offset in point vector pi
+            static const std::uint8_t eo = 4; //!< edge offset in point vector pi
             static const std::uint8_t map[3][4] =
             {
-                {vo+0, fo+0, fo+1, 0},
-                {vo+1, fo+2, fo+0, 0},
-                {vo+2, fo+1, fo+2, 0}
+                {vo+0, eo+0, eo+1, 0},
+                {vo+1, eo+2, eo+0, 0},
+                {vo+2, eo+1, eo+2, 0}
             };
 
             return ScvfCornerStorage{ {pi[map[indexInIntersection][0]],
@@ -551,14 +551,14 @@ public:
         case 4: // quadrilateral
         {
             //! Only build the maps the first time we encounter a quadrilateral
-            static const std::uint8_t vo = 1; //!< vertex offset in point vector p
-            static const std::uint8_t fo = 5; //!< face offset in point vector p
+            static const std::uint8_t vo = 1; //!< vertex offset in point vector pi
+            static const std::uint8_t eo = 5; //!< edge offset in point vector pi
             static const std::uint8_t map[4][4] =
             {
-                {vo+0, fo+2, fo+0, 0},
-                {vo+1, fo+1, fo+2, 0},
-                {vo+2, fo+0, fo+3, 0},
-                {vo+3, fo+3, fo+1, 0}
+                {vo+0, eo+2, eo+0, 0},
+                {vo+1, eo+1, eo+2, 0},
+                {vo+2, eo+0, eo+3, 0},
+                {vo+3, eo+3, eo+1, 0}
             };
 
             return ScvfCornerStorage{ {pi[map[indexInIntersection][0]],
@@ -605,7 +605,7 @@ public:
         return 0.5*Dumux::crossProduct(p[3]-p[0], p[2]-p[1]).two_norm();
     }
 
-private:
+protected:
     const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
     std::array<GlobalPosition, maxPoints> p; // the points needed for construction of the scv/scvf geometries

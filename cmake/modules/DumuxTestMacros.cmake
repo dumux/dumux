@@ -14,7 +14,7 @@
 ###
 macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_source)
 
-  message(WARNING "add_dumux_test is deprecated. Use dune_add_test directly now that we require dune 2.5")
+  message(WARNING "add_dumux_test is deprecated. Use dune_add_test directly now that we require dune 2.6")
 
   # if present, symlink the grids folder
   set(grids_directory ${CMAKE_CURRENT_SOURCE_DIR}/grids)

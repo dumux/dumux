@@ -25,11 +25,14 @@
 #define DUMUX_BENZENE_HH
 
 #include <dumux/material/idealgas.hh>
-#include "component.hh"
 
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A simple benzene component (LNAPL).
@@ -37,9 +40,12 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class Benzene : public Component<Scalar, Benzene<Scalar> >
+class Benzene
+: public Components::Base<Scalar, Benzene<Scalar> >
+, public Components::Liquid<Scalar, Benzene<Scalar> >
+, public Components::Gas<Scalar, Benzene<Scalar> >
 {
-
+     using IdealGas = Dumux::IdealGas<Scalar>;
 public:
     /*!
      * \brief A human readable name for the benzene
@@ -50,77 +56,8 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of benzene
      */
-    static Scalar molarMass()
-    {
-        DUNE_THROW(Dune::NotImplemented, "molar mass for benzene");
-    }
-
-    /*!
-     * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of benzene.
-     */
-    static Scalar criticalTemperature()
-    {
-        DUNE_THROW(Dune::NotImplemented, "criticalTemperature for benzene");
-    }
-
-    /*!
-     * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of benzene.
-     */
-    static Scalar criticalPressure()
-    {
-        DUNE_THROW(Dune::NotImplemented, "criticalPressure for benzene");
-    }
-
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at benzene's triple point.
-     */
-    static Scalar tripleTemperature()
-    {
-        DUNE_THROW(Dune::NotImplemented, "tripleTemperature for benzene");
-    }
-
-    /*!
-     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at benzene's triple point.
-     */
-    static Scalar triplePressure()
-    {
-        DUNE_THROW(Dune::NotImplemented, "triplePressure for benzene");
-    }
-
-    /*!
-     * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure benzene
-     *        at a given temperature.
-     *
-     * \param T temperature of component in \f$\mathrm{[K]}\f$
-     */
-    static Scalar vaporPressure(Scalar T)
-    {
-        DUNE_THROW(Dune::NotImplemented, "vaporPressure for benzene");
-    }
-
-    /*!
-     * \brief Specific enthalpy of benzene steam \f$\mathrm{[J/kg]}\f$.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static const Scalar gasEnthalpy(Scalar temperature,
-                                    Scalar pressure)
-    {
-        DUNE_THROW(Dune::NotImplemented, "gasEnthalpy for benzene");
-    }
-
-    /*!
-     * \brief Specific enthalpy of liquid benzene \f$\mathrm{[J/kg]}\f$.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static const Scalar liquidEnthalpy(Scalar temperature,
-                                       Scalar pressure)
-    {
-        DUNE_THROW(Dune::NotImplemented, "liquidEnthalpy for benzene");
-    }
+    static constexpr Scalar molarMass()
+    { return 0.07811; }
 
     /*!
      * \brief The density of benzene steam at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
@@ -130,10 +67,19 @@ public:
     */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
-        return IdealGas<Scalar>::density(molarMass(),
-                                         temperature,
-                                         pressure);
+        return IdealGas::density(molarMass(),
+                                 temperature,
+                                 pressure);
     }
+
+    /*!
+     * \brief The molar density of steam in \f$\mathrm{[mol/m^3]}\f$,
+     *   depending on pressure and temperature.
+     * \param temperature The temperature of the gas
+     * \param pressure The pressure of the gas
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
 
     /*!
      * \brief The density of pure benzene at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
@@ -143,19 +89,18 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        return 889.51; // [kg/m^3]
+        return 889.51;
     }
 
     /*!
-     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of benzene steam.
+     * \brief The molar density of pure benzene at a given pressure and temperature \f$\mathrm{[mol/m^3]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     * \param regularize defines, if the functions is regularized or not, set to true by default
      */
-    static Scalar gasViscosity(Scalar temperature, Scalar pressure, bool regularize=true)
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
     {
-        DUNE_THROW(Dune::NotImplemented, "gasViscosity for benzene");
+        return liquidDensity(temperature, pressure)/molarMass();
     }
 
     /*!
@@ -170,6 +115,8 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+} // end namespace Dumux
 
 #endif

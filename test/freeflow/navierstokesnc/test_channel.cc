@@ -41,16 +41,15 @@
 #include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/nonlinear/staggerednewtoncontroller.hh>
 
 #include <dumux/discretization/methods.hh>
 
 #include <dumux/io/staggeredvtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -102,16 +101,15 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv, usage);
 
     // try to create a grid (from the given grid file or the input file)
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    GridCreator::makeGrid();
-    GridCreator::loadBalance();
+    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    gridManager.init();
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -125,30 +123,21 @@ int main(int argc, char** argv) try
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
-
     // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
     problem->setTimeLoop(timeLoop);
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
     const auto numDofsCellCenter = leafGridView.size(0);
     const auto numDofsFace = leafGridView.size(1);
     SolutionVector x;
-    x[cellCenterIdx].resize(numDofsCellCenter);
-    x[faceIdx].resize(numDofsFace);
+    x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
+    x[FVGridGeometry::faceIdx()].resize(numDofsFace);
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -159,7 +148,7 @@ int main(int argc, char** argv) try
 
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    StaggeredVtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.addField(problem->getDeltaP(), "deltaP");
     vtkWriter.write(0.0);
@@ -173,10 +162,8 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = StaggeredNewtonController<Scalar>;
-    using NewtonMethod = Dumux::NewtonMethod<NewtonController, Assembler, LinearSolver>;
-    auto newtonController = std::make_shared<NewtonController>(timeLoop);
-    NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
+    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
     timeLoop->start(); do
@@ -184,24 +171,8 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
-        // try solving the non-linear system
-        for (int i = 0; i < maxDivisions; ++i)
-        {
-            // linearize & solve
-            auto converged = nonLinearSolver.solve(x);
-
-            if (converged)
-                break;
-
-            if (!converged && i == maxDivisions-1)
-                DUNE_THROW(Dune::MathError,
-                           "Newton solver didn't converge after "
-                           << maxDivisions
-                           << " time-step divisions. dt="
-                           << timeLoop->timeStepSize()
-                           << ".\nThe solutions of the current and the previous time steps "
-                           << "have been saved to restart files.");
-        }
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(x, *timeLoop);
 
         // make the new solution the old solution
         xOld = x;
@@ -218,8 +189,8 @@ int main(int argc, char** argv) try
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        // set new dt as suggested by newton controller
-        timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+        // set new dt as suggested by newton solver
+        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 

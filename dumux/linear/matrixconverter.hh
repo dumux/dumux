@@ -98,10 +98,10 @@ private:
 
         // fill the pattern
         std::size_t rowIndex = 0;
-        Dune::Hybrid::forEach(A, [&addIndices, &rowIndex, &occupationPattern, numRows](const auto& rowOfMultiTypeMatrix)
+        Dune::Hybrid::forEach(A, [&addIndices, &rowIndex, numRows](const auto& rowOfMultiTypeMatrix)
         {
             std::size_t colIndex = 0;
-            Dune::Hybrid::forEach(rowOfMultiTypeMatrix, [&addIndices, &occupationPattern, &colIndex, &rowIndex, numRows](const auto& subMatrix)
+            Dune::Hybrid::forEach(rowOfMultiTypeMatrix, [&addIndices, &colIndex, &rowIndex, numRows](const auto& subMatrix)
             {
                 addIndices(subMatrix, rowIndex, colIndex);
 

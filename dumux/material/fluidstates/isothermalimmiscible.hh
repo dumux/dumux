@@ -25,32 +25,41 @@
 #ifndef DUMUX_ISOIMMISCIBLE_FLUID_STATE_HH
 #define DUMUX_ISOIMMISCIBLE_FLUID_STATE_HH
 
+#include <limits>
+#include <type_traits>
 #include <dune/common/exceptions.hh>
 
-#include <dumux/common/valgrind.hh>
+namespace Dumux {
 
-#include <limits>
-
-namespace Dumux
-{
 /*!
  * \ingroup FluidStates
  * \brief Represents all relevant thermodynamic quantities of a
  *        multi-phase fluid system assuming immiscibility and
  *        thermodynamic equilibrium.
  */
-template <class Scalar, class FluidSystem>
+template <class ScalarType, class FluidSystem>
 class IsothermalImmiscibleFluidState
 {
 public:
     static constexpr int numPhases = FluidSystem::numPhases;
+    static constexpr int numComponents = FluidSystem::numComponents;
 
-    IsothermalImmiscibleFluidState()
-    { Valgrind::SetUndefined(*this); }
+    //! export the scalar type
+    using Scalar = ScalarType;
 
-    template <class FluidState>
-    IsothermalImmiscibleFluidState(FluidState &fs)
+    //! default constructor
+    IsothermalImmiscibleFluidState() = default;
+
+    //! copy constructor from arbitrary fluid state
+    template <class FluidState, typename std::enable_if_t<!std::is_same<FluidState, IsothermalImmiscibleFluidState>::value, int> = 0>
+    IsothermalImmiscibleFluidState(const FluidState &fs)
     { assign(fs); }
+
+    // copy and move constructor / assignment operator
+    IsothermalImmiscibleFluidState(const IsothermalImmiscibleFluidState &fs) = default;
+    IsothermalImmiscibleFluidState(IsothermalImmiscibleFluidState &&fs) = default;
+    IsothermalImmiscibleFluidState& operator=(const IsothermalImmiscibleFluidState &fs) = default;
+    IsothermalImmiscibleFluidState& operator=(IsothermalImmiscibleFluidState &&fs) = default;
 
     /*****************************************************
      * Generic access to fluid properties
@@ -76,7 +85,7 @@ public:
      * \param compIdx the index of the component
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
-    { return (phaseIdx == compIdx)?1.0:0.0; }
+    { return (phaseIdx == compIdx) ? 1.0 : 0.0; }
 
     /*!
      * \brief Returns the mass fraction \f$X^\kappa_\alpha\f$ of component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
@@ -87,7 +96,7 @@ public:
      * \param compIdx the index of the component
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
-    { return (phaseIdx == compIdx)?1.0:0.0; }
+    { return (phaseIdx == compIdx) ? 1.0 : 0.0; }
 
     /*!
      * \brief The average molar mass \f$\overline M_\alpha\f$ of phase \f$\alpha\f$ in \f$\mathrm{[kg/mol]}\f$
@@ -126,12 +135,7 @@ public:
      * completely out of a phase is 0 to feed it zero fugacity.)
      */
     Scalar fugacity(int phaseIdx, int compIdx) const
-    {
-        if (phaseIdx == compIdx)
-            return pressure(phaseIdx);
-        else
-            return 0;
-    }
+    { return phaseIdx == compIdx ? pressure(phaseIdx) : 0.0; }
 
     /*!
      * \brief The fugacity coefficient \f$\Phi^\kappa_\alpha\f$ of component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$
@@ -142,12 +146,7 @@ public:
      * you don't keep that in mind.
      */
     Scalar fugacityCoefficient(int phaseIdx, int compIdx) const
-    {
-        if (phaseIdx == compIdx)
-            return 1.0;
-        else
-            return std::numeric_limits<Scalar>::infinity();
-    }
+    { return phaseIdx == compIdx ? 1.0 : std::numeric_limits<Scalar>::infinity(); }
 
     /*!
      * \brief The molar volume \f$v_{mol,\alpha}\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[m^3/mol]}\f$
@@ -155,7 +154,7 @@ public:
      * This quantity is the inverse of the molar density.
      */
     Scalar molarVolume(int phaseIdx) const
-    { return 1/molarDensity(phaseIdx); }
+    { return 1.0/molarDensity(phaseIdx); }
 
     /*!
      * \brief The mass density \f$\rho_\alpha\f$ of the fluid phase
@@ -173,7 +172,7 @@ public:
      * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
      */
     Scalar molarDensity(int phaseIdx) const
-    { return density_[phaseIdx]/averageMolarMass(phaseIdx); }
+    { return molarDensity_[phaseIdx]; }
 
     /*!
      * \brief The temperature of a fluid phase \f$\mathrm{[K]}\f$
@@ -230,10 +229,12 @@ public:
     template <class FluidState>
     void assign(const FluidState &fs)
     {
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
             pressure_[phaseIdx] = fs.pressure(phaseIdx);
             saturation_[phaseIdx] = fs.saturation(phaseIdx);
             density_[phaseIdx] = fs.density(phaseIdx);
+            molarDensity_[phaseIdx] = fs.molarDensity(phaseIdx);
             viscosity_[phaseIdx] = fs.viscosity(phaseIdx);
         }
         temperature_ = fs.temperature(0);
@@ -264,39 +265,24 @@ public:
     { density_[phaseIdx] = value; }
 
     /*!
+     * \brief Set the molar density of a phase \f$\mathrm{[kg/m^3]}\f$
+     */
+    void setMolarDensity(int phaseIdx, Scalar value)
+    { molarDensity_[phaseIdx] = value; }
+
+    /*!
      * \brief Set the dynamic viscosity of a phase \f$\mathrm{[Pa s]}\f$
      */
     void setViscosity(int phaseIdx, Scalar value)
     { viscosity_[phaseIdx] = value; }
 
-    /*!
-     * \brief Make sure that all attributes are defined.
-     *
-     * This method does not do anything if the program is not run
-     * under valgrind. If it is, then valgrind will print an error
-     * message if some attributes of the object have not been properly
-     * defined.
-     */
-    void checkDefined() const
-    {
-#if HAVE_VALGRIND && ! defined NDEBUG
-        for (int i = 0; i < numPhases; ++i) {
-            Valgrind::CheckDefined(pressure_[i]);
-            Valgrind::CheckDefined(saturation_[i]);
-            Valgrind::CheckDefined(density_[i]);
-            Valgrind::CheckDefined(viscosity_[i]);
-        }
-
-        Valgrind::CheckDefined(temperature_);
-#endif // HAVE_VALGRIND
-    }
-
 protected:
-    Scalar pressure_[numPhases];
-    Scalar saturation_[numPhases];
-    Scalar density_[numPhases];
-    Scalar viscosity_[numPhases];
-    Scalar temperature_;
+    Scalar pressure_[numPhases] = {};
+    Scalar saturation_[numPhases] = {};
+    Scalar density_[numPhases] = {};
+    Scalar molarDensity_[numPhases] = {};
+    Scalar viscosity_[numPhases] = {};
+    Scalar temperature_ = 0.0;
 };
 
 } // end namespace Dumux

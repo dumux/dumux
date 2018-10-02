@@ -27,12 +27,15 @@
 
 #include <dumux/material/idealgas.hh>
 
-#include "component.hh"
-
 #include <cmath>
 
-namespace Dumux
-{
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A much simpler (and thus potentially less buggy) version of
@@ -41,7 +44,10 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class SimpleH2O : public Component<Scalar, SimpleH2O<Scalar> >
+class SimpleH2O
+: public Components::Base<Scalar, SimpleH2O<Scalar> >
+, public Components::Liquid<Scalar, SimpleH2O<Scalar> >
+, public Components::Gas<Scalar, SimpleH2O<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
 
@@ -57,7 +63,7 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of water.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 18e-3; }
 
     /*!
@@ -213,13 +219,23 @@ public:
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
         // Assume an ideal gas
-        return molarMass()*IdealGas::molarDensity(temperature, pressure);
+        return IdealGas::density(molarMass(), temperature, pressure);
     }
+
+    /*!
+     *  \brief The molar density of steam in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be ideal
      */
-    static bool gasIsIdeal()
+    static constexpr bool gasIsIdeal()
     { return true; }
 
     /*!
@@ -244,6 +260,16 @@ public:
     {
         return 1000.;
     }
+
+    /*!
+     * \brief The molar density of pure water in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    { return liquidDensity(temperature, pressure)/molarMass(); }
 
     /*!
      * \brief The pressure of water in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
@@ -319,12 +345,28 @@ public:
        return 0.025;
     }
 
+    /*!
+     * \brief Specific isobaric heat capacity of water steam \f$\mathrm{[J/(kg*K)}\f$.
+     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
+     *        @ T= 372.76K (99.6°C) , p=0.1MPa)
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar gasHeatCapacity(Scalar temperature, Scalar pressure)
+    {
+        return 2.08e3;
+    }
 
 };
 
 template <class Scalar>
-const Scalar SimpleH2O<Scalar>::R = Constants<Scalar>::R / 18e-3;
+struct IsAqueous<SimpleH2O<Scalar>> : public std::true_type {};
 
-} // end namespace
+template <class Scalar>
+const Scalar Components::SimpleH2O<Scalar>::R = Constants<Scalar>::R / 18e-3;
+
+} // end namespace Components
+
+} // end namespace Dumux
 
 #endif

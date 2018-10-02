@@ -26,11 +26,7 @@
 #ifndef DUMUX_THERMOCHEM_REACTION_HH
 #define DUMUX_THERMOCHEM_REACTION_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
-
+namespace Dumux {
 
 /*!
  * \ingroup OnePNCMinTests
@@ -38,67 +34,56 @@ namespace Dumux
  *
  * It contains simple and advanced reaction kinetics according to Nagel et al. (2014).
  */
-template<class TypeTag>
-class ThermoChemReaction
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static const int numSolidPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
-
-    enum{
-        // Indices of the primary variables
-        pressureIdx = Indices::pressureIdx, //gas-phase pressure
-        firstMoleFracIdx = Indices::firstMoleFracIdx, // mole fraction water
-
-        // Phase Indices
-        phaseIdx = FluidSystem::gPhaseIdx,
-        cPhaseIdx = FluidSystem::cPhaseIdx,
-        hPhaseIdx = FluidSystem::hPhaseIdx
-    };
+class ThermoChemReaction {
 
 public:
-
-
     /*!
      * \brief evaluates the reaction kinetics (see Nagel et al. 2014)
      */
-    Scalar thermoChemReaction(const VolumeVariables &volVars) const
+    template<class VolumeVariables>
+    typename VolumeVariables::PrimaryVariables::value_type
+    thermoChemReaction(const VolumeVariables &volVars) const
     {
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+        using SolidSystem = typename VolumeVariables::SolidSystem;
+
+        static constexpr auto H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx);
+        static constexpr int cPhaseIdx = SolidSystem::comp0Idx;
+        static constexpr int hPhaseIdx = SolidSystem::comp1Idx;
+
+        using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
+
         // calculate the equilibrium temperature Teq
         Scalar T= volVars.temperature();
         Scalar Teq = 0;
 
         Scalar moleFractionVapor = 1e-3;
 
-        if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) > 1e-3)
-            moleFractionVapor = volVars.moleFraction(phaseIdx, firstMoleFracIdx);
+        if(volVars.moleFraction(0, H2OIdx) > 1e-3)
+            moleFractionVapor = volVars.moleFraction(0, H2OIdx);
 
-        if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) >= 1.0) moleFractionVapor = 1;
+        if(volVars.moleFraction(0, H2OIdx) >= 1.0) moleFractionVapor = 1;
 
-        Scalar pV = volVars.pressure(phaseIdx) *moleFractionVapor;
+        Scalar pV = volVars.pressure(0) *moleFractionVapor;
         Scalar vaporPressure = pV*1.0e-5;
         Scalar pFactor = log(vaporPressure);
 
         Teq = -12845;
         Teq /= (pFactor - 16.508); //the equilibrium temperature
 
-        Scalar realSolidDensityAverage = (volVars.precipitateVolumeFraction(hPhaseIdx)*volVars.density(hPhaseIdx)
-                                        + volVars.precipitateVolumeFraction(cPhaseIdx)*volVars.density(cPhaseIdx))
-                                        / (volVars.precipitateVolumeFraction(hPhaseIdx)
-                                        + volVars.precipitateVolumeFraction(cPhaseIdx));
+        Scalar realSolidDensityAverage = (volVars.solidVolumeFraction(hPhaseIdx)*volVars.solidComponentDensity(hPhaseIdx)
+                                        + volVars.solidVolumeFraction(cPhaseIdx)*volVars.solidComponentDensity(cPhaseIdx))
+                                        / (volVars.solidVolumeFraction(hPhaseIdx)
+                                        + volVars.solidVolumeFraction(cPhaseIdx));
 
-        if(realSolidDensityAverage <= volVars.density(cPhaseIdx))
+        if(realSolidDensityAverage <= volVars.solidComponentDensity(cPhaseIdx))
         {
-            realSolidDensityAverage = volVars.density(cPhaseIdx);
+            realSolidDensityAverage = volVars.solidComponentDensity(cPhaseIdx);
         }
 
-        if(realSolidDensityAverage >= volVars.density(hPhaseIdx))
+        if(realSolidDensityAverage >= volVars.solidComponentDensity(hPhaseIdx))
         {
-            realSolidDensityAverage = volVars.density(hPhaseIdx);
+            realSolidDensityAverage = volVars.solidComponentDensity(hPhaseIdx);
         }
 
         Scalar qMass = 0.0;
@@ -108,7 +93,7 @@ public:
             Scalar dXH_dt1 = 0.0;
             Scalar dXH_dt2 = 0.0;
 
-            Scalar xH = (realSolidDensityAverage-volVars.density(cPhaseIdx))/(volVars.density(hPhaseIdx)- volVars.density(cPhaseIdx));
+            Scalar xH = (realSolidDensityAverage-volVars.solidComponentDensity(cPhaseIdx))/(volVars.solidComponentDensity(hPhaseIdx)- volVars.solidComponentDensity(cPhaseIdx));
 
             if(xH < 1.0e-5) {xH = 1.0e-5; }
             if(xH >=1 ) {xH = 1 - 1e-5; }
@@ -164,7 +149,7 @@ public:
             // no reaction at equilibrium
             if(Teq -T <= 0)
                 dXH_dt = 0;
-            Scalar deltaRhoS = volVars.density(hPhaseIdx) - volVars.density(cPhaseIdx);
+            Scalar deltaRhoS = volVars.solidComponentDensity(hPhaseIdx) - volVars.solidComponentDensity(cPhaseIdx);
             qMass = dXH_dt*deltaRhoS;
         }
 
@@ -175,49 +160,61 @@ public:
     /*!
      * \brief evaluates the simple chemical reaction kinetics (see Nagel et al. 2014)
      */
-    Scalar thermoChemReactionSimple(const VolumeVariables &volVars) const
+    template<class VolumeVariables>
+    typename VolumeVariables::PrimaryVariables::value_type
+    thermoChemReactionSimple(const VolumeVariables &volVars) const
     {
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+        using SolidSystem = typename VolumeVariables::SolidSystem;
+
+        static constexpr auto H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx);
+        static constexpr int cPhaseIdx = SolidSystem::comp0Idx;
+        static constexpr int hPhaseIdx = SolidSystem::comp1Idx;
+
+        using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
+
         // calculate the equilibrium temperature Teq
         Scalar T= volVars.temperature();
         Scalar Teq = 0;
 
         Scalar moleFractionVapor = 1e-3;
 
-        if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) > 1e-3)
-            moleFractionVapor = volVars.moleFraction(phaseIdx, firstMoleFracIdx);
+        if(volVars.moleFraction(0, H2OIdx) > 1e-3)
+            moleFractionVapor = volVars.moleFraction(0, H2OIdx);
 
-        if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) >= 1.0) moleFractionVapor = 1;
+        if(volVars.moleFraction(0, H2OIdx) >= 1.0) moleFractionVapor = 1;
 
-        Scalar pV = volVars.pressure(phaseIdx) *moleFractionVapor;
+        Scalar pV = volVars.pressure(0) *moleFractionVapor;
         Scalar vaporPressure = pV*1.0e-5;
         Scalar pFactor = log(vaporPressure);
 
         Teq = -12845;
         Teq /= (pFactor - 16.508); //the equilibrium temperature
 
-        Scalar realSolidDensityAverage = (volVars.precipitateVolumeFraction(hPhaseIdx)*volVars.density(hPhaseIdx)
-                                        + volVars.precipitateVolumeFraction(cPhaseIdx)*volVars.density(cPhaseIdx))
-                                        / (volVars.precipitateVolumeFraction(hPhaseIdx)
-                                        + volVars.precipitateVolumeFraction(cPhaseIdx));
 
-        if(realSolidDensityAverage <= volVars.density(cPhaseIdx))
+        Scalar realSolidDensityAverage = (volVars.solidVolumeFraction(hPhaseIdx)*volVars.solidComponentDensity(hPhaseIdx)
+                                        + volVars.solidVolumeFraction(cPhaseIdx)*volVars.solidComponentDensity(cPhaseIdx))
+                                        / (volVars.solidVolumeFraction(hPhaseIdx)
+                                        + volVars.solidVolumeFraction(cPhaseIdx));
+
+        if(realSolidDensityAverage <= volVars.solidComponentDensity(cPhaseIdx))
         {
-            realSolidDensityAverage = volVars.density(cPhaseIdx);
+            realSolidDensityAverage = volVars.solidComponentDensity(cPhaseIdx);
         }
 
-        if(realSolidDensityAverage >= volVars.density(hPhaseIdx))
+        if(realSolidDensityAverage >= volVars.solidComponentDensity(hPhaseIdx))
         {
-            realSolidDensityAverage = volVars.density(hPhaseIdx);
+            realSolidDensityAverage = volVars.solidComponentDensity(hPhaseIdx);
         }
 
         Scalar qMass = 0.0;
 
          //discharge or hydration
         if (T < Teq){
-            Scalar massFracH2O_fPhase = volVars.massFraction(phaseIdx, firstMoleFracIdx);
+            Scalar massFracH2O_fPhase = volVars.massFraction(0, H2OIdx);
             Scalar krh = 0.2;
 
-            Scalar rHydration = - massFracH2O_fPhase* (volVars.density(hPhaseIdx)- realSolidDensityAverage)
+            Scalar rHydration = - massFracH2O_fPhase* (volVars.solidComponentDensity(hPhaseIdx)- realSolidDensityAverage)
                                                      * krh * (T-Teq)/ Teq;
 
             Scalar qMass =  rHydration;
@@ -228,7 +225,7 @@ public:
 
             Scalar krd = 0.05;
 
-            Scalar rDehydration = -(volVars.density(cPhaseIdx)- realSolidDensityAverage)
+            Scalar rDehydration = -(volVars.solidComponentDensity(cPhaseIdx)- realSolidDensityAverage)
                                                      * krd * (Teq-T)/ Teq;
 
             qMass =  rDehydration;

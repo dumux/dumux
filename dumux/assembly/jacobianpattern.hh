@@ -35,7 +35,7 @@ namespace Dumux {
  * \brief Helper function to generate Jacobian pattern for the box method
  */
 template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<(GridGeometry::discretizationMethod == DiscretizationMethods::Box), int> = 0>
+         typename std::enable_if_t<(GridGeometry::discMethod == DiscretizationMethod::box), int> = 0>
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 {
     const auto numDofs = gridGeometry.numDofs();
@@ -76,8 +76,8 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
  * \brief Helper function to generate Jacobian pattern for cell-centered methods
  */
 template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<( (GridGeometry::discretizationMethod == DiscretizationMethods::CCTpfa)
-                                     || (GridGeometry::discretizationMethod == DiscretizationMethods::CCMpfa) ), int> = 0>
+         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethod::cctpfa)
+                                     || (GridGeometry::discMethod == DiscretizationMethod::ccmpfa) ), int> = 0>
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 {
     const auto numDofs = gridGeometry.numDofs();
@@ -100,6 +100,52 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
     {
         for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
             pattern.add(globalI, globalI);
+    }
+
+    return pattern;
+}
+
+/*!
+ * \ingroup Assembly
+ * \brief Helper function to generate Jacobian pattern for the staggered method
+ */
+template<bool isImplicit, class GridGeometry,
+         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethod::staggered) ), int> = 0>
+auto getJacobianPattern(const GridGeometry& gridGeometry)
+{
+    // resize the jacobian and the residual
+    const auto numDofs = gridGeometry.numDofs();
+    Dune::MatrixIndexSet pattern(numDofs, numDofs);
+
+
+    const auto& connectivityMap = gridGeometry.connectivityMap();
+
+    // evaluate the acutal pattern
+    for (const auto& element : elements(gridGeometry.gridView()))
+    {
+        if(gridGeometry.isCellCenter())
+        {
+            // the global index of the element at hand
+            static constexpr auto cellCenterIdx = GridGeometry::cellCenterIdx();
+            const auto ccGlobalI = gridGeometry.elementMapper().index(element);
+
+            for (auto&& ccGlobalJ : connectivityMap(cellCenterIdx, cellCenterIdx, ccGlobalI))
+                pattern.add(ccGlobalI, ccGlobalJ);
+        }
+        else
+        {
+            static constexpr auto faceIdx = GridGeometry::faceIdx();
+            auto fvGeometry = localView(gridGeometry);
+            fvGeometry.bindElement(element);
+
+            // loop over sub control faces
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                const auto faceGlobalI = scvf.dofIndex();
+                for (auto&& faceGlobalJ : connectivityMap(faceIdx, faceIdx, scvf.index()))
+                    pattern.add(faceGlobalI, faceGlobalJ);
+            }
+        }
     }
 
     return pattern;

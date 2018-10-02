@@ -24,12 +24,7 @@
 #ifndef DUMUX_STAGGERD_FV_PROBLEM_HH
 #define DUMUX_STAGGERD_FV_PROBLEM_HH
 
-#include <dune/common/version.hh>
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
 #include <dune/common/rangeutilities.hh>
-#else
-#include <dumux/common/intrange.hh>
-#endif
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/fvproblem.hh>
@@ -52,55 +47,95 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using ParentType = FVProblem<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using GridFaceVariables = typename GridVariables::GridFaceVariables;
+    using ElementFaceVariables = typename GridFaceVariables::LocalView;
+
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
+    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
+    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
+
+    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+    static constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
 
 public:
     /*!
      * \brief Constructor
-    * \param fvGridGeometry The finite volume grid geometry
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    StaggeredFVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    StaggeredFVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
     { }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume (-face).
      *
-     * \param globalPos The global position
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param elementFaceVars All face variables for the element
+     * \param e The geometrical entity on which the source shall be applied (scv or scvf)
+     *
+     * For this method, the return parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    template<class ElementVolumeVariables, class ElementFaceVariables, class Entity>
+    NumEqVector source(const Element &element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const ElementFaceVariables& elementFaceVars,
+                       const Entity &e) const
     {
-        // Throw an exception (there is no reasonable default value
-        // for initial values)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide "
-                   "an initial() or an initialAtPos() method.");
+        // forward to solution independent, fully-implicit specific interface
+        return asImp_().sourceAtPos(e.center());
     }
 
     /*!
-     * \brief Evaluate the initial value for
-     * an element (for cell-centered models)
-     * or vertex (for box / vertex-centered models)
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent
+     * \param elemFaceVars All face variables for the element
+     * \param scvf The sub control volume face
+     *
+     * Negative values mean influx.
+     * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+     */
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFaceVariables& elemFaceVars,
+                        const SubControlVolumeFace& scvf) const
+    {
+        // forward it to the interface with only the global position
+        return asImp_().neumannAtPos(scvf.ipGlobal());
+    }
+
+    /*!
+     * \brief Evaluate the initial value for an element (for cell-centered primary variables)
+     * or face (for velocities)
      *
      * \param entity The dof entity (element or vertex)
      */
@@ -127,35 +162,39 @@ public:
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
                 auto initPriVars = asImp_().initial(scv);
-                asImp_().applyInititalCellCenterSolution(sol, scv, initPriVars);
+                asImp_().applyInitialCellCenterSolution(sol, scv, initPriVars);
             }
 
             // loop over faces
             for(auto&& scvf : scvfs(fvGeometry))
             {
                 auto initPriVars = asImp_().initial(scvf);
-                asImp_().applyInititalFaceSolution(sol, scvf, initPriVars);
+                asImp_().applyInitialFaceSolution(sol, scvf, initPriVars);
             }
         }
     }
 
 
     //! Applys the initial cell center solution
-    void applyInititalCellCenterSolution(SolutionVector& sol,
-                                         const SubControlVolume& scv,
-                                         const PrimaryVariables& initSol) const
+    void applyInitialCellCenterSolution(SolutionVector& sol,
+                                        const SubControlVolume& scv,
+                                        const PrimaryVariables& initSol) const
     {
-        for(auto&& i : priVarIndices_(cellCenterIdx))
-            sol[cellCenterIdx][scv.dofIndex()][i] = initSol[i];
+        // while the container within the actual solution vector holds numEqCellCenter
+        // elements, we need to specify an offset to get the correct entry of the initial solution
+        static constexpr auto offset = PrimaryVariables::dimension - numEqCellCenter;
+
+        for(int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
+            sol[cellCenterIdx][scv.dofIndex()][pvIdx] = initSol[pvIdx + offset];
     }
 
     //! Applys the initial face solution
-    void applyInititalFaceSolution(SolutionVector& sol,
-                                   const SubControlVolumeFace& scvf,
-                                   const PrimaryVariables& initSol) const
+    void applyInitialFaceSolution(SolutionVector& sol,
+                                  const SubControlVolumeFace& scvf,
+                                  const PrimaryVariables& initSol) const
     {
-        for(auto&& i : priVarIndices_(faceIdx))
-            sol[faceIdx][scvf.dofIndex()][i] = initSol[i];
+        for(int pvIdx = 0; pvIdx < numEqFace; ++pvIdx)
+            sol[faceIdx][scvf.dofIndex()][pvIdx] = initSol[pvIdx];
     }
 
 protected:
@@ -166,33 +205,6 @@ protected:
     //! \copydoc asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
-
-    //! Helper function that returns an iterable range of primary variable indices.
-    //! Specialization for cell center dofs.
-    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::CellCenterIdx)
-    {
-        constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-        return Dune::range(0, numEqCellCenter);
-#else
-        return IntRange(0, numEqCellCenter);
-#endif
-    }
-
-    //! Helper function that returns an iterable range of primary variable indices.
-    //! Specialization for face dofs.
-    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx)
-    {
-        constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-        constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-        return Dune::range(numEqCellCenter, numEq);
-#else
-        return IntRange(numEqCellCenter, numEq);
-#endif
-    }
-
 };
 
 } // end namespace Dumux

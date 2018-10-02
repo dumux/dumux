@@ -2,39 +2,36 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="4" NumberOfPoints="22">
-      <CellData Scalars="Sn">
-        <DataArray type="Float32" Name="Sn" NumberOfComponents="1" format="ascii">
-          0.714401 0.349245 0.297318 0.0336473
-        </DataArray>
-        <DataArray type="Float32" Name="Sw" NumberOfComponents="1" format="ascii">
-          0.285599 0.650755 0.702682 0.966353
-        </DataArray>
-        <DataArray type="Float32" Name="pn" NumberOfComponents="1" format="ascii">
-          186999 121275 123879 117922
-        </DataArray>
-        <DataArray type="Float32" Name="pw" NumberOfComponents="1" format="ascii">
-          184385 119183 121856 116490
-        </DataArray>
-        <DataArray type="Float32" Name="pc" NumberOfComponents="1" format="ascii">
-          2614.03 2092.72 2023.74 1432.07
-        </DataArray>
-        <DataArray type="Float32" Name="rhoW" NumberOfComponents="1" format="ascii">
-          1000 1000 1000 1000
-        </DataArray>
-        <DataArray type="Float32" Name="rhoN" NumberOfComponents="1" format="ascii">
-          1460 1460 1460 1460
-        </DataArray>
-        <DataArray type="Float32" Name="mobW" NumberOfComponents="1" format="ascii">
-          22.587 247.769 312.188 933.954
-        </DataArray>
-        <DataArray type="Float32" Name="mobN" NumberOfComponents="1" format="ascii">
-          989.77 245.533 177.857 2.08447
-        </DataArray>
+      <CellData Scalars="porosity">
         <DataArray type="Float32" Name="porosity" NumberOfComponents="1" format="ascii">
           0.1 0.1 0.3 0.3
         </DataArray>
-        <DataArray type="Float32" Name="temperature" NumberOfComponents="1" format="ascii">
-          293.15 293.15 293.15 293.15
+        <DataArray type="Float32" Name="pc" NumberOfComponents="1" format="ascii">
+          2614.11 2091.05 2024.13 1414.34
+        </DataArray>
+        <DataArray type="Float32" Name="S_aq" NumberOfComponents="1" format="ascii">
+          0.285556 0.652038 0.702397 0.96918
+        </DataArray>
+        <DataArray type="Float32" Name="p_aq" NumberOfComponents="1" format="ascii">
+          184557 119320 121961 116546
+        </DataArray>
+        <DataArray type="Float32" Name="rho_aq" NumberOfComponents="1" format="ascii">
+          1000 1000 1000 1000
+        </DataArray>
+        <DataArray type="Float32" Name="mob_aq" NumberOfComponents="1" format="ascii">
+          22.5775 249.234 311.805 943.527
+        </DataArray>
+        <DataArray type="Float32" Name="S_napl" NumberOfComponents="1" format="ascii">
+          0.714444 0.347962 0.297603 0.0308204
+        </DataArray>
+        <DataArray type="Float32" Name="p_napl" NumberOfComponents="1" format="ascii">
+          187171 121411 123985 117961
+        </DataArray>
+        <DataArray type="Float32" Name="rho_napl" NumberOfComponents="1" format="ascii">
+          1460 1460 1460 1460
+        </DataArray>
+        <DataArray type="Float32" Name="mob_napl" NumberOfComponents="1" format="ascii">
+          989.879 243.734 178.199 1.74053
         </DataArray>
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
           0 0 0 0
