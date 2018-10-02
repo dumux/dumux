@@ -81,7 +81,7 @@ public:
         stream << "\n# Runtime-specified parameters used:" << std::endl;
         usedRuntimeParams_.report(stream);
 
-        stream << "\n# Default parameters used:" << std::endl;
+        stream << "\n# Global default parameters used:" << std::endl;
         usedDefaultParams_.report(stream);
 
         const auto unusedParams = getUnusedKeys();
