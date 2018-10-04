@@ -360,7 +360,7 @@ public:
      * \note calling this turns this into a stationary assembler
      */
     void setTimeManager(std::shared_ptr<const TimeLoop> timeLoop)
-    { timeLoop_ = timeLoop_; isStationaryProblem_ = !(static_cast<bool>(timeLoop)); }
+    { timeLoop_ = timeLoop; isStationaryProblem_ = !(static_cast<bool>(timeLoop)); }
 
     /*!
      * \brief Sets the solution from which to start the time integration. Has to be

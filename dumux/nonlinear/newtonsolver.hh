@@ -110,6 +110,8 @@ public:
             partialReassembler_ = std::make_unique<Reassembler>(*assembler_);
     }
 
+    virtual ~NewtonSolver() {}
+
     //! the communicator for parallel runs
     const Communication& comm() const
     { return comm_; }
