@@ -174,7 +174,7 @@ public:
         fluidState.setSaturation(wPhaseIdx, sw_);
         fluidState.setSaturation(nPhaseIdx, 1 - sw_);
         pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
-        fluidState.setPressure(nPhaseIdx, pw - pc_);
+        fluidState.setPressure(nPhaseIdx, pw + pc_);
 
 
         typename FluidSystem::ParameterCache paramCache;
