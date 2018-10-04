@@ -47,7 +47,7 @@ template<class TypeTag> class TwoPTransport;
 namespace Properties {
 NEW_TYPE_TAG(TwoPTransport, INHERITS_FROM(CCTpfaModel, Transport));
 // Set the grid type
-SET_TYPE_PROP(TwoPTransport, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(TwoPTransport, Grid, Dune::YaspGrid<2>);
 
 // Set the problem type
 SET_TYPE_PROP(TwoPTransport, Problem, TwoPTransport<TypeTag>);
@@ -57,7 +57,11 @@ SET_PROP(TwoPTransport, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+#if PROBLEM == 2
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
+#else
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+#endif
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
@@ -73,8 +77,8 @@ public:
 
 // Enable caching
 SET_BOOL_PROP(TwoPTransport, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(TwoPTransport, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(TwoPTransport, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(TwoPTransport, EnableGridFluxVariablesCache, false);
+SET_BOOL_PROP(TwoPTransport, EnableFVGridGeometryCache, false);
 } // end namespace Properties
 
 /*!
@@ -99,10 +103,23 @@ class TwoPTransport : public PorousMediumFlowProblem<TypeTag>
         transportEqIdx = Indices::transportEqIdx,
         saturationIdx = Indices::saturationIdx
     };
+    static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
     TwoPTransport(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    : ParentType(fvGridGeometry)
+    {
+        Scalar inletWidth = getParam<Scalar>("Problem.InletWidth", 1.0);
+        GlobalPosition inletCenter = this->fvGridGeometry().bBoxMax();
+        inletCenter[0] *= 0.5;
+
+        inletLeftCoord_ = inletCenter;
+        inletLeftCoord_[0] -=0.5*inletWidth;
+        inletRightCoord_ = inletCenter;
+        inletRightCoord_[0] +=0.5*inletWidth;
+
+        inFlux_ = getParam<Scalar>("Problem.InjectionFlux", 1e-4);
+    }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -113,12 +130,25 @@ public:
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+#if PROBLEM == 2
+        BoundaryTypes values;
+        if (onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos))
+        {
+            values.setAllDirichlet();
+        }
+        else
+        {
+            values.setAllNeumann();
+        }
+        return values;
+#else
         BoundaryTypes values;
         if (onLeftBoundary_(globalPos))
             values.setAllDirichlet();
         else
             values.setAllNeumann();
         return values;
+#endif
     }
 
     /*!
@@ -132,8 +162,16 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        if (onLeftBoundary_(globalPos))
-                values[saturationIdx] = 0.8;
+//        if (onLeftBoundary_(globalPos))
+//                values[saturationIdx] = 0.8;
+
+        using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
+        values[saturationIdx] = 1.0;
+
+        if (isInlet(globalPos))
+        {
+            values[saturationIdx] = 0.0;
+        }
 
         return values;
     }
@@ -166,7 +204,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[saturationIdx] = 0;
+        values[saturationIdx] = 1.0;
 
         return values;
     }
@@ -204,7 +242,25 @@ private:
         return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
     }
 
+    bool isInlet(const GlobalPosition& globalPos) const
+    {
+        if (!onUpperBoundary_(globalPos))
+            return false;
+
+        for (int i = 0; i < dimWorld; i++)
+        {
+            if (globalPos[i] < inletLeftCoord_[i] - eps_)
+                return false;
+            if (globalPos[i] > inletRightCoord_[i] + eps_)
+                return false;
+        }
+        return true;
+    }
+
     static constexpr Scalar eps_ = 1e-6;
+    Scalar inFlux_;
+    GlobalPosition inletLeftCoord_;
+    GlobalPosition inletRightCoord_;
 };
 
 } // end namespace Dumux

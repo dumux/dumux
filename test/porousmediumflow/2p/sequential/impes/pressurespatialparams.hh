@@ -60,24 +60,30 @@ public:
     TwoPTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
-        lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
+        materialLawParamsBackground_.setSwr(0.);
+        materialLawParamsBackground_.setSnr(0.);
 
-        // residual saturations
-        lensMaterialParams_.setSwr(0.0);
-        lensMaterialParams_.setSnr(0.0);
-        outerMaterialParams_.setSwr(0.0);
-        outerMaterialParams_.setSnr(0.0);
+        materialLawParamsLenses_.setSwr(0.);
+        materialLawParamsLenses_.setSnr(0.);
 
-        // parameters for the Van Genuchten law
-        // alpha and n
-        lensMaterialParams_.setLambda(2.0);
-        lensMaterialParams_.setPe(0);
-        outerMaterialParams_.setLambda(2.0);
-        outerMaterialParams_.setPe(0);
+        //parameters for Brooks-Corey law
 
-        lensK_ = 1.0e-7;
-        outerK_ = 1.0e-7;
+        // entry pressures
+        materialLawParamsBackground_.setPe(getParam<Scalar>("SpatialParams.BackgroundEntryPressure", 0.0));
+        materialLawParamsLenses_.setPe(getParam<Scalar>("SpatialParams.LenseEntryPressure", 0.0));
+
+        materialLawParamsBackground_.setLambda(getParam<Scalar>("SpatialParams.BackgroundLambda", 3.0));
+        materialLawParamsLenses_.setLambda(getParam<Scalar>("SpatialParams.LenseLambda", 2.0));
+
+        permBackground_ = getParam<Scalar>("SpatialParams.BackgroundPermeability", 1e-10);
+        permLenses_ = getParam<Scalar>("SpatialParams.LensPermeability", 1e-10);
+
+        lensOneLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensOneLowerLeft", GlobalPosition(0.0));
+        lensOneUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensOneUpperRight", GlobalPosition(0.0));
+        lensTwoLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensTwoLowerLeft", GlobalPosition(0.0));
+        lensTwoUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensTwoUpperRight", GlobalPosition(0.0));
+        lensThreeLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensThreeLowerLeft", GlobalPosition(0.0));
+        lensThreeUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensThreeUpperRight", GlobalPosition(0.0));
 
         wettingSaturation_.resize(fvGridGeometry->numDofs(),0.0);
     }
@@ -98,9 +104,15 @@ public:
     {
 
         // do not use a less permeable lens in the test with inverted wettability
-        if (isInLens_(element.geometry().center()))
-            return lensK_;
-        return outerK_;
+        auto globalPos = element.geometry().center();
+        if (isLensOne(globalPos))
+            return permLenses_;
+        else if (isLensTwo(globalPos))
+            return permLenses_;
+        else if (isLensThree(globalPos))
+            return permLenses_;
+        else
+            return permBackground_;
     }
 
     /*!
@@ -109,7 +121,7 @@ public:
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.2; }
+    { return 0.4; }
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law.
@@ -125,10 +137,15 @@ public:
                                                const SubControlVolume& scv,
                                                const ElementSolution& elemSol) const
     {
-        // do not use different parameters in the test with inverted wettability
-        if (isInLens_(element.geometry().center()))
-            return lensMaterialParams_;
-        return outerMaterialParams_;
+        auto globalPos = element.geometry().center();
+        if (isLensOne(globalPos))
+            return materialLawParamsLenses_;
+        else if (isLensTwo(globalPos))
+            return materialLawParamsLenses_;
+        else if (isLensThree(globalPos))
+            return materialLawParamsLenses_;
+        else
+            return materialLawParamsBackground_;
     }
 
     /*!
@@ -161,22 +178,50 @@ public:
     { wettingSaturation_ = sat;}
 
 private:
-    bool isInLens_(const GlobalPosition &globalPos) const
+    bool isLensOne(const GlobalPosition& globalPos) const
     {
-        for (int i = 0; i < dimWorld; ++i) {
-            if (globalPos[i] < lensLowerLeft_[i] + eps_ || globalPos[i] > lensUpperRight_[i] - eps_)
+        for (int i = 0; i < dimWorld; i++)
+        {
+            if (globalPos[i] < lensOneLowerLeft_[i] - eps_ || globalPos[i] > lensOneUpperRight_[i] + eps_)
+            {
                 return false;
+            }
+        }
+        return true;
+    }
+    bool isLensTwo(const GlobalPosition& globalPos) const
+    {
+        for (int i = 0; i < dimWorld; i++)
+        {
+            if (globalPos[i] < lensTwoLowerLeft_[i] - eps_ || globalPos[i] > lensTwoUpperRight_[i] + eps_)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    bool isLensThree(const GlobalPosition& globalPos) const
+    {
+        for (int i = 0; i < dimWorld; i++)
+        {
+            if (globalPos[i] < lensThreeLowerLeft_[i] - eps_ || globalPos[i] > lensThreeUpperRight_[i] + eps_)
+            {
+                return false;
+            }
         }
         return true;
     }
 
-    GlobalPosition lensLowerLeft_;
-    GlobalPosition lensUpperRight_;
-
-    Scalar lensK_;
-    Scalar outerK_;
-    MaterialLawParams lensMaterialParams_;
-    MaterialLawParams outerMaterialParams_;
+    MaterialLawParams materialLawParamsBackground_;
+    MaterialLawParams materialLawParamsLenses_;
+    PermeabilityType permBackground_;
+    PermeabilityType permLenses_;
+    GlobalPosition lensOneLowerLeft_;
+    GlobalPosition lensOneUpperRight_;
+    GlobalPosition lensTwoLowerLeft_;
+    GlobalPosition lensTwoUpperRight_;
+    GlobalPosition lensThreeLowerLeft_;
+    GlobalPosition lensThreeUpperRight_;
 
     std::vector<Scalar> wettingSaturation_;
 

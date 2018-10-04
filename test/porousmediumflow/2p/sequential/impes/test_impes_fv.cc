@@ -21,6 +21,8 @@
  *
  * \brief test for the two-phase porousmedium flow model
  */
+#define PROBLEM 2
+
 #include <config.h>
 
 #include <ctime>
@@ -195,11 +197,11 @@ int main(int argc, char** argv) try
     twoPTransportAssembler->setLinearSystem(As, rs);
 
     // the linear solver
-    using LinearSolver = AMGBackend<TwoPImpesTT>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, twoPImpesFvGridGeometry->dofMapper());
+    using LinearSolver = UMFPackBackend;
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     //! set some check points for the time loop
-    timeLoop->setPeriodicCheckPoint(1.0e4);
+    timeLoop->setPeriodicCheckPoint(4);
 
     //! start the time loop
     timeLoop->start();
@@ -223,8 +225,12 @@ int main(int argc, char** argv) try
             {
                 if (scvf.boundary())
                 {
-                    const auto idx = scvf.outsideScvIdx();
-                    satVals[idx] = elemVolVars[idx].saturation(0);
+                    const auto bcTypes = twoPImpesProblem->boundaryTypes(element, scvf);
+                    if (bcTypes.hasOnlyDirichlet())
+                    {
+                        const auto idx = scvf.outsideScvIdx();
+                        satVals[idx] = 1.0;
+                    }
                 }
             }
         }
@@ -280,6 +286,10 @@ int main(int argc, char** argv) try
                         FluxVariables fluxVars;
                         fluxVars.init(*twoPImpesProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
                         volumeFlux[idx] = fluxVars.advectiveFlux(0, upwindTerm);
+                    }
+                    else
+                    {
+                        //volumeFlux[idx] = -0.1;
                     }
                 }
             }
