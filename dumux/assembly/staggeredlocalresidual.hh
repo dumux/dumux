@@ -286,28 +286,35 @@ public:
                             const SubControlVolumeFace& scvf,
                             SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands) const
     {
-        FaceResidualValue storage(0.0);
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
         auto prevFaceStorage = prevElemVolVars[scv].density() * prevElemFaceVars[scvf].velocitySelf();
         const auto extrusionFactor = curElemVolVars[scv].extrusionFactor();
 
-        simpleMomentumBalanceSummands.RHS = std::move(prevFaceStorage);
+        auto RHSContribution = std::move(prevFaceStorage);
         // multiply by 0.5 because we only consider half of a staggered control volume here
-        simpleMomentumBalanceSummands.RHS *= (0.5*scv.volume()*extrusionFactor);
-        simpleMomentumBalanceSummands.RHS /= timeLoop_->timeStepSize();
+        RHSContribution *= (0.5*scv.volume()*extrusionFactor);
+        RHSContribution /= timeLoop_->timeStepSize();
+
+        simpleMomentumBalanceSummands.RHS += RHSContribution;
 
         //compute contribution to selfCoefficient
         if(scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(Indices::velocity(scvf.directionIndex()))){
             auto curFaceStorage = - curElemVolVars[scv].density() * curElemFaceVars[scvf].velocitySelf();
-            simpleMomentumBalanceSummands.RHS = std::move(curFaceStorage);
-            simpleMomentumBalanceSummands.RHS *= (0.5*scv.volume()*extrusionFactor);
-            simpleMomentumBalanceSummands.RHS /= timeLoop_->timeStepSize();
+
+            auto secondRHSContribution = std::move(curFaceStorage);
+            secondRHSContribution *= (0.5*scv.volume()*extrusionFactor);
+            secondRHSContribution /= timeLoop_->timeStepSize();
+
+            simpleMomentumBalanceSummands.RHS += secondRHSContribution;
         }
         else {
             auto curFaceStorage = curElemVolVars[scv].density();
-            simpleMomentumBalanceSummands.selfCoefficient = std::move(curFaceStorage);
-            simpleMomentumBalanceSummands.selfCoefficient *= (0.5*scv.volume()*extrusionFactor);
-            simpleMomentumBalanceSummands.selfCoefficient /= timeLoop_->timeStepSize();
+
+            auto selfCoefficientContribution = std::move(curFaceStorage);
+            selfCoefficientContribution *= (0.5*scv.volume()*extrusionFactor);
+            selfCoefficientContribution /= timeLoop_->timeStepSize();
+
+            simpleMomentumBalanceSummands.selfCoefficient += selfCoefficientContribution;
         }
     }
 
