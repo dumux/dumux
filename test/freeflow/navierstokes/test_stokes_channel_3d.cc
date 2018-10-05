@@ -124,6 +124,7 @@ int main(int argc, char** argv) try
     SolutionVector x;
     x[cellCenterIdx].resize(numDofsCellCenter);
     x[faceIdx].resize(numDofsFace);
+    problem->applyInitialSolution(x);
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);

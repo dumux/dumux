@@ -4,7 +4,7 @@ TEnd = 2 # [s]
 
 [Grid]
 UpperRight = 10 1
-Cells = 10 5
+Cells = 50 25
 
 [Problem]
 Name = test_channel_navierstokes # name passed to the output routines

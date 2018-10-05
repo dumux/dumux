@@ -13,14 +13,14 @@ LiquidDensity = 1
 LiquidKinematicViscosity = 0.025
 
 [ Newton ]
-MaxSteps = 100
+MaxSteps = 1500
 MaxRelativeShift = 1e-5
 
 [Vtk]
 WriteFaceData = false
 
 [Algorithm]
-AlgorithmType = 2 #SIMPLER
+AlgorithmType = 2
 
 [Underrelaxation]
 HundredTimesVelocityUnderrelaxationFactor = 0.9

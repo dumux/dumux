@@ -1,7 +1,7 @@
 # Increase the number of cells and the time to reach equilibrium
 # to match the results of Ghia et al. (1982) for Re = 1000
 [TimeLoop]
-DtInitial = 2 # [s]
+DtInitial = 2e-5 # [s]
 TEnd = 50 # [s] set to 200 for reproducing Ghia et al. (1982)
 
 [Grid]
@@ -19,7 +19,7 @@ LiquidKinematicViscosity = 1e-3
 
 [Newton]
 MaxSteps = 100
-MaxRelativeShift = 1e-10
+MaxRelativeShift = 1e-7
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-8

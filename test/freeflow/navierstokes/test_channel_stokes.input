@@ -4,7 +4,7 @@ TEnd = 2 # [s]
 
 [Grid]
 UpperRight = 10 1
-Cells = 10 5
+Cells = 100 50
 
 [Problem]
 Name = test_channel_stokes # name passed to the output routines

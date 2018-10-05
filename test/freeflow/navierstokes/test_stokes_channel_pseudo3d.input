@@ -13,7 +13,7 @@ LiquidDensity = 1e3
 LiquidKinematicViscosity = 1e-6
 
 [Newton]
-MaxSteps = 10
+MaxSteps = 100
 MaxRelativeShift = 1e-8
 
 [Assembly]
@@ -22,3 +22,6 @@ NumericDifference.BaseEpsilon = 1e-8
 
 [Vtk]
 WriteFaceData = false
+
+[Underrelaxation]
+HundredTimesVelocityUnderrelaxationFactor = 30

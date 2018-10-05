@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 1e-12 # [s]
+DtInitial = 1e-13 # [s]
 TEnd = 1e-2 # [s]
 
 [Grid]
@@ -20,8 +20,12 @@ LiquidKinematicViscosity = 0.1
 NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
-MaxSteps = 10
+MaxSteps = 100
 MaxRelativeShift = 1e-5
+TargetSteps = 100
 
 [Vtk]
 WriteFaceData = false
+
+[Underrelaxation]
+HundredTimesVelocityUnderrelaxationFactor = 70

@@ -229,7 +229,7 @@ public:
         values[Indices::velocityXIdx] = 0.0;
         values[Indices::velocityYIdx] = 0.0;
 
-        return values;
+        return /*values*/dirichletAtPos(globalPos);
     }
 
    /*!
