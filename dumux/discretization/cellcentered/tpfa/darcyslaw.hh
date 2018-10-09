@@ -40,7 +40,7 @@ class DarcysLawImplementation;
 /*!
  * \ingroup CCTpfaDiscretization
  * \brief Darcy's law for cell-centered finite volume schemes with two-point flux approximation
- * \note Darcy's law is speialized for network and surface grids (i.e. if grid dim < dimWorld)
+ * \note Darcy's law is specialized for network and surface grids (i.e. if grid dim < dimWorld)
  * \tparam Scalar the scalar type for scalar physical quantities
  * \tparam FVGridGeometry the grid geometry
  * \tparam isNetwork whether we are computing on a network grid embedded in a higher world dimension
@@ -51,7 +51,7 @@ class CCTpfaDarcysLaw;
 /*!
  * \ingroup CCTpfaDiscretization
  * \brief Darcy's law for cell-centered finite volume schemes with two-point flux approximation
- * \note Darcy's law is speialized for network and surface grids (i.e. if grid dim < dimWorld)
+ * \note Darcy's law is specialized for network and surface grids (i.e. if grid dim < dimWorld)
  */
 template <class TypeTag>
 class DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
