@@ -31,40 +31,20 @@
 namespace Dumux
 {
 
-// forward declaration
-template <class TypeTag>
-class SweVolumeVariablesImplementation;
-
-/*!
- * \ingroup SweModel
- * \brief Volume variables for the shallow water equations
- *
- */
-template <class TypeTag>
-using SweVolumeVariables = SweVolumeVariablesImplementation<TypeTag>;
 /*!
  * \ingroup SweModel
  * \brief Volume variables for the shallow water equations model.
  */
 template <class TypeTag>
-class SweVolumeVariablesImplementation
+class SweVolumeVariables
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    //using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    //using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+    //using ParentType = SweVolumeVariables<Traits>;
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
    enum {
-         // grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
         // indices for primary variables
         massBalanceIdx = Indices::massBalanceIdx,
         momentumXBalanceIdx = Indices::momentumXBalanceIdx,
@@ -79,7 +59,7 @@ public:
     void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume &scv)
+                const Scv &scv)
     {
         priVars_ = extractDofPriVars(elemSol, scv);
         auto h = priVars_[waterdepthIdx];

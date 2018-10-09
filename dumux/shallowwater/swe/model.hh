@@ -47,6 +47,7 @@
 namespace Dumux
 {
 
+template <class TypeTag>
 struct SweModelTraits
 {
     using Indices = SweIndices;
@@ -60,7 +61,20 @@ struct SweModelTraits
 };
 
 
-
+/*!
+ * \ingroup TwoPModel
+ * \brief Traits class for the two-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam SSY The solid system type
+ * \tparam SST The solid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ * \tparam SR The class used for reconstruction of
+ *            non-wetting phase saturations in scvs
+ */
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the shallow water model
@@ -102,11 +116,16 @@ SET_INT_PROP(Swe, Manning, 1);
 SET_INT_PROP(Swe, Chezy, 2);
 SET_INT_PROP(Swe, Nikuradse, 3);
 
+//! The model traits
+SET_TYPE_PROP(Swe, ModelTraits, SweModelTraits<TypeTag>);
+
 //! The local residual
 SET_TYPE_PROP(Swe, LocalResidual, SweResidual<TypeTag>);
 
 //! The volume variables
 SET_TYPE_PROP(Swe, VolumeVariables, SweVolumeVariables<TypeTag>);
+
+
 
 //! The flux variables
 SET_TYPE_PROP(Swe, FluxVariables, SweFluxVariables<TypeTag>);

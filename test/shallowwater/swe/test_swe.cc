@@ -23,8 +23,6 @@
  */
 #include <config.h>
 
-#include "sweproblem.hh"
-
 #include <ctime>
 #include <iostream>
 
@@ -33,6 +31,8 @@
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
+
+#include <dune/grid/uggrid.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -46,11 +46,13 @@
 #include <dumux/discretization/methods.hh>
 
 #include <dumux/assembly/fvassembler.hh>
+#include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/hdf5reader.hh>
 #include <dumux/io/xdmfwriter.hh>
 
+#include "sweproblem.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -78,6 +80,7 @@ void usage(const char *progName, const std::string &errorMsg)
     }
 }
 
+
 ////////////////////////
 // the main function
 ////////////////////////
@@ -99,14 +102,7 @@ int main(int argc, char** argv) try
     // parse command line arguments and input file
     Parameters::init(argc, argv, usage);
 
-    // try to create a grid (from the given grid file or the input file)
-    /*old-way
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    GridCreator::makeGrid();
-    GridCreator::loadBalance();
-    */
-
-    //xdmf-way
+    //Read a triangular grid from xdmf/HDF5
     typedef Dune::UGGrid<2> GridType;
     //typedef Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming> GridType;
     Dune::Dumux::HDF5Reader<GridType> reader("init.hdf5");
@@ -120,11 +116,6 @@ int main(int argc, char** argv) try
     // run instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
-    // we compute on the leaf grid view
-    /* old-way
-    const auto& leafGridView = GridCreator::grid().leafGridView();
-    */
-
     //xdmf-way:
     const auto& leafGridView  = reader.grid().leafGridView();
 
@@ -135,12 +126,12 @@ int main(int argc, char** argv) try
 
     // the problem (initial and boundary conditions)
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto spatialParams = std::make_shared<typename Problem::SpatialParams>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(fvGridGeometry, spatialParams);
 
     // set the inital values
     problem->setInputData(elementdata);
     problem->spatialParams().setElementdata(elementdata);
-
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);

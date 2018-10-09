@@ -1,0 +1,27 @@
+[TimeLoop]
+DtInitial = 0.01 # [s]
+TEnd = 10 # [s]
+MaxTimeStepSize = 0.1 # [s]
+
+[Grid]
+File = "mesh.dgf"
+
+[Problem]
+Name = test_swe # name passed to the output routines
+OutputInterval = 10
+
+[Newton]
+#EnableAbsoluteResidualCriterion = "true"
+#EnableChop = "false"
+#EnableShiftCriterion = "false"
+#MaxAbsoluteResidual = "1e-6"
+#MaxRelativeShift = "1e-8"
+#MaxSteps = "8"
+#ResidualReduction = "1e-6"
+#SatisfyResidualAndShiftCriterion = "false"
+#TargetSteps = "5"
+#UseLineSearch = "true"
+
+[LinearSolver]
+#PreconditionerIterations = 1
+#ResidualReduction = 1.0E-6

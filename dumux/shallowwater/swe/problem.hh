@@ -43,77 +43,58 @@ template<class TypeTag>
 class SweProblem : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
-
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Grid = typename GridView::Grid;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Element = typename GridView::template Codim<0>::Entity;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    enum {
-        dim = Grid::dimension,
-        dimWorld = Grid::dimensionworld
-      };
-    // TODO: dim or dimWorld appropriate here?
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
 
     Scalar getH(const Element& element)
     {
-        return asImp_().getH();
+        return this->asImp_().getH();
     }
 
 
     Scalar getU(const Element& element)
     {
-        return asImp_().getU();
+        return this->asImp_().getU();
     }
 
     Scalar getV(const Element& element)
     {
-        return asImp_().getV();
+        return this->asImp_().getV();
     }
 
     Scalar getZ(const Element& element)
     {
-        return asImp_().getZ();
+        return this->asImp_().getZ();
     }
 
     Scalar getKs(const Element& element)
     {
-        return asImp_().getKs();
+        return this->asImp_().getKs();
     }
 
     Scalar getFrictionH(const Element& element)
     {
-        return asImp_().getFrictionH();
+        return this->asImp_().getFrictionH();
     }
 
     Scalar getFrictionUstarH(const Element& element)
     {
-        return asImp_().getFrictionUstarH();
+        return this->asImp_().getFrictionUstarH();
     }
 
     Scalar getGravity(const Element& element)
     {
-        return asImp_().getGravity();
+        return this->asImp_().getGravity();
     }
 
 private:
 
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
 
     GlobalPosition gravity_;
 };

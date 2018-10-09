@@ -35,19 +35,18 @@ namespace Dumux
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <int dimension, int numEquations, int PVOffset = 0>
 struct SweIndices
 {
 
     static constexpr int dimXIdx = 0; //!< Index of the x-component of a vector of size dim
     static constexpr int dimYIdx = 1; //!< Index of the y-component of a vector of size dim
 
-    static constexpr int massBalanceIdx = PVOffset + 0; //!< Index of the mass balance equation
-    static constexpr int momentumXBalanceIdx = PVOffset + 1; //!< Index of the x momentum balance equation
-    static constexpr int momentumYBalanceIdx = PVOffset + 2; //!< Index of the y momentum balance equation
+    static constexpr int massBalanceIdx = 0; //!< Index of the mass balance equation
+    static constexpr int momentumXBalanceIdx = 1; //!< Index of the x momentum balance equation
+    static constexpr int momentumYBalanceIdx = 2; //!< Index of the y momentum balance equation
 
-    static constexpr auto dim = dimension;
-    static constexpr auto numEq = numEquations;
+    static constexpr auto dim = 2; //!< We have allways two-dimensional SWEs
+    static constexpr auto numEq = 3;  //!< SWEs have allways 3 balance equations for mass and momentum
 
     static constexpr int waterdepthIdx = massBalanceIdx; //!< Index of the velocity in a solution vector
     static constexpr int velocityXIdx = momentumXBalanceIdx; //!< Index of the velocity in a solution vector

@@ -33,6 +33,9 @@
 #include <dumux/shallowwater/numericalfluxes/exactriemannsolver.hh>
 #include <dumux/shallowwater/numericalfluxes/fluxrotation.hh>
 #include <dumux/shallowwater/numericalfluxes/boundaryFluxes.hh>
+
+#include <dune/grid/uggrid.hh>
+
 #include<iostream>
 #include<fstream>
 #include<string>
@@ -44,28 +47,33 @@ namespace Dumux
 {
 /*!
  * \ingroup SweTests
- * \brief A simple dambreak test for the shallow water equations
+ * \brief Shallow water equations
  */
-template <class TypeTag>
-class SweTestProblem;
-
+template <class TypeTag> class SweTestProblem;
 
 // Specify the properties for the problem
 namespace Properties
 {
-    NEW_TYPE_TAG(SweTestTypeTag, INHERITS_FROM(CCTpfaModel, Swe, SweTestSpatialParams));
 
-// Use 2d YaspGrid
-//SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::YaspGrid<2>);
+//NEW_TYPE_TAG(SweTestTypeTag, INHERITS_FROM(CCTpfaModel, Swe, SweTestSpatialParams));
+NEW_TYPE_TAG(SweTestTypeTag, INHERITS_FROM(CCTpfaModel, Swe));
+
 SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::UGGrid<2>);
 //SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>);
+
 
 // Set the physical problem to be solved
 SET_TYPE_PROP(SweTestTypeTag, Problem,SweTestProblem<TypeTag>);
 
-SET_TYPE_PROP(SweTestTypeTag, SpatialParams, SweTestSpatialParams<TypeTag>);
+// Set the spatial parameters
+SET_PROP(SweTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = SweTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
-} // end namespace Dumux
+} // end namespace Properties
 
 
 
@@ -84,22 +92,27 @@ SET_TYPE_PROP(SweTestTypeTag, SpatialParams, SweTestSpatialParams<TypeTag>);
  * simulation time is 10 seconds
  */
 template <class TypeTag>
-// evtl von SweProblem ableiten?
+// evtl von SweProblem ableiten? class SweTestProblem : public SweProblem<TypeTag>
 class SweTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
+    //using ParentType = SweProblem<TypeTag>;
     using ParentType = PorousMediumFlowProblem<TypeTag>;
+
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
 
     enum {
@@ -136,8 +149,9 @@ public:
      * \param timeManager The Dumux TimeManager for simulation management.
      * \param gridView The grid view on the spatial domain of the problem
      */
-    SweTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    SweTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                   std::shared_ptr<typename ParentType::SpatialParams> spatialParams)
+    : ParentType(fvGridGeometry, spatialParams)
     {
         name_ = getParam<std::string>("Problem.Name");
     }

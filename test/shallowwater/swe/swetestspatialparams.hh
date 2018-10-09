@@ -25,36 +25,28 @@
 #ifndef DUMUX_SWE_TEST_SPATIALPARAMS_HH
 #define DUMUX_SWE_TEST_SPATIALPARAMS_HH
 
+#include <dumux/material/spatialparams/fv.hh>
 
-namespace Dumux
-{
+namespace Dumux{
 
-//forward declaration
-template<class TypeTag>
-class SweTestSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(SweTestSpatialParams);
-}
 
 /*!
  * \ingroup SweTests
  * \brief The spatial parameters class for the test problem using the
  *        shallow water model
  */
-template<class TypeTag>
-class SweTestSpatialParams //: public FVSpatialParamsSwe<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class SweTestSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         SweTestSpatialParams<FVGridGeometry, Scalar>>
 {
-    //using ParentType = FVSpatialParamsSwe<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    //using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexSet = typename GridView::IndexSet;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ThisType = SweTestSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
     enum {
         dim=GridView::dimension,
@@ -62,10 +54,10 @@ class SweTestSpatialParams //: public FVSpatialParamsSwe<TypeTag>
     };
 
     using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
-    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    SweTestSpatialParams(const Problem& problem)
+    SweTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {}
 
     /*! \brief Define the porosity in [-].

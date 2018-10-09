@@ -89,7 +89,6 @@ class ShallowWaterAdvectiveFlux
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    //using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using Element = typename GridView::template Codim<0>::Entity;
