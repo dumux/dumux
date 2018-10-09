@@ -26,7 +26,7 @@
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/shallowwater/properties.hh>
-#include <dumux/porousmediumflow/problem.hh>
+//#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/shallowwater/swe/problem.hh>
 #include <dumux/shallowwater/swe/model.hh>
 #include "swetestspatialparams.hh"
@@ -211,9 +211,9 @@ public:
     }
 
     NeumannFluxes neumann(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace& scvf) const
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolVars,
+                          const SubControlVolumeFace& scvf) const
     {
         NeumannFluxes values(0.0);
 

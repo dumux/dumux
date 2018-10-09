@@ -51,6 +51,31 @@ class SweProblem : public FVProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+
+        /*!
+     * \brief Constructor, passing the spatial parameters
+     *
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param spatialParams The spatial parameter class
+     */
+    SweProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                            std::shared_ptr<SpatialParams> spatialParams)
+    : ParentType(fvGridGeometry)
+    , spatialParams_(spatialParams)
+    {}
+
+    /*!
+     * \brief Constructor, constructing the spatial parameters
+     *
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    SweProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : SweProblem(fvGridGeometry,
+                              std::make_shared<SpatialParams>(fvGridGeometry))
+    {}
+
 
     Scalar getH(const Element& element)
     {
@@ -93,10 +118,26 @@ public:
         return this->asImp_().getGravity();
     }
 
-private:
+    /*!
+     * \brief Returns the spatial parameters object.
+     */
+    SpatialParams &spatialParams()
+    { return *spatialParams_; }
+
+    /*!
+     * \brief Returns the spatial parameters object.
+     */
+    const SpatialParams &spatialParams() const
+    { return *spatialParams_; }
+
+    // \}
 
 
+protected:
     GlobalPosition gravity_;
+
+    // material properties
+    std::shared_ptr<SpatialParams> spatialParams_;
 };
 
 }

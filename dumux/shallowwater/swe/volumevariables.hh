@@ -42,7 +42,6 @@ class SweVolumeVariables
     //using ParentType = SweVolumeVariables<Traits>;
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
    enum {
         // indices for primary variables
@@ -55,6 +54,8 @@ class SweVolumeVariables
     };
 
 public:
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+
     template<class ElemSol, class Problem, class Element, class Scv>
     void update(const ElemSol &elemSol,
                 const Problem &problem,

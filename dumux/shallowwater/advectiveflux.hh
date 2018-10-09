@@ -30,6 +30,8 @@
 
 namespace Dumux
 {
+
+/*
 template<class TypeTag>
 class ShallowWaterAdvectiveFluxCacheFiller
 {
@@ -51,6 +53,8 @@ public:
                      const FluxVariablesCacheFiller& fluxVarsCacheFiller)
     {}
 };
+*/
+
 
 /*!
  * \ingroup CCTpfaDiscretization
@@ -68,7 +72,7 @@ class ShallowWaterAdvectiveFluxCache
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
 
 public:
-    using Filler = ShallowWaterAdvectiveFluxCacheFiller<TypeTag>;
+    //using Filler = ShallowWaterAdvectiveFluxCacheFiller<TypeTag>;
 
     void updateAdvection(const Problem& problem,
                          const Element& element,

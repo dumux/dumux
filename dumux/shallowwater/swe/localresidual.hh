@@ -44,7 +44,7 @@ class SweResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
@@ -87,12 +87,12 @@ public:
      * \note The volVars can be different to allow computing
      *       the implicit euler time derivative here
      */
-    ResidualVector computeStorage(const Problem& problem,
+    NumEqVector computeStorage(const Problem& problem,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars) const
     {
         // partial time derivative of the phase mass
-        ResidualVector storage(0.0);
+        NumEqVector storage(0.0);
         storage[massBalanceIdx] = volVars.getH();
         storage[momentumXBalanceIdx] = volVars.getH() * volVars.getU();
         storage[momentumYBalanceIdx] = volVars.getH() * volVars.getV();
@@ -109,14 +109,17 @@ public:
      * \param elemVolVars The volume variables of the current element
      * \param scvf The sub control volume face to compute the flux on
     */
-    ResidualVector computeFlux(const Problem& problem,
+    NumEqVector computeFlux(const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
                                const ElementVolumeVariables& elemVolVars,
                                const SubControlVolumeFace& scvf,
                                const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        ResidualVector flux(0.0);
+        //FluxVariables fluxVars;
+        //fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+
+        NumEqVector flux(0.0);
         auto numFlux = AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
         flux = numFlux;// + turbFlux;
 

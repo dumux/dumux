@@ -88,24 +88,18 @@ namespace Properties {
 //! The type tag for the Swe inherits from shallow water
 NEW_TYPE_TAG(Swe, INHERITS_FROM(ShallowWater));
 
-///////////////////////////////////////////////////////////////////////////
-// default property values for shallow water model
-///////////////////////////////////////////////////////////////////////////
-SET_BOOL_PROP(Swe, EnableNumericalFlux, true); //!< Enable numerical flux (e.g. Riemann solver)
-SET_BOOL_PROP(Swe, EnableTurbulenceModel, false); //!< The turbulence model for the momentum equations
-
 
 /*!
 * \brief The two-dimensional shallow water equations have allways 3 equations.
 */
 //SET_INT_PROP(Swe, NumEq, 3);
 //SET_INT_PROP(Swe, NumPhases, 1);
-//SET_BOOL_PROP(Swe, EnableAdvection, true);
-//SET_BOOL_PROP(Swe, SolutionDependentAdvection, true);
+//SET_BOOL_PROP(Swe, EnableAdvection, false);
 //SET_BOOL_PROP(Swe, EnableMolecularDiffusion, false);
-//SET_BOOL_PROP(Swe, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(Swe, SolutionDependentAdvection, false); //TODO check if this is correct
+SET_BOOL_PROP(Swe, SolutionDependentMolecularDiffusion, false);
 //SET_BOOL_PROP(Swe, EnableEnergyBalance, false);
-//SET_BOOL_PROP(Swe, SolutionDependentHeatConduction, false);
+SET_BOOL_PROP(Swe, SolutionDependentHeatConduction, false);
 SET_TYPE_PROP(Swe, AdvectionType, ShallowWaterAdvectiveFlux<TypeTag>);
 
 //! Set friction law indices
@@ -125,14 +119,11 @@ SET_TYPE_PROP(Swe, LocalResidual, SweResidual<TypeTag>);
 //! The volume variables
 SET_TYPE_PROP(Swe, VolumeVariables, SweVolumeVariables<TypeTag>);
 
-
-
 //! The flux variables
 SET_TYPE_PROP(Swe, FluxVariables, SweFluxVariables<TypeTag>);
 
 //! The flux variables cache class
 SET_TYPE_PROP(Swe, FluxVariablesCache, SweFluxVariablesCache<TypeTag>);
-
 
 //! The specific vtk output fields
 SET_TYPE_PROP(Swe, VtkOutputFields, SweVtkOutputFields<TypeTag>);
