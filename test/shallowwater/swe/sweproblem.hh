@@ -73,6 +73,12 @@ SET_PROP(SweTestTypeTag, SpatialParams)
     using type = SweTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
+// Enable caching
+SET_BOOL_PROP(SweTestTypeTag, EnableGridVolumeVariablesCache, false);
+SET_BOOL_PROP(SweTestTypeTag, EnableGridFluxVariablesCache, false);
+SET_BOOL_PROP(SweTestTypeTag, EnableFVGridGeometryCache, false);
+
+
 } // end namespace Properties
 
 
@@ -93,17 +99,17 @@ SET_PROP(SweTestTypeTag, SpatialParams)
  */
 template <class TypeTag>
 // evtl von SweProblem ableiten? class SweTestProblem : public SweProblem<TypeTag>
-class SweTestProblem : public PorousMediumFlowProblem<TypeTag>
+class SweTestProblem : public SweProblem<TypeTag>
 {
     //using ParentType = SweProblem<TypeTag>;
-    using ParentType = PorousMediumFlowProblem<TypeTag>;
+    using ParentType = SweProblem<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -204,12 +210,12 @@ public:
         return bcTypes;
     }
 
-    PrimaryVariables neumann(const Element& element,
+    NeumannFluxes neumann(const Element& element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolVars,
                              const SubControlVolumeFace& scvf) const
     {
-        PrimaryVariables values(0.0);
+        NeumannFluxes values(0.0);
 
         //we need the Riemann invariants to compute the values depending of the boundary type
         //since we use a weak imposition we do not have a dirichlet value. We impose fluxes

@@ -61,11 +61,12 @@ public:
                 const Element &element,
                 const Scv &scv)
     {
-        priVars_ = extractDofPriVars(elemSol, scv);
+        //priVars_ = extractDofPriVars(elemSol, scv);
+        const auto& priVars = elemSol[scv.localDofIndex()];
         auto h = priVars_[waterdepthIdx];
         auto u = priVars_[velocityXIdx];
         auto v = priVars_[velocityYIdx];
-        auto ks =  problem.spatialParams().ks(element, scv, elemSol);
+        auto ks =  problem.spatialParams().ks(element, scv);
         grav_ =  problem.spatialParams().grav();
         auto frictionlaw =  problem.spatialParams().frictionlaw();
 

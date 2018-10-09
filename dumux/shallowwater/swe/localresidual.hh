@@ -48,12 +48,11 @@ class SweResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    //using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    //old using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
@@ -114,7 +113,8 @@ public:
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
                                const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace& scvf) const
+                               const SubControlVolumeFace& scvf,
+                               const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         ResidualVector flux(0.0);
         auto numFlux = AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
