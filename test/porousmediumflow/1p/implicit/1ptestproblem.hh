@@ -37,6 +37,10 @@
 
 #include "1ptestspatialparams.hh"
 
+#if FORCHHEIMER
+#include <dumux/discretization/forchheimerslaw.hh>
+#endif
+
 namespace Dumux
 {
 template <class TypeTag>
@@ -71,6 +75,10 @@ SET_PROP(OnePTestTypeTag, SpatialParams)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
 };
+
+#ifdef FORCHHEIMER
+SET_TYPE_PROP(OnePTestTypeTag, AdvectionType, ForchheimersLaw<TypeTag>);
+#endif
 }
 
 /*!

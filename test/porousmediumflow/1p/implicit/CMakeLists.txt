@@ -37,6 +37,16 @@ dune_add_test(NAME test_1pbox
                                 ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pbox test_1pfv.input -Problem.Name 1ptestbox")
 
+dune_add_test(NAME test_1pforchheimercctpfa
+              SOURCES test_1pfv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfaTypeTag FORCHHEIMER=1
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/1pforchheimercctpfa.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1ptestforchheimertpfa-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pforchheimercctpfa"
+                        --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
+
 # a gstat test (becaue it's a random permeability field we can't test against a reference solution)
 dune_add_test(NAME test_1pwithgstat
               SOURCES test_1pfv.cc
