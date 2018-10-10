@@ -26,6 +26,8 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_GRID_FVGEOMETRY_HH
 #define DUMUX_DISCRETIZATION_BOX_GRID_FVGEOMETRY_HH
 
+#include <unordered_map>
+
 #include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
@@ -141,7 +143,7 @@ public:
 
     //! The total number of degrees of freedom
     std::size_t numDofs() const
-    { return this->gridView().size(dim); }
+    { return this->vertexMapper().size(); }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
@@ -210,7 +212,7 @@ public:
             // construct the sub control volume faces on the domain boundary
             for (const auto& intersection : intersections(this->gridView(), element))
             {
-                if (intersection.boundary())
+                if (intersection.boundary() && !intersection.neighbor())
                 {
                     const auto isGeometry = intersection.geometry();
                     // count
@@ -246,6 +248,43 @@ public:
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
                 }
+
+                // inform the grid geometry if we have periodic boundaries
+                else if (intersection.boundary() && intersection.neighbor())
+                {
+                    this->setPeriodic();
+
+                    // find the mapped periodic vertex of all vertices on periodic boundaries
+                    const auto fIdx = intersection.indexInInside();
+                    const auto numFaceVerts = referenceElement.size(fIdx, 1, dim);
+                    const auto eps = 1e-7*(elementGeometry.corner(1) - elementGeometry.corner(0)).two_norm();
+                    for (int localVIdx = 0; localVIdx < numFaceVerts; ++localVIdx)
+                    {
+                        const auto vIdx = referenceElement.subEntity(fIdx, 1, localVIdx, dim);
+                        const auto vIdxGlobal = this->vertexMapper().subIndex(element, vIdx, dim);
+                        const auto vPos = elementGeometry.corner(vIdx);
+
+                        const auto& outside = intersection.outside();
+                        const auto outsideGeometry = outside.geometry();
+                        for (const auto& isOutside : intersections(this->gridView(), outside))
+                        {
+                            // only check periodic vertices of the periodic neighbor
+                            if (isOutside.boundary() && isOutside.neighbor())
+                            {
+                                const auto fIdxOutside = isOutside.indexInInside();
+                                const auto numFaceVertsOutside = referenceElement.size(fIdxOutside, 1, dim);
+                                for (int localVIdxOutside = 0; localVIdxOutside < numFaceVertsOutside; ++localVIdxOutside)
+                                {
+                                    const auto vIdxOutside = referenceElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
+                                    const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
+                                    const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
+                                    if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)
+                                        periodicVertexMap_[vIdxGlobal] = this->vertexMapper().subIndex(outside, vIdxOutside, dim);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -266,6 +305,14 @@ public:
     bool dofOnBoundary(unsigned int dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
 
+    //! If a vertex / d.o.f. is on a periodic boundary
+    bool dofOnPeriodicBoundary(std::size_t dofIdx) const
+    { return periodicVertexMap_.count(dofIdx); }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    { return periodicVertexMap_.at(dofIdx); }
+
 private:
 
     const FeCache feCache_;
@@ -279,6 +326,9 @@ private:
 
     // vertices on the boudary
     std::vector<bool> boundaryDofIndices_;
+
+    // a map for periodic boundary vertices
+    std::unordered_map<std::size_t, std::size_t> periodicVertexMap_;
 };
 
 /*!
@@ -326,9 +376,9 @@ public:
     : ParentType(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::box>::isValid(gridView))
-            DUNE_THROW(Dune::InvalidStateException, "The box discretization method only works with zero overlap for parallel computations. "
-                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+        // if (!CheckOverlapSize<DiscretizationMethod::box>::isValid(gridView))
+        //     DUNE_THROW(Dune::InvalidStateException, "The box discretization method only works with zero overlap for parallel computations. "
+        //                                              << " Set the parameter \"Grid.Overlap\" in the input file.");
     }
 
     //! the vertex mapper is the dofMapper
@@ -351,7 +401,7 @@ public:
 
     //! The total number of degrees of freedom
     std::size_t numDofs() const
-    { return this->gridView().size(dim); }
+    { return this->vertexMapper().size(); }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
@@ -376,7 +426,7 @@ public:
             // store the sub control volume face indices on the domain boundary
             for (const auto& intersection : intersections(this->gridView(), element))
             {
-                if (intersection.boundary())
+                if (intersection.boundary() && !intersection.neighbor())
                 {
                     const auto isGeometry = intersection.geometry();
                     numScvf_ += isGeometry.corners();
@@ -393,6 +443,43 @@ public:
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
                 }
+
+                // inform the grid geometry if we have periodic boundaries
+                else if (intersection.boundary() && intersection.neighbor())
+                {
+                    this->setPeriodic();
+
+                    // find the mapped periodic vertex of all vertices on periodic boundaries
+                    const auto fIdx = intersection.indexInInside();
+                    const auto numFaceVerts = referenceElement.size(fIdx, 1, dim);
+                    const auto eps = 1e-7*(elementGeometry.corner(1) - elementGeometry.corner(0)).two_norm();
+                    for (int localVIdx = 0; localVIdx < numFaceVerts; ++localVIdx)
+                    {
+                        const auto vIdx = referenceElement.subEntity(fIdx, 1, localVIdx, dim);
+                        const auto vIdxGlobal = this->vertexMapper().subIndex(element, vIdx, dim);
+                        const auto vPos = elementGeometry.corner(vIdx);
+
+                        const auto& outside = intersection.outside();
+                        const auto outsideGeometry = outside.geometry();
+                        for (const auto& isOutside : intersections(this->gridView(), outside))
+                        {
+                            // only check periodic vertices of the periodic neighbor
+                            if (isOutside.boundary() && isOutside.neighbor())
+                            {
+                                const auto fIdxOutside = isOutside.indexInInside();
+                                const auto numFaceVertsOutside = referenceElement.size(fIdxOutside, 1, dim);
+                                for (int localVIdxOutside = 0; localVIdxOutside < numFaceVertsOutside; ++localVIdxOutside)
+                                {
+                                    const auto vIdxOutside = referenceElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
+                                    const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
+                                    const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
+                                    if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)
+                                        periodicVertexMap_[vIdxGlobal] = this->vertexMapper().subIndex(outside, vIdxOutside, dim);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -402,8 +489,20 @@ public:
     { return feCache_; }
 
     //! If a vertex / d.o.f. is on the boundary
-    bool dofOnBoundary(unsigned int dofIdx) const
+    bool dofOnBoundary(std::size_t dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
+
+    //! If a vertex / d.o.f. is on a periodic boundary
+    bool dofOnPeriodicBoundary(std::size_t dofIdx) const
+    { return periodicVertexMap_.count(dofIdx); }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    { return periodicVertexMap_.at(dofIdx); }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    const std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
+    { return periodicVertexMap_; }
 
 private:
 
@@ -417,6 +516,9 @@ private:
 
     // vertices on the boudary
     std::vector<bool> boundaryDofIndices_;
+
+    // a map for periodic boundary vertices
+    std::unordered_map<std::size_t, std::size_t> periodicVertexMap_;
 };
 
 } // end namespace Dumux

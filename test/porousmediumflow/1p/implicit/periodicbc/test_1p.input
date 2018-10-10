@@ -1,0 +1,17 @@
+[Problem]
+Name = incompressible
+
+[Grid]
+File = periodic.dgf
+
+[Source]
+Position = 0.1 0.5
+Values = 500
+Radius = 0.05
+
+[SpatialParams]
+LensLowerLeft = 0.2 0.2
+LensUpperRight = 0.8 0.8
+
+Permeability = 1e-10 # [m^2]
+PermeabilityLens = 1e-12 # [m^2]

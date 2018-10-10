@@ -49,8 +49,8 @@ class BaseFVGridGeometry
     using ElementSet = GridViewGeometricEntitySet<GV, 0, typename Traits::ElementMapper>;
     using BoundingBoxTree = Dumux::BoundingBoxTree<ElementSet>;
 
-    static const int dim = GV::dimension;
-    static const int dimWorld = GV::dimensionworld;
+    static constexpr int dim = GV::dimension;
+    static constexpr int dimWorld = GV::dimensionworld;
 
     using IndexType = typename GV::IndexSet::IndexType;
     using Element = typename GV::template Codim<0>::Entity;
@@ -68,7 +68,11 @@ public:
     //! export the vertex mapper type
     using VertexMapper = typename Traits::VertexMapper;
 
-    //! Constructor computes the bouding box of the entire domain, for e.g. setting boundary conditions
+    /*!
+     * \ingroup Discretization
+     * \brief Constructor computes the bouding box of the entire domain, for e.g. setting boundary conditions
+     * \param gridView the grid view on which to construct the grid geometry
+     */
     BaseFVGridGeometry(const GridView& gridView)
     : gridView_(gridView)
     , elementMapper_(gridView, Dune::mcmgElementLayout())
@@ -174,6 +178,18 @@ public:
     const GlobalCoordinate &bBoxMax() const
     { return bBoxMax_; }
 
+    /*!
+     * \brief Returns if the grid geometry is periodic (at all)
+     */
+    bool isPeriodic() const
+    { return periodic_; }
+
+    /*!
+     * \brief Set the periodicity of the grid geometry
+     */
+    void setPeriodic(bool value = true)
+    { periodic_ = value; }
+
 private:
 
     //! Compute the bouding box of the entire domain, for e.g. setting boundary conditions
@@ -218,6 +234,9 @@ private:
     //! the bounding box of the whole domain
     GlobalCoordinate bBoxMin_;
     GlobalCoordinate bBoxMax_;
+
+    //! if the grid geometry has periodic boundaries
+    bool periodic_ = false;
 };
 
 } // end namespace Dumux

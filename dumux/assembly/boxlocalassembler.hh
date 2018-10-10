@@ -137,6 +137,16 @@ public:
                 if (scvI.localDofIndex() == scvJ.localDofIndex())
                     jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
             }
+
+            // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
+            if (this->assembler().fvGridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
+            {
+                const auto periodicDof = this->assembler().fvGridGeometry().periodicallyMappedDof(scvI.dofIndex());
+                res[periodicDof][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+                const auto end = jac[periodicDof].end();
+                for (auto it = jac[periodicDof].begin(); it != end; ++it)
+                    (*it) = periodicDof != it.index() ? 0.0 : 1.0;
+            }
         };
 
         this->asImp_().evalDirichletBoundaries(applyDirichlet);
@@ -206,7 +216,7 @@ public:
                 {
                     const auto dirichletValues = this->problem().dirichlet(this->element(), scvI);
 
-                    // set the dirichlet conditions in residual and jacobian
+                    // set the Dirichlet conditions in residual and jacobian
                     for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                     {
                         if (bcTypes.isDirichlet(eqIdx))

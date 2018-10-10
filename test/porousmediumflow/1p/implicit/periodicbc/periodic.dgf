@@ -1,0 +1,21 @@
+DGF
+
+INTERVAL
+0 0            % lower left corner
+1 1            % upper right corner
+100 100            % number of cells in each direction
+#
+
+PERIODICFACETRANSFORMATION
+1 0, 0 1 + 1 0  % make periodic in x-direction
+#
+
+BOUNDARYDOMAIN
+DEFAULT 1
+#
+
+GRIDPARAMETER
+OVERLAP 1
+#
+
+#
