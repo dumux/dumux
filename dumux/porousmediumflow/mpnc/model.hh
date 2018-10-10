@@ -153,6 +153,26 @@ struct MPNCModelTraits
 
     //! Per default, we use the indices without offset
     using Indices = MPNCIndices< numPhases(), numEq() >;
+
+    template <class FluidSystem, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state=0)
+    {
+        if (pvIdx < numComponents())
+            return "fugacity^"+ FluidSystem::componentName(pvIdx);
+        else if (pvIdx < numEq()-1)
+            return "S_"+ FluidSystem::phaseName(pvIdx - numComponents());
+        else
+        {
+            switch (pressureFormulation())
+            {
+                case MpNcPressureFormulation::mostWettingFirst :
+                    return "p_"+ FluidSystem::phaseName(0);
+                case MpNcPressureFormulation::leastWettingFirst :
+                    return "p_"+ FluidSystem::phaseName(numPhases()-1);
+                default: DUNE_THROW(Dune::InvalidStateException, "Invalid formulation ");
+            }
+        }
+    }
 };
 
 /*!

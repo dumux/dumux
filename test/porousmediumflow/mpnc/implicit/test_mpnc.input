@@ -11,4 +11,3 @@ ResidualReduction = 1e-12
 
 [Problem]
 Name = obstacle
-
