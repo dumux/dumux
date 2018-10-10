@@ -40,7 +40,7 @@ public:
       * \brief Upwind Method
       */
     Scalar upwind(const Scalar downstreamVelocity,
-                            const Scalar upstreamVelocity
+                            const Scalar upstreamVelocity,
                             const Scalar density) const
     {
         return upstreamVelocity * density;
@@ -50,7 +50,7 @@ public:
       * \brief Central Differencing Method
       */
     Scalar centralDifference(const Scalar downstreamVelocity,
-                            const Scalar upstreamVelocity
+                            const Scalar upstreamVelocity,
                             const Scalar density) const
     {
         return (0.5 * (upstreamVelocity + downstreamVelocity)) * density;
@@ -89,7 +89,64 @@ public:
         return (zeroOrder + firstOrder + secondOrder) * density;
     }
 
+    /**
+      * \brief TVD Scheme: Total Variation Diminuishing
+      */
+    Scalar TVD(const Scalar downstreamVelocity,
+               const Scalar upstreamVelocity,
+               const Scalar previousVelocity,
+               const Scalar density,
+               const std::function<Scalar(const Scalar)>& psi) const
+    {
+        const Scalar ratio = (upstreamVelocity - previousVelocity) / (downstreamVelocity - upstreamVelocity);
+        const Scalar secondOrderTerm = 0.5 * psi(ratio) * (downstreamVelocity - upstreamVelocity);
+        if(std::isnan(secondOrderTerm))
+            return density * upstreamVelocity;
+        else
+            return density * (upstreamVelocity + secondOrderTerm);
+    }
+
+    /**
+      * \brief Van Leer flux limiter function [Van Leer 1974]
+      */
+    static Scalar VanLeer(const Scalar r)
+    {
+        return (r + std::abs(r)) / (1.0 + r);
+    }
+
+    /**
+      * \brief Van Albada flux limiter function [Van Albada et al. 1982]
+      */
+    static Scalar VanAlbada(const Scalar r)
+    {
+        return r * (r + 1.0) / (1.0 + r * r);
+    }
+
+    /**
+      * \brief MinMod flux limiter function [Roe 1985]
+      */
+    static Scalar MinMod(const Scalar r)
+    {
+        return std::min(0.0, std::max(r, 1.0));
+    }
+
+    /**
+      * \brief SUPERBEE flux limiter function [Roe 1985]
+      */
+    static Scalar SUPERBEE(const Scalar r)
+    {
+        return std::max(0.0, std::max(std::min(2.0 * r, 1.0), std::min(r, 2.0)));
+    }
+
+    /**
+      * \brief UMIST flux limiter function [Lien and Leschziner 1993]
+      */
+    static Scalar UMIST(const Scalar r)
+    {
+        return std::max(0.0, std::min(2.0 * r, std::min((1.0 + 3.0 * r) / 4.0, std::min((3.0 + r) / 4.0, 2.0))));
+    }
+
 };
 } // end namespace Dumux
 
-#endif // DUMUX_TURBULENCE_PROPERTIES_HH
+#endif // DUMUX_HIGHER_ORDER_VELOCITY_APPROXIMATION_HH
