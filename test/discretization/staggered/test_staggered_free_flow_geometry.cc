@@ -144,37 +144,39 @@ int main (int argc, char *argv[]) try
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
+                std::cout << std::endl;
+                std::cout << "......................................." << std::endl;
                 std::cout <<  std::fixed << std::left << std::setprecision(2)
-                << "Center pos "<< scvf.ipGlobal()
-                << " | Face Idx "  << std::setw(3)  << scvf.index();
+                << "Face Idx "  << std::setw(3)  << scvf.index()
+                << "|  Center pos "<< scvf.ipGlobal();
                 if (scvf.boundary())
                 {std::cout << " (on boundary)" << "\n";}
                 else
                 {std::cout << "\n";}
 
-                // On Axis Dofs
+                // Dofs
                 std::cout <<  std::fixed << std::left << std::setprecision(2)
-                << "\n On Axis Dof Index: \n";
+                << "\n Dof Indices: \n";
 
                 for (int i = 0; i < scvf.axisData().inAxisBackwardDofs.size(); i++)
                 {
-                    std::cout << " | Backward dofIdx"<< i << " :       " << std::setw(3) << scvf.axisData().inAxisBackwardDofs[i] << "\n";
+                    std::cout << " | Backward dofIdx, degree "<< i << " : " << std::setw(3) << scvf.axisData().inAxisBackwardDofs[i] << "\n";
                 }
 
                 std::cout <<  std::fixed << std::left << std::setprecision(2)
-                << " | Opposite dofIdx :       " << std::setw(3) << scvf.axisData().oppositeDof
-                << " | Self dofIdx :           " << std::setw(3) << scvf.axisData().selfDof << "\n";
+                << " | Opposite dofIdx : " << std::setw(3) << scvf.axisData().oppositeDof << "\n"
+                << " | Self dofIdx : " << std::setw(3) << scvf.axisData().selfDof << "\n";
 
                 for (int i = 0; i < scvf.axisData().inAxisForwardDofs.size(); i++)
                 {
-                    std::cout << " | Forward dofIdx"<< i << " :        " << std::setw(3) << scvf.axisData().inAxisForwardDofs[i] << "\n" ;
+                    std::cout << " | Forward dofIdx, degree "<< i << " : " << std::setw(3) << scvf.axisData().inAxisForwardDofs[i] << "\n" ;
                 }
 
                 // Normal Dofs
                 for (int i = 0; i < scvf.pairData().size(); i++)
                 {
-                    std::cout << " | Normal Axis " << i << " Inner Dof: "<< std::setw(3) << scvf.pairData(i).normalPair.first << "\n" ;
-                    std::cout << " | Normal Axis " << i << " Outer Dof: "<< std::setw(3) << scvf.pairData(i).normalPair.second << "\n" ;
+                    std::cout << " | Normal Axis " << i << ", Inner Dof: "<< std::setw(3) << scvf.pairData(i).normalPair.first << "\n" ;
+                    std::cout << " | Normal Axis " << i << ", Outer Dof: "<< std::setw(3) << scvf.pairData(i).normalPair.second << "\n" ;
                 }
 
                 // Parallel Axis Dofs
@@ -182,27 +184,24 @@ int main (int argc, char *argv[]) try
                 {
                     for(int j = 0; j < scvf.pairData(i).parallelDofs.size(); j++)
                     {
-                      std::cout << " | Parallel Axis " << i << " element #" << j << " Dof: " << std::setw(3) << scvf.pairData(i).parallelDofs[j] << "\n" ;
+                      std::cout << " | Parallel Axis " << i << ", element #" << j << " Dof: " << std::setw(3) << scvf.pairData(i).parallelDofs[j] << "\n" ;
                     }
                 }
 
-                std::cout << std::endl;
-                std::cout << " Distances: \n";
-                std::cout << std::endl;
-
-                // On Axis Dofs
-                std::cout <<  "On Axis Distances: " << scvf.axisData().inAxisBackwardDistances.size() <<  " \n";
+                // Distances
+                std::cout <<  std::fixed << std::left << std::setprecision(2)
+                << "\n Distances: \n";
 
                 for (int i = 0; i < scvf.axisData().inAxisBackwardDistances.size(); i++)
                 {
-                    std::cout << " | Backward Distance, cell "<< i << " :       " << std::setw(3) << scvf.axisData().inAxisBackwardDistances[i] << "\n";
+                    std::cout << " | Backward Distance, cell "<< i << " : " << std::setw(3) << scvf.axisData().inAxisBackwardDistances[i] << "\n";
                 }
 
-                std::cout << " | Self to Opposite Distance :           " << std::setw(3) << scvf.axisData().selfToOppositeDistance << "\n";
+                std::cout << " | Self to Opposite Distance : " << std::setw(3) << scvf.axisData().selfToOppositeDistance << "\n";
 
                 for (int i = 0; i < scvf.axisData().inAxisForwardDistances.size(); i++)
                 {
-                    std::cout << " | Forward Distance, cell "<< i << " :        " << std::setw(3) << scvf.axisData().inAxisForwardDistances[i] << "\n";
+                    std::cout << " | Forward Distance, cell "<< i << " : " << std::setw(3) << scvf.axisData().inAxisForwardDistances[i] << "\n";
                 }
 
                 // Parallel Axis Distances
@@ -210,14 +209,14 @@ int main (int argc, char *argv[]) try
                 {
                     for(int j = 0; j < scvf.pairData(i).parallelDistances.size(); j++)
                     {
-                      std::cout << " | Parallel Axis " << i << ", element #" << j << " Distance: " << std::setw(3) << scvf.pairData(i).parallelDistances[j] << "\n" ;
+                      std::cout << " | Parallel Axis " << i << ", element #" << j << ", Distance: " << std::setw(3) << scvf.pairData(i).parallelDistances[j] << "\n" ;
                     }
                 }
 
                 // Normal Distances
                 for (int i = 0; i < scvf.pairData().size(); i++)
                 {
-                    std::cout << " | Normal Axis" << i << "normal Cell distance" << std::setw(3) << scvf.pairData(i).normalDistance << "\n" ;
+                    std::cout << " | Normal Axis " << i << ", normal Cell distance : " << std::setw(3) << scvf.pairData(i).normalDistance << "\n" ;
                 }
 
             }
