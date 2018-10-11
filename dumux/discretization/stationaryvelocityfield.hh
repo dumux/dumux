@@ -60,7 +60,7 @@ public:
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
         //! Obtain the volume flux from the user, specified in the spatial params in m^3/s
-        return problem.spatialParams().volumeFlux(element, fvGeometry, elemVolVars, scvf);
+        return problem.spatialParams().volumeFlux(element, fvGeometry, elemVolVars, scvf, phaseIdx);
     }
 };
 

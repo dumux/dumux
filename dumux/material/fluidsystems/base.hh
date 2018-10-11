@@ -111,7 +111,10 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      */
     static std::string phaseName(int phaseIdx)
-    { return "DefaultPhaseName"; }
+    { if (phaseIdx == 0)
+        return "Water";
+      else
+        return "NotWater"; }
 
     /*!
      * \brief Return the human readable name of a fluid phase

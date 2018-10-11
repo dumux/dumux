@@ -51,7 +51,7 @@ public:
                 vtk.addVolumeVariable( [phaseIdx, compIdx](const auto& v){  return v.massFraction(phaseIdx, compIdx); },
                         "X_" + std::string(FluidSystem::phaseName(phaseIdx) + "^" + FluidSystem::componentName(compIdx)));
             }
-            vtk.addVolumeVariable( [](const auto& v){ return v.density(); }, "rho");
+            //vtk.addVolumeVariable( [](const auto& v){ return v.density(); }, "rho");
         }
     }
 };

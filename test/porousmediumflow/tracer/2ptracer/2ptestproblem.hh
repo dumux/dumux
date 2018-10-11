@@ -161,7 +161,7 @@ public:
         Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
         Scalar alpha = 1 + 1.5/height;
         Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
-        Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
+        Scalar factor = 1;
 
         // hydrostatic pressure scaled by alpha
         values[pressureH2OIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;

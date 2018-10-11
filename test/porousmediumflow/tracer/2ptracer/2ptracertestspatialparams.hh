@@ -56,25 +56,12 @@ class TwoPTracerTestSpatialParams
     //using PhaseVector = std::vector<Scalar>;
     //using FieldVector = Dune::FieldVector<PhaseVector, 2>;
 
-    static const int numPhases = ModelTraits::numPhases();
-    using ScvfVector  = std::vector<Scalar>;
-    using FieldVector = std::vector<Dune::FieldVector<ScvfVector, numPhases>>;
+    //static const int numPhases = ModelTraits::numPhases();
+    //using ScvfVector  = std::vector<Scalar>;
+    //using FieldVector = Dune::FieldVector<ScvfVector, numPhases>;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
-
-    //static const int numPhases = 2;
-    //using numPhases = typename GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
-    //using numScvf = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::numScvf();
-    //static const int numScvf = fvGeometry->numScvf();
-
-      // number of rows
-      //static const int rows = Jacobian::rows;
-      //static_assert((rows == dimRange), "Number of rows and range dimension do not coincide");
-      // number of cols
-      //static const int cols = Jacobian::cols;
-      //static_assert((cols == dimDomain), "Number of columns and domain dimension do not coincide");
-
 
 
 public:
@@ -126,17 +113,17 @@ public:
                           const SubControlVolume& scv) const
     {
         if (phaseIdx == 0)
-            return 18.0;
+            return 0.018;
         else
-            return 131.0;
+            return 0.018;
     }
 
     Scalar fluidMolarMass(const int phaseIdx,
                           const GlobalPosition &globalPos) const
     { if (phaseIdx == 0)
-            return 18.0;
+            return 0.018;
       else
-            return 18.0;
+            return 0.018;
     }
 
     //! velocity field
@@ -144,16 +131,25 @@ public:
     Scalar volumeFlux(const Element &element,
                       const FVElementGeometry& fvGeometry,
                       const ElementVolumeVariables& elemVolVars,
-                      const SubControlVolumeFace& scvf) const
+                      const SubControlVolumeFace& scvf,
+                      const int phaseIdx) const
     {
-        return volumeFlux_[scvf.index()];
+//         std::cout<<"SpatialParams: volumeFlux_0[scvf.index()="<<scvf.index()<<"]="<<volumeFlux_0[scvf.index()]<<std::endl;
+            return volumeFlux_0[scvf.index()];
+
     }
 
-    void setVolumeFlux(const FieldVector& f)
-    { volumeFlux_ = f; }
+    void setVolumeFlux(const std::vector<Scalar>& f_0)
+    {   volumeFlux_0 = f_0;
+    }
 
 private:
-    FieldVector volumeFlux_;
+
+//     std::vector<Scalar> volumeFlux_0(fvGridGeometry->numScvf(), 0.0);
+    std::vector<Scalar> volumeFlux_0;
+    //std::vector<Scalar> volumeFlux_1;
+
+    //FieldVector volumeFlux_;
     //std::vector<Scalar> volumeFlux_;
 };
 

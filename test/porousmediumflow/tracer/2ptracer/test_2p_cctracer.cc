@@ -42,6 +42,7 @@
 #include <dumux/common/valgrind.hh>
 
 #include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
@@ -116,8 +117,6 @@ int main(int argc, char** argv) try
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    // only create the grid once using the 1p type tag
-    // try to create a grid (from the given grid file or the input file)
     using GridCreator = typename GET_PROP_TYPE(TwoPTypeTag, GridCreator);
     try { GridCreator::makeGrid(); }
     catch (...) {
@@ -176,28 +175,30 @@ int main(int argc, char** argv) try
     auto twoPGridVariables = std::make_shared<TwoPGridVariables>(twoPProblem, fvGridGeometry);
     twoPGridVariables->init(p, pOld);
 
-    // intialize the vtk output module
-    using TwoPVtkOutputFields = typename GET_PROP_TYPE(TwoPTypeTag, VtkOutputFields);
+     // intialize the vtk output module
+     using TwoPVtkOutputFields = typename GET_PROP_TYPE(TwoPTypeTag, VtkOutputFields);
 
-    // use non-conforming output for the test with interface solver
-    const auto ncOutput = getParam<bool>("Problem.UseNonConformingOutput", false);
-    VtkOutputModule<TwoPTypeTag> twoPVtkWriter(*twoPProblem, *fvGridGeometry, *twoPGridVariables, p, twoPProblem->name(), "",
-                                       (ncOutput ? Dune::VTK::nonconforming : Dune::VTK::conforming));
+     // use non-conforming output for the test with interface solver
+     const auto ncOutput = getParam<bool>("Problem.UseNonConformingOutput", false);
+     VtkOutputModule<TwoPTypeTag> twoPVtkWriter(*twoPProblem, *fvGridGeometry, *twoPGridVariables, p, twoPProblem->name(), "",
+                                        (ncOutput ? Dune::VTK::nonconforming : Dune::VTK::conforming));
 
-    TwoPVtkOutputFields::init(twoPVtkWriter); //!< Add model specific output fields
-    twoPVtkWriter.write(0.0);
+     TwoPVtkOutputFields::init(twoPVtkWriter); //!< Add model specific output fields
+     twoPVtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
     using TwoPAssembler = FVAssembler<TwoPTypeTag, DiffMethod::numeric>;
     auto twoPAssembler = std::make_shared<TwoPAssembler>(twoPProblem, fvGridGeometry, twoPGridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = AMGBackend<TwoPTypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    using TwoPLinearSolver = AMGBackend<TwoPTypeTag>;
+    auto twoPLinearSolver = std::make_shared<TwoPLinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+//     using LinearSolver = ILU0BiCGSTABBackend;
+//     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<TwoPAssembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(twoPAssembler, linearSolver);
+    using NewtonSolver = Dumux::NewtonSolver<TwoPAssembler, TwoPLinearSolver>;
+    NewtonSolver nonLinearSolver(twoPAssembler, twoPLinearSolver);
 
 
     ////////////////////////////////////////////////////////////
@@ -219,6 +220,10 @@ int main(int argc, char** argv) try
     auto tracerGridVariables = std::make_shared<TracerGridVariables>(tracerProblem, fvGridGeometry);
     tracerGridVariables->init(x, xOld);
 
+    // the linear solver
+    using TracerLinearSolver = AMGBackend<TracerTypeTag>;
+    auto tracerLinearSolver = std::make_shared<TracerLinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+
      //! the linear system
     using JacobianMatrix = typename GET_PROP_TYPE(TracerTypeTag, JacobianMatrix);
     auto A = std::make_shared<JacobianMatrix>();
@@ -229,28 +234,31 @@ int main(int argc, char** argv) try
     auto tracerAssembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, tracerGridVariables, timeLoop);
     tracerAssembler->setLinearSystem(A, r);
 
-    //! initialize the vtk output module
-    VtkOutputModule<TracerTypeTag> vtkWriter(*tracerProblem, *fvGridGeometry, *tracerGridVariables, x, tracerProblem->name());
-    using TracerVtkOutputFields = typename GET_PROP_TYPE(TracerTypeTag, VtkOutputFields);
-    TracerVtkOutputFields::init(vtkWriter); //!< Add model specific output fields
-    vtkWriter.write(0.0);
-
     //! initialize the flux vector
     using ModelTraits = typename GET_PROP_TYPE(TwoPTypeTag, ModelTraits);
     static const int numPhases = ModelTraits::numPhases();
-    using ScvfVector  = std::vector<Scalar>;
-    using FieldVector = std::vector<Dune::FieldVector<ScvfVector, numPhases>>;
-    ScvfVector phaseFlux;
-    FieldVector volumeFlux;
+    //using ScvfVector  = std::vector<Scalar>;
+    //using FieldVector = Dune::FieldVector<ScvfVector, numPhases>;
+    //FieldVector volumeFlux;
 
-    for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-    {
-        volumeFlux[phaseIdx] = ScvfVector(fvGridGeometry->numScvf(), 0.0);
-    }
+    //for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+    //{
+    //    volumeFlux[phaseIdx] = ScvfVector(fvGridGeometry->numScvf(), 0.0);
+    //}
+    std::vector<Scalar> volumeFlux_0(fvGridGeometry->numScvf(), 0.0);
+    std::vector<Scalar> volumeFlux_1(fvGridGeometry->numScvf(), 0.0);
 
+    // set the flux from the 1p problem
+    tracerProblem->spatialParams().setVolumeFlux(volumeFlux_0);
+
+//     //! initialize the vtk output module
+     VtkOutputModule<TracerTypeTag> vtkWriter(*tracerProblem, *fvGridGeometry, *tracerGridVariables, x, tracerProblem->name());
+     using TracerVtkOutputFields = typename GET_PROP_TYPE(TracerTypeTag, VtkOutputFields);
+     TracerVtkOutputFields::init(vtkWriter); //!< Add model specific output fields
+     vtkWriter.write(0.0);
 
     //! set some check points for the time loop
-    timeLoop->setPeriodicCheckPoint(tEnd/10.0);
+    timeLoop->setPeriodicCheckPoint(tEnd/50.0);
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem
@@ -275,6 +283,8 @@ int main(int argc, char** argv) try
 
         // write vtk output
         twoPVtkWriter.write(timeLoop->time());
+//          if (timeLoop->isCheckPoint())
+//              twoPVtkWriter.write(timeLoop->time());
 
         // report statistics of this time step              ??
         timeLoop->reportTimeStep();
@@ -292,19 +302,20 @@ int main(int argc, char** argv) try
 
         using FluxVariables =  typename GET_PROP_TYPE(TwoPTypeTag, FluxVariables);
         auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
-        for (const auto& element : elements(leafGridView))
-        {
-            auto fvGeometry = localView(*fvGridGeometry);
-            fvGeometry.bind(element);
-
-            auto elemVolVars = localView(twoPGridVariables->curGridVolVars());
-            elemVolVars.bind(element, fvGeometry, p);
-
-            auto elemFluxVars = localView(twoPGridVariables->gridFluxVarsCache());
-            elemFluxVars.bind(element, fvGeometry, elemVolVars);
-
-            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+   //     for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+   //     {
+            for (const auto& element : elements(leafGridView))
             {
+                auto fvGeometry = localView(*fvGridGeometry);
+                fvGeometry.bind(element);
+
+                auto elemVolVars = localView(twoPGridVariables->curGridVolVars());
+                elemVolVars.bind(element, fvGeometry, p);
+
+                auto elemFluxVars = localView(twoPGridVariables->gridFluxVarsCache());
+                elemFluxVars.bind(element, fvGeometry, elemVolVars);
+
+
                 for (const auto& scvf : scvfs(fvGeometry))
                 {
                     const auto idx = scvf.index();
@@ -313,7 +324,16 @@ int main(int argc, char** argv) try
                     {
                         FluxVariables fluxVars;
                         fluxVars.init(*twoPProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
-                        phaseFlux[idx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+
+//                         if (phaseIdx == 0)
+//                         {
+                            volumeFlux_0[idx] = fluxVars.advectiveFlux(0, upwindTerm);
+
+//                         }
+//                         else
+//                         {
+//                             volumeFlux_1[idx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+//                         }
                     }
                     else
                     {
@@ -322,21 +342,27 @@ int main(int argc, char** argv) try
                         {
                             FluxVariables fluxVars;
                             fluxVars.init(*twoPProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
-                            phaseFlux[idx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+
+//                             if (phaseIdx == 0)
+//                             {
+                                volumeFlux_0[idx] = fluxVars.advectiveFlux(0, upwindTerm);
+//                             }
+//                             else
+//                             {
+//                                 volumeFlux_1[idx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+//                             }
                         }
                     }
                 }
-                volumeFlux[phaseIdx] = phaseFlux;
-
             }
-        }
+//         }
 
         ////////////////////////////////////////////////////////////
-        // solve tracer problem on the same grid / run instationary non-linear simulation
+        // solve tracer problem on the same grid
         ////////////////////////////////////////////////////////////
 
         // set the flux from the 1p problem
-        tracerProblem->spatialParams().setVolumeFlux(volumeFlux);
+        tracerProblem->spatialParams().setVolumeFlux(volumeFlux_0);
 
         //! get some time loop parameters
         //const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
@@ -364,7 +390,7 @@ int main(int argc, char** argv) try
         // solve the linear system A(xOld-xNew) = r
         Dune::Timer solveTimer;
         TracerSolutionVector xDelta(x);
-        linearSolver->solve(*A, xDelta, *r);
+        tracerLinearSolver->solve(*A, xDelta, *r);
         solveTimer.stop();
 
         // update solution and grid variables
@@ -387,13 +413,13 @@ int main(int argc, char** argv) try
         xOld = x;
         tracerGridVariables->advanceTimeStep();
 
-        // advance to the time loop to the next step
+        // advance the time loop to the next step
         timeLoop->advanceTimeStep();
 
         // write vtk output on check points
-        if (timeLoop->isCheckPoint())
-            twoPVtkWriter.write(timeLoop->time());
-            vtkWriter.write(timeLoop->time());        // CHECKPOINTS MIT BEIDEN .WRITER ... ?!
+         if (timeLoop->isCheckPoint())
+//           twoPVtkWriter.write(timeLoop->time());
+             vtkWriter.write(timeLoop->time());        // CHECKPOINTS MIT BEIDEN .WRITER ... ?!
 
         //  // report statistics of this time step
         //  timeLoop->reportTimeStep();

@@ -59,8 +59,7 @@ public:
      * \param scv The sub-control volume
      */
     template<class ElemSol, class Problem, class Element, class Scv>
-    void update(const int phaseIdx,
-                const ElemSol &elemSol,
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const Scv &scv)
@@ -72,9 +71,11 @@ public:
         // dispersivity_ = problem.spatialParams().dispersivity(element, scv, elemSol);
 
         // the spatial params special to the tracer model
-        fluidDensity_ = problem.spatialParams().fluidDensity(phaseIdx, element, scv);
-        fluidMolarMass_ = problem.spatialParams().fluidMolarMass(phaseIdx, element, scv);
-
+        for (int phaseIdx = 0; phaseIdx < ParentType::numPhases(); ++phaseIdx)
+        {
+            fluidDensity_ = problem.spatialParams().fluidDensity(phaseIdx, element, scv);
+            fluidMolarMass_ = problem.spatialParams().fluidMolarMass(phaseIdx, element, scv);
+        }
         for (int compIdx = 0; compIdx < ParentType::numComponents(); ++compIdx)
         {
             moleOrMassFraction_[compIdx] = this->priVars()[compIdx];

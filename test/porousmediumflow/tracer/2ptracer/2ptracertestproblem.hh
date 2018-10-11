@@ -87,7 +87,7 @@ public:
     { return -1; }
 
     //! The number of components
-    static constexpr int numComponents = 1;
+    static constexpr int numComponents = 2;
 
     //! Human readable component name (index compIdx) (for vtk output)
     static std::string componentName(int compIdx)
@@ -95,7 +95,11 @@ public:
 
     //! Human readable phase name (index phaseIdx) (for velocity vtk output)
     static std::string phaseName(int phaseIdx = 0)
-    { return "Groundwater"; }
+    { if (phaseIdx == 0)
+        return "Water";
+      else
+        return "NotWater";
+    }
     // Noch für mehrphasig anpassen und entsprechend korrekte Namengebung auch für vtkOutput!
 
     //! Molar mass in kg/mol of the component with index compIdx
@@ -195,25 +199,119 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables initialValues(0.0);
-        if (globalPos[1] > onUpperBoundary_ - 0.1)
+
+//  VERSION 1
+          if (onUpperBoundary_(globalPos))
+
+//  VERSION 2
+//          if (onUpperBoundary_(globalPos) ||  onStripe1_(globalPos) || onStripe2_(globalPos) || onStripe3_(globalPos))
+
+//  VERSION 3
+//         if (onUpperTrajectoryPoint_(globalPos) || onLeftTrajectroyPoint_(globalPos) || onRightTrajectoryPoint_(globalPos))
+
         {
             if (useMoles)
                 initialValues = 1e-9;
             else
-                initialValues = 1e-9*FluidSystem::molarMass(0)/this->spatialParams().fluidMolarMass(globalPos);
+                initialValues = 1e-9*FluidSystem::molarMass(0)/this->spatialParams().fluidMolarMass(0, globalPos);
         }
         return initialValues;
     }
 
-    // \}
 
 private:
-    bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    {
-        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
-    }
+
 
     static constexpr Scalar eps_ = 1e-6;
+
+    Scalar yMax_ = this->fvGridGeometry().bBoxMax()[1];
+    Scalar xMax_ = this->fvGridGeometry().bBoxMax()[0];
+
+// TODO allgemeiner Abruf der Anzahl von Zellen in Y-Richtung/ X-Richtung
+    Scalar yNumCells_ = 32;
+    Scalar xNumCells_ = 48;
+    Scalar cellHeight_ = yMax_/yNumCells_;
+    Scalar cellWidth_ = xMax_/xNumCells_;
+    Scalar width_ = xMax_ - this->fvGridGeometry().bBoxMin()[0];
+
+//  VERSION 1
+     bool onUpperBoundary_(const GlobalPosition &globalPos) const
+     {
+         return globalPos[1] > yMax_ - 0.1 - eps_;
+     }
+
+
+//  VERSION 2
+     bool onStripe1_(const GlobalPosition &globalPos) const
+     {
+         std::cout << "Stripe1 is: " << (( (yMax_ /4.0 - cellHeight_*0.5) <= globalPos[1] ) &&
+                  ( (yMax_/4.0 + cellHeight_*0.5) > globalPos[1] ));
+         std::cout << " at globalPos:" << globalPos[1] << "\n";
+         std::cout << "yMax is: " << yMax_ << "\n" ;
+
+
+        return  (
+            ( (yMax_ /4.0 - cellHeight_*0.5) <= globalPos[1] ) &&
+            ( (yMax_/4.0 + cellHeight_*0.5) > globalPos[1] )
+        );
+    }
+
+
+
+    bool onStripe2_(const GlobalPosition &globalPos) const
+    {
+        return  (
+            ( (2.0 * yMax_ /4.0 - cellHeight_*0.5) <= globalPos[1] ) &&
+            ( (2.0 * yMax_/4.0 + cellHeight_*0.5) > globalPos[1] )
+        );
+    }
+
+    bool onStripe3_(const GlobalPosition &globalPos) const
+    {
+        return  (
+            ( (3.0 * yMax_ /4.0 - cellHeight_*0.5) <= globalPos[1] ) &&
+            ( (3.0 * yMax_/4.0 + cellHeight_*0.5) > globalPos[1] )
+        );
+    }
+
+//  VERSION 3
+
+// //     bool onUpperTrajectoryPoint_(const GlobalPosition &globalPos) const
+// //     {
+// //         std::cout << "onUpperTrajectoryPoint is: "
+// //         << (    globalPos[1] > (yMax_ - 2.0*cellHeight_) &&
+// //                 globalPos[0] > (width_/2.0 - cellWidth_) &&
+// //                 globalPos[0] < (width_/2.0 + cellWidth_) );
+// //         std::cout << " at x- globalPos:" << globalPos[0] << "\n";
+// //         std::cout << " at y- globalPos:" << globalPos[1] << "\n";
+// //
+// //         return (
+// //             globalPos[1] > (yMax_ - 2.0*cellHeight_) &&
+// //             globalPos[0] > (width_/2.0 - cellWidth_) &&
+// //             globalPos[0] < (width_/2.0 + cellWidth_)
+// //         );
+// //     }
+// //
+// //     bool onLeftTrajectroyPoint_(const GlobalPosition &globalPos) const
+// //     {
+// //         return (
+// //             ( globalPos[1] >= (3.0 * yMax_ /4.0 - cellHeight_) ) &&
+// //             ( globalPos[1] < (3.0 * yMax_/4.0 + cellHeight_) ) &&
+// //             ( globalPos[0] > (xMax_ /6.0 - cellHeight_) ) &&
+// //             ( globalPos[0] < (xMax_ /6.0 + cellHeight_) )
+// //         );
+// //     }
+// //
+// //     bool onRightTrajectoryPoint_(const GlobalPosition &globalPos) const
+// //     {
+// //         return (
+// //             ( globalPos[1] >= (3.0 * yMax_ /4.0 - cellHeight_) ) &&
+// //             ( globalPos[1] < (3.0 * yMax_/4.0 + cellHeight_) ) &&
+// //             ( globalPos[0] > (5.0 * xMax_/6.0 - cellHeight_) ) &&
+// //             ( globalPos[0] < (5.0 * xMax_/6.0 + cellHeight_) )
+// //         );
+// //     }
+
 };
 
 } //end namespace Dumux
