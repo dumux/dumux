@@ -170,6 +170,13 @@ int main(int argc, char** argv) try
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 
+    using VtkOutputFieldsTransport = typename GET_PROP_TYPE(TwoPTransportTT, VtkOutputFields);
+
+    std::string nameTransport = twoPImpesProblem->name() + "_transport";
+    VtkOutputModule<GVTwoPTransport, SVTwoPTransport> vtkWriterTransport(*gridVarTwoPTransport, x_s, nameTransport, "",Dune::VTK::conforming);
+    VtkOutputFieldsTransport::init(vtkWriterTransport); //!< Add model specific output fields
+    vtkWriterTransport.write(0.0);
+
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
@@ -201,7 +208,11 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     //! set some check points for the time loop
-    timeLoop->setPeriodicCheckPoint(4);
+    timeLoop->setPeriodicCheckPoint(getParam<Scalar>("TimeLoop.OutputTimeInterval"));
+
+    // the non-linear solver
+    using NewtonSolver = Dumux::NewtonSolver<TwoPImpesAssembler, LinearSolver>;
+    NewtonSolver nonLinearSolver(twoPImpesAssembler, linearSolver);
 
     //! start the time loop
     timeLoop->start();
@@ -237,16 +248,19 @@ int main(int argc, char** argv) try
 
         twoPImpesProblem->spatialParams().setWettingSaturation(satVals);
 
-        // set previous solution for storage evaluations
+//        // set previous solution for storage evaluations
         twoPImpesAssembler->setPreviousSolution(x_p_old);
+//
+//        twoPImpesAssembler->assembleJacobianAndResidual(x_p);
+//
+//        SVTwoPImpes xpDelta(x_p);
+//        linearSolver->solve(*Ap, xpDelta, *rp);
+//
+//        x_p -= xpDelta;
+//        gridVarTwoPImpes->update(x_p);
 
-        twoPImpesAssembler->assembleJacobianAndResidual(x_p);
-
-        SVTwoPImpes xpDelta(x_p);
-        linearSolver->solve(*Ap, xpDelta, *rp);
-
-        x_p -= xpDelta;
-        gridVarTwoPImpes->update(x_p);
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(x_p, *timeLoop);
 
         // make the new solution the old solution
         x_p_old = x_p;
@@ -256,7 +270,7 @@ int main(int argc, char** argv) try
         std::vector<Scalar> volumeFlux(twoPImpesFvGridGeometry->numScvf(), 0.0);
 
         using FluxVariables =  typename GET_PROP_TYPE(TwoPImpesTT, FluxVariables);
-        auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
+        auto upwindTerm = [](const auto& volVars) { return 1.0; };
         for (const auto& element : elements(leafGridView))
         {
             auto fvGeometry = localView(*twoPImpesFvGridGeometry);
@@ -320,7 +334,10 @@ int main(int argc, char** argv) try
 
         // write vtk output on check points
         if (timeLoop->isCheckPoint() || timeLoop->finished())
+        {
             vtkWriter.write(timeLoop->time());
+            vtkWriterTransport.write(timeLoop->time());
+        }
 
         // set new dt
         timeLoop->setTimeStepSize(dt);

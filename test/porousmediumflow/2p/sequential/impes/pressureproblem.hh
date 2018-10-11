@@ -59,7 +59,7 @@ SET_PROP(TwoPImpes, FluidSystem)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #if PROBLEM == 2
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #else
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 #endif
@@ -135,11 +135,11 @@ public:
     BoundaryTypes values;
     if (onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos))
     {
-        values.setAllDirichlet();
+        values.setAllNeumann();
     }
     else
     {
-        values.setAllNeumann();
+        values.setAllDirichlet();
     }
     return values;
 #else
@@ -169,12 +169,8 @@ public:
         Scalar pRef = 1.0e5;
 
         using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
-        if (onUpperBoundary_(globalPos))
-        {
-            pRef = 2.0e5;
-        }
-
-        values[pressureIdx] = (pRef - (this->fvGridGeometry().bBoxMax()- globalPos) * this->gravity() * WettingPhase::density(temperature(), pRef));
+        values[pressureIdx] = (pRef - (this->fvGridGeometry().bBoxMax()- globalPos)
+                                       * this->gravity() * WettingPhase::density(temperature(), pRef));
 
         return values;
     }
@@ -192,9 +188,10 @@ public:
      */
     NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
+        using NonwettingPhase = typename GET_PROP(TypeTag, FluidSystem)::NonwettingPhase;
         NumEqVector values(0.0);
-        //if(isInlet(globalPos))
-        //    values[pressureEqIdx] = -inFlux_;
+        if(isInlet(globalPos))
+            values[pressureEqIdx] = -inFlux_/NonwettingPhase::density(temperature(), 1.0e5);
 
         return values;
     }

@@ -58,7 +58,7 @@ SET_PROP(TwoPTransport, FluidSystem)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #if PROBLEM == 2
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #else
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 #endif
@@ -134,11 +134,11 @@ public:
         BoundaryTypes values;
         if (onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos))
         {
-            values.setAllDirichlet();
+            values.setAllNeumann();
         }
         else
         {
-            values.setAllNeumann();
+            values.setAllDirichlet();
         }
         return values;
 #else
@@ -162,16 +162,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-//        if (onLeftBoundary_(globalPos))
-//                values[saturationIdx] = 0.8;
-
-        using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
         values[saturationIdx] = 1.0;
-
-        if (isInlet(globalPos))
-        {
-            values[saturationIdx] = 0.0;
-        }
 
         return values;
     }

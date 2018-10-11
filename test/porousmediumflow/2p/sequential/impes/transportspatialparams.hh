@@ -165,6 +165,9 @@ public:
                       const ElementVolumeVariables& elemVolVars,
                       const SubControlVolumeFace& scvf) const
     {
+//        GlobalPosition vel(0.0);
+//        vel[dimWorld-1] = -1.0e-6;
+//        return vel*scvf.unitOuterNormal();
         return volumeFlux_[scvf.index()];
     }
 
