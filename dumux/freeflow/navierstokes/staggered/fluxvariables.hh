@@ -28,7 +28,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 
-// #include <dumux/freeflow/higherorderapproximation.hh>
+#include <dumux/freeflow/higherorderapproximation.hh>
 
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
@@ -194,11 +194,6 @@ public:
         // The velocities of the dof at interest and the one of the opposite scvf.
         const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
         const Scalar velocityOpposite = elemFaceVars[scvf].velocityOpposite();
-        if(scvf.canSecondOrder())
-        {
-            const Scalar velocityPrevious = elemFaceVars[scvf].velocityPrevious();
-            std::cout << velocityPrevious << "\n";
-        }
 
         // The volume variables within the current element. We only require those (and none of neighboring elements)
         // because the fluxes are calculated over the staggered face at the center of the element.
@@ -213,19 +208,31 @@ public:
             // Check if the the velocity of the dof at interest lies up- or downstream w.r.t. to the transporting velocity.
             const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
 
-            // Lamba function to evaluate the transported momentum, regarding an user-specified upwind weight.
-            auto computeMomentum = [&insideVolVars, &problem](const Scalar upstreamVelocity, const Scalar downstreamVelocity)
+            Dumux::HigherOrderApproximation<Scalar> higherOrderApproximation;
+            Scalar momentum = 0.0;
+
+            // If I am not too near to the boundary I can use a second order approximation for the velocity
+            if (canFrontalSecondOrder_(scvf, selfIsUpstream))
             {
-                static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
-                return (upwindWeight * upstreamVelocity + (1.0 - upwindWeight) * downstreamVelocity) * insideVolVars.density();
-            };
-
-//             Dumux::HigherOrderApproximation<Scalar> higherOrderApproximation;
-//             higherOrderApproximation.firstOrderUpwind(downstreamVelocity, upstreamVelocity, upwindWeight, insideVolVars.density());
-
-            // Get the momentum that is advectively transported and account for the flow direction.
-            const Scalar momentum = selfIsUpstream ? computeMomentum(velocitySelf, velocityOpposite)
-                                                   : computeMomentum(velocityOpposite, velocitySelf);
+                // const Scalar upstreamToDownstreamDistance = scvf.selfToOppositeDistance();
+                if (selfIsUpstream)
+                {
+                    const Scalar velocityUpUpstream = elemFaceVars[scvf].velocityForward();
+                    // const Scalar UpUpstreamToUpstreamDistance = scvf.axisData().inAxisForwardDistances[0];
+                    // momentum = higherOrderApproximation.upwindQUICK(velocityOpposite, velocitySelf, velocityUpUpstream, upstreamToDownstreamDistance, UpUpstreamToUpstreamDistance, insideVolVars.density());
+                    momentum = higherOrderApproximation.TVD(velocityOpposite, velocitySelf, velocityUpUpstream, insideVolVars.density(), higherOrderApproximation.VanAlbada);
+                }
+                else
+                {
+                    const Scalar velocityUpUpstream = elemFaceVars[scvf].velocityBackward();
+                    // const Scalar UpUpstreamToUpstreamDistance = scvf.axisData().inAxisBackwardDistances[0];
+                    // momentum = higherOrderApproximation.upwindQUICK(velocitySelf, velocityOpposite, velocityUpUpstream, upstreamToDownstreamDistance, UpUpstreamToUpstreamDistance, insideVolVars.density());
+                    momentum = higherOrderApproximation.TVD(velocitySelf, velocityOpposite, velocityUpUpstream, insideVolVars.density(), higherOrderApproximation.VanAlbada);
+                }
+            }
+            else
+                momentum = selfIsUpstream ? higherOrderApproximation.upwind(velocityOpposite, velocitySelf, insideVolVars.density())
+                                          : higherOrderApproximation.upwind(velocitySelf, velocityOpposite, insideVolVars.density());
 
             // Account for the orientation of the staggered face's normal outer normal vector
             // (pointing in opposite direction of the scvf's one).
@@ -389,7 +396,7 @@ private:
         const Scalar transportingVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
 
         // Check whether the own or the neighboring element is upstream.
-        const bool ownElementIsUpstream = ( normalFace.directionSign() == sign(transportingVelocity) );
+        const bool selfIsUpstream = ( normalFace.directionSign() == sign(transportingVelocity) );
 
         // Get the velocities at the current (own) scvf and at the parallel one at the neighboring scvf.
         const Scalar velocitySelf = faceVars.velocitySelf();
@@ -405,29 +412,44 @@ private:
         };
 
         const Scalar velocityFirstParallel = scvf.hasFirstParallelNeighbor(localSubFaceIdx)
-                                        ? faceVars.velocityFirstParallel(localSubFaceIdx)
-                                        : getParallelVelocityFromBoundary();
+                                           ? faceVars.velocityFirstParallel(localSubFaceIdx)
+                                           : getParallelVelocityFromBoundary();
 
         // Get the volume variables of the own and the neighboring element
         const auto& insideVolVars = elemVolVars[normalFace.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[normalFace.outsideScvIdx()];
 
-        // Lamba function to evaluate the transported momentum, regarding an user-specified upwind weight.
-        auto computeMomentum = [&problem](const VolumeVariables& upstreamVolVars,
-                                  const VolumeVariables& downstreamVolVars,
-                                  const Scalar upstreamVelocity,
-                                  const Scalar downstreamVelocity)
-        {
-            static const Scalar upWindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
-            const Scalar density = upWindWeight * upstreamVolVars.density() + (1.0 - upWindWeight) * downstreamVolVars.density();
-            const Scalar transportedVelocity =  upWindWeight * upstreamVelocity + (1.0 - upWindWeight) * downstreamVelocity;
-            return transportedVelocity * density;
-        };
+        Dumux::HigherOrderApproximation<Scalar> higherOrderApproximation;
+        Scalar momentum = 0.0;
 
-        // Get the momentum that is advectively transported and account for the flow direction.
-        const Scalar momentum = ownElementIsUpstream ?
-                                computeMomentum(insideVolVars, outsideVolVars, velocitySelf, velocityFirstParallel)
-                              : computeMomentum(outsideVolVars, insideVolVars, velocityFirstParallel, velocitySelf);
+        const int oppositeSubFaceIdx = localSubFaceIdx % 2 ? localSubFaceIdx - 1 : localSubFaceIdx + 1;
+
+        if (canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx, oppositeSubFaceIdx))
+        {
+            if (selfIsUpstream)
+            {
+                const Scalar velocityUpUpstream = faceVars.velocityFirstParallel(oppositeSubFaceIdx);
+
+                // momentum = higherOrderApproximation.upwindQUICK(velocityFirstParallel, velocitySelf, velocityUpUpstream,
+                //                                                 scvf.cellCenteredSelfToFirstParallelDistance(localSubFaceIdx), scvf.cellCenteredSelfToFirstParallelDistance(oppositeSubFaceIdx),
+                //                                                 insideVolVars.density());
+
+                momentum = higherOrderApproximation.TVD(velocityFirstParallel, velocitySelf, velocityUpUpstream, outsideVolVars.density(), higherOrderApproximation.VanAlbada);
+            }
+            else
+            {
+                const Scalar velocityUpUpstream = faceVars.velocitySecondParallel(localSubFaceIdx);
+
+                // momentum = higherOrderApproximation.upwindQUICK(velocitySelf, velocityFirstParallel, velocityUpUpstream,
+                //                                                 scvf.cellCenteredSelfToFirstParallelDistance(localSubFaceIdx), scvf.cellCenteredFirstToSecondParallelDistance(localSubFaceIdx),
+                //                                                 outsideVolVars.density());
+
+                momentum = higherOrderApproximation.TVD(velocitySelf, velocityFirstParallel, velocityUpUpstream, outsideVolVars.density(), higherOrderApproximation.VanAlbada);
+              }
+          }
+          else
+              momentum = selfIsUpstream ? higherOrderApproximation.upwind(velocityFirstParallel, velocitySelf, insideVolVars.density())
+                                        : higherOrderApproximation.upwind(velocitySelf, velocityFirstParallel, outsideVolVars.density());
 
         // Account for the orientation of the staggered normal face's outer normal vector
         // and its area (0.5 of the coinciding scfv).
@@ -602,6 +624,36 @@ private:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         return harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
+    }
+
+   /*!
+    * \brief Check if a second order approximation for the advective term can be used
+    *
+    * This helper function checks if the scvf of interest is not too near to the
+    * boundary so that a dof upstream with respect to the upstream dof is available
+    *
+    * \param ownScvf The SubControlVolumeFace we are considering
+    * \param selfIsUpstream @c true if the velocity ownScvf is upstream wrt the transporting velocity
+    */
+    bool canFrontalSecondOrder_(const SubControlVolumeFace& ownScvf, const bool selfIsUpstream) const
+    {
+        return selfIsUpstream ? ownScvf.hasForwardNeighbor() : ownScvf.hasBackwardNeighbor();
+    }
+
+    /*!
+     * \brief Check if a second order approximation for the advective term can be used
+     *
+     * This helper function checks if the scvf of interest is not too near to the
+     * boundary so that a dof upstream with respect to the upstream dof is available
+     *
+     * \param ownScvf The SubControlVolumeFace we are considering
+     * \param selfIsUpstream @c true if the velocity ownScvf is upstream wrt the transporting velocity
+     * \param localSubFaceIdx The local subface index
+     * \param oppositeSubFaceIdx The index of the subface opposite to the local one
+     */
+    bool canLateralSecondOrder_(const SubControlVolumeFace& ownScvf, const bool selfIsUpstream, const int localSubFaceIdx, const int oppositeSubFaceIdx) const
+    {
+        return selfIsUpstream ? ownScvf.hasFirstParallelNeighbor(oppositeSubFaceIdx) : ownScvf.hasSecondParallelNeighbor(localSubFaceIdx);
     }
 };
 

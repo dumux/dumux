@@ -73,13 +73,15 @@ public:
         velocitySelf_ = faceSol[scvf.dofIndex()];
         velocityOpposite_ = faceSol[scvf.dofIndexOpposingFace()];
 
-        // treat the velocity forward of the self face
-        if(scvf.hasFrontalNeighbor())
+        // treat the velocity at the first forward face i.e. the face that is
+        // forward wrt the self face
+        if(scvf.hasForwardNeighbor())
             velocityForward_ = faceSol[scvf.dofIndexForwardFace()];
 
-        // treat the velocity previous to the opposite face
-        if(scvf.hasPreviousNeighbor())
-            velocityPrevious_ = faceSol[scvf.dofIndexPreviousFace()];
+        // treat the velocity at the first backward face i.e. the face that is
+        // behind the opposite face
+        if(scvf.hasBackwardNeighbor())
+            velocityBackward_ = faceSol[scvf.dofIndexBackwardFace()];
 
         // handle all sub faces
         for(int i = 0; i < scvf.pairData().size(); ++i)
@@ -92,13 +94,13 @@ public:
             if(scvf.hasOuterNormal(i))
                 velocityNormalOutside_[i] = faceSol[subFaceData.normalPair.second];
 
-            // treat the velocity parallel to the face
+            // treat the first velocity parallel to the face
             if(scvf.hasFirstParallelNeighbor(i))
-                velocityFirstParallel_[i] = faceSol[subFaceData.firstParallelFaceDofIdx];
+                velocityFirstParallel_[i] = faceSol[subFaceData.parallelDofs[1]];
 
-            // treat the velocity parallel to the parallel face
+            // treat the second velocity parallel to the face
             if(scvf.hasSecondParallelNeighbor(i))
-                velocitySecondParallel_[i] = faceSol[subFaceData.secondParallelFaceDofIdx];
+                velocitySecondParallel_[i] = faceSol[subFaceData.parallelDofs[2]];
         }
     }
 
@@ -119,19 +121,15 @@ public:
     }
 
     /*!
-    * \brief Returns the velocity at the previous face
-    *
-    * \param localSubFaceIdx The local index of the subface
+    * \brief Returns the velocity at the first backward face
     */
-    Scalar velocityPrevious() const
+    Scalar velocityBackward() const
     {
-        return velocityPrevious_;
+        return velocityBackward_;
     }
 
     /*!
     * \brief Returns the velocity at the forward face
-    *
-    * \param localSubFaceIdx The local index of the subface
     */
     Scalar velocityForward() const
     {
@@ -183,13 +181,13 @@ private:
     Scalar velocityForward_;
     Scalar velocitySelf_;
     Scalar velocityOpposite_;
-    Scalar velocityPrevious_;
+    Scalar velocityBackward_;
     std::array<Scalar, numPairs> velocityFirstParallel_;
     std::array<Scalar, numPairs> velocitySecondParallel_;
     std::array<Scalar, numPairs> velocityNormalInside_;
     std::array<Scalar, numPairs> velocityNormalOutside_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
-#endif
+#endif // DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FACEVARIABLES_HH

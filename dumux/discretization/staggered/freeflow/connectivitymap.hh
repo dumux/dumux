@@ -176,7 +176,6 @@ private:
                                    const FVElementGeometry& fvGeometry,
                                    const SubControlVolumeFace& scvf)
     {
-        // the first entries are always the face dofIdx itself and the one of the opposing face
         if(stencil.empty())
         {
             if(scvf.hasBackwardNeighbor())
@@ -210,8 +209,9 @@ private:
             if(!scvf.boundary())
                 stencil.push_back(data.normalPair.second);
 
-            // add parallel dofs
-            for(int i = 0; i < data.parallelDofs.size(); i++)
+            // add parallel dofs. Start from 1 becaouse in data.parallelDofs[0] there is
+            // the dof of the face itself that was already added with axisData().selfDof
+            for (int i = 1; i < data.parallelDofs.size(); i++)
             {
                 if(data.parallelDofs[i] >= 0)
                 {

@@ -219,84 +219,111 @@ public:
         return axisData_;
     }
 
+    //! Returns @c true if the face is a ghost face
     bool isGhostFace() const
     {
         return isGhostFace_;
     }
-    bool hasFirstParallelNeighbor(const int localSubFaceIdx) const
-    {
-        return !(pairData(localSubFaceIdx).parallelDofs[0] < 0);
-    }
 
-    bool hasSecondParallelNeighbor(const int localSubFaceIdx) const
+    /*!
+    * \brief Check if the face has a first parallel neighbor
+    *
+    * \param localSubFaceIdx The local index of the subface
+    */
+    bool hasFirstParallelNeighbor(const int localSubFaceIdx) const
     {
         return !(pairData(localSubFaceIdx).parallelDofs[1] < 0);
     }
 
+    /*!
+    * \brief Check if the face has a second parallel neighbor
+    *
+    * \param localSubFaceIdx The local index of the subface
+    */
+    bool hasSecondParallelNeighbor(const int localSubFaceIdx) const
+    {
+        return !(pairData(localSubFaceIdx).parallelDofs[2] < 0);
+    }
+
+    /*!
+    * \brief Check if the face has an outer normal neighbor
+    *
+    * \param localSubFaceIdx The local index of the subface
+    */
     bool hasOuterNormal(const int localSubFaceIdx) const
     {
         return !(pairData_[localSubFaceIdx].normalPair.second < 0);
     }
 
+    /*!
+    * \brief Check if the face has a first backward neighbor
+    */
     bool hasBackwardNeighbor() const
     {
       return  (axisData().inAxisBackwardDofs[0] >= 0);
     }
 
+    /*!
+    * \brief Check if the face has a first forward neighbor
+    */
     bool hasForwardNeighbor() const
     {
         return (axisData().inAxisForwardDofs[0] >= 0);
     }
 
-    bool canSecondOrder() const
+    //! Returns the dof of the face
+    GridIndexType dofIndex() const
     {
-        if( hasBackwardNeighbor() && hasForwardNeighbor() && hasFirstParallelNeighbor() && hasSecondParallelNeighbor() )
-            return 1;
-        else
-            return 0;
+        return axisData().selfDof;
+    }
+
+    //! Returns the dof of the opposing face
+    GridIndexType dofIndexOpposingFace() const
+    {
+        return axisData().oppositeDof;
+    }
+
+    //! Returns the dof the first forward face
+    GridIndexType dofIndexForwardFace() const
+    {
+        return axisData().inAxisForwardDofs[0];
+    }
+
+    //! Returns the dof of the first backward face
+    GridIndexType dofIndexBackwardFace() const
+    {
+        return axisData().inAxisBackwardDofs[0];
+    }
+
+    //! Returns the distance between the face and the opposite one
+    Scalar selfToOppositeDistance() const
+    {
+        return axisData().selfToOppositeDistance;
+    }
+
+    /*!
+    * \brief Returns the distance between the self dof and the first parallel one
+    *
+    * \param localSubFaceIdx The local index of the subface
+    */
+    Scalar cellCenteredSelfToFirstParallelDistance(const int localSubFaceIdx) const
+    {
+        return (pairData(localSubFaceIdx).parallelDistances[0] +
+                pairData(localSubFaceIdx).parallelDistances[1]) * 0.5;
+    }
+
+    /*!
+    * \brief Returns the distance between the first parallel dof and the second parallel one
+    *
+    * \param localSubFaceIdx The local index of the subface
+    */
+    Scalar cellCenteredFirstToSecondParallelDistance(const int localSubFaceIdx) const
+    {
+        return (pairData(localSubFaceIdx).parallelDistances[1] +
+                pairData(localSubFaceIdx).parallelDistances[2]) * 0.5;
     }
 
 private:
-
-    bool hasOuterNormal() const
-    {
-        std::vector<Scalar> outerNormalDofIdxs;
-        for (int i = 0; i < pairData().size() ; i++)
-        {
-            outerNormalDofIdxs.push_back(pairData_[i].normalPair.second);
-        }
-        if (std::any_of(outerNormalDofIdxs.begin(), outerNormalDofIdxs.end(), [](int j){return j < 0;}))
-            return 0;
-        else
-            return 1;
-    }
-
-    bool hasFirstParallelNeighbor() const
-    {
-        std::vector<Scalar> firstParallelDofIdxs;
-        for (int i = 0; i < pairData().size() ; i++)
-        {
-            firstParallelDofIdxs.push_back(pairData_[i].firstParallelFaceDofIdx);
-        }
-        if (std::any_of(firstParallelDofIdxs.begin(), firstParallelDofIdxs.end(), [](int j){return j < 0;}))
-            return 0;
-        else
-            return 1;
-    }
-
-    bool hasSecondParallelNeighbor() const
-    {
-        std::vector<Scalar> secondParallelDofIdxs;
-        for (int i = 0; i < pairData().size() ; i++)
-        {
-            secondParallelDofIdxs.push_back(pairData_[i].secondParallelFaceDofIdx);
-        }
-        if (std::any_of(secondParallelDofIdxs.begin(), secondParallelDofIdxs.end(), [](int j){return j < 0;}))
-          return 0;
-        else
-          return 1;
-    }
-
     Dune::GeometryType geomType_;
     std::vector<GlobalPosition> corners_;
     Scalar area_;
@@ -319,4 +346,4 @@ private:
 
 } // end namespace Dumux
 
-#endif
+#endif // DUMUX_DISCRETIZATION_STAGGERED_FREE_FLOW_SUBCONTROLVOLUMEFACE_HH
