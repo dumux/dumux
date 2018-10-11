@@ -1,0 +1,23 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 2 10
+
+[Problem]
+Name = 1ptestforchheimertpfa # name passed to the output routines
+EnableGravity = false
+
+[SpatialParams]
+LensLowerLeft = 0.2 0.2
+LensUpperRight = 0.8 0.8
+
+Permeability = 1e-7 # [m^2]
+PermeabilityLens = 1e-7 # [m^2]
+ForchCoeff = 0.55
+
+[Vtk]
+AddVelocity = true
