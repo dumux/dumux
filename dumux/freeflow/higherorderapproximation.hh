@@ -23,9 +23,9 @@
 #ifndef DUMUX_HIGHER_ORDER_VELOCITY_APPROXIMATION_HH
 #define DUMUX_HIGHER_ORDER_VELOCITY_APPROXIMATION_HH
 
+#include <cmath>
+#include <functional>
 #include <iostream>
-
-#include<dune/common/fvector.hh>
 
 namespace Dumux {
 
@@ -40,8 +40,8 @@ public:
       * \brief Upwind Method
       */
     Scalar upwind(const Scalar downstreamVelocity,
-                            const Scalar upstreamVelocity,
-                            const Scalar density) const
+                  const Scalar upstreamVelocity,
+                  const Scalar density) const
     {
         return upstreamVelocity * density;
     }
@@ -50,24 +50,23 @@ public:
       * \brief Central Differencing Method
       */
     Scalar centralDifference(const Scalar downstreamVelocity,
-                            const Scalar upstreamVelocity,
-                            const Scalar density) const
+                             const Scalar upstreamVelocity,
+                             const Scalar density) const
     {
         return (0.5 * (upstreamVelocity + downstreamVelocity)) * density;
     }
-
 
     /**
       * \brief Linear Upwind Method
       */
     Scalar linearUpwind(const Scalar upstreamVelocity,
-                             const Scalar previousVelocity,
-                             const Scalar upstreamToDownstreamDistance,
-                             const Scalar previousToUpstreamDistance,
-                             const Scalar density) const
+                        const Scalar upUpstreamVelocity,
+                        const Scalar upstreamToDownstreamDistance,
+                        const Scalar upUpstreamToUpstreamDistance,
+                        const Scalar density) const
     {
         Scalar zeroOrder = upstreamVelocity;
-        Scalar firstOrder = -1.0 * ((upstreamVelocity - previousVelocity) / previousToUpstreamDistance) * ( upstreamToDownstreamDistance / -2.0);
+        Scalar firstOrder = -1.0 * ((upstreamVelocity - upUpstreamVelocity) / upUpstreamToUpstreamDistance) * ( upstreamToDownstreamDistance / -2.0);
         return (zeroOrder + firstOrder) * density;
     }
 
@@ -76,16 +75,16 @@ public:
       */
     Scalar upwindQUICK(const Scalar downstreamVelocity,
                        const Scalar upstreamVelocity,
-                       const Scalar previousVelocity,
+                       const Scalar upUpstreamVelocity,
                        const Scalar upstreamToDownstreamDistance,
-                       const Scalar previousToUpstreamDistance,
+                       const Scalar upUpstreamToUpstreamDistance,
                        const Scalar density) const
     {
-        Scalar normalDistance = (previousToUpstreamDistance + upstreamToDownstreamDistance) / 2.0;
+        Scalar normalDistance = (upUpstreamToUpstreamDistance + upstreamToDownstreamDistance) / 2.0;
         Scalar zeroOrder = upstreamVelocity;
         Scalar firstOrder = ((downstreamVelocity - upstreamVelocity) / 2.0);
-        Scalar secondOrder = -(((downstreamVelocity - upstreamVelocity) / upstreamToDownstreamDistance) - ((upstreamVelocity - previousVelocity) / previousToUpstreamDistance))
-                  * std::pow(upstreamToDownstreamDistance , 2 ) / (8.0 * normalDistance);
+        Scalar secondOrder = -(((downstreamVelocity - upstreamVelocity) / upstreamToDownstreamDistance) - ((upstreamVelocity - upUpstreamVelocity) / upUpstreamToUpstreamDistance))
+                           * upstreamToDownstreamDistance * upstreamToDownstreamDistance / (8.0 * normalDistance);
         return (zeroOrder + firstOrder + secondOrder) * density;
     }
 
@@ -94,16 +93,21 @@ public:
       */
     Scalar TVD(const Scalar downstreamVelocity,
                const Scalar upstreamVelocity,
-               const Scalar previousVelocity,
+               const Scalar upUpstreamVelocity,
                const Scalar density,
-               const std::function<Scalar(const Scalar)>& psi) const
+               const std::function<Scalar(const Scalar)>& limiter) const
     {
-        const Scalar ratio = (upstreamVelocity - previousVelocity) / (downstreamVelocity - upstreamVelocity);
-        const Scalar secondOrderTerm = 0.5 * psi(ratio) * (downstreamVelocity - upstreamVelocity);
-        if(std::isnan(secondOrderTerm))
-            return density * upstreamVelocity;
-        else
+        const Scalar ratio = (upstreamVelocity - upUpstreamVelocity) / (downstreamVelocity - upstreamVelocity);
+
+        // If the velocity field is uniform (like at the first newton step) we get a NaN
+        if(std::isfinite(ratio))
+        {
+            const Scalar secondOrderTerm = 0.5 * limiter(ratio) * (downstreamVelocity - upstreamVelocity);
             return density * (upstreamVelocity + secondOrderTerm);
+        }
+
+        else
+            return density * upstreamVelocity;
     }
 
     /**
@@ -127,7 +131,7 @@ public:
       */
     static Scalar MinMod(const Scalar r)
     {
-        return std::min(0.0, std::max(r, 1.0));
+        return std::max(0.0, std::min(r, 1.0));
     }
 
     /**
