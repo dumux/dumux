@@ -31,7 +31,6 @@
 #define DUMUX_SWE_MODEL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>
 #include <dumux/shallowwater/properties.hh>
 #include <dumux/shallowwater/advectiveflux.hh>
 
@@ -100,7 +99,7 @@ SET_BOOL_PROP(Swe, SolutionDependentAdvection, false); //TODO check if this is c
 SET_BOOL_PROP(Swe, SolutionDependentMolecularDiffusion, false);
 //SET_BOOL_PROP(Swe, EnableEnergyBalance, false);
 SET_BOOL_PROP(Swe, SolutionDependentHeatConduction, false);
-SET_TYPE_PROP(Swe, AdvectionType, ShallowWaterAdvectiveFlux<TypeTag>);
+SET_TYPE_PROP(Swe, AdvectionType, SweAdvectiveFlux<TypeTag>);
 
 //! Set friction law indices
 NEW_PROP_TAG(Manning);
