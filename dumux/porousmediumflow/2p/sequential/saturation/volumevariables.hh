@@ -82,6 +82,20 @@ public:
 
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        const int nPhaseIdx = 1 - wPhaseIdx;
+
+        mobility_[wPhaseIdx] =
+            MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
+            / fluidState_.viscosity(wPhaseIdx);
+
+        mobility_[nPhaseIdx] =
+            MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx))
+            / fluidState_.viscosity(nPhaseIdx);
+
         // porosity calculation over inert volumefraction
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
     }
@@ -194,6 +208,14 @@ public:
     Scalar molarDensity(const int phaseIdx) const
     { return fluidState_.molarDensity(phaseIdx); }
 
+        /*!
+     * \brief Returns the effective mobility of a given phase within
+     *        the control volume in \f$[s*m/kg]\f$.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar mobility(int phaseIdx) const
+    { return mobility_[phaseIdx]; }
 
     /*!
      * \brief Returns the average porosity within the control volume in \f$[-]\f$.
@@ -208,6 +230,7 @@ protected:
 private:
     Scalar pc_;
     Scalar porosity_;
+    Scalar mobility_[ModelTraits::numPhases()];
 };
 
 } // end namespace Dumux

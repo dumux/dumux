@@ -111,7 +111,7 @@ public:
         {
             // the physical quantities for which we perform upwinding
             auto upwindTerm = [phaseIdx](const auto& volVars)
-                              { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx); };
+                              { return volVars.mobility(phaseIdx); };
 
             flux[pressureEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
         }
