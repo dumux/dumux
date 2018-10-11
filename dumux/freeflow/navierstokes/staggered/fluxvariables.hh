@@ -217,14 +217,14 @@ public:
                 // const Scalar upstreamToDownstreamDistance = scvf.selfToOppositeDistance();
                 if (selfIsUpstream)
                 {
-                    const Scalar velocityUpUpstream = elemFaceVars[scvf].velocityForward();
+                    const Scalar velocityUpUpstream = elemFaceVars[scvf].velocityForward(0);
                     // const Scalar UpUpstreamToUpstreamDistance = scvf.axisData().inAxisForwardDistances[0];
                     // momentum = higherOrderApproximation.upwindQUICK(velocityOpposite, velocitySelf, velocityUpUpstream, upstreamToDownstreamDistance, UpUpstreamToUpstreamDistance, insideVolVars.density());
                     momentum = higherOrderApproximation.TVD(velocityOpposite, velocitySelf, velocityUpUpstream, insideVolVars.density(), higherOrderApproximation.VanAlbada);
                 }
                 else
                 {
-                    const Scalar velocityUpUpstream = elemFaceVars[scvf].velocityBackward();
+                    const Scalar velocityUpUpstream = elemFaceVars[scvf].velocityBackward(0);
                     // const Scalar UpUpstreamToUpstreamDistance = scvf.axisData().inAxisBackwardDistances[0];
                     // momentum = higherOrderApproximation.upwindQUICK(velocitySelf, velocityOpposite, velocityUpUpstream, upstreamToDownstreamDistance, UpUpstreamToUpstreamDistance, insideVolVars.density());
                     momentum = higherOrderApproximation.TVD(velocitySelf, velocityOpposite, velocityUpUpstream, insideVolVars.density(), higherOrderApproximation.VanAlbada);
@@ -312,7 +312,7 @@ public:
 
             // Check if there is face/element parallel to our face of interest where the dof lives on. If there is no parallel neighbor,
             // we are on a boundary where we have to check for boundary conditions.
-            if(!scvf.hasFirstParallelNeighbor(localSubFaceIdx))
+            if(!scvf.hasParallelNeighbor(localSubFaceIdx,0))
             {
                 // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
                 // the sub faces's center.
@@ -423,8 +423,8 @@ private:
             return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
         };
 
-        const Scalar velocityFirstParallel = scvf.hasFirstParallelNeighbor(localSubFaceIdx)
-                                           ? faceVars.velocityFirstParallel(localSubFaceIdx)
+        const Scalar velocityFirstParallel = scvf.hasParallelNeighbor(localSubFaceIdx,0)
+                                           ? faceVars.velocityParallel(localSubFaceIdx,0)
                                            : getParallelVelocityFromBoundary();
 
         // Get the volume variables of the own and the neighboring element
@@ -440,28 +440,30 @@ private:
         {
             if (selfIsUpstream)
             {
-                const Scalar velocityUpUpstream = faceVars.velocityFirstParallel(oppositeSubFaceIdx);
+                const Scalar velocityUpUpstream = faceVars.velocityParallel(oppositeSubFaceIdx,0);
 
                 // momentum = higherOrderApproximation.upwindQUICK(velocityFirstParallel, velocitySelf, velocityUpUpstream,
-                //                                                 scvf.cellCenteredSelfToFirstParallelDistance(localSubFaceIdx), scvf.cellCenteredSelfToFirstParallelDistance(oppositeSubFaceIdx),
+                //                                                 scvf.cellCenteredParallelDistance(localSubFaceIdx,0), scvf.cellCenteredParallelDistance(oppositeSubFaceIdx,0),
                 //                                                 insideVolVars.density());
 
                 momentum = higherOrderApproximation.TVD(velocityFirstParallel, velocitySelf, velocityUpUpstream, outsideVolVars.density(), higherOrderApproximation.VanAlbada);
             }
             else
             {
-                const Scalar velocityUpUpstream = faceVars.velocitySecondParallel(localSubFaceIdx);
+                const Scalar velocityUpUpstream = faceVars.velocityParallel(localSubFaceIdx,1);
 
                 // momentum = higherOrderApproximation.upwindQUICK(velocitySelf, velocityFirstParallel, velocityUpUpstream,
-                //                                                 scvf.cellCenteredSelfToFirstParallelDistance(localSubFaceIdx), scvf.cellCenteredFirstToSecondParallelDistance(localSubFaceIdx),
+                //                                                 scvf.cellCenteredParallelDistance(localSubFaceIdx,0), scvf.cellCenteredParallelDistance(localSubFaceIdx,1),
                 //                                                 outsideVolVars.density());
 
                 momentum = higherOrderApproximation.TVD(velocitySelf, velocityFirstParallel, velocityUpUpstream, outsideVolVars.density(), higherOrderApproximation.VanAlbada);
-              }
-          }
-          else
-              momentum = selfIsUpstream ? higherOrderApproximation.upwind(velocityFirstParallel, velocitySelf, insideVolVars.density())
-                                        : higherOrderApproximation.upwind(velocitySelf, velocityFirstParallel, outsideVolVars.density());
+                }
+            }
+            else
+            {
+                momentum = selfIsUpstream ? higherOrderApproximation.upwind(velocityFirstParallel, velocitySelf, insideVolVars.density())
+                                          : higherOrderApproximation.upwind(velocitySelf, velocityFirstParallel, outsideVolVars.density());
+            }
 
         // Account for the orientation of the staggered normal face's outer normal vector
         // and its area (0.5 of the coinciding scfv).
@@ -559,14 +561,14 @@ private:
                 return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
             };
 
-            const Scalar velocityFirstParallel = scvf.hasFirstParallelNeighbor(localSubFaceIdx)
-                                               ? faceVars.velocityFirstParallel(localSubFaceIdx)
+            const Scalar velocityFirstParallel = scvf.hasParallelNeighbor(localSubFaceIdx,0)
+                                               ? faceVars.velocityParallel(localSubFaceIdx,0)
                                                : getParallelVelocityFromBoundary();
 
             // The velocity gradient already accounts for the orientation
             // of the staggered face's outer normal vector.
             const Scalar parallelGradient = (velocityFirstParallel - innerParallelVelocity)
-                                          / scvf.cellCenteredSelfToFirstParallelDistance(localSubFaceIdx);
+                                          / scvf.cellCenteredParallelDistance(localSubFaceIdx,0);
 
             normalDiffusiveFlux -= muAvg * parallelGradient;
         }
@@ -663,7 +665,7 @@ private:
     */
     bool canFrontalSecondOrder_(const SubControlVolumeFace& ownScvf, const bool selfIsUpstream) const
     {
-        return selfIsUpstream ? ownScvf.hasForwardNeighbor() : ownScvf.hasBackwardNeighbor();
+        return selfIsUpstream ? ownScvf.hasForwardNeighbor(0) : ownScvf.hasBackwardNeighbor(0);
     }
 
     /*!
@@ -679,7 +681,7 @@ private:
      */
     bool canLateralSecondOrder_(const SubControlVolumeFace& ownScvf, const bool selfIsUpstream, const int localSubFaceIdx, const int oppositeSubFaceIdx) const
     {
-        return selfIsUpstream ? ownScvf.hasFirstParallelNeighbor(oppositeSubFaceIdx) : ownScvf.hasSecondParallelNeighbor(localSubFaceIdx);
+        return selfIsUpstream ? ownScvf.hasParallelNeighbor(oppositeSubFaceIdx,0) : ownScvf.hasParallelNeighbor(localSubFaceIdx,1);
     }
 };
 

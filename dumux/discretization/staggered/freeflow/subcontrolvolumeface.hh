@@ -225,27 +225,18 @@ public:
         return isGhostFace_;
     }
 
-    /*!
-    * \brief Check if the face has a first parallel neighbor
+   /*!
+    * \brief Check if the face has a parallel neighbor
     *
     * \param localSubFaceIdx The local index of the subface
+    * \param parallelDegreeIdx The index describing how many faces away from the self face
     */
-    bool hasFirstParallelNeighbor(const int localSubFaceIdx) const
+    bool hasParallelNeighbor(const int localSubFaceIdx, const int parallelDegreeIdx) const
     {
-        return !(pairData(localSubFaceIdx).parallelDofs[1] < 0);
+        return !(pairData(localSubFaceIdx).parallelDofs[parallelDegreeIdx] < 0);
     }
 
-    /*!
-    * \brief Check if the face has a second parallel neighbor
-    *
-    * \param localSubFaceIdx The local index of the subface
-    */
-    bool hasSecondParallelNeighbor(const int localSubFaceIdx) const
-    {
-        return !(pairData(localSubFaceIdx).parallelDofs[2] < 0);
-    }
-
-    /*!
+   /*!
     * \brief Check if the face has an outer normal neighbor
     *
     * \param localSubFaceIdx The local index of the subface
@@ -255,20 +246,24 @@ public:
         return !(pairData_[localSubFaceIdx].normalPair.second < 0);
     }
 
-    /*!
-    * \brief Check if the face has a first backward neighbor
+   /*!
+    * \brief Check if the face has a backward neighbor
+    *
+    * \param backwardIdx The index describing how many faces backward this dof is from the opposite face
     */
-    bool hasBackwardNeighbor() const
+    bool hasBackwardNeighbor(const int backwardIdx) const
     {
-      return  (axisData().inAxisBackwardDofs[0] >= 0);
+        return !(axisData().inAxisBackwardDofs[backwardIdx] < 0);
     }
 
-    /*!
-    * \brief Check if the face has a first forward neighbor
+   /*!
+    * \brief Check if the face has a forward neighbor
+    *
+    * \param forwardIdx The index describing how many faces forward this dof is of the self face
     */
-    bool hasForwardNeighbor() const
+    bool hasForwardNeighbor(const int forwardIdx) const
     {
-        return (axisData().inAxisForwardDofs[0] >= 0);
+        return !(axisData().inAxisForwardDofs[forwardIdx] < 0);
     }
 
     //! Returns the dof of the face
@@ -302,26 +297,17 @@ public:
     }
 
     /*!
-    * \brief Returns the distance between the self dof and the first parallel one
+    * \brief Returns the distance between the parallel dofs
     *
     * \param localSubFaceIdx The local index of the subface
+    * \param parallelDegreeIdx The index describing how many faces away from the self
     */
-    Scalar cellCenteredSelfToFirstParallelDistance(const int localSubFaceIdx) const
+    Scalar cellCenteredParallelDistance(const int localSubFaceIdx, const int parallelDegreeIdx) const
     {
-        return (pairData(localSubFaceIdx).parallelDistances[0] +
-                pairData(localSubFaceIdx).parallelDistances[1]) * 0.5;
+        return (pairData(localSubFaceIdx).parallelDistances[parallelDegreeIdx] +
+                pairData(localSubFaceIdx).parallelDistances[parallelDegreeIdx+1]) * 0.5;
     }
 
-    /*!
-    * \brief Returns the distance between the first parallel dof and the second parallel one
-    *
-    * \param localSubFaceIdx The local index of the subface
-    */
-    Scalar cellCenteredFirstToSecondParallelDistance(const int localSubFaceIdx) const
-    {
-        return (pairData(localSubFaceIdx).parallelDistances[1] +
-                pairData(localSubFaceIdx).parallelDistances[2]) * 0.5;
-    }
 
 private:
     Dune::GeometryType geomType_;

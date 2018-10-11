@@ -178,26 +178,22 @@ private:
     {
         if(stencil.empty())
         {
-            if(scvf.hasBackwardNeighbor())
+            for(int i = 0; i < scvf.axisData().inAxisBackwardDofs.size(); i++)
             {
-                for(int i = 0; i < scvf.axisData().inAxisBackwardDofs.size(); i++)
+                if(scvf.hasBackwardNeighbor(i))
                 {
-                    if(scvf.axisData().inAxisBackwardDofs[i] >= 0)
-                    {
-                        stencil.push_back(scvf.axisData().inAxisBackwardDofs[i]);
-                    }
+                    stencil.push_back(scvf.axisData().inAxisBackwardDofs[i]);
                 }
             }
+
             stencil.push_back(scvf.axisData().selfDof);
             stencil.push_back(scvf.axisData().oppositeDof);
-            if(scvf.hasForwardNeighbor())
+
+            for(int i = 0; i < scvf.axisData().inAxisForwardDofs.size(); i++)
             {
-                for(int i = 0; i < scvf.axisData().inAxisForwardDofs.size(); i++)
+                if(scvf.hasForwardNeighbor(i))
                 {
-                    if(scvf.axisData().inAxisForwardDofs[i] >= 0)
-                    {
-                        stencil.push_back(scvf.axisData().inAxisForwardDofs[i]);
-                    }
+                    stencil.push_back(scvf.axisData().inAxisForwardDofs[i]);
                 }
             }
         }
@@ -209,11 +205,10 @@ private:
             if(!scvf.boundary())
                 stencil.push_back(data.normalPair.second);
 
-            // add parallel dofs. Start from 1 becaouse in data.parallelDofs[0] there is
-            // the dof of the face itself that was already added with axisData().selfDof
-            for (int i = 1; i < data.parallelDofs.size(); i++)
+            // add parallel dofs
+            for (int i = 0; i < data.parallelDofs.size(); i++)
             {
-                if(data.parallelDofs[i] >= 0)
+                if(!(data.parallelDofs[i] < 0))
                 {
                     stencil.push_back(data.parallelDofs[i]);
                 }

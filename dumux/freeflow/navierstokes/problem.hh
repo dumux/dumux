@@ -232,7 +232,7 @@ public:
         using std::sqrt;
         const Scalar K = asImp_().permeability(normalFace);
         const Scalar alpha = asImp_().alphaBJ(normalFace);
-        return velocitySelf / (alpha / sqrt(K) * scvf.cellCenteredSelfToFirstParallelDistance(localSubFaceIdx) + 1.0);
+        return velocitySelf / (alpha / sqrt(K) * scvf.cellCenteredParallelDistance(localSubFaceIdx,0) + 1.0);
     }
 
 private:

@@ -311,7 +311,7 @@ private:
         // initialize values that could remain unitialized if the intersection lies on a boundary
         for(auto& data : pairData_)
         {
-            int numParallelDofs = order + 1;
+            int numParallelDofs = order;
 
             // parallel Dofs
             data.parallelDofs.clear();
@@ -319,7 +319,7 @@ private:
 
             // parallel Distances
             data.parallelDistances.clear();
-            data.parallelDistances.resize(numParallelDofs, 0.0);
+            data.parallelDistances.resize(numParallelDofs + 1, 0.0);
 
             // outer normals
             data.normalPair.second = -1;
@@ -412,11 +412,13 @@ private:
                     }
                     while(!parallelElementStack.empty())
                     {
-                        this->pairData_[numPairParallelIdx].parallelDofs[parallelElementStack.size()-1] = gridView_.indexSet().subIndex(parallelElementStack.top(), parallelLocalIdx, codimIntersection);
+                        if(parallelElementStack.size() > 1)
+                        {
+                            this->pairData_[numPairParallelIdx].parallelDofs[parallelElementStack.size()-2] = gridView_.indexSet().subIndex(parallelElementStack.top(), parallelLocalIdx, codimIntersection);
+                        }
                         this->pairData_[numPairParallelIdx].parallelDistances[parallelElementStack.size()-1] = setParallelPairDistances_(parallelElementStack.top(), parallelAxisIdx);
                         parallelElementStack.pop();
                     }
-                    // numPairParallelIdx++;
                 }
                 else
                 {
@@ -432,9 +434,6 @@ private:
                     // The distance is saved doubled because with scvf.cellCenteredSelfToFirstParallelDistance
                     // an average between parallelDistances[0] and parallelDistances[1] will be computed
                     this->pairData_[numPairParallelIdx].parallelDistances[0] = std::move(distance.two_norm() * 2);
-
-                    // For coherence I add the self dof in parallelDofs[0]
-                    this->pairData_[numPairParallelIdx].parallelDofs[0] = gridView_.indexSet().subIndex(element_, parallelLocalIdx, codimIntersection);
                 }
                 numPairParallelIdx++;
             }
