@@ -63,6 +63,11 @@ class KOmegaProblem : public RANSProblem<TypeTag>
     using DimVector = typename Element::Geometry::GlobalCoordinate;
 
 public:
+    /*
+     * \brief The constructor
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
     KOmegaProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     {

@@ -1,0 +1,72 @@
+[TimeLoop]
+DtInitial =  1e-1 # [s]
+MaxTimeStepSize = 43200 # [s] (12 hours)
+TEnd = 864000 # [s] (6 days)
+
+[RANS.Grid]
+Positions0 = -1.0 0.0 0.5
+Positions1 = 0.25 0.5
+Grading0 = 1.0 1.0
+Grading1 = 1.57539
+Cells0 = 4 16
+Cells1 = 16
+Verbosity = true
+
+[Darcy.Grid]
+Positions0 = 0.0 0.5
+Positions1 = 0.0 0.25
+Cells0 = 16
+Cells1 = 16
+Grading0 = 1.0
+Grading1 = -1.57539
+Verbosity = true
+
+[RANS.Problem]
+Name = rans
+InletVelocity = 3.5 # [m/s]
+InletPressure = 1e5 # [Pa]
+InletMassFrac = 0.008 # [-]
+InletTemperature = 298.15 # [K]
+
+[Darcy.Problem]
+Name = darcy
+Pressure = 1e5
+Saturation = 0.8 # initial Sw
+Temperature = 298.15 # [K]
+InitPhasePresence = 3 # bothPhases
+
+[Darcy.SpatialParams]
+Porosity = 0.41
+Permeability = 2.65e-10
+AlphaBeaversJoseph = 1.0
+Swr = 0.005
+Snr = 0.01
+VgAlpha = 6.37e-4
+VgN = 8.0
+
+[Problem]
+Name = test_rans1p2cnidarcy2p2cni
+EnableGravity = true
+InterfaceDiffusionCoefficientAvg = Harmonic # FreeFlowOnly Harmonic
+PlotFluxes = false
+PlotStorage = true
+
+[RANS.RANS]
+EddyViscosityModel = "vanDriest"
+UseStoredEddyViscosity = false
+
+[RANS.KEpsilon]
+YPlusThreshold = 50. # should be large (30-60) for fine grids
+
+[Vtk]
+AddVelocity = true
+WriteFaceData = false
+
+[Newton]
+TargetSteps = 5
+MaxSteps = 12
+MaxRelativeShift = 1e-5
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
