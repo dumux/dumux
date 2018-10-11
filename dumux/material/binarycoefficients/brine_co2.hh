@@ -53,14 +53,17 @@ public:
      */
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
     {
-        //Diffusion coefficient of water in the CO2 phase
-        Scalar const PI=3.141593;
-        Scalar const k = 1.3806504e-23; // Boltzmann constant
-        Scalar const c = 4; // slip parameter, can vary between 4 (slip condition) and 6 (stick condition)
-        Scalar const R_h = 1.72e-10; // hydrodynamic radius of the solute
-        Scalar mu = CO2::gasViscosity(temperature, pressure); // CO2 viscosity
-        Scalar D = k / (c * PI * R_h) * (temperature / mu);
-        return D;
+        if(!hasParam("BinaryCoefficients.GasDiffCoeff")) //in case one might set that user-specific as e.g. in dumux-lecture/mm/convectivemixing
+        {
+            //Diffusion coefficient of water in the CO2 phase
+            Scalar const PI=3.141593;
+            Scalar const k = 1.3806504e-23; // Boltzmann constant
+            Scalar const c = 4; // slip parameter, can vary between 4 (slip condition) and 6 (stick condition)
+            Scalar const R_h = 1.72e-10; // hydrodynamic radius of the solute
+            Scalar mu = CO2::gasViscosity(temperature, pressure); // CO2 viscosity
+            Scalar D = k / (c * PI * R_h) * (temperature / mu);
+            return D;
+        } else return getParam<Scalar>("BinaryCoefficients.GasDiffCoeff");
     }
 
     /*!
@@ -72,7 +75,10 @@ public:
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
     {
         //Diffusion coefficient of CO2 in the brine phase
-        return 2e-9;
+        if(!hasParam("BinaryCoefficients.LiquidDiffCoeff")) //in case one might set that user-specific as e.g. in dumux-lecture/mm/convectivemixing
+        {
+            return 2e-9;
+        } else return getParam<Scalar>("BinaryCoefficients.LiquidDiffCoeff");
     }
 
     /*!
