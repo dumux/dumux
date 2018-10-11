@@ -80,6 +80,8 @@ class KEpsilonProblem : public RANSProblem<TypeTag>
     static_assert(cellCenterOffset == ModelTraits::dim(), "cellCenterOffset must equal dim for staggered NavierStokes");
 
 public:
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+
     /*
      * \brief The constructor
      * \param fvGridGeometry The finite volume grid geometry
