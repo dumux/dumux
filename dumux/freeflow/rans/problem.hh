@@ -55,11 +55,13 @@ class RANSProblem : public NavierStokesProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
@@ -414,6 +416,41 @@ public:
             }
         }
     }
+
+    /*!
+     * \brief Returns whether a wall function should be used at a given face
+     *
+     * \param element The element.
+     * \param scvf The sub control volume face.
+     * \param eqIdx The equation index.
+     */
+    bool useWallFunction(const Element& element,
+                         const SubControlVolumeFace& scvf,
+                         const int& eqIdx) const
+    { return false; }
+
+    /*!
+     * \brief Returns an additional wall function momentum flux
+     */
+    template<class ElementVolumeVariables, class ElementFaceVariables>
+    FacePrimaryVariables wallFunction(const Element& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVolumeVariables& elemVolVars,
+                                      const ElementFaceVariables& elemFaceVars,
+                                      const SubControlVolumeFace& scvf,
+                                      const SubControlVolumeFace& localSubFace) const
+    { return FacePrimaryVariables(0.0); }
+
+    /*!
+     * \brief  Returns an additional wall function flux for cell-centered quantities
+     */
+    template<class ElementVolumeVariables, class ElementFaceVariables>
+    CellCenterPrimaryVariables wallFunction(const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const ElementFaceVariables& elemFaceVars,
+                                            const SubControlVolumeFace& scvf) const
+    { return CellCenterPrimaryVariables(0.0); }
 
     /*!
      * \brief Returns whether a given sub control volume face is on a wall
