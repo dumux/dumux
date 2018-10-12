@@ -24,7 +24,7 @@
 #ifndef DUMUX_SWE_TEST_PROBLEM_HH
 #define DUMUX_SWE_TEST_PROBLEM_HH
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/godunov/properties.hh>
 #include <dumux/shallowwater/properties.hh>
 //#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/shallowwater/swe/problem.hh>
@@ -55,8 +55,7 @@ template <class TypeTag> class SweTestProblem;
 namespace Properties
 {
 
-//NEW_TYPE_TAG(SweTestTypeTag, INHERITS_FROM(CCTpfaModel, Swe, SweTestSpatialParams));
-NEW_TYPE_TAG(SweTestTypeTag, INHERITS_FROM(CCTpfaModel, Swe));
+NEW_TYPE_TAG(SweTestTypeTag, INHERITS_FROM(Godunov, Swe));
 
 SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::UGGrid<2>);
 //SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>);
@@ -72,12 +71,6 @@ SET_PROP(SweTestTypeTag, SpatialParams)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = SweTestSpatialParams<FVGridGeometry, Scalar>;
 };
-
-// Enable caching
-SET_BOOL_PROP(SweTestTypeTag, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(SweTestTypeTag, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(SweTestTypeTag, EnableFVGridGeometryCache, false);
-
 
 } // end namespace Properties
 
