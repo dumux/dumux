@@ -187,6 +187,12 @@ template<class FVGridGeometry>
 class UpwindSchemeImpl<FVGridGeometry, DiscretizationMethod::ccmpfa>
 : public UpwindSchemeImpl<FVGridGeometry, DiscretizationMethod::cctpfa> {};
 
+
+//! Upwind scheme for cell-centered godunov schemes
+template<class FVGridGeometry>
+class UpwindSchemeImpl<FVGridGeometry, DiscretizationMethod::godunov>
+: public UpwindSchemeImpl<FVGridGeometry, DiscretizationMethod::cctpfa> {};
+
 } // end namespace Dumux
 
 #endif

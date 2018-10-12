@@ -1,5 +1,6 @@
 add_subdirectory(mpfa)
 add_subdirectory(tpfa)
+add_subdirectory(godunov)
 
 install(FILES
 connectivitymap.hh

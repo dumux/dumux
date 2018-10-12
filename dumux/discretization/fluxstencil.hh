@@ -123,6 +123,47 @@ public:
     }
 };
 
+/*
+ * \ingroup Discretization
+ * \brief Flux stencil specialization for the cell-centered godunov scheme
+ * \tparam FVElementGeometry The local view on the finite volume grid geometry
+ */
+template<class FVElementGeometry>
+class FluxStencil<FVElementGeometry, DiscretizationMethod::godunov>
+{
+    using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
+
+public:
+    //! Each cell I couples to a cell J always only via one face
+    using ScvfStencilIForJ = Dune::ReservedVector<IndexType, 1>;
+
+    //! The flux stencil type
+    using Stencil = typename SubControlVolumeFace::Traits::GridIndexStorage;
+
+    //! Returns the flux stencil
+    static Stencil stencil(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const SubControlVolumeFace& scvf)
+    {
+        if (scvf.boundary())
+            return Stencil({scvf.insideScvIdx()});
+        else if (scvf.numOutsideScvs() > 1)
+        {
+            Stencil stencil({scvf.insideScvIdx()});
+            for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+                stencil.push_back(scvf.outsideScvIdx(i));
+            return stencil;
+        }
+        else
+            return Stencil({scvf.insideScvIdx(), scvf.outsideScvIdx()});
+    }
+};
+
+
 } // end namespace Dumux
 
 #endif
