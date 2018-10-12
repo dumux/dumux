@@ -89,7 +89,7 @@ SET_BOOL_PROP(RANSTypeTag, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(RANSTypeTag, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(RANSTypeTag, EnableGridVolumeVariablesCache, true);
 
-SET_BOOL_PROP(RANSTypeTag, EnableInertiaTerms, true);
+// SET_BOOL_PROP(RANSTypeTag, EnableInertiaTerms, true);
 }
 
 /*!
@@ -180,7 +180,24 @@ public:
                                         turbulenceProperties.dissipation(inletVelocity_, charLength, kinematicViscosity, true));
 #endif
         std::cout << std::endl;
+
     }
+   /*!
+     * \name Boundary Locations
+     */
+    // \{
+
+    bool isOnWall(const SubControlVolumeFace& scvf) const
+    {
+        GlobalPosition globalPos = scvf.ipGlobal();
+        return isOnWallAtPos(globalPos);
+    }
+
+    bool isOnWallAtPos(const GlobalPosition& globalPos) const
+    {
+        return onLowerBoundary_(globalPos);
+    }
+    // \}
 
    /*!
      * \name Problem parameters
@@ -271,13 +288,14 @@ public:
             bTypes.setCouplingNeumann(Indices::conti0EqIdx);
             bTypes.setCouplingNeumann(Indices::conti0EqIdx + 1);
             bTypes.setCouplingNeumann(Indices::energyBalanceIdx);
-            bTypes.setCouplingNeumann(Indices::momentumYBalanceIdx);
-            bTypes.setBJS(Indices::momentumXBalanceIdx);
+
+            bTypes.setCouplingNeumann(scvf.directionIndex());
+            bTypes.setBJS(1 - scvf.directionIndex());
         }
 
 #if KOMEGA
         // set a fixed dissipation (omega) in one cell
-        if (isOnWall(globalPos))
+        if (isOnWallAtPos(globalPos))
             bTypes.setDirichletCell(Indices::dissipationIdx);
 #endif
 
@@ -363,7 +381,6 @@ public:
     {
         return (onLowerBoundary_(globalPos));
     }
-
    /*!
      * \name Volume terms
      */
@@ -393,7 +410,8 @@ public:
 #if LOWREKEPSILON || KEPSILON || KOMEGA
         values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
         values[Indices::dissipationIdx] = dissipation_;
-        if (isOnWall(globalPos))
+
+        if (isOnWallAtPos(globalPos))
         {
             values[Indices::turbulentKineticEnergyIdx] = 0.0;
             values[Indices::dissipationIdx] = 0.0;
@@ -402,7 +420,7 @@ public:
 
 #if ONEEQ
         values[Indices::viscosityTildeIdx] = viscosityTilde_;
-        if (isOnWall(globalPos))
+        if (isOnWallAtPos(globalPos))
         {
             values[Indices::viscosityTildeIdx] = 0.0;
         }
