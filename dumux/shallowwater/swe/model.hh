@@ -37,7 +37,6 @@
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "fluxvariables.hh"
-#include "fluxvariablescache.hh"
 #include "indices.hh"
 #include "vtkoutputfields.hh"
 
@@ -53,27 +52,8 @@ struct SweModelTraits
 
     static constexpr int numEq() { return 3; }
     static constexpr int numPhases() { return 1; }
-
-    static constexpr bool enableAdvection() { return true; }
-    static constexpr bool enableMolecularDiffusion() { return false; }
-    static constexpr bool enableEnergyBalance() { return false; }
 };
 
-
-/*!
- * \ingroup TwoPModel
- * \brief Traits class for the two-phase model.
- *
- * \tparam PV The type used for primary variables
- * \tparam FSY The fluid system type
- * \tparam FST The fluid state type
- * \tparam SSY The solid system type
- * \tparam SST The solid state type
- * \tparam PT The type used for permeabilities
- * \tparam MT The model traits
- * \tparam SR The class used for reconstruction of
- *            non-wetting phase saturations in scvs
- */
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the shallow water model
@@ -95,11 +75,11 @@ NEW_TYPE_TAG(Swe, INHERITS_FROM(ShallowWater));
 //SET_INT_PROP(Swe, NumPhases, 1);
 //SET_BOOL_PROP(Swe, EnableAdvection, false);
 //SET_BOOL_PROP(Swe, EnableMolecularDiffusion, false);
-SET_BOOL_PROP(Swe, SolutionDependentAdvection, false); //TODO check if this is correct
-SET_BOOL_PROP(Swe, SolutionDependentMolecularDiffusion, false);
+//SET_BOOL_PROP(Swe, SolutionDependentAdvection, false); //TODO check if this is correct
+//SET_BOOL_PROP(Swe, SolutionDependentMolecularDiffusion, false);
 //SET_BOOL_PROP(Swe, EnableEnergyBalance, false);
-SET_BOOL_PROP(Swe, SolutionDependentHeatConduction, false);
-SET_TYPE_PROP(Swe, AdvectionType, SweAdvectiveFlux<TypeTag>);
+//SET_BOOL_PROP(Swe, SolutionDependentHeatConduction, false);
+//SET_TYPE_PROP(Swe, AdvectionType, SweAdvectiveFlux<TypeTag>);
 
 //! Set friction law indices
 NEW_PROP_TAG(Manning);
@@ -120,9 +100,6 @@ SET_TYPE_PROP(Swe, VolumeVariables, SweVolumeVariables<TypeTag>);
 
 //! The flux variables
 SET_TYPE_PROP(Swe, FluxVariables, SweFluxVariables<TypeTag>);
-
-//! The flux variables cache class
-SET_TYPE_PROP(Swe, FluxVariablesCache, SweFluxVariablesCache<TypeTag>);
 
 //! The specific vtk output fields
 SET_TYPE_PROP(Swe, VtkOutputFields, SweVtkOutputFields<TypeTag>);

@@ -116,8 +116,6 @@ public:
                                const SubControlVolumeFace& scvf,
                                const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        //FluxVariables fluxVars;
-        //fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         NumEqVector flux(0.0);
         auto numFlux = AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
