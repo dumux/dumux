@@ -1,0 +1,61 @@
+[TimeLoop]
+DtInitial = 5e-4 # [s]
+MaxTimeStepSize = 1 # [s]
+TEnd = 2 # [s]
+
+[RANS.Grid]
+Positions0 = -1.0 0.0 1.0 2.0
+Positions1 = 0.5 1.0 1.5
+Grading0 = 1.0 1.0 1.0
+Grading1 = 1.3 -1.3
+Cells0 = 10 20 5
+Cells1 = 20 20
+Verbosity = true
+
+[Darcy.Grid]
+Positions0 = 0.0 1.0
+Positions1 = 0.0 0.5
+Cells0 = 20
+Cells1 = 20
+Grading0 = 1.0
+Grading1 = -1.3
+Verbosity = true
+
+[RANS.Problem]
+Name = rans
+InletReynoldsNumber = 1e6 # [m/s]
+InletPressure = 1e5 # [Pa]
+Temperature = 298.15 # [K]
+
+[Darcy.Problem]
+Name = darcy
+Pressure = 1e5
+Temperature = 298.15 # [K]
+
+[Darcy.SpatialParams]
+Porosity = 0.41
+Permeability = 1e-6
+AlphaBeaversJoseph = 1.0
+
+[SpatialParams]
+ForchCoeff = 0.55
+
+[Problem]
+Name = test_rans1pdarcy1pforchheimer
+EnableGravity = false
+
+[RANS.RANS]
+UseStoredEddyViscosity = false
+
+[Vtk]
+AddVelocity = true
+WriteFaceData = false
+
+[Newton]
+TargetSteps = 7
+MaxSteps = 12
+MaxRelativeShift = 1e-5
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8

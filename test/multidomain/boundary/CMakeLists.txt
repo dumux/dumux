@@ -1,3 +1,4 @@
 add_subdirectory(darcydarcy)
 add_subdirectory(ransdarcy)
+add_subdirectory(ransforchheimer)
 add_subdirectory(stokesdarcy)
