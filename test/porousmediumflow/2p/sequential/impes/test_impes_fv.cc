@@ -182,7 +182,7 @@ int main(int argc, char** argv) try
     timeLoop->setMaxTimeStepSize(maxDt);
 
     //! the assembler with time loop for instationary problem
-    using TwoPImpesAssembler = FVAssembler<TwoPImpesTT, DiffMethod::numeric, true>;
+    using TwoPImpesAssembler = FVAssembler<TwoPImpesTT, DiffMethod::analytic, true>;
     auto twoPImpesAssembler = std::make_shared<TwoPImpesAssembler>(twoPImpesProblem,
                                                                    twoPImpesFvGridGeometry,
                                                                    gridVarTwoPImpes,
@@ -209,10 +209,6 @@ int main(int argc, char** argv) try
 
     //! set some check points for the time loop
     timeLoop->setPeriodicCheckPoint(getParam<Scalar>("TimeLoop.OutputTimeInterval"));
-
-    // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<TwoPImpesAssembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(twoPImpesAssembler, linearSolver);
 
     //! start the time loop
     timeLoop->start();
@@ -248,19 +244,16 @@ int main(int argc, char** argv) try
 
         twoPImpesProblem->spatialParams().setWettingSaturation(satVals);
 
-//        // set previous solution for storage evaluations
+        // set previous solution for storage evaluations
         twoPImpesAssembler->setPreviousSolution(x_p_old);
-//
-//        twoPImpesAssembler->assembleJacobianAndResidual(x_p);
-//
-//        SVTwoPImpes xpDelta(x_p);
-//        linearSolver->solve(*Ap, xpDelta, *rp);
-//
-//        x_p -= xpDelta;
-//        gridVarTwoPImpes->update(x_p);
 
-        // solve the non-linear system with time step control
-        nonLinearSolver.solve(x_p, *timeLoop);
+        twoPImpesAssembler->assembleJacobianAndResidual(x_p);
+
+        SVTwoPImpes xpDelta(x_p);
+        linearSolver->solve(*Ap, xpDelta, *rp);
+
+        x_p -= xpDelta;
+        gridVarTwoPImpes->update(x_p);
 
         // make the new solution the old solution
         x_p_old = x_p;

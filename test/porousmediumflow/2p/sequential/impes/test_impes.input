@@ -1,8 +1,8 @@
 [TimeLoop]
-DtInitial = 1e2# [s]
+DtInitial = 10# [s]
 MaxTimeStepSize = 10
 TEnd = 5e4 # [s]
-OutputTimeInterval = 10 # [s]
+OutputTimeInterval = 1e3 # [s]
 
 [Grid]
 #File = ../grids/test_mpfa2p.dgf #grid for buckley-leverett or mcwhorter problem
@@ -37,9 +37,3 @@ InjectionFlux = 0.1
 [Component]
 LiquidDensity = 1000
 LiquidKinematicViscosity = 1e-6
-
-[Newton]
-MaxRelativeShift = 1.0e-14
-
-[Assembly]
-NumericDifference.BaseEpsilon =  1.0e-12
