@@ -398,6 +398,16 @@ public:
     using ParentType::ParentType;
 };
 
+//! the partial reassembler engine specialized for the godunov method
+template<class Assembler>
+class PartialReassemblerEngine<Assembler, DiscretizationMethod::godunov>
+: public PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>
+{
+    using ParentType = PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>;
+public:
+    using ParentType::ParentType;
+};
+
 //! helper struct to determine whether the an engine class has vertex colors
 struct hasVertexColor
 {
