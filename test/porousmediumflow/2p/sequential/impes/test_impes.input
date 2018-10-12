@@ -29,7 +29,7 @@ LenseEntryPressure = 0
 
 [Problem]
 Name = test_lenses
-EnableGravity = false
+EnableGravity = true
 
 InletWidth = 2
 InjectionFlux = 0.1

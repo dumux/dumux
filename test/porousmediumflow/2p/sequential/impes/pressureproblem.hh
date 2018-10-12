@@ -59,7 +59,7 @@ SET_PROP(TwoPImpes, FluidSystem)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #if PROBLEM == 2
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
 #else
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 #endif
@@ -78,8 +78,8 @@ public:
 
 // Enable caching
 SET_BOOL_PROP(TwoPImpes, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(TwoPImpes, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(TwoPImpes, EnableFVGridGeometryCache, false);
+SET_BOOL_PROP(TwoPImpes, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(TwoPImpes, EnableFVGridGeometryCache, true);
 } // end namespace Properties
 
 /*!

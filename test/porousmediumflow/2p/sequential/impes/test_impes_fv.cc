@@ -204,7 +204,7 @@ int main(int argc, char** argv) try
     twoPTransportAssembler->setLinearSystem(As, rs);
 
     // the linear solver
-    using LinearSolver = UMFPackBackend;
+    using LinearSolver = Dumux::ILU0BiCGSTABBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     //! set some check points for the time loop

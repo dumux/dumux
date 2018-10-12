@@ -58,7 +58,7 @@ SET_PROP(TwoPTransport, FluidSystem)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #if PROBLEM == 2
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
 #else
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 #endif
