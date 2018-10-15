@@ -23,11 +23,11 @@ TemperatureHigh = 873.15            # [Pa]high end for tabularization of fluid p
 
 [Problem]
 Name = 1pncmin_test_charge
-PressureInitial = 2E5              # [Pa] Initial reservoir pressure
-TemperatureInitial = 573.15        # [K]  reservoir temperature
-VaporInitial = 0.464                # [-]  initial mole fraction of water
-CaOInitial = 0.2                   # [-]  molefraction in the solid phase;  0 dehydration/charge, 1  hydration/discharge
-CaO2H2Initial = 0.0
+PressureInitial = 1E5              # [Pa] Initial reservoir pressure
+TemperatureInitial = 773.15        # [K]  reservoir temperature
+VaporInitial = 0.1                # [-]  initial mole fraction of water
+CaOInitial = 0.0                   # [-]  molefraction in the solid phase;  0 dehydration/charge, 1  hydration/discharge
+CaO2H2Initial = 0.2
 BoundaryPressure= 2e5                  # [Pa] outlet pressure
 BoundaryTemperature = 573.15             # [K] inlet temperature: charge: 873 K ; discharge: 473K
 BoundaryMoleFraction = 0.464                     # [] molefraction
