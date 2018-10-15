@@ -179,20 +179,11 @@ public:
                           /*pressureSteps=*/200);
 
         // obtain BCs
-        boundaryPressure_ = getParam<Scalar>("Problem.BoundaryPressure");
-        boundaryVaporMoleFrac_ = getParam<Scalar>("Problem.BoundaryMoleFraction");
-        boundaryTemperature_ = getParam<Scalar>("Problem.BoundaryTemperature");
 
         unsigned int codim = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box ? dim : 0;
         permeability_.resize(fvGridGeometry->gridView().size(codim));
         porosity_.resize(fvGridGeometry->gridView().size(codim));
         reactionRate_.resize(fvGridGeometry->gridView().size(codim));
-
-        //change made
-        // create and initialize file for flux and storage calculations
-        outputFile_.open("balance.out", std::ios::out);
-        outputFile_ << "inFluxH20|outFluxH20|inFluxN2|outFluxN2|inFluxEnthaply|outFluxEnthaply" << std::endl;
-
     }
 
     /*!
@@ -225,39 +216,11 @@ public:
     {
         BoundaryTypes values;
 
-        // we don't set any BCs for the solid phases
-        /*values.setDirichlet(pressureIdx);
-        values.setDirichlet(H2OIdx);
-        values.setDirichlet(temperatureIdx);*/
-
-        //changes made
- //       if (globalPos[0] < eps_)
-//         {
-// //             values.setNeumann(pressureIdx);
-// //             values.setNeumann(firstMoleFracIdx);
-// //             values.setNeumann(temperatureIdx);
-// //             values.setNeumann(CaO2H2Idx);
-// //             values.setNeumann(CaOIdx);
-//             values.setDirichlet(pressureIdx);
-//             values.setDirichlet(firstMoleFracIdx);
-//             values.setDirichlet(temperatureIdx);
-//             values.setDirichlet(CaO2H2Idx);
-//             values.setDirichlet(CaOIdx);
-//         }
-//
-//         if( globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_ )
-//         {
-//             values.setDirichlet(pressureIdx);
-//             values.setDirichlet(firstMoleFracIdx);
-//             values.setDirichlet(temperatureIdx);
             values.setNeumann(pressureIdx);
             values.setNeumann(firstMoleFracIdx);
             values.setNeumann(temperatureIdx);
             values.setNeumann(CaO2H2Idx);
             values.setNeumann(CaOIdx);
-//         }
-
-
         return values;
     }
 
@@ -268,30 +231,18 @@ public:
      * \param globalPos The global position
      */
 
-    //changes made
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
 
         if (globalPos[0] < eps_ )
         {
-            priVars[pressureIdx] = 2e5;
-            priVars[firstMoleFracIdx] = 0.464;
-            priVars[temperatureIdx] = 573.15;
-            priVars[CaO2H2Idx] = 0.0;
-            priVars[CaOIdx] = 0.2;
+            priVars[pressureIdx] = 1e5;
+            priVars[firstMoleFracIdx] = 0.01;
+            priVars[temperatureIdx] = 773.15;
+            priVars[CaO2H2Idx] = 0.2;
+            priVars[CaOIdx] = 0.0;
         }
-
-    /*PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
-    {
-        PrimaryVariables priVars(0.0);
-
-        priVars[pressureIdx] = boundaryPressure_;
-        priVars[H2OIdx] = boundaryVaporMoleFrac_;
-        priVars[temperatureIdx] = boundaryTemperature_;
-        priVars[CaO2H2Idx] = 0.0;
-        priVars[CaOIdx] = 0.2;*/
-
         return priVars;
     }
 
@@ -308,16 +259,6 @@ public:
      * Negative values indicate an inflow.
      */
 
-    //changes made
-    /*NumEqVector neumann(const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const ElementVolumeVariables& elemVolVars,
-                           const SubControlVolumeFace& scvf) const
-    {
-        NumEqVector flux(0.0);
-        return flux;
-    }
-    */
     NumEqVector neumann(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const ElementVolumeVariables& elemVolVars,
@@ -331,7 +272,7 @@ public:
         if(globalPos[0] < eps_)
         {
            Scalar InFlowAir = 4.64;
-           Scalar InFlowH2O = 0.1;
+           Scalar InFlowH2O = 0.01;
            Scalar tIn = 773.15;
 
            FluidState fluidstateBorder;
@@ -365,7 +306,6 @@ public:
             const Scalar molarDensity = elemVolVars[scv].molarDensity(phaseIdx);
             const Scalar density = elemVolVars[scv].density(phaseIdx);
 
-/// BOX //////////////////////
             // construct the element solution
             const auto elemSol = [&]()
             {
@@ -399,9 +339,8 @@ public:
             flux[firstMoleFracIdx] = tpfaFluxMole * elemVolVars[scv].moleFraction(phaseIdx, firstMoleFracIdx);
             flux[temperatureIdx] = tpfaFluxMass * (FluidSystem::enthalpy(elemVolVars[scv].fluidState(), phaseIdx));
         }
-/////////////////////////////////////////////////////////////////////////////////////////////
 
-        return flux;
+       return flux;
     }
 
 
@@ -665,9 +604,7 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 
     // boundary conditions
-    Scalar boundaryPressure_;
-    Scalar boundaryVaporMoleFrac_;
-    Scalar boundaryTemperature_;
+
 
     std::vector<double> permeability_;
     std::vector<double> porosity_;
