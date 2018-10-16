@@ -77,7 +77,7 @@ public:
 };
 
 // Enable caching
-SET_BOOL_PROP(TwoPImpes, EnableGridVolumeVariablesCache, false);
+SET_BOOL_PROP(TwoPImpes, EnableGridVolumeVariablesCache, true);
 SET_BOOL_PROP(TwoPImpes, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(TwoPImpes, EnableFVGridGeometryCache, true);
 } // end namespace Properties

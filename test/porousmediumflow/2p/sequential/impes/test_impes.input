@@ -24,8 +24,8 @@ LensTwoUpperRight = 8 5
 LensThreeLowerLeft = 10 2
 LensThreeUpperRight = 18 3
 
-BackgroundEntryPressure = 0
-LenseEntryPressure = 0
+BackgroundEntryPressure = 500
+LenseEntryPressure = 5000
 
 [Problem]
 Name = test_lenses
@@ -37,3 +37,6 @@ InjectionFlux = 0.1
 [Component]
 LiquidDensity = 1000
 LiquidKinematicViscosity = 1e-6
+
+[Pressure]
+UpwindWeight = 1.0

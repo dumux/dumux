@@ -232,17 +232,22 @@ int main(int argc, char** argv) try
             {
                 if (scvf.boundary())
                 {
-                    const auto bcTypes = twoPImpesProblem->boundaryTypes(element, scvf);
+                    const auto bcTypes = twoPTransportProblem->boundaryTypes(element, scvf);
                     if (bcTypes.hasOnlyDirichlet())
                     {
                         const auto idx = scvf.outsideScvIdx();
-                        satVals[idx] = 1.0;
+                        satVals[idx] = elemVolVars[idx].saturation(0);
                     }
                 }
             }
         }
 
         twoPImpesProblem->spatialParams().setWettingSaturation(satVals);
+
+        // This additional update is required to guarantee that the correct
+        // saturation values are stored in the pressure volVars.
+        // This has only an effect if chaching is enabled.
+        gridVarTwoPImpes->update(x_p);
 
         // set previous solution for storage evaluations
         twoPImpesAssembler->setPreviousSolution(x_p_old);
@@ -326,7 +331,7 @@ int main(int argc, char** argv) try
         timeLoop->reportTimeStep();
 
         // write vtk output on check points
-        if (timeLoop->isCheckPoint() || timeLoop->finished())
+        if (timeLoop->isCheckPoint() || timeLoop->finished() || timeLoop->timeStepIndex() == 1)
         {
             vtkWriter.write(timeLoop->time());
             vtkWriterTransport.write(timeLoop->time());

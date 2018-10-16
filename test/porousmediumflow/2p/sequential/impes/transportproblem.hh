@@ -76,9 +76,9 @@ public:
 };
 
 // Enable caching
-SET_BOOL_PROP(TwoPTransport, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(TwoPTransport, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(TwoPTransport, EnableFVGridGeometryCache, false);
+SET_BOOL_PROP(TwoPTransport, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(TwoPTransport, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(TwoPTransport, EnableFVGridGeometryCache, true);
 } // end namespace Properties
 
 /*!

@@ -97,7 +97,7 @@ public:
 
                     VolumeVariables::updateBoundaryVolVars_(volumeVariables_[scvf.outsideScvIdx()],
                                                             dirichletPriVars,
-                                                            problem,
+                                                            problem(),
                                                             element,
                                                             insideScv,
                                                             scvf);
