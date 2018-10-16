@@ -31,12 +31,14 @@
 #define DUMUX_SWE_MODEL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/properties/model.hh>
 #include <dumux/shallowwater/properties.hh>
 #include <dumux/shallowwater/advectiveflux.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "fluxvariables.hh"
+#include "fluxvariablescache.hh"
 #include "indices.hh"
 #include "vtkoutputfields.hh"
 
@@ -68,18 +70,6 @@ namespace Properties {
 NEW_TYPE_TAG(Swe, INHERITS_FROM(ShallowWater));
 
 
-/*!
-* \brief The two-dimensional shallow water equations have allways 3 equations.
-*/
-//SET_INT_PROP(Swe, NumEq, 3);
-//SET_INT_PROP(Swe, NumPhases, 1);
-//SET_BOOL_PROP(Swe, EnableAdvection, false);
-//SET_BOOL_PROP(Swe, EnableMolecularDiffusion, false);
-//SET_BOOL_PROP(Swe, SolutionDependentAdvection, false); //TODO check if this is correct
-//SET_BOOL_PROP(Swe, SolutionDependentMolecularDiffusion, false);
-//SET_BOOL_PROP(Swe, EnableEnergyBalance, false);
-//SET_BOOL_PROP(Swe, SolutionDependentHeatConduction, false);
-//SET_TYPE_PROP(Swe, AdvectionType, SweAdvectiveFlux<TypeTag>);
 
 //! Set friction law indices
 NEW_PROP_TAG(Manning);
@@ -101,9 +91,14 @@ SET_TYPE_PROP(Swe, VolumeVariables, SweVolumeVariables<TypeTag>);
 //! The flux variables
 SET_TYPE_PROP(Swe, FluxVariables, SweFluxVariables<TypeTag>);
 
+//! The flux variables cache
+SET_TYPE_PROP(Swe, FluxVariablesCache, SweFluxVariablesCache<TypeTag>);
+
 //! The specific vtk output fields
 SET_TYPE_PROP(Swe, VtkOutputFields, SweVtkOutputFields<TypeTag>);
 
+//Set the advective Flux
+SET_TYPE_PROP(Swe, AdvectionType, SweAdvectiveFlux<TypeTag>);
 }
 
 } // end namespace

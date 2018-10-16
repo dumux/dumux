@@ -1,8 +1,11 @@
 install(FILES
 elementvolumevariables.hh
+elementfluxvariablescache.hh
+fluxvariablescachefiller.hh
 fvelementgeometry.hh
 fvgridgeometry.hh
 gridvolumevariables.hh
+gridfluxvariablescache.hh
 properties.hh
 subcontrolvolumeface.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/cellcentered/godunov)

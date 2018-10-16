@@ -26,7 +26,6 @@
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
 #include <dumux/discretization/cellcentered/godunov/properties.hh>
 #include <dumux/shallowwater/properties.hh>
-//#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/shallowwater/swe/problem.hh>
 #include <dumux/shallowwater/swe/model.hh>
 #include "swetestspatialparams.hh"
@@ -55,7 +54,7 @@ template <class TypeTag> class SweTestProblem;
 namespace Properties
 {
 
-NEW_TYPE_TAG(SweTestTypeTag, INHERITS_FROM(Godunov, Swe));
+NEW_TYPE_TAG(SweTestTypeTag, INHERITS_FROM(GodunovModel, Swe));
 
 SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::UGGrid<2>);
 //SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>);

@@ -23,8 +23,8 @@
  * \note Inherit from these properties to use a cell-centered finite volume scheme with Godunov
  */
 
-#ifndef DUMUX_CC_Godunov_PROPERTIES_HH
-#define DUMUX_CC_Godunov_PROPERTIES_HH
+#ifndef DUMUX_CC_GODUNOV_PROPERTIES_HH
+#define DUMUX_CC_GODUNOV_PROPERTIES_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
@@ -39,6 +39,9 @@
 #include <dumux/discretization/cellcentered/godunov/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/godunov/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/godunov/subcontrolvolumeface.hh>
+#include <dumux/discretization/cellcentered/godunov/fluxvariablescachefiller.hh>
+#include <dumux/discretization/cellcentered/godunov/gridfluxvariablescache.hh>
+
 
 namespace Dumux {
 namespace Properties {
@@ -67,6 +70,17 @@ public:
     using type = GodunovGridVolumeVariables<Problem, VolumeVariables, enableCache>;
 };
 
+//! The grid flux variables cache vector class
+SET_PROP(GodunovModel, GridFluxVariablesCache)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FluxVariablesCacheFiller = GodunovFluxVariablesCacheFiller<TypeTag>;
+public:
+    using type = GodunovGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
+};
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(GodunovModel, ElementBoundaryTypes, CCElementBoundaryTypes);

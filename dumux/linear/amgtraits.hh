@@ -171,6 +171,10 @@ template<class Matrix, class Vector, class FVGridGeometry>
 struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::ccmpfa>
 : public AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::cctpfa> {};
 
-} // end namespace Dumux
+template<class Matrix, class Vector, class FVGridGeometry>
+struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::godunov>
+: public AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::cctpfa> {};
+
+}// end namespace Dumux
 
 #endif // DUMUX_AMG_TRAITS_HH
