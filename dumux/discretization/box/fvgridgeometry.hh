@@ -314,7 +314,7 @@ public:
     { return periodicVertexMap_.at(dofIdx); }
 
     //! Returns the map between dofs across periodic boundaries
-    const std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
+    const std::unordered_map<std::size_t, std::size_t>& periodicVertexMap() const
     { return periodicVertexMap_; }
 
 private:
@@ -505,7 +505,7 @@ public:
     { return periodicVertexMap_.at(dofIdx); }
 
     //! Returns the map between dofs across periodic boundaries
-    const std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
+    const std::unordered_map<std::size_t, std::size_t>& periodicVertexMap() const
     { return periodicVertexMap_; }
 
 private:
