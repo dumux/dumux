@@ -722,7 +722,7 @@ public:
         }else{
             std::cout << "Can not find initial data in elementdata"<< std::endl;
         }
-        std::cout << "alive in inputdata " << std::endl;
+        std::cout << "alive in inputdata with h[0] " << hInit_[0] << std::endl;
     }
 
 private:

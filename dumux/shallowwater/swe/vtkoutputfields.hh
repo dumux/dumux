@@ -36,30 +36,20 @@ namespace Dumux
  * \ingroup SweModel
  * \brief Adds vtk output fields for the SWEs model
  */
-template<class TypeTag>
 class SweVtkOutputFields
 {
-    //using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-
-
 public:
-    //! Initialize the Navier-Stokes specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
+        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getH(); }, "h");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getU(); }, "u");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getV(); }, "v");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getBottom(); }, "bottom");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getBottom() + v.getH(); }, "theta");
     }
-
 };
 
 } // end namespace Dumux

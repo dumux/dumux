@@ -95,7 +95,7 @@ SET_TYPE_PROP(Swe, FluxVariables, SweFluxVariables<TypeTag>);
 SET_TYPE_PROP(Swe, FluxVariablesCache, SweFluxVariablesCache<TypeTag>);
 
 //! The specific vtk output fields
-SET_TYPE_PROP(Swe, VtkOutputFields, SweVtkOutputFields<TypeTag>);
+SET_TYPE_PROP(Swe, VtkOutputFields, SweVtkOutputFields);
 
 //Set the advective Flux
 SET_TYPE_PROP(Swe, AdvectionType, SweAdvectiveFlux<TypeTag>);

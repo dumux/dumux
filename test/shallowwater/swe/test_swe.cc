@@ -110,7 +110,6 @@ int main(int argc, char** argv) try
     reader.readAllCellData("/timesteps/start");
     reader.loadBalance();
     auto& elementdata = reader.getCellData();
-    std::cout << "\nDebug alive " << std::endl;
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
@@ -157,17 +156,14 @@ int main(int argc, char** argv) try
         restartTime = getParam<Scalar>("TimeLoop.Restart");
 
     // intialize the vtk output module
-    /*using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
-    */
 
     //intialize xdmf output module
     Dune::Swf::XDMFWriter<typename GridType::LeafGridView>
         writer("result", leafGridView,"Dune-SWF implicit", 0);
-
-
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -207,7 +203,7 @@ int main(int argc, char** argv) try
     writer.writeCellData(plotMap["z"],"z","m");
     writer.endTimeStep();
 
-
+/*
     bool doPolot = true;
     // time loop
     timeLoop->start(); do
@@ -253,7 +249,7 @@ int main(int argc, char** argv) try
     nonLinearSolver.report();
 
     timeLoop->finalize(leafGridView.comm());
-
+*/
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////

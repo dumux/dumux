@@ -126,8 +126,7 @@ public:
             distributedData_.emplace(name, std::vector<double>(gridView.size(0) *
                                                                *(multiplier++)));
         }
-        auto mapper = MultipleCodimMultipleGeomTypeMapper< typename Grid::LeafGridView,
-                                                       MCMGElementLayout >(gridView);
+        MultipleCodimMultipleGeomTypeMapper<typename Grid::LeafGridView> mapper(gridView,mcmgElementLayout());
 
         // Remap the data from localId based to index based.
         for (const auto& element: elements(gridView))
@@ -308,8 +307,7 @@ void HDF5Reader<Grid>::loadBalance()
         auto dataArray = cellData_.begin();
 
         assert(distributedCellData_.size()==0);
-        MultipleCodimMultipleGeomTypeMapper< typename Grid::LeafGridView,
-                                             MCMGElementLayout > mapper(gridView);
+        MultipleCodimMultipleGeomTypeMapper<typename Grid::LeafGridView> mapper(gridView,mcmgElementLayout());
 
         for( const auto& name : dataNames_ )
         {

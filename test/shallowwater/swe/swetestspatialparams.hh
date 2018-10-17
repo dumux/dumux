@@ -140,6 +140,7 @@ public:
     */
     void setElementdata(auto elementdata)
     {
+        std::cout << "Set element data" << std::endl;
         //set all data
         if ( elementdata.find("z") != elementdata.end() ){
             eleZ_ = elementdata["z"];
