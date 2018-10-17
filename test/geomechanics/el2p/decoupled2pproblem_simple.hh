@@ -16,15 +16,15 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
+/*!F
  * \file
  *
  * \brief Soil contamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  */
 
-#ifndef DUMUX_2PPROBLEM_HH
-#define DUMUX_2PPROBLEM_HH
+#ifndef DUMUX_2PPROBLEM_SIMPLE_HH
+#define DUMUX_2PPROBLEM_SIMPLE_HH
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
@@ -42,7 +42,7 @@
 #include <dumux/material/fluidsystems/brineco2.hh>
 #include <test/geomechanics/el2p/co2tables.hh>
 
-#include "decoupled2pAntoniospatialparams.hh"
+#include "decoupled2pspatialparams_simple.hh"
 // #include "decoupled2pspatialparams.hh"
 
 #include <dumux/porousmediumflow/implicit/cpdarcyfluxvariables.hh>
@@ -51,7 +51,7 @@ namespace Dumux
 {
 
 template <class TypeTag>
-class TwoP_TestProblem;
+class TwoP_TestProblem_Simple;
 
 // initial conditions for mass balance equations
 template<class GridView, class Scalar>
@@ -64,34 +64,34 @@ namespace Properties
 {
 
 #if PROBLEM_IS_CC==1
-NEW_TYPE_TAG(TwoP_TestProblem, INHERITS_FROM(CCTwoP, TwoPAntonioSpatialParams));
+NEW_TYPE_TAG(TwoP_TestProblem_Simple, INHERITS_FROM(CCTwoP, TwoPSpatialParams_Simple));
 #else
-NEW_TYPE_TAG(TwoP_TestProblem, INHERITS_FROM(BoxTwoP, TwoPAntonioSpatialParams));
+NEW_TYPE_TAG(TwoP_TestProblem_Simple, INHERITS_FROM(BoxTwoP, TwoPSpatialParams_Simple));
 #endif
 NEW_PROP_TAG(InitialPressSat);
 
 NEW_PROP_TAG(BaseProblem);
-SET_TYPE_PROP(TwoP_TestProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
+SET_TYPE_PROP(TwoP_TestProblem_Simple, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 
-SET_TYPE_PROP(TwoP_TestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(TwoP_TestProblem_Simple, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 
 // Set the problem property
-SET_TYPE_PROP(TwoP_TestProblem, Problem, TwoP_TestProblem<TypeTag>);
+SET_TYPE_PROP(TwoP_TestProblem_Simple, Problem, TwoP_TestProblem_Simple<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(TwoP_TestProblem, FluidSystem)
+SET_PROP(TwoP_TestProblem_Simple, FluidSystem)
 {
     typedef Dumux::BrineCO2FluidSystem<TypeTag> type;
 };
 
 // Set the CO2 table to be used; in this case not the the default table
-// SET_TYPE_PROP(TwoP_TestProblem, CO2Table, Dumux::ViscoEl2P::CO2TablesAntonio);
-SET_TYPE_PROP(TwoP_TestProblem, CO2Table, CO2Tables);
+// SET_TYPE_PROP(TwoP_TestProblem_Simple, CO2Table, Dumux::ViscoEl2P::CO2TablesAntonio);
+SET_TYPE_PROP(TwoP_TestProblem_Simple, CO2Table, CO2Tables);
 // Set the salinity mass fraction of the brine in the reservoir
-SET_SCALAR_PROP(TwoP_TestProblem, ProblemSalinity, 0);
+SET_SCALAR_PROP(TwoP_TestProblem_Simple, ProblemSalinity, 0);
 
 // Set the wetting phase
-// SET_PROP(TwoP_TestProblem, WettingPhase)
+// SET_PROP(TwoP_TestProblem_Simple, WettingPhase)
 // {
 // private:
 //     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -100,7 +100,7 @@ SET_SCALAR_PROP(TwoP_TestProblem, ProblemSalinity, 0);
 // };
 //
 // // Set the non-wetting phase
-// SET_PROP(TwoP_TestProblem, NonwettingPhase)
+// SET_PROP(TwoP_TestProblem_Simple, NonwettingPhase)
 // {
 // private:
 //     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -110,7 +110,7 @@ SET_SCALAR_PROP(TwoP_TestProblem, ProblemSalinity, 0);
 
 
 // Set the initial pressure and saturation function
-SET_PROP(TwoP_TestProblem, InitialPressSat)
+SET_PROP(TwoP_TestProblem_Simple, InitialPressSat)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -120,60 +120,60 @@ public:
 };
 
 // Linear solver settings
-SET_INT_PROP(TwoP_TestProblem, LinearSolverVerbosity, 0);
+SET_INT_PROP(TwoP_TestProblem_Simple, LinearSolverVerbosity, 0);
 
-SET_SCALAR_PROP(TwoP_TestProblem, NewtonMaxRelativeShift, 1e-5);
-// SET_BOOL_PROP(TwoP_TestProblem, NewtonWriteConvergence, true);
-SET_BOOL_PROP(TwoP_TestProblem, NewtonUseLineSearch, true);
-// SET_BOOL_PROP(TwoP_TestProblem, NewtonUseDampedUpdate, true);
-SET_INT_PROP(TwoP_TestProblem, NewtonMaxSteps, 30);
+SET_SCALAR_PROP(TwoP_TestProblem_Simple, NewtonMaxRelativeShift, 1e-5);
+// SET_BOOL_PROP(TwoP_TestProblem_Simple, NewtonWriteConvergence, true);
+SET_BOOL_PROP(TwoP_TestProblem_Simple, NewtonUseLineSearch, true);
+// SET_BOOL_PROP(TwoP_TestProblem_Simple, NewtonUseDampedUpdate, true);
+SET_INT_PROP(TwoP_TestProblem_Simple, NewtonMaxSteps, 30);
 
-SET_BOOL_PROP(TwoP_TestProblem, EvalGradientsAtSCVCenter, true);
+SET_BOOL_PROP(TwoP_TestProblem_Simple, EvalGradientsAtSCVCenter, true);
 
 // disable jacobian matrix recycling
-SET_BOOL_PROP(TwoP_TestProblem, ImplicitEnableJacobianRecycling, false);
+SET_BOOL_PROP(TwoP_TestProblem_Simple, ImplicitEnableJacobianRecycling, false);
 // disable partial reassembling
-SET_BOOL_PROP(TwoP_TestProblem, ImplicitEnablePartialReassemble, false);
+SET_BOOL_PROP(TwoP_TestProblem_Simple, ImplicitEnablePartialReassemble, false);
 // Enable gravity
-SET_BOOL_PROP(TwoP_TestProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(TwoP_TestProblem_Simple, ProblemEnableGravity, true);
 
 // use the algebraic multigrid
-// SET_TYPE_PROP(TwoP_TestProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
-SET_TYPE_PROP(TwoP_TestProblem, LinearSolver, SuperLUBackend<TypeTag> );
+// SET_TYPE_PROP(TwoP_TestProblem_Simple, LinearSolver, Dumux::AMGBackend<TypeTag> );
+SET_TYPE_PROP(TwoP_TestProblem_Simple, LinearSolver, SuperLUBackend<TypeTag> );
 
 // for better TPFA for CC use  CpDarcyFluxVariable
 // Box uses DecoupledTwoPFluxVariables, which also includes the option of Keff
 #if PROBLEM_IS_CC==1
-SET_TYPE_PROP(TwoP_TestProblem, FluxVariables, CpDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoP_TestProblem_Simple, FluxVariables, CpDarcyFluxVariables<TypeTag>);
 #else
-SET_TYPE_PROP(TwoP_TestProblem, FluxVariables, DecoupledTwoPFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoP_TestProblem_Simple, FluxVariables, DecoupledTwoPFluxVariables<TypeTag>);
 #endif
 
 
 // use the decoupled 2p model
-SET_TYPE_PROP(TwoP_TestProblem, Model, DecoupledTwoPModel<TypeTag>);
+SET_TYPE_PROP(TwoP_TestProblem_Simple, Model, DecoupledTwoPModel<TypeTag>);
 
 // use the decoupled 2p volume variables
-SET_TYPE_PROP(TwoP_TestProblem, VolumeVariables, DecoupledTwoPVolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoP_TestProblem_Simple, VolumeVariables, DecoupledTwoPVolumeVariables<TypeTag>);
 
 // use the decoupled 2p element volume variables
 #if PROBLEM_IS_CC==1
-SET_TYPE_PROP(TwoP_TestProblem, ElementVolumeVariables, DecoupledTwoPCCElementVolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoP_TestProblem_Simple, ElementVolumeVariables, DecoupledTwoPCCElementVolumeVariables<TypeTag>);
 #else
-SET_TYPE_PROP(TwoP_TestProblem, ElementVolumeVariables, DecoupledTwoPElementVolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoP_TestProblem_Simple, ElementVolumeVariables, DecoupledTwoPElementVolumeVariables<TypeTag>);
 #endif
 
 // Use the modified decoupled 2p local jacobian operator for the 2p model
-SET_TYPE_PROP(TwoP_TestProblem,
+SET_TYPE_PROP(TwoP_TestProblem_Simple,
               LocalResidual,
               DecoupledTwoPLocalResidual<TypeTag>);
 
 // central differences to calculate the jacobian by default
-SET_INT_PROP(TwoP_TestProblem, ImplicitNumericDifferenceMethod, 0);
+SET_INT_PROP(TwoP_TestProblem_Simple, ImplicitNumericDifferenceMethod, 0);
 
 // write the stress and displacement output according to rock mechanics
 // sign convention (compressive stresses > 0)
-// SET_BOOL_PROP(TwoP_TestProblem, VtkRockMechanicsSignConvention, true);
+// SET_BOOL_PROP(TwoP_TestProblem_Simple, VtkRockMechanicsSignConvention, true);
 }
 
 /*!
@@ -213,7 +213,7 @@ SET_INT_PROP(TwoP_TestProblem, ImplicitNumericDifferenceMethod, 0);
  * <tt>./test_cc2p -parameterFile test_cc2p.input</tt>
  */
 template <class TypeTag >
-class TwoP_TestProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
+class TwoP_TestProblem_Simple : public GET_PROP_TYPE(TypeTag, BaseProblem)
 {
     typedef typename GET_PROP_TYPE(TypeTag, BaseProblem) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -276,7 +276,7 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    TwoP_TestProblem(TimeManager &timeManager,
+    TwoP_TestProblem_Simple(TimeManager &timeManager,
                 const GridView &gridView)
     : ParentType(timeManager, gridView),
     gridView_(gridView),
@@ -286,7 +286,7 @@ public:
     {
         GridCreator::grid().globalRefine(GET_RUNTIME_PARAM(TypeTag, Scalar,Grid.Refine));
 
-        std::cout << "TwoP_TestProblem: Initializing the fluid system for the 2p model\n";
+        std::cout << "TwoP_TestProblem_Simple: Initializing the fluid system for the 2p model\n";
 
         // initialize the tables of the fluid system
 //         FluidSystem::init(/*Tmin=*/273,
@@ -416,7 +416,7 @@ public:
     {
         Scalar T;
 //         T = 308.15 /*+ (depthBOR_ - globalPos[dim-1]) * 0.025*/;
-        T = 283.15 + (depthBOR_ - globalPos[dim-1]) * 0.025;
+        T = 283.15 + (depthBOR_ - globalPos[dimWorld-1]) * 0.03;
 
         return T;
     };
@@ -434,7 +434,7 @@ public:
 //     {
 //         Scalar pValue = 0.0;
 //
-//         typename TwoP_TestProblem<TypeTag>::LocalFEMSpace feMap(this->gridView());
+//         typename TwoP_TestProblem_Simple<TypeTag>::LocalFEMSpace feMap(this->gridView());
 //         const typename LocalFEMSpace::Traits::FiniteElementType
 //         &localFiniteElement = feMap.find(element.geometry().type());
 //         typedef Dune::FieldVector<CoordScalar, 1> ShapeValue;
@@ -502,26 +502,22 @@ public:
     {
         values.setAllNeumann();
 
-        // The pressure and saturation at the bottom are fixed
-        // Bottom: x = 0, y = -1000
-        if(globalPos[1] < this->bBoxMin()[1] + eps_)
+        // The solid displacement normal to the lateral boundaries is fixed.
+        if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0]-eps_)
         {
-            values.setDirichlet(pressureIdx, contiWEqIdx);
-            values.setDirichlet(saturationIdx, contiNEqIdx);
+            if(initializationRun_ == false)
+            {
+                values.setDirichlet(pressureIdx);
+                values.setDirichlet(saturationIdx);
+            }
         }
 
-        // The pressure and saturation on the right (x = 2000) are fixed
-        if(globalPos[0] > this->bBoxMax()[0]-eps_)
+        // for the initialization run the pressure and saturation
+        // values are only given at the top boundary.
+        if(globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1]-eps_)
         {
-            values.setDirichlet(pressureIdx, contiWEqIdx);
-            values.setDirichlet(saturationIdx, contiNEqIdx);
-        }
-
-        // The pressure and saturation on the top (y=1000) are fixed
-        if(globalPos[1] > this->bBoxMax()[1]-eps_)
-        {
-            values.setDirichlet(pressureIdx, contiWEqIdx);
-            values.setDirichlet(saturationIdx, contiNEqIdx);
+            values.setDirichlet(pressureIdx);
+            values.setDirichlet(saturationIdx);
         }
     }
 
@@ -555,7 +551,7 @@ public:
      */
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        values[pressureIdx] =  1.0e5 + (depthBOR_ - globalPos[1]) * brineDensity_ * 9.81;
+        values[pressureIdx] =  1.013e5 + (depthBOR_ - globalPos[dimWorld-1]) * brineDensity_ * 9.81;
         values[saturationIdx] = 0.0;
     }
 
@@ -595,7 +591,7 @@ public:
         typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
 
         // hydrostatic pressure
-        values[pressureIdx] = 1.0e5 + (depthBOR_ - globalPos[1]) * brineDensity_ * 9.81;
+        values[pressureIdx] = 1.013e5 + (depthBOR_ - globalPos[dimWorld-1]) * brineDensity_ * 9.81;
         values[saturationIdx] = 0.0;
     }
 
@@ -622,43 +618,18 @@ public:
     void sourceAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
         values = 0.0;
-
-        if (initializationRun_ == false)
-        {
-            if (this->timeManager().time() < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.InjectionStop))
+        if(initializationRun_ == false){
+            if(globalPos[0] > 499.99-eps_ && globalPos[0] < 500.01+eps_
+                        && globalPos[1] > 499.99-eps_ && globalPos[1] < 500.01+eps_
+                        && globalPos[dimWorld-1] > 499.99-eps_ && globalPos[dimWorld-1] < 500.01+eps_)
             {
-                if ( ( (globalPos[0] > GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.XminSource1) - eps_) &&
-                    (globalPos[0] < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.XmaxSource1) + eps_) &&
-                    (globalPos[1] > GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.YminSource1) - eps_) &&
-                    (globalPos[1] < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.YmaxSource1) + eps_))
-                    ||
-                    ( (globalPos[0] > GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.XminSource2) - eps_) &&
-                    (globalPos[0] < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.XmaxSource2) + eps_) &&
-                    (globalPos[1] > GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.YminSource2) - eps_) &&
-                    (globalPos[1] < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.YmaxSource2) + eps_)) )
-                {
-                    if(GET_RUNTIME_PARAM(TypeTag, bool, Injection.Nonwetting))
-                    {
-                        values[pressureIdx] = 0.0;
-                        values[saturationIdx] = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.Rate);
-                    }
-                    else
-                    {
-                        values[pressureIdx] = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.Rate);
-                        values[saturationIdx] = 0.0;
-                    }
-//                     std::cout << "Injection: globalPos = " << globalPos[0] << " " << globalPos[1] << std::endl;
-                }
+                Scalar refinement = GET_RUNTIME_PARAM(TypeTag, int, Grid.Refinement);
+
+                Scalar factor = std::pow(2, refinement) * std::pow(2, refinement);
+
+                values[saturationIdx] = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.Rate)*factor; // injection
             }
         }
-    }
-        void preTimeStep()
-    {
-        this->spatialParams().setEpisode(this->timeManager().episodeIndex());
-        this->timeManager().startNextEpisode(episodeLength_);
-        std::cout << "2p: episodeLength_ is " << episodeLength_ << "\n";
-        this->timeManager().setTimeStepSize(episodeLength_);
-        std::cout << "2p: TimeStepSize_ " << this->timeManager().timeStepSize() << "\n";
     }
 
     /*!
@@ -980,7 +951,7 @@ public:
 private:
     static constexpr Scalar eps_ = 1e-10;
     Scalar depthBOR_;
-    static constexpr Scalar brineDensity_ = 1000;
+    static constexpr Scalar brineDensity_ = 1059;
 //     Scalar brineDensity_;
     Scalar episodeLength_;
 

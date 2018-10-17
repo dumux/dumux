@@ -767,7 +767,7 @@ protected:
            }
 
            // try with a smaller update
-           lambda /= 4.0;
+           lambda /= 8.0;
        }
     }
 

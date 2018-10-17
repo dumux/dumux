@@ -22,8 +22,8 @@
  * \brief The spatial parameters for the El2P_TestProblem which uses the
  *        linear elastic two-phase model
  */
-#ifndef DUMUX_TWOPANTONIOSPARAMETERS_HH
-#define DUMUX_TWOPANTONIOSPARAMETERS_HH
+#ifndef DUMUX_TWOPSPARAMETERS_SIMPLE_HH
+#define DUMUX_TWOPSPARAMETERS_SIMPLE_HH
 
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
@@ -40,24 +40,24 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class TwoPAntonioSpatialParams;
+class TwoPSpatialParams_Simple;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(TwoPAntonioSpatialParams);
+NEW_TYPE_TAG(TwoPSpatialParams_Simple);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TwoPAntonioSpatialParams, SpatialParams, Dumux::TwoPAntonioSpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPSpatialParams_Simple, SpatialParams, Dumux::TwoPSpatialParams_Simple<TypeTag>);
 
 // Set the material Law
-SET_PROP(TwoPAntonioSpatialParams, MaterialLaw)
+SET_PROP(TwoPSpatialParams_Simple, MaterialLaw)
 {
 private:
     // define the material law which is parameterized by effective
     // saturations
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
+    typedef RegularizedBrooksCorey<Scalar> EffectiveLaw;
 public:
     // define the material law parameterized by absolute saturations
     typedef EffToAbsLaw<EffectiveLaw> type;
@@ -69,7 +69,7 @@ public:
  *        linear elastic two-phase model
  */
 template<class TypeTag>
-class TwoPAntonioSpatialParams : public ImplicitSpatialParams<TypeTag>
+class TwoPSpatialParams_Simple : public ImplicitSpatialParams<TypeTag>
 {
     typedef ImplicitSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
@@ -96,7 +96,7 @@ public:
     typedef typename MaterialLaw::Params MaterialLawParams;
 
 
-    TwoPAntonioSpatialParams(const GridView &gridView)
+    TwoPSpatialParams_Simple(const GridView &gridView)
     : ParentType(gridView)
     {
         // episode index
@@ -157,19 +157,17 @@ public:
 
         // given Van Genuchten m
         m_ = 0.457;
-
-        n_ = 1.0 / (1.0 - m_);
-
-        alpha_ = 1.0 / (19.9e3);
+        // Brooks Corey lambda
+        using std::pow;
+        BrooksCoreyLambda_ = m_ / (1 - m_) * (1 - pow(0.5,1/m_));
 
         // residual saturations
-        MaterialParams_.setSwr(0.20);
+        MaterialParams_.setSwr(0.3);
         MaterialParams_.setSnr(0.05);
 
-        MaterialParams_.setVgAlpha(alpha_);
-        MaterialParams_.setVgn(n_);
-
-        MaterialParams_.setKrwHighSw(0.99);
+        // parameters for the Brooks Corey law
+        MaterialParams_.setPe(1.99e4);
+        MaterialParams_.setLambda(BrooksCoreyLambda_);
 
         //////////////////////////////////////
 
@@ -211,7 +209,7 @@ public:
 //         gnuplot.plot("lambdaeff");
     }
 
-    ~TwoPAntonioSpatialParams()
+    ~TwoPSpatialParams_Simple()
     {}
 
     /*!

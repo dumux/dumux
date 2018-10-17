@@ -283,65 +283,63 @@ public:
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
-//         static const double a0 = 0.235156;
-//         static const double a1 = -0.491266;
-//         static const double a2 = 5.211155E-2;
-//         static const double a3 = 5.347906E-2;
-//         static const double a4 = -1.537102E-2;
-//
-//         static const double d11 = 0.4071119E-2;
-//         static const double d21 = 0.7198037E-4;
-//         static const double d64 = 0.2411697E-16;
-//         static const double d81 = 0.2971072E-22;
-//         static const double d82 = -0.1627888E-22;
-//
-//         static const double ESP = 251.196;
-//
-//         double mu0, SigmaStar, TStar;
-//         double dmu, rho;
-//         double visco_CO2;
-//
-//         if(temperature < 275.) // regularisation
-//         {
-//             temperature = 275;
-//             Dune::dgrave << "Temperature below 275K in viscosity function:"
-//                     << "Regularizing tempereature to 275K. " << std::endl;
-//         }
-//
-//
-//         TStar = temperature/ESP;
-//
-//         /* mu0: viscosity in zero-density limit */
-//         using std::exp;
-//         using std::log;
-//         using std::sqrt;
-//         SigmaStar = exp(a0 + a1*log(TStar)
-//                         + a2*log(TStar)*log(TStar)
-//                         + a3*log(TStar)*log(TStar)*log(TStar)
-//                         + a4*log(TStar)*log(TStar)*log(TStar)*log(TStar) );
-//         mu0 = 1.00697*sqrt(temperature) / SigmaStar;
-//
-//         /* dmu : excess viscosity at elevated density */
-//         rho = gasDensity(temperature, pressure); /* CO2 mass density [kg/m^3] */
-//
-//         using std::pow;
-//         dmu = d11*rho + d21*rho*rho + d64*pow(rho,6)/(TStar*TStar*TStar)
-//             + d81*pow(rho,8) + d82*pow(rho,8)/TStar;
-//
-//         /* dmucrit : viscosity increase near the critical point */
-//
-//         // False (Lybke 2July2007)
-//         //e1 = 5.5930E-3;
-//         //e2 = 6.1757E-5;
-//         //e4 = 2.6430E-11;
-//         //dmucrit = e1*rho + e2*rho*rho + e4*rho*rho*rho;
-//         //visco_CO2 = (mu0 + dmu + dmucrit)/1.0E6;   /* conversion to [Pa s] */
-//
-//         visco_CO2 = (mu0 + dmu)/1.0E6;   /* conversion to [Pa s] */
-//
-//         return visco_CO2;
+        static const double a0 = 0.235156;
+        static const double a1 = -0.491266;
+        static const double a2 = 5.211155E-2;
+        static const double a3 = 5.347906E-2;
+        static const double a4 = -1.537102E-2;
 
-        return CO2Tables::tabulatedViscosity.at(temperature, pressure);
+        static const double d11 = 0.4071119E-2;
+        static const double d21 = 0.7198037E-4;
+        static const double d64 = 0.2411697E-16;
+        static const double d81 = 0.2971072E-22;
+        static const double d82 = -0.1627888E-22;
+
+        static const double ESP = 251.196;
+
+        double mu0, SigmaStar, TStar;
+        double dmu, rho;
+        double visco_CO2;
+
+        if(temperature < 275.) // regularisation
+        {
+            temperature = 275;
+            Dune::dgrave << "Temperature below 275K in viscosity function:"
+                    << "Regularizing tempereature to 275K. " << std::endl;
+        }
+
+
+        TStar = temperature/ESP;
+
+        /* mu0: viscosity in zero-density limit */
+        using std::exp;
+        using std::log;
+        using std::sqrt;
+        SigmaStar = exp(a0 + a1*log(TStar)
+                        + a2*log(TStar)*log(TStar)
+                        + a3*log(TStar)*log(TStar)*log(TStar)
+                        + a4*log(TStar)*log(TStar)*log(TStar)*log(TStar) );
+        mu0 = 1.00697*sqrt(temperature) / SigmaStar;
+
+        /* dmu : excess viscosity at elevated density */
+        rho = gasDensity(temperature, pressure); /* CO2 mass density [kg/m^3] */
+
+        using std::pow;
+        dmu = d11*rho + d21*rho*rho + d64*pow(rho,6)/(TStar*TStar*TStar)
+            + d81*pow(rho,8) + d82*pow(rho,8)/TStar;
+
+        /* dmucrit : viscosity increase near the critical point */
+
+        // False (Lybke 2July2007)
+        //e1 = 5.5930E-3;
+        //e2 = 6.1757E-5;
+        //e4 = 2.6430E-11;
+        //dmucrit = e1*rho + e2*rho*rho + e4*rho*rho*rho;
+        //visco_CO2 = (mu0 + dmu + dmucrit)/1.0E6;   /* conversion to [Pa s] */
+
+        visco_CO2 = (mu0 + dmu)/1.0E6;   /* conversion to [Pa s] */
+
+        return visco_CO2;
     }
 
     /*!

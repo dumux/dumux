@@ -249,13 +249,13 @@ public:
 //                         + (1.0 - dampingFactor) * ((*this)[scvIdx].initialPorosity() + (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_);
 // //                         std::cout << "deltaVolumetricStrainOldIteration_[" << eIdx << "][" << scvIdx << "] = " << (*this)[scvIdx].deltaVolumetricStrainOldIteration_ << std::endl;
 //                     }
-//                     if(problem.evalGlobalResidual() == true)
-//                     {
-//                         (*this)[scvIdx].effPorosity_ =
-//                         ((*this)[scvIdx].initialPorosity() + (*this)[scvIdx].deltaVolumetricStrainOldIteration_);
-//                     }
-//                     else
-//                     {
+                    if(problem.evalGlobalResidual() == true)
+                    {
+                        (*this)[scvIdx].effPorosity_ =
+                        ((*this)[scvIdx].initialPorosity() + (*this)[scvIdx].deltaVolumetricStrainOldIteration_);
+                    }
+                    else
+                    {
                         //                     (*this)[scvIdx].effPorosity_ = 1 - (1 - (*this)[scvIdx].initialPorosity() )*exp( -((*this)[scvIdx].deltaVolumetricStrainCurrentIteration_));
                         (*this)[scvIdx].effPorosity_ = ((*this)[scvIdx].initialPorosity() + (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_)/*/(1.0 + (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_)*/;
 
@@ -275,7 +275,7 @@ public:
 //                             std::cout << "effPorosityNew_[" << eIdx << "][" << scvIdx << "] = " << (*this)[scvIdx].effPorosity_ << std::endl;
 //                         }
 
-//                     }
+                    }
                 }
             }
         }

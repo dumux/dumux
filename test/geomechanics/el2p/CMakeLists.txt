@@ -22,6 +22,11 @@ add_dumux_test(test_el2pdecoupled test_el2pdecoupled test_el2pdecoupled.cc
   echo
   )
 
+# compile test_el2p_2pdecoupled_simple
+add_dumux_test(test_el2p_decoupled_simple test_el2p_decoupled_simple test_el2p_decoupled_simple.cc
+  echo
+  )
+
 #install sources
 install(FILES
 el2pco2tables.hh

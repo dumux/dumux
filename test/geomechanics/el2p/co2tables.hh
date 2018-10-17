@@ -33,7 +33,9 @@ namespace ViscoEl2P
 {
 // the real work is done by some external program which provides
 // ready-to-use tables.
-#include "co2tablesAntonio.inc"
+
+#include "co2values.inc"
+
 }
 }
 

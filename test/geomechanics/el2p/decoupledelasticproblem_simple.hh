@@ -21,8 +21,8 @@
  * \brief Definition of a problem, for the two-phase flow linear elasticity problem:
  * Problem definition for the deformation of an elastic solid.
  */
-#ifndef DUMUX_EL2P_TESTPROBLEM_HH
-#define DUMUX_EL2P_TESTPROBLEM_HH
+#ifndef DUMUX_EL2P_TESTPROBLEM_SIMPLE_HH
+#define DUMUX_EL2P_TESTPROBLEM_SIMPLE_HH
 
 #include <dune/pdelab/finiteelementmap/qkfem.hh>
 
@@ -33,12 +33,12 @@
 
 #include "co2tables.hh"
 // #include "decoupled2pspatialparams.hh"
-#include "decoupled2pAntoniospatialparams.hh"
+#include "decoupled2pspatialparams_simple.hh"
 
 namespace Dumux
 {
 template<class TypeTag>
-class El2P_TestProblem;
+class El2P_TestProblem_Simple;
 
 
 // initial conditions for momentum balance equation
@@ -46,14 +46,14 @@ template<class TypeTag, int dim>
 class InitialDisplacement;
 
 namespace Properties {
-NEW_TYPE_TAG(El2P_TestProblem, INHERITS_FROM(BoxModel, BoxElasticTwoP, TwoPAntonioSpatialParams));
+NEW_TYPE_TAG(El2P_TestProblem_Simple, INHERITS_FROM(BoxModel, BoxElasticTwoP, TwoPSpatialParams_Simple));
 NEW_PROP_TAG(InitialDisplacement); //!< The initial displacement function
 
 // Set the grid type
-SET_TYPE_PROP(El2P_TestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(El2P_TestProblem_Simple, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 
 
-SET_PROP(El2P_TestProblem, PressureFEM)
+SET_PROP(El2P_TestProblem_Simple, PressureFEM)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -62,7 +62,7 @@ public:
     typedef Dune::PDELab::QkLocalFiniteElementMap<GridView,Scalar,Scalar,1>  type;
 };
 
-SET_PROP(El2P_TestProblem, DisplacementFEM)
+SET_PROP(El2P_TestProblem_Simple, DisplacementFEM)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -72,26 +72,26 @@ public:
 };
 
 // Set the problem property
-SET_TYPE_PROP(El2P_TestProblem, Problem, El2P_TestProblem<TypeTag>);
+SET_TYPE_PROP(El2P_TestProblem_Simple, Problem, El2P_TestProblem_Simple<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(El2P_TestProblem, FluidSystem)
+SET_PROP(El2P_TestProblem_Simple, FluidSystem)
 {
 public:
     typedef BrineCO2FluidSystem<TypeTag> type;
 };
 
 // Set the CO2 table to be used; in this case not the the default table
-SET_TYPE_PROP(El2P_TestProblem, CO2Table, CO2Tables);
+SET_TYPE_PROP(El2P_TestProblem_Simple, CO2Table, CO2Tables);
 // Set the salinity mass fraction of the brine in the reservoir
-SET_SCALAR_PROP(El2P_TestProblem, ProblemSalinity, 0);
+SET_SCALAR_PROP(El2P_TestProblem_Simple, ProblemSalinity, 0);
 
 // Set the soil properties
-SET_TYPE_PROP(El2P_TestProblem, SpatialParams, TwoPAntonioSpatialParams<TypeTag>);
-// SET_TYPE_PROP(El2P_TestProblem, SpatialParams, TwoPSpatialParams<TypeTag>);
+SET_TYPE_PROP(El2P_TestProblem_Simple, SpatialParams, TwoPSpatialParams_Simple<TypeTag>);
+// SET_TYPE_PROP(El2P_TestProblem_Simple, SpatialParams, TwoPSpatialParams<TypeTag>);
 
 // Set the initial displacement function
-SET_PROP(El2P_TestProblem, InitialDisplacement)
+SET_PROP(El2P_TestProblem_Simple, InitialDisplacement)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -102,20 +102,20 @@ public:
 };
 
 
-SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxRelativeShift, 1e-6);
-SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxSteps, 30);
-// SET_SCALAR_PROP(El2P_TestProblem, NewtonUseLineSearch, true);
+SET_SCALAR_PROP(El2P_TestProblem_Simple, NewtonMaxRelativeShift, 1e-6);
+SET_SCALAR_PROP(El2P_TestProblem_Simple, NewtonMaxSteps, 30);
+// SET_SCALAR_PROP(El2P_TestProblem_Simple, NewtonUseLineSearch, true);
 
 // use the algebraic multigrid
-// SET_TYPE_PROP(El2P_TestProblem, LinearSolver, El2PAMGBackend<TypeTag>);
-SET_TYPE_PROP(El2P_TestProblem, LinearSolver, SuperLUBackend<TypeTag> );
+// SET_TYPE_PROP(El2P_TestProblem_Simple, LinearSolver, El2PAMGBackend<TypeTag>);
+SET_TYPE_PROP(El2P_TestProblem_Simple, LinearSolver, SuperLUBackend<TypeTag> );
 
 // central differences to calculate the jacobian by default
-SET_INT_PROP(El2P_TestProblem, ImplicitNumericDifferenceMethod, 0);
+SET_INT_PROP(El2P_TestProblem_Simple, ImplicitNumericDifferenceMethod, 0);
 
 // write the stress and displacement output according to rock mechanics
 // sign convention (compressive stresses > 0)
-SET_BOOL_PROP(El2P_TestProblem, VtkRockMechanicsSignConvention, true);
+SET_BOOL_PROP(El2P_TestProblem_Simple, VtkRockMechanicsSignConvention, true);
 }
 
 /*!
@@ -138,8 +138,8 @@ SET_BOOL_PROP(El2P_TestProblem, VtkRockMechanicsSignConvention, true);
  * period is applied as initial condition and for the definition of the lateral Dirichlet
  * boundary conditions. The solid  displacement field is set to zero and the CO2 injection is started.
  */
-template<class TypeTag = TTAG(El2P_TestProblem)>
-class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
+template<class TypeTag = TTAG(El2P_TestProblem_Simple)>
+class El2P_TestProblem_Simple : public ImplicitPorousMediaProblem<TypeTag>
 {
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -190,7 +190,7 @@ public:
      * \param gridView The grid view
      * \param tInitEnd End of initialization period
      */
-    El2P_TestProblem(TimeManager &timeManager,
+    El2P_TestProblem_Simple(TimeManager &timeManager,
                     const GridView &gridView)
         : ParentType(timeManager, gridView),
         gridView_(gridView)
@@ -251,7 +251,7 @@ public:
             GlobalPosition globalPos = vertex.geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
-            pInit_[vIdxGlobal] = -(1.0e5 + (depthBOR_ - globalPos[dimWorld-1]) * brineDensity_ * 9.81);
+            pInit_[vIdxGlobal] = -(1.013e5 + (depthBOR_ - globalPos[dimWorld-1]) * brineDensity_ * 9.81);
         }
     }
 
@@ -284,7 +284,7 @@ public:
 //         initializationRun_ = false; // initialization run is now finished
 //
 //         this->setInitializationRun(initializationRun_);
-//         std::cout<<"El2P_TestProblem: initialized pressure field copied to pInit_"<<std::endl;
+//         std::cout<<"El2P_TestProblem_Simple: initialized pressure field copied to pInit_"<<std::endl;
 //         for(const auto& vertex : vertices(gridView_))
 //         {
 //             int vIdxGlobal = this->vertexMapper().index(vertex);
@@ -315,10 +315,10 @@ public:
       rockDensity = this->spatialParams().rockDensity(globalPos);
 
       // initial total stress field here assumed to be isotropic, lithostatic
-      stress[0] = 0.6 * ( brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dimWorld-1])
+      stress[0] = ( brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dimWorld-1])
                   + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dimWorld-1]) );
       if(dimWorld >=2)
-      stress[1] = 1.0 * ( brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dimWorld-1])
+      stress[1] = ( brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dimWorld-1])
                   + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dimWorld-1]) );
       if(dimWorld == 3)
       stress[2] = 1.0 * ( brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dimWorld-1])
@@ -352,7 +352,7 @@ public:
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
         Scalar T;
-        T = 283.15 + (depthBOR_ - globalPos[dim-1]) * 0.025;
+        T = 283.15 + (depthBOR_ - globalPos[dimWorld-1]) * 0.03;
 //         T = 298.15 /*+ (depthBOR_ - globalPos[dim-1]) * 0.025*/;
 
         return T;
@@ -372,7 +372,7 @@ public:
     {
         Scalar pValue = 0.0;
 
-        typename El2P_TestProblem<TypeTag>::LocalFEMSpace feMap(this->gridView());
+        typename El2P_TestProblem_Simple<TypeTag>::LocalFEMSpace feMap(this->gridView());
         const typename LocalFEMSpace::Traits::FiniteElementType
         &localFiniteElement = feMap.find(element.geometry().type());
         typedef Dune::FieldVector<CoordScalar, 1> ShapeValue;
@@ -436,17 +436,19 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
     {
         values.setAllNeumann();
 
-        // The solid displacement on the left is fixed in x and y.
-        if(globalPos[0] < eps_)
+        // The solid displacement normal to the lateral boundaries is fixed.
+        if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0]-eps_)
         {
-            values.setDirichlet(Indices::u(0));
+            values.setDirichlet(uxIdx);
         }
 
-        // The solid displacement at the bottom is fixed in y.
-        // Bottom: x = 0, y = -1000
-        if(globalPos[1] < this->bBoxMin()[1] + eps_)
+        // Lower boundary closed for brine and CO2 flux, uz is fixed.
+        if(globalPos[dimWorld-1] < eps_)
         {
-            values.setDirichlet(Indices::u(1));
+            if(dim == 2)
+                values.setDirichlet(uyIdx);
+            if(dim == 3)
+                values.setDirichlet(uzIdx);
         }
      }
 

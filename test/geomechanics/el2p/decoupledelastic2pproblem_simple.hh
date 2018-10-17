@@ -22,8 +22,8 @@
  * \brief A test problem for the one-phase model:
  * water is flowing from bottom to top through and around a low permeable lens.
  */
-#ifndef DUMUX_EL2P_2PDECOUPLED_PROBLEM_HH
-#define DUMUX_EL2P_2PDECOUPLED_PROBLEM_HH
+#ifndef DUMUX_EL2P_DECOUPLED_PROBLEM_SIMPLE_HH
+#define DUMUX_EL2P_DECOUPLED_PROBLEM_SIMPLE_HH
 
 #include <valgrind/callgrind.h>
 
@@ -32,8 +32,8 @@
 #include <dune/pdelab/gridfunctionspace/localfunctionspace.hh>
 #include <dune/common/timer.hh>
 
-#include "decoupledelasticproblem.hh"
-#include "decoupled2pproblem.hh"
+#include "decoupledelasticproblem_simple.hh"
+#include "decoupled2pproblem_simple.hh"
 #include <vector>
 #include "time.h"
 
@@ -42,27 +42,27 @@
 namespace Dumux
 {
 template <class TypeTag>
-class El2p_2pDecoupledProblem;
+class El2p_DecoupledProblem_Simple;
 
 namespace Properties
 {
-NEW_TYPE_TAG(El2p_2pDecoupledProblem, INHERITS_FROM(SimpleCoupled, GridAdapt));
+NEW_TYPE_TAG(El2p_DecoupledProblem_Simple, INHERITS_FROM(SimpleCoupled, GridAdapt));
 
 // Set the problem property
-SET_TYPE_PROP(El2p_2pDecoupledProblem, Problem,
-              Dumux::El2p_2pDecoupledProblem<TypeTag>);
+SET_TYPE_PROP(El2p_DecoupledProblem_Simple, Problem,
+              Dumux::El2p_DecoupledProblem_Simple<TypeTag>);
 
-SET_INT_PROP(El2p_2pDecoupledProblem, ImplicitMaxTimeStepDivisions, 5);
+SET_INT_PROP(El2p_DecoupledProblem_Simple, ImplicitMaxTimeStepDivisions, 5);
 
 // Set the two sub-problems of the global problem
-//SET_TYPE_PROP(El2p_2pDecoupledProblem, SubProblem1TypeTag, TTAG(BioTranspProblem));
-//SET_TYPE_PROP(El2p_2pDecoupledProblem, SubProblem2TypeTag, TTAG(BioChemProblem));
-SET_TYPE_PROP(El2p_2pDecoupledProblem, SubProblem1TypeTag, TTAG(TwoP_TestProblem));
-SET_TYPE_PROP(El2p_2pDecoupledProblem, SubProblem2TypeTag, TTAG(El2P_TestProblem));
+//SET_TYPE_PROP(El2p_DecoupledProblem_Simple, SubProblem1TypeTag, TTAG(BioTranspProblem));
+//SET_TYPE_PROP(El2p_DecoupledProblem_Simple, SubProblem2TypeTag, TTAG(BioChemProblem));
+SET_TYPE_PROP(El2p_DecoupledProblem_Simple, SubProblem1TypeTag, TTAG(TwoP_TestProblem_Simple));
+SET_TYPE_PROP(El2p_DecoupledProblem_Simple, SubProblem2TypeTag, TTAG(El2P_TestProblem_Simple));
 
-SET_PROP(TwoP_TestProblem, ParameterTree)
+SET_PROP(TwoP_TestProblem_Simple, ParameterTree)
 {private:
-    typedef typename GET_PROP(TTAG(El2p_2pDecoupledProblem), ParameterTree) ParameterTree;
+    typedef typename GET_PROP(TTAG(El2p_DecoupledProblem_Simple), ParameterTree) ParameterTree;
 public:
     typedef typename ParameterTree::type type;
 
@@ -83,9 +83,9 @@ public:
 
 };
 
-SET_PROP(El2P_TestProblem, ParameterTree)
+SET_PROP(El2P_TestProblem_Simple, ParameterTree)
 {private:
-    typedef typename GET_PROP(TTAG(El2p_2pDecoupledProblem), ParameterTree) ParameterTree;
+    typedef typename GET_PROP(TTAG(El2p_DecoupledProblem_Simple), ParameterTree) ParameterTree;
 public:
     typedef typename ParameterTree::type type;
 
@@ -108,7 +108,7 @@ public:
 }
 
 template <class TypeTag>
-class El2p_2pDecoupledProblem : public SimpleCoupledProblem<TypeTag>
+class El2p_DecoupledProblem_Simple : public SimpleCoupledProblem<TypeTag>
 {
     typedef SimpleCoupledProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
@@ -118,8 +118,8 @@ class El2p_2pDecoupledProblem : public SimpleCoupledProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, SubProblem1TypeTag) SubTypeTag1;
     typedef typename GET_PROP_TYPE(TypeTag, SubProblem2TypeTag) SubTypeTag2;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, Problem) TwoP_TestProblem;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, Problem) El2P_TestProblem;
+    typedef typename GET_PROP_TYPE(SubTypeTag1, Problem) TwoPSpatialParams_Simple;
+    typedef typename GET_PROP_TYPE(SubTypeTag2, Problem) El2P_TestProblem_Simple;
 
     typedef typename GET_PROP_TYPE(SubTypeTag1, FVElementGeometry) FVElementGeometryTranspProblem;
     typedef typename GET_PROP_TYPE(SubTypeTag1, ElementVolumeVariables) ElementVolumeVariablesTranspProblem;
@@ -166,7 +166,7 @@ class El2p_2pDecoupledProblem : public SimpleCoupledProblem<TypeTag>
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
 public:
-    El2p_2pDecoupledProblem(TimeManager &timeManager, const GridView &gridView)
+    El2p_DecoupledProblem_Simple(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView),
     gridView_(gridView)
     {
@@ -967,20 +967,20 @@ public:
 
 //         std::vector<double> timeAntonio = {0.864000E+01, 0.259200E+02, 0.604800E+02, 0.129600E+03, 0.267840E+03, 0.544320E+03, 0.109728E+04, 0.220320E+04, 0.441504E+04, 0.883872E+04, 0.176861E+05, 0.353808E+05, 0.707702E+05, 0.141549E+06, 0.283107E+06, 0.424665E+06, 0.566222E+06, 0.849338E+06, 0.129600E+07, 0.218932E+07, 0.259200E+07, 0.339735E+07, 0.432000E+07, 0.616530E+07, 0.777600E+07, 0.109974E+08, 0.155520E+08, 0.246612E+08, 0.311040E+08, 0.432000E+08, 0.604800E+08, 0.777600E+08, 0.103680E+09, 0.129600E+09, 0.155520E+09};
 
-        std::vector<double> timeAntonio = {172800, 275200, 396562.9629629629, 540400.548696845, 710874.7243814459, 912918.1918594914, 1152377.116277916, 1436180.285959011, 1591220.906432943, 1760617.13991372, 1992752.719128119, 2246382.333454961, 2546980.394879368, 2875411.610139367, 3295073.718527144, 3792451.032171917, 4427988.710718015, 5063526.389264113, 5875602.311850795, 6606470.642178807, 7472684.9596046, 8419104.306421671, 8726400, 9672819.346817071, 10619238.69363414, 11471016.1057695, 12480530.07570771, 13306496.0511117, 14208940.35757161, 15194944.32203707, 16082347.89005599, 16445376.62242736, 16909246.66934634, 17257149.20453557, 17366400, 17714302.53518923, 18094418.26808117, 18509729.90216681, 18755840.50014348, 19093103.17144485, 19492821.89298721, 19929551.60726498, 20406719.25804995, 20836170.14375642, 21345148.97126038, 21995510.80640434, 22706091.32998755, 23482466.34649513, 24402614.51420782, 25407961.58633835, 26006400, 27011747.07213053, 28110181.836125, 29310323.52271155, 30510465.2092981, 31821731.12612415, 32538070.83994579, 33519721.55888655, 34592265.86291441, 34646400, 35718944.30402787, 36890798.2658361, 38171157.22410805, 39688619.6931711, 40930179.89513178, 42401658.65301111, 43286400, 44757878.75787932, 46082209.63997071, 47897033.44135521, 49530374.86260127, 51314951.60062935, 51926400, 53710976.73802809, 54946452.9412783, 56525116.97876469, 57945914.61250244, 59498267.58269739, 60566400, 62118752.97019495, 64102315.09877738, 66269540.38741375, 69038772.70067132, 69206400, 71975632.31325758, 75001275.02589086, 76946331.05544081, 77846400, 79791456.02954996, 82276805.40064158, 85452529.59703642, 86486400, 88074262.09819742, 90250221.26980129, 92829135.84355403, 95126400, 97705314.57375275, 101000594.3068812, 103766400, 107061679.7331285, 110662077.9600652, 112406400, 116006798.2269367, 120607307.0724669, 121046400, 125646908.8455302, 127826097.2460445, 129686400, 131865588.4005143, 134650106.9122826, 138326400, 142002693.0877174, 146700178.6998007, 146966400, 151663885.6120833, 155520000};
-
-        if(ParentType::timeManager_.episodeIndex()  == 1)
-        {
-            episodeLength_ = timeAntonio[0] - time;
-        }
-        else if(ParentType::timeManager_.episodeIndex()  <= timeAntonio.size())
-        {
-            episodeLength_ = timeAntonio[ParentType::timeManager_.episodeIndex()-1] - time;
-        }
-        else
-        {
-            episodeLength_ = 8640000;
-        }
+//         std::vector<double> timeAntonio = {172800, 275200, 396562.9629629629, 540400.548696845, 710874.7243814459, 912918.1918594914, 1152377.116277916, 1436180.285959011, 1591220.906432943, 1760617.13991372, 1992752.719128119, 2246382.333454961, 2546980.394879368, 2875411.610139367, 3295073.718527144, 3792451.032171917, 4427988.710718015, 5063526.389264113, 5875602.311850795, 6606470.642178807, 7472684.9596046, 8419104.306421671, 8726400, 9672819.346817071, 10619238.69363414, 11471016.1057695, 12480530.07570771, 13306496.0511117, 14208940.35757161, 15194944.32203707, 16082347.89005599, 16445376.62242736, 16909246.66934634, 17257149.20453557, 17366400, 17714302.53518923, 18094418.26808117, 18509729.90216681, 18755840.50014348, 19093103.17144485, 19492821.89298721, 19929551.60726498, 20406719.25804995, 20836170.14375642, 21345148.97126038, 21995510.80640434, 22706091.32998755, 23482466.34649513, 24402614.51420782, 25407961.58633835, 26006400, 27011747.07213053, 28110181.836125, 29310323.52271155, 30510465.2092981, 31821731.12612415, 32538070.83994579, 33519721.55888655, 34592265.86291441, 34646400, 35718944.30402787, 36890798.2658361, 38171157.22410805, 39688619.6931711, 40930179.89513178, 42401658.65301111, 43286400, 44757878.75787932, 46082209.63997071, 47897033.44135521, 49530374.86260127, 51314951.60062935, 51926400, 53710976.73802809, 54946452.9412783, 56525116.97876469, 57945914.61250244, 59498267.58269739, 60566400, 62118752.97019495, 64102315.09877738, 66269540.38741375, 69038772.70067132, 69206400, 71975632.31325758, 75001275.02589086, 76946331.05544081, 77846400, 79791456.02954996, 82276805.40064158, 85452529.59703642, 86486400, 88074262.09819742, 90250221.26980129, 92829135.84355403, 95126400, 97705314.57375275, 101000594.3068812, 103766400, 107061679.7331285, 110662077.9600652, 112406400, 116006798.2269367, 120607307.0724669, 121046400, 125646908.8455302, 127826097.2460445, 129686400, 131865588.4005143, 134650106.9122826, 138326400, 142002693.0877174, 146700178.6998007, 146966400, 151663885.6120833, 155520000};
+//
+//         if(ParentType::timeManager_.episodeIndex()  == 1)
+//         {
+//             episodeLength_ = timeAntonio[0] - time;
+//         }
+//         else if(ParentType::timeManager_.episodeIndex()  <= timeAntonio.size())
+//         {
+//             episodeLength_ = timeAntonio[ParentType::timeManager_.episodeIndex()-1] - time;
+//         }
+//         else
+//         {
+//             episodeLength_ = 8640000;
+//         }
 
 //         if(ParentType::timeManager_.episodeIndex()  <= 2)
 //         {
@@ -1061,14 +1061,14 @@ public:
 
     }
 
-    TwoP_TestProblem& TranspProblem()
+    TwoPSpatialParams_Simple& TranspProblem()
     { return this->subProblem1(); }
-    const TwoP_TestProblem& TranspProblem() const
+    const TwoPSpatialParams_Simple& TranspProblem() const
     { return this->subProblem1(); }
 
-    El2P_TestProblem& MechanicsProblem()
+    El2P_TestProblem_Simple& MechanicsProblem()
     { return this->subProblem2(); }
-    const El2P_TestProblem& MechanicsProblem() const
+    const El2P_TestProblem_Simple& MechanicsProblem() const
     { return this->subProblem2(); }
 
 private:
