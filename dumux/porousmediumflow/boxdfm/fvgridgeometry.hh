@@ -238,7 +238,7 @@ public:
                                                                                referenceElement.subEntity(idxInInside, 1, vIdxLocal, dim),
                                                                                dim);
                 // maybe add boundary scvf
-                if (intersection.boundary())
+                if (intersection.boundary() && !intersection.neighbor())
                 {
                     numScvf_ += isGeometry.corners();
                     numBoundaryScvf_ += isGeometry.corners();
@@ -266,6 +266,9 @@ public:
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
                 }
+                // make sure we have no periodic boundaries
+                else if (intersection.boundary() && intersection.neighbor())
+                    DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme");
 
                 // maybe add fracture scvs & scvfs
                 if (fractureGridAdapter.composeFacetElement(isVertexIndices))
@@ -351,6 +354,16 @@ public:
     bool dofOnBoundary(unsigned int dofIdx) const { return boundaryDofIndices_[dofIdx]; }
     //! If a vertex / d.o.f. is on a fracture
     bool dofOnFracture(unsigned int dofIdx) const { return fractureDofIndices_[dofIdx]; }
+    //! Periodic boundaries are not supported for the box-dfm scheme
+    bool dofOnPeriodicBoundary(std::size_t dofIdx) const { return false; }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
+
+    //! Returns the map between dofs across periodic boundaries
+    std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
+    { return std::unordered_map<std::size_t, std::size_t>(); }
 
 private:
     const FeCache feCache_;
@@ -475,7 +488,7 @@ public:
                                                                                referenceElement.subEntity(idxInInside, 1, vIdxLocal, dim),
                                                                                dim);
 
-                if (intersection.boundary())
+                if (intersection.boundary() && !intersection.neighbor())
                 {
                     numScvf_ += numCorners;
                     numBoundaryScvf_ += numCorners;
@@ -491,6 +504,10 @@ public:
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
                 }
+
+                // make sure we have no periodic boundaries
+                else if (intersection.boundary() && intersection.neighbor())
+                    DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme");
 
                 // maybe add fracture scvs & scvfs
                 if (fractureGridAdapter.composeFacetElement(isVertexIndices))
@@ -513,9 +530,20 @@ public:
     bool dofOnBoundary(unsigned int dofIdx) const { return boundaryDofIndices_[dofIdx]; }
     //! If a vertex / d.o.f. is on a fracture
     bool dofOnFracture(unsigned int dofIdx) const { return fractureDofIndices_[dofIdx]; }
+    //! Periodic boundaries are not supported for the box-dfm scheme
+    bool dofOnPeriodicBoundary(std::size_t dofIdx) const { return false; }
+
     //! Returns true if an intersection coincides with a fracture element
     bool isOnFracture(const Element& element, const Intersection& intersection) const
     { return facetOnFracture_[facetMapper_.subIndex(element, intersection.indexInInside(), 1)]; }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
+
+    //! Returns the map between dofs across periodic boundaries
+    std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
+    { return std::unordered_map<std::size_t, std::size_t>(); }
 
 private:
 

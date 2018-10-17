@@ -313,6 +313,10 @@ public:
     std::size_t periodicallyMappedDof(std::size_t dofIdx) const
     { return periodicVertexMap_.at(dofIdx); }
 
+    //! Returns the map between dofs across periodic boundaries
+    const std::unordered_map<std::size_t, std::size_t>& periodicVertexMap() const
+    { return periodicVertexMap_; }
+
 private:
 
     const FeCache feCache_;
@@ -500,8 +504,8 @@ public:
     std::size_t periodicallyMappedDof(std::size_t dofIdx) const
     { return periodicVertexMap_.at(dofIdx); }
 
-    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    const std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
+    //! Returns the map between dofs across periodic boundaries
+    const std::unordered_map<std::size_t, std::size_t>& periodicVertexMap() const
     { return periodicVertexMap_; }
 
 private:
