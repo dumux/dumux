@@ -42,8 +42,8 @@ def compare_data(dataFile1, dataFile2, delimiter, absolute=1.5e-7, relative=1e-2
         print("... with a maximum relative error of {} and a maximum absolute error of {}*max_abs_parameter_value.".format(relative, absolute))
 
     # construct element tree from data files
-    data1 = list(csv.reader(open(dataFile1, 'rb'), delimiter=delimiter))
-    data2 = list(csv.reader(open(dataFile2, 'rb'), delimiter=delimiter))
+    data1 = list(csv.reader(open(dataFile1, 'r'), delimiter=delimiter))
+    data2 = list(csv.reader(open(dataFile2, 'r'), delimiter=delimiter))
 
     if (len(data1) != len(data2)):
         print("Length of data1 and data2 not equal: ref=", len(data1), ",new=", len(data2), ". Aborting!")
