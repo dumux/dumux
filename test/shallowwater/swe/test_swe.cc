@@ -143,6 +143,8 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
+    std::cout << "\n x " << x[0] << std::endl;
+
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
@@ -155,11 +157,12 @@ int main(int argc, char** argv) try
     if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
         restartTime = getParam<Scalar>("TimeLoop.Restart");
 
-    // intialize the vtk output module
+    /*// intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
+    */
 
     //intialize xdmf output module
     Dune::Swf::XDMFWriter<typename GridType::LeafGridView>
@@ -176,14 +179,6 @@ int main(int argc, char** argv) try
     // the linear solver AMG works parallel and seriell (parallel AMG is slow for triangular grids)
     using LinearSolver = Dumux::AMGBackend<TypeTag>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
-
-
-    //seriell choosing on of:
-        //using LinearSolver = Dumux::ILUnBiCGSTABBackend;
-        //using LinearSolver = Dumux::SSORRestartedGMResBackend; //slow
-
-        //further add linear solver
-        //auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
@@ -203,7 +198,7 @@ int main(int argc, char** argv) try
     writer.writeCellData(plotMap["z"],"z","m");
     writer.endTimeStep();
 
-/*
+
     bool doPolot = true;
     // time loop
     timeLoop->start(); do
@@ -249,7 +244,7 @@ int main(int argc, char** argv) try
     nonLinearSolver.report();
 
     timeLoop->finalize(leafGridView.comm());
-*/
+
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////
