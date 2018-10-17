@@ -254,6 +254,10 @@ public:
                 // if the vertices compose a facet element, the intersection is on facet grid
                 const bool isOnFacet = codimOneGridAdapter.composeFacetElement(gridVertexIndices);
 
+                // make sure there are no periodic boundaries
+                if (boundary && intersection.neighbor())
+                    DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box facet coupling scheme");
+
                 // if it is not, but it is on the boundary -> boundary scvf
                 if (isOnFacet || boundary)
                 {
@@ -308,6 +312,18 @@ public:
     //! If a d.o.f. is on an interior boundary
     bool dofOnInteriorBoundary(unsigned int dofIdx) const
     { return interiorBoundaryDofIndices_[dofIdx]; }
+
+    //! Periodic boundaries are not supported for the box facet coupling scheme
+    bool dofOnPeriodicBoundary(std::size_t dofIdx) const
+    { return false; }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box facet coupling scheme"); }
+
+    //! Returns the map between dofs across periodic boundaries
+    std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
+    { return std::unordered_map<std::size_t, std::size_t>(); }
 
 private:
     const FeCache feCache_;
@@ -457,6 +473,10 @@ public:
                 // if all vertices are living on the facet grid, this is an interiour boundary
                 const bool isOnFacet = codimOneGridAdapter.composeFacetElement(gridVertexIndices);
 
+                // make sure there are no periodic boundaries
+                if (boundary && intersection.neighbor())
+                    DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box facet coupling scheme");
+
                 if (isOnFacet || boundary)
                 {
                     const auto isGeometry = intersection.geometry();
@@ -494,6 +514,18 @@ public:
     //! returns true if an intersection is on an interior boundary
     bool isOnInteriorBoundary(const Element& element, const Intersection& intersection) const
     { return facetIsOnInteriorBoundary_[ facetMapper_.subIndex(element, intersection.indexInInside(), 1) ]; }
+
+    //! Periodic boundaries are not supported for the box facet coupling scheme
+    bool dofOnPeriodicBoundary(std::size_t dofIdx) const
+    { return false; }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the facet coupling scheme"); }
+
+    //! Returns the map between dofs across periodic boundaries
+    std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
+    { return std::unordered_map<std::size_t, std::size_t>(); }
 
 private:
     const FeCache feCache_;
