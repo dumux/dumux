@@ -678,7 +678,6 @@ protected:
 
         // the given solution is the initial guess
         SolutionVector uLastIter(uCurrentIter);
-        SolutionVector deltaU(uCurrentIter);
 
         Dune::Timer assembleTimer(false);
         Dune::Timer solveTimer(false);
@@ -750,9 +749,10 @@ protected:
                 solveTimer.start();
 
                 // set the delta vector to zero before solving the linear system!
+                SolutionVector deltaU(uCurrentIter);
                 deltaU = 0;
 
-                solveLinearSystem(assembler_->reducedCoefficientMatrix(), deltaU, assembler_->reducedRHS());
+                solveLinearSystem(assembler_->reducedCoefficientMatrix(), deltaU, assembler_->reducedResidual());
                 solveTimer.stop();
 
                 ///////////////
@@ -768,6 +768,7 @@ protected:
 
                 //full vectors from reduced ones
                 //uCurrentIter
+
                 uCurrentIter[faceIdx] = constructFullVectorFromReducedVector_(uCurrentIter[faceIdx], originalFullU[faceIdx], boundaryScvfsIndexSet);
                 uCurrentIter[cellCenterIdx] = constructFullVectorFromReducedVector_(uCurrentIter[cellCenterIdx], originalFullU[cellCenterIdx], fixedPressureScvsIndexSet);
 
@@ -776,6 +777,7 @@ protected:
                 originalDeltaU[faceIdx].resize(originalFullU[faceIdx].size());
                 originalDeltaU[cellCenterIdx].resize(originalFullU[cellCenterIdx].size());
                 originalDeltaU = 0.;
+
                 deltaU[faceIdx] = constructFullVectorFromReducedVector_(deltaU[faceIdx], originalDeltaU[faceIdx], boundaryScvfsIndexSet);
                 deltaU[cellCenterIdx] = constructFullVectorFromReducedVector_(deltaU[cellCenterIdx], originalDeltaU[cellCenterIdx], fixedPressureScvsIndexSet);
 

@@ -190,6 +190,9 @@ public:
     {
         resetResidual_();
         assembleResidual(*residual_, curSol);
+
+        resetReducedResidual_();
+        fillReducedResidual_(*residual_, *reducedResidual_);
     }
 
     //! assemble a residual r
@@ -440,6 +443,9 @@ public:
     SolutionVector& residual()
     { return *residual_; }
 
+    SolutionVector& reducedResidual()
+    { return *reducedResidual_; }
+
     //! the solution of the previous time step
     const SolutionVector& prevSol() const
     { return *prevSol_; }
@@ -554,6 +560,18 @@ private:
         }
 
         (*reducedRHS_) = 0.0;
+    }
+
+    // reset the reduced right-hand side vector to 0.0
+    void resetReducedResidual_()
+    {
+        if(!reducedResidual_)
+        {
+            reducedResidual_ = std::make_shared<SolutionVector>();
+            setReducedRHSSize(*reducedResidual_);
+        }
+
+        (*reducedResidual_) = 0.0;
     }
 
     // reset the coefficient matrix vector to 0.0
@@ -827,6 +845,14 @@ private:
         { this->removeSetOfEntriesFromVector(reducedRHS[domainId], this->reductionIndexSet(domainId)); });
     }
 
+    void fillReducedResidual_(const SolutionVector& Residual, SolutionVector& reducedResidual)
+    {
+        reducedResidual = Residual;
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(reducedResidual)), [&](const auto domainId)
+        { this->removeSetOfEntriesFromVector(reducedResidual[domainId], this->reductionIndexSet(domainId)); });
+    }
+
     //! pointer to the problem to be solved
     ProblemTuple problemTuple_;
 
@@ -851,6 +877,7 @@ private:
     std::shared_ptr<SolutionVector> RHS_;
     std::shared_ptr<JacobianMatrix> reducedCoefficientMatrix_;
     std::shared_ptr<SolutionVector> reducedRHS_;
+    std::shared_ptr<SolutionVector> reducedResidual_;
     std::shared_ptr<JacobianMatrix> furtherReducedCoefficientMatrix_;
 };
 

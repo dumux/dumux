@@ -155,7 +155,7 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NonlinearSolver = Dumux::SimpleSolver<Assembler, LinearSolver>;
+    using NonlinearSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NonlinearSolver nonLinearSolver(assembler, linearSolver);
 
     // linearize & solve

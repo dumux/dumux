@@ -1,6 +1,6 @@
 [Grid]
 UpperRight = 1 1
-Cells = 5 5
+Cells = 40 40
 
 [Problem]
 Name = test_donea # name passed to the output routines
