@@ -222,14 +222,17 @@ public:
             // Variables that will store the distances between the dofs of interest:
             // distances[0]: upstream to downstream distance
             // distances[1]: upstream-upstream to upstream distance
-            std::array<Scalar, 2> distances{0.0, 0.0};
+            // distances[2]: downstream staggered cell size
+            std::array<Scalar, 3> distances{0.0, 0.0, 0.0};
 
             // If I am not too near to the boundary I can use a second order approximation for the velocity.
             // In this frontal flux I use for the density always the value that I have on the scvf.
             if (canFrontalSecondOrder_(scvf, selfIsUpstream, velocities, distances, elemFaceVars[scvf]))
             {
                 // momentum = higherOrderApproximation.upwindQUICK(velocities[0], velocities[1], velocities[2], distances[0], distances[1], insideVolVars.density());
-                momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], insideVolVars.density(), higherOrderApproximation.VanAlbada);
+                // momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], insideVolVars.density(), higherOrderApproximation.vanleer);
+                // momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream, insideVolVars.density(), higherOrderApproximation.vanleer);
+                momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], insideVolVars.density(), higherOrderApproximation.modifiedVanleer);
             }
             else
                 momentum = higherOrderApproximation.upwind(velocities[0], velocities[1], insideVolVars.density());
@@ -421,13 +424,16 @@ private:
         // Variables that will store the distances between the dofs of interest:
         // distances[0]: upstream to downstream distance
         // distances[1]: upstream-upstream to upstream distance
-        std::array<Scalar, 2> distances{0.0, 0.0};
+        // distances[2]: downstream staggered cell size
+        std::array<Scalar, 3> distances{0.0, 0.0, 0.0};
 
         // If I am not too near to the boundary I can use a second order approximation.
         if (canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx, velocities, distances, problem, element, faceVars, isDirichletPressure, isBJS))
         {
             // momentum = higherOrderApproximation.upwindQUICK(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
-            momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), higherOrderApproximation.VanAlbada);
+            // momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), higherOrderApproximation.vanleer);
+            // momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), higherOrderApproximation.vanleer);
+            momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), higherOrderApproximation.modifiedVanleer);
         }
         else
             momentum = higherOrderApproximation.upwind(velocities[0], velocities[1], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
@@ -628,7 +634,7 @@ private:
     bool canFrontalSecondOrder_(const SubControlVolumeFace& ownScvf,
                                 const bool selfIsUpstream,
                                 std::array<Scalar, 3>& velocities,
-                                std::array<Scalar, 2>& distances,
+                                std::array<Scalar, 3>& distances,
                                 const FaceVariables& faceVars) const
     {
         // Depending on selfIsUpstream I can assign the downstream and the upstream velocities,
@@ -644,6 +650,7 @@ private:
                 velocities[2] = faceVars.velocityForward(0);
                 distances[0] = ownScvf.selfToOppositeDistance();
                 distances[1] = ownScvf.axisData().inAxisForwardDistances[0];
+                distances[2] = 0.5 * (ownScvf.axisData().selfToOppositeDistance + ownScvf.axisData().inAxisForwardDistances[0]);
                 return true;
             }
             else
@@ -659,6 +666,8 @@ private:
                 velocities[2] = faceVars.velocityBackward(0);
                 distances[0] = ownScvf.selfToOppositeDistance();
                 distances[1] = ownScvf.axisData().inAxisBackwardDistances[0];
+                // pairData(0) or pairData(1) have the same normalDistance
+                distances[2] = ownScvf.pairData(0).normalDistance;
                 return true;
             }
             else
@@ -682,7 +691,7 @@ private:
                                 const bool selfIsUpstream,
                                 const int localSubFaceIdx,
                                 std::array<Scalar, 3>& velocities,
-                                std::array<Scalar, 2>& distances,
+                                std::array<Scalar, 3>& distances,
                                 const Problem& problem,
                                 const Element& element,
                                 const FaceVariables& faceVars,
@@ -714,9 +723,17 @@ private:
             // I can assign the upstream velocity. The downstream velocity can be assigned or retrieved
             // from the boundary if there is no parallel neighbor.
             velocities[1] = faceVars.velocitySelf();
-            velocities[0] = ownScvf.hasParallelNeighbor(localSubFaceIdx, 0)
-                          ? faceVars.velocityParallel(localSubFaceIdx, 0)
-                          : getParallelVelocityFromBoundary();
+
+            if(ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
+            {
+                velocities[0] = faceVars.velocityParallel(localSubFaceIdx, 0);
+                distances[2] = ownScvf.pairData(localSubFaceIdx).parallelDistances[1];
+            }
+            else
+            {
+                velocities[0] = getParallelVelocityFromBoundary();
+                distances[2] = ownScvf.area() / 2.0;
+            }
 
             // The "upstream-upsteram" velocity is retrieved from the other parallel neighbor
             // or from the boundary.
@@ -757,6 +774,7 @@ private:
 
             distances[0] = ownScvf.cellCenteredParallelDistance(localSubFaceIdx, 0);
             distances[1] = ownScvf.cellCenteredParallelDistance(localSubFaceIdx, 1);
+            distances[2] = ownScvf.area();
 
             return true;
         }
@@ -805,7 +823,7 @@ private:
             // Neumann conditions are not well implemented
             DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions for the momentum equations at global position " << boundarySubFaceCenter);
         }
-    };
+    }
 };
 
 } // end namespace Dumux
