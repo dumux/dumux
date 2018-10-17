@@ -39,8 +39,7 @@ public:
     typedef int DataType;
 
     DetermineOwnerVerticesHandle(int rank, std::vector<int>& isOwner,
-                         MultipleCodimMultipleGeomTypeMapper<typename Grid::GridView> mapper (GridView, mcmgVertexLayout())
-                         )
+                        MultipleCodimMultipleGeomTypeMapper< GridView, MCMGVertexLayout >& mapper)
         : rank_(rank), isOwner_(isOwner), mapper_(mapper)
     {}
     bool fixedsize(int /* dim */, int /* codim */) const
