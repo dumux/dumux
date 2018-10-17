@@ -658,95 +658,11 @@ public:
     { return paramGroup_; }
 
 protected:
-
-    void computeResidualReduction_(const SolutionVector &uCurrentIter)
-    {
-        residualNorm_ = assembler_->residualNorm(uCurrentIter);
-        reduction_ = residualNorm_;
-        reduction_ /= initialResidual_;
-    }
-
-    bool enableResidualCriterion() const
-    { return enableResidualCriterion_; }
-
-    const LinearSolver& linearSolver() const
-    { return *linearSolver_; }
-
-    LinearSolver& linearSolver()
-    { return *linearSolver_; }
-
-    const Assembler& assembler() const
-    { return *assembler_; }
-
-    Assembler& assembler()
-    { return *assembler_; }
-
-    //! optimal number of iterations we want to achieve
-    int targetSteps_;
-    //! maximum number of iterations we do before giving up
-    int maxSteps_;
-    //! actual number of steps done so far
-    int numSteps_;
-
-    // residual criterion variables
-    Scalar reduction_;
-    Scalar residualNorm_;
-    Scalar lastReduction_;
-    Scalar initialResidual_;
-
-    // shift criterion variables
-    Scalar shift_;
-    Scalar lastShift_;
-
-    //! message stream to be displayed at the end of iterations
-    std::ostringstream endIterMsgStream_;
-
-
-private:
-    template<class VectorType, class IndexType>
-    VectorType constructFullVectorFromReducedVector_(const VectorType& currentReducedVector,
-                                                     const VectorType&  originalFullVector,
-                                                     const std::vector<IndexType>& indices){
-        if (indices.size() == 0) { return currentReducedVector; }
-
-        std::vector<IndexType> tmpIndices = indices;
-        std::sort (tmpIndices.begin(), tmpIndices.end());
-
-        if (!(currentReducedVector.size() + indices.size() == originalFullVector.size())){
-            std::cout << "Wrong sizes." << std::endl;
-        }
-
-        VectorType tmpVector;
-        tmpVector.resize(originalFullVector.size());
-
-        //fill intermediate reduced indices for A - delete rows
-        int numBoundaryScvfsAlreadyHandled = 0;
-        //k=0
-        for (unsigned int i = 0; i < tmpIndices[0]; ++i){
-            tmpVector[i] = currentReducedVector[i];
-        }
-        tmpVector[tmpIndices[0]] = originalFullVector[tmpIndices[0]];
-        numBoundaryScvfsAlreadyHandled ++;
-        for (unsigned int k = 1; k < tmpIndices.size(); ++k){
-            //k is related to the boundary scvf up to which I want to go
-            for (unsigned int i = (tmpIndices[k-1]+1); i < tmpIndices[k]; ++i){
-                tmpVector[i]=currentReducedVector[i-numBoundaryScvfsAlreadyHandled];
-            }
-            numBoundaryScvfsAlreadyHandled ++;
-            tmpVector[tmpIndices[k]] = originalFullVector[tmpIndices[k]];
-        }
-        for (unsigned int i = tmpIndices[tmpIndices.size()-1]+1; i < tmpVector.size(); ++i){
-            tmpVector[i] = currentReducedVector[i-numBoundaryScvfsAlreadyHandled];
-        }
-
-        return tmpVector;
-    }
-
     /*!
      * \brief Run the Newton method to solve a non-linear system.
      *        The solver is responsible for all the strategic decisions.
      */
-    bool solve_(SolutionVector& uCurrentIter, std::shared_ptr<ConvergenceWriter> convWriter = nullptr)
+    virtual bool solve_(SolutionVector& uCurrentIter, std::shared_ptr<ConvergenceWriter> convWriter = nullptr)
     {
         auto originalFullU = uCurrentIter;
 
@@ -762,6 +678,7 @@ private:
 
         // the given solution is the initial guess
         SolutionVector uLastIter(uCurrentIter);
+        SolutionVector deltaU(uCurrentIter);
 
         Dune::Timer assembleTimer(false);
         Dune::Timer solveTimer(false);
@@ -807,13 +724,12 @@ private:
                 // reduce uCurrentIter
                 const auto boundaryScvfsIndexSet = (assembler_->problem()).dirichletBoundaryScvfsIndexSet();
 
-
                 assembler_->removeSetOfEntriesFromVector(uCurrentIter[faceIdx], boundaryScvfsIndexSet);
 
                 std::vector<IndexType> fixedPressureScvsIndexSet = (assembler_->problem()).fixedPressureScvsIndexSet();
                 assembler_->removeSetOfEntriesFromVector(uCurrentIter[cellCenterIdx], fixedPressureScvsIndexSet);
 
-                const auto& reducedULastIter = uCurrentIter;
+//                 const auto& reducedULastIter = uCurrentIter;
 
                 ///////////////
                 // linear solve
@@ -833,200 +749,10 @@ private:
                 // solve the resulting linear equation system
                 solveTimer.start();
 
-                //To see which order of [faceIdx] and [cellCenterIdx] is correct, refer to staggeredlocalassembler.hh, function assembleCoefficientMatrixAndRHS, where the coefficientMatrix is filled.
-                auto& A = assembler_->reducedCoefficientMatrix()[faceIdx][faceIdx];
-                auto& B = assembler_->reducedCoefficientMatrix()[faceIdx][cellCenterIdx];
-                auto& C = assembler_->reducedCoefficientMatrix()[cellCenterIdx][faceIdx];
-                auto& rN = assembler_->reducedRHS()[faceIdx];
-                auto& rC = assembler_->reducedRHS()[cellCenterIdx];
+                // set the delta vector to zero before solving the linear system!
+                deltaU = 0;
 
-                const std::size_t numDofsFaceReduced = A.N();
-                const std::size_t numDofsCellCenterReduced = B.M();
-//                 Dune::writeVectorToMatlab(rC, "rC.m");
-//                 Dune::writeVectorToMatlab(rN, "rN.m");
-//                 Dune::writeMatrixToMatlab(A, "A.m");
-//                 Dune::writeMatrixToMatlab(B, "B.m");
-//                 Dune::writeMatrixToMatlab(C, "C.m");
-//                 exit(0);
-
-                FaceToCCMatrixBlock invAB;
-                FaceToFaceMatrixBlock invDiagA;
-
-                unsigned int algorithmType = getParamFromGroup<Scalar>("Algorithm", "Algorithm.AlgorithmType", 0);
-
-                // [ Algorithm ]
-                // # 0: SIMPLE
-                // # 1: PISO
-                // # 2: SIMPLER
-                // # 3: SIMPLEC
-                // # do not use SIMPLEC for Stokes
-                // AlgorithmType = 2
-
-                if(algorithmType == 0){
-                //SIMPLE
-                    invAB.setBuildMode(FaceToCCMatrixBlock::BuildMode::random);
-
-                    Dune::MatrixIndexSet pattern(B.N(), B.M());
-
-                    for (int i = 0; i < B.N(); ++i)
-                    {
-                        for (int j = 0; j < B.M(); ++j)
-                        {
-                            pattern.add(i,j);
-                        }
-                    }
-                    pattern.exportIdx(invAB);
-
-                    std::vector<Dune::BlockVector<Dune::FieldVector<Scalar,1>>> columnsOfB;
-                    //B.M() is number of columns
-
-                    columnsOfB.resize(B.M());
-
-                    for (int i = 0; i < columnsOfB.size(); ++i)
-                    {
-                        columnsOfB[i].resize(B.N());
-                        columnsOfB[i] = 0.0;
-                    }
-
-                    for (typename FaceToCCMatrixBlock::RowIterator i = B.begin(); i != B.end(); ++i)
-                    {
-                        for (typename FaceToCCMatrixBlock::ColIterator j = B[i.index()].begin(); j != B[i.index()].end(); ++j)
-                        {
-                            (columnsOfB[j.index()])[i.index()][0] = B[i.index()][j.index()][0][0];
-                        }
-                    }
-
-    //                 for (const auto& vec : columnsOfB)
-    //                 {
-    //                     std::cout << "new columnvector ";
-    //                     for (const auto& elem : vec)
-    //                     {
-    //                         std::cout << elem << ", ";
-    //                     }
-    //                     std::cout << std::endl;
-    //                 }
-
-                    for (int i = 0; i < B.M(); ++i)
-                    {
-                        Dune::BlockVector<Dune::FieldVector<Scalar,1>> ithColumnOfInvAB;
-                        ithColumnOfInvAB.resize(B.N());
-                        solveLinearSystem(A, ithColumnOfInvAB, columnsOfB[i]);
-                        for (int j = 0; j < B.N(); ++j)
-                        {
-                            //[0] is the block size in the blockmatrix, compare in solveLinearSystemImpl_
-                            invAB[j][i] = ithColumnOfInvAB[j][0];
-                        }
-                    }
-                }
-                else
-                {
-                    //SIMPLER, SIMPLEC or PISO
-                    //get a diagonal matrix
-                    //inspired by dumux/linear/amgbackend.hh
-                    invDiagA.setBuildMode(FaceToFaceMatrixBlock::random);
-                    setInvDiagAPattern_(invDiagA, numDofsFaceReduced);
-                    typename FaceToFaceMatrixBlock::RowIterator row = A.begin();
-
-                    for(; row != A.end(); ++row)
-                    {
-                        using size_type = typename FaceToFaceMatrixBlock::size_type;
-                        size_type rowIdx = row.index();
-
-                        //invDigaA = inverse(diagonal(A))
-                        if (algorithmType == 3){
-                            //SIMPLEC
-                            Scalar rowSum = 0.0;
-                            typename FaceToFaceMatrixBlock::ColIterator col = A[rowIdx].begin();
-                            for (; col != A[rowIdx].end(); ++col)
-                            {
-                                size_type colIdx = col.index();
-                                rowSum += A[rowIdx][colIdx];
-                            }
-
-                            invDiagA[rowIdx][rowIdx] = 1./rowSum;
-                        }
-                        else
-                        {
-                            invDiagA[rowIdx][rowIdx] = 1./(A[rowIdx][rowIdx]);
-                        }
-                    }
-
-                    Dune::matMultMat(invAB, invDiagA, B);
-                }
-
-                CCToCCMatrixBlock matrixPressureStep;
-                Dune::matMultMat(matrixPressureStep, C, invAB);
-
-                if(algorithmType == 2){
-                //SIMPLER
-                    FaceToFaceMatrixBlock invDiagAAminusOne = getInvDiagAAminusOne_(invDiagA, A, numDofsFaceReduced);
-
-                    FaceSolutionVector uHat;
-                    uHat.resize(numDofsFaceReduced);
-                    invDiagA.mv(rN, uHat);
-                    invDiagAAminusOne.mmv(uCurrentIter[faceIdx], uHat);
-
-                    auto resSIMPLERStep = rC;
-                    resSIMPLERStep *= -1.;
-                    C.umv(uHat, resSIMPLERStep);
-
-                    solveLinearSystem(matrixPressureStep, uCurrentIter[cellCenterIdx], resSIMPLERStep);
-
-                    //underrelaxation of pressure
-                    Scalar pressureUnderrelaxationFactor = getParamFromGroup<Scalar>("Underrelaxation", "Underrelaxation.HundredTimesPressureUnderrelaxationFactor", 100)/100.;
-
-                    //if anywhere, pressure has to be underrelaxed here. The reason is, that this pressure is only used in steps 3-5, and not in the next iteration step
-                    auto oldP = reducedULastIter[cellCenterIdx];
-                    oldP *= (1 - pressureUnderrelaxationFactor);
-                    auto newP = uCurrentIter[cellCenterIdx];
-                    newP *= pressureUnderrelaxationFactor;
-
-                    oldP += newP;
-
-                    uCurrentIter[cellCenterIdx] = oldP;
-                }
-
-                //velocity step
-                auto velocityStepRHS = rN;
-                velocityStepRHS *= -1.0;
-
-                A.umv(uCurrentIter[faceIdx], velocityStepRHS);
-                B.umv(uCurrentIter[cellCenterIdx], velocityStepRHS);
-
-                FaceSolutionVector deltaUTilde;
-                deltaUTilde.resize(velocityStepRHS.size());
-                //TODO required (set zero before solving the linear system)!?
-                deltaUTilde = 0;
-
-                solveLinearSystem(A, deltaUTilde, velocityStepRHS);
-
-                //pressure step
-                auto pressureStepRHS = rC;
-                C.mmv(uCurrentIter[faceIdx], pressureStepRHS);
-                C.umv(deltaUTilde, pressureStepRHS);
-
-                CellCenterSolutionVector pressureCorrection;
-                pressureCorrection.resize(pressureStepRHS.size());
-                //TODO required (set zero before solving the linear system)!?
-                pressureCorrection = 0;
-
-                solveLinearSystem(matrixPressureStep, pressureCorrection, pressureStepRHS);
-
-                //calculate deltaU
-                SolutionVector deltaU;
-                //deltaU[faceIdx] = invAB * pressureCorrection
-                deltaU[faceIdx] = deltaUTilde;
-                invAB.mmv(pressureCorrection, deltaU[faceIdx]);
-                deltaU[cellCenterIdx] = pressureCorrection;
-
-                if (algorithmType != 2) {
-                    Scalar pressureUnderrelaxationFactor = getParamFromGroup<Scalar>("Underrelaxation", "Underrelaxation.HundredTimesPressureUnderrelaxationFactor", 100)/100.;
-                    deltaU[cellCenterIdx] *= pressureUnderrelaxationFactor;
-                }
-
-                Scalar velocityUnderrelaxationFactor = getParamFromGroup<Scalar>("Underrelaxation", "Underrelaxation.HundredTimesVelocityUnderrelaxationFactor", 100)/100.;
-                deltaU[faceIdx] *= velocityUnderrelaxationFactor;
-
+                solveLinearSystem(assembler_->reducedCoefficientMatrix(), deltaU, assembler_->reducedRHS());
                 solveTimer.stop();
 
                 ///////////////
@@ -1053,76 +779,10 @@ private:
                 deltaU[faceIdx] = constructFullVectorFromReducedVector_(deltaU[faceIdx], originalDeltaU[faceIdx], boundaryScvfsIndexSet);
                 deltaU[cellCenterIdx] = constructFullVectorFromReducedVector_(deltaU[cellCenterIdx], originalDeltaU[cellCenterIdx], fixedPressureScvsIndexSet);
 
-                if(algorithmType == 2){
-                    //SIMPLER
-                    deltaU[cellCenterIdx] = 0.;
-                }
-
                 // update the current solution (i.e. uOld) with the delta
                 // (i.e. u). The result is stored in u
                 newtonUpdate(uCurrentIter, uLastIter, deltaU);
                 updateTimer.stop();
-
-                if (algorithmType == 1){
-                    //PISO
-                    SolutionVector secondULastIter(uCurrentIter);
-
-                    FaceToFaceMatrixBlock invDiagAAminusOne = getInvDiagAAminusOne_(invDiagA, A, numDofsFaceReduced);
-
-                    CCToFaceMatrixBlock matrixForSecondPressureStepRHS;
-                    Dune::matMultMat(matrixForSecondPressureStepRHS, C, invDiagAAminusOne);
-
-                    // reduce uCurrentIter
-                    assembler_->removeSetOfEntriesFromVector(uCurrentIter[faceIdx], boundaryScvfsIndexSet);
-                    assembler_->removeSetOfEntriesFromVector(uCurrentIter[cellCenterIdx], fixedPressureScvsIndexSet);
-
-                    // reduce uLastIter[faceIdx]
-                    FaceSolutionVector uLastIterFaceReduced = uLastIter[faceIdx];
-                    assembler_->removeSetOfEntriesFromVector(uLastIterFaceReduced, boundaryScvfsIndexSet);
-
-                    CellCenterSolutionVector secondPressureStepRHS;
-                    secondPressureStepRHS.resize(numDofsCellCenterReduced);
-                    FaceSolutionVector deltaUForSecondPressureStepRHS = uCurrentIter[faceIdx];
-                    deltaUForSecondPressureStepRHS -= uLastIterFaceReduced;
-                    matrixForSecondPressureStepRHS.umv(deltaUForSecondPressureStepRHS, secondPressureStepRHS);
-
-                    const auto& matrixSecondPressureStep = matrixPressureStep;
-
-                    CellCenterSolutionVector secondPressureCorrection;
-                    secondPressureCorrection.resize(secondPressureStepRHS.size());
-                    //TODO required (set zero before solving the linear system)!?
-                    secondPressureCorrection = 0;
-
-                    solveLinearSystem(matrixSecondPressureStep, secondPressureCorrection, secondPressureStepRHS);
-
-                    SolutionVector secondDeltaU;
-                    secondDeltaU[faceIdx] = uLastIterFaceReduced;
-                    secondDeltaU[faceIdx] -= uCurrentIter[faceIdx];
-                    invDiagAAminusOne.mv(secondDeltaU[faceIdx], secondDeltaU[faceIdx]);
-
-                    invAB.umv(secondPressureCorrection, secondDeltaU[faceIdx]);
-
-                    secondDeltaU[cellCenterIdx] = secondPressureCorrection;
-
-                    //underrelaxation
-                    Scalar secondStepVelocityUnderrelaxationFactor = getParamFromGroup<Scalar>("Underrelaxation", "Underrelaxation.HundredTimesPISOSecondStepVelocityUnderrelaxationFactor", 100)/100.;
-                    Scalar secondStepPressureUnderrelaxationFactor = getParamFromGroup<Scalar>("Underrelaxation", "Underrelaxation.HundredTimesPISOSecondStepPressureUnderrelaxationFactor", 100)/100.;
-
-                    secondDeltaU[cellCenterIdx] *= secondStepPressureUnderrelaxationFactor;
-                    secondDeltaU[faceIdx] *= secondStepVelocityUnderrelaxationFactor;
-
-                    //full vectors from reduced ones
-                    //uCurrentIter
-                    uCurrentIter[faceIdx] = constructFullVectorFromReducedVector_(uCurrentIter[faceIdx], originalFullU[faceIdx], boundaryScvfsIndexSet);
-                    uCurrentIter[cellCenterIdx] = constructFullVectorFromReducedVector_(uCurrentIter[cellCenterIdx], originalFullU[cellCenterIdx], fixedPressureScvsIndexSet);
-
-                    // deltaU
-                    secondDeltaU[faceIdx] = constructFullVectorFromReducedVector_(secondDeltaU[faceIdx], originalDeltaU[faceIdx], boundaryScvfsIndexSet);
-                    secondDeltaU[cellCenterIdx] = constructFullVectorFromReducedVector_(secondDeltaU[cellCenterIdx], originalDeltaU[cellCenterIdx], fixedPressureScvsIndexSet);
-
-
-                    newtonUpdate(uCurrentIter, secondULastIter, secondDeltaU);
-                }
 
                 // tell the solver that we're done with this iteration
                 newtonEndStep(uCurrentIter, uLastIter);
@@ -1143,7 +803,6 @@ private:
             {
                 totalWastedIter_ += numSteps_;
                 newtonFail(uCurrentIter);
-
                 return false;
             }
 
@@ -1175,68 +834,125 @@ private:
         }
     }
 
-        FaceToFaceMatrixBlock getInvDiagAAminusOne_(FaceToFaceMatrixBlock& A, FaceToFaceMatrixBlock& invDiagA, std::size_t numDofsFaceReduced){
-        //get a unity matrix of size numDofsFaceReduced
-        FaceToFaceMatrixBlock ones;
-        ones.setBuildMode(FaceToFaceMatrixBlock::random);
-        setOnesPattern_(ones, numDofsFaceReduced);
-        typename FaceToFaceMatrixBlock::RowIterator row = A.begin();
-        row = A.begin();
-        for(; row != A.end(); ++row)
-        {
-            using size_type = typename FaceToFaceMatrixBlock::size_type;
-            size_type rowIdx = row.index();
-
-            ones[rowIdx][rowIdx] = 1.;
-        }
-
-        FaceToFaceMatrixBlock invDiagAAminusOne;
-        Dune::matMultMat(invDiagAAminusOne, invDiagA, A);
-        invDiagAAminusOne -= ones;
-
-        return invDiagAAminusOne;
+    void computeResidualReduction_(const SolutionVector &uCurrentIter)
+    {
+        residualNorm_ = assembler_->residualNorm(uCurrentIter);
+        reduction_ = residualNorm_;
+        reduction_ /= initialResidual_;
     }
 
-    /*!
-     * \brief Resizes the  matrix invDiagA and sets the matrix' sparsity pattern.
-     */
-    void setInvDiagAPattern_(FaceToFaceMatrixBlock& invDiagA, std::size_t numDofsFaceReduced)
-    {
-        // set the size of the sub-matrizes
-        invDiagA.setSize(numDofsFaceReduced, numDofsFaceReduced);
+    bool enableResidualCriterion() const
+    { return enableResidualCriterion_; }
 
-        // set occupation pattern of the coefficient matrix
-        Dune::MatrixIndexSet occupationPatternInvDiagA;
-        occupationPatternInvDiagA.resize(numDofsFaceReduced, numDofsFaceReduced);
+    const LinearSolver& linearSolver() const
+    { return *linearSolver_; }
 
-        // evaluate the acutal pattern
-        for (int i = 0; i < invDiagA.N(); ++i)
-        {
-             occupationPatternInvDiagA.add(i, i);
+    LinearSolver& linearSolver()
+    { return *linearSolver_; }
+
+    const Assembler& assembler() const
+    { return *assembler_; }
+
+    Assembler& assembler()
+    { return *assembler_; }
+
+    //! optimal number of iterations we want to achieve
+    int targetSteps_;
+    //! maximum number of iterations we do before giving up
+    int maxSteps_;
+    //! actual number of steps done so far
+    int numSteps_;
+
+    // residual criterion variables
+    Scalar reduction_;
+    Scalar residualNorm_;
+    Scalar lastReduction_;
+    Scalar initialResidual_;
+
+    // shift criterion variables
+    Scalar shift_;
+    Scalar lastShift_;
+
+    //! message stream to be displayed at the end of iterations
+    std::ostringstream endIterMsgStream_;
+
+    std::shared_ptr<Assembler> assembler_;
+    std::shared_ptr<LinearSolver> linearSolver_;
+
+    //! The communication object
+    Communication comm_;
+
+    //! switches on/off verbosity
+    bool verbose_;
+
+    Scalar shiftTolerance_;
+    Scalar reductionTolerance_;
+    Scalar residualTolerance_;
+
+    // time step control
+    std::size_t maxTimeStepDivisions_;
+
+    // further parameters
+    bool useLineSearch_;
+    bool useChop_;
+    bool enableAbsoluteResidualCriterion_;
+    bool enableShiftCriterion_;
+    bool enableResidualCriterion_;
+    bool satisfyResidualAndShiftCriterion_;
+
+    //! the parameter group for getting parameters from the parameter tree
+    std::string paramGroup_;
+
+    // infrastructure for partial reassembly
+    bool enablePartialReassembly_;
+    std::unique_ptr<Reassembler> partialReassembler_;
+    std::vector<Scalar> distanceFromLastLinearization_;
+    Scalar reassemblyMinThreshold_;
+    Scalar reassemblyMaxThreshold_;
+    Scalar reassemblyShiftWeight_;
+
+    // statistics for the optional report
+    std::size_t totalWastedIter_ = 0; //! Newton steps in solves that didn't converge
+    std::size_t totalSucceededIter_ = 0; //! Newton steps in solves that converged
+    std::size_t numConverged_ = 0; //! total number of converged solves
+
+    template<class VectorType, class IndexType>
+    VectorType constructFullVectorFromReducedVector_(const VectorType& currentReducedVector,
+                                                     const VectorType&  originalFullVector,
+                                                     const std::vector<IndexType>& indices){
+        if (indices.size() == 0) { return currentReducedVector; }
+
+        std::vector<IndexType> tmpIndices = indices;
+        std::sort (tmpIndices.begin(), tmpIndices.end());
+
+        if (!(currentReducedVector.size() + indices.size() == originalFullVector.size())){
+            std::cout << "Wrong sizes." << std::endl;
         }
 
-        occupationPatternInvDiagA.exportIdx(invDiagA);
-    }
+        VectorType tmpVector;
+        tmpVector.resize(originalFullVector.size());
 
-    /*!
-     * \brief Resizes the  matrix ones and sets the matrix' sparsity pattern.
-     */
-    void setOnesPattern_(FaceToFaceMatrixBlock& ones, std::size_t numDofsFaceReduced)
-    {
-        // set the size of the sub-matrizes
-        ones.setSize(numDofsFaceReduced, numDofsFaceReduced);
-
-        // set occupation pattern of the coefficient matrix
-        Dune::MatrixIndexSet occupationPattern;
-        occupationPattern.resize(numDofsFaceReduced, numDofsFaceReduced);
-
-        // evaluate the acutal pattern
-        for (int i = 0; i < ones.N(); ++i)
-        {
-             occupationPattern.add(i, i);
+        //fill intermediate reduced indices for A - delete rows
+        int numBoundaryScvfsAlreadyHandled = 0;
+        //k=0
+        for (unsigned int i = 0; i < tmpIndices[0]; ++i){
+            tmpVector[i] = currentReducedVector[i];
+        }
+        tmpVector[tmpIndices[0]] = originalFullVector[tmpIndices[0]];
+        numBoundaryScvfsAlreadyHandled ++;
+        for (unsigned int k = 1; k < tmpIndices.size(); ++k){
+            //k is related to the boundary scvf up to which I want to go
+            for (unsigned int i = (tmpIndices[k-1]+1); i < tmpIndices[k]; ++i){
+                tmpVector[i]=currentReducedVector[i-numBoundaryScvfsAlreadyHandled];
+            }
+            numBoundaryScvfsAlreadyHandled ++;
+            tmpVector[tmpIndices[k]] = originalFullVector[tmpIndices[k]];
+        }
+        for (unsigned int i = tmpIndices[tmpIndices.size()-1]+1; i < tmpVector.size(); ++i){
+            tmpVector[i] = currentReducedVector[i-numBoundaryScvfsAlreadyHandled];
         }
 
-        occupationPattern.exportIdx(ones);
+        return tmpVector;
     }
 
     //! assembleLinearSystem_ for assemblers that support partial reassembly
@@ -1582,46 +1298,549 @@ private:
         }
         return result;
     }
+};
 
-    std::shared_ptr<Assembler> assembler_;
-    std::shared_ptr<LinearSolver> linearSolver_;
+template <class Assembler,
+          class LinearSolver,
+          class Reassembler = PartialReassembler<Assembler>,
+          class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
+class SimpleSolver : public NewtonSolver<Assembler, LinearSolver,
+          Reassembler, Comm >
+{
+    using ParentType = NewtonSolver<Assembler, LinearSolver, Reassembler, Comm >;
 
-    //! The communication object
-    Communication comm_;
+    using Scalar = typename Assembler::Scalar;
+    using FVGridGeometry = typename Assembler::FVGridGeometry;
+    using IndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
+    using SolutionVector = typename Assembler::ResidualType;
+    using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
 
-    //! switches on/off verbosity
-    bool verbose_;
+    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
+    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
 
-    Scalar shiftTolerance_;
-    Scalar reductionTolerance_;
-    Scalar residualTolerance_;
+    using CellCenterSolutionVector = typename Assembler::CellCenterSolutionVector;
+    using FaceSolutionVector = typename Assembler::FaceSolutionVector;
 
-    // time step control
-    std::size_t maxTimeStepDivisions_;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
 
-    // further parameters
-    bool useLineSearch_;
-    bool useChop_;
-    bool enableAbsoluteResidualCriterion_;
-    bool enableShiftCriterion_;
-    bool enableResidualCriterion_;
-    bool satisfyResidualAndShiftCriterion_;
+    using CCToCCMatrixBlock = typename Assembler::CCToCCMatrixBlock;
+    using FaceToFaceMatrixBlock = typename Assembler::FaceToFaceMatrixBlock;
+    using FaceToCCMatrixBlock = typename Assembler::FaceToCCMatrixBlock;
+    using CCToFaceMatrixBlock = typename Assembler::CCToFaceMatrixBlock;
 
-    //! the parameter group for getting parameters from the parameter tree
-    std::string paramGroup_;
+    static constexpr int pressureIdx = FVGridGeometry::GridView::dimension;
 
-    // infrastructure for partial reassembly
-    bool enablePartialReassembly_;
-    std::unique_ptr<Reassembler> partialReassembler_;
-    std::vector<Scalar> distanceFromLastLinearization_;
-    Scalar reassemblyMinThreshold_;
-    Scalar reassemblyMaxThreshold_;
-    Scalar reassemblyShiftWeight_;
+public:
 
-    // statistics for the optional report
-    std::size_t totalWastedIter_ = 0; //! Newton steps in solves that didn't converge
-    std::size_t totalSucceededIter_ = 0; //! Newton steps in solves that converged
-    std::size_t numConverged_ = 0; //! total number of converged solves
+    using Communication = Comm;
+
+    /*!
+     * \brief Constructor for stationary problems
+     */
+    SimpleSolver(std::shared_ptr<Assembler> assembler,
+                 std::shared_ptr<LinearSolver> linearSolver,
+                 const Communication& comm = Dune::MPIHelper::getCollectiveCommunication(),
+                 const std::string& paramGroup = "")
+    : ParentType (assembler, linearSolver, comm, paramGroup)
+    {}
+
+private:
+    /*!
+     * \brief Run the Newton method to solve a non-linear system.
+     *        The solver is responsible for all the strategic decisions.
+     */
+    bool solve_(SolutionVector& uCurrentIter, std::shared_ptr<ConvergenceWriter> convWriter = nullptr)
+    {
+        auto originalFullU = uCurrentIter;
+
+        // make sure constructFullVectorFromReducedVector_ uses the correct boundary conditions even if the
+        // initial conditions don't
+        auto problem = ((this->assembler_)->problem());
+        for (auto& scvIdx : problem.fixedPressureScvsIndexSet()){
+            SubControlVolume scv = ((this->assembler_)-> fvGridGeometry()).scv(scvIdx);
+            const auto dirichletAtCc = ((this->assembler_)->problem()).dirichletAtPos(scv.dofPosition());
+            originalFullU[cellCenterIdx][scvIdx] = dirichletAtCc[pressureIdx];
+        }
+        //TODO add the same for originalFullU[faceIdx]. It is OK for the donea test, when starting with 0, because u=0 at the boundary, but it should be written in a more generic form!
+
+        // the given solution is the initial guess
+        SolutionVector uLastIter(uCurrentIter);
+
+        Dune::Timer assembleTimer(false);
+        Dune::Timer solveTimer(false);
+        Dune::Timer updateTimer(false);
+
+        if (this->enablePartialReassembly_)
+        {
+            (this->partialReassembler_)->resetColors();
+            this->resizeDistanceFromLastLinearization_(uCurrentIter, this->distanceFromLastLinearization_);
+        }
+
+        try
+        {
+            this->newtonBegin(uCurrentIter);
+
+            // execute the method as long as the solver thinks
+            // that we should do another iteration
+            while (this->newtonProceed(uCurrentIter, this->newtonConverged()))
+            {
+                // notify the solver that we're about to start
+                // a new timestep
+                this->newtonBeginStep(uCurrentIter);
+
+                // make the current solution to the old one
+                if (this->numSteps_ > 0)
+                    uLastIter = uCurrentIter;
+
+                if (this->verbose_) {
+                    std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r"
+                              << std::flush;
+                }
+
+                ///////////////
+                // assemble
+                ///////////////
+
+                // linearize the problem at the current solution
+                assembleTimer.start();
+                this->assembleLinearSystem(uCurrentIter);
+                this->assembleResidual(uCurrentIter);
+                assembleTimer.stop();
+
+                // reduce uCurrentIter
+                const auto boundaryScvfsIndexSet = ((this->assembler_)->problem()).dirichletBoundaryScvfsIndexSet();
+
+
+                (this->assembler_)->removeSetOfEntriesFromVector(uCurrentIter[faceIdx], boundaryScvfsIndexSet);
+
+                std::vector<IndexType> fixedPressureScvsIndexSet = ((this->assembler_)->problem()).fixedPressureScvsIndexSet();
+                (this->assembler_)->removeSetOfEntriesFromVector(uCurrentIter[cellCenterIdx], fixedPressureScvsIndexSet);
+
+                const auto& reducedULastIter = uCurrentIter;
+
+                ///////////////
+                // linear solve
+                ///////////////
+
+                // Clear the current line using an ansi escape
+                // sequence.  for an explanation see
+                // http://en.wikipedia.org/wiki/ANSI_escape_code
+                const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
+
+                if (this->verbose_) {
+                    std::cout << "\rSolve: M deltax^k = r";
+                    std::cout << clearRemainingLine
+                              << std::flush;
+                }
+
+                // solve the resulting linear equation system
+                solveTimer.start();
+
+                //To see which order of [faceIdx] and [cellCenterIdx] is correct, refer to staggeredlocalassembler.hh, function assembleCoefficientMatrixAndRHS, where the coefficientMatrix is filled.
+                auto& A = (this->assembler_)->reducedCoefficientMatrix()[faceIdx][faceIdx];
+                auto& B = (this->assembler_)->reducedCoefficientMatrix()[faceIdx][cellCenterIdx];
+                auto& C = (this->assembler_)->reducedCoefficientMatrix()[cellCenterIdx][faceIdx];
+                auto& rN = (this->assembler_)->reducedRHS()[faceIdx];
+                auto& rC = (this->assembler_)->reducedRHS()[cellCenterIdx];
+
+                const std::size_t numDofsFaceReduced = A.N();
+                const std::size_t numDofsCellCenterReduced = B.M();
+//                 Dune::writeVectorToMatlab(rC, "rC.m");
+//                 Dune::writeVectorToMatlab(rN, "rN.m");
+//                 Dune::writeMatrixToMatlab(A, "A.m");
+//                 Dune::writeMatrixToMatlab(B, "B.m");
+//                 Dune::writeMatrixToMatlab(C, "C.m");
+//                 exit(0);
+
+                FaceToCCMatrixBlock invAB;
+                FaceToFaceMatrixBlock invDiagA;
+
+                unsigned int algorithmType = getParamFromGroup<Scalar>("Algorithm", "Algorithm.AlgorithmType", 0);
+
+                // [ Algorithm ]
+                // # 0: SIMPLE
+                // # 1: PISO
+                // # 2: SIMPLER
+                // # 3: SIMPLEC
+                // # do not use SIMPLEC for Stokes
+                // AlgorithmType = 2
+
+                if(algorithmType == 0){
+                //SIMPLE
+                    invAB.setBuildMode(FaceToCCMatrixBlock::BuildMode::random);
+
+                    Dune::MatrixIndexSet pattern(B.N(), B.M());
+
+                    for (int i = 0; i < B.N(); ++i)
+                    {
+                        for (int j = 0; j < B.M(); ++j)
+                        {
+                            pattern.add(i,j);
+                        }
+                    }
+                    pattern.exportIdx(invAB);
+
+                    std::vector<Dune::BlockVector<Dune::FieldVector<Scalar,1>>> columnsOfB;
+                    //B.M() is number of columns
+
+                    columnsOfB.resize(B.M());
+
+                    for (int i = 0; i < columnsOfB.size(); ++i)
+                    {
+                        columnsOfB[i].resize(B.N());
+                        columnsOfB[i] = 0.0;
+                    }
+
+                    for (typename FaceToCCMatrixBlock::RowIterator i = B.begin(); i != B.end(); ++i)
+                    {
+                        for (typename FaceToCCMatrixBlock::ColIterator j = B[i.index()].begin(); j != B[i.index()].end(); ++j)
+                        {
+                            (columnsOfB[j.index()])[i.index()][0] = B[i.index()][j.index()][0][0];
+                        }
+                    }
+
+    //                 for (const auto& vec : columnsOfB)
+    //                 {
+    //                     std::cout << "new columnvector ";
+    //                     for (const auto& elem : vec)
+    //                     {
+    //                         std::cout << elem << ", ";
+    //                     }
+    //                     std::cout << std::endl;
+    //                 }
+
+                    for (int i = 0; i < B.M(); ++i)
+                    {
+                        Dune::BlockVector<Dune::FieldVector<Scalar,1>> ithColumnOfInvAB;
+                        ithColumnOfInvAB.resize(B.N());
+                        this->solveLinearSystem(A, ithColumnOfInvAB, columnsOfB[i]);
+                        for (int j = 0; j < B.N(); ++j)
+                        {
+                            //[0] is the block size in the blockmatrix, compare in solveLinearSystemImpl_
+                            invAB[j][i] = ithColumnOfInvAB[j][0];
+                        }
+                    }
+                }
+                else
+                {
+                    //SIMPLER, SIMPLEC or PISO
+                    //get a diagonal matrix
+                    //inspired by dumux/linear/amgbackend.hh
+                    invDiagA.setBuildMode(FaceToFaceMatrixBlock::random);
+                    setInvDiagAPattern_(invDiagA, numDofsFaceReduced);
+                    typename FaceToFaceMatrixBlock::RowIterator row = A.begin();
+
+                    for(; row != A.end(); ++row)
+                    {
+                        using size_type = typename FaceToFaceMatrixBlock::size_type;
+                        size_type rowIdx = row.index();
+
+                        //invDigaA = inverse(diagonal(A))
+                        if (algorithmType == 3){
+                            //SIMPLEC
+                            Scalar rowSum = 0.0;
+                            typename FaceToFaceMatrixBlock::ColIterator col = A[rowIdx].begin();
+                            for (; col != A[rowIdx].end(); ++col)
+                            {
+                                size_type colIdx = col.index();
+                                rowSum += A[rowIdx][colIdx];
+                            }
+
+                            invDiagA[rowIdx][rowIdx] = 1./rowSum;
+                        }
+                        else
+                        {
+                            invDiagA[rowIdx][rowIdx] = 1./(A[rowIdx][rowIdx]);
+                        }
+                    }
+
+                    Dune::matMultMat(invAB, invDiagA, B);
+                }
+
+                CCToCCMatrixBlock matrixPressureStep;
+                Dune::matMultMat(matrixPressureStep, C, invAB);
+
+                if(algorithmType == 2){
+                //SIMPLER
+                    FaceToFaceMatrixBlock invDiagAAminusOne = getInvDiagAAminusOne_(invDiagA, A, numDofsFaceReduced);
+
+                    FaceSolutionVector uHat;
+                    uHat.resize(numDofsFaceReduced);
+                    invDiagA.mv(rN, uHat);
+                    invDiagAAminusOne.mmv(uCurrentIter[faceIdx], uHat);
+
+                    auto resSIMPLERStep = rC;
+                    resSIMPLERStep *= -1.;
+                    C.umv(uHat, resSIMPLERStep);
+
+                    this->solveLinearSystem(matrixPressureStep, uCurrentIter[cellCenterIdx], resSIMPLERStep);
+
+                    //underrelaxation of pressure
+                    Scalar pressureUnderrelaxationFactor = getParamFromGroup<Scalar>("Underrelaxation", "Underrelaxation.HundredTimesPressureUnderrelaxationFactor", 100)/100.;
+
+                    //if anywhere, pressure has to be underrelaxed here. The reason is, that this pressure is only used in steps 3-5, and not in the next iteration step
+                    auto oldP = reducedULastIter[cellCenterIdx];
+                    oldP *= (1 - pressureUnderrelaxationFactor);
+                    auto newP = uCurrentIter[cellCenterIdx];
+                    newP *= pressureUnderrelaxationFactor;
+
+                    oldP += newP;
+
+                    uCurrentIter[cellCenterIdx] = oldP;
+                }
+
+                //velocity step
+                auto velocityStepRHS = rN;
+                velocityStepRHS *= -1.0;
+
+                A.umv(uCurrentIter[faceIdx], velocityStepRHS);
+                B.umv(uCurrentIter[cellCenterIdx], velocityStepRHS);
+
+                FaceSolutionVector deltaUTilde;
+                deltaUTilde.resize(velocityStepRHS.size());
+                //TODO required (set zero before solving the linear system)!?
+                deltaUTilde = 0;
+
+                this->solveLinearSystem(A, deltaUTilde, velocityStepRHS);
+
+                //pressure step
+                auto pressureStepRHS = rC;
+                C.mmv(uCurrentIter[faceIdx], pressureStepRHS);
+                C.umv(deltaUTilde, pressureStepRHS);
+
+                CellCenterSolutionVector pressureCorrection;
+                pressureCorrection.resize(pressureStepRHS.size());
+                //TODO required (set zero before solving the linear system)!?
+                pressureCorrection = 0;
+
+                this->solveLinearSystem(matrixPressureStep, pressureCorrection, pressureStepRHS);
+
+                //calculate deltaU
+                SolutionVector deltaU;
+                //deltaU[faceIdx] = invAB * pressureCorrection
+                deltaU[faceIdx] = deltaUTilde;
+                invAB.mmv(pressureCorrection, deltaU[faceIdx]);
+                deltaU[cellCenterIdx] = pressureCorrection;
+
+                if (algorithmType != 2) {
+                    Scalar pressureUnderrelaxationFactor = getParamFromGroup<Scalar>("Underrelaxation", "Underrelaxation.HundredTimesPressureUnderrelaxationFactor", 100)/100.;
+                    deltaU[cellCenterIdx] *= pressureUnderrelaxationFactor;
+                }
+
+                Scalar velocityUnderrelaxationFactor = getParamFromGroup<Scalar>("Underrelaxation", "Underrelaxation.HundredTimesVelocityUnderrelaxationFactor", 100)/100.;
+                deltaU[faceIdx] *= velocityUnderrelaxationFactor;
+
+                solveTimer.stop();
+
+                ///////////////
+                // update
+                ///////////////
+                if (this->verbose_) {
+                    std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
+                    std::cout << clearRemainingLine;
+                    std::cout.flush();
+                }
+
+                updateTimer.start();
+
+                //full vectors from reduced ones
+                //uCurrentIter
+                uCurrentIter[faceIdx] = this->constructFullVectorFromReducedVector_(uCurrentIter[faceIdx], originalFullU[faceIdx], boundaryScvfsIndexSet);
+                uCurrentIter[cellCenterIdx] = this->constructFullVectorFromReducedVector_(uCurrentIter[cellCenterIdx], originalFullU[cellCenterIdx], fixedPressureScvsIndexSet);
+
+                // deltaU
+                SolutionVector originalDeltaU;
+                originalDeltaU[faceIdx].resize(originalFullU[faceIdx].size());
+                originalDeltaU[cellCenterIdx].resize(originalFullU[cellCenterIdx].size());
+                originalDeltaU = 0.;
+                deltaU[faceIdx] = this->constructFullVectorFromReducedVector_(deltaU[faceIdx], originalDeltaU[faceIdx], boundaryScvfsIndexSet);
+                deltaU[cellCenterIdx] = this->constructFullVectorFromReducedVector_(deltaU[cellCenterIdx], originalDeltaU[cellCenterIdx], fixedPressureScvsIndexSet);
+
+                if(algorithmType == 2){
+                    //SIMPLER
+                    deltaU[cellCenterIdx] = 0.;
+                }
+
+                // update the current solution (i.e. uOld) with the delta
+                // (i.e. u). The result is stored in u
+                this->newtonUpdate(uCurrentIter, uLastIter, deltaU);
+                updateTimer.stop();
+
+                if (algorithmType == 1){
+                    //PISO
+                    SolutionVector secondULastIter(uCurrentIter);
+
+                    FaceToFaceMatrixBlock invDiagAAminusOne = getInvDiagAAminusOne_(invDiagA, A, numDofsFaceReduced);
+
+                    CCToFaceMatrixBlock matrixForSecondPressureStepRHS;
+                    Dune::matMultMat(matrixForSecondPressureStepRHS, C, invDiagAAminusOne);
+
+                    // reduce uCurrentIter
+                    (this->assembler_)->removeSetOfEntriesFromVector(uCurrentIter[faceIdx], boundaryScvfsIndexSet);
+                    (this->assembler_)->removeSetOfEntriesFromVector(uCurrentIter[cellCenterIdx], fixedPressureScvsIndexSet);
+
+                    // reduce uLastIter[faceIdx]
+                    FaceSolutionVector uLastIterFaceReduced = uLastIter[faceIdx];
+                    (this->assembler_)->removeSetOfEntriesFromVector(uLastIterFaceReduced, boundaryScvfsIndexSet);
+
+                    CellCenterSolutionVector secondPressureStepRHS;
+                    secondPressureStepRHS.resize(numDofsCellCenterReduced);
+                    FaceSolutionVector deltaUForSecondPressureStepRHS = uCurrentIter[faceIdx];
+                    deltaUForSecondPressureStepRHS -= uLastIterFaceReduced;
+                    matrixForSecondPressureStepRHS.umv(deltaUForSecondPressureStepRHS, secondPressureStepRHS);
+
+                    const auto& matrixSecondPressureStep = matrixPressureStep;
+
+                    CellCenterSolutionVector secondPressureCorrection;
+                    secondPressureCorrection.resize(secondPressureStepRHS.size());
+                    //TODO required (set zero before solving the linear system)!?
+                    secondPressureCorrection = 0;
+
+                    this->solveLinearSystem(matrixSecondPressureStep, secondPressureCorrection, secondPressureStepRHS);
+
+                    SolutionVector secondDeltaU;
+                    secondDeltaU[faceIdx] = uLastIterFaceReduced;
+                    secondDeltaU[faceIdx] -= uCurrentIter[faceIdx];
+                    invDiagAAminusOne.mv(secondDeltaU[faceIdx], secondDeltaU[faceIdx]);
+
+                    invAB.umv(secondPressureCorrection, secondDeltaU[faceIdx]);
+
+                    secondDeltaU[cellCenterIdx] = secondPressureCorrection;
+
+                    //underrelaxation
+                    Scalar secondStepVelocityUnderrelaxationFactor = getParamFromGroup<Scalar>("Underrelaxation", "Underrelaxation.HundredTimesPISOSecondStepVelocityUnderrelaxationFactor", 100)/100.;
+                    Scalar secondStepPressureUnderrelaxationFactor = getParamFromGroup<Scalar>("Underrelaxation", "Underrelaxation.HundredTimesPISOSecondStepPressureUnderrelaxationFactor", 100)/100.;
+
+                    secondDeltaU[cellCenterIdx] *= secondStepPressureUnderrelaxationFactor;
+                    secondDeltaU[faceIdx] *= secondStepVelocityUnderrelaxationFactor;
+
+                    //full vectors from reduced ones
+                    //uCurrentIter
+                    uCurrentIter[faceIdx] = this->constructFullVectorFromReducedVector_(uCurrentIter[faceIdx], originalFullU[faceIdx], boundaryScvfsIndexSet);
+                    uCurrentIter[cellCenterIdx] = this->constructFullVectorFromReducedVector_(uCurrentIter[cellCenterIdx], originalFullU[cellCenterIdx], fixedPressureScvsIndexSet);
+
+                    // deltaU
+                    secondDeltaU[faceIdx] = this->constructFullVectorFromReducedVector_(secondDeltaU[faceIdx], originalDeltaU[faceIdx], boundaryScvfsIndexSet);
+                    secondDeltaU[cellCenterIdx] = this->constructFullVectorFromReducedVector_(secondDeltaU[cellCenterIdx], originalDeltaU[cellCenterIdx], fixedPressureScvsIndexSet);
+
+
+                    this->newtonUpdate(uCurrentIter, secondULastIter, secondDeltaU);
+                }
+
+                // tell the solver that we're done with this iteration
+                this->newtonEndStep(uCurrentIter, uLastIter);
+
+                // if a convergence writer was specified compute residual and write output
+                if (convWriter)
+                {
+                    (this->assembler_)->assembleResidual(uCurrentIter);
+                    convWriter->write(uLastIter, deltaU, (this->assembler_)->residual());
+                }
+            }
+
+            // tell solver we are done
+            this->newtonEnd();
+
+            // reset state if Newton failed
+            if (!(this->newtonConverged()))
+            {
+                this->totalWastedIter_ += this->numSteps_;
+                this->newtonFail(uCurrentIter);
+
+                return false;
+            }
+
+            this->totalSucceededIter_ += this->numSteps_;
+            this->numConverged_++;
+
+            // tell solver we converged successfully
+            this->newtonSucceed();
+
+            if (this->verbose_) {
+                const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
+                std::cout << "Assemble/solve/update time: "
+                          <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
+                          <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
+                          <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
+                          << "\n";
+            }
+            return true;
+
+        }
+        catch (const NumericalProblem &e)
+        {
+            if (this->verbose_)
+                std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
+
+            this->totalWastedIter_ += this->numSteps_;
+            this->newtonFail(uCurrentIter);
+            return false;
+        }
+    }
+
+    FaceToFaceMatrixBlock getInvDiagAAminusOne_(FaceToFaceMatrixBlock& A, FaceToFaceMatrixBlock& invDiagA, std::size_t numDofsFaceReduced){
+        //get a unity matrix of size numDofsFaceReduced
+        FaceToFaceMatrixBlock ones;
+        ones.setBuildMode(FaceToFaceMatrixBlock::random);
+        setOnesPattern_(ones, numDofsFaceReduced);
+        typename FaceToFaceMatrixBlock::RowIterator row = A.begin();
+        row = A.begin();
+        for(; row != A.end(); ++row)
+        {
+            using size_type = typename FaceToFaceMatrixBlock::size_type;
+            size_type rowIdx = row.index();
+
+            ones[rowIdx][rowIdx] = 1.;
+        }
+
+        FaceToFaceMatrixBlock invDiagAAminusOne;
+        Dune::matMultMat(invDiagAAminusOne, invDiagA, A);
+        invDiagAAminusOne -= ones;
+
+        return invDiagAAminusOne;
+    }
+
+    /*!
+     * \brief Resizes the  matrix invDiagA and sets the matrix' sparsity pattern.
+     */
+    void setInvDiagAPattern_(FaceToFaceMatrixBlock& invDiagA, std::size_t numDofsFaceReduced)
+    {
+        // set the size of the sub-matrizes
+        invDiagA.setSize(numDofsFaceReduced, numDofsFaceReduced);
+
+        // set occupation pattern of the coefficient matrix
+        Dune::MatrixIndexSet occupationPatternInvDiagA;
+        occupationPatternInvDiagA.resize(numDofsFaceReduced, numDofsFaceReduced);
+
+        // evaluate the acutal pattern
+        for (int i = 0; i < invDiagA.N(); ++i)
+        {
+             occupationPatternInvDiagA.add(i, i);
+        }
+
+        occupationPatternInvDiagA.exportIdx(invDiagA);
+    }
+
+    /*!
+     * \brief Resizes the  matrix ones and sets the matrix' sparsity pattern.
+     */
+    void setOnesPattern_(FaceToFaceMatrixBlock& ones, std::size_t numDofsFaceReduced)
+    {
+        // set the size of the sub-matrizes
+        ones.setSize(numDofsFaceReduced, numDofsFaceReduced);
+
+        // set occupation pattern of the coefficient matrix
+        Dune::MatrixIndexSet occupationPattern;
+        occupationPattern.resize(numDofsFaceReduced, numDofsFaceReduced);
+
+        // evaluate the acutal pattern
+        for (int i = 0; i < ones.N(); ++i)
+        {
+             occupationPattern.add(i, i);
+        }
+
+        occupationPattern.exportIdx(ones);
+    }
 };
 
 } // end namespace Dumux

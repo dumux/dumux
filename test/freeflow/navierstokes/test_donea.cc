@@ -155,8 +155,8 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    using NonlinearSolver = Dumux::SimpleSolver<Assembler, LinearSolver>;
+    NonlinearSolver nonLinearSolver(assembler, linearSolver);
 
     // linearize & solve
     Dune::Timer timer;
