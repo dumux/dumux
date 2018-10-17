@@ -25,6 +25,7 @@
 
 #include "2ptestproblem.hh"
 #include "2ptracertestproblem.hh"
+// #include "2ptracertestproblem_3stripes.hh"
 
 #include <ctime>
 #include <iostream>
@@ -51,6 +52,7 @@
 #include <dumux/discretization/methods.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -117,14 +119,8 @@ int main(int argc, char** argv) try
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    using GridCreator = typename GET_PROP_TYPE(TwoPTypeTag, GridCreator);
-    try { GridCreator::makeGrid(); }
-    catch (...) {
-        std::cout << "\n\t -> Creation of the grid failed! <- \n\n";
-        throw;
-    }
-    GridCreator::loadBalance();
-
+    GridManager<typename GET_PROP_TYPE(TwoPTypeTag, Grid)> gridManager;
+    gridManager.init();
 
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TwoPTypeTag, Scalar);
@@ -138,10 +134,9 @@ int main(int argc, char** argv) try
         restartTime = getParam<Scalar>("TimeLoop.Restart");
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);  // restartTime anstelle 0.0
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);  // restartTime anstelle 0.0
     // auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
-
 
     ////////////////////////////////////////////////////////////
     // set 2p Problem
@@ -149,7 +144,7 @@ int main(int argc, char** argv) try
 
 
     // we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TwoPTypeTag, FVGridGeometry);
@@ -180,8 +175,8 @@ int main(int argc, char** argv) try
 
      // use non-conforming output for the test with interface solver
      const auto ncOutput = getParam<bool>("Problem.UseNonConformingOutput", false);
-     VtkOutputModule<TwoPTypeTag> twoPVtkWriter(*twoPProblem, *fvGridGeometry, *twoPGridVariables, p, twoPProblem->name(), "",
-                                        (ncOutput ? Dune::VTK::nonconforming : Dune::VTK::conforming));
+     VtkOutputModule<TwoPGridVariables, TwoPSolutionVector> twoPVtkWriter(*twoPGridVariables, p, "2p_"+twoPProblem->name(), "",
+                                                                         (ncOutput ? Dune::VTK::nonconforming : Dune::VTK::conforming));
 
      TwoPVtkOutputFields::init(twoPVtkWriter); //!< Add model specific output fields
      twoPVtkWriter.write(0.0);
@@ -199,7 +194,6 @@ int main(int argc, char** argv) try
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<TwoPAssembler, TwoPLinearSolver>;
     NewtonSolver nonLinearSolver(twoPAssembler, twoPLinearSolver);
-
 
     ////////////////////////////////////////////////////////////
     // set tracer Problem
@@ -235,8 +229,8 @@ int main(int argc, char** argv) try
     tracerAssembler->setLinearSystem(A, r);
 
     //! initialize the flux vector
-    using ModelTraits = typename GET_PROP_TYPE(TwoPTypeTag, ModelTraits);
-    static const int numPhases = ModelTraits::numPhases();
+    // using ModelTraits = typename GET_PROP_TYPE(TwoPTypeTag, ModelTraits);
+    // static const int numPhases = ModelTraits::numPhases();
     //using ScvfVector  = std::vector<Scalar>;
     //using FieldVector = Dune::FieldVector<ScvfVector, numPhases>;
     //FieldVector volumeFlux;
@@ -252,9 +246,11 @@ int main(int argc, char** argv) try
     tracerProblem->spatialParams().setVolumeFlux(volumeFlux_0);
 
 //     //! initialize the vtk output module
-     VtkOutputModule<TracerTypeTag> vtkWriter(*tracerProblem, *fvGridGeometry, *tracerGridVariables, x, tracerProblem->name());
+     VtkOutputModule<TracerGridVariables, TracerSolutionVector> vtkWriter(*tracerGridVariables, x, tracerProblem->name());
      using TracerVtkOutputFields = typename GET_PROP_TYPE(TracerTypeTag, VtkOutputFields);
      TracerVtkOutputFields::init(vtkWriter); //!< Add model specific output fields
+     using VelocityOutput = typename GET_PROP_TYPE(TracerTypeTag, VelocityOutput);
+     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*tracerGridVariables));
      vtkWriter.write(0.0);
 
     //! set some check points for the time loop

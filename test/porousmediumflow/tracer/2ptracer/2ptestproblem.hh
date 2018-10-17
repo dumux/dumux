@@ -24,6 +24,7 @@
 #ifndef DUMUX_INCOMPRESSIBLE_TWOP_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_TWOP_TEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
@@ -39,6 +40,8 @@
 #include <dumux/porousmediumflow/2p/incompressiblelocalresidual.hh>
 
 #include "2ptestspatialparams.hh"
+// #include "2ptestspatialparams_randomfield.hh"
+
 
 #ifndef ENABLEINTERFACESOLVER
 #define ENABLEINTERFACESOLVER 0
@@ -157,10 +160,10 @@ public:
 
         Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
 
-        Scalar height = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
+        // Scalar height = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
         Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
-        Scalar alpha = 1 + 1.5/height;
-        Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
+        // Scalar alpha = 1 + 1.5/height;
+        // Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
         Scalar factor = 1;
 
         // hydrostatic pressure scaled by alpha
@@ -185,7 +188,10 @@ public:
     {
         NumEqVector values(0.0);
         if (onInlet_(globalPos))
+        {
             values[contiDNAPLEqIdx] = -0.04; // kg / (m * s)
+            values[Indices::conti0EqIdx] = -0.04;
+        }
 
         // in the test with the oil wet lens, use higher injection rate
         if (this->spatialParams().lensIsOilWet())

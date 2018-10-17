@@ -24,13 +24,13 @@
 #ifndef DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
 
+#include <random>
 #include <dumux/discretization/methods.hh>
 
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <random>
 #include <dumux/porousmediumflow/2p/boxmaterialinterfaceparams.hh>
 
 namespace Dumux {
@@ -117,8 +117,6 @@ public:
         outerMaterialParams_.setVgAlpha(0.0037);
         outerMaterialParams_.setVgn(4.7);
 
-//         lensK_ = 9.05e-12;
-//         outerK_ = 4.6e-10;
     }
 
     /*!
@@ -228,7 +226,6 @@ private:
 
     // Determines the parameters associated with the dofs at material interfaces
     BoxMaterialInterfaceParams<ThisType> materialInterfaceParams_;
-
 
     static constexpr Scalar eps_ = 1.5e-7;
 };

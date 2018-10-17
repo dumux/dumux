@@ -67,7 +67,7 @@ SET_BOOL_PROP(TwoPTracerTestCCTypeTag, SolutionDependentMolecularDiffusion, fals
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
-class TracerFluidSystem : public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar),
+class TracerFluidSystem : public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                TracerFluidSystem<TypeTag>>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -201,13 +201,13 @@ public:
         PrimaryVariables initialValues(0.0);
 
 //  VERSION 1
-          if (onUpperBoundary_(globalPos))
+        // if (onUpperBoundary_(globalPos))
 
 //  VERSION 2
-//          if (onUpperBoundary_(globalPos) ||  onStripe1_(globalPos) || onStripe2_(globalPos) || onStripe3_(globalPos))
+        // if (onUpperBoundary_(globalPos) ||  onStripe1_(globalPos) || onStripe2_(globalPos) || onStripe3_(globalPos))
 
 //  VERSION 3
-//         if (onUpperTrajectoryPoint_(globalPos) || onLeftTrajectroyPoint_(globalPos) || onRightTrajectoryPoint_(globalPos))
+        if (onUpperTrajectoryPoint_(globalPos) || onLeftTrajectroyPoint_(globalPos) || onRightTrajectoryPoint_(globalPos))
 
         {
             if (useMoles)
@@ -244,11 +244,10 @@ private:
 //  VERSION 2
      bool onStripe1_(const GlobalPosition &globalPos) const
      {
-         std::cout << "Stripe1 is: " << (( (yMax_ /4.0 - cellHeight_*0.5) <= globalPos[1] ) &&
-                  ( (yMax_/4.0 + cellHeight_*0.5) > globalPos[1] ));
-         std::cout << " at globalPos:" << globalPos[1] << "\n";
-         std::cout << "yMax is: " << yMax_ << "\n" ;
-
+         // std::cout << "Stripe1 is: " << (( (yMax_ /4.0 - cellHeight_*0.5) <= globalPos[1] ) &&
+         //          ( (yMax_/4.0 + cellHeight_*0.5) > globalPos[1] ));
+         // std::cout << " at globalPos:" << globalPos[1] << "\n";
+         // std::cout << "yMax is: " << yMax_ << "\n" ;
 
         return  (
             ( (yMax_ /4.0 - cellHeight_*0.5) <= globalPos[1] ) &&
@@ -276,41 +275,41 @@ private:
 
 //  VERSION 3
 
-// //     bool onUpperTrajectoryPoint_(const GlobalPosition &globalPos) const
-// //     {
-// //         std::cout << "onUpperTrajectoryPoint is: "
-// //         << (    globalPos[1] > (yMax_ - 2.0*cellHeight_) &&
-// //                 globalPos[0] > (width_/2.0 - cellWidth_) &&
-// //                 globalPos[0] < (width_/2.0 + cellWidth_) );
-// //         std::cout << " at x- globalPos:" << globalPos[0] << "\n";
-// //         std::cout << " at y- globalPos:" << globalPos[1] << "\n";
-// //
-// //         return (
-// //             globalPos[1] > (yMax_ - 2.0*cellHeight_) &&
-// //             globalPos[0] > (width_/2.0 - cellWidth_) &&
-// //             globalPos[0] < (width_/2.0 + cellWidth_)
-// //         );
-// //     }
-// //
-// //     bool onLeftTrajectroyPoint_(const GlobalPosition &globalPos) const
-// //     {
-// //         return (
-// //             ( globalPos[1] >= (3.0 * yMax_ /4.0 - cellHeight_) ) &&
-// //             ( globalPos[1] < (3.0 * yMax_/4.0 + cellHeight_) ) &&
-// //             ( globalPos[0] > (xMax_ /6.0 - cellHeight_) ) &&
-// //             ( globalPos[0] < (xMax_ /6.0 + cellHeight_) )
-// //         );
-// //     }
-// //
-// //     bool onRightTrajectoryPoint_(const GlobalPosition &globalPos) const
-// //     {
-// //         return (
-// //             ( globalPos[1] >= (3.0 * yMax_ /4.0 - cellHeight_) ) &&
-// //             ( globalPos[1] < (3.0 * yMax_/4.0 + cellHeight_) ) &&
-// //             ( globalPos[0] > (5.0 * xMax_/6.0 - cellHeight_) ) &&
-// //             ( globalPos[0] < (5.0 * xMax_/6.0 + cellHeight_) )
-// //         );
-// //     }
+    bool onUpperTrajectoryPoint_(const GlobalPosition &globalPos) const
+    {
+        // std::cout << "onUpperTrajectoryPoint is: "
+        // << (    globalPos[1] > (yMax_ - 2.0*cellHeight_) &&
+        //         globalPos[0] > (width_/2.0 - cellWidth_) &&
+        //         globalPos[0] < (width_/2.0 + cellWidth_) );
+        // std::cout << " at x- globalPos:" << globalPos[0] << "\n";
+        // std::cout << " at y- globalPos:" << globalPos[1] << "\n";
+
+        return (
+            globalPos[1] > (yMax_ - 2.0*cellHeight_) &&
+            globalPos[0] > (width_/2.0 - cellWidth_) &&
+            globalPos[0] < (width_/2.0 + cellWidth_)
+        );
+    }
+
+    bool onLeftTrajectroyPoint_(const GlobalPosition &globalPos) const
+    {
+        return (
+            ( globalPos[1] >= (3.0 * yMax_ /4.0 - cellHeight_) ) &&
+            ( globalPos[1] < (3.0 * yMax_/4.0 + cellHeight_) ) &&
+            ( globalPos[0] > (xMax_ /6.0 - cellHeight_) ) &&
+            ( globalPos[0] < (xMax_ /6.0 + cellHeight_) )
+        );
+    }
+
+    bool onRightTrajectoryPoint_(const GlobalPosition &globalPos) const
+    {
+        return (
+            ( globalPos[1] >= (3.0 * yMax_ /4.0 - cellHeight_) ) &&
+            ( globalPos[1] < (3.0 * yMax_/4.0 + cellHeight_) ) &&
+            ( globalPos[0] > (5.0 * xMax_/6.0 - cellHeight_) ) &&
+            ( globalPos[0] < (5.0 * xMax_/6.0 + cellHeight_) )
+        );
+    }
 
 };
 

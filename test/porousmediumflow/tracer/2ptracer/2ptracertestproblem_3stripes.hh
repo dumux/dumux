@@ -67,7 +67,7 @@ SET_BOOL_PROP(TwoPTracerTestCCTypeTag, SolutionDependentMolecularDiffusion, fals
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
-class TracerFluidSystem : public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar),
+class TracerFluidSystem : public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                TracerFluidSystem<TypeTag>>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -201,15 +201,13 @@ public:
         PrimaryVariables initialValues(0.0);
 
 //  VERSION 1
-//          if (onUpperBoundary_(globalPos))
+        // if (onUpperBoundary_(globalPos))
 
 //  VERSION 2
-          if (onUpperBoundary_(globalPos) ||  onStripe1_(globalPos) || onStripe2_(globalPos) || onStripe3_(globalPos))
+        if (onUpperBoundary_(globalPos) ||  onStripe1_(globalPos) || onStripe2_(globalPos) || onStripe3_(globalPos))
 
 //  VERSION 3
 //         if (onUpperTrajectoryPoint_(globalPos) || onLeftTrajectroyPoint_(globalPos) || onRightTrajectoryPoint_(globalPos))
-
-
 
         {
             if (useMoles)
@@ -250,7 +248,6 @@ private:
 //                   ( (yMax_/4.0 + cellHeight_*0.5) > globalPos[1] ));
 //          std::cout << " at globalPos:" << globalPos[1] << "\n";
 //          std::cout << "yMax is: " << yMax_ << "\n" ;
-
 
         return  (
             ( (yMax_ /4.0 - cellHeight_*0.5) <= globalPos[1] ) &&
