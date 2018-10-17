@@ -3,6 +3,7 @@ dune_symlink_to_source_files(FILES grids)
 
 dune_add_test(NAME test_gridmanager_cake
               SOURCES test_gridmanager_cake.cc
+              LABELS unit
               CMAKE_GUARD "( dune-uggrid_FOUND OR dune-alugrid_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -12,6 +13,7 @@ dune_add_test(NAME test_gridmanager_cake
 
 dune_add_test(NAME test_gridmanager_subgrid
               SOURCES test_gridmanager_subgrid.cc
+              LABELS unit
               CMAKE_GUARD dune-subgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -28,6 +30,7 @@ target_compile_definitions(test_gridmanager_gmsh_3d_alu PUBLIC GRIDTYPE=Dune::AL
 
 dune_add_test(NAME test_gridmanager_gmsh_3d_alu_sequential
               TARGET test_gridmanager_gmsh_3d_alu
+              LABELS unit
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -37,6 +40,7 @@ dune_add_test(NAME test_gridmanager_gmsh_3d_alu_sequential
 
 dune_add_test(NAME test_gridmanager_gmsh_3d_alu_parallel
               TARGET test_gridmanager_gmsh_3d_alu
+              LABELS unit
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
@@ -49,6 +53,7 @@ target_compile_definitions(test_gridmanager_gmsh_3d_ug PUBLIC GRIDTYPE=Dune::UGG
 
 dune_add_test(NAME test_gridmanager_gmsh_3d_ug_sequential
               TARGET test_gridmanager_gmsh_3d_ug
+              LABELS unit
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -60,6 +65,7 @@ dune_add_test(NAME test_gridmanager_gmsh_3d_ug_sequential
 
 dune_add_test(NAME test_gridmanager_gmsh_3d_ug_parallel
               TARGET test_gridmanager_gmsh_3d_ug
+              LABELS unit
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
@@ -74,6 +80,7 @@ target_compile_definitions(test_gridmanager_gmsh_e_markers_alu PUBLIC GRIDTYPE=D
 
 dune_add_test(NAME test_gridmanager_gmsh_e_markers_alu_sequential
               TARGET test_gridmanager_gmsh_e_markers_alu
+              LABELS unit
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -85,6 +92,7 @@ dune_add_test(NAME test_gridmanager_gmsh_e_markers_alu_sequential
 
 dune_add_test(NAME test_gridmanager_gmsh_e_markers_alu_parallel
               TARGET test_gridmanager_gmsh_e_markers_alu
+              LABELS unit
               CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
@@ -99,6 +107,7 @@ target_compile_definitions(test_gridmanager_gmsh_e_markers_ug PUBLIC GRIDTYPE=Du
 
 dune_add_test(NAME test_gridmanager_gmsh_e_markers_ug_sequential
               TARGET test_gridmanager_gmsh_e_markers_ug
+              LABELS unit
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -110,6 +119,7 @@ dune_add_test(NAME test_gridmanager_gmsh_e_markers_ug_sequential
 
 dune_add_test(NAME test_gridmanager_gmsh_e_markers_ug_parallel
               TARGET test_gridmanager_gmsh_e_markers_ug
+              LABELS unit
               CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
@@ -124,6 +134,7 @@ target_compile_definitions(test_gridmanager_dgf_alu PUBLIC GRIDTYPE=Dune::ALUGri
 
 dune_add_test(NAME test_gridmanager_dgf_alu_sequential
               TARGET test_gridmanager_dgf_alu
+              LABELS unit
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -137,6 +148,7 @@ dune_add_test(NAME test_gridmanager_dgf_alu_sequential
 
 dune_add_test(NAME test_gridmanager_dgf_alu_parallel
               TARGET test_gridmanager_dgf_alu
+              LABELS unit
               CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
@@ -153,6 +165,7 @@ target_compile_definitions(test_gridmanager_dgf_ug PUBLIC GRIDTYPE=Dune::UGGrid<
 
 dune_add_test(NAME test_gridmanager_dgf_ug_sequential
               TARGET test_gridmanager_dgf_ug
+              LABELS unit
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -166,6 +179,7 @@ dune_add_test(NAME test_gridmanager_dgf_ug_sequential
 
 dune_add_test(NAME test_gridmanager_dgf_ug_parallel
               TARGET test_gridmanager_dgf_ug
+              LABELS unit
               CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}

@@ -1,4 +1,5 @@
-dune_add_test(SOURCES test_pengrobinson.cc)
+dune_add_test(SOURCES test_pengrobinson.cc
+              LABELS unit)
 
 #install sources
 install(FILES

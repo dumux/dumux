@@ -1,7 +1,7 @@
-dune_add_test(SOURCES test_1d3d_intersection.cc)
-dune_add_test(SOURCES test_2d3d_intersection.cc)
-dune_add_test(SOURCES test_graham_convex_hull.cc)
-dune_add_test(SOURCES test_makegeometry.cc)
+dune_add_test(SOURCES test_1d3d_intersection.cc LABELS unit)
+dune_add_test(SOURCES test_2d3d_intersection.cc LABELS unit)
+dune_add_test(SOURCES test_graham_convex_hull.cc LABELS unit)
+dune_add_test(SOURCES test_makegeometry.cc LABELS unit)
 
 #install sources
 install(FILES

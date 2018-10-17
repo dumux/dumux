@@ -1,4 +1,5 @@
-dune_add_test(SOURCES test_solidsystems.cc)
+dune_add_test(SOURCES test_solidsystems.cc
+              LABELS unit)
 
 #install sources
 install(FILES

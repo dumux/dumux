@@ -1,1 +1,2 @@
-dune_add_test(SOURCES test_timeloop.cc)
+dune_add_test(SOURCES test_timeloop.cc
+              LABELS unit)

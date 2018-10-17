@@ -1,4 +1,5 @@
-dune_add_test(SOURCES test_container_io.cc)
+dune_add_test(SOURCES test_container_io.cc
+              LABELS unit)
 
 #install sources
 install(FILES
