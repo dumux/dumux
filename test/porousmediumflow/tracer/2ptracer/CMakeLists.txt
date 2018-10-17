@@ -14,7 +14,9 @@ dune_add_test(NAME test_2p_tracer_sequential
 install(FILES
 2ptestproblem.hh
 2ptestspatialparams.hh
+2ptestspatialparams_randomfield.hh
 2ptracertestproblem.hh
+2ptracertestproblem_3stripes.hh
 2ptracertestspatialparams.hh
 test_2p_cctracer.cc
 tracer_2p.input
