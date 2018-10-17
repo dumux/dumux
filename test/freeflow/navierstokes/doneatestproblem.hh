@@ -66,6 +66,8 @@ SET_BOOL_PROP(DoneaTestTypeTag, EnableGridFluxVariablesCache, ENABLECACHING);
 SET_BOOL_PROP(DoneaTestTypeTag, EnableGridVolumeVariablesCache, ENABLECACHING);
 SET_BOOL_PROP(DoneaTestTypeTag, EnableGridFaceVariablesCache, ENABLECACHING);
 
+SET_TYPE_PROP(DoneaTestProblem, LinearSolver, SchurComplementSolver<TypeTag> );
+
 #if ENABLE_NAVIERSTOKES
 SET_BOOL_PROP(DoneaTestTypeTag, EnableInertiaTerms, true);
 #else
