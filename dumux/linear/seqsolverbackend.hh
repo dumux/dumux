@@ -43,7 +43,7 @@
 
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>
-#include <dumux/linear/amgproperties.hh>
+#include <dumux/linear/amgtraits.hh>
 
 namespace Dumux {
 
@@ -1292,7 +1292,7 @@ public:
    \tparam Y Type of the defect
    \tparam l The block level to invert. Default is 1
 */
-template<class TypeTag, class AInvOpType, class M, class X, class Y, int l=1>
+template<class AInvOpType, class M, class X, class Y, int l=1>
 class SchurComplementPreconditioner : public Dune::Preconditioner<X,Y>
 {
 public:
@@ -1314,8 +1314,9 @@ public:
             | 0  S |
      */
     SchurComplementPreconditioner (const M& matrix,
-                                   const std::shared_ptr<AInvOpType>& aInvOp)
-      : M_(matrix), aInvOp_(aInvOp)
+                                   const std::shared_ptr<AInvOpType>& aInvOp,
+                                   const std::string& paramGroup)
+      : M_(matrix), aInvOp_(aInvOp), paramGroup_(paramGroup)
     {}
 
     virtual void pre (X& x, Y& b)
@@ -1332,13 +1333,13 @@ public:
     virtual void apply (X& v, const Y& b)
     {
         using namespace Dune::Indices;
-        using VVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables)>;
-        using PVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables)>;
+        using VVector = std::decay_t<decltype(v[_1])>;
+        using PVector = std::decay_t<decltype(v[_0])>;
 
-        using BType = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockCCToFace;
-        using AType = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockFaceToFace;
-        using CType = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockFaceToCC;
-        using DType = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockCCToCC;
+        using BType = std::decay_t<decltype(M_[_0][_1])>;
+        using AType = std::decay_t<decltype(M_[_1][_1])>;
+        using CType = std::decay_t<decltype(M_[_1][_0])>;
+        using DType = std::decay_t<decltype(M_[_0][_0])>;
 
         // Currently Navier-Stokes system is assembled the other way around
         // Consider flipping indices
@@ -1351,13 +1352,13 @@ public:
         const PVector& g = b[_0];
 
         // first solve pressure by applying the Schur inverse operator using a GMRes solver
-        static const int schurMaxIter = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, SchurIterations);
-        static const int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, PreconditionerVerbosity);
-        static const double schurResred = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, SchurResidualReduction);
-        static const double velResred = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, VelocityResidualReduction);
+        static const int schurMaxIter = getParamFromGroup<int>(paramGroup_, "LinearSolver.SchurIterations");
+        static const int verbosity = getParamFromGroup<int>(paramGroup_, "LinearSolver.PreconditionerVerbosity");
+        static const double schurResred = getParamFromGroup<double>(paramGroup_, "LinearSolver.SchurResidualReduction");
+        static const double velResred = getParamFromGroup<double>(paramGroup_, "LinearSolver.VelocityResidualReduction");
         using Identity = Dune::Richardson<PVector, PVector>;
         Identity identity(1.0);
-        // SchurComplement<AType, BType, CType, DType, AInvOpType, PVector, PVector> schurOperator(A, B, C, D, aInvOp_);
+        // SchurComplement<AType, BType, CType, DType, AInvOpType, PVector, PVector> schurOperator(A, B, C, D, aInvOp_);//requires RestartedFlexibleGMResSolver !
         SchurApproximate<AType, BType, CType, DType, PVector, PVector> schurOperator(A, B, C, D);
         Dune::RestartedGMResSolver<PVector> invOpS(schurOperator, identity, schurResred*g.two_norm(), 100, schurMaxIter, verbosity);
         // Dune::BiCGSTABSolver<PVector> invOpS(schurOperator, identity, schurResred*g.two_norm(), schurMaxIter, verbosity);
@@ -1389,29 +1390,27 @@ public:
     //! \brief The matrix we operate on.
     const M& M_;
     std::shared_ptr<AInvOpType> aInvOp_;
+    const std::string& paramGroup_;
   };
 
-template <class TypeTag>
-class SchurComplementSolver
+template <class GridView>
+class SchurComplementSolver : public LinearSolver
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-
 public:
     SchurComplementSolver() = default;
-    SchurComplementSolver(const Problem& problem) {}
 
     // expects a system as a multi-type matrix
     // | A  B |
     // | C  D |
 
     // Solve saddle-point problem using a Schur complement based preconditioner
-    template<class Matrix, class Vector>
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
-        const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
-        const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
-        const int restartGMRes = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, GMResRestart);
+        int verbosity = getParamFromGroup<int>(this->paramGroup(), "LinearSolver.Verbosity");
+        const int maxIter = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.MaxIterations");
+        const double residReduction = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.ResidualReduction");
+        const int restartGMRes = getParamFromGroup<int>(this->paramGroup(), "LinearSolver.GMResRestart");
 
         Vector bTmp(b);
 
@@ -1420,8 +1419,8 @@ public:
 
         // LU decompose vel sub matrix and hand it to the preconditioner
         using namespace Dune::Indices;
-        using VelMatrixType = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockFaceToFace;
-        using VVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables)>;
+        using VelMatrixType = std::decay_t<decltype(A[_1][_1])>;
+        using VVector = std::decay_t<decltype(x[_1])>;
         // using InnerSolver = Dune::UMFPack<VelMatrixType>;
         // auto invOpVel = std::make_shared<InnerSolver>(A[_1][_1], false);
         // using InnerPreconditioner = Dune::SeqJac<VelMatrixType, VVector, VVector, 1>;
@@ -1439,7 +1438,7 @@ public:
         using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
         using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<VelMatrixType, Dune::Amg::FirstDiagonal> >;
         Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
-        params.setDefaultValuesIsotropic(GET_PROP_TYPE(TypeTag, GridView)::Traits::Grid::dimension);
+        params.setDefaultValuesIsotropic(GridView::Traits::Grid::dimension);
         params.setDebugLevel(verbosity);
         params.setGamma(1); // one V-cycle
         Criterion criterion(params);
@@ -1449,17 +1448,17 @@ public:
 
         using InnerPreconditioner = Dune::Amg::AMG<LinearOperator, VVector, Smoother, Comm>;
         auto innerPrec = std::make_shared<InnerPreconditioner>(*fop, criterion, smootherArgs, *comm);
-        static const int precVerbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, PreconditionerVerbosity);
-        static const int precMaxIter = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, VelocityIterations);
+        static const int precVerbosity = getParamFromGroup<int>(this->paramGroup(), "LinearSolver.PreconditionerVerbosity");
+        static const int precMaxIter = getParamFromGroup<int>(this->paramGroup(), "LinearSolver.VelocityIterations");
         using InnerSolver = Dune::RestartedGMResSolver<VVector>;
         auto invOpVel = std::make_shared<InnerSolver>(*fop, *sp, *innerPrec, 1.0, 100, precMaxIter, precVerbosity);
 
-        using Preconditioner = SchurComplementPreconditioner<TypeTag, InnerSolver, Matrix, Vector, Vector, 1>;
-        Preconditioner schurPrecond(A, invOpVel);
+        using Preconditioner = SchurComplementPreconditioner<InnerSolver, Matrix, Vector, Vector, precondBlockLevel>;
+        Preconditioner schurPrecond(A, invOpVel, this->paramGroup());
 
-        // using Solver = Dune::MINRESSolver<Vector>;
-        using Solver = Dune::RestartedfGMResSolver<Vector>;
-        // using Solver = Dune::BiCGSTABSolver<Vector>;
+//         using Solver = Dune::MINRESSolver<Vector>;
+        using Solver = Dune::RestartedGMResSolver<Vector>;
+//         using Solver = Dune::BiCGSTABSolver<Vector>;
         Solver solver(operatorA, schurPrecond, residReduction, restartGMRes, maxIter, verbosity);
         // Solver solver(operatorA, schurPrecond, residReduction, maxIter, verbosity);
         solver.apply(x, bTmp, result_);

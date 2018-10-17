@@ -151,7 +151,8 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
 
     // the linear solver
-    using LinearSolver = Dumux::UMFPackBackend;
+//     using LinearSolver = Dumux::UMFPackBackend;
+    using LinearSolver = SchurComplementSolver<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
