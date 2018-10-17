@@ -18,6 +18,26 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
 * __IMPROVEMENTS and ENHANCEMENTS:__
     - Support for grid managers dune-subgrid (a meta grid selecting only certain elements from a host grid)
       and dune-spgrid (a structured parallel grid manager, supporting periodic boundaries)
+    - __New style main files:__ 3.0 comes which a major overhaul of how the sequence of simulation steps is specified.
+      Until 2.12 there was the start.hh header including the free function `start` that contained a predefined sequence of
+      steps. Customization of the sequence was possible by many hooks implemented in classes used in this sequence. This
+      made it hard to follow the course of the program and hard to implement customization at points where this was not previously envisioned.
+      In contrast, in the new approach the sequence of simulation steps was linearized, meaning that each step is visible
+      in the program's main file. In the new main files, one can clearly see the io, initialization, assembly, solving, update, time loop, etc.,
+      of the program. Many parts of the simulation that were previously mandatory, i.e. simulations in 2.12 always contained a time loop,
+      are now optional (instationary simulations just don't need a time loop). The new style main files make it easier two follow the course
+      of the program, easier to customize, and offer more flexibility concerning the customization of steps and components of a simulation.
+      All tests and examples in the dumux repository have been adapted to the new style main files.
+    - __The grid geometry concept:__ In version 3.0, discretization methods use grid geometries which are wrapper or adapters around a `Dune::GridView`,
+      providing data structures and interfaces necessary to implement these discretization methods easily. In particular, the
+      abstraction of sub-control-volumes (scv) and sub-control-volume-faces (scvf) are now separate classes and the grid geometry provides means to iterate
+      over all scvs and scvfs of an element, using range-based-for loops.
+    - __The caching concept:__ Version 3.0 introduces a caching concept for the new grid geometry, the volume variables and the flux variables.
+      There are classes with a `Grid` prefix, that store data for the current grid view, and classes with the `Element` prefix that store data locally
+      for an element or element stencil. Depending on the caching concept used, data will be either stored completely in the `Grid` objects
+      (e.g. `GridGeometry`) and the `Element` object (e.g. `ElementGeometry`) are mere accessor objects, or, data will be partly only cached locally.
+      The local caching uses less memory but might result in a more runtime, the grid caching is memory intensive
+      but can provide a significant run-time speedup. Choose whatever concept fits your available resources.
 
 * __IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:__
     - The `GridCreator` has been replaced by the `GridManager`, which no longer uses a singleton for the grid object.
