@@ -44,6 +44,7 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
     - __Interface solver:__ For the two-phase flow model in conjunction with the box scheme, an interface solver can now be used to reconstruct the saturations
       in the sub-control volumes adjacent to vertices that lie on material discontinuities. This allows a sharper representation of the saturation front evolving
       in heterogeneous porous media.
+    - __Box-dfm:__ The `2pdfm` model from version 2.12 has been generalized such that it can be used on any DuMux model and in both two and three dimensions.
     - __Multidomain:__ DuMux 3.0 introduces a new multidomain framework which does no longer depend on `dune-multidomain` and can be used for the coupling
       of an arbitrary number of subdomains. The sub-domains can be regions in which a different set of equations are solved and/or which have different
       dimensionalities. The implementation is such that any of the existing DuMux models can be used in the subdomains, while the data and functionality
