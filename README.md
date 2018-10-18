@@ -24,7 +24,7 @@ License
 
 DuMuX is licensed under the terms and conditions of the GNU General
 Public License (GPL) version 2 or - at your option - any later
-version. The GPL can be [read online][5] or in the `LICENSE.md` file
+version. The GPL can be [read online][5] or in the [LICENSE.md](LICENSE.md) file
 provided in the topmost directory of the DuMuX source code tree.
 
 Please note that DuMuX' license, unlike DUNE's, does *not* feature a
@@ -34,7 +34,7 @@ files if you want to redistribute your program to third parties. If
 this is unacceptable to you, please [contact us][6] for a commercial
 license.
 
-See the file `LICENSE.md` for full copying permissions.
+See the file [LICENSE.md](LICENSE.md) for full copying permissions.
 
 Automated Testing
 ==================
