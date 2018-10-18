@@ -12,7 +12,7 @@ dune_symlink_to_source_files(FILES "tubesconvergencetest.py")
 # isothermal tests
 dune_add_test(NAME test_1pcctpfa
               SOURCES test_1pfv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
@@ -21,7 +21,7 @@ dune_add_test(NAME test_1pcctpfa
 
 dune_add_test(NAME test_1pccmpfa
               SOURCES test_1pfv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTestCCMpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTestCCMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
@@ -30,7 +30,7 @@ dune_add_test(NAME test_1pccmpfa
 
 dune_add_test(NAME test_1pbox
               SOURCES test_1pfv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTestBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTestBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1ptestbox-reference.vtu
@@ -39,7 +39,7 @@ dune_add_test(NAME test_1pbox
 
 dune_add_test(NAME test_1pforchheimercctpfa
               SOURCES test_1pfv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfaTypeTag FORCHHEIMER=1
+              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa FORCHHEIMER=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1pforchheimercctpfa.vtu
@@ -50,7 +50,7 @@ dune_add_test(NAME test_1pforchheimercctpfa
 # a gstat test (becaue it's a random permeability field we can't test against a reference solution)
 dune_add_test(NAME test_1pwithgstat
               SOURCES test_1pfv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa
               CMAKE_GUARD HAVE_GSTAT)
 
 # non-isothermal tests

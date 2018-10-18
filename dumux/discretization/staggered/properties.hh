@@ -90,7 +90,7 @@ SET_PROP(StaggeredModel, StaggeredFaceSolution)
 private:
     using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
 public:
-    using type = StaggeredFaceSolution<FaceSolutionVector>;
+    using type = Dumux::StaggeredFaceSolution<FaceSolutionVector>;
 };
 
 //! Set the grid variables (volume, flux and face variables)
@@ -124,7 +124,7 @@ SET_TYPE_PROP(StaggeredModel,
                                 GET_PROP_VALUE(TypeTag, NumEqFace)>);
 
 //! Boundary types at a single degree of freedom
-SET_TYPE_PROP(StaggeredModel, BoundaryTypes, BoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
+SET_TYPE_PROP(StaggeredModel, BoundaryTypes, Dumux::BoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
 
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits

@@ -144,7 +144,7 @@ public:
 SET_PROP(NonEquilibrium, NusseltFormulation)
 {
 public:
-    static constexpr NusseltFormulation value = NusseltFormulation::WakaoKaguei;
+    static constexpr Dumux::NusseltFormulation value = Dumux::NusseltFormulation::WakaoKaguei;
 };
 
 /*!
@@ -154,7 +154,7 @@ public:
 SET_PROP(NonEquilibrium, SherwoodFormulation)
 {
 public:
-    static constexpr SherwoodFormulation value = SherwoodFormulation::WakaoKaguei;
+    static constexpr Dumux::SherwoodFormulation value = Dumux::SherwoodFormulation::WakaoKaguei;
 };
 
 } //end namespace Properties

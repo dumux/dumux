@@ -23,6 +23,7 @@
 #include <dumux/common/properties/model.hh>
 #include <dumux/common/properties/grid.hh>
 #include <dumux/common/defaultmappertraits.hh>
+#include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptproperties.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptinitializationindicatordefault.hh>
 
@@ -55,12 +56,10 @@ NEW_TYPE_TAG(SequentialModel, INHERITS_FROM(ModelProperties, GridAdaptTypeTag, G
 //! This means vectors of primary variables, solution functions on the
 //! grid, and elements, and shape functions.
 NEW_PROP_TAG( SolutionTypes);
-NEW_PROP_TAG( PrimaryVariables);
 NEW_PROP_TAG( Indices);
 
 // Some properties that have been removed from numeric model
 NEW_PROP_TAG( Model ); //!< The type of the mode
-NEW_PROP_TAG( TimeManager ); //!< The type of the time manager
 NEW_PROP_TAG( DiscretizationMethod ); //!< The type of discretization method
 
 NEW_PROP_TAG( PressureModel ); //!< The type of the discretization of a pressure model
@@ -71,16 +70,8 @@ NEW_PROP_TAG( NumPhases); //!< Number of phases in the system
 NEW_PROP_TAG( NumComponents); //!< Number of components in the system
 NEW_PROP_TAG( Variables); //!< The type of the container of global variables
 NEW_PROP_TAG( CellData );//!< Defines data object to be stored
-NEW_PROP_TAG( TimeManager );  //!< Manages the simulation time
-NEW_PROP_TAG( BoundaryTypes ); //!< Stores the boundary types of a single degree of freedom
 NEW_PROP_TAG( MaxIntersections ); //!< Gives maximum number of intersections of an element and neighboring elements
 NEW_PROP_TAG( PressureCoefficientMatrix ); //!< Gives maximum number of intersections of an element and neighboring elements
-
-//! Some properties that became obsolete in dumux, but are still necessary
-//! for sequential models until they are integrated in the general framework
-NEW_PROP_TAG( NumEq );         //!< The number of equations to solve (equal to number of primary variables)
-NEW_PROP_TAG( NumPhases );     //!< Number of fluid phases in the system
-NEW_PROP_TAG( NumComponents ); //!< Number of fluid components in the system
 }
 }
 
@@ -148,15 +139,15 @@ public:
 //! A simplified grid geometry for compatibility with new style models
 SET_PROP(SequentialModel, FVGridGeometry)
 {
-    struct FVGridGeometry
+    struct MockFVGridGeometry
     : public DefaultMapperTraits<typename GET_PROP_TYPE(TypeTag, GridView)>
     {
-        static constexpr DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+        static constexpr Dumux::DiscretizationMethod discMethod = Dumux::DiscretizationMethod::cctpfa;
         using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     };
 
 public:
-    using type = FVGridGeometry;
+    using type = MockFVGridGeometry;
 };
 
 //! For compatibility with new style models we need a solution vector type
@@ -223,7 +214,7 @@ SET_TYPE_PROP(SequentialModel,  Variables, VariableClass<TypeTag>);
 SET_TYPE_PROP(SequentialModel,  PrimaryVariables, typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables);
 
 //! Set the default type for the time manager
-SET_TYPE_PROP(SequentialModel, TimeManager, TimeManager<TypeTag>);
+SET_TYPE_PROP(SequentialModel, TimeManager, Dumux::TimeManager<TypeTag>);
 
 /*!
  * \brief Boundary types at a single degree of freedom.
@@ -232,7 +223,7 @@ SET_PROP(SequentialModel, BoundaryTypes)
 { private:
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 public:
-    using type = BoundaryTypes<numEq>;
+    using type = Dumux::BoundaryTypes<numEq>;
 };
 
 //! do not specific any model-specific default parameters here

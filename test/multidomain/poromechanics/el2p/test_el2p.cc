@@ -50,7 +50,6 @@
 // set the coupling manager property in the sub-problems
 namespace Dumux {
 namespace Properties {
-NEW_PROP_TAG(CouplingManager);
 
 SET_PROP(TwoPSubTypeTag, CouplingManager)
 {

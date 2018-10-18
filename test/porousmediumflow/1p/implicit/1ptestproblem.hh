@@ -41,45 +41,56 @@
 #include <dumux/discretization/forchheimerslaw.hh>
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
+
 template <class TypeTag>
 class OnePTestProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(OnePTestTypeTag, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePTestBoxTypeTag, INHERITS_FROM(BoxModel, OnePTestTypeTag));
-NEW_TYPE_TAG(OnePTestCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePTestTypeTag));
-NEW_TYPE_TAG(OnePTestCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePTestTypeTag));
+namespace Properties {
 
-// the fluid system
-SET_PROP(OnePTestTypeTag, FluidSystem)
+// Create new type tags
+namespace TTag {
+struct OnePTest { using InheritsFrom = std::tuple<OneP>; };
+struct OnePTestBox { using InheritsFrom = std::tuple<OnePTest, BoxModel>; };
+struct OnePTestCCTpfa { using InheritsFrom = std::tuple<OnePTest, CCTpfaModel>; };
+struct OnePTestCCMpfa { using InheritsFrom = std::tuple<OnePTest, CCMpfaModel>; };
+} // end namespace TTag
+
+// Specialize the fluid system type for this type tag
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePTest>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
-// Set the grid type
-SET_TYPE_PROP(OnePTestTypeTag, Grid, Dune::YaspGrid<2>);
-//SET_TYPE_PROP(OnePTestTypeTag, Grid, Dune::UGGrid<2>);
-//SET_TYPE_PROP(OnePTestTypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+// Specialize the grid type for this type tag
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePTest>
+{ using type = Dune::YaspGrid<2>; };
 
-// Set the problem property
-SET_TYPE_PROP(OnePTestTypeTag, Problem, OnePTestProblem<TypeTag> );
+// Specialize the problem type for this type tag
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePTest>
+{ using type = OnePTestProblem<TypeTag>; };
 
-// Set the spatial parameters
-SET_PROP(OnePTestTypeTag, SpatialParams)
+// Specialize the spatial params type for this type tag
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePTest>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Scalar>;
     using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
 #ifdef FORCHHEIMER
-SET_TYPE_PROP(OnePTestTypeTag, AdvectionType, ForchheimersLaw<TypeTag>);
+// Specialize the advection type for this type tag
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::OnePTest>
+{ using type = ForchheimersLaw<TypeTag>; };
 #endif
-}
+
+} // end namespace Properties
 
 /*!
  * \ingroup OnePTests
@@ -106,21 +117,21 @@ template <class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum {
         // index of the primary variable
         pressureIdx = Indices::pressureIdx
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 

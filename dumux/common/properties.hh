@@ -29,6 +29,7 @@
 
 #ifndef DUMUX_PROPERTY_SYSTEM_HH
 #include <dumux/common/properties/propertysystem.hh>
+#include <dumux/common/properties/propertysystemmacros.hh> // remove this once all macros are gone
 #endif
 
 namespace Dumux {
@@ -194,6 +195,11 @@ NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure
 // Properties used by multidomain simulations
 /////////////////////////////////////////////////////////////
 NEW_PROP_TAG(CouplingManager);
+
+///////////////////////////////////////
+// Basic properties of sequential models:
+///////////////////////////////////////
+NEW_PROP_TAG(TimeManager);
 
 } // end namespace Properties
 } // end namespace Dumux
