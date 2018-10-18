@@ -391,8 +391,8 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
-            auto isEndIt = problem().gridView().template iend(element);
-            for (auto isIt = problem().gridView().template ibegin(element); isIt != isEndIt; ++isIt)
+            auto isEndIt = problem().gridView().iend(element);
+            for (auto isIt = problem().gridView().ibegin(element); isIt != isEndIt; ++isIt)
             {
                 const auto& intersection = *isIt;
 
@@ -827,20 +827,20 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     // nextIs points to next intersection
     auto nextIs = isIt;
     ++nextIs;
-    if (nextIs == problem().gridView().template iend(element))
-        nextIs = problem().gridView().template ibegin(element);
+    if (nextIs == problem().gridView().iend(element))
+        nextIs = problem().gridView().ibegin(element);
 
     // get last intersection : --intersection does not exist
     // paceingIt loops one IS bevore prevIs
-    auto prevIs = problem().gridView().template ibegin(element);
+    auto prevIs = problem().gridView().ibegin(element);
     auto paceingIt = prevIs;
-    for (++paceingIt; paceingIt != problem().gridView().template iend(element); ++paceingIt)
+    for (++paceingIt; paceingIt != problem().gridView().iend(element); ++paceingIt)
     {
         if (!paceingIt->neighbor())  // continue if no neighbor found
             ++prevIs;   // we investigate next paceingIt -> prevIs is also increased
         else if (paceingIt->outside() == intersection.outside())  // we already found prevIs
                 break;
-        else if (paceingIt == problem().gridView().template iend(element))
+        else if (paceingIt == problem().gridView().iend(element))
                 prevIs = paceingIt; // this could only happen if isIt is begin, so prevIs has to be last.
         else
             ++prevIs;   // we investigate next paceingIt -> prevIs is also increased
@@ -851,8 +851,8 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     auto face23 = isIt; // as long as face23 == intersection, it is still not found!
 
     // store other intersection for the other interaction region for the other half-edge
-    auto isEndIt = problem().gridView().template iend(neighbor);
-    for (auto isIt23 = problem().gridView().template ibegin(neighbor); isIt23 != isEndIt; ++isIt23)
+    auto isEndIt = problem().gridView().iend(neighbor);
+    for (auto isIt23 = problem().gridView().ibegin(neighbor); isIt23 != isEndIt; ++isIt23)
     {
         const auto& intersection23 = *isIt23;
 
@@ -1035,15 +1035,15 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         auto tempIntersection = face13;
         bool corner1245found = false;
         // ensure iterator increases over local end
-        if (tempIntersection == problem().gridView().template iend(element))
-            tempIntersection = problem().gridView().template ibegin(element);
+        if (tempIntersection == problem().gridView().iend(element))
+            tempIntersection = problem().gridView().ibegin(element);
         while (!corner1245found)
         {
             ++tempIntersection;
 
             // ensure iterator increases over local end
-            if (tempIntersection == problem().gridView().template iend(element))
-                tempIntersection = problem().gridView().template ibegin(element);
+            if (tempIntersection == problem().gridView().iend(element))
+                tempIntersection = problem().gridView().ibegin(element);
             // enshure we do not arrive at isIt
             if (tempIntersection == isIt)
                 continue;
@@ -1141,8 +1141,8 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
         ++tempIntersection;
 
         // ensure iterator increases over local end of neighbor J
-        if (tempIntersection== problem().gridView().template iend(intersection.outside()))
-            tempIntersection = problem().gridView().template ibegin(intersection.outside());
+        if (tempIntersection== problem().gridView().iend(intersection.outside()))
+            tempIntersection = problem().gridView().ibegin(intersection.outside());
 
         if(!tempIntersection->neighbor())
             continue;
