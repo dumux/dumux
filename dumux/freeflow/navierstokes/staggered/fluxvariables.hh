@@ -27,10 +27,9 @@
 #include <array>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-
-#include <dumux/freeflow/higherorderapproximation.hh>
 
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
@@ -210,7 +209,6 @@ public:
             // Check if the the velocity of the dof at interest lies up- or downstream w.r.t. to the transporting velocity.
             const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
 
-            Dumux::HigherOrderApproximation<Scalar> higherOrderApproximation;
             Scalar momentum = 0.0;
 
             // Variables that will store the velocities of interest:
@@ -225,17 +223,41 @@ public:
             // distances[2]: downstream staggered cell size
             std::array<Scalar, 3> distances{0.0, 0.0, 0.0};
 
+            const auto& highOrder = problem.higherOrderApproximation();
+
             // If I am not too near to the boundary I can use a second order approximation for the velocity.
             // In this frontal flux I use for the density always the value that I have on the scvf.
             if (canFrontalSecondOrder_(scvf, selfIsUpstream, velocities, distances, elemFaceVars[scvf]))
             {
-                // momentum = higherOrderApproximation.upwindQUICK(velocities[0], velocities[1], velocities[2], distances[0], distances[1], insideVolVars.density());
-                // momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], insideVolVars.density(), higherOrderApproximation.vanleer);
-                // momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream, insideVolVars.density(), higherOrderApproximation.vanleer);
-                momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], insideVolVars.density(), higherOrderApproximation.modifiedVanleer);
+                switch (highOrder.tvdApproach())
+                {
+                    case TvdApproach::uniform :
+                    {
+                        momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], insideVolVars.density());
+                        break;
+                    }
+                    case TvdApproach::li :
+                    {
+                        momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream, insideVolVars.density());
+                        break;
+                    }
+                    case TvdApproach::hou :
+                    {
+                        momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], insideVolVars.density());
+                        break;
+                    }
+                    default:
+                    {
+                        DUNE_THROW(ParameterException, "\nTvd approach " << static_cast<int>(highOrder.tvdApproach()) << " is not implemented.\n" <<
+                                    static_cast<int>(TvdApproach::uniform) << ": Uniform Tvd\n" <<
+                                    static_cast<int>(TvdApproach::li) << ": Li's approach\n" <<
+                                    static_cast<int>(TvdApproach::hou) << ": Hou's approach");
+                        break;
+                    }
+                }
             }
             else
-                momentum = higherOrderApproximation.upwind(velocities[0], velocities[1], insideVolVars.density());
+                momentum = highOrder.upwind(velocities[0], velocities[1], insideVolVars.density());
 
             // Account for the orientation of the staggered face's normal outer normal vector
             // (pointing in opposite direction of the scvf's one).
@@ -412,7 +434,6 @@ private:
         const auto& insideVolVars = elemVolVars[normalFace.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[normalFace.outsideScvIdx()];
 
-        Dumux::HigherOrderApproximation<Scalar> higherOrderApproximation;
         Scalar momentum = 0.0;
 
         // Variables that will store the velocities of interest:
@@ -427,16 +448,40 @@ private:
         // distances[2]: downstream staggered cell size
         std::array<Scalar, 3> distances{0.0, 0.0, 0.0};
 
+        const auto& highOrder = problem.higherOrderApproximation();
+
         // If I am not too near to the boundary I can use a second order approximation.
         if (canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx, velocities, distances, problem, element, faceVars, isDirichletPressure, isBJS))
         {
-            // momentum = higherOrderApproximation.upwindQUICK(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
-            // momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), higherOrderApproximation.vanleer);
-            // momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), higherOrderApproximation.vanleer);
-            momentum = higherOrderApproximation.TVD(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), higherOrderApproximation.modifiedVanleer);
+            switch (highOrder.tvdApproach())
+            {
+                case TvdApproach::uniform :
+                {
+                    momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+                    break;
+                }
+                case TvdApproach::li :
+                {
+                    momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+                    break;
+                }
+                case TvdApproach::hou :
+                {
+                    momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+                    break;
+                }
+                default:
+                {
+                    DUNE_THROW(ParameterException, "\nTvd approach " << static_cast<int>(highOrder.tvdApproach()) << " is not implemented.\n" <<
+                                static_cast<int>(TvdApproach::uniform) << ": Uniform Tvd\n" <<
+                                static_cast<int>(TvdApproach::li) << ": Li's approach\n" <<
+                                static_cast<int>(TvdApproach::hou) << ": Hou's approach");
+                    break;
+                }
+            }
         }
         else
-            momentum = higherOrderApproximation.upwind(velocities[0], velocities[1], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+            momentum = highOrder.upwind(velocities[0], velocities[1], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
 
         // Account for the orientation of the staggered normal face's outer normal vector
         // and its area (0.5 of the coinciding scfv).

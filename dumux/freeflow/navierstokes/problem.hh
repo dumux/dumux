@@ -28,6 +28,9 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/methods.hh>
+
+#include <dumux/freeflow/higherorderapproximation.hh>
+
 #include "model.hh"
 
 namespace Dumux {
@@ -95,8 +98,9 @@ public:
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
     NavierStokesProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, paramGroup)
-    , gravity_(0.0)
+    : ParentType(fvGridGeometry, paramGroup),
+      gravity_(0.0),
+      higherOrderApproximation_(paramGroup)
     {
         if (getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity"))
             gravity_[dim-1]  = -9.81;
@@ -235,6 +239,12 @@ public:
         return velocitySelf / (alpha / sqrt(K) * scvf.cellCenteredParallelDistance(localSubFaceIdx,0) + 1.0);
     }
 
+    //! Return the HigherOrderApproximation
+    const HigherOrderApproximation<Scalar>& higherOrderApproximation() const
+    {
+        return higherOrderApproximation_;
+    }
+
 private:
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
@@ -246,6 +256,8 @@ private:
     { return *static_cast<const Implementation *>(this); }
 
     GravityVector gravity_;
+
+    HigherOrderApproximation<Scalar> higherOrderApproximation_;
 };
 
 } // end namespace Dumux

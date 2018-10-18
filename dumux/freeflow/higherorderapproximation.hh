@@ -26,8 +26,31 @@
 #include <cmath>
 #include <functional>
 #include <iostream>
+#include <string>
+
+#include <dumux/common/exceptions.hh>
 
 namespace Dumux {
+
+//! \brief Available Tvd approaches
+enum class TvdApproach
+{
+    uniform = 1,
+    li      = 2,
+    hou     = 3
+};
+
+//! \biraf Available differencing schemes
+enum class DifferencingScheme
+{
+    vanleer   = 1,
+    vanalbada = 2,
+    minmod    = 3,
+    superbee  = 4,
+    umist     = 5,
+    mclimiter = 6,
+    wahyd     = 7
+};
 
 /**
   * \brief This file contains different higher order methods for approximating the velocity.
@@ -36,6 +59,60 @@ template<class Scalar>
 class HigherOrderApproximation
 {
 public:
+    HigherOrderApproximation(const std::string& paramGroup = "")
+    {
+        tvdApproach_ = static_cast<TvdApproach>(getParamFromGroup<int>(paramGroup, "Discretization.TvdApproach", 1));
+        differencingScheme_ = static_cast<DifferencingScheme>(getParamFromGroup<int>(paramGroup, "Discretization.DifferencingScheme", 1));
+
+        switch (differencingScheme_)
+        {
+            case DifferencingScheme::vanleer :
+            {
+                limiter_ = this->vanleer;
+                break;
+            }
+            case DifferencingScheme::vanalbada :
+            {
+                if (tvdApproach_ == TvdApproach::hou)
+                    DUNE_THROW(ParameterException, "\nDifferencing scheme " << static_cast<int>(DifferencingScheme::vanalbada) <<
+                        " (Van Albada) is not implemented for the Tvd approach " << static_cast<int>(TvdApproach::hou) <<" (Hou).");
+                limiter_ = this->vanalbada;
+                break;
+            }
+            case DifferencingScheme::minmod :
+            {
+                limiter_ = this->minmod;
+                break;
+            }
+            case DifferencingScheme::superbee :
+            {
+                limiter_ = this->superbee;
+                break;
+            }
+            case DifferencingScheme::umist :
+            {
+                limiter_ = this->umist;
+                break;
+            }
+            case DifferencingScheme::mclimiter :
+            {
+                limiter_ = this->mclimiter;
+                break;
+            }
+            case DifferencingScheme::wahyd :
+            {
+                limiter_ = this->wahyd;
+                break;
+            }
+            default:
+            {
+                DUNE_THROW(ParameterException, "\nDifferencing scheme " << static_cast<int>(differencingScheme_) <<
+                    " is not implemented.\n");
+                break;
+            }
+        }
+    }
+
     /**
       * \brief Upwind Method
       */
@@ -89,42 +166,39 @@ public:
     }
 
     /**
-      * \brief TVD Scheme: Total Variation Diminuishing
+      * \brief Tvd Scheme: Total Variation Diminuishing
       */
-    Scalar TVD(const Scalar downstreamVelocity,
+    Scalar tvd(const Scalar downstreamVelocity,
                const Scalar upstreamVelocity,
                const Scalar upUpstreamVelocity,
-               const Scalar density,
-               const std::function<Scalar(const Scalar)>& limiter) const
+               const Scalar density) const
     {
         const Scalar ratio = (upstreamVelocity - upUpstreamVelocity) / (downstreamVelocity - upstreamVelocity);
 
         // If the velocity field is uniform (like at the first newton step) we get a NaN
         if(ratio > 0.0 && std::isfinite(ratio))
         {
-            const Scalar secondOrderTerm = 0.5 * limiter(ratio) * (downstreamVelocity - upstreamVelocity);
+            const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (downstreamVelocity - upstreamVelocity);
             return density * (upstreamVelocity + secondOrderTerm);
         }
-
         else
             return density * upstreamVelocity;
     }
 
     /**
-      * \brief TVD Scheme: Total Variation Diminuishing
+      * \brief Tvd Scheme: Total Variation Diminuishing
       *
       * This functions manages the non uniformities of the grid according to [Li, Liao 2007].
       * It tries to reconstruct the value for the velocity at the upstream-upstream point
       * if the grid was uniform.
       */
-    Scalar TVD(const Scalar downstreamVelocity,
+    Scalar tvd(const Scalar downstreamVelocity,
                const Scalar upstreamVelocity,
                const Scalar upUpstreamVelocity,
                const Scalar upstreamToDownstreamDistance,
                const Scalar upUpstreamToUpstreamDistance,
                const bool selfIsUpstream,
-               const Scalar density,
-               const std::function<Scalar(const Scalar)>& limiter) const
+               const Scalar density) const
     {
         // I need the information of selfIsUpstream to get the correct sign because upUpstreamToUpstreamDistance is always positive
         const Scalar upUpstreamGradient = (upstreamVelocity - upUpstreamVelocity) / upUpstreamToUpstreamDistance * selfIsUpstream;
@@ -137,28 +211,26 @@ public:
         // If the velocity field is uniform (like at the first newton step) we get a NaN
         if(ratio > 0 && std::isfinite(ratio))
         {
-            const Scalar secondOrderTerm = 0.5 * limiter(ratio) * (downstreamVelocity - upstreamVelocity);
+            const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (downstreamVelocity - upstreamVelocity);
             return density * (upstreamVelocity + secondOrderTerm);
         }
-
         else
             return density * upstreamVelocity;
     }
 
     /**
-     * \brief TVD Scheme: Total Variation Diminuishing
+     * \brief Tvd Scheme: Total Variation Diminuishing
      *
      * This functions manages the non uniformities of the grid according to [Hou, Simons, Hinkelmann 2007].
      * It should behave better then the Li's version in very stretched grids.
      */
-    Scalar TVD(const Scalar downstreamVelocity,
+    Scalar tvd(const Scalar downstreamVelocity,
                const Scalar upstreamVelocity,
                const Scalar upUpstreamVelocity,
                const Scalar upstreamToDownstreamDistance,
                const Scalar upUpstreamToUpstreamDistance,
                const Scalar downstreamStaggeredCellSize,
-               const Scalar density,
-               const std::function<Scalar(const Scalar, const Scalar)>& limiter) const
+               const Scalar density) const
     {
         const Scalar ratio = (upstreamVelocity - upUpstreamVelocity) / (downstreamVelocity - upstreamVelocity)
                            * upstreamToDownstreamDistance / upUpstreamToUpstreamDistance;
@@ -167,8 +239,8 @@ public:
         if(ratio > 0.0 && std::isfinite(ratio))
         {
             const Scalar upstreamStaggeredCellSize = 0.5 * (upstreamToDownstreamDistance + upUpstreamToUpstreamDistance);
-            const Scalar Rfactor = (upstreamStaggeredCellSize + downstreamStaggeredCellSize) / upstreamStaggeredCellSize;
-            const Scalar secondOrderTerm = limiter(ratio, Rfactor) / Rfactor * (downstreamVelocity - upstreamVelocity);
+            const Scalar R = (upstreamStaggeredCellSize + downstreamStaggeredCellSize) / upstreamStaggeredCellSize;
+            const Scalar secondOrderTerm = limiter_(ratio, R) / R * (downstreamVelocity - upstreamVelocity);
             return density * (upstreamVelocity + secondOrderTerm);
         }
         else
@@ -177,16 +249,18 @@ public:
 
     /**
       * \brief Van Leer flux limiter function [Van Leer 1974]
+      *
+      * With R != 2 is the modified Van Leer flux limiter function [Hou, Simons, Hinkelmann 2007]
       */
-    static Scalar vanleer(const Scalar r)
+    static Scalar vanleer(const Scalar r, const Scalar R)
     {
-        return 2.0 * r / (1.0 + r);
+        return R * r / (R - 1.0 + r);
     }
 
     /**
       * \brief Van Albada flux limiter function [Van Albada et al. 1982]
       */
-    static Scalar vanalbada(const Scalar r)
+    static Scalar vanalbada(const Scalar r, const Scalar R)
     {
         return r * (r + 1.0) / (1.0 + r * r);
     }
@@ -194,60 +268,63 @@ public:
     /**
       * \brief MinMod flux limiter function [Roe 1985]
       */
-    static Scalar minmod(const Scalar r)
+    static Scalar minmod(const Scalar r, const Scalar R)
     {
         return std::min(r, 1.0);
     }
 
     /**
       * \brief SUPERBEE flux limiter function [Roe 1985]
+      *
+      * With R != 2 is the modified SUPERBEE flux limiter function [Hou, Simons, Hinkelmann 2007]
       */
-    static Scalar superbee(const Scalar r)
+    static Scalar superbee(const Scalar r, const Scalar R)
     {
-        return std::max(std::min(2.0 * r, 1.0), std::min(r, 2.0));
+        return std::max(std::min(R * r, 1.0), std::min(r, R));
     }
 
     /**
       * \brief UMIST flux limiter function [Lien and Leschziner 1993]
       */
-    static Scalar umist(const Scalar r)
+    static Scalar umist(const Scalar r, const Scalar R)
     {
-        return std::min({2.0 * r, (1.0 + 3.0 * r) / 4.0, (3.0 + r) / 4.0, 2.0});
+        return std::min({R * r, (r * (5.0 - R) + R - 1.0) / 4.0, (r * (R - 1.0) + 5.0 - R) / 4.0, R});
     }
 
     /*
      * \brief Monotonized-Central limiter [Van Leer 1977]
      */
-    static Scalar mclimiter(const Scalar r)
+    static Scalar mclimiter(const Scalar r, const Scalar R)
     {
-        return std::min({2.0 * r, (r + 1.0) / 2.0, 2.0});
-    }
-
-    /**
-      * \brief Modified Van Leer flux limiter function [Hou, Simons, Hinkelmann 2007]
-      */
-    static Scalar modifiedVanleer(const Scalar r, const Scalar Rfactor)
-    {
-        return Rfactor * r / (Rfactor - 1.0 + r);
-    }
-
-    /**
-      * \brief Modified SUPERBEE flux limiter function [Hou, Simons, Hinkelmann 2007]
-      */
-    static Scalar modifiedSuperbee(const Scalar r, const Scalar Rfactor)
-    {
-        return std::max(std::min(Rfactor * r, 1.0), std::min(r, Rfactor));
+        return std::min({R * r, (r + 1.0) / 2.0, R});
     }
 
     /**
       * \brief WAHYD Scheme [Hou, Simons, Hinkelmann 2007];
       */
-    static Scalar wahyd(const Scalar r, const Scalar Rfactor)
+    static Scalar wahyd(const Scalar r, const Scalar R)
     {
-        return r > 1 ? std::min((r + Rfactor * r * r) / (Rfactor + r * r), Rfactor)
-                     : modifiedVanleer(r, Rfactor);
+        return r > 1 ? std::min((r + R * r * r) / (R + r * r), R)
+                     : vanleer(r, R);
     }
 
+    //! Returns the Tvd approach
+    const TvdApproach& tvdApproach() const
+    {
+        return tvdApproach_;
+    }
+
+    //! Returns the differencing scheme
+    const DifferencingScheme& differencingScheme() const
+    {
+        return differencingScheme_;
+    }
+
+private:
+    TvdApproach tvdApproach_;
+    DifferencingScheme differencingScheme_;
+
+    std::function<Scalar(const Scalar, const Scalar)> limiter_;
 };
 
 } // end namespace Dumux
