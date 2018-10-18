@@ -49,6 +49,28 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
       - _Boundary:_ coupling across sub-domain boundaries
       - _Embedded:_ Coupling between a bulk domain and an embedded lower-dimensional sub-domain which has an independent grid
       - _Facet:_ Coupling betweeen a bulk domain and a codimension-one sub-domain, which is conforming with the element facets of the bulk domain
+    - __Property system:__ The property system is now usable without preprocessor macros. To this end it was completely reimplemented using C++14 techniques and
+      variadic templates. The hierarchies can now be arbitrarily deep instead of being limited to 5 levels. The new implementation does not use
+      C++ inheritance. Properties and TypeTag now have to be properly qualified with the namespaces `Properties::`, `TTag::`. Types that share the
+      name with properties have to properly qualified with the `Dumux::` namespace. This update makes it hopefully more readable
+      and removes the "magic" part from the property system.
+    - __TypeTag templates:__ Implementers of code in DuMuX 3.0 are advised to avoid TypeTag as a template argument for class templates.
+      Many classes in the DuMuX core have been changed to have a small number of specific template arguments, including `GridGeometry`,
+      `TimeLoop`, `Newton`, `LinearSolver`, `SpatialParams`. This makes it possible to share objects of these types between models using
+      different TypeTags. This was not possible before as `Class<TypeTag1>` and `Class<TypeTag2>` are different types, even if they contain
+      exactly the implementation code otherwise.
+      Furthermore, having TypeTag as a template argument leads to bad programming, and unnecessary dependencies that should be avoided in
+      every object-oriented code.
+    - __Components:__ Components can now derive from different base classes, `Base`, `Liquid`, `Solid`, `Gas`, depending on which
+      phase states are implemented. This can be used to determine at compile time if a component support a certain phase state.
+    - __Solid systems:__ DuMuX 3.0 introduces solid systems similar to fluid systems but for solid components. This allows a consistent
+      implementation of mineralization models including reactions, dissolution, precipitation and other processes altering the solid
+      phase of the porous medium.
+    - __Tabulation of fluid parameter laws:__ The tabulation of fluid parameter laws has been improved to only tabulate those functions actually used during the
+      simulation. To this end, the tabulation is done on the first call of certain fluid parameter.
+    - __Assembly__: The assembler can now assemble implicit and explicit Euler time discretizations. An interface for implementing analytical Jacobians was added.
+      The CCTpfa assembler has been significantly improved for complex models that spend a lot of time computing constitutive laws. Also the numerical
+      differentiation scheme was improved by altering the order in which derivatives are computed.
 
 * __IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:__
     - The `GridCreator` has been replaced by the `GridManager`, which no longer uses a singleton for the grid object.
