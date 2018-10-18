@@ -71,6 +71,9 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
     - __Assembly__: The assembler can now assemble implicit and explicit Euler time discretizations. An interface for implementing analytical Jacobians was added.
       The CCTpfa assembler has been significantly improved for complex models that spend a lot of time computing constitutive laws. Also the numerical
       differentiation scheme was improved by altering the order in which derivatives are computed.
+    - __Solution-dependent spatial params:__ A redesign of the spatial params interface allows now to define spatial parameters such as permeability
+      and porosity that depend on the solution. This makes it easier to implement mineralization models altering the solid structure of the porous medium.
+    - __Different wettability:__ The 2p models can now model materials with different wettability (hydrophobic, hydrophilic) in different parts of the domain.
 
 * __IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:__
     - The `GridCreator` has been replaced by the `GridManager`, which no longer uses a singleton for the grid object.
