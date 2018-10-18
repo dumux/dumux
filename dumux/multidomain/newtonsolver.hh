@@ -49,7 +49,7 @@ class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Reas
 public:
 
     /*!
-     * \brief Constructor for stationary problems
+     * \brief The constructor
      */
     MultiDomainNewtonSolver(std::shared_ptr<Assembler> assembler,
                             std::shared_ptr<LinearSolver> linearSolver,
@@ -59,20 +59,6 @@ public:
     : ParentType(assembler, linearSolver, comm, paramGroup)
     , couplingManager_(couplingManager)
     {}
-
-    /*!
-     * \brief Constructor for instationary problems
-     */
-    MultiDomainNewtonSolver(std::shared_ptr<Assembler> assembler,
-                            std::shared_ptr<LinearSolver> linearSolver,
-                            std::shared_ptr<CouplingManager> couplingManager,
-                            std::shared_ptr<TimeLoop<Scalar>> timeLoop,
-                            const Comm& comm = Dune::MPIHelper::getCollectiveCommunication(),
-                            const std::string& paramGroup = "")
-    : ParentType(assembler, linearSolver, timeLoop, comm, paramGroup)
-    , couplingManager_(couplingManager)
-    {}
-
 
     /*!
      * \brief Indicates the beginning of a Newton iteration.
