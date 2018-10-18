@@ -13,7 +13,10 @@ EpisodeLength = 86400  # [s] # these values are hit in the output
 #Cells = 4 4 4
 Refine = 0
 <<<<<<< Updated upstream
-File = ./Lu2D.msh
+#File = ./Lu2D.msh  #very coarse mesh cube
+File = ./Lu2Dfine.msh  #fine cube msh
+
+
 
 
 [Injection]

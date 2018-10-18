@@ -442,7 +442,7 @@ public:
      */
     std::string name() const
     {
-        return "el2p";
+        return "el2p-FineMesh";
     }
 
     /*!
