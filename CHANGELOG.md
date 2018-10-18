@@ -38,6 +38,9 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
       (e.g. `GridGeometry`) and the `Element` object (e.g. `ElementGeometry`) are mere accessor objects, or, data will be partly only cached locally.
       The local caching uses less memory but might result in a more runtime, the grid caching is memory intensive
       but can provide a significant run-time speedup. Choose whatever concept fits your available resources.
+    - __MPFA schemes:__ The new design of the DuMux core facilitates the incorporation of new finite-volume schemes. In particular, the new core comes with
+      a framework for MPFA schemes, in which currently the only available scheme is the MPFA-O scheme. It can be used in conjunction with any DuMux model and
+      also works on surface grids. More schemes will be added in the future.
     - __Multidomain:__ DuMux 3.0 introduces a new multidomain framework which does no longer depend on `dune-multidomain` and can be used for the coupling
       of an arbitrary number of subdomains. The sub-domains can be regions in which a different set of equations are solved and/or which have different
       dimensionalities. The implementation is such that any of the existing DuMux models can be used in the subdomains, while the data and functionality
