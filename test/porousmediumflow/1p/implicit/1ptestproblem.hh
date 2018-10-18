@@ -50,15 +50,15 @@ namespace Properties {
 
 // Create new type tags
 namespace TTag {
-struct OnePTestTypeTag { using InheritsFrom = std::tuple<OneP>; };
-struct OnePTestBoxTypeTag { using InheritsFrom = std::tuple<OnePTestTypeTag, BoxModel>; };
-struct OnePTestCCTpfaTypeTag { using InheritsFrom = std::tuple<OnePTestTypeTag, CCTpfaModel>; };
-struct OnePTestCCMpfaTypeTag { using InheritsFrom = std::tuple<OnePTestTypeTag, CCMpfaModel>; };
+struct OnePTest { using InheritsFrom = std::tuple<OneP>; };
+struct OnePTestBox { using InheritsFrom = std::tuple<OnePTest, BoxModel>; };
+struct OnePTestCCTpfa { using InheritsFrom = std::tuple<OnePTest, CCTpfaModel>; };
+struct OnePTestCCMpfa { using InheritsFrom = std::tuple<OnePTest, CCMpfaModel>; };
 } // end namespace TTag
 
 // Specialize the fluid system type for this type tag
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePTestTypeTag>
+struct FluidSystem<TypeTag, TTag::OnePTest>
 {
     using Scalar = GetPropType<TypeTag, Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
@@ -66,17 +66,17 @@ struct FluidSystem<TypeTag, TTag::OnePTestTypeTag>
 
 // Specialize the grid type for this type tag
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePTestTypeTag>
+struct Grid<TypeTag, TTag::OnePTest>
 { using type = Dune::YaspGrid<2>; };
 
 // Specialize the problem type for this type tag
 template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePTestTypeTag>
+struct Problem<TypeTag, TTag::OnePTest>
 { using type = OnePTestProblem<TypeTag>; };
 
 // Specialize the spatial params type for this type tag
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePTestTypeTag>
+struct SpatialParams<TypeTag, TTag::OnePTest>
 {
     using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Scalar>;
@@ -86,7 +86,7 @@ struct SpatialParams<TypeTag, TTag::OnePTestTypeTag>
 #ifdef FORCHHEIMER
 // Specialize the advection type for this type tag
 template<class TypeTag>
-struct AdvectionType<TypeTag, TTag::OnePTestTypeTag>
+struct AdvectionType<TypeTag, TTag::OnePTest>
 { using type = ForchheimersLaw<TypeTag>; };
 #endif
 
