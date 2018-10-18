@@ -49,6 +49,10 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
       - _Boundary:_ coupling across sub-domain boundaries
       - _Embedded:_ Coupling between a bulk domain and an embedded lower-dimensional sub-domain which has an independent grid
       - _Facet:_ Coupling betweeen a bulk domain and a codimension-one sub-domain, which is conforming with the element facets of the bulk domain
+    - __Runtime parameters:__ Runtime parameters are no longer accessed with preprocessor macros. They have been replaced by C++ function templates
+      `Dumux::getParam`, `Dumux::haveParam`, `Dumux::getParamFromGroup`. The `..FromGroup` version has been redesigned to allow the specification
+      of parameters for different models in one input file. The concept of a parameter group string was extended to make it possible to
+      use a single input file for complex multidomain simulation setups.
     - __Property system:__ The property system is now usable without preprocessor macros. To this end it was completely reimplemented using C++14 techniques and
       variadic templates. The hierarchies can now be arbitrarily deep instead of being limited to 5 levels. The new implementation does not use
       C++ inheritance. Properties and TypeTag now have to be properly qualified with the namespaces `Properties::`, `TTag::`. Types that share the
