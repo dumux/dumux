@@ -113,20 +113,20 @@ struct GetPropImpl
 };
 
 } // end namespace Detail
+} // end namespace Property
 
 //! get the type of a property (equivalent to old macro GET_PROP(...))
 template<class TypeTag, template<class,class> class Property>
-using GetProp = typename Detail::GetPropImpl<TypeTag, Property>::type;
+using GetProp = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type;
 
 //! get the type alias defined in the property (equivalent to old macro GET_PROP_TYPE(...))
 template<class TypeTag, template<class,class> class Property>
-using GetPropType = typename Detail::GetPropImpl<TypeTag, Property>::type::type;
+using GetPropType = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type::type;
 
 //! get the value data member of a property (C++17 only, equivalent to old macro GET_PROP_VALUE(...))
 // template<class TypeTag, template<class,class> class Property>
 // constexpr auto getPropValue = Detail::GetPropImpl<TypeTag, Property>::type::value;
 
-} // end namespace Property
 } // end namespace Dumux
 
 #endif

@@ -117,21 +117,21 @@ template <class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = Properties::GetPropType<TypeTag, Properties::GridView>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Scalar = Properties::GetPropType<TypeTag, Properties::Scalar>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     // copy some indices for convenience
-    using Indices = typename Properties::GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum {
         // index of the primary variable
         pressureIdx = Indices::pressureIdx
     };
 
-    using PrimaryVariables = Properties::GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = Properties::GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = Properties::GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
