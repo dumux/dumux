@@ -38,6 +38,14 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
       (e.g. `GridGeometry`) and the `Element` object (e.g. `ElementGeometry`) are mere accessor objects, or, data will be partly only cached locally.
       The local caching uses less memory but might result in a more runtime, the grid caching is memory intensive
       but can provide a significant run-time speedup. Choose whatever concept fits your available resources.
+    - __Multidomain:__ DuMux 3.0 introduces a new multidomain framework which does no longer depend on `dune-multidomain` and can be used for the coupling
+      of an arbitrary number of subdomains. The sub-domains can be regions in which a different set of equations are solved and/or which have different
+      dimensionalities. The implementation is such that any of the existing DuMux models can be used in the subdomains, while the data and functionality
+      required for the coupling of the sub-domains is implemented in a `CouplingManger` class. Three different coupling concepts are available, for which
+      there are a number of available `CouplingManager` class implementations:
+      - _Boundary:_ coupling across sub-domain boundaries
+      - _Embedded:_ Coupling between a bulk domain and an embedded lower-dimensional sub-domain which has an independent grid
+      - _Facet:_ Coupling betweeen a bulk domain and a codimension-one sub-domain, which is conforming with the element facets of the bulk domain
 
 * __IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:__
     - The `GridCreator` has been replaced by the `GridManager`, which no longer uses a singleton for the grid object.
