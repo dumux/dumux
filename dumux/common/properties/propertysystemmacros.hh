@@ -235,7 +235,7 @@ struct GetTypeTagInheritance<std::tuple<FirstTypeTag, OtherTypeTags...>>
     template <class TypeTag>                                    \
     struct PropTagName<TypeTag, TTAG(EffTypeTagName)>     \
     {                                                           \
-        using Scalar = GetPropType<TypeTag, Scalar>;            \
+        using Scalar = Dumux::GetPropType<TypeTag, Scalar>;            \
     public:                                                             \
         using type = Scalar;                                            \
         static const Scalar value;                                      \
