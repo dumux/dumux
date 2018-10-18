@@ -103,6 +103,8 @@ SET_SCALAR_PROP(TwoP_TestProblem, NewtonMaxRelativeShift, 1e-5);
 SET_BOOL_PROP(TwoP_TestProblem, NewtonUseLineSearch, true);
 // SET_BOOL_PROP(TwoP_TestProblem, NewtonUseDampedUpdate, true);
 SET_INT_PROP(TwoP_TestProblem, NewtonMaxSteps, 30);
+// SET_SCALAR_PROP(El2P_TestProblem, NewtonUseLineSearch, true);
+
 
 SET_BOOL_PROP(TwoP_TestProblem, EvalGradientsAtSCVCenter, true);
 
@@ -328,7 +330,7 @@ public:
           return 0;
       else if (globalPos[0]>6.3+eps_ && globalPos[0]<23.6+eps_)
           return (-10.-0.)/(23.6-6.3)*(globalPos[0])+ 3.64 +eps_;
-      else if (globalPos[0]>23.6-eps_)
+      else if (globalPos[0]>23.6+eps_)
           return -10;
     }
 
@@ -395,7 +397,7 @@ public:
      */
     const char *name() const
     {
-        return "2pproblem";
+        return "2pproblem.FineMesh";
     }
 
     /*!
@@ -509,9 +511,9 @@ public:
         values = 0.0;
         GlobalPosition globalPos = fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
 
-        Scalar avgRain_ = 3.7E-8; //GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameter.avgRain);//[m/s]
+        Scalar avgRain_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.avgRain);//[m/s]
         Scalar rb_ = 2.0E-4; //[1/s] =K/B conductance
-        Scalar ks_ = 1.39e-6;
+        Scalar ks_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.ks);//1.39e-6;
 
         const Scalar pW = elemVolVars[scvIdx].pressure(pressureIdx);
         const Scalar pN = elemVolVars[scvIdx].pressure(nPhaseIdx);
@@ -523,13 +525,13 @@ public:
                if (satW > 1. -eps_){
                    //std::cout << "saturation above 1 \n" ;
                     values[contiWEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
-                    if (pN>1.e5) values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
+                    if (pN>1.e5) values[contiNEqIdx] = satN * (pN - 1.e5) * rb_;
                }
                 else {
                    //std::cout << "saturation below 1, infiltration \n" ;
                     values[contiWEqIdx] = -avgRain_*1000.;
                     if (pN>1.e5) {
-                    values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
+                    values[contiNEqIdx] = satN * (pN - 1.e5) * rb_;
                     }
                 }
         }
@@ -563,8 +565,8 @@ public:
             Scalar n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.n);
             Scalar m_ = 1.0 - (1.0 / n_);
             Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.alpha);
-          const Scalar meterUeberGW = globalPos[1] +15;
-          const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
+          const Scalar meterUeberGW_ = globalPos[1] +15;
+          const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW_);
 //        const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));// use the numerical solution for Pc
            const Scalar sw = std::min(1.0-snr, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam use the analytical solution for sw
 

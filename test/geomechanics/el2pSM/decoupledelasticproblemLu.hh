@@ -96,7 +96,7 @@ public:
 
 SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxRelativeShift, 1e-6);
 SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxSteps, 30);
-// SET_SCALAR_PROP(El2P_TestProblem, NewtonUseLineSearch, true);
+//  SET_SCALAR_PROP(El2P_TestProblem, NewtonUseLineSearch, true);
 
 // use the algebraic multigrid
 SET_TYPE_PROP(El2P_TestProblem, LinearSolver, El2PAMGBackend<TypeTag>);
@@ -233,7 +233,7 @@ public:
           return 0;
       else if (globalPos[0]>6.3+eps_ && globalPos[0]<23.6+eps_)
           return (-10.-0.)/(23.6-6.3)*(globalPos[0])+ 3.64 +eps_;
-      else if (globalPos[0]>23.6-eps_)
+      else if (globalPos[0]>23.6+eps_)
           return -10;
     }
 
@@ -333,10 +333,18 @@ public:
 
           //const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));// khodam: numerical solution
 
-//           const Scalar sw = pow(pow(alpha_*pc, n_) + 1, -m_);//Khodam: numerical solution from vanGenuchten.hh
-          const Scalar sw = std::min(1.0-snr, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam: use the numerical solution for sw
+          const Scalar sw = pow(pow(alpha_*pc, n_) + 1, -m_);//Khodam: numerical solution from vanGenuchten.hh
+//           const Scalar sw = std::min(1.0-snr, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam: use the numerical solution for sw
+
 
       // initial total stress field here assumed to be isotropic, lithostatic
+     //Asked Martin: Pref_ shouldnt be added because this is just stress and Pref is considered in Peff later on.
+
+
+//         Scalar nu_ = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.nu);
+//         Scalar k0_ = nu_ / (1 - nu_);//khodam sigma h/sigma v = nu/(1-nu) and nu shouldnt be more than 0.5
+
+//        stress[0] = k0_ * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
 
        stress[0] = 0.5 * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
 
@@ -390,7 +398,7 @@ public:
      */
     const char *name() const
     {
-        return "el2pRutqvist";
+        return "el2pRutqvist.FineMesh";
     }
 
     /*!
@@ -506,14 +514,6 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
             }
           }
 
-          if (leftBoundaryO_(globalPos)|| rightBoundaryO_(globalPos)){
-            values.setDirichlet(momentumXEqIdx);//this part is aplied all the time
-            //values.setDirichlet(momentumYEqIdx);
-            if (initializationRun_ == true)
-            {
-                values.setDirichlet(momentumYEqIdx);
-            }
-          }
 
         if (leftBoundaryU_(globalPos)){
             values.setDirichlet(momentumXEqIdx);//this part is aplied all the time
@@ -533,14 +533,20 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
             }
          }
 
-        if (onLowerBoundary_(globalPos)){
+//         if (onLowerBoundary_(globalPos)){
+//
+//              values.setDirichlet(momentumYEqIdx);
+//
+//             if(initializationRun_ == true)
+//             {
+//                 values.setDirichlet(momentumXEqIdx);
+//            }
+//         }
+        if (onLowerBoundary_(globalPos)){ //fixed boundary
 
-             values.setDirichlet(momentumYEqIdx);
+             values.setDirichlet(uyIdx);
+             values.setDirichlet(uxIdx);
 
-            if(initializationRun_ == true)
-            {
-                values.setDirichlet(momentumXEqIdx);
-           }
         }
      }
 

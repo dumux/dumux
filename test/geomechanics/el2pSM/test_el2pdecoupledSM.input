@@ -1,8 +1,8 @@
 [TimeManager]
-TInitEnd =0.01#      [s]
-TEnd =  12960000#     [s]
+TInitEnd =0.01  # [s]
+TEnd =  12960000   #  [s]
 DtInitial = 0.01 #   [s]
-EpisodeLengthInit =  0.001 #  [s]
+EpisodeLengthInit =  0.005 #  [s]
 EpisodeLengthMainSimulation =  86400 # [s]
 NumIterationsInit = 1
 NumIterations = 1
@@ -17,7 +17,9 @@ FirstEvalOriginalRhsIteration = 100
 
 [Grid]
 Refine = 0
-File = ./grids/Lu2D.msh
+#File = ./grids/Lu2D.msh  #very coarse mesh cube
+File = ./Lu2Dfine.msh    #fine cube msh
+
 
 [Damping]
 DampingFactor = 0.50
@@ -58,6 +60,7 @@ BrineDensity = 1000
 
 [ElasticParameters]
 E = 1.0e7
+#E = 3.0e8
 nu = 0.33
 PoreComp = 3.0e-9
 
@@ -68,7 +71,7 @@ ks = 1.39e-6 #Hydraulic conductivity[m/s]
 avgRain = 3.7E-8 #[m/s] 400 mm in 150d
 
 Phi   = 0.46     # porosity
-swr = 0  # Residual water content
+swr =0  # Residual water content
 snr = 0
 n = 1.37 
 alpha = 0.000163196 # [1/m] to [1/pa] = 1.6/9804.139432
