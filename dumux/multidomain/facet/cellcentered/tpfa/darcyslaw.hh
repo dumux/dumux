@@ -42,7 +42,7 @@
 namespace Dumux {
 
 //! Forward declaration of the implementation
-template<class TypeTag, bool isNetwork>
+template<class ScalarType, class FVGridGeometry, bool isNetwork>
 class CCTpfaFacetCouplingDarcysLawImpl;
 
 /*!
@@ -64,8 +64,10 @@ class CCTpfaFacetCouplingDarcysLawCache;
  */
 template<class TypeTag>
 using CCTpfaFacetCouplingDarcysLaw =
-      CCTpfaFacetCouplingDarcysLawImpl< TypeTag, ( int(GET_PROP_TYPE(TypeTag, GridView)::dimension) <
-                                                   int(GET_PROP_TYPE(TypeTag, GridView)::dimensionworld) ) >;
+      CCTpfaFacetCouplingDarcysLawImpl< typename GET_PROP_TYPE(TypeTag, Scalar),
+                                        typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                        ( int(GET_PROP_TYPE(TypeTag, GridView)::dimension) <
+                                          int(GET_PROP_TYPE(TypeTag, GridView)::dimensionworld) ) >;
 
 /*!
  * \ingroup MultiDomain
@@ -129,20 +131,12 @@ private:
  * \ingroup FacetCoupling
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
  */
-template<class TypeTag>
-class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
+template<class ScalarType, class FVGridGeometry>
+class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/false>
 {
-    using ThisType = CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>;
-    using TpfaDarcysLaw = DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
+    using ThisType = CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, false>;
+    using TpfaDarcysLaw = CCTpfaDarcysLaw<ScalarType, FVGridGeometry, false>;
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using ScalarType = typename GridVariables::Scalar;
-    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
-    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-    using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
-    using FluxVariablesCache = typename ElementFluxVarsCache::FluxVariablesCache;
-
-    using FVGridGeometry = typename GridVariables::GridGeometry;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
@@ -153,7 +147,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
     using IndexType = typename GridView::IndexSet::IndexType;
 
     //! Compute the transmissibility associated with the facet element
-    template<class FacetVolVars>
+    template<class VolumeVariables, class FacetVolVars>
     static ScalarType computeFacetTransmissibility_(const VolumeVariables& insideVolVars,
                                                     const FacetVolVars& facetVolVars,
                                                     const SubControlVolumeFace& scvf)
@@ -175,7 +169,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
 
 
     //! Compute the advective flux
-    template< class Problem >
+    template< class Problem, class ElementVolumeVariables, class ElementFluxVarsCache >
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -233,7 +227,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
 
     // The flux variables cache has to be bound to an element prior to flux calculations
     // During the binding, the transmissibility will be computed and stored using the method below.
-    template< class Problem >
+    template< class Problem, class ElementVolumeVariables >
     static TijContainer calculateTransmissibility(const Problem& problem,
                                                   const Element& element,
                                                   const FVElementGeometry& fvGeometry,
@@ -244,11 +238,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
         if (!problem.couplingManager().isCoupled(element, scvf))
         {
             //! use the standard darcy's law and only compute one transmissibility
-            tij[FluxVariablesCache::insideTijIdx] = TpfaDarcysLaw::calculateTransmissibility(problem,
-                                                                                             element,
-                                                                                             fvGeometry,
-                                                                                             elemVolVars,
-                                                                                             scvf);
+            tij[Cache::insideTijIdx] = TpfaDarcysLaw::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
             return tij;
         }
 
@@ -306,23 +296,23 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
 
                 // tij = C(A^-1)B
                 const Scalar detA = A[0][0]*A[1][1] - A[1][0]*A[0][1];
-                tij[FluxVariablesCache::insideTijIdx] = xiWIn - xiWIn*(A[1][1]*B[0][0] - A[0][1]*B[1][0])/detA;
-                tij[FluxVariablesCache::outsideTijIdx] = -xiWIn*(A[1][1]*B[0][1] - A[0][1]*B[1][1])/detA;
-                tij[FluxVariablesCache::facetTijIdx] = -xiWIn*wFacet*(A[1][1] + A[0][1])/detA;
+                tij[Cache::insideTijIdx] = xiWIn - xiWIn*(A[1][1]*B[0][0] - A[0][1]*B[1][0])/detA;
+                tij[Cache::outsideTijIdx] = -xiWIn*(A[1][1]*B[0][1] - A[0][1]*B[1][1])/detA;
+                tij[Cache::facetTijIdx] = -xiWIn*wFacet*(A[1][1] + A[0][1])/detA;
             }
             else
             {
                 // TODO: check for division by zero??
-                tij[FluxVariablesCache::insideTijIdx] = wFacet*wIn/(wIn+wFacet);
-                tij[FluxVariablesCache::facetTijIdx] = -tij[FluxVariablesCache::insideTijIdx];
-                tij[FluxVariablesCache::outsideTijIdx] = 0.0;
+                tij[Cache::insideTijIdx] = wFacet*wIn/(wIn+wFacet);
+                tij[Cache::facetTijIdx] = -tij[Cache::insideTijIdx];
+                tij[Cache::outsideTijIdx] = 0.0;
             }
         }
         else if (iBcTypes.hasOnlyDirichlet())
         {
-            tij[FluxVariablesCache::insideTijIdx] = wIn;
-            tij[FluxVariablesCache::outsideTijIdx] = 0.0;
-            tij[FluxVariablesCache::facetTijIdx] = -wIn;
+            tij[Cache::insideTijIdx] = wIn;
+            tij[Cache::outsideTijIdx] = 0.0;
+            tij[Cache::facetTijIdx] = -wIn;
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Interior boundary types other than pure Dirichlet or Neumann");
@@ -393,19 +383,12 @@ private:
  * \ingroup FacetCoupling
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim<dimWorld
  */
-template<class TypeTag>
-class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/true>
+template<class ScalarType, class FVGridGeometry>
+class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/true>
 {
-    using ThisType = CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/true>;
-    using TpfaDarcysLaw = DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
+    using ThisType = CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, true>;
+    using TpfaDarcysLaw = CCTpfaDarcysLaw<ScalarType, FVGridGeometry, true>;
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using ScalarType = typename GridVariables::Scalar;
-    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
-    using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
-    using FluxVariablesCache = typename ElementFluxVarsCache::FluxVariablesCache;
-
-    using FVGridGeometry = typename GridVariables::GridGeometry;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
@@ -426,7 +409,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/true>
     using TijContainer = typename Cache::AdvectionTransmissibilityContainer;
 
     //! Compute the advective flux
-    template< class Problem >
+    template< class Problem, class ElementVolumeVariables, class ElementFluxVarsCache >
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -463,7 +446,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/true>
 
     // The flux variables cache has to be bound to an element prior to flux calculations
     // During the binding, the transmissibility will be computed and stored using the method below.
-    template< class Problem >
+    template< class Problem, class ElementVolumeVariables >
     static TijContainer calculateTransmissibility(const Problem& problem,
                                                   const Element& element,
                                                   const FVElementGeometry& fvGeometry,
@@ -475,11 +458,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/true>
         {
             //! use the standard darcy's law and only compute one transmissibility
             tij.resize(1);
-            tij[FluxVariablesCache::insideTijIdx] = TpfaDarcysLaw::calculateTransmissibility(problem,
-                                                                                             element,
-                                                                                             fvGeometry,
-                                                                                             elemVolVars,
-                                                                                             scvf);
+            tij[Cache::insideTijIdx] = TpfaDarcysLaw::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
             return tij;
         }
 
@@ -576,25 +555,25 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/true>
                 // compute transmissibilities
                 for (unsigned int i = 0; i < numDofs; ++i)
                 {
-                    tij[FluxVariablesCache::insideTijIdx] -= A[0][i]*B[i][0];
-                    tij[FluxVariablesCache::facetTijIdx] -= A[0][i]*M[i];
+                    tij[Cache::insideTijIdx] -= A[0][i]*B[i][0];
+                    tij[Cache::facetTijIdx] -= A[0][i]*M[i];
                     for (unsigned int idxInOutside = 0; idxInOutside < numOutsideScvs; ++idxInOutside)
-                        tij[FluxVariablesCache::firstOutsideTijIdx+idxInOutside] -= A[0][i]*B[i][idxInOutside+1];
+                        tij[Cache::firstOutsideTijIdx+idxInOutside] -= A[0][i]*B[i][idxInOutside+1];
                 }
                 std::for_each(tij.begin(), tij.end(), [xiWIn] (auto& t) { t *= xiWIn; });
-                tij[FluxVariablesCache::insideTijIdx] += xiWIn;
+                tij[Cache::insideTijIdx] += xiWIn;
             }
             else
             {
                 // TODO: check for division by zero??
-                tij[FluxVariablesCache::insideTijIdx] = wFacet*wIn/(wIn+wFacet);
-                tij[FluxVariablesCache::facetTijIdx] = -tij[FluxVariablesCache::insideTijIdx];
+                tij[Cache::insideTijIdx] = wFacet*wIn/(wIn+wFacet);
+                tij[Cache::facetTijIdx] = -tij[Cache::insideTijIdx];
             }
         }
         else if (iBcTypes.hasOnlyDirichlet())
         {
-            tij[FluxVariablesCache::insideTijIdx] = wIn;
-            tij[FluxVariablesCache::facetTijIdx] = -wIn;
+            tij[Cache::insideTijIdx] = wIn;
+            tij[Cache::facetTijIdx] = -wIn;
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Interior boundary types other than pure Dirichlet or Neumann");
