@@ -1,0 +1,42 @@
+[TimeLoop]
+DtInitial = 10# [s]
+MaxTimeStepSize = 10
+TEnd = 5e4 # [s]
+OutputTimeInterval = 1e3 # [s]
+
+[Grid]
+#File = ../grids/test_mpfa2p.dgf #grid for buckley-leverett or mcwhorter problem
+Refinement = 1
+LowerLeft = 0 0
+UpperRight = 20 10
+Cells = 10 10
+
+[SpatialParams]
+BackgroundPermeability = 1e-10
+LensPermeability= 1e-14
+
+LensOneLowerLeft = 7 6
+LensOneUpperRight = 13 7
+
+LensTwoLowerLeft = 2 4
+LensTwoUpperRight = 8 5
+
+LensThreeLowerLeft = 10 2
+LensThreeUpperRight = 18 3
+
+BackgroundEntryPressure = 500
+LenseEntryPressure = 5000
+
+[Problem]
+Name = test_lenses
+EnableGravity = true
+
+InletWidth = 2
+InjectionFlux = 0.1
+
+[Component]
+LiquidDensity = 1000
+LiquidKinematicViscosity = 1e-6
+
+[Pressure]
+UpwindWeight = 1.0
