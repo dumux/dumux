@@ -214,7 +214,7 @@ protected:
 
         const auto numCorners = element.subEntities(dim);
         std::vector< IndexType > nodalDofs(numCorners);
-        for (int i = 0; i < numCorners; ++i)
+        for (unsigned int i = 0; i < numCorners; ++i)
             nodalDofs[i] = fvGridGeometry.vertexMapper().subIndex(element, i, dim);
 
         return nodalDofs;

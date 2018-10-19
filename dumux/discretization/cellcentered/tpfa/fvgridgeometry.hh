@@ -322,7 +322,7 @@ private:
         for (auto outsideScvfIndex : scvfIndicesOfScv_[outsideScvIdx])
         {
             const auto& outsideScvf = this->scvf(outsideScvfIndex);
-            for (int j = 0; j < outsideScvf.numOutsideScvs(); ++j)
+            for (unsigned int j = 0; j < outsideScvf.numOutsideScvs(); ++j)
                 if (outsideScvf.outsideScvIdx(j) == insideScvIdx)
                     return outsideScvf.index();
         }

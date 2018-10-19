@@ -59,7 +59,7 @@ void makeInterpolatedVolVars(VolumeVariables& volVars,
     // interpolate solution and set it for each entry in element solution
     auto elemSol = elementSolution(element, sol, fvGeometry.fvGridGeometry());
     const auto centerSol = evalSolution(element, elemGeom, fvGeometry.fvGridGeometry(), elemSol, pos);
-    for (int i = 0; i < fvGeometry.numScv(); ++i)
+    for (unsigned int i = 0; i < fvGeometry.numScv(); ++i)
         elemSol[i] = centerSol;
 
     // Update volume variables with the interpolated solution. Note that this standard
