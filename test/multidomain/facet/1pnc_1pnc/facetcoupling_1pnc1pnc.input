@@ -1,0 +1,22 @@
+[TimeLoop]
+TEnd = 5e7
+DtInitial = 10000
+
+[Problem]
+UseInteriorDirichletBCs = false
+EnableGravity = false
+FractureAperture = 1e-3
+BoundaryMoleFraction = 1e-4
+
+[Grid]
+File = ./grids/hybridgrid.msh
+
+[Bulk]
+Problem.Name = 1pnc_1pnc_bulk
+SpatialParams.Permeability = 1e-12
+SpatialParams.Porosity = 0.2
+
+[LowDim]
+Problem.Name = 1pnc_1pnc_lowdim
+SpatialParams.Permeability = 1e-8
+SpatialParams.Porosity = 0.8
