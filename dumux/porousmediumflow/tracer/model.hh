@@ -77,7 +77,7 @@ struct TracerModelTraits
     using Indices = TracerIndices;
 
     static constexpr int numEq() { return nComp; }
-    static constexpr int numPhases() { return 2; }
+    static constexpr int numPhases() { return 1; }
     static constexpr int numComponents() { return nComp; }
 
     static constexpr bool enableAdvection() { return true; }

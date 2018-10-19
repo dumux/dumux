@@ -59,8 +59,12 @@ SET_TYPE_PROP(TwoPTracerTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(TwoPTracerTestTypeTag, Problem, TwoPTracerTestProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TwoPTracerTestTypeTag, SpatialParams, TwoPTracerTestSpatialParams<TypeTag>);
-
+SET_PROP(TwoPTracerTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = TwoPTracerTestSpatialParams<FVGridGeometry, Scalar>;
+};
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(TwoPTracerTestTypeTag, UseMoles, false);
 SET_BOOL_PROP(TwoPTracerTestCCTypeTag, SolutionDependentMolecularDiffusion, false);
@@ -213,7 +217,7 @@ public:
             if (useMoles)
                 initialValues = 1e-9;
             else
-                initialValues = 1e-9*FluidSystem::molarMass(0)/this->spatialParams().fluidMolarMass(0, globalPos);
+                initialValues = 1e-9*FluidSystem::molarMass(0)/this->spatialParams().fluidMolarMass(globalPos);
         }
         return initialValues;
     }

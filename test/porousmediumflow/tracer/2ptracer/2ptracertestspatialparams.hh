@@ -24,6 +24,7 @@
 #ifndef DUMUX_TWOP_TRACER_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TWOP_TRACER_TEST_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <iostream>
 
@@ -33,22 +34,18 @@ namespace Dumux {
  * \ingroup TracerTests
  * \brief Definition of the spatial parameters for the tracer problem
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class TwoPTracerTestSpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                             typename GET_PROP_TYPE(TypeTag, Scalar),
-                             TwoPTracerTestSpatialParams<TypeTag>>
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         TwoPTracerTestSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, TwoPTracerTestSpatialParams<TypeTag>>;
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       TwoPTracerTestSpatialParams<FVGridGeometry, Scalar>>;
 
     //static const int numPhases = ModelTraits::numPhases();
     //static const int numScvf = FVGridGeometry::numScvf();
@@ -95,59 +92,47 @@ public:
 
     //! fluid density
 
-    Scalar fluidDensity(const int phaseIdx,
-                        const Element &element,
+    Scalar fluidDensity(const Element &element,
                         const SubControlVolume& scv) const
-    {
-        if (phaseIdx == 0)
-            return 1000;
-        else
-            return 1000;
-    }
+    { return density_[this->fvGridGeometry().elementMapper().index(element)];; }
 
-    // TODO density und molar mass (x2) für verschiedene Phasen differenzieren!
+    void setDensity(const std::vector<Scalar>& d)
+    { density_ = d; }
 
     //! fluid molar mass
-    Scalar fluidMolarMass(const int phaseIdx,
-                          const Element &element,
+    Scalar fluidMolarMass(const Element &element,
                           const SubControlVolume& scv) const
-    {
-        if (phaseIdx == 0)
-            return 0.018;
-        else
-            return 0.018;
-    }
+    { return 0.018; }
 
-    Scalar fluidMolarMass(const int phaseIdx,
-                          const GlobalPosition &globalPos) const
-    { if (phaseIdx == 0)
-            return 0.018;
-      else
-            return 0.018;
-    }
+    Scalar fluidMolarMass(const GlobalPosition &globalPos) const
+    { return 0.018; }
 
     //! velocity field
     template<class ElementVolumeVariables>
     Scalar volumeFlux(const Element &element,
                       const FVElementGeometry& fvGeometry,
                       const ElementVolumeVariables& elemVolVars,
-                      const SubControlVolumeFace& scvf,
-                      const int phaseIdx) const
+                      const SubControlVolumeFace& scvf) const
     {
-//         std::cout<<"SpatialParams: volumeFlux_0[scvf.index()="<<scvf.index()<<"]="<<volumeFlux_0[scvf.index()]<<std::endl;
-            return volumeFlux_0[scvf.index()];
-
+//         std::cout<<"SpatialParams: volumeFlux_[scvf.index()="<<scvf.index()<<"]="<<volumeFlux_[scvf.index()]<<std::endl;
+            return volumeFlux_[scvf.index()];
     }
 
-    void setVolumeFlux(const std::vector<Scalar>& f_0)
-    {   volumeFlux_0 = f_0;
-    }
+    void setVolumeFlux(const std::vector<Scalar>& f)
+    { volumeFlux_ = f; }
 
+    //! saturation from twoPProblem
+    Scalar saturation(const SubControlVolume& scv) const
+    { return saturation_[scv.dofIndex()]; }
+
+    void setSaturation(const std::vector<Scalar>& s)
+    { saturation_ = s; }
 private:
 
-//     std::vector<Scalar> volumeFlux_0(fvGridGeometry->numScvf(), 0.0);
-    std::vector<Scalar> volumeFlux_0;
-    //std::vector<Scalar> volumeFlux_1;
+//     std::vector<Scalar> volumeFlux_(fvGridGeometry->numScvf(), 0.0);
+    std::vector<Scalar> volumeFlux_;
+    std::vector<Scalar> density_;
+    std::vector<Scalar> saturation_;
 
     //FieldVector volumeFlux_;
     //std::vector<Scalar> volumeFlux_;

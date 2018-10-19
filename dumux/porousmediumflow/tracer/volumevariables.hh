@@ -71,11 +71,10 @@ public:
         // dispersivity_ = problem.spatialParams().dispersivity(element, scv, elemSol);
 
         // the spatial params special to the tracer model
-        for (int phaseIdx = 0; phaseIdx < ParentType::numPhases(); ++phaseIdx)
-        {
-            fluidDensity_ = problem.spatialParams().fluidDensity(phaseIdx, element, scv);
-            fluidMolarMass_ = problem.spatialParams().fluidMolarMass(phaseIdx, element, scv);
-        }
+        fluidDensity_ = problem.spatialParams().fluidDensity(element, scv);
+        fluidMolarMass_ = problem.spatialParams().fluidMolarMass(element, scv);
+        fluidSaturation_ = problem.spatialParams().saturation(scv);
+
         for (int compIdx = 0; compIdx < ParentType::numComponents(); ++compIdx)
         {
             moleOrMassFraction_[compIdx] = this->priVars()[compIdx];
@@ -103,12 +102,14 @@ public:
      * \brief Return the saturation
      *
      * This method is here for compatibility reasons with other models. The saturation
-     * is always 1.0 in a one-phasic context.
+     * is always 1.0 in a one-phasic context, if two-phases or richards are considered,
+     * the spatialParams serve as way to pass the saturation from the main-file to the
+     * volVars and then to the localresidual for the tracer model.
      *
      * \param phaseIdx TODO docme!
      */
     Scalar saturation(int phaseIdx = 0) const
-    { return 1.0; }
+    { return fluidSaturation_; }
 
     /*!
      * \brief Return the mobility
@@ -127,7 +128,7 @@ public:
      * \param phaseIdx TODO docme!
      */
     Scalar molarDensity(int phaseIdx = 0) const
-    { return fluidDensity_/fluidMolarMass_; }
+    { return density()/fluidMolarMass_; }
 
     /*!
      * \brief Return mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
@@ -181,6 +182,7 @@ public:
 protected:
     SolidState solidState_;
     Scalar fluidDensity_, fluidMolarMass_;
+    Scalar fluidSaturation_ = 1.0;
     // DispersivityType dispersivity_;
     std::array<Scalar, ParentType::numComponents()> diffCoeff_;
     std::array<Scalar, ParentType::numComponents()> moleOrMassFraction_;

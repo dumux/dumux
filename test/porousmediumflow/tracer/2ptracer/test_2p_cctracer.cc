@@ -239,11 +239,16 @@ int main(int argc, char** argv) try
     //{
     //    volumeFlux[phaseIdx] = ScvfVector(fvGridGeometry->numScvf(), 0.0);
     //}
-    std::vector<Scalar> volumeFlux_0(fvGridGeometry->numScvf(), 0.0);
-    std::vector<Scalar> volumeFlux_1(fvGridGeometry->numScvf(), 0.0);
+    std::vector<Scalar> volumeFlux_(fvGridGeometry->numScvf(), 0.0);
+    std::vector<Scalar> density_(fvGridGeometry->numScv(), 0.0);
+    std::vector<Scalar> saturation_(fvGridGeometry->numScv(), 0.0);
 
-    // set the flux from the 1p problem
-    tracerProblem->spatialParams().setVolumeFlux(volumeFlux_0);
+
+    // set the flux, density and saturation from the 2p problem
+    tracerProblem->spatialParams().setVolumeFlux(volumeFlux_);
+    tracerProblem->spatialParams().setDensity(density_);
+    tracerProblem->spatialParams().setSaturation(saturation_);
+    std::cout<< "Flux, Mob Sat set 1 "<< std::endl;
 
 //     //! initialize the vtk output module
      VtkOutputModule<TracerGridVariables, TracerSolutionVector> vtkWriter(*tracerGridVariables, x, tracerProblem->name());
@@ -298,68 +303,106 @@ int main(int argc, char** argv) try
 
         using FluxVariables =  typename GET_PROP_TYPE(TwoPTypeTag, FluxVariables);
         auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
-   //     for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-   //     {
-            for (const auto& element : elements(leafGridView))
+        for (const auto& element : elements(leafGridView))
+        {
+            auto fvGeometry = localView(*fvGridGeometry);
+            fvGeometry.bind(element);
+
+            auto elemVolVars = localView(twoPGridVariables->curGridVolVars());
+            elemVolVars.bind(element, fvGeometry, p);
+
+            auto elemFluxVars = localView(twoPGridVariables->gridFluxVarsCache());
+            elemFluxVars.bind(element, fvGeometry, elemVolVars);
+
+
+            for (const auto& scvf : scvfs(fvGeometry))
             {
-                auto fvGeometry = localView(*fvGridGeometry);
-                fvGeometry.bind(element);
+                const auto idx = scvf.index();
 
-                auto elemVolVars = localView(twoPGridVariables->curGridVolVars());
-                elemVolVars.bind(element, fvGeometry, p);
-
-                auto elemFluxVars = localView(twoPGridVariables->gridFluxVarsCache());
-                elemFluxVars.bind(element, fvGeometry, elemVolVars);
-
-
-                for (const auto& scvf : scvfs(fvGeometry))
+                if (!scvf.boundary())
                 {
-                    const auto idx = scvf.index();
-
-                    if (!scvf.boundary())
-                    {
-                        FluxVariables fluxVars;
-                        fluxVars.init(*twoPProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
+                    FluxVariables fluxVars;
+                    fluxVars.init(*twoPProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
 
 //                         if (phaseIdx == 0)
 //                         {
-                            volumeFlux_0[idx] = fluxVars.advectiveFlux(0, upwindTerm);
+                        volumeFlux_[idx] = fluxVars.advectiveFlux(0, upwindTerm);
 
 //                         }
 //                         else
 //                         {
 //                             volumeFlux_1[idx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 //                         }
-                    }
-                    else
+                }
+                else
+                {
+                    const auto bcTypes = twoPProblem->boundaryTypes(element, scvf);
+                    if (bcTypes.hasOnlyDirichlet())
                     {
-                        const auto bcTypes = twoPProblem->boundaryTypes(element, scvf);
-                        if (bcTypes.hasOnlyDirichlet())
-                        {
-                            FluxVariables fluxVars;
-                            fluxVars.init(*twoPProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
+                        FluxVariables fluxVars;
+                        fluxVars.init(*twoPProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
 
 //                             if (phaseIdx == 0)
 //                             {
-                                volumeFlux_0[idx] = fluxVars.advectiveFlux(0, upwindTerm);
+                            volumeFlux_[idx] = fluxVars.advectiveFlux(0, upwindTerm);
 //                             }
 //                             else
 //                             {
 //                                 volumeFlux_1[idx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 //                             }
-                        }
                     }
                 }
             }
-//         }
+        }
 
+        ////////////////////////////////////////////////////////////
+        // compute densities for the tracer model
+        ///////////////////////////////////////////////////////////
+        for (const auto& element : elements(leafGridView))
+        {
+            // auto eIdx = fvGridGeometry.elementMapper().index(element);
+            auto fvGeometry = localView(*fvGridGeometry);
+            fvGeometry.bind(element);
+
+            auto elemVolVars = localView(twoPGridVariables->curGridVolVars());
+            elemVolVars.bind(element, fvGeometry, p);
+
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[scv];
+                const auto idx = scv.dofIndex();
+                density_[idx] = volVars.density(0);
+            }
+        }
+        ////////////////////////////////////////////////////////////
+        // compute saturations for the tracer model
+        ///////////////////////////////////////////////////////////
+        for (const auto& element : elements(leafGridView))
+        {
+            // auto eIdx = fvGridGeometry.elementMapper().index(element);
+            auto fvGeometry = localView(*fvGridGeometry);
+            fvGeometry.bind(element);
+
+            auto elemVolVars = localView(twoPGridVariables->curGridVolVars());
+            elemVolVars.bind(element, fvGeometry, p);
+
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[scv];
+                const auto idx = scv.dofIndex();
+                saturation_[idx] = volVars.saturation(0);
+            }
+        }
         ////////////////////////////////////////////////////////////
         // solve tracer problem on the same grid
         ////////////////////////////////////////////////////////////
 
-        // set the flux from the 1p problem
-        tracerProblem->spatialParams().setVolumeFlux(volumeFlux_0);
+        // set the flux from the 2p problem
+        tracerProblem->spatialParams().setVolumeFlux(volumeFlux_);
+        tracerProblem->spatialParams().setDensity(density_);
+        tracerProblem->spatialParams().setSaturation(saturation_);
 
+        std::cout<< "Flux, Mob Sat set 2 "<< std::endl;
         //! get some time loop parameters
         //const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
         //auto dt = getParam<Scalar>("TimeLoop.DtInitial");

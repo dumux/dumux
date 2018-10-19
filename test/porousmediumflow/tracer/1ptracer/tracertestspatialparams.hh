@@ -104,6 +104,11 @@ public:
     void setVolumeFlux(const std::vector<Scalar>& f)
     { volumeFlux_ = f; }
 
+    //! Saturation needs to be set to 1.0 in one-phasic context due to compatibility reasons.
+    Scalar saturation(const Element &element,
+                      const SubControlVolume& scv) const
+    { return 1.0; }
+
 private:
     std::vector<Scalar> volumeFlux_;
 };

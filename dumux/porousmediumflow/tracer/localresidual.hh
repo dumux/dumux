@@ -56,9 +56,9 @@ class TracerLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-    static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
     static constexpr int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr int phaseIdx = 0;
 
 public:
     using ParentType::ParentType;
@@ -79,27 +79,26 @@ public:
                                const VolumeVariables& volVars) const
     {
         NumEqVector storage(0.0);
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+
+        // formulation with mole balances
+        if (useMoles)
         {
-            // formulation with mole balances
-            if (useMoles)
-            {
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    storage[compIdx] += volVars.porosity()
-                                        * volVars.molarDensity(phaseIdx)
-                                        * volVars.moleFraction(phaseIdx, compIdx)
-                                        * volVars.saturation(phaseIdx);
-            }
-            // formulation with mass balances
-            else
-            {
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    storage[compIdx] += volVars.porosity()
-                                        * volVars.density(phaseIdx)
-                                        * volVars.massFraction(phaseIdx, compIdx)
-                                        * volVars.saturation(phaseIdx);
-            }
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                storage[compIdx] += volVars.porosity()
+                                    * volVars.molarDensity(phaseIdx)
+                                    * volVars.moleFraction(phaseIdx, compIdx)
+                                    * volVars.saturation(phaseIdx);
         }
+        // formulation with mass balances
+        else
+        {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                storage[compIdx] += volVars.porosity()
+                                    * volVars.density(phaseIdx)
+                                    * volVars.massFraction(phaseIdx, compIdx)
+                                    * volVars.saturation(phaseIdx);
+        }
+
         return storage;
     }
 
@@ -125,44 +124,47 @@ public:
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         NumEqVector flux(0.0);
+        const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
 
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        // formulation with mole balances
+        if (useMoles)
         {
-            const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
-
-            // formulation with mole balances
-
-            if (useMoles)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                // the physical quantities for which we perform upwinding
+                auto upwindTerm = [compIdx](const VolumeVariables& volVars)
                 {
-                    // the physical quantities for which we perform upwinding
-                    auto upwindTerm = [phaseIdx, compIdx](const VolumeVariables& volVars)
-                    { return volVars.molarDensity(phaseIdx)*volVars.moleFraction(phaseIdx, compIdx); };
+                    return volVars.molarDensity(phaseIdx)
+                           *volVars.moleFraction(phaseIdx, compIdx);
+                           // *volVars.mobility(phaseIdx);
+                };
 
-                    // advective fluxes
-                    flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-                    // diffusive fluxes
-                    flux[compIdx] += diffusiveFluxes[compIdx];
-                }
-            }
-            // formulation with mass balances
-            else
-            {
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    // the physical quantities for which we perform upwinding
-                    auto upwindTerm = [phaseIdx, compIdx](const VolumeVariables& volVars)
-                    { return volVars.density(phaseIdx)*volVars.massFraction(phaseIdx, compIdx); };
-
-                    // advective fluxes
-                    flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-                    // diffusive fluxes
-                    flux[compIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
-                }
+                // advective fluxes
+                flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+                // diffusive fluxes
+                flux[compIdx] += diffusiveFluxes[compIdx];
             }
         }
+        // formulation with mass balances
+        else
+        {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                // the physical quantities for which we perform upwinding
+                auto upwindTerm = [compIdx](const VolumeVariables& volVars)
+                {
+                    return volVars.density(phaseIdx)
+                           *volVars.massFraction(phaseIdx, compIdx);
+                           // *volVars.mobility(phaseIdx);
+                };
+
+                // advective fluxes
+                flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+                // diffusive fluxes
+                flux[compIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+            }
+        }
+
         return flux;
     }
 
@@ -245,17 +247,15 @@ public:
         // diffusive term
         const auto& fluxCache = elemFluxVarsCache[scvf];
         const auto rhoMolar = 0.5*(insideVolVars.molarDensity() + outsideVolVars.molarDensity());
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                // diffusive term
-                const auto diffDeriv = useMoles ? rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)
-                                                : rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)*FluidSystem::molarMass(compIdx);
 
-                derivativeMatrices[scvf.insideScvIdx()][compIdx][compIdx] += (advDerivII + diffDeriv);
-                derivativeMatrices[scvf.outsideScvIdx()][compIdx][compIdx] += (advDerivIJ - diffDeriv);
-            }
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            // diffusive term
+            const auto diffDeriv = useMoles ? rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)
+                                            : rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)*FluidSystem::molarMass(compIdx);
+
+            derivativeMatrices[scvf.insideScvIdx()][compIdx][compIdx] += (advDerivII + diffDeriv);
+            derivativeMatrices[scvf.outsideScvIdx()][compIdx][compIdx] += (advDerivIJ - diffDeriv);
         }
     }
 
@@ -290,40 +290,32 @@ public:
         const auto advDerivIJ = volFlux*rho(outsideVolVars)*outsideWeight;
 
         // diffusive term
-
-        // TODO -> phaseIdx Schleife nötig? ti = .... verstehen. Warum PhaseIdx als Param?
-
         using DiffusionType = typename GET_PROP_TYPE(T, MolecularDiffusionType);
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        const auto ti = DiffusionType::calculateTransmissibilities(problem,
+                                                                   element,
+                                                                   fvGeometry,
+                                                                   curElemVolVars,
+                                                                   scvf,
+                                                                   elemFluxVarsCache[scvf],
+                                                                   phaseIdx);
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-    //          const int phaseIdx = 0;
-            const auto ti = DiffusionType::calculateTransmissibilities(problem,
-                                                                    element,
-                                                                    fvGeometry,
-                                                                    curElemVolVars,
-                                                                    scvf,
-                                                                    elemFluxVarsCache[scvf],
-                                                                    phaseIdx);
-
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            for (const auto& scv : scvs(fvGeometry))
             {
-                for (const auto& scv : scvs(fvGeometry))
-                {
-                    // diffusive term
-                    const auto diffDeriv = useMoles ? ti[compIdx][scv.indexInElement()]
-                                                    : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
-                    A[insideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] += diffDeriv;
-                    A[outsideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] -= diffDeriv;
-                }
-
-                A[insideScv.dofIndex()][insideScv.dofIndex()][compIdx][compIdx] += advDerivII;
-                A[insideScv.dofIndex()][outsideScv.dofIndex()][compIdx][compIdx] += advDerivIJ;
-                A[outsideScv.dofIndex()][outsideScv.dofIndex()][compIdx][compIdx] -= advDerivII;
-                A[outsideScv.dofIndex()][insideScv.dofIndex()][compIdx][compIdx] -= advDerivIJ;
+                // diffusive term
+                const auto diffDeriv = useMoles ? ti[compIdx][scv.indexInElement()]
+                                                : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
+                A[insideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] += diffDeriv;
+                A[outsideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] -= diffDeriv;
             }
+
+            A[insideScv.dofIndex()][insideScv.dofIndex()][compIdx][compIdx] += advDerivII;
+            A[insideScv.dofIndex()][outsideScv.dofIndex()][compIdx][compIdx] += advDerivIJ;
+            A[outsideScv.dofIndex()][outsideScv.dofIndex()][compIdx][compIdx] -= advDerivII;
+            A[outsideScv.dofIndex()][insideScv.dofIndex()][compIdx][compIdx] -= advDerivIJ;
         }
     }
 
