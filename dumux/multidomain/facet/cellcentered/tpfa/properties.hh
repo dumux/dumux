@@ -32,9 +32,11 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
+
 #include <dumux/multidomain/facet/cellcentered/upwindscheme.hh>
 #include <dumux/multidomain/facet/cellcentered/localresidual.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/darcyslaw.hh>
+#include <dumux/multidomain/facet/cellcentered/tpfa/fickslaw.hh>
 
 #include <dumux/porousmediumflow/fluxvariables.hh>
 
@@ -51,6 +53,9 @@ SET_TYPE_PROP(CCTpfaFacetCouplingModel,
               AdvectionType,
               CCTpfaFacetCouplingDarcysLaw< typename GET_PROP_TYPE(TypeTag, Scalar),
                                             typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
+
+//! Use the tpfa facet coupling-specific Fick's law
+SET_TYPE_PROP(CCTpfaFacetCouplingModel, MolecularDiffusionType, CCTpfaFacetCouplingFicksLaw<TypeTag>);
 
 //! Use the cc local residual for models with facet coupling
 SET_TYPE_PROP(CCTpfaFacetCouplingModel, BaseLocalResidual, CCFacetCouplingLocalResidual<TypeTag>);
