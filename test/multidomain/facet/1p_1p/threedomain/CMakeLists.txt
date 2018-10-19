@@ -3,7 +3,6 @@ dune_symlink_to_source_files(FILES "grids" "facetcoupling_1p1p_threedomain.input
 dune_add_test(NAME test_facetcoupling_tpfa_1p1p_threedomain
               SOURCES test_facetcoupling_tpfa_1p1p_threedomain.cc
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-              COMPILE_DEFINITIONS BULKTYPETAG=TissueCCTypeTag LOWDIMTYPETAG=BloodFlowCCTypeTag COUPLINGMODE=EmbeddedCouplingMode::average
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/facetcoupling_1p1p_threedomain_bulk.vtu
