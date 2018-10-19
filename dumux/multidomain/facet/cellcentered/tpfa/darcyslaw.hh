@@ -62,12 +62,10 @@ class CCTpfaFacetCouplingDarcysLawCache;
  *        in the context of coupled models where the coupling occurs across the facets of the bulk
  *        domain elements with a lower-dimensional domain living on these facets.
  */
-template<class TypeTag>
+template<class ScalarType, class FVGridGeometry>
 using CCTpfaFacetCouplingDarcysLaw =
-      CCTpfaFacetCouplingDarcysLawImpl< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                        typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                        ( int(GET_PROP_TYPE(TypeTag, GridView)::dimension) <
-                                          int(GET_PROP_TYPE(TypeTag, GridView)::dimensionworld) ) >;
+      CCTpfaFacetCouplingDarcysLawImpl< ScalarType, FVGridGeometry, ( int(FVGridGeometry::GridView::dimension) <
+                                                                      int(FVGridGeometry::GridView::dimensionworld) ) >;
 
 /*!
  * \ingroup MultiDomain
