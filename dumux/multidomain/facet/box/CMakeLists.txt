@@ -3,6 +3,7 @@ couplingmanager.hh
 couplingmapper.hh
 darcyslaw.hh
 elementboundarytypes.hh
+fickslaw.hh
 fvelementgeometry.hh
 fvgridgeometry.hh
 localresidual.hh
