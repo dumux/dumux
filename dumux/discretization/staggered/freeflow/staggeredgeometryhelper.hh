@@ -106,7 +106,7 @@ class FreeFlowStaggeredGeometryHelper
     static constexpr int numFacetSubEntities = (dim == 2) ? 2 : 4;
     static constexpr int numfacets = dimWorld * 2;
     static constexpr int numPairs = 2 * (dimWorld - 1);
-    int order = 2;
+    static int order_;
 
 public:
 
@@ -163,13 +163,25 @@ public:
         return Dumux::directionIndex(std::move(intersection.centerUnitOuterNormal()));
     }
 
+    //! \brief Returns the order needed by the scheme
+    static int order()
+    {
+        return order_;
+    }
+
+    //! \brief Set the order needed by the scheme
+    static void setOrder(const int order)
+    {
+        order_ = order;
+    }
+
 private:
     /*!
      * \brief Fills all entries of the in axis data
      */
     void fillAxisData_()
     {
-        unsigned int numForwardBackwardAxisDofs = order - 1;
+        unsigned int numForwardBackwardAxisDofs = order_ - 1;
         const auto inIdx = intersection_.indexInInside();
         const auto oppIdx = localOppositeIdx_(inIdx);
 
@@ -204,8 +216,9 @@ private:
         auto selfFace = getFacet_(inIdx, element_);
         if(intersection_.neighbor())
         {
-            inAxisForwardElementStack.push(intersection_.outside());
-            bool keepStackingForward = (inAxisForwardElementStack.size() < order-1);
+            if (order_ > 1)
+                inAxisForwardElementStack.push(intersection_.outside());
+            bool keepStackingForward = (inAxisForwardElementStack.size() < order_-1);
             while(keepStackingForward)
             {
                 auto e = inAxisForwardElementStack.top();
@@ -216,7 +229,7 @@ private:
                         if( intersection.neighbor())
                         {
                             inAxisForwardElementStack.push(intersection.outside());
-                            keepStackingForward = (inAxisForwardElementStack.size() < order-1);
+                            keepStackingForward = (inAxisForwardElementStack.size() < order_-1);
                         }
                         else
                         {
@@ -256,8 +269,9 @@ private:
             {
                 if(intersection.neighbor())
                 {
-                    inAxisBackwardElementStack.push(intersection.outside());
-                    bool keepStackingBackward = (inAxisBackwardElementStack.size() < order-1);
+                    if (order_ > 1)
+                        inAxisBackwardElementStack.push(intersection.outside());
+                    bool keepStackingBackward = (inAxisBackwardElementStack.size() < order_-1);
                     while(keepStackingBackward)
                     {
                         auto e = inAxisBackwardElementStack.top();
@@ -269,7 +283,7 @@ private:
                                 if( intersectionOut.neighbor())
                                 {
                                     inAxisBackwardElementStack.push(intersectionOut.outside());
-                                    keepStackingBackward = (inAxisBackwardElementStack.size() < order-1);
+                                    keepStackingBackward = (inAxisBackwardElementStack.size() < order_-1);
                                 }
                                 else
                                 {
@@ -311,7 +325,7 @@ private:
         // initialize values that could remain unitialized if the intersection lies on a boundary
         for(auto& data : pairData_)
         {
-            int numParallelDofs = order;
+            int numParallelDofs = order_;
 
             // parallel Dofs
             data.parallelDofs.clear();
@@ -390,7 +404,7 @@ private:
                     auto parallelAxisIdx = directionIndex(intersection);
                     auto localNormalIntersectionIndex = intersection.indexInInside();
                     parallelElementStack.push(element_);
-                    bool keepStacking =  (parallelElementStack.size() < order+1);
+                    bool keepStacking =  (parallelElementStack.size() < order_+1);
                     while(keepStacking)
                     {
                         auto e = parallelElementStack.top();
@@ -401,7 +415,7 @@ private:
                                 if( normalIntersection.neighbor() )
                                 {
                                     parallelElementStack.push(normalIntersection.outside());
-                                    keepStacking = (parallelElementStack.size() < order+1);
+                                    keepStacking = (parallelElementStack.size() < order_+1);
                                 }
                                 else
                                 {
@@ -553,6 +567,9 @@ private:
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_; //!< Collection of pair information related to normal and parallel faces
     std::vector<GlobalPosition> innerNormalFacePos_;
 };
+
+template<class GridView>
+int FreeFlowStaggeredGeometryHelper<GridView>::order_ = 1;
 
 } // end namespace Dumux
 

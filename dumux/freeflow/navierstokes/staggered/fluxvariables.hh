@@ -31,6 +31,8 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 
+#include <dumux/freeflow/higherorderapproximation.hh>
+
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -225,9 +227,9 @@ public:
 
             const auto& highOrder = problem.higherOrderApproximation();
 
-            // If I am not too near to the boundary I can use a second order approximation for the velocity.
-            // In this frontal flux I use for the density always the value that I have on the scvf.
-            if (canFrontalSecondOrder_(scvf, selfIsUpstream, velocities, distances, elemFaceVars[scvf]))
+            // If a Tvd approac has been specified and I am not too near to the boundary I can use a second order
+            // approximation for the velocity. In this frontal flux I use for the density always the value that I have on the scvf.
+            if (highOrder.tvdApproach() != TvdApproach::none && canFrontalSecondOrder_(scvf, selfIsUpstream, velocities, distances, elemFaceVars[scvf]))
             {
                 switch (highOrder.tvdApproach())
                 {
@@ -450,8 +452,8 @@ private:
 
         const auto& highOrder = problem.higherOrderApproximation();
 
-        // If I am not too near to the boundary I can use a second order approximation.
-        if (canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx, velocities, distances, problem, element, faceVars, isDirichletPressure, isBJS))
+        // If a Tvd approach has been specified and I am not too near to the boundary I can use a second order approximation.
+        if (highOrder.tvdApproach() != TvdApproach::none && canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx, velocities, distances, problem, element, faceVars, isDirichletPressure, isBJS))
         {
             switch (highOrder.tvdApproach())
             {

@@ -225,6 +225,8 @@ public:
         if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The satggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
+        if (hasParamInGroup("Discretization", "TvdApproach"))
+            GeometryHelper::setOrder(2);
     }
 
     //! The total number of sub control volumes

@@ -35,6 +35,7 @@ namespace Dumux {
 //! \brief Available Tvd approaches
 enum class TvdApproach
 {
+    none    = 0,
     uniform = 1,
     li      = 2,
     hou     = 3
@@ -43,6 +44,7 @@ enum class TvdApproach
 //! \biraf Available differencing schemes
 enum class DifferencingScheme
 {
+    none      = 0,
     vanleer   = 1,
     vanalbada = 2,
     minmod    = 3,
@@ -61,55 +63,74 @@ class HigherOrderApproximation
 public:
     HigherOrderApproximation(const std::string& paramGroup = "")
     {
-        tvdApproach_ = static_cast<TvdApproach>(getParamFromGroup<int>(paramGroup, "Discretization.TvdApproach", 1));
-        differencingScheme_ = static_cast<DifferencingScheme>(getParamFromGroup<int>(paramGroup, "Discretization.DifferencingScheme", 1));
-
-        switch (differencingScheme_)
+        if (hasParamInGroup(paramGroup, "Discretization.TvdApproach"))
         {
-            case DifferencingScheme::vanleer :
+            // Read the runtime parameters
+            tvdApproach_ = static_cast<TvdApproach>(getParamFromGroup<int>(paramGroup, "Discretization.TvdApproach"));
+            if(tvdApproach_ == TvdApproach::none)
             {
-                limiter_ = this->vanleer;
-                break;
+                DUNE_THROW(ParameterException, "\nTvd approach 0 is not implemented.\n" <<
+                        static_cast<int>(TvdApproach::uniform) << ": Uniform Tvd\n" <<
+                        static_cast<int>(TvdApproach::li) << ": Li's approach\n" <<
+                        static_cast<int>(TvdApproach::hou) << ": Hou's approach");
             }
-            case DifferencingScheme::vanalbada :
+            differencingScheme_ = static_cast<DifferencingScheme>(getParamFromGroup<int>(paramGroup, "Discretization.DifferencingScheme"));
+
+            // Assign the limiter_ depending on the differencing scheme
+            switch (differencingScheme_)
             {
-                if (tvdApproach_ == TvdApproach::hou)
-                    DUNE_THROW(ParameterException, "\nDifferencing scheme " << static_cast<int>(DifferencingScheme::vanalbada) <<
-                        " (Van Albada) is not implemented for the Tvd approach " << static_cast<int>(TvdApproach::hou) <<" (Hou).");
-                limiter_ = this->vanalbada;
-                break;
+                case DifferencingScheme::vanleer :
+                {
+                    limiter_ = this->vanleer;
+                    break;
+                }
+                case DifferencingScheme::vanalbada :
+                {
+                    if (tvdApproach_ == TvdApproach::hou)
+                        DUNE_THROW(ParameterException, "\nDifferencing scheme " << static_cast<int>(DifferencingScheme::vanalbada) <<
+                            " (Van Albada) is not implemented for the Tvd approach " << static_cast<int>(TvdApproach::hou) <<" (Hou).");
+                    else
+                        limiter_ = this->vanalbada;
+                    break;
+                }
+                case DifferencingScheme::minmod :
+                {
+                    limiter_ = this->minmod;
+                    break;
+                }
+                case DifferencingScheme::superbee :
+                {
+                    limiter_ = this->superbee;
+                    break;
+                }
+                case DifferencingScheme::umist :
+                {
+                    limiter_ = this->umist;
+                    break;
+                }
+                case DifferencingScheme::mclimiter :
+                {
+                    limiter_ = this->mclimiter;
+                    break;
+                }
+                case DifferencingScheme::wahyd :
+                {
+                    limiter_ = this->wahyd;
+                    break;
+                }
+                default:
+                {
+                    DUNE_THROW(ParameterException, "\nDifferencing scheme " << static_cast<int>(differencingScheme_) <<
+                        " is not implemented.\n");
+                    break;
+                }
             }
-            case DifferencingScheme::minmod :
-            {
-                limiter_ = this->minmod;
-                break;
-            }
-            case DifferencingScheme::superbee :
-            {
-                limiter_ = this->superbee;
-                break;
-            }
-            case DifferencingScheme::umist :
-            {
-                limiter_ = this->umist;
-                break;
-            }
-            case DifferencingScheme::mclimiter :
-            {
-                limiter_ = this->mclimiter;
-                break;
-            }
-            case DifferencingScheme::wahyd :
-            {
-                limiter_ = this->wahyd;
-                break;
-            }
-            default:
-            {
-                DUNE_THROW(ParameterException, "\nDifferencing scheme " << static_cast<int>(differencingScheme_) <<
-                    " is not implemented.\n");
-                break;
-            }
+        }
+        else
+        {
+            // If the runtime parameters are not specified we will use upwind
+            tvdApproach_ = TvdApproach::none;
+            differencingScheme_ = DifferencingScheme::none;
         }
     }
 
@@ -209,7 +230,7 @@ public:
         const Scalar ratio = (upstreamVelocity - reconstrutedUpUpstreamVelocity) / (downstreamVelocity - upstreamVelocity);
 
         // If the velocity field is uniform (like at the first newton step) we get a NaN
-        if(ratio > 0 && std::isfinite(ratio))
+        if(ratio > 0.0 && std::isfinite(ratio))
         {
             const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (downstreamVelocity - upstreamVelocity);
             return density * (upstreamVelocity + secondOrderTerm);
