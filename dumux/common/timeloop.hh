@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <queue>
+#include <iomanip>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/timer.hh>
@@ -310,15 +311,17 @@ public:
      */
     void reportTimeStep() const
     {
-        const auto cpuTime = wallClockTime();
-
         if (verbose_)
         {
-            std::cout << "Time step " << timeStepIdx_ << " done in "
-                      << timeStepWallClockTime_ << " seconds. "
-                      << "Wall clock time: " << cpuTime
-                      << ", time: " << time_
-                      << ", time step size: " << lastTimeStepSize_
+            const auto cpuTime = wallClockTime();
+            const auto percent = std::round( time_ / endTime_ * 100 );
+            std::cout << "[" << std::fixed << std::setw( 3 ) << std::setfill( ' ' )
+                      << std::setprecision( 0 )  << percent << "%] "
+                      << "Time step " << timeStepIdx_ << " done in "
+                      << std::setprecision( 6 ) << timeStepWallClockTime_ << " seconds. "
+                      << "Wall clock time: " << std::setprecision( 3 ) << cpuTime
+                      << ", time: " << std::setprecision( 5 ) << time_
+                      << ", time step size: " << std::setprecision( 8 ) << lastTimeStepSize_
                       << std::endl;
         }
     }
