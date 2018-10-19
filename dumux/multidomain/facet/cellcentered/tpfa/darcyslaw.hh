@@ -52,7 +52,7 @@ class CCTpfaFacetCouplingDarcysLawImpl;
  * \note We distinguish between network and non-network grids here. Specializations
  *       for the two cases can be found below.
  */
-template<class TypeTag, bool isNetwork>
+template<class AdvectionType, class FVGridGeometry, bool isNetwork>
 class CCTpfaFacetCouplingDarcysLawCache;
 
 /*!
@@ -72,15 +72,10 @@ using CCTpfaFacetCouplingDarcysLaw =
  * \ingroup FacetCoupling
  * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for non-network grids.
  */
-template<class TypeTag>
-class CCTpfaFacetCouplingDarcysLawCache<TypeTag, /*isNetwork*/false>
+template<class AdvectionType, class FVGridGeometry>
+class CCTpfaFacetCouplingDarcysLawCache<AdvectionType, FVGridGeometry, /*isNetwork*/false>
 {
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using Scalar = typename GridVariables::Scalar;
-    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
-
-    using FVGridGeometry = typename GridVariables::GridGeometry;
+    using Scalar = typename AdvectionType::Scalar;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
@@ -100,7 +95,7 @@ public:
     using AdvectionTransmissibilityContainer = std::array<Scalar, 3>;
 
     //! update subject to a given problem
-    template< class Problem >
+    template< class Problem, class ElementVolumeVariables >
     void updateAdvection(const Problem& problem,
                          const Element& element,
                          const FVElementGeometry& fvGeometry,
@@ -137,10 +132,11 @@ private:
 template<class TypeTag>
 class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
 {
+    using ThisType = CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>;
     using TpfaDarcysLaw = DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
 
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using Scalar = typename GridVariables::Scalar;
+    using ScalarType = typename GridVariables::Scalar;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
     using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
@@ -158,9 +154,9 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
 
     //! Compute the transmissibility associated with the facet element
     template<class FacetVolVars>
-    static Scalar computeFacetTransmissibility_(const VolumeVariables& insideVolVars,
-                                                const FacetVolVars& facetVolVars,
-                                                const SubControlVolumeFace& scvf)
+    static ScalarType computeFacetTransmissibility_(const VolumeVariables& insideVolVars,
+                                                    const FacetVolVars& facetVolVars,
+                                                    const SubControlVolumeFace& scvf)
     {
         return 2.0*scvf.area()*insideVolVars.extrusionFactor()
                               /facetVolVars.extrusionFactor()
@@ -168,12 +164,15 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
     }
 
   public:
+    //! state the scalar type of the law
+    using Scalar = ScalarType;
     //! export the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
     //! export the type for the corresponding cache
-    using Cache = CCTpfaFacetCouplingDarcysLawCache<TypeTag, /*isNetwork*/false>;
+    using Cache = CCTpfaFacetCouplingDarcysLawCache<ThisType, FVGridGeometry, /*isNetwork*/false>;
     //! export the type used to store transmissibilities
     using TijContainer = typename Cache::AdvectionTransmissibilityContainer;
+
 
     //! Compute the advective flux
     template< class Problem >
@@ -337,15 +336,10 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
  * \ingroup FacetCoupling
  * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for network grids
  */
-template<class TypeTag>
-class CCTpfaFacetCouplingDarcysLawCache<TypeTag, /*isNetwork*/true>
+template<class AdvectionType, class FVGridGeometry>
+class CCTpfaFacetCouplingDarcysLawCache<AdvectionType, FVGridGeometry, /*isNetwork*/true>
 {
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using Scalar = typename GridVariables::Scalar;
-    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
-
-    using FVGridGeometry = typename GridVariables::GridGeometry;
+    using Scalar = typename AdvectionType::Scalar;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
@@ -365,7 +359,7 @@ public:
     using AdvectionTransmissibilityContainer = std::vector<Scalar>;
 
     //! update subject to a given problem
-    template< class Problem >
+    template< class Problem, class ElementVolumeVariables >
     void updateAdvection(const Problem& problem,
                          const Element& element,
                          const FVElementGeometry& fvGeometry,
@@ -402,10 +396,11 @@ private:
 template<class TypeTag>
 class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/true>
 {
+    using ThisType = CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/true>;
     using TpfaDarcysLaw = DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
 
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using Scalar = typename GridVariables::Scalar;
+    using ScalarType = typename GridVariables::Scalar;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using FluxVariablesCache = typename ElementFluxVarsCache::FluxVariablesCache;
@@ -421,10 +416,12 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/true>
     using IndexType = typename GridView::IndexSet::IndexType;
 
   public:
+    //! state the scalar type of the law
+    using Scalar = ScalarType;
     //! state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
     //! state the type for the corresponding cache
-    using Cache = CCTpfaFacetCouplingDarcysLawCache<TypeTag, /*isNetwork*/true>;
+    using Cache = CCTpfaFacetCouplingDarcysLawCache<ThisType, FVGridGeometry, /*isNetwork*/true>;
     //! export the type used to store transmissibilities
     using TijContainer = typename Cache::AdvectionTransmissibilityContainer;
 
