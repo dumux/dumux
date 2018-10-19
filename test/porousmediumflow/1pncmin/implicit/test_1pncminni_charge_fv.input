@@ -4,14 +4,14 @@
 
 [TimeLoop]
 DtInitial = 0.5                      # [s] initial time step size
-MaxTimeStepSize =1               # [s] maximum time step size
-TEnd= 150                        # [s] duration of the simulation
+MaxTimeStepSize =10   #1               # [s] maximum time step size
+TEnd= 3600                        # [s] duration of the simulation
 FreqOutput          = 10           # frequency of VTK output
 WriteRestartFile    = 1            # Boolean. Should restart files be written? (1) Yes (0) No
 
 [Grid]
-UpperRight = 0.02 0.01 #20 10 #     # [m] upper right corner coordinates
-Cells =  2 1 # 21 6                # [-] number of cells in x,y-direction
+UpperRight = 0.08 0.055      # [m] upper right corner coordinates
+Cells =  40 2  #2 1#               # [-] number of cells in x,y-direction
 
 [FluidSystem]
 NTemperature = 10                   # [-] number of tabularization entries

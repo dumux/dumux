@@ -25,7 +25,6 @@
 #define DUMUX_CHARGE_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
-
 #include <dumux/porousmediumflow/1pncmin/model.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/box/properties.hh>
@@ -37,16 +36,11 @@
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 #include <dumux/material/components/cao2h2.hh>
 #include <dumux/material/solidsystems/compositionalsolidphase.hh>
-//changes made
 #include <dumux/material/fluidsystems/1padapter.hh>
 // box solution dependent Neumann, outflow
 #include <dumux/discretization/evalgradients.hh>
 #include <dumux/discretization/evalsolution.hh>
-// #include "steamn2.hh"
 #include <dumux/material/fluidsystems/h2on2.hh>
-
-
-
 #include "thermochemspatialparams.hh"
 #include "thermochemreaction.hh"
 #include "modifiedcao.hh"
@@ -70,7 +64,7 @@ SET_PROP(ChargeTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using H2ON2 = FluidSystems::H2ON2<Scalar>;
-    static constexpr auto phaseIdx = H2ON2::gasPhaseIdx; // simulate the air phase
+    static constexpr auto phaseIdx = H2ON2::gasPhaseIdx; // simulate the gas phase
     using type = FluidSystems::OnePAdapter<H2ON2, phaseIdx>;
 };
 
@@ -81,9 +75,6 @@ SET_PROP(ChargeTypeTag, SolidSystem)
     using ComponentTwo = Components::CaO2H2<Scalar>;
     using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo>;
 };
-
-// // Enable velocity output
-// SET_BOOL_PROP(ChargeTypeTag, VtkAddVelocity, false);
 
 // Set the spatial parameters
 SET_TYPE_PROP(ChargeTypeTag, SpatialParams, ThermoChemSpatialParams<TypeTag>);
@@ -125,8 +116,6 @@ class ChargeProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ReactionRate = ThermoChemReaction;
-
-    //change made
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     enum { dim = GridView::dimension };
@@ -137,11 +126,8 @@ class ChargeProblem : public PorousMediumFlowProblem<TypeTag>
         // Indices of the primary variables
         pressureIdx = Indices::pressureIdx, //gas-phase pressure
 
-
-        //change made
-        firstMoleFracIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx), // mole fraction water
-        //H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx), // mole fraction water
-
+        //firstMoleFracIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx), // mole fraction water
+        H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx), // mole fraction water
 
         CaOIdx = FluidSystem::numComponents,
         CaO2H2Idx = FluidSystem::numComponents+1,
@@ -152,7 +138,6 @@ class ChargeProblem : public PorousMediumFlowProblem<TypeTag>
         // Phase Indices
         phaseIdx = FluidSystem::phase0Idx,
         cPhaseIdx = SolidSystem::comp0Idx,
-        //change made
         hPhaseIdx = SolidSystem::comp0Idx+1,
 
         temperatureIdx = Indices::temperatureIdx,
@@ -178,7 +163,6 @@ public:
                           /*endPressure=*/9e6,
                           /*pressureSteps=*/200);
 
-        // obtain BCs
 
         unsigned int codim = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box ? dim : 0;
         permeability_.resize(fvGridGeometry->gridView().size(codim));
@@ -217,36 +201,13 @@ public:
         BoundaryTypes values;
 
             values.setNeumann(pressureIdx);
-            values.setNeumann(firstMoleFracIdx);
+            values.setNeumann(H2OIdx);
             values.setNeumann(temperatureIdx);
             values.setNeumann(CaO2H2Idx);
             values.setNeumann(CaOIdx);
         return values;
     }
-
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
-     *
-     * \param globalPos The global position
-     */
-
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
-    {
-        PrimaryVariables priVars(0.0);
-
-        if (globalPos[0] < eps_ )
-        {
-            priVars[pressureIdx] = 1e5;
-            priVars[firstMoleFracIdx] = 0.01;
-            priVars[temperatureIdx] = 773.15;
-            priVars[CaO2H2Idx] = 0.2;
-            priVars[CaOIdx] = 0.0;
-        }
-        return priVars;
-    }
-
-    /*
      * \brief Evaluates the boundary conditions for a Neumann
      *        boundary segment in dependency on the current solution.
      *
@@ -258,7 +219,6 @@ public:
      * \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * Negative values indicate an inflow.
      */
-
     NumEqVector neumann(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const ElementVolumeVariables& elemVolVars,
@@ -285,18 +245,17 @@ public:
            Scalar deltaH = 0.0; // if temperature at the right border > 573.15 K, cool down
                                 //temperature of injected fluid via the enthalpyflux deltaH
 
-           deltaH = (T-tIn)* 1e20;
+           deltaH = -(T-tIn)* 1e5;
 
-           Scalar hInAir = InFlowAir*FluidSystem::molarMass(firstMoleFracIdx-1)
-                           *FluidSystem::componentEnthalpy(fluidstateBorder, phaseIdx, firstMoleFracIdx-1);
+           Scalar hInAir = InFlowAir*FluidSystem::molarMass(H2OIdx-1)
+                           *FluidSystem::componentEnthalpy(fluidstateBorder, phaseIdx, H2OIdx-1);
 
-           Scalar hInH2O = InFlowH2O*FluidSystem::molarMass(firstMoleFracIdx)
-                           *FluidSystem::componentEnthalpy(fluidstateBorder, phaseIdx, firstMoleFracIdx);
+           Scalar hInH2O = InFlowH2O*FluidSystem::molarMass(H2OIdx)
+                           *FluidSystem::componentEnthalpy(fluidstateBorder, phaseIdx, H2OIdx);
            flux[pressureIdx] = - InFlowAir; //[mol/s] gas inflow of the air component
-           flux[firstMoleFracIdx] = - InFlowH2O;//[mol/s] gas inflow of the water component
+           flux[H2OIdx] = - InFlowH2O;//[mol/s] gas inflow of the water component
            flux[temperatureIdx] = - (hInAir + hInH2O -deltaH); //[J/s] enthalpy inflow
         }
-
         // outflow BC
         if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_ )
         {
@@ -335,19 +294,13 @@ public:
             Scalar tpfaFluxMass = tpfaFlux * density * elemVolVars[scv].mobility(phaseIdx);
 
             // emulate an outflow condition for the component transport on the right side
-            flux[pressureIdx] = tpfaFluxMole * (elemVolVars[scv].moleFraction(phaseIdx, (firstMoleFracIdx-1)));
-            flux[firstMoleFracIdx] = tpfaFluxMole * elemVolVars[scv].moleFraction(phaseIdx, firstMoleFracIdx);
+            flux[pressureIdx] = tpfaFluxMole * (elemVolVars[scv].moleFraction(phaseIdx, (H2OIdx-1)));
+            flux[H2OIdx] = tpfaFluxMole * elemVolVars[scv].moleFraction(phaseIdx, H2OIdx);
             flux[temperatureIdx] = tpfaFluxMass * (FluidSystem::enthalpy(elemVolVars[scv].fluidState(), phaseIdx));
         }
-
        return flux;
     }
-
-
-
-
-
-    /*
+    /*!
      *
      *
      * \brief Evaluates the initial values for a control volume in
@@ -372,14 +325,8 @@ public:
         CaO2H2Init = getParam<Scalar>("Problem.CaO2H2Initial");
 
         priVars[pressureIdx] = pInit;
-        //change made
-        priVars[firstMoleFracIdx]   = h2oInit;
-        //priVars[H2OIdx]   = h2oInit;
+        priVars[H2OIdx]   = h2oInit;
         priVars[temperatureIdx] = tInit;
-
-        // these values are not used, as we didn't set BCs
-        // for the solid phases. For cell-centered models it is
-        // important to set the values to fully define Dirichlet BCs
         priVars[CaOIdx] = CaOInit;
         priVars[CaO2H2Idx]   = CaO2H2Init;
 
@@ -404,10 +351,6 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-
-
-    //change made
-
      PrimaryVariables source(const Element &element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& elemVolVars,
@@ -420,57 +363,24 @@ public:
         Scalar qMass = rrate_.thermoChemReactionSimple(volVars);
 
         const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-        Scalar qMole = qMass/FluidSystem::molarMass(firstMoleFracIdx)*(1-volVars.porosity());
+        Scalar qMole = qMass/FluidSystem::molarMass(H2OIdx)*(1-volVars.porosity());
 
         // make sure not more solid reacts than present
-        // In this test, we only consider discharge. Therefore, we use the cPhaseIdx for CaO.
-        if (-qMole*timeStepSize_ + volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidComponentMolarDensity(cPhaseIdx) < 0 + eps_)
+        // In this test, we only consider charge. Therefore, we use the hPhaseIdx for CaO2H2.
+        if (-qMole*timeStepSize_ + volVars.solidVolumeFraction(hPhaseIdx)* volVars.solidComponentMolarDensity(hPhaseIdx) < 0 + eps_)
         {
-            qMole = -volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidComponentMolarDensity(cPhaseIdx)/timeStepSize_;
+            qMole = -volVars.solidVolumeFraction(hPhaseIdx)* volVars.solidComponentMolarDensity(hPhaseIdx)/timeStepSize_;
         }
 
         source[conti0EqIdx+CaO2H2Idx] = qMole;
         source[conti0EqIdx+CaOIdx] = - qMole;
-        source[conti0EqIdx+firstMoleFracIdx] = - qMole;
+        source[conti0EqIdx+H2OIdx] = - qMole;
 
         Scalar deltaH = 108.3e3; // J/mol
         source[energyEqIdx] = qMole * (deltaH - 4*(volVars.pressure(phaseIdx)/volVars.molarDensity(phaseIdx))) ;
 
         return source;
     }
-
-
-
-    /*NumEqVector source(const Element &element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume &scv) const
-    {
-
-        NumEqVector source(0.0);
-        const auto& volVars = elemVolVars[scv];
-
-        Scalar qMass = rrate_.thermoChemReaction(volVars);
-        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-        Scalar qMole = qMass/FluidSystem::molarMass(H2OIdx)*(1-volVars.porosity());
-
-        // make sure not more solid reacts than present
-        // In this test, we only consider discharge. Therefore, we use the cPhaseIdx for CaO.
-        if (-qMole*timeStepSize_ + volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidComponentMolarDensity(cPhaseIdx) < 0 + eps_)
-        {
-            qMole = -volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidComponentMolarDensity(cPhaseIdx)/timeStepSize_;
-        }
-        source[conti0EqIdx+CaO2H2Idx] = qMole;
-        source[conti0EqIdx+CaOIdx] = - qMole;
-        source[conti0EqIdx+H2OIdx] = - qMole;
-
-        Scalar deltaH = 108e3; // J/mol
-        source[energyEqIdx] = qMole * (deltaH - 4*(volVars.pressure(phaseIdx)/volVars.molarDensity(phaseIdx)));
-
-        return source;
-    }
-   */
-
    /*!
      * \brief Return the permeability
      */
@@ -520,99 +430,14 @@ public:
     }
 
 
-
-
-    //change made
-    void postTimeStep(NumEqVector& neumannInFlux, NumEqVector& neumannOutFlux, const SolutionVector& curSol)
-    {
-       Scalar inNeumannH20 = 0.0;
-        Scalar inNeumannEnthalpy = 0.0;
-        Scalar outNeumannH2O = 0.0;
-        Scalar outNeumannEnthaply = 0.0;
-
-        // Loop over all elements
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
-        {
-            const auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
-            auto fvGeometry = localView(this->fvGridGeometry());
-            fvGeometry.bindElement(element);
-
-            auto eIdx = this->fvGridGeometry().elementMapper().index(element);
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                // loop over all subcontrolvolumefaces
-                for (auto&& scvf : scvfs(fvGeometry))
-                {
-                    const auto idx = scvf.index();
-                    const auto& ipGlobal = scvf.ipGlobal();
-                    VolumeVariables volVars;
-                    volVars.update(elemSol, *this, element, scv);
-//                     std::cout<<"eIdx = "<<eIdx <<" idx = "<< idx << "\n";
-
-//                     neumannFlux = this->neumann(element, fvGeometry, elemVolVars, scvf);
-
-//                  //   advective fluxes for h2o and enthalpy
-//                     if(ipGlobal[0] < /*2e-4*/0.0 + eps_)
-//                     {
-// //                         std::cout<<"test \n";
-//                         inFluxH20 += volumeFlux[eIdx/*idx*/]
-//                                     *volVars.molarDensity(phaseIdx)
-//                                     *volVars.moleFraction(phaseIdx, firstMoleFracIdx);
-//                         inFluxN2 += volumeFlux[eIdx/*idx*/]
-//                                     *volVars.molarDensity(phaseIdx)
-//                                     *volVars.moleFraction(phaseIdx, firstMoleFracIdx-1);
-//                         inFluxEnthaply += volumeFlux[eIdx/*idx*/]
-//                                         *volVars.density(phaseIdx)
-//                                         *(FluidSystem::enthalpy(volVars.fluidState(), phaseIdx));
-//                     }
-
-                    if(ipGlobal[0] < 0.0 + eps_)
-                    {
-                        inNeumannH20 = neumannInFlux[firstMoleFracIdx];
-                        inNeumannEnthalpy = neumannInFlux[temperatureIdx];
-                    }
-
-//                     if(ipGlobal[0] > 0.08 - /*10*/*eps_)
-//                     {
-//                         outFluxH20 += volumeFlux[eIdx/*idx*/]
-//                                     *volVars.molarDensity(phaseIdx)
-//                                     *volVars.moleFraction(phaseIdx, firstMoleFracIdx);
-//                         outFluxN2 += volumeFlux[eIdx/*idx*/]
-//                                     *volVars.molarDensity(phaseIdx)
-//                                     *volVars.moleFraction(phaseIdx, firstMoleFracIdx-1);
-//                         outFluxEnthaply += volumeFlux[eIdx/*idx*/]
-//                                         *volVars.density(phaseIdx)
-//                                         *(FluidSystem::enthalpy(volVars.fluidState(), phaseIdx));
-//                     }
-
-                    if(ipGlobal[0] > 0.08 - eps_)
-                    {
-                        outNeumannH2O = neumannOutFlux[firstMoleFracIdx];
-                        outNeumannEnthaply = neumannOutFlux[temperatureIdx];
-                    }
-                }
-            }
-        }
-
-        outputFile_ << /*inFluxH20 <<" | "<< outFluxH20 <<" | "<<*/ inNeumannH20 <<" | "<< outNeumannH2O <<" | "<< /*inFluxN2 <<" | "<< outFluxN2 <<" | "<< inFluxEnthaply <<" | "<< outFluxEnthaply <<" | "<<*/ inNeumannEnthalpy <<" | "<< outNeumannEnthaply  << std::endl;
-    }
-
 private:
     std::string name_;
 
     static constexpr Scalar eps_ = 1e-6;
-
-    // boundary conditions
-
-
     std::vector<double> permeability_;
     std::vector<double> porosity_;
     std::vector<double> reactionRate_;
-
-    //change made
     std::ofstream outputFile_;
-
     ReactionRate rrate_;
     Scalar timeStepSize_;
 };
