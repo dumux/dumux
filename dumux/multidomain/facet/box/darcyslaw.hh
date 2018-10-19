@@ -104,7 +104,6 @@ public:
             using std::sqrt;
             // If this is a surface grid, use the square root of the facet extrusion factor
             // as an approximate average distance from scvf ip to facet center
-            using std::sqrt;
             const auto a = facetVolVars.extrusionFactor();
             auto gradP = scvf.unitOuterNormal();
             gradP *= dim == dimWorld ? 0.5*a : 0.5*sqrt(a);
