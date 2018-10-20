@@ -41,10 +41,7 @@ template <class Assembler, class LinearSolver, class CouplingManager,
 class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Reassembler, Comm>
 {
     using ParentType = NewtonSolver<Assembler, LinearSolver, Reassembler, Comm>;
-    using Scalar = typename Assembler::Scalar;
-    using JacobianMatrix = typename Assembler::JacobianMatrix;
     using SolutionVector = typename Assembler::ResidualType;
-    using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
 
 public:
 
