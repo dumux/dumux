@@ -73,6 +73,7 @@ inline void letmobility(const auto dl,const auto dr, const auto upper_h, const a
           mobility[0] = (krw * std::pow(sw,letL))/(std::pow(sw,letL) + letE* std::pow(1.0-sw,letT));
     }
 
+}
 } // end namespace Dumux
 
 #endif

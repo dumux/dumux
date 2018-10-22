@@ -101,6 +101,7 @@ class SweTestProblem : public SweProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -108,6 +109,7 @@ class SweTestProblem : public SweProblem<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using Indices = typename ModelTraits::Indices;
@@ -562,6 +564,41 @@ public:
 
         return values;
     };
+
+        /*!
+     * \brief Evaluate the source term for all balance equations within a given
+     *        sub-control-volume.
+     *
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scv The sub control volume
+     *
+     * For this method, the \a values parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
+     */
+     NumEqVector source(const Element &element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
+    {
+        NumEqVector source(0.0);
+
+        const auto& globalPos = scv.center();
+        const auto& volVars = elemVolVars[scv];
+        //const auto K = this->spatialParams().permeability(element, scv, EmptyElementSolution{});
+
+
+        return source;
+    }
+
+
 
     // \}
     void readBoundaryBoxFile(std::string filename)
