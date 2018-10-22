@@ -35,7 +35,7 @@
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/nacl.hh>
 
-#include "base.hh"
+#include <dumux/material/fluidsystems/base.hh>
 
 namespace Dumux {
 namespace FluidSystems {
@@ -70,7 +70,7 @@ class TwoPNCImmiscible
 
 public:
     static constexpr int numPhases = 2; //!< Number of phases in the fluid system
-    // here, set the number of tracers:
+    // TODO: here, set the number of tracers, twhich will be added to the total number of components automatically:
     static constexpr int numTracers = 1;
     static constexpr int numComponents = 2 + numTracers; //!< Number of components in the fluid system
 
@@ -79,7 +79,7 @@ public:
     static constexpr int comp0Idx = 0; //!< index of the frist component
     static constexpr int comp1Idx = 1; //!< index of the second component
 
-    //here, define a component index for all added tracers
+    //TODO: for each tracercomponent, define a unique component index for all added tracers
     static constexpr int comp2Idx = 2; //!< index of the first tracer
 
     /****************************************
@@ -229,7 +229,11 @@ public:
 
         if (compIdx == comp0Idx)
             return Fluid0::name();
-        return Fluid1::name();
+        else if (compIdx == comp1Idx)
+            return Fluid1::name();
+        //TODO: for each tracercomponent, define a unique name! Otherwise Paraview will crash.
+        else if (compIdx == comp2Idx)
+            return "NaCl1";
     }
 
     /*!
@@ -413,7 +417,7 @@ public:
             return 1.0;
         else if (phaseIdx == phase0Idx && compIdx == comp0Idx)
             //water likes to stay in the water phase
-            return 1/fluidState.pressure(phase0Idx);
+            return 1e-10;
         else if (phaseIdx == phase0Idx && compIdx == comp1Idx)
             //NAPL doesn't want to be in the water phase
             return fluidState.pressure(phase0Idx);

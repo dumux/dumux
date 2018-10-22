@@ -28,13 +28,11 @@
 
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
-// #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 
 #include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
-// #include <dumux/material/fluidsystems/2pimmiscible.hh>
-#include <dumux/material/fluidsystems/2pncimmiscible.hh>
+#include "2pncimmiscible.hh"
 
 #include <dumux/porousmediumflow/2pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -270,7 +268,6 @@ public:
                 values[tracer1Idx] = 1e-9*FluidSystem::molarMass(tracer1Idx)/FluidSystem::molarMass(0);
         }
 
-        std::cout << "values:\n" <<values << std::endl;
         return values;
     }
 
