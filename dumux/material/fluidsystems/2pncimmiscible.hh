@@ -405,16 +405,23 @@ public:
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         assert(0 <= compIdx  && compIdx < numComponents);
 
-        if (phaseIdx == compIdx)
+        if (phaseIdx == phase1Idx)
             // We could calculate the real fugacity coefficient of
             // the component in the fluid. Probably that's not worth
             // the effort, since the fugacity coefficient of the other
             // component is infinite anyway...
             return 1.0;
+        else if (phaseIdx == phase0Idx && compIdx == comp0Idx)
+            //water likes to stay in the water phase
+            return 1/fluidState.pressure(phase0Idx);
+        else if (phaseIdx == phase0Idx && compIdx == comp1Idx)
+            //NAPL doesn't want to be in the water phase
+            return fluidState.pressure(phase0Idx);
         else if (compIdx > numPhases && phaseIdx == phase0Idx)
             //NaCl/tracer always stays in the water phase
             return 0.0;
-        return std::numeric_limits<Scalar>::infinity();
+
+        return 1.0;
     }
 
     using Base::diffusionCoefficient;

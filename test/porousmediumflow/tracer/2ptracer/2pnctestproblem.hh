@@ -36,7 +36,6 @@
 // #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/2pncimmiscible.hh>
 
-#include "2pnctestvolumevariables.hh"
 #include <dumux/porousmediumflow/2pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -69,28 +68,6 @@ SET_TYPE_PROP(TwoPNCTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem type
 SET_TYPE_PROP(TwoPNCTestProblem, Problem, TwoPNCTestProblem<TypeTag>);
-
-// set the custom volume variables
-// SET_TYPE_PROP(TwoPNCTestProblem, VolumeVariables, TwoPNCTestVolumeVariables<TypeTag>);
-//! Set the volume variables property
-SET_PROP(TwoPNCTestProblem, VolumeVariables)
-{
-private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
-
-    using Traits = TwoPNCTestVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
-public:
-    using type = TwoPNCTestVolumeVariables<Traits>;
-};
-
-// the local residual containing the analytic derivative methods
-// SET_TYPE_PROP(TwoPNCTestProblem, LocalResidual, TwoPNCTestProblemLocalResidual<TypeTag>);
 
 // the fluid system
 SET_PROP(TwoPNCTestProblem, FluidSystem)
@@ -151,7 +128,10 @@ class TwoPNCTestProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     TwoPNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    : ParentType(fvGridGeometry)
+    {
+        Dune::FMatrixPrecision<>::set_singular_limit(1e-35);
+    }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -181,7 +161,6 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-
         values.setState(Indices::firstPhaseOnly);
 
         typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
@@ -291,6 +270,7 @@ public:
                 values[tracer1Idx] = 1e-9*FluidSystem::molarMass(tracer1Idx)/FluidSystem::molarMass(0);
         }
 
+        std::cout << "values:\n" <<values << std::endl;
         return values;
     }
 

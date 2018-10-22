@@ -1,4 +1,5 @@
 dune_symlink_to_source_files(FILES "tracer_2p.input")
+dune_symlink_to_source_files(FILES "test_2pnc.input")
 
 dune_add_test(NAME test_2p_tracer_sequential
               SOURCES test_2p_cctracer.cc
