@@ -35,6 +35,52 @@ namespace Dumux {
 /*!
  * \ingroup MultiDomain
  * \ingroup FacetCoupling
+ * \brief Class to temporarily store the geometric and physical variables from the coupling
+ *        context related to the domain with codimension one at the degree of freedom that
+ *        a sub-control volume face of the bulk domain couples to.
+ *
+ * \tparam CodimOneTypeTag The type tag of the problem that lives on the domain with codimension one.
+ */
+template<class CodimOneTypeTag>
+class ScvfCouplingData
+{
+    using Problem = typename GET_PROP_TYPE(CodimOneTypeTag, Problem);
+    using VolVars = typename GET_PROP_TYPE(CodimOneTypeTag, VolumeVariables);
+    using FVGridGeometry = typename GET_PROP_TYPE(CodimOneTypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+
+public:
+    ScvfCouplingData(const Problem& problem,
+                     const Element& element,
+                     const VolVars& volVars,
+                     const FVElementGeometry& fvGeometry,
+                     const SubControlVolume& scv)
+    : problem_(problem)
+    , element_(element)
+    , volVars_(volVars)
+    , fvGeometry_(fvGeometry)
+    , scv_(scv)
+    {}
+
+    const Problem& problem() const { return problem_; }
+    const Element& element() const { return element_; }
+    const VolVars& volVars() const { return volVars_; }
+    const FVElementGeometry& fvGeometry() const { return fvGeometry_; }
+    const SubControlVolume& scv() const { return scv_; }
+
+private:
+    const Problem& problem_;
+    const Element& element_;
+    const VolVars& volVars_;
+    const FVElementGeometry& fvGeometry_;
+    const SubControlVolume& scv_;
+};
+
+/*!
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Free function that allows the creation of a volume variables object
  *        interpolated to a given position within an element. This is the standard
  *        implementation which simply interpolates the solution to the given position
@@ -188,6 +234,9 @@ public:
 
     using BulkFacetManager::getLowDimElement;
     using FacetEdgeManager::getLowDimElement;
+
+    using BulkFacetManager::getLowDimCouplingData;
+    using FacetEdgeManager::getLowDimCouplingData;
 
     using BulkFacetManager::evalSourcesFromBulk;
     using FacetEdgeManager::evalSourcesFromBulk;

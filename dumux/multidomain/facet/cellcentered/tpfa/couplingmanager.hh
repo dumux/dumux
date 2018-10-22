@@ -108,11 +108,13 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     {
         bool isSet;
         IndexType< bulkId > elementIdx;
+        std::vector< Element<lowDimId> > lowDimElements;
         std::vector< FVElementGeometry<lowDimId> > lowDimFvGeometries;
         std::vector< VolumeVariables<lowDimId> > lowDimVolVars;
 
         void reset()
         {
+            lowDimElements.clear();
             lowDimFvGeometries.clear();
             lowDimVolVars.clear();
             isSet = false;
@@ -301,6 +303,45 @@ public:
     }
 
     /*!
+     * \brief returns the coupling data of the lower-dimensional d.o.f coinciding with a bulk scvf.
+     */
+    ScvfCouplingData<SubDomainTypeTag<lowDimId>> getLowDimCouplingData(const Element<bulkId>& element,
+                                                                       const SubControlVolumeFace<bulkId>& scvf) const
+    {
+        assert(bulkContext_.isSet);
+        assert(bulkScvfIsCoupled_[scvf.index()]);
+        assert(scvf.insideScvIdx() == this->problem(bulkId).fvGridGeometry().elementMapper().index(element));
+
+        const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
+        const auto& couplingData = map.find(scvf.insideScvIdx())->second;
+
+        // search the low dim element idx this scvf is embedded in
+        auto it = std::find_if( couplingData.elementToScvfMap.begin(),
+                                couplingData.elementToScvfMap.end(),
+                                [&scvf] (auto& dataPair)
+                                {
+                                    const auto& scvfs = dataPair.second;
+                                    return std::find(scvfs.begin(), scvfs.end(), scvf.index()) != scvfs.end();
+                                } );
+
+        assert(it != couplingData.elementToScvfMap.end());
+        const auto lowDimElemIdx = it->first;
+        const auto& s = map.find(bulkContext_.elementIdx)->second.couplingElementStencil;
+        const auto& idxInContext = std::distance( s.begin(), std::find(s.begin(), s.end(), lowDimElemIdx) );
+        assert(std::find(s.begin(), s.end(), lowDimElemIdx) != s.end());
+
+        // TODO If box is used we have interpolated vol vars - but which scv to return??? We return the first for now...
+        static constexpr auto dm = FVGridGeometry<lowDimId>::discMethod;
+        const auto scvIdx = dm == DiscretizationMethod::box ? 0 : lowDimElemIdx;
+
+        return ScvfCouplingData<SubDomainTypeTag<lowDimId>>(this->problem(lowDimId),
+                                                            bulkContext_.lowDimElements[idxInContext],
+                                                            bulkContext_.lowDimVolVars[idxInContext],
+                                                            bulkContext_.lowDimFvGeometries[idxInContext],
+                                                            bulkContext_.lowDimFvGeometries[idxInContext].scv(scvIdx));
+    }
+
+    /*!
      * \brief Evaluates the coupling element residual of a bulk domain element with respect
      *        to a dof in the lower-dimensional domain (dofIdxGlobalJ). This is essentially
      *        the fluxes across the bulk element facets that coincide with the lower-dimensional
@@ -421,8 +462,10 @@ public:
 
             auto it = map.find(bulkElemIdx); assert(it != map.end());
             const auto& elementStencil = it->second.couplingElementStencil;
-            bulkContext_.lowDimFvGeometries.reserve(elementStencil.size());
-            bulkContext_.lowDimVolVars.reserve(elementStencil.size());
+            const auto stencilSize = elementStencil.size();
+            bulkContext_.lowDimElements.reserve(stencilSize);
+            bulkContext_.lowDimFvGeometries.reserve(stencilSize);
+            bulkContext_.lowDimVolVars.reserve(stencilSize);
 
             for (const auto lowDimElemIdx : elementStencil)
             {
@@ -430,7 +473,7 @@ public:
                 const auto& ldProblem = this->problem(lowDimId);
                 const auto& ldGridGeometry = this->problem(lowDimId).fvGridGeometry();
 
-                const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
+                auto elemJ = ldGridGeometry.element(lowDimElemIdx);
                 auto fvGeom = localView(ldGridGeometry);
                 fvGeom.bindElement(elemJ);
 
@@ -450,6 +493,7 @@ public:
                                     fvGeom.scv(lowDimElemIdx) );
 
                 bulkContext_.isSet = true;
+                bulkContext_.lowDimElements.emplace_back( std::move(elemJ) );
                 bulkContext_.lowDimFvGeometries.emplace_back( std::move(fvGeom) );
                 bulkContext_.lowDimVolVars.emplace_back( std::move(volVars) );
             }
