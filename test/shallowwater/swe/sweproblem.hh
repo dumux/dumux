@@ -258,7 +258,7 @@ public:
                     bdValue = 0.0;
                     bdType = 0;
                 }else{
-                    bdValue = (bdValue / this->hBoundarySumMap_.at(boundaryValues.id))
+                    bdValue = (bdValue / this->hBoundarySum_[boundaryValues.id])
                                * hBoundarySegmentMap_.at(scvf.index());
                     bdType = 1;
                 }
@@ -357,11 +357,7 @@ public:
         this->hBoundarySegmentMap_.clear();
 
         //clear the existing map and create a new one
-        this->hBoundarySumMap_.clear();
-        for( auto const& [key, val] : this->boundaryValuesMap_)
-        {
-            this->hBoundarySumMap_[val.id] = 0.0;
-        }
+        std::fill(this->hBoundarySum_.begin(), this->hBoundarySum_.end(), 0);
 
         // bulk elements
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -403,7 +399,7 @@ public:
                                     if (myBoundaryId > 0)
                                     {
                                         auto boundaryValues = this->boundaryValuesMap_.at(myBoundaryId);
-                                        this->hBoundarySumMap_[boundaryValues.id] += scvf.area() * h;
+                                        this->hBoundarySum_[boundaryValues.id] += scvf.area() * h;
                                     }
                                 }
                             }
@@ -412,7 +408,10 @@ public:
 
                 }
             }
-        } //TODO cumpute parallel sum for this->hBoundarySumMap_[boundaryValues.id] += scvf.area() * h;
+        }
+        for(std::vector<int>::size_type i = 0; i != this->hBoundarySum_.size(); i++){
+            this->hBoundarySum_[i] = this->fvGridGeometry().gridView().comm().sum(this->hBoundarySum_[i]);
+        }
     }
 
 
@@ -426,11 +425,7 @@ public:
         bool isNoGhost = false;
 
         //clear the existing map and create a new one
-        this->hBoundaryFluxMap_.clear();
-        for( auto const& [key, val] : this->boundaryValuesMap_)
-        {
-            this->hBoundaryFluxMap_[val.id] = 0.0;
-        }
+        std::fill(this->hBoundaryFlux_.begin(), this->hBoundaryFlux_.end(), 0);
 
         // bulk elements
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -508,7 +503,7 @@ public:
                                             bdValue = 0.0;
                                             bdType = 0;
                                         }else{
-                                            bdValue = (bdValue / this->hBoundarySumMap_.at(boundaryValues.id))
+                                            bdValue = (bdValue / this->hBoundarySum_[boundaryValues.id])
                                                       * hBoundarySegmentMap_.at(scvf.index());
                                             bdType = 1;
                                         }
@@ -529,7 +524,7 @@ public:
                                     rotateFluxBack(nxy,riemannFlux);
 
                                     //Store the computed flux of the Riemann solver
-                                    this->hBoundaryFluxMap_[boundaryValues.id] += scvf.area() * riemannFlux[0];
+                                    this->hBoundaryFlux_[boundaryValues.id] += scvf.area() * riemannFlux[0];
                                 }
                             }
                         }
@@ -537,12 +532,9 @@ public:
                 }
             }
         }
-        //TODO compute parallel sum for this->hBoundaryFluxMap_[boundaryValues.id]
-        for( auto const& [key, val] : this->hBoundaryFluxMap_)
-        {
-            //std::cout << "hBoundaryFluxMap_ key " << key << " val " << val << std::endl;
+        for(std::vector<int>::size_type i = 0; i != this->hBoundaryFlux_.size(); i++){
+            this->hBoundaryFlux_[i] = this->fvGridGeometry().gridView().comm().sum(this->hBoundaryFlux_[i]);
         }
-
     }
 
 
@@ -731,8 +723,8 @@ private:
     std::map<int,double> waterdepth_;
 
     std::map<int,double> hBoundarySegmentMap_;
-    std::map<int,double> hBoundarySumMap_;
-    std::map<int,double> hBoundaryFluxMap_;
+    std::vector<double> hBoundarySum_;
+    std::vector<double> hBoundaryFlux_;
 
     std::map<std::string, std::vector<double>> XDMFCellData_;
 
@@ -779,6 +771,8 @@ private:
         std::vector<double> y;
         double inx,iny;
         std::string actualfile;
+        int maxBoundaryId = 1;
+
 
         //open an read all files n = numberOfBoundaryfiles there might be more boxes as files!
         for (std::vector<int>::size_type i = 0; i != boundaryBoxesVec_.size(); i++){
@@ -810,6 +804,7 @@ private:
                         found = line.find(bdidString);
                         if (found != std::string::npos){
                             ssin >> dummy >>  myValues.id;
+                            maxBoundaryId = std::max(myValues.id,maxBoundaryId);
                         }
 
                         //check for  initialvalue
@@ -830,6 +825,12 @@ private:
             infile.close();
             this->boundaryValuesMap_[myValues.id] = myValues;
         }
+
+        //resize hBoundarySum_
+        maxBoundaryId = this->fvGridGeometry().gridView().comm().max(maxBoundaryId);
+        this->hBoundarySum_.resize(maxBoundaryId +1);
+        this->hBoundaryFlux_.resize(maxBoundaryId +1);
+
     }
 };
 

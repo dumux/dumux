@@ -199,7 +199,7 @@ int main(int argc, char** argv) try
     writer.endTimeStep();
 
 
-    bool doPolot = true;
+    bool doPlot = false;
     // time loop
     timeLoop->start(); do
     {
@@ -223,7 +223,7 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // write output
-        if (doPolot){
+        if (doPlot){
             auto& plotMap = problem->xdmfGetVariable(x, *gridVariables, timeLoop->time());
             writer.beginTimeStep(timeLoop->time());
             writer.writeCellData(plotMap["h"],"h","m");
