@@ -1,0 +1,26 @@
+[TimeLoop]
+DtInitial = 50 # [s]
+TEnd = 15000 # [s]
+MaxTimeStepSize = 100
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 6 4
+Cells = 48 32
+
+[SpatialParams]
+LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
+LensUpperRight = 4.0 3.0 # [m] coordinates of the upper right lens corner
+
+Permeability = 1e-10 # [m^2]
+PermeabilityLens = 1e-12 # [m^2]
+
+[Problem]
+Name = tracer_2p
+EnableGravity = true
+
+[Newton]
+EnablePartialReassembly = true
+
+[Vtk]
+AddVelocity = true
