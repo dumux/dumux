@@ -94,12 +94,8 @@ class SweAdvectiveFlux
         Scalar thetal = cellStatesLeft[3] + cellStatesLeft[0];
         Scalar thetar = cellStatesRight[3] + cellStatesRight[0];
 
-        auto ks_av = std::max(outsideVolVars.getKsH(), insideVolVars.getKsH());
-        ks_av = std::max(ks_av,1.0E-9);
-        ks_av = std::min(ks_av,0.1);
-
         Scalar mobility[3] = {1.0};
-        letmobility(cellStatesLeft[0],cellStatesRight[0],ks_av,mobility);
+        letmobility(cellStatesLeft[0],cellStatesRight[0],1.0E-4,1.0E-6,mobility);
 
         //-------------------------------------------------------------
         //
