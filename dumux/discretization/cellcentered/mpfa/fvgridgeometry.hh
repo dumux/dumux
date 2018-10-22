@@ -84,11 +84,15 @@ class CCMpfaFVGridGeometry<GV, Traits, true>
 
     using ScvfOutsideGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
+    // check if two types of interaction volumes are considered in this problem
+    using Helper = typename Traits::template MpfaHelper<ThisType>;
+    static constexpr bool considerSecondaryIVs = Helper::considerSecondaryIVs();
+
 public:
     //! export the flip scvf index set type
     using FlipScvfIndexSet = std::vector<ScvfOutsideGridIndexStorage>;
     //! export the mpfa helper type
-    using MpfaHelper = typename Traits::template MpfaHelper<ThisType>;
+    using MpfaHelper = Helper;
     //! export the grid interaction volume index set type
     using GridIVIndexSets = typename Traits::template GridIvIndexSets<ThisType>;
     //! export the type to be used for indicators where to use the secondary ivs
@@ -154,7 +158,6 @@ public:
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! This specialization is enabled if the use of secondary interaction volumes is active.
-    static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
     template<bool useSecondary = considerSecondaryIVs, std::enable_if_t<useSecondary, bool> = 0>
     bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
@@ -440,11 +443,15 @@ class CCMpfaFVGridGeometry<GV, Traits, false>
 
     using ScvfOutsideGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
+    // check if two types of interaction volumes are considered in this problem
+    using Helper = typename Traits::template MpfaHelper<ThisType>;
+    static constexpr bool considerSecondaryIVs = Helper::considerSecondaryIVs();
+
 public:
     //! export the flip scvf index set type
     using FlipScvfIndexSet = std::vector<ScvfOutsideGridIndexStorage>;
     //! export the mpfa helper type
-    using MpfaHelper = typename Traits::template MpfaHelper<ThisType>;
+    using MpfaHelper = Helper;
     //! export the grid interaction volume index set type
     using GridIVIndexSets = typename Traits::template GridIvIndexSets<ThisType>;
     //! export the type to be used for indicators where to use the secondary ivs
@@ -510,7 +517,6 @@ public:
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! This specialization is enabled if the use of secondary interaction volumes is active.
-    static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
     template<bool useSecondary = considerSecondaryIVs, std::enable_if_t<useSecondary, bool> = 0>
     bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
