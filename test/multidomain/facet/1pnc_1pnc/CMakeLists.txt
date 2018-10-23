@@ -11,7 +11,8 @@ dune_add_test(NAME test_facet_1pnc1pnc_tpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/1pnc_1pnc_bulk_tpfa-00016.vtu
                                 ${CMAKE_SOURCE_DIR}/test/references/facetcoupling_1pnc1pnc_lowdim_tpfa.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/1pnc_1pnc_lowdim_tpfa-00016.vtp
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_facet_1pnc1pnc_tpfa facetcoupling_1pnc1pnc.input -Bulk.Problem.Name 1pnc_1pnc_bulk_tpfa -LowDim.Problem.Name 1pnc_1pnc_lowdim_tpfa")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_facet_1pnc1pnc_tpfa facetcoupling_1pnc1pnc.input
+                                  -Bulk.Problem.Name 1pnc_1pnc_bulk_tpfa -LowDim.Problem.Name 1pnc_1pnc_lowdim_tpfa")
 
 dune_add_test(NAME test_facet_1pnc1pnc_box
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND gmsh_FOUND AND HAVE_UMFPACK )"
@@ -24,7 +25,36 @@ dune_add_test(NAME test_facet_1pnc1pnc_box
                                 ${CMAKE_CURRENT_BINARY_DIR}/1pnc_1pnc_bulk_box-00016.vtu
                                 ${CMAKE_SOURCE_DIR}/test/references/facetcoupling_1pnc1pnc_lowdim_box.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/1pnc_1pnc_lowdim_box-00016.vtp
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_facet_1pnc1pnc_box facetcoupling_1pnc1pnc.input -Bulk.Problem.Name 1pnc_1pnc_bulk_box -LowDim.Problem.Name 1pnc_1pnc_lowdim_box")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_facet_1pnc1pnc_box facetcoupling_1pnc1pnc.input
+                                   -Bulk.Problem.Name 1pnc_1pnc_bulk_box -LowDim.Problem.Name 1pnc_1pnc_lowdim_box")
+
+dune_add_test(NAME test_facet_1pncni1pncni_tpfa
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND gmsh_FOUND AND HAVE_UMFPACK )"
+              COMPILE_DEFINITIONS BULKTYPETAG=OnePNCNIBulkTpfa
+              COMPILE_DEFINITIONS LOWDIMTYPETAG=OnePNCNILowDimTpfa
+              SOURCES test_facetcoupling_fv_1pnc_1pnc.cc
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/facetcoupling_1pncni1pncni_bulk_tpfa.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1pncni_1pncni_bulk_tpfa-00005.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/facetcoupling_1pncni1pncni_lowdim_tpfa.vtp
+                                ${CMAKE_CURRENT_BINARY_DIR}/1pncni_1pncni_lowdim_tpfa-00005.vtp
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_facet_1pncni1pncni_tpfa facetcoupling_1pnc1pnc.input
+                                 -Bulk.Problem.Name 1pncni_1pncni_bulk_tpfa -LowDim.Problem.Name 1pncni_1pncni_lowdim_tpfa -TimeLoop.TEnd 1e5")
+
+dune_add_test(NAME test_facet_1pncni1pncni_box
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND gmsh_FOUND AND HAVE_UMFPACK )"
+              COMPILE_DEFINITIONS BULKTYPETAG=OnePNCNIBulkBox
+              COMPILE_DEFINITIONS LOWDIMTYPETAG=OnePNCNILowDimBox
+              SOURCES test_facetcoupling_fv_1pnc_1pnc.cc
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/facetcoupling_1pncni1pncni_bulk_box.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1pncni_1pncni_bulk_box-00018.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/facetcoupling_1pncni1pncni_lowdim_box.vtp
+                                ${CMAKE_CURRENT_BINARY_DIR}/1pncni_1pncni_lowdim_box-00018.vtp
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_facet_1pncni1pncni_box facetcoupling_1pnc1pnc.input
+                                 -Bulk.Problem.Name 1pncni_1pncni_bulk_box -LowDim.Problem.Name 1pncni_1pncni_lowdim_box -TimeLoop.TEnd 1e5")
 
 set(CMAKE_BUILD_TYPE Release)
 

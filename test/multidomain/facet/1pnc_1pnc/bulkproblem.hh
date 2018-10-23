@@ -45,8 +45,11 @@ template<class TypeTag> class OnePNCBulkProblem;
 namespace Properties {
 // create the type tag nodes
 NEW_TYPE_TAG(OnePNCBulk, INHERITS_FROM(OnePNC));
+NEW_TYPE_TAG(OnePNCBulkNI, INHERITS_FROM(OnePNCBulk, OnePNCNI));
 NEW_TYPE_TAG(OnePNCBulkTpfa, INHERITS_FROM(OnePNCBulk, CCTpfaFacetCouplingModel));
 NEW_TYPE_TAG(OnePNCBulkBox, INHERITS_FROM(OnePNCBulk, BoxFacetCouplingModel));
+NEW_TYPE_TAG(OnePNCNIBulkTpfa, INHERITS_FROM(OnePNCBulkNI, CCTpfaFacetCouplingModel));
+NEW_TYPE_TAG(OnePNCNIBulkBox, INHERITS_FROM(OnePNCBulkNI, BoxFacetCouplingModel));
 
 // Set the grid type
 SET_TYPE_PROP(OnePNCBulk, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
@@ -103,6 +106,8 @@ class OnePNCBulkProblem : public PorousMediumFlowProblem<TypeTag>
         N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx),
     };
 
+    static constexpr bool isNonIsothermal = GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance();
+
 public:
     OnePNCBulkProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                       std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
@@ -130,7 +135,8 @@ public:
         return values;
     }
 
-    //! evaluates the Dirichlet boundary condition for a given position
+    //! evaluates the Dirichlet boundary condition for a given position (isothermal case)
+    template<bool ni = isNonIsothermal, std::enable_if_t<!ni, int> = 0>
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         auto values = initialAtPos(globalPos);
@@ -139,9 +145,39 @@ public:
         return values;
     }
 
-    //! evaluate the initial conditions
+    //! evaluates the Dirichlet boundary condition for a given position (non-isothermal case)
+    template<bool ni = isNonIsothermal, std::enable_if_t<ni, int> = 0>
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    {
+        auto values = initialAtPos(globalPos);
+        if (globalPos[0] < 1e-6)
+        {
+            values[N2Idx] = boundaryMoleFraction_;
+            values[Indices::temperatureIdx] += 100.0; // increase 100 K
+        }
+        return values;
+    }
+
+    //! evaluate the initial conditions (isothermal case)
+    template<bool ni = isNonIsothermal, std::enable_if_t<!ni, int> = 0>
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    { return PrimaryVariables({1.0e5, 0.0}); }
+    {
+        PrimaryVariables values;
+        values[pressureIdx] = 1.0e5;
+        values[N2Idx] = 0.0;
+        return values;
+    }
+
+    //! evaluate the initial conditions (non-isothermal case)
+    template<bool ni = isNonIsothermal, std::enable_if_t<ni, int> = 0>
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    {
+        PrimaryVariables values;
+        values[pressureIdx] = 1.0e5;
+        values[N2Idx] = 0.0;
+        values[Indices::temperatureIdx] = temperature();
+        return values;
+    }
 
     //! returns the temperature in \f$\mathrm{[K]}\f$ in the domain
     Scalar temperature() const

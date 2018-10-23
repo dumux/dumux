@@ -45,8 +45,11 @@ template<class TypeTag> class OnePNCLowDimProblem;
 namespace Properties {
 // create the type tag nodes
 NEW_TYPE_TAG(OnePNCLowDim, INHERITS_FROM(OnePNC));
+NEW_TYPE_TAG(OnePNCNILowDim, INHERITS_FROM(OnePNCLowDim, OnePNCNI));
 NEW_TYPE_TAG(OnePNCLowDimTpfa, INHERITS_FROM(CCTpfaModel, OnePNCLowDim));
 NEW_TYPE_TAG(OnePNCLowDimBox, INHERITS_FROM(BoxModel, OnePNCLowDim));
+NEW_TYPE_TAG(OnePNCNILowDimTpfa, INHERITS_FROM(CCTpfaModel, OnePNCNILowDim));
+NEW_TYPE_TAG(OnePNCNILowDimBox, INHERITS_FROM(BoxModel, OnePNCNILowDim));
 
 // Set the grid type
 SET_TYPE_PROP(OnePNCLowDim, Grid, Dune::FoamGrid<1, 2>);
@@ -91,6 +94,21 @@ class OnePNCLowDimProblem : public PorousMediumFlowProblem<TypeTag>
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
+    // copy some indices for convenience
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    enum
+    {
+        // indices of the primary variables
+        pressureIdx = Indices::pressureIdx,
+
+        // component indices
+        H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx),
+        N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx),
+    };
+
+    static constexpr bool isNonIsothermal = GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance();
+
 public:
     OnePNCLowDimProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                         std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
@@ -127,9 +145,26 @@ public:
     Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
     { return aperture_; }
 
-    //! evaluate the initial conditions
+    //! evaluate the initial conditions (isothermal case)
+    template<bool ni = isNonIsothermal, std::enable_if_t<!ni, int> = 0>
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    { return PrimaryVariables({1.0e5, 0.0}); }
+    {
+        PrimaryVariables values;
+        values[pressureIdx] = 1.0e5;
+        values[N2Idx] = 0.0;
+        return values;
+    }
+
+    //! evaluate the initial conditions (non-isothermal case)
+    template<bool ni = isNonIsothermal, std::enable_if_t<ni, int> = 0>
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    {
+        PrimaryVariables values;
+        values[pressureIdx] = 1.0e5;
+        values[N2Idx] = 0.0;
+        values[Indices::temperatureIdx] = temperature();
+        return values;
+    }
 
     //! returns the temperature in \f$\mathrm{[K]}\f$ in the domain
     Scalar temperature() const

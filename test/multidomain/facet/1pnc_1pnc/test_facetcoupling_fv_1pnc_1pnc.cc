@@ -71,13 +71,19 @@ namespace Properties {
 
 // set cm property for the box test
 using BoxTraits = TestTraits<TTAG(OnePNCBulkBox), TTAG(OnePNCLowDimBox)>;
+using BoxNITraits = TestTraits<TTAG(OnePNCNIBulkBox), TTAG(OnePNCNILowDimBox)>;
 SET_TYPE_PROP(OnePNCBulkBox, CouplingManager, typename BoxTraits::CouplingManager);
 SET_TYPE_PROP(OnePNCLowDimBox, CouplingManager, typename BoxTraits::CouplingManager);
+SET_TYPE_PROP(OnePNCNIBulkBox, CouplingManager, typename BoxNITraits::CouplingManager);
+SET_TYPE_PROP(OnePNCNILowDimBox, CouplingManager, typename BoxNITraits::CouplingManager);
 
 // set cm property for the tpfa test
 using TpfaTraits = TestTraits<TTAG(OnePNCBulkTpfa), TTAG(OnePNCLowDimTpfa)>;
+using TpfaNITraits = TestTraits<TTAG(OnePNCNIBulkTpfa), TTAG(OnePNCNILowDimTpfa)>;
 SET_TYPE_PROP(OnePNCBulkTpfa, CouplingManager, typename TpfaTraits::CouplingManager);
 SET_TYPE_PROP(OnePNCLowDimTpfa, CouplingManager, typename TpfaTraits::CouplingManager);
+SET_TYPE_PROP(OnePNCNIBulkTpfa, CouplingManager, typename TpfaNITraits::CouplingManager);
+SET_TYPE_PROP(OnePNCNILowDimTpfa, CouplingManager, typename TpfaNITraits::CouplingManager);
 
 } // end namespace Properties
 } // end namespace Dumux
