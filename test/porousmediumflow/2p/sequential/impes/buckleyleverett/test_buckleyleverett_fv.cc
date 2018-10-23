@@ -21,7 +21,7 @@
  *
  * \brief test for the two-phase porousmedium flow model
  */
-#define PROBLEM 3
+#define PROBLEM 2
 
 #include <config.h>
 

@@ -10,4 +10,4 @@ install(FILES
 problem.hh
 spatialparams.hh
 test_transport_fv.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/2p/sequential/buckleyleverett)
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/2p/sequential/impes/buckleyleverett)

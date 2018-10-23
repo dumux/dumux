@@ -20,8 +20,8 @@
  * \ingroup TwoPTests
  * \brief The properties for the incompressible 2p test
  */
-#ifndef DUMUX_BUCKLEYLEVERETT_PRESSURE_TEST_PROBLEM_HH
-#define DUMUX_BUCKLEYLEVERETT_PRESSURE_TEST_PROBLEM_HH
+#ifndef DUMUX_BUCKLEYLEVERETT_TRANSPORT_TEST_PROBLEM_HH
+#define DUMUX_BUCKLEYLEVERETT_TRANSPORT_TEST_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/uggrid.hh>
@@ -36,25 +36,24 @@
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/2p/sequential/pressure/model.hh>
+#include <dumux/porousmediumflow/2p/sequential/saturation/model.hh>
 
-#include "pressurespatialparams.hh"
+#include "transportspatialparams.hh"
 
 namespace Dumux {
 // forward declarations
-template<class TypeTag> class TwoPTestProblem;
+template<class TypeTag> class TwoPTransport;
 
 namespace Properties {
-NEW_TYPE_TAG(TwoPImpes, INHERITS_FROM(CCTpfaModel,Pressure));
-
+NEW_TYPE_TAG(TwoPTransport, INHERITS_FROM(CCTpfaModel, Transport));
 // Set the grid type
-SET_TYPE_PROP(TwoPImpes, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TwoPTransport, Grid, Dune::YaspGrid<2>);
 
 // Set the problem type
-SET_TYPE_PROP(TwoPImpes, Problem, TwoPTestProblem<TypeTag>);
+SET_TYPE_PROP(TwoPTransport, Problem, TwoPTransport<TypeTag>);
 
 // Set the fluid system
-SET_PROP(TwoPImpes, FluidSystem)
+SET_PROP(TwoPTransport, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
@@ -67,19 +66,19 @@ SET_PROP(TwoPImpes, FluidSystem)
 };
 
 // Set the spatial parameters
-SET_PROP(TwoPImpes, SpatialParams)
+SET_PROP(TwoPTransport, SpatialParams)
 {
 private:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = TwoPTransportSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Enable caching
-SET_BOOL_PROP(TwoPImpes, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(TwoPImpes, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(TwoPImpes, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(TwoPTransport, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(TwoPTransport, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(TwoPTransport, EnableFVGridGeometryCache, true);
 } // end namespace Properties
 
 /*!
@@ -87,7 +86,7 @@ SET_BOOL_PROP(TwoPImpes, EnableFVGridGeometryCache, true);
  * \brief The incompressible 2p test problem.
  */
 template<class TypeTag>
-class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
+class TwoPTransport : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -101,13 +100,13 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
-        pressureEqIdx = Indices::pressureEqIdx,
-        pressureIdx = Indices::pressureIdx
+        transportEqIdx = Indices::transportEqIdx,
+        saturationIdx = Indices::saturationIdx
     };
-
     static constexpr int dimWorld = GridView::dimensionworld;
+
 public:
-    TwoPTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TwoPTransport(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         Scalar inletWidth = getParam<Scalar>("Problem.InletWidth", 1.0);
@@ -132,16 +131,16 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
 #if PROBLEM == 2
-    BoundaryTypes values;
-    if (onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos))
-    {
-        values.setAllNeumann();
-    }
-    else
-    {
-        values.setAllDirichlet();
-    }
-    return values;
+        BoundaryTypes values;
+        if (onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos) || onRightBoundary_(globalPos) )
+        {
+            values.setAllNeumann();
+        }
+        else
+        {
+            values.setAllDirichlet();
+        }
+        return values;
 #else
         BoundaryTypes values;
         if (onLeftBoundary_(globalPos))
@@ -162,15 +161,8 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(1.0e5);
-//        if (onLeftBoundary_(globalPos))
-//                values[pressureIdx] = 1.0e5;
-
-        Scalar pRef = 1.0e5;
-
-        using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
-        values[pressureIdx] = (pRef - (this->fvGridGeometry().bBoxMax()- globalPos)
-                                       * this->gravity() * WettingPhase::density(temperature(), pRef));
+        PrimaryVariables values;
+        values[saturationIdx] = 1.0;
 
         return values;
     }
@@ -188,10 +180,7 @@ public:
      */
     NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
-        using NonwettingPhase = typename GET_PROP(TypeTag, FluidSystem)::NonwettingPhase;
         NumEqVector values(0.0);
-        if(isInlet(globalPos))
-            values[pressureEqIdx] = -inFlux_/NonwettingPhase::density(temperature(), 1.0e5);
 
         return values;
     }
@@ -206,7 +195,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[pressureIdx] = 1e5;
+        values[saturationIdx] = 1.0;
 
         return values;
     }

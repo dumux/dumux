@@ -1,3 +1,5 @@
+add_subdirectory("buckleyleverett")
+
 dune_symlink_to_source_files(FILES "test_impes.input")
 
 dune_add_test(NAME test_impes_fv
