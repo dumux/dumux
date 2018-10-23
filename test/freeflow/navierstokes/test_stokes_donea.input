@@ -14,3 +14,14 @@ MaxRelativeShift = 1e-5
 
 [Vtk]
 WriteFaceData = false
+
+[LinearSolver]
+GMResRestart = 100
+ResidualReduction = 1e-7
+Verbosity = 0
+MaxIterations = 2000
+PreconditionerVerbosity = 0
+SchurIterations = 1
+VelocityIterations = 3
+SchurResidualReduction = 1e-10
+VelocityResidualReduction = 1e-10
