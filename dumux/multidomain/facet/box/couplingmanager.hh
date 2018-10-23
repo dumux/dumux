@@ -332,8 +332,8 @@ public:
     /*!
      * \brief returns the coupling data of the lower-dimensional d.o.f coinciding with a bulk scvf.
      */
-    ScvfCouplingData<SubDomainTypeTag<lowDimId>> getLowDimCouplingData(const Element<bulkId>& element,
-                                                                       const SubControlVolumeFace<bulkId>& scvf) const
+    ScvfFacetCouplingData<SubDomainTypeTag<lowDimId>> getLowDimCouplingData(const Element<bulkId>& element,
+                                                                            const SubControlVolumeFace<bulkId>& scvf) const
     {
         const auto eIdx = this->problem(bulkId).fvGridGeometry().elementMapper().index(element);
         assert(bulkContext_.isSet);
@@ -364,11 +364,11 @@ public:
         static constexpr auto dm = FVGridGeometry<lowDimId>::discMethod;
         const auto scvIdx = dm == DiscretizationMethod::box ? coupledScvIdx : lowDimElemIdx;
 
-        return ScvfCouplingData<SubDomainTypeTag<lowDimId>>(this->problem(lowDimId),
-                                                            bulkContext_.lowDimElements[idxInContext],
-                                                            bulkContext_.lowDimElemVolVars[idxInContext][scvIdx],
-                                                            bulkContext_.lowDimFvGeometries[idxInContext],
-                                                            bulkContext_.lowDimFvGeometries[idxInContext].scv(scvIdx));
+        return ScvfFacetCouplingData<SubDomainTypeTag<lowDimId>>(this->problem(lowDimId),
+                                                                 bulkContext_.lowDimElements[idxInContext],
+                                                                 bulkContext_.lowDimElemVolVars[idxInContext][scvIdx],
+                                                                 bulkContext_.lowDimFvGeometries[idxInContext],
+                                                                 bulkContext_.lowDimFvGeometries[idxInContext].scv(scvIdx));
     }
 
     /*!

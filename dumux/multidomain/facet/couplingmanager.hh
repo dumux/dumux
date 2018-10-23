@@ -42,7 +42,7 @@ namespace Dumux {
  * \tparam CodimOneTypeTag The type tag of the problem that lives on the domain with codimension one.
  */
 template<class CodimOneTypeTag>
-class ScvfCouplingData
+class ScvfFacetCouplingData
 {
     using Problem = typename GET_PROP_TYPE(CodimOneTypeTag, Problem);
     using VolVars = typename GET_PROP_TYPE(CodimOneTypeTag, VolumeVariables);
@@ -52,11 +52,11 @@ class ScvfCouplingData
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
 
 public:
-    ScvfCouplingData(const Problem& problem,
-                     const Element& element,
-                     const VolVars& volVars,
-                     const FVElementGeometry& fvGeometry,
-                     const SubControlVolume& scv)
+    ScvfFacetCouplingData(const Problem& problem,
+                          const Element& element,
+                          const VolVars& volVars,
+                          const FVElementGeometry& fvGeometry,
+                          const SubControlVolume& scv)
     : problem_(problem)
     , element_(element)
     , volVars_(volVars)
