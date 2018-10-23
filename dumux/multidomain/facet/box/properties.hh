@@ -35,6 +35,7 @@
 
 #include <dumux/multidomain/facet/box/darcyslaw.hh>
 #include <dumux/multidomain/facet/box/fickslaw.hh>
+#include <dumux/multidomain/facet/box/fourierslaw.hh>
 #include <dumux/multidomain/facet/box/elementboundarytypes.hh>
 #include <dumux/multidomain/facet/box/fvgridgeometry.hh>
 #include <dumux/multidomain/facet/box/localresidual.hh>
@@ -61,6 +62,9 @@ SET_TYPE_PROP(BoxFacetCouplingModel,
 
 //! Use the box facet coupling-specific Fick's law
 SET_TYPE_PROP(BoxFacetCouplingModel, MolecularDiffusionType, BoxFacetCouplingFicksLaw<TypeTag>);
+
+//! Use the box facet coupling-specific Fourier's law
+SET_TYPE_PROP(BoxFacetCouplingModel, HeatConductionType, BoxFacetCouplingFouriersLaw<TypeTag>);
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
 SET_TYPE_PROP(BoxFacetCouplingModel,
