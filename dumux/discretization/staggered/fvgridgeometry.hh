@@ -267,6 +267,7 @@ public:
         // clear containers (necessary after grid refinement)
         scvs_.clear();
         scvfs_.clear();
+        boundaryScvfs_.clear();
         scvfIndicesOfScv_.clear();
         intersectionMapper_.update();
 
@@ -279,6 +280,7 @@ public:
         // reserve memory
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
+        boundaryScvfs_.resize(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
         localToGlobalScvfIndices_.resize(numScvs);
 
@@ -321,6 +323,13 @@ public:
                 // boundary sub control volume faces
                 else if (intersection.boundary())
                 {
+                    SubControlVolumeFace tmpScvf(intersection,
+                                        intersection.geometry(),
+                                        scvfIdx,
+                                        std::vector<IndexType>({eIdx, this->gridView().size(0) + numBoundaryScvf_}),
+                                        geometryHelper
+                                        );
+                    boundaryScvfs_[this->gridView().indexSet().subIndex(element, localFaceIndex, 1)] = tmpScvf;
                     scvfs_.emplace_back(intersection,
                                         intersection.geometry(),
                                         scvfIdx,
@@ -328,6 +337,11 @@ public:
                                         geometryHelper);
                     localToGlobalScvfIndices_[eIdx][localFaceIndex] = scvfIdx;
                     scvfsIndexSet.push_back(scvfIdx++);
+
+                    boundaryScvfsIndexSet_.push_back(this->gridView().indexSet().subIndex(element, localFaceIndex, 1));
+                    bool eIdxAlreadyInVector = (find(boundaryScvsIndexSet_.begin(), boundaryScvsIndexSet_.end(), eIdx) != boundaryScvsIndexSet_.end());
+                    if(eIdxAlreadyInVector == false)
+                        boundaryScvsIndexSet_.push_back(eIdx);
                 }
             }
 
@@ -374,6 +388,25 @@ public:
     const ConnectivityMap &connectivityMap() const
     { return connectivityMap_; }
 
+    //! Get a boundary sub control volume face with dof index
+    // At the boundary, the dofIdx is clearly connected with a scvf. In the inner of the domain, the dofIdx belongs to two different scvfs. ScvfIdx is not dofIdx, scvfIdx is different depending on what element the scvf is associated with.
+    const SubControlVolumeFace& boundaryScvf(IndexType scvfDofIdx) const
+    {
+        return boundaryScvfs_[scvfDofIdx];
+    }
+
+    //! Get a vector of all dofIndices of the boundary scvfs
+    const std::vector<IndexType>& boundaryScvfsIndexSet() const
+    {
+        return boundaryScvfsIndexSet_;
+    }
+
+    //! Get a vector of all dofIndices of the boundary scvs
+    const std::vector<IndexType>& boundaryScvsIndexSet() const
+    {
+        return boundaryScvsIndexSet_;
+    }
+
     //! Returns a pointer the cell center specific auxiliary class. Required for the multi-domain FVAssembler's ctor.
     std::unique_ptr<CellCenterFVGridGeometry<ThisType>> cellCenterFVGridGeometryPtr() const
     {
@@ -406,8 +439,11 @@ private:
 
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
+    std::vector<SubControlVolumeFace> boundaryScvfs_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<IndexType>> localToGlobalScvfIndices_;
+    std::vector<IndexType> boundaryScvfsIndexSet_;
+    std::vector<IndexType> boundaryScvsIndexSet_;
     IndexType numBoundaryScvf_;
 };
 
