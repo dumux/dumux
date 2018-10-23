@@ -592,9 +592,25 @@ public:
 
         const auto& globalPos = scv.center();
         const auto& volVars = elemVolVars[scv];
-        //const auto K = this->spatialParams().permeability(element, scv, EmptyElementSolution{});
+        const auto& elementIndex = scv.elementIndex();
 
+        auto cell_volume = scv.volume();
+        /*first we need the friction law to use
+        *   0 = no friction
+        *   1 = Manning
+        *   2 = Chezy
+        *   3 = Nikuradse
+        */
+        //const auto fricLaw = this->spatialParams().frictionlaw(elementIndex);
+        auto h = elemVolVars[scv].getH();
+        auto u = elemVolVars[scv].getU();
+        auto v = elemVolVars[scv].getV();
+        auto ustarH = elemVolVars[scv].frictionUstarH();
 
+        auto uv = sqrt(pow(u,2.0) + pow(v,2.0));
+
+        source[velocityXIdx] = ustarH * u * uv * cell_volume;
+        source[velocityYIdx] = ustarH * v * uv * cell_volume;
         return source;
     }
 

@@ -75,11 +75,11 @@ public:
     * \return the material parameters object
     */
     Scalar ks(const Element& element,
-             const SubControlVolume& scv) const
-    {
-        // Get the global index of the element
-        //const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);
-        return 0.0;
+              const SubControlVolume& scv) const
+   {
+        //const auto newIdx = scv.elementIndex();
+        auto eIdx = scv.elementIndex();
+        return eleKs_[eIdx];
     }
 
     /*! \brief Define the gravitation.
@@ -108,9 +108,11 @@ public:
     * \param elemSol The solution at the dofs connected to the element.
     * \return the friction law of the object
     */
-    int frictionlaw() const
+    int frictionlaw(const Element& element,
+              const SubControlVolume& scv) const
     {
-        return 0;
+        auto eIdx = scv.elementIndex();
+        return (int)eleFrictionlaw_[eIdx];
     }
 
     /*! \brief Define the bottom (for SWEs without sediment transport
@@ -122,13 +124,10 @@ public:
     * \return the material parameters object
     */
     Scalar bottom(const Element& element,
-             const SubControlVolume& scv) const
+              const SubControlVolume& scv) const
     {
-        auto someInitSol = element.geometry().center();
-        /*if ((11.0 < someInitSol[0])&&(someInitSol[0] < 14.0)){
-            return 3.1;
-        }*/
-        return 0.0;
+        auto eIdx = scv.elementIndex();
+        return eleZ_[eIdx];
     }
 
     /*! \brief Set all element data for SWEs and set them.
@@ -187,6 +186,12 @@ public:
         }else{
             eleDefaultId_.assign(nelem, 0.0);
         }
+
+        if (elementdata.find("frictionlaw") != elementdata.end() ){
+            eleFrictionlaw_ = elementdata["frictionlaw"];
+        }else{
+            eleFrictionlaw_.assign(nelem, 0.0);
+        }
     }
 
 
@@ -204,6 +209,7 @@ private:
     std::vector<double> eleVegHp_;
     std::vector<double> eleCflLentgth_;
     std::vector<double> eleDefaultId_;
+    std::vector<double> eleFrictionlaw_;
     std::vector<double> eleZoneId_; //Do we need this?
 };
 

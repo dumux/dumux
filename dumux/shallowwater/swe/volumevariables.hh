@@ -62,13 +62,14 @@ public:
                 const Element &element,
                 const Scv &scv)
     {
+
         priVars_ = elemSol[scv.localDofIndex()];
         auto h = priVars_[waterdepthIdx];
         auto u = priVars_[velocityXIdx];
         auto v = priVars_[velocityYIdx];
         auto ks =  problem.spatialParams().ks(element, scv);
         grav_ =  problem.spatialParams().grav();
-        auto frictionlaw =  problem.spatialParams().frictionlaw();
+        auto frictionlaw =  problem.spatialParams().frictionlaw(element, scv);
 
         //
         auto ustar_h = computeUstarH(ks,h,grav_,frictionlaw);
@@ -146,6 +147,7 @@ public:
 
 private:
     PrimaryVariables priVars_;
+
     Scalar frictionH_;
     Scalar bottom_;
     Scalar frictionUstarH_;
