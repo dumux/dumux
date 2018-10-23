@@ -37,6 +37,7 @@
 #include <dumux/multidomain/facet/cellcentered/localresidual.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/darcyslaw.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/fickslaw.hh>
+#include <dumux/multidomain/facet/cellcentered/tpfa/fourierslaw.hh>
 
 #include <dumux/porousmediumflow/fluxvariables.hh>
 
@@ -56,6 +57,9 @@ SET_TYPE_PROP(CCTpfaFacetCouplingModel,
 
 //! Use the tpfa facet coupling-specific Fick's law
 SET_TYPE_PROP(CCTpfaFacetCouplingModel, MolecularDiffusionType, CCTpfaFacetCouplingFicksLaw<TypeTag>);
+
+//! Use the tpfa facet coupling-specific Fourier's law
+SET_TYPE_PROP(CCTpfaFacetCouplingModel, HeatConductionType, CCTpfaFacetCouplingFouriersLaw<TypeTag>);
 
 //! Use the cc local residual for models with facet coupling
 SET_TYPE_PROP(CCTpfaFacetCouplingModel, BaseLocalResidual, CCFacetCouplingLocalResidual<TypeTag>);
