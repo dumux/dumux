@@ -58,6 +58,8 @@ public:
         permeability_ = getParam<Scalar>("Darcy.SpatialParams.Permeability");
         porosity_ = getParam<Scalar>("Darcy.SpatialParams.Porosity");
         alphaBJ_ = getParam<Scalar>("Darcy.SpatialParams.AlphaBeaversJoseph");
+        fittedAlpha_ = getParam<bool>("Darcy.SpatialParams.FittedAlpha");
+        baseClosed_ = getParam<bool>("Darcy.SpatialParams.BaseClosed");
     }
 
     /*!
@@ -81,13 +83,23 @@ public:
      * \param globalPos The global position
      */
     Scalar beaversJosephCoeffAtPos(const GlobalPosition& globalPos) const
-    { return alphaBJ_; }
-
+    {
+        using std::pow;
+        Scalar x = globalPos[0];
+        if(fittedAlpha_ && baseClosed_)
+            return 39.0*pow(x,4) - 79.0*pow(x,3) + 54.0*pow(x,2) - 15.0*x + 4.0;
+        else if (fittedAlpha_ && !baseClosed_)
+            return 44.4*pow(x,4) - 71.3*pow(x,3) + 20.5*pow(x,2) + 7.9*x + 3.0;
+        else
+            return alphaBJ_;
+    }
 
 private:
     Scalar permeability_;
     Scalar porosity_;
     Scalar alphaBJ_;
+    bool fittedAlpha_;
+    bool baseClosed_;
 };
 
 } // end namespace
