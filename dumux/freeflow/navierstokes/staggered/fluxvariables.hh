@@ -693,7 +693,7 @@ private:
                                 const FaceVariables& faceVars) const
     {
         // Depending on selfIsUpstream I can assign the downstream and the upstream velocities,
-        // then I have to check if I have a forward or a backward neighbot to retrieve
+        // then I have to check if I have a forward or a backward neighbor to retrieve
         // an "upstream-upstream velocity" and be able to use a second order scheme.
         if (selfIsUpstream)
         {
@@ -705,7 +705,7 @@ private:
                 velocities[2] = faceVars.velocityForward(0);
                 distances[0] = ownScvf.selfToOppositeDistance();
                 distances[1] = ownScvf.axisData().inAxisForwardDistances[0];
-                distances[2] = 0.5 * (ownScvf.axisData().selfToOppositeDistance + ownScvf.axisData().inAxisForwardDistances[0]);
+                distances[2] = 0.5 * (ownScvf.axisData().selfToOppositeDistance + ownScvf.axisData().inAxisBackwardDistances[0]);
                 return true;
             }
             else
@@ -721,8 +721,7 @@ private:
                 velocities[2] = faceVars.velocityBackward(0);
                 distances[0] = ownScvf.selfToOppositeDistance();
                 distances[1] = ownScvf.axisData().inAxisBackwardDistances[0];
-                // pairData(0) or pairData(1) have the same normalDistance
-                distances[2] = ownScvf.pairData(0).normalDistance;
+                distances[2] = 0.5 * (ownScvf.axisData().selfToOppositeDistance + ownScvf.axisData().inAxisForwardDistances[0]);
                 return true;
             }
             else
