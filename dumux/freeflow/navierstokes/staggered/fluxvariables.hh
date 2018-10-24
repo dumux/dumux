@@ -227,39 +227,45 @@ public:
 
             const auto& highOrder = problem.higherOrderApproximation();
 
-            // If a Tvd approac has been specified and I am not too near to the boundary I can use a second order
+            // If a Tvd approach has been specified and I am not too near to the boundary I can use a second order
             // approximation for the velocity. In this frontal flux I use for the density always the value that I have on the scvf.
-            if (highOrder.tvdApproach() != TvdApproach::none && canFrontalSecondOrder_(scvf, selfIsUpstream, velocities, distances, elemFaceVars[scvf]))
+            if (highOrder.tvdApproach() != TvdApproach::none)
             {
-                switch (highOrder.tvdApproach())
+                if (canFrontalSecondOrder_(scvf, selfIsUpstream, velocities, distances, elemFaceVars[scvf]))
                 {
-                    case TvdApproach::uniform :
+                    switch (highOrder.tvdApproach())
                     {
-                        momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], insideVolVars.density());
-                        break;
-                    }
-                    case TvdApproach::li :
-                    {
-                        momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream, insideVolVars.density());
-                        break;
-                    }
-                    case TvdApproach::hou :
-                    {
-                        momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], insideVolVars.density());
-                        break;
-                    }
-                    default:
-                    {
-                        DUNE_THROW(ParameterException, "\nTvd approach " << static_cast<int>(highOrder.tvdApproach()) << " is not implemented.\n" <<
-                                    static_cast<int>(TvdApproach::uniform) << ": Uniform Tvd\n" <<
-                                    static_cast<int>(TvdApproach::li) << ": Li's approach\n" <<
-                                    static_cast<int>(TvdApproach::hou) << ": Hou's approach");
-                        break;
+                        case TvdApproach::uniform :
+                        {
+                            momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], insideVolVars.density());
+                            break;
+                        }
+                        case TvdApproach::li :
+                        {
+                            momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream, insideVolVars.density());
+                            break;
+                        }
+                        case TvdApproach::hou :
+                        {
+                            momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], insideVolVars.density());
+                            break;
+                        }
+                        default:
+                        {
+                            DUNE_THROW(ParameterException, "\nTvd approach " << static_cast<int>(highOrder.tvdApproach()) << " is not implemented.\n" <<
+                                        static_cast<int>(TvdApproach::uniform) << ": Uniform Tvd\n" <<
+                                        static_cast<int>(TvdApproach::li) << ": Li's approach\n" <<
+                                        static_cast<int>(TvdApproach::hou) << ": Hou's approach");
+                            break;
+                        }
                     }
                 }
+                else
+                    momentum = highOrder.upwind(velocities[0], velocities[1], insideVolVars.density());
             }
             else
-                momentum = highOrder.upwind(velocities[0], velocities[1], insideVolVars.density());
+                momentum = selfIsUpstream ? highOrder.upwind(velocityOpposite, velocitySelf, insideVolVars.density())
+                                          : highOrder.upwind(velocitySelf, velocityOpposite, insideVolVars.density());
 
             // Account for the orientation of the staggered face's normal outer normal vector
             // (pointing in opposite direction of the scvf's one).
@@ -453,37 +459,49 @@ private:
         const auto& highOrder = problem.higherOrderApproximation();
 
         // If a Tvd approach has been specified and I am not too near to the boundary I can use a second order approximation.
-        if (highOrder.tvdApproach() != TvdApproach::none && canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx, velocities, distances, problem, element, faceVars, isDirichletPressure, isBJS))
+        if (highOrder.tvdApproach() != TvdApproach::none)
         {
-            switch (highOrder.tvdApproach())
+            if (canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx, velocities, distances, problem, element, faceVars, isDirichletPressure, isBJS))
             {
-                case TvdApproach::uniform :
+                switch (highOrder.tvdApproach())
                 {
-                    momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
-                    break;
-                }
-                case TvdApproach::li :
-                {
-                    momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
-                    break;
-                }
-                case TvdApproach::hou :
-                {
-                    momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
-                    break;
-                }
-                default:
-                {
-                    DUNE_THROW(ParameterException, "\nTvd approach " << static_cast<int>(highOrder.tvdApproach()) << " is not implemented.\n" <<
-                                static_cast<int>(TvdApproach::uniform) << ": Uniform Tvd\n" <<
-                                static_cast<int>(TvdApproach::li) << ": Li's approach\n" <<
-                                static_cast<int>(TvdApproach::hou) << ": Hou's approach");
-                    break;
+                    case TvdApproach::uniform :
+                    {
+                        momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+                        break;
+                    }
+                    case TvdApproach::li :
+                    {
+                        momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+                        break;
+                    }
+                    case TvdApproach::hou :
+                    {
+                        momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+                        break;
+                    }
+                    default:
+                    {
+                        DUNE_THROW(ParameterException, "\nTvd approach " << static_cast<int>(highOrder.tvdApproach()) << " is not implemented.\n" <<
+                                    static_cast<int>(TvdApproach::uniform) << ": Uniform Tvd\n" <<
+                                    static_cast<int>(TvdApproach::li) << ": Li's approach\n" <<
+                                    static_cast<int>(TvdApproach::hou) << ": Hou's approach");
+                        break;
+                    }
                 }
             }
+            else
+                momentum = highOrder.upwind(velocities[0], velocities[1], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
         }
         else
-            momentum = highOrder.upwind(velocities[0], velocities[1], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+        {
+            const Scalar velocityFirstParallel = scvf.hasParallelNeighbor(localSubFaceIdx, 0)
+                                               ? faceVars.velocityParallel(localSubFaceIdx, 0)
+                                               : getParallelVelocityFromBoundary_(problem, scvf, normalFace, faceVars.velocitySelf(), localSubFaceIdx, element, isDirichletPressure, isBJS);
+
+            momentum = selfIsUpstream ? highOrder.upwind(velocityFirstParallel, faceVars.velocitySelf(), insideVolVars.density())
+                                      : highOrder.upwind(faceVars.velocitySelf(), velocityFirstParallel, outsideVolVars.density());
+        }
 
         // Account for the orientation of the staggered normal face's outer normal vector
         // and its area (0.5 of the coinciding scfv).
@@ -571,19 +589,9 @@ private:
             // and at the parallel one at the neighboring scvf.
             const Scalar innerParallelVelocity = faceVars.velocitySelf();
 
-            // Lambda to conveniently get the outer parallel velocity for normal faces that are on the boundary
-            // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
-            auto getParallelVelocityFromBoundary = [&]()
-            {
-                const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
-                if (isBJS)
-                    return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, innerParallelVelocity);
-                return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
-            };
-
             const Scalar velocityFirstParallel = scvf.hasParallelNeighbor(localSubFaceIdx,0)
                                                ? faceVars.velocityParallel(localSubFaceIdx,0)
-                                               : getParallelVelocityFromBoundary();
+                                               : getParallelVelocityFromBoundary_(problem, scvf, normalFace, innerParallelVelocity, localSubFaceIdx, element, false, isBJS);
 
             // The velocity gradient already accounts for the orientation
             // of the staggered face's outer normal vector.
@@ -750,21 +758,6 @@ private:
         // The local index of the faces that is opposite to localSubFaceIdx
         const int oppositeSubFaceIdx = localSubFaceIdx % 2 ? localSubFaceIdx - 1 : localSubFaceIdx + 1;
 
-        // Lambda to conveniently get the outer parallel velocity for normal faces that are on the boundary
-        // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
-        auto getParallelVelocityFromBoundary = [&]()
-        {
-            // If there is a Dirichlet condition for the pressure we assume zero gradient for the velocity,
-            // so the velocity at the boundary equal to that on the scvf.
-            if (isDirichletPressure)
-                return faceVars.velocitySelf();
-
-            const auto ghostFace = makeParallelGhostFace_(ownScvf, localSubFaceIdx);
-            if (isBJS)
-                return problem.bjsVelocity(ownScvf, normalFace, localSubFaceIdx, faceVars.velocitySelf());
-            return problem.dirichlet(element, ghostFace)[Indices::velocity(ownScvf.directionIndex())];
-        };
-
         if (selfIsUpstream)
         {
             // I can assign the upstream velocity. The downstream velocity can be assigned or retrieved
@@ -778,7 +771,7 @@ private:
             }
             else
             {
-                velocities[0] = getParallelVelocityFromBoundary();
+                velocities[0] = getParallelVelocityFromBoundary_(problem, ownScvf, normalFace, faceVars.velocitySelf(), localSubFaceIdx, element, isDirichletPressure, isBJS);
                 distances[2] = ownScvf.area() / 2.0;
             }
 
@@ -802,7 +795,7 @@ private:
 
             if (!ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
             {
-                velocities[1] = getParallelVelocityFromBoundary();
+                velocities[1] = getParallelVelocityFromBoundary_(problem, ownScvf, normalFace, faceVars.velocitySelf(), localSubFaceIdx, element, isDirichletPressure, isBJS);
                 return false;
             }
 
@@ -826,6 +819,40 @@ private:
             return true;
         }
     }
+
+    /*!
+     * \brief Return the outer parallel velocity for normal faces that are on the boundary and therefore have no neighbor.
+     *
+     * Calls the problem to retrieve a fixed value set on the boundary.
+     *
+     * \param problem The problem
+     * \param scvf The SubControlVolumeFace that is normal to the boundary
+     * \param normalFace The face at the boundary
+     * \param velocitySelf the velocity at scvf
+     * \param localSubFaceIdx The local index of the face that is on the boundary
+     * \param element The element that is on the boundary
+     * \param isDirichletPressure @c true if there is a dirichlet condition for the pressure on the boundary
+     * \param isBJS @c true if there is a BJS condition fot the velocity on the boundary
+     */
+    Scalar getParallelVelocityFromBoundary_(const Problem& problem,
+                                            const SubControlVolumeFace& scvf,
+                                            const SubControlVolumeFace& normalFace,
+                                            const Scalar velocitySelf,
+                                            const int localSubFaceIdx,
+                                            const Element& element,
+                                            const bool isDirichletPressure,
+                                            const bool isBJS) const
+    {
+        // If there is a Dirichlet condition for the pressure we assume zero gradient for the velocity,
+        // so the velocity at the boundary equal to that on the scvf.
+        if (isDirichletPressure)
+            return velocitySelf;
+
+        const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
+        if (isBJS)
+            return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, velocitySelf);
+        return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
+    };
 
     /*!
      * \brief Return a velocity value from a boundary for which the boundary conditions have to be checked.
