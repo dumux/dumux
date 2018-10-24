@@ -84,7 +84,7 @@ public:
     using Communication = Comm;
 
     /*!
-     * \brief Constructor for stationary problems
+     * \brief The Constructor
      */
     NewtonSolver(std::shared_ptr<Assembler> assembler,
                  std::shared_ptr<LinearSolver> linearSolver,
