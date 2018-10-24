@@ -26,7 +26,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/fluidsystems/1pgas.hh>
-#include <dumux/material/components/air.hh>
+#include <dumux/material/components/constant.hh>
 
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/turbulenceproperties.hh>
@@ -46,8 +46,10 @@ NEW_TYPE_TAG(RANSTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmega));
 // the fluid system
 SET_PROP(RANSTypeTag, FluidSystem)
 {
+private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::OnePGas<Scalar, Components::Air<Scalar> >;
+public:
+    using type = FluidSystems::OnePGas<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
@@ -100,6 +102,11 @@ public:
         inletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletPressure");
         temperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Temperature");
 
+        darcyStart_ = getParamFromGroup<Scalar>(this->paramGroup(), "Grid.DarcyStart");
+        darcyEnd_ = getParamFromGroup<Scalar>(this->paramGroup(), "Grid.DarcyEnd");
+        smoothingZoneDistance_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.SmoothingZoneDistance");
+        smoothingSlipVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.SmoothingSlipVelocity");
+
         Dumux::TurbulenceProperties<Scalar, FVGridGeometry::GridView::dimensionworld, true> turbulenceProperties;
         FluidState fluidState;
         fluidState.setPressure(0, inletPressure_);
@@ -126,11 +133,23 @@ public:
         return isOnWallAtPos(globalPos);
     }
 
+    bool isOnCouplingWall(const SubControlVolumeFace& scvf) const
+    {
+        return couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf);
+    }
+
     bool isOnWallAtPos(const GlobalPosition& globalPos) const
     {
         return (onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
     }
     // \}
+
+    bool isSmoothingZoneAtPos(const GlobalPosition& globalPos) const
+    {
+        return (onLowerBoundary_(globalPos) &&
+               (((globalPos[0] > ((darcyStart_ - smoothingZoneDistance_) - eps_)) && (globalPos[0] < (darcyStart_ + eps_))) ||
+               ((globalPos[0] < ((darcyEnd_ + smoothingZoneDistance_) + eps_)) && (globalPos[0] > (darcyEnd_ - eps_)))));
+    }
 
    /*!
      * \name Problem parameters
@@ -186,7 +205,7 @@ public:
             bTypes.setDirichlet(Indices::velocityYIdx);
         }
 
-        if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+        if (isOnCouplingWall(scvf))
         {
             bTypes.setCouplingNeumann(Indices::conti0EqIdx);
             bTypes.setCouplingNeumann(scvf.directionIndex());
@@ -194,7 +213,7 @@ public:
         }
 
         // set a fixed dissipation (omega) in one cell
-        if (isOnWallAtPos(globalPos))
+        if (isOnWall(scvf))
             bTypes.setDirichletCell(Indices::dissipationIdx);
 
         return bTypes;
@@ -270,11 +289,6 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
-    bool isOnWall(const GlobalPosition& globalPos) const
-    {
-        return (onLowerBoundary_(globalPos));
-    }
-
    /*!
      * \name Volume terms
      */
@@ -297,6 +311,11 @@ public:
 
         values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
         values[Indices::dissipationIdx] = dissipation_;
+
+        if (isSmoothingZoneAtPos(globalPos))
+        {
+        values[Indices::velocityXIdx] = smoothingSlipVelocity_;
+        }
 
         if (isOnWallAtPos(globalPos))
         {
@@ -360,6 +379,10 @@ private:
     Scalar temperature_;
     Scalar turbulentKineticEnergy_;
     Scalar dissipation_;
+    Scalar darcyEnd_;
+    Scalar darcyStart_;
+    Scalar smoothingZoneDistance_;
+    Scalar smoothingSlipVelocity_;
 
     TimeLoopPtr timeLoop_;
 

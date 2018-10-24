@@ -31,7 +31,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/fluidsystems/1pgas.hh>
-#include <dumux/material/components/air.hh>
+#include <dumux/material/components/constant.hh>
 
 #if FORCHHEIMER
 #include <dumux/discretization/forchheimerslaw.hh>
@@ -54,8 +54,10 @@ SET_TYPE_PROP(DarcyOnePTypeTag, Problem, Dumux::DarcySubProblem<TypeTag>);
 // the fluid system
 SET_PROP(DarcyOnePTypeTag, FluidSystem)
 {
+private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::OnePGas<Scalar, Components::Air<Scalar> >;
+public:
+    using type = FluidSystems::OnePGas<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
