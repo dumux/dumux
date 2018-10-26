@@ -118,15 +118,24 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return the porosity
      */
-    template<class ElementSolution>
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolution& elemSol) const
+    template<class SolidSystem>
+    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos,
+                                    int compIdx) const
     {
-        if (inOutFlow(scv.dofPosition()))
-            return porosityOutFlow_;
+        if (compIdx == SolidSystem::comp0Idx)
+        {
+            if (inOutFlow(globalPos))
+                return 1-porosityOutFlow_;
+            else
+                return 0;
+        }
         else
-            return porosity_;
+        {
+            if (inOutFlow(globalPos))
+                return 0;
+            else
+                return 1-porosity_;
+        }
     }
 
     /*!

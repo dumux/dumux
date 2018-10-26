@@ -63,6 +63,8 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
     enum { energyEq0Idx = Indices::energyEq0Idx };
     enum { energyEqSolidIdx = Indices::energyEqSolidIdx};
 
+    enum { numPhases        = ModelTraits::numPhases() };
+
     enum { numComponents    = ModelTraits::numComponents() };
     enum { phase0Idx        = FluidSystem::phase0Idx};
     enum { phase1Idx        = FluidSystem::phase1Idx};
@@ -149,7 +151,7 @@ public:
          //heat conduction for the solid phases
        for(int sPhaseIdx=0; sPhaseIdx<numEnergyEqSolid; ++sPhaseIdx)
        {
-            flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(sPhaseIdx);
+            flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(numPhases + sPhaseIdx);
        }
     }
 
@@ -403,7 +405,7 @@ public:
         }
        for(int sPhaseIdx=0; sPhaseIdx<numEnergyEqSolid; ++sPhaseIdx)
        {
-            flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(sPhaseIdx);
+            flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(numPhases +sPhaseIdx);
        }
     }
     /*!
