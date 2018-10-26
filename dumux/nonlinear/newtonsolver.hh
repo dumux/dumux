@@ -694,6 +694,10 @@ private:
                 assembleLinearSystem(uCurrentIter);
                 assembleTimer.stop();
 
+                const auto& M = assembler_->jacobian();
+                const auto& A = MatrixConverter<std::decay_t<decltype(M)>>::multiTypeToBCRSMatrix(M);
+                Dune::writeMatrixToMatlab(A, "A.mat");
+
                 ///////////////
                 // linear solve
                 ///////////////

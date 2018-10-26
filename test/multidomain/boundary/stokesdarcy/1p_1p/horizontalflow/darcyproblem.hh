@@ -64,6 +64,11 @@ SET_PROP(DarcyOnePTypeTag, SpatialParams)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = OnePSpatialParams<FVGridGeometry, Scalar>;
 };
+
+//! Enable caching (more memory, but faster runtime)
+SET_BOOL_PROP(DarcyOnePTypeTag, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(DarcyOnePTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(DarcyOnePTypeTag, EnableGridFluxVariablesCache, true);
 }
 
 template <class TypeTag>
@@ -71,6 +76,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
@@ -231,6 +237,22 @@ public:
     //! Get the coupling manager
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
+
+    std::vector<IndexType> dirichletBoundaryScvfsIndexSet(const Element& element, const IndexType& eqIdx) const
+    {
+        std::vector<IndexType> vec;
+        const auto boundaryScvfsIndexSet = (this->fvGridGeometry()).boundaryScvfsIndexSet();
+        for (auto& scvfIdx : boundaryScvfsIndexSet)
+        {
+            const auto scvf = (this->fvGridGeometry()).boundaryScvf(scvfIdx);
+            const auto bcTypes = boundaryTypes(element, scvf);
+            if (bcTypes.isDirichlet(eqIdx))
+            {
+                vec.push_back(scvfIdx);
+            }
+        }
+        return vec;
+    }
 
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const

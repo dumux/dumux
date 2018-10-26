@@ -159,6 +159,7 @@ public:
         // clear containers (necessary after grid refinement)
         scvs_.clear();
         scvfs_.clear();
+        boundaryScvfs_.clear();
         scvfIndicesOfScv_.clear();
         flipScvfIndices_.clear();
 
@@ -171,6 +172,7 @@ public:
         // reserve memory
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
+        boundaryScvfs_.resize(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
 
         // Build the scvs and scv faces
@@ -248,12 +250,25 @@ public:
                 // boundary sub control volume faces
                 else if (intersection.boundary())
                 {
+                    SubControlVolumeFace tmpScvf(intersection,
+                                        intersection.geometry(),
+                                        scvfIdx,
+                                        ScvfGridIndexStorage({eIdx, this->gridView().size(0) + numBoundaryScvf_}),
+                                        true);
+
+                    boundaryScvfs_[eIdx] = tmpScvf;
+
                     scvfs_.emplace_back(intersection,
                                         intersection.geometry(),
                                         scvfIdx,
                                         ScvfGridIndexStorage({eIdx, this->gridView().size(0) + numBoundaryScvf_++}),
                                         true);
                     scvfsIndexSet.push_back(scvfIdx++);
+
+                    boundaryScvfsIndexSet_.push_back(eIdx);
+                    bool eIdxAlreadyInVector = (find(boundaryScvsIndexSet_.begin(), boundaryScvsIndexSet_.end(), eIdx) != boundaryScvsIndexSet_.end());
+                    if(eIdxAlreadyInVector == false)
+                        boundaryScvsIndexSet_.push_back(eIdx);
                 }
             }
 
@@ -314,6 +329,25 @@ public:
     const ConnectivityMap &connectivityMap() const
     { return connectivityMap_; }
 
+    //! Get a boundary sub control volume face with dof index
+    // At the boundary, the dofIdx is clearly connected with a scvf. In the inner of the domain, the dofIdx belongs to two different scvfs. ScvfIdx is not dofIdx, scvfIdx is different depending on what element the scvf is associated with.
+    const SubControlVolumeFace& boundaryScvf(IndexType scvfDofIdx) const
+    {
+        return boundaryScvfs_[scvfDofIdx];
+    }
+
+    //! Get a vector of all dofIndices of the boundary scvfs
+    const std::vector<IndexType>& boundaryScvfsIndexSet() const
+    {
+        return boundaryScvfsIndexSet_;
+    }
+
+    //! Get a vector of all dofIndices of the boundary scvs
+    const std::vector<IndexType>& boundaryScvsIndexSet() const
+    {
+        return boundaryScvsIndexSet_;
+    }
+
 private:
     // find the scvf that has insideScvIdx in its outsideScvIdx list and outsideScvIdx as its insideScvIdx
     IndexType findFlippedScvfIndex_(IndexType insideScvIdx, IndexType outsideScvIdx)
@@ -336,7 +370,10 @@ private:
     //! containers storing the global data
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
+    std::vector<SubControlVolumeFace> boundaryScvfs_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
+    std::vector<IndexType> boundaryScvfsIndexSet_;
+    std::vector<IndexType> boundaryScvsIndexSet_;
     IndexType numBoundaryScvf_;
 
     //! needed for embedded surface and network grids (dim < dimWorld)

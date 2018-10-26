@@ -64,6 +64,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
 
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using GridFaceVariables = typename GridVariables::GridFaceVariables;
@@ -217,6 +218,23 @@ public:
         const Scalar alpha = asImp_().alphaBJ(normalFace);
         return velocitySelf / (alpha / sqrt(K) * scvf.pairData(localSubFaceIdx).parallelDistance + 1.0);
     }
+
+    std::vector<IndexType> dirichletBoundaryScvfsIndexSet(const Element& element) const
+    {
+        std::vector<IndexType> vec;
+        const auto boundaryScvfsIndexSet = (this->fvGridGeometry()).boundaryScvfsIndexSet();
+        for (auto& scvfIdx : boundaryScvfsIndexSet)
+        {
+            const auto scvf = (this->fvGridGeometry()).boundaryScvf(scvfIdx);
+            const auto bcTypes = asImp_().boundaryTypes(element, scvf);
+            if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
+            {
+                vec.push_back(scvfIdx);
+            }
+        }
+        return vec;
+    }
+
 
 private:
 

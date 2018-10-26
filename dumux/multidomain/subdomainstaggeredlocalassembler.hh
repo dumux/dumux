@@ -556,7 +556,6 @@ public:
                NumericDifferentiation::partialDerivative(evalResidual, priVars[pvIdx + offset], partialDeriv, origResidual,
                                                          eps(priVars[pvIdx + offset], pvIdx), numDiffMethod);
 
-
                // update the global jacobian matrix with the current partial derivatives
                updateGlobalJacobian_(A, cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
 
@@ -651,8 +650,12 @@ public:
                    NumericDifferentiation::partialDerivative(evalResidual, faceSolution[globalJ][pvIdx], partialDeriv, origResiduals[scvf.localFaceIdx()],
                                                              eps(faceSolution[globalJ][pvIdx], pvIdx), numDiffMethod);
 
-                   // update the global jacobian matrix with the current partial derivatives
-                   updateGlobalJacobian_(A, faceGlobalI, globalJ, pvIdx, partialDeriv);
+                    const auto boundaryScvfsIndexSet = (this->problem()).dirichletBoundaryScvfsIndexSet(element);
+                    const auto it = find (boundaryScvfsIndexSet.begin(), boundaryScvfsIndexSet.end(), globalJ);
+                    if ((it == boundaryScvfsIndexSet.end() /*globalJ not a boundary DirichletBoundary*/) || (faceGlobalI == globalJ)){
+                        // update the global jacobian matrix with the current partial derivatives
+                        updateGlobalJacobian_(A, faceGlobalI, globalJ, pvIdx, partialDeriv);
+                    }
 
                    // restore the original faceVars
                    faceVars = origFaceVars;
@@ -716,8 +719,13 @@ public:
                 NumericDifferentiation::partialDerivative(evalResidual, facePriVars[pvIdx], partialDeriv, origResidual,
                                                           epsCoupl(facePriVars[pvIdx], pvIdx), numDiffMethod);
 
-                // update the global jacobian matrix with the current partial derivatives
-                updateGlobalJacobian_(A, cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
+                const auto boundaryScvfsIndexSet = (this->problem()).dirichletBoundaryScvfsIndexSet(element);
+
+                const auto it = find (boundaryScvfsIndexSet.begin(), boundaryScvfsIndexSet.end(), globalJ);
+                if ((it == boundaryScvfsIndexSet.end() /*globalJ not a boundary DirichletBoundary*/) || (cellCenterGlobalI == globalJ)){
+                    // update the global jacobian matrix with the current partial derivatives
+                    updateGlobalJacobian_(A, cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
+                }
 
                 // restore the original faceVars
                 faceVars = origFaceVars;
