@@ -58,11 +58,7 @@ SET_PROP(TwoPImpes, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
-#if PROBLEM == 2
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
-#else
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-#endif
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
@@ -110,16 +106,6 @@ public:
     TwoPTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        Scalar inletWidth = getParam<Scalar>("Problem.InletWidth", 1.0);
-        GlobalPosition inletCenter = this->fvGridGeometry().bBoxMax();
-        inletCenter[0] *= 0.5;
-
-        inletLeftCoord_ = inletCenter;
-        inletLeftCoord_[0] -=0.5*inletWidth;
-        inletRightCoord_ = inletCenter;
-        inletRightCoord_[0] +=0.5*inletWidth;
-
-        inFlux_ = getParam<Scalar>("Problem.InjectionFlux", 1e-4);
     }
 
     /*!
@@ -131,25 +117,12 @@ public:
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-#if PROBLEM == 2
-    BoundaryTypes values;
-    if (onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos) || onRightBoundary_(globalPos) )
-    {
-        values.setAllNeumann();
-    }
-    else
-    {
-        values.setAllDirichlet();
-    }
-    return values;
-#else
         BoundaryTypes values;
         if (onLeftBoundary_(globalPos))
             values.setAllDirichlet();
         else
             values.setAllNeumann();
         return values;
-#endif
     }
 
     /*!
@@ -162,16 +135,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(1.0e5);
-//        if (onLeftBoundary_(globalPos))
-//                values[pressureIdx] = 1.0e5;
-
-        Scalar pRef = 1.0e5;
-
-        using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
-        values[pressureIdx] = (pRef - (this->fvGridGeometry().bBoxMax()- globalPos)
-                                       * this->gravity() * WettingPhase::density(temperature(), pRef));
-
+        PrimaryVariables values(2.0e5);
         return values;
     }
 
@@ -186,16 +150,14 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
-    {
-        using NonwettingPhase = typename GET_PROP(TypeTag, FluidSystem)::NonwettingPhase;
-        NumEqVector values(0.0);
-        if(isInlet(globalPos))
-            values[pressureEqIdx] = -inFlux_/NonwettingPhase::density(temperature(), 1.0e5);
-
-        return values;
-    }
-
+     NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
+     {
+         using NonwettingPhase = typename GET_PROP(TypeTag, FluidSystem)::NonwettingPhase;
+         NumEqVector values(0.0);
+         if(onRightBoundary_(globalPos))
+            values[pressureEqIdx] = 3e-4/NonwettingPhase::density(temperature(), 1.0e5);
+         return values;
+     }
     /*!
      * \brief Evaluates the initial values for a control volume
      *
@@ -206,7 +168,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[pressureIdx] = 1e5;
+         values[pressureIdx] = 2e5;
 
         return values;
     }
@@ -220,7 +182,7 @@ public:
      */
     Scalar temperature() const
     {
-        return 293.15; // 10°C
+        return 283.15; // 10°C
     }
 
 private:
@@ -243,26 +205,7 @@ private:
     {
         return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
     }
-
-    bool isInlet(const GlobalPosition& globalPos) const
-    {
-        if (!onUpperBoundary_(globalPos))
-            return false;
-
-        for (int i = 0; i < dimWorld; i++)
-        {
-            if (globalPos[i] < inletLeftCoord_[i] - eps_)
-                return false;
-            if (globalPos[i] > inletRightCoord_[i] + eps_)
-                return false;
-        }
-        return true;
-    }
-
-    static constexpr Scalar eps_ = 1e-6;
-    Scalar inFlux_;
-    GlobalPosition inletLeftCoord_;
-    GlobalPosition inletRightCoord_;
+    static constexpr Scalar eps_ = 1e-8;
 };
 
 } // end namespace Dumux

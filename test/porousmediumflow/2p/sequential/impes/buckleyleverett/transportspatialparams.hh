@@ -61,30 +61,21 @@ public:
     : ParentType(fvGridGeometry)
     {
         // residual saturations
-        materialLawParamsBackground_.setSwr(0.);
-        materialLawParamsBackground_.setSnr(0.);
+        materialLawParams_.setSwr(0.2);
+        materialLawParams_.setSnr(0.2);
 
-        materialLawParamsLenses_.setSwr(0.);
-        materialLawParamsLenses_.setSnr(0.);
 
         //parameters for Brooks-Corey law
 
         // entry pressures
-        materialLawParamsBackground_.setPe(getParam<Scalar>("SpatialParams.BackgroundEntryPressure", 0.0));
-        materialLawParamsLenses_.setPe(getParam<Scalar>("SpatialParams.LenseEntryPressure", 0.0));
+        materialLawParams_.setPe(getParam<Scalar>("SpatialParams.EntryPressure", 0.0));
 
-        materialLawParamsBackground_.setLambda(getParam<Scalar>("SpatialParams.BackgroundLambda", 3.0));
-        materialLawParamsLenses_.setLambda(getParam<Scalar>("SpatialParams.LenseLambda", 2.0));
 
-        permBackground_ = getParam<Scalar>("SpatialParams.BackgroundPermeability", 1e-10);
-        permLenses_ = getParam<Scalar>("SpatialParams.LensPermeability", 1e-10);
+        materialLawParams_.setLambda(getParam<Scalar>("SpatialParams.Lambda", 4.0));
 
-        lensOneLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensOneLowerLeft", GlobalPosition(0.0));
-        lensOneUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensOneUpperRight", GlobalPosition(0.0));
-        lensTwoLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensTwoLowerLeft", GlobalPosition(0.0));
-        lensTwoUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensTwoUpperRight", GlobalPosition(0.0));
-        lensThreeLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensThreeLowerLeft", GlobalPosition(0.0));
-        lensThreeUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensThreeUpperRight", GlobalPosition(0.0));
+
+        perm_ = getParam<Scalar>("SpatialParams.Permeability", 1e-10);
+
     }
 
     /*!
@@ -101,16 +92,7 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
-        auto globalPos = element.geometry().center();
-        // do not use a less permeable lens in the test with inverted wettability
-        if (isLensOne(globalPos))
-            return permLenses_;
-        else if (isLensTwo(globalPos))
-            return permLenses_;
-        else if (isLensThree(globalPos))
-            return permLenses_;
-        else
-            return permBackground_;
+            return perm_;
     }
 
     /*!
@@ -119,7 +101,7 @@ public:
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.4; }
+    { return 0.2; }
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law.
@@ -135,15 +117,8 @@ public:
                                                const SubControlVolume& scv,
                                                const ElementSolution& elemSol) const
     {
-        auto globalPos = element.geometry().center();
-        if (isLensOne(globalPos))
-            return materialLawParamsLenses_;
-        else if (isLensTwo(globalPos))
-            return materialLawParamsLenses_;
-        else if (isLensThree(globalPos))
-            return materialLawParamsLenses_;
-        else
-            return materialLawParamsBackground_;
+
+            return materialLawParams_;
     }
 
     /*!
@@ -175,50 +150,12 @@ public:
     { volumeFlux_ = f; }
 
 private:
-    bool isLensOne(const GlobalPosition& globalPos) const
-    {
-        for (int i = 0; i < dimWorld; i++)
-        {
-            if (globalPos[i] < lensOneLowerLeft_[i] - eps_ || globalPos[i] > lensOneUpperRight_[i] + eps_)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-    bool isLensTwo(const GlobalPosition& globalPos) const
-    {
-        for (int i = 0; i < dimWorld; i++)
-        {
-            if (globalPos[i] < lensTwoLowerLeft_[i] - eps_ || globalPos[i] > lensTwoUpperRight_[i] + eps_)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-    bool isLensThree(const GlobalPosition& globalPos) const
-    {
-        for (int i = 0; i < dimWorld; i++)
-        {
-            if (globalPos[i] < lensThreeLowerLeft_[i] - eps_ || globalPos[i] > lensThreeUpperRight_[i] + eps_)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
 
-    MaterialLawParams materialLawParamsBackground_;
-    MaterialLawParams materialLawParamsLenses_;
-    PermeabilityType permBackground_;
-    PermeabilityType permLenses_;
-    GlobalPosition lensOneLowerLeft_;
-    GlobalPosition lensOneUpperRight_;
-    GlobalPosition lensTwoLowerLeft_;
-    GlobalPosition lensTwoUpperRight_;
-    GlobalPosition lensThreeLowerLeft_;
-    GlobalPosition lensThreeUpperRight_;
+
+    MaterialLawParams materialLawParams_;
+
+    PermeabilityType perm_;
+
 
     std::vector<Scalar> volumeFlux_;
 

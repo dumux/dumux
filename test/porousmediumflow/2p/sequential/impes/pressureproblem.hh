@@ -133,7 +133,7 @@ public:
     {
 #if PROBLEM == 2
     BoundaryTypes values;
-    if (onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos))
+    if (onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos) || onRightBoundary_(globalPos) )
     {
         values.setAllNeumann();
     }
