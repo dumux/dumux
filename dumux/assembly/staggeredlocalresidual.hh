@@ -211,13 +211,14 @@ public:
                                                const FVElementGeometry& fvGeometry,
                                                const ElementVolumeVariables& elemVolVars,
                                                const ElementFaceVariables& elemFaceVars,
+                                               const ElementFaceVariables& defElemFaceVars,
                                                const ElementBoundaryTypes& bcTypes,
                                                const ElementFluxVariablesCache& elemFluxVarsCache,
                                                const SubControlVolumeFace& scvf) const
     {
         FaceResidualValue residual(0.0);
         asImp().evalSourceForFace(residual, this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, scvf);
-        asImp().evalFluxForFace(residual, this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache, scvf);
+        asImp().evalFluxForFace(residual, this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, defElemFaceVars, bcTypes, elemFluxVarsCache, scvf);
 
         return residual;
     }
@@ -229,12 +230,13 @@ public:
                          const FVElementGeometry& fvGeometry,
                          const ElementVolumeVariables& elemVolVars,
                          const ElementFaceVariables& elemFaceVars,
+                         const ElementFaceVariables& defElemFaceVars,
                          const ElementBoundaryTypes& bcTypes,
                          const ElementFluxVariablesCache& elemFluxVarsCache,
                          const SubControlVolumeFace& scvf) const
     {
         if(!scvf.boundary())
-            residual += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+            residual += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, defElemFaceVars, elemFluxVarsCache);
     }
 
     //! Evaluate the source terms for a face residual
@@ -306,11 +308,12 @@ public:
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolVars,
                              const ElementFaceVariables& elemFaceVars,
+                             const ElementFaceVariables& defElemFaceVars,
                              const ElementBoundaryTypes& bcTypes,
                              const ElementFluxVariablesCache& elemFluxVarsCache,
                              const SubControlVolumeFace& scvf) const
     {
-        asImp_().evalBoundaryForFace_(residual, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache);
+        asImp_().evalBoundaryForFace_(residual, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, defElemFaceVars, bcTypes, elemFluxVarsCache);
     }
 
     //! If no solution has been set, we treat the problem as stationary.

@@ -179,10 +179,11 @@ public:
                                             const FVElementGeometry& fvGeometry,
                                             const ElementVolumeVariables& elemVolVars,
                                             const ElementFaceVariables& elemFaceVars,
+                                            const ElementFaceVariables& defElemFaceVars,
                                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        return fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
+        return fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, defElemFaceVars);
     }
 
     /*!
@@ -277,6 +278,7 @@ protected:
                               const SubControlVolumeFace& scvf,
                               const ElementVolumeVariables& elemVolVars,
                               const ElementFaceVariables& elemFaceVars,
+                              const ElementFaceVariables& defElemFaceVars,
                               const ElementBoundaryTypes& elemBcTypes,
                               const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
@@ -296,11 +298,11 @@ protected:
             {
                 // set a given Neumann flux for the face on the boundary itself
                 const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
-                residual = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
+                residual += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
                                            * extrusionFactor * scvf.area();
 
                 // treat the remaining (frontal and lateral) faces of the staggered control volume
-                residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+                residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, defElemFaceVars, elemFluxVarsCache);
             }
             else if(bcTypes.isSymmetry())
             {
@@ -313,7 +315,7 @@ protected:
             else if(bcTypes.isDirichlet(Indices::pressureIdx))
             {
                 // If none of the above conditions apply, we are at an "fixed pressure" boundary for which the velocity needs to be assembled
-                residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+                residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, defElemFaceVars, elemFluxVarsCache);
             }
             else
                 DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions for the momentum equations.");

@@ -23,6 +23,7 @@
 #ifndef DUMUX_HIGHER_ORDER_VELOCITY_APPROXIMATION_HH
 #define DUMUX_HIGHER_ORDER_VELOCITY_APPROXIMATION_HH
 
+#include <array>
 #include <cmath>
 #include <functional>
 #include <iostream>
@@ -137,8 +138,7 @@ public:
     /**
       * \brief Upwind Method
       */
-    Scalar upwind(const Scalar downstreamVelocity,
-                  const Scalar upstreamVelocity,
+    Scalar upwind(const Scalar upstreamVelocity,
                   const Scalar density) const
     {
         return upstreamVelocity * density;
@@ -189,17 +189,16 @@ public:
     /**
       * \brief Tvd Scheme: Total Variation Diminuishing
       */
-    Scalar tvd(const Scalar downstreamVelocity,
-               const Scalar upstreamVelocity,
-               const Scalar upUpstreamVelocity,
+    Scalar tvd(const Scalar upstreamVelocity,
+               const std::array<Scalar, 3>& defVelocities,
                const Scalar density) const
     {
-        const Scalar ratio = (upstreamVelocity - upUpstreamVelocity) / (downstreamVelocity - upstreamVelocity);
+        const Scalar ratio = (defVelocities[1] - defVelocities[2]) / (defVelocities[0] - defVelocities[1]);
 
         // If the velocity field is uniform (like at the first newton step) we get a NaN
         if(ratio > 0.0 && std::isfinite(ratio))
         {
-            const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (downstreamVelocity - upstreamVelocity);
+            const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (defVelocities[0] - defVelocities[1]);
             return density * (upstreamVelocity + secondOrderTerm);
         }
         else
@@ -213,26 +212,24 @@ public:
       * It tries to reconstruct the value for the velocity at the upstream-upstream point
       * if the grid was uniform.
       */
-    Scalar tvd(const Scalar downstreamVelocity,
-               const Scalar upstreamVelocity,
-               const Scalar upUpstreamVelocity,
-               const Scalar upstreamToDownstreamDistance,
-               const Scalar upUpstreamToUpstreamDistance,
+    Scalar tvd(const Scalar upstreamVelocity,
+               const std::array<Scalar, 3>& defVelocities,
+               const std::array<Scalar, 3>& distances,
                const bool selfIsUpstream,
                const Scalar density) const
     {
         // I need the information of selfIsUpstream to get the correct sign because upUpstreamToUpstreamDistance is always positive
-        const Scalar upUpstreamGradient = (upstreamVelocity - upUpstreamVelocity) / upUpstreamToUpstreamDistance * selfIsUpstream;
+        const Scalar upUpstreamGradient = (defVelocities[1] - defVelocities[0]) / distances[1] * selfIsUpstream;
 
         // Distance between the upUpstream node and the position where it should be if the grid were uniform.
-        const Scalar correctionDistance = upUpstreamToUpstreamDistance - upstreamToDownstreamDistance;
-        const Scalar reconstrutedUpUpstreamVelocity = upUpstreamVelocity + upUpstreamGradient * correctionDistance;
-        const Scalar ratio = (upstreamVelocity - reconstrutedUpUpstreamVelocity) / (downstreamVelocity - upstreamVelocity);
+        const Scalar correctionDistance = distances[1] - distances[0];
+        const Scalar reconstrutedUpUpstreamVelocity = defVelocities[2] + upUpstreamGradient * correctionDistance;
+        const Scalar ratio = (defVelocities[1] - reconstrutedUpUpstreamVelocity) / (defVelocities[0] - defVelocities[1]);
 
         // If the velocity field is uniform (like at the first newton step) we get a NaN
         if(ratio > 0.0 && std::isfinite(ratio))
         {
-            const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (downstreamVelocity - upstreamVelocity);
+            const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (defVelocities[0] - defVelocities[1]);
             return density * (upstreamVelocity + secondOrderTerm);
         }
         else
@@ -245,23 +242,20 @@ public:
      * This functions manages the non uniformities of the grid according to [Hou, Simons, Hinkelmann 2007].
      * It should behave better then the Li's version in very stretched grids.
      */
-    Scalar tvd(const Scalar downstreamVelocity,
-               const Scalar upstreamVelocity,
-               const Scalar upUpstreamVelocity,
-               const Scalar upstreamToDownstreamDistance,
-               const Scalar upUpstreamToUpstreamDistance,
-               const Scalar downstreamStaggeredCellSize,
+    Scalar tvd(const Scalar upstreamVelocity,
+               const std::array<Scalar, 3>& defVelocities,
+               const std::array<Scalar, 3>& distances,
                const Scalar density) const
     {
-        const Scalar ratio = (upstreamVelocity - upUpstreamVelocity) / (downstreamVelocity - upstreamVelocity)
-                           * upstreamToDownstreamDistance / upUpstreamToUpstreamDistance;
+        const Scalar ratio = (defVelocities[1] - defVelocities[2]) / (defVelocities[0] - defVelocities[1])
+                           * distances[0] / distances[1];
 
         // If the velocity field is uniform (like at the first newton step) we get a NaN
         if(ratio > 0.0 && std::isfinite(ratio))
         {
-            const Scalar upstreamStaggeredCellSize = 0.5 * (upstreamToDownstreamDistance + upUpstreamToUpstreamDistance);
-            const Scalar R = (upstreamStaggeredCellSize + downstreamStaggeredCellSize) / upstreamStaggeredCellSize;
-            const Scalar secondOrderTerm = limiter_(ratio, R) / R * (downstreamVelocity - upstreamVelocity);
+            const Scalar upstreamStaggeredCellSize = 0.5 * (distances[0] + distances[1]);
+            const Scalar R = (upstreamStaggeredCellSize + distances[2]) / upstreamStaggeredCellSize;
+            const Scalar secondOrderTerm = limiter_(ratio, R) / R * (defVelocities[0] - defVelocities[1]);
             return density * (upstreamVelocity + secondOrderTerm);
         }
         else

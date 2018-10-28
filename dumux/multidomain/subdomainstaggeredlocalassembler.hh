@@ -110,6 +110,7 @@ public:
                  (element.partitionType() == Dune::GhostEntity))
     , curElemFaceVars_(localView(assembler.gridVariables(domainId).curGridFaceVars()))
     , prevElemFaceVars_(localView(assembler.gridVariables(domainId).prevGridFaceVars()))
+    , defElemFaceVars_(localView(assembler.gridVariables(domainId).curGridFaceVars()))
     , couplingManager_(couplingManager)
     {}
 
@@ -224,8 +225,8 @@ public:
             return FaceResidualValue(0.0);
         }
 
-        return isImplicit ? evalLocalResidualForFace(scvf, this->curElemVolVars(), this->curElemFaceVars())
-                          : evalLocalResidualForFace(scvf, this->prevElemVolVars(), this->prevElemFaceVars());
+        return isImplicit ? evalLocalResidualForFace(scvf, this->curElemVolVars(), this->curElemFaceVars(), this->defElemFaceVars())
+                          : evalLocalResidualForFace(scvf, this->prevElemVolVars(), this->prevElemFaceVars(), this->prevElemFaceVars());
     }
 
     /*!
@@ -233,17 +234,19 @@ public:
      * \param scvf The sub control volume face
      * \param elemVolVars The element volume variables
      * \param elemFaceVars The element face variables
+     * \param defElemFaceVars The element face variables to be used for the deferred terms
      */
     FaceResidualValue evalLocalResidualForFace(const SubControlVolumeFace& scvf,
                                                const ElementVolumeVariables& elemVolVars,
-                                               const ElementFaceVariables& elemFaceVars) const
+                                               const ElementFaceVariables& elemFaceVars,
+                                               const ElementFaceVariables& defElemFaceVars) const
     {
-        auto residual = evalLocalFluxAndSourceResidualForFace(scvf, elemVolVars, elemFaceVars);
+        auto residual = evalLocalFluxAndSourceResidualForFace(scvf, elemVolVars, elemFaceVars, defElemFaceVars);
 
         if (!this->assembler().isStationaryProblem())
             residual += evalLocalStorageResidualForFace(scvf);
 
-        this->localResidual().evalBoundaryForFace(residual, this->problem(), this->element(), this->fvGeometry(), elemVolVars, elemFaceVars, this->elemBcTypes(), this->elemFluxVarsCache(), scvf);
+        this->localResidual().evalBoundaryForFace(residual, this->problem(), this->element(), this->fvGeometry(), elemVolVars, elemFaceVars, defElemFaceVars, this->elemBcTypes(), this->elemFluxVarsCache(), scvf);
 
         return residual;
     }
@@ -256,8 +259,8 @@ public:
      */
     FaceResidualValue evalLocalFluxAndSourceResidualForFace(const SubControlVolumeFace& scvf) const
     {
-        return isImplicit ? evalLocalFluxAndSourceResidualForFace(scvf, this->curElemVolVars(), this->curElemFaceVars())
-                          : evalLocalFluxAndSourceResidualForFace(scvf, this->prevElemVolVars(), this->prevElemFaceVars());
+        return isImplicit ? evalLocalFluxAndSourceResidualForFace(scvf, this->curElemVolVars(), this->curElemFaceVars(), this->defElemFaceVars())
+                          : evalLocalFluxAndSourceResidualForFace(scvf, this->prevElemVolVars(), this->prevElemFaceVars(), this->prevElemFaceVars());
     }
 
     /*!
@@ -266,12 +269,14 @@ public:
      * \param scvf The sub control volume face
      * \param elemVolVars The element volume variables
      * \param elemFaceVars The element face variables
+     * \param defElemFaceVars The element face variables to be used for the deferred terms
      */
     FaceResidualValue evalLocalFluxAndSourceResidualForFace(const SubControlVolumeFace& scvf,
                                                             const ElementVolumeVariables& elemVolVars,
-                                                            const ElementFaceVariables& elemFaceVars) const
+                                                            const ElementFaceVariables& elemFaceVars,
+                                                            const ElementFaceVariables& defElemFaceVars) const
     {
-        return this->localResidual().evalFluxAndSourceForFace(this->element(), this->fvGeometry(), elemVolVars, elemFaceVars, this->elemBcTypes(), this->elemFluxVarsCache(), scvf);
+        return this->localResidual().evalFluxAndSourceForFace(this->element(), this->fvGeometry(), elemVolVars, elemFaceVars, defElemFaceVars, this->elemBcTypes(), this->elemFluxVarsCache(), scvf);
     }
 
     /*!
@@ -296,6 +301,10 @@ public:
     ElementFaceVariables& prevElemFaceVars()
     { return prevElemFaceVars_; }
 
+    //! The current element volume variables to be used for the deferred terms
+    ElementFaceVariables& defElemFaceVars()
+    { return defElemFaceVars_; }
+
     //! The current element volume variables
     const ElementFaceVariables& curElemFaceVars() const
     { return curElemFaceVars_; }
@@ -303,6 +312,10 @@ public:
     //! The element volume variables of the provious time step
     const ElementFaceVariables& prevElemFaceVars() const
     { return prevElemFaceVars_; }
+
+    //! The current element volume variables to be used for the deferred terms
+    const ElementFaceVariables& defElemFaceVars() const
+    { return defElemFaceVars_; }
 
     CouplingManager& couplingManager()
     { return couplingManager_; }
@@ -366,6 +379,7 @@ private:
 
     ElementFaceVariables curElemFaceVars_;
     ElementFaceVariables prevElemFaceVars_;
+    ElementFaceVariables defElemFaceVars_;
     CouplingManager& couplingManager_; //!< the coupling manager
 };
 
@@ -396,6 +410,7 @@ public:
         auto&& fvGeometry = this->fvGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& curElemFaceVars = this->curElemFaceVars();
+        auto&& defElemFaceVars = this->defElemFaceVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // bind the caches
@@ -403,6 +418,7 @@ public:
         fvGeometry.bind(element);
         curElemVolVars.bind(element, fvGeometry, curSol);
         curElemFaceVars.bind(element, fvGeometry, curSol);
+        defElemFaceVars.bind(element, fvGeometry, curSol);
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
         if (!this->assembler().isStationaryProblem())
         {
