@@ -1152,6 +1152,167 @@ private:
     Dune::InverseOperatorResult result_;
 };
 
+/*!
+  \brief Schur complement inverse operator.
+*/
+template<class AType, class BType, class CType, class DType, class InvOpAType, class X, class Y>
+class SchurComplement : public Dune::LinearOperator<X,Y>
+{
+public:
+    // export types
+    typedef DType matrix_type;
+    typedef X domain_type;
+    typedef Y range_type;
+    typedef typename X::field_type field_type;
+
+    //! constructor: just store a reference to a matrix
+    explicit SchurComplement (const AType& A, const BType& B,
+                              const CType& C, const DType& D,
+                              const std::shared_ptr<InvOpAType>& invA)
+    : A_(A), B_(B), C_(C), D_(D), invA_(invA) {}
+
+    //! apply operator to x:  \f$ y = A(x) \f$
+    virtual void apply (const X& x, Y& y) const
+    {
+        // apply B, note x and aTmp1 have different size (Bx)
+        X aTmp1(A_.N());
+        aTmp1 = 0.0;
+        B_.mv(x, aTmp1);
+
+        // apply A^-1 (A^-1Bx)
+        auto aTmp2 = aTmp1;
+
+        // if we use the exact Schur complement the eigenvalues are 1 and GMRes converges in 2 steps
+        // ... a single V-cycle of AMG instead
+        Dune::InverseOperatorResult result;
+        invA_->apply(aTmp2, aTmp1, result);
+        // invA_.pre(aTmp2, aTmp1);
+        // invA_.apply(aTmp2, aTmp1);
+        // invA_.post(aTmp2);
+
+        // apply C (CA^-1Bx)
+        C_.mv(aTmp2, y);
+        // switch signs
+    }
+
+    //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
+    virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
+    {
+        auto tmp = y;
+        this->apply(x, tmp);
+        y.axpy(alpha, tmp);
+    }
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual Dune::SolverCategory::Category category() const
+    {
+      return Dune::SolverCategory::sequential;
+    }
+
+  private:
+    const AType& A_;
+    const BType& B_;
+    const CType& C_;
+    const DType& D_;
+    std::shared_ptr<InvOpAType> invA_;
+};
+
+template <class GridView>
+class SchurComplementSolver : public LinearSolver
+{
+public:
+    SchurComplementSolver() = default;
+
+    // expects a system as a multi-type matrix
+    // | A  B |
+    // | C  D |
+
+    // Solve saddle-point problem using a Schur complement based preconditioner
+    template<int precondBlockLevel = 1, class Matrix, class Vector, class FaceVector>
+    bool solve(const Matrix& coefficientMatrix, Vector& CCVector, const Vector& b, const FaceVector& sampleFaceVec)
+    {
+        int verbosity = getParamFromGroup<int>(this->paramGroup(), "LinearSolver2.schurVerbosity");
+        const int maxIter = getParamFromGroup<double>(this->paramGroup(), "LinearSolver2.schurMaxIter");
+        const double residReduction = getParamFromGroup<double>(this->paramGroup(), "LinearSolver2.schurResidualReduction");
+        const int restartGMRes = getParamFromGroup<int>(this->paramGroup(), "LinearSolver2.schurGMResRestart");
+
+        Vector bTmp(b);
+
+        // LU decompose vel sub matrix and hand it to the preconditioner
+        using namespace Dune::Indices;
+        using VelMatrixType = std::decay_t<decltype(coefficientMatrix[_1][_1])>;
+        using VVector = std::decay_t<decltype(sampleFaceVec)>;
+        // using InnerSolver = Dune::UMFPack<VelMatrixType>;
+        // auto invOpVel = std::make_shared<InnerSolver>(coefficientMatrix[_1][_1], false);
+        // using InnerPreconditioner = Dune::SeqJac<VelMatrixType, VVector, VVector, 1>;
+        // auto innerPrec = std::make_shared<InnerPreconditioner>(coefficientMatrix[_1][_1], 1, 1.0);
+
+        // or use an AMG approximation instead instead
+        using Comm = Dune::Amg::SequentialInformation;
+        using LinearOperator = Dune::MatrixAdapter<VelMatrixType, VVector, VVector>;
+        using ScalarProduct = Dune::SeqScalarProduct<VVector>;
+        using Smoother = Dune::SeqSSOR<VelMatrixType, VVector, VVector>;
+        auto comm = std::make_shared<Comm>();
+        auto fop = std::make_shared<LinearOperator>(coefficientMatrix[_1][_1]);
+        auto sp = std::make_shared<ScalarProduct>();
+
+        using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
+        using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<VelMatrixType, Dune::Amg::FirstDiagonal> >;
+        Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
+        params.setDefaultValuesIsotropic(GridView::Traits::Grid::dimension);
+        params.setDebugLevel(verbosity);
+        params.setGamma(1); // one V-cycle
+        Criterion criterion(params);
+        SmootherArgs smootherArgs;
+        smootherArgs.iterations = 1;
+        smootherArgs.relaxationFactor = 1.0;
+
+        using InnerPreconditioner = Dune::Amg::AMG<LinearOperator, VVector, Smoother, Comm>;
+        auto innerPrec = std::make_shared<InnerPreconditioner>(*fop, criterion, smootherArgs, *comm);
+        static const int precVerbosity = getParamFromGroup<int>(this->paramGroup(), "LinearSolver2.precVerbosity");
+        static const int precMaxIter = getParamFromGroup<int>(this->paramGroup(), "LinearSolver2.precMaxIter");
+        const double precResidReduction = getParamFromGroup<double>(this->paramGroup(), "LinearSolver2.precResidReduction");
+        using InnerSolver = Dune::RestartedFlexibleGMResSolver<VVector>;
+        auto invOpVel = std::make_shared<InnerSolver>(*fop, *sp, *innerPrec, precResidReduction, 100, precMaxIter, precVerbosity);
+
+        auto& A = coefficientMatrix[_1][_1];
+        auto& B = coefficientMatrix[_1][_0];
+        auto& C = coefficientMatrix[_0][_1];
+        auto& D = coefficientMatrix[_0][_0];
+
+        using BType = std::decay_t<decltype(B)>;
+        using CType = std::decay_t<decltype(C)>;
+        using PresMatrixType = std::decay_t<decltype(D)>;
+        using PVector = std::decay_t<decltype(CCVector)>;
+        using InvOpVelType = std::decay_t<decltype(*invOpVel)>;
+
+        using SchurComplementType = SchurComplement<VelMatrixType, BType, CType, PresMatrixType, InvOpVelType, PVector, PVector>;
+        SchurComplementType schur(A, B, C, D, invOpVel);
+
+        using InnerPreconditioner2 = Dune::Richardson<PVector, PVector>;
+        auto schurPrec = std::make_shared<InnerPreconditioner2>();
+
+//         using Solver = Dune::MINRESSolver<Vector>;
+        using Solver = Dune::RestartedGMResSolver<Vector>;
+//         using Solver = Dune::BiCGSTABSolver<Vector>;
+
+        Solver solver(schur, *schurPrec, residReduction, restartGMRes, maxIter, verbosity);
+//         the above line without restartGMRes
+        solver.apply(CCVector, bTmp, result_);
+
+        return result_.converged;
+    }
+
+    const Dune::InverseOperatorResult& result() const
+    {
+      return result_;
+    }
+
+private:
+    Dune::InverseOperatorResult result_;
+};
+
+
 // \}
 
 } // end namespace Dumux

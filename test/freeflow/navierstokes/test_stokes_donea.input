@@ -14,10 +14,19 @@ MaxRelativeShift = 1e-10
 [Vtk]
 WriteFaceData = false
 
-#[LinearSolver]
-#Verbosity = 2
-
 [ InitialCondition ]
 # 0: zero
 # 1: exact solution
 InitialConditionType = 0
+
+[LinearSolver2]
+schurGMResRestart = 100
+schurResidualReduction = 1e-20
+schurVerbosity = 0
+schurMaxIter = 2000
+precVerbosity = 0
+precMaxIter = 2000
+precResidReduction = 1e-13
+
+[Algorithm]
+AlgorithmType = 4
