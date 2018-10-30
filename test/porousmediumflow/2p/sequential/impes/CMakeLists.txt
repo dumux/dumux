@@ -1,4 +1,5 @@
 add_subdirectory("buckleyleverett")
+add_subdirectory("mcwhorter")
 
 dune_symlink_to_source_files(FILES "test_impes.input")
 

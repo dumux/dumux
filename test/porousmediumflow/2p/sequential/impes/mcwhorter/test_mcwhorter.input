@@ -1,0 +1,28 @@
+[TimeLoop]
+DtInitial = 1e2# [s]
+MaxTimeStepSize = 1e3
+TEnd = 5e6 # [s]
+OutputTimeInterval = 5e4 # [s]
+
+[Grid]
+
+LowerLeft = 0 0
+UpperRight = 2 1
+Cells =  50 1
+[SpatialParams]
+
+Permeability = 1.01936799e-13
+Lambda = 3
+EntryPressure = 2000
+
+[Problem]
+Name = test_mcwhorter
+EnableGravity = false
+
+
+
+[Component]
+LiquidDensity = 1000
+LiquidKinematicViscosity = 1e-6
+
+
