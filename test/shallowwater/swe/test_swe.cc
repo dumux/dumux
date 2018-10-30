@@ -191,7 +191,6 @@ int main(int argc, char** argv) try
     // write a first output file with no data
     auto& plotMap = problem->xdmfGetVariable(x, *gridVariables, timeLoop->time());
     writer.beginTimeStep(0.0);
-    //std::cout << "Debug Write Cell Data" << std::endl;
     writer.writeCellData(plotMap["h"],"h","m");
     writer.writeCellData(plotMap["u"],"u","m/s");
     writer.writeCellData(plotMap["v"],"v","m/s");
@@ -250,7 +249,11 @@ int main(int argc, char** argv) try
             std::cout << "\n=====================================" << std::endl;
             std::cout << "t " << timeLoop->time() << " dt " << timeLoop->timeStepSize() << std::endl;
             std::cout << "\n" << std::endl;
+
+            //show the fluxes over all boundaries
+            problem->printBoundaryFluxes();
         }
+
 
     } while (!timeLoop->finished());
 

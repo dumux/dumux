@@ -389,6 +389,8 @@ public:
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
                     if (scvf.boundary()){
+
+                       //check that key does not allready exist
                        if (this->hBoundarySegmentMap_.find(scvf.index()) == this->hBoundarySegmentMap_.end())
                        {
                             if (h > this->minHBoundary_){
@@ -447,7 +449,6 @@ public:
             {
                 isNoGhost = true;
             }
-
             for (auto&& scv : scvs(fvGeometry))
             {
                 for (auto&& scvf : scvfs(fvGeometry))
@@ -457,78 +458,74 @@ public:
                     auto v = elemVolVars[scv].getV();
 
                     if (scvf.boundary()){
-                        if (this->hBoundarySegmentMap_.find(scvf.index()) == this->hBoundarySegmentMap_.end())
-                        {
-                            if (isNoGhost){
+                        if (isNoGhost){
+                            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                            const auto& insideVolVars = elemVolVars[insideScv];
+                            const auto& nxy = scvf.unitOuterNormal();
+                            const auto& ip = scvf.ipGlobal();
 
-                                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-                                const auto& insideVolVars = elemVolVars[insideScv];
-                                const auto& nxy = scvf.unitOuterNormal();
-                                const auto& ip = scvf.ipGlobal();
+                            Scalar cellStatesLeft[4] = {0.0};
+                            Scalar cellStatesRight[4] = {0.0};
 
-                                Scalar cellStatesLeft[4] = {0.0};
-                                Scalar cellStatesRight[4] = {0.0};
+                            cellStatesLeft[0]  =  elemVolVars[scv].getH();
+                            cellStatesLeft[1]  =  elemVolVars[scv].getU();
+                            cellStatesLeft[2]  =  elemVolVars[scv].getV();
+                            cellStatesLeft[3]  =  elemVolVars[scv].getBottom();
 
-                                cellStatesLeft[0]  =  elemVolVars[scv].getH();
-                                cellStatesLeft[1]  =  elemVolVars[scv].getU();
-                                cellStatesLeft[2]  =  elemVolVars[scv].getV();
-                                cellStatesLeft[3]  =  elemVolVars[scv].getBottom();
+                            //first case reflecting wall boundary (no-flow)
+                            cellStatesRight[0] = cellStatesLeft[0];
+                            cellStatesRight[1] = -cellStatesLeft[1];
+                            cellStatesRight[2] = -cellStatesLeft[2];
+                            cellStatesRight[3] = cellStatesLeft[3];
 
-                                //first case reflecting wall boundary (no-flow)
-                                cellStatesRight[0] = cellStatesLeft[0];
-                                cellStatesRight[1] = -cellStatesLeft[1];
-                                cellStatesRight[2] = -cellStatesLeft[2];
-                                cellStatesRight[3] = cellStatesLeft[3];
+                            int bdType = 0; //0 = Neumann, 1 = definded q, 2 = defined h
+                            double bdValue = 0.0;
 
-                                int bdType = 0; //0 = Neumann, 1 = definded q, 2 = defined h
-                                double bdValue = 0.0;
+                            auto myBoundaryId = this->getBoundaryId(ip[0],ip[1]); //use the integration point
+                            auto boundaryValues = this->boundaryValuesMap_.at(myBoundaryId);
 
-                                auto myBoundaryId = this->getBoundaryId(ip[0],ip[1]); //use the integration point
-                                auto boundaryValues = this->boundaryValuesMap_.at(myBoundaryId);
-
-                                if (myBoundaryId != 0){
-                                    if (boundaryValues.type == "hq-curve")
+                            if (myBoundaryId != 0){
+                                if (boundaryValues.type == "hq-curve")
+                                {
+                                    bdValue = getWQBoundaryValue(time_,myBoundaryId);
+                                    bdType = 2;
+                                }
+                                if (boundaryValues.type == "depth")
+                                {
+                                    bdValue = getBoundaryValue(time_,myBoundaryId);
+                                    bdType = 2;
+                                }
+                                if (boundaryValues.type == "discharge")
+                                {
+                                    bdValue = getBoundaryValue(time_,myBoundaryId);
+                                    using std::abs;
+                                    if (abs(bdValue) < (1.0E-20))
                                     {
-                                        bdValue = getWQBoundaryValue(time_,myBoundaryId);
-                                        bdType = 2;
+                                        bdValue = 0.0;
+                                        bdType = 0;
+                                    }else{
+                                        bdValue = (bdValue / this->hBoundarySum_[boundaryValues.id])
+                                                  * hBoundarySegmentMap_.at(scvf.index());
+                                        bdType = 1;
                                     }
-                                    if (boundaryValues.type == "depth")
-                                    {
-                                        bdValue = getBoundaryValue(time_,myBoundaryId);
-                                        bdType = 2;
-                                    }
-                                    if (boundaryValues.type == "discharge")
-                                    {
-                                        bdValue = getBoundaryValue(time_,myBoundaryId);
-                                        using std::abs;
-                                        if (abs(bdValue) < (1.0E-20))
-                                        {
-                                            bdValue = 0.0;
-                                            bdType = 0;
-                                        }else{
-                                            bdValue = (bdValue / this->hBoundarySum_[boundaryValues.id])
-                                                      * hBoundarySegmentMap_.at(scvf.index());
-                                            bdType = 1;
-                                        }
-                                    }
+                                }
 
-                                    //call boundaryfluxes for computing the Riemann invariants
-                                    boundaryFluxes(nxy,scvf.area(),0.2,
-                                                   cellStatesLeft,cellStatesRight,bdType,bdValue);
+                                //call boundaryfluxes for computing the Riemann invariants
+                                boundaryFluxes(nxy,scvf.area(),0.2,
+                                               cellStatesLeft,cellStatesRight,bdType,bdValue);
 
-                                    stateRotation(nxy,cellStatesLeft);
-                                    stateRotation(nxy,cellStatesRight);
+                                stateRotation(nxy,cellStatesLeft);
+                                stateRotation(nxy,cellStatesRight);
 
-                                    Scalar riemannFlux[3] = {0.0};
-                                    computeExactRiemann(riemannFlux,cellStatesLeft[0],cellStatesRight[0],
+                                Scalar riemannFlux[3] = {0.0};
+                                computeExactRiemann(riemannFlux,cellStatesLeft[0],cellStatesRight[0],
                                         cellStatesLeft[1],cellStatesRight[1],
                                         cellStatesLeft[2],cellStatesRight[2],insideVolVars.getGravity());
 
-                                    rotateFluxBack(nxy,riemannFlux);
+                                rotateFluxBack(nxy,riemannFlux);
 
-                                    //Store the computed flux of the Riemann solver
-                                    this->hBoundaryFlux_[boundaryValues.id] += scvf.area() * riemannFlux[0];
-                                }
+                                //Store the computed flux of the Riemann solver
+                                this->hBoundaryFlux_[boundaryValues.id] += scvf.area() * riemannFlux[0];
                             }
                         }
                     }
@@ -540,6 +537,26 @@ public:
         }
     }
 
+
+   // \}
+
+    /*!
+     * \name printBoundaryFluxes     */
+    // \{
+
+    /*!
+     * \brief Printout the fluxes (water)     *
+     */
+
+    void printBoundaryFluxes()
+    {
+        if (this->fvGridGeometry().gridView().comm().rank() == 0)
+        {
+            for(std::vector<int>::size_type i = 0; i != this->hBoundaryFlux_.size(); i++){
+                std::cout << "Boundary id " << i << " discharge " << this->hBoundaryFlux_[i] << std::endl;
+            }
+        }
+    }
 
     /*!
      * \name Volume terms
@@ -877,6 +894,16 @@ private:
             infile.close();
             this->boundaryValuesMap_[myValues.id] = myValues;
         }
+
+        //Add the no-flow boundary to boundaryValuesMap_
+        BoundaryValues myValues;
+        myValues.type = "no-flow";
+        myValues.id = 0;
+        myValues.bdvalue_old = 0.0;
+        myValues.relaxfactor = 0.0;
+        myValues.x.push_back(0.0);
+        myValues.y.push_back(0.0);
+        this->boundaryValuesMap_[0] = myValues;
 
         //resize hBoundarySum_
         maxBoundaryId = this->fvGridGeometry().gridView().comm().max(maxBoundaryId);
