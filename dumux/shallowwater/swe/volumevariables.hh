@@ -72,9 +72,7 @@ public:
         auto frictionlaw =  problem.spatialParams().frictionlaw(element, scv);
 
         //
-        auto ustar_h = computeUstarH(ks,h,grav_,frictionlaw);
-        frictionH_ = 0; // calculate from primary variables and spatial params
-        frictionUstarH_ = 0; // calculate from primary variables and spatial params
+        frictionUstarH_ = computeUstarH(ks,h,grav_,frictionlaw);
         bottom_ = problem.spatialParams().bottom(element,scv);
         auto ksH_ = computeKsH(ks,frictionlaw);
     }
@@ -83,7 +81,7 @@ public:
     Scalar extrusionFactor() const
     { return 1.0; }
 
-    /*!
+     /*!
      * \brief Return water detph h inside the sub-control volume.
      *
      */
@@ -91,7 +89,6 @@ public:
     {
         return priVars_[waterdepthIdx];
     }
-
     /*!
      * \brief Return water velocity u inside the sub-control volume.
      *
@@ -113,7 +110,7 @@ public:
      * \brief Return the friction u_starh inside the sub-control volume.
      *
      */
-    Scalar frictionUstarH() const
+    Scalar getFrictionUstarH() const
     {
         return frictionUstarH_;
     }
@@ -148,7 +145,6 @@ public:
 private:
     PrimaryVariables priVars_;
 
-    Scalar frictionH_;
     Scalar bottom_;
     Scalar frictionUstarH_;
     Scalar ksH_;

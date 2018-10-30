@@ -336,6 +336,7 @@ public:
                     XDMFCellData_["u"][eIdx] = u;
                     XDMFCellData_["v"][eIdx] = v;
                     XDMFCellData_["z"][eIdx] = z;
+                    XDMFCellData_["theta"][eIdx] = z + h;
                 }
             }
         }
@@ -605,12 +606,14 @@ public:
         auto h = elemVolVars[scv].getH();
         auto u = elemVolVars[scv].getU();
         auto v = elemVolVars[scv].getV();
-        auto ustarH = elemVolVars[scv].frictionUstarH();
+        auto ustarH = elemVolVars[scv].getFrictionUstarH();
 
         auto uv = sqrt(pow(u,2.0) + pow(v,2.0));
 
-        source[velocityXIdx] = ustarH * u * uv * cell_volume;
-        source[velocityYIdx] = ustarH * v * uv * cell_volume;
+        source[massBalanceIdx] = 0.0;
+        source[velocityXIdx] = -ustarH * u * uv;
+        source[velocityYIdx] = -ustarH * v * uv;
+
         return source;
     }
 
@@ -625,16 +628,14 @@ public:
         std::ifstream infile;
         std::string line;
         std::string comment ("#");
-        std::cout << "Debug, start reading boundary file " << std::flush;;
-
         infile.open(filename);
+
         if (!infile) {
-            std::cerr << "Unable to open boundary file " << filename << std::endl;
+            std::cerr << "\nUnable to open boundary file " << filename << std::endl;
             //TODO exit the programm
         }
         while(std::getline(infile,line))
         {
-            std::cout << "Debug, start reading boundary file " << std::endl;
             std::stringstream ssin(line);
             while(ssin.good()){
                 //check if comment line
@@ -678,7 +679,6 @@ public:
             }
         }
         return searchedId;
-
     }
 
 
@@ -767,7 +767,6 @@ public:
         }else{
             std::cout << "Can not find initial data in elementdata"<< std::endl;
         }
-        std::cout << "alive in inputdata with h[0] " << hInit_[0] << std::endl;
     }
 
 private:

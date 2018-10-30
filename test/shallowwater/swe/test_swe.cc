@@ -193,20 +193,21 @@ int main(int argc, char** argv) try
     writer.beginTimeStep(0.0);
     //std::cout << "Debug Write Cell Data" << std::endl;
     writer.writeCellData(plotMap["h"],"h","m");
-    writer.writeCellData(plotMap["u"],"u","m");
-    writer.writeCellData(plotMap["v"],"v","m");
+    writer.writeCellData(plotMap["u"],"u","m/s");
+    writer.writeCellData(plotMap["v"],"v","m/s");
     writer.writeCellData(plotMap["z"],"z","m");
+    writer.writeCellData(plotMap["theta"],"theta","m");
     writer.endTimeStep();
 
 
     bool doPlot = false;
+    int counter = 0;
     // time loop
     timeLoop->start(); do
     {
 
         //preprocessing
         problem->preTimeStep(x, *gridVariables, timeLoop->time(),timeLoop->timeStepSize());
-
 
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
@@ -222,22 +223,35 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
+        if (counter == 10){
+            doPlot = true;
+        }
+        counter += 1;
+
         // write output
         if (doPlot){
             auto& plotMap = problem->xdmfGetVariable(x, *gridVariables, timeLoop->time());
             writer.beginTimeStep(timeLoop->time());
             writer.writeCellData(plotMap["h"],"h","m");
-            writer.writeCellData(plotMap["u"],"u","m");
-            writer.writeCellData(plotMap["v"],"v","m");
+            writer.writeCellData(plotMap["u"],"u","m/s");
+            writer.writeCellData(plotMap["v"],"v","m/s");
             writer.writeCellData(plotMap["z"],"z","m");
+            writer.writeCellData(plotMap["theta"],"theta","m");
             writer.endTimeStep();
+            doPlot = false;
+            counter = 0;
         }
-
-        // report statistics of this time step
-        timeLoop->reportTimeStep();
 
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+        if (mpiHelper.rank() == 0){
+            //simple output
+            std::cout << "\n=====================================" << std::endl;
+            std::cout << "t " << timeLoop->time() << " dt " << timeLoop->timeStepSize() << std::endl;
+            std::cout << "\n" << std::endl;
+        }
+
     } while (!timeLoop->finished());
 
     // output some Newton statistics
