@@ -11,12 +11,11 @@ Cells = 48 32
 [SpatialParams]
 LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
 LensUpperRight = 4.0 3.0 # [m] coordinates of the upper right lens corner
-
 Permeability = 1e-10 # [m^2]
 PermeabilityLens = 1e-12 # [m^2]
 
 [Problem]
-Name = tracer_2p
+Name = test_2pnc
 EnableGravity = true
 
 [Newton]
