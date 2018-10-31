@@ -693,19 +693,18 @@ private:
                                 const bool selfIsUpstream,
                                 std::array<Scalar, 3>& velocities,
                                 std::array<Scalar, 3>& distances,
-                                const FaceVariables& faceVars) const
+                                const FaceVariables& defFaceVars) const
     {
         // Depending on selfIsUpstream I can assign the downstream and the upstream velocities,
         // then I have to check if I have a forward or a backward neighbor to retrieve
         // an "upstream-upstream velocity" and be able to use a second order scheme.
         if (selfIsUpstream)
         {
-            velocities[0] = faceVars.velocityOpposite();
-            velocities[1] = faceVars.velocitySelf();
-
             if (ownScvf.hasForwardNeighbor(0))
             {
-                velocities[2] = faceVars.velocityForward(0);
+                velocities[0] = defFaceVars.velocityOpposite();
+                velocities[1] = defFaceVars.velocitySelf();
+                velocities[2] = defFaceVars.velocityForward(0);
                 distances[0] = ownScvf.selfToOppositeDistance();
                 distances[1] = ownScvf.axisData().inAxisForwardDistances[0];
                 distances[2] = 0.5 * (ownScvf.axisData().selfToOppositeDistance + ownScvf.axisData().inAxisBackwardDistances[0]);
@@ -716,12 +715,11 @@ private:
         }
         else
         {
-            velocities[0] = faceVars.velocitySelf();
-            velocities[1] = faceVars.velocityOpposite();
-
             if (ownScvf.hasBackwardNeighbor(0))
             {
-                velocities[2] = faceVars.velocityBackward(0);
+                velocities[0] = defFaceVars.velocitySelf();
+                velocities[1] = defFaceVars.velocityOpposite();
+                velocities[2] = defFaceVars.velocityBackward(0);
                 distances[0] = ownScvf.selfToOppositeDistance();
                 distances[1] = ownScvf.axisData().inAxisBackwardDistances[0];
                 distances[2] = 0.5 * (ownScvf.axisData().selfToOppositeDistance + ownScvf.axisData().inAxisForwardDistances[0]);
@@ -767,24 +765,24 @@ private:
         {
             // I can assign the upstream velocity. The downstream velocity can be assigned or retrieved
             // from the boundary if there is no parallel neighbor.
-            velocities[1] = faceVars.velocitySelf();
-            upstreamVelocity = defFaceVars.velocitySelf();
+            velocities[1] = defFaceVars.velocitySelf();
+            upstreamVelocity = faceVars.velocitySelf();
 
             if(ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
             {
-                velocities[0] = faceVars.velocityParallel(localSubFaceIdx, 0);
+                velocities[0] = defFaceVars.velocityParallel(localSubFaceIdx, 0);
                 distances[2] = ownScvf.pairData(localSubFaceIdx).parallelDistances[1];
             }
             else
             {
-                velocities[0] = getParallelVelocityFromBoundary_(problem, ownScvf, normalFace, faceVars.velocitySelf(), localSubFaceIdx, element, isDirichletPressure, isBJS);
+                velocities[0] = getParallelVelocityFromBoundary_(problem, ownScvf, normalFace, velocities[1], localSubFaceIdx, element, isDirichletPressure, isBJS);
                 distances[2] = ownScvf.area() / 2.0;
             }
 
             // The "upstream-upsteram" velocity is retrieved from the other parallel neighbor
             // or from the boundary.
             if (ownScvf.hasParallelNeighbor(oppositeSubFaceIdx, 0))
-                velocities[2] = faceVars.velocityParallel(oppositeSubFaceIdx, 0);
+                velocities[2] = defFaceVars.velocityParallel(oppositeSubFaceIdx, 0);
             else
                 velocities[2] = getParallelVelocityFromOtherBoundary_(problem, ownScvf, oppositeSubFaceIdx, element, velocities[1]);
 
@@ -797,21 +795,21 @@ private:
         {
             // The self velocity is downstream, then if there is no parallel neighbor I can not use
             // a second order approximation beacuse I have only two velocities.
-            velocities[0] = faceVars.velocitySelf();
+            velocities[0] = defFaceVars.velocitySelf();
 
             if (!ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
             {
-                upstreamVelocity = getParallelVelocityFromBoundary_(problem, ownScvf, normalFace, defFaceVars.velocitySelf(), localSubFaceIdx, element, isDirichletPressure, isBJS);
+                upstreamVelocity = getParallelVelocityFromBoundary_(problem, ownScvf, normalFace, faceVars.velocitySelf(), localSubFaceIdx, element, isDirichletPressure, isBJS);
                 return false;
             }
 
-            velocities[1] = faceVars.velocityParallel(localSubFaceIdx, 0);
-            upstreamVelocity = defFaceVars.velocityParallel(localSubFaceIdx, 0);
+            velocities[1] = defFaceVars.velocityParallel(localSubFaceIdx, 0);
+            upstreamVelocity = faceVars.velocityParallel(localSubFaceIdx, 0);
 
             // If there is another parallel neighbor I can assign the "upstream-upstream"
             // velocity, otherwise I retrieve it from the boundary.
             if (ownScvf.hasParallelNeighbor(localSubFaceIdx, 1))
-                velocities[2] = faceVars.velocityParallel(localSubFaceIdx, 1);
+                velocities[2] = defFaceVars.velocityParallel(localSubFaceIdx, 1);
             else
             {
                 const Element& elementParallel = problem.fvGridGeometry().element(problem.fvGridGeometry().scv(normalFace.outsideScvIdx()));
