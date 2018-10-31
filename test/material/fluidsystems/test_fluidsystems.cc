@@ -49,7 +49,6 @@
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/fluidstates/isothermalimmiscible.hh>
 #include <dumux/material/fluidstates/nonequilibrium.hh>
-#include <dumux/material/fluidstates/nonequilibriumenergy.hh>
 #include <dumux/material/fluidstates/nonequilibriummass.hh>
 #include <dumux/material/fluidstates/pressureoverlay.hh>
 #include <dumux/material/fluidstates/pseudo1p2c.hh>
@@ -99,10 +98,6 @@ int main()
         // NonEquilibriumFluidState
         NonEquilibriumFluidState<Scalar, FluidSystem> nonEquilibriumFluidState;
         success += checkFluidState<Scalar>(nonEquilibriumFluidState);
-
-        // NonEquilibriumEnergyFluidState TODO: fails the test
-        // NonEquilibriumEnergyFluidState<Scalar, FluidSystem> nonEquilibriumEnergyFluidState;
-        // success += checkFluidState<Scalar>(nonEquilibriumEnergyFluidState);
 
         // NonEquilibriumMassFluidState
         NonEquilibriumMassFluidState<Scalar, FluidSystem> nonEquilibriumMassFluidState;
