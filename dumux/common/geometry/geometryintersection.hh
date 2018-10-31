@@ -239,9 +239,9 @@ public:
             const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
 
             using PolySegTest = GeometryIntersection<Geometry2, SegGeometry>;
-            typename PolySegTest::IntersectionType intersection;
-            if (PolySegTest::template intersection<2>(geo2, segGeo, intersection))
-                points.emplace_back(intersection[0]);
+            typename PolySegTest::IntersectionType polySegIntersection;
+            if (PolySegTest::template intersection<2>(geo2, segGeo, polySegIntersection))
+                points.emplace_back(polySegIntersection[0]);
         }
 
         // add intersection points of all polygon faces (codim 1) with the polyhedron faces
@@ -278,9 +278,9 @@ public:
                 const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
 
                 using PolySegTest = GeometryIntersection<PolyhedronFaceGeometry, SegGeometry>;
-                typename PolySegTest::IntersectionType intersection;
-                if (PolySegTest::template intersection<2>(faceGeo, segGeo, intersection))
-                    points.emplace_back(intersection[0]);
+                typename PolySegTest::IntersectionType polySegIntersection;
+                if (PolySegTest::template intersection<2>(faceGeo, segGeo, polySegIntersection))
+                    points.emplace_back(polySegIntersection[0]);
             }
         }
 
