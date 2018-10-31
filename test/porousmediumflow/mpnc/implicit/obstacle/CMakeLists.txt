@@ -1,0 +1,27 @@
+add_input_file_links()
+dune_symlink_to_source_files(FILES grids)
+
+dune_add_test(NAME test_mpnc_obstacle_box
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=ObstacleBoxTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_mpnc_obstacle_box-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_mpnc_obstacle_box-00009.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpnc_obstacle_box params.input -Problem.Name test_mpnc_obstacle_box")
+
+dune_add_test(NAME test_mpnc_obstacle_tpfa
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=ObstacleCCTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_mpnc_obstacle_tpfa-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_mpnc_obstacle_tpfa-00009.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpnc_obstacle_tpfa params.input -Problem.Name test_mpnc_obstacle_tpfa")
+
+#install sources
+install(FILES
+problem.hh
+spatialparams.hh
+main.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/mpnc/obstacle)

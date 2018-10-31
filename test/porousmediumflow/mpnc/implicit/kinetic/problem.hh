@@ -53,7 +53,7 @@
 #include "plotoverline2d.hh"
 #include <dumux/material/components/constant.hh>
 
-#include "evaporationatmospherespatialparams.hh"
+#include "spatialparams.hh"
 
 // material laws for interfacial area
 #include <dumux/material/fluidmatrixinteractions/2pia/efftoabslawia.hh>
