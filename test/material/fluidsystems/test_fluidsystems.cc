@@ -44,7 +44,6 @@
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states
-#include <dumux/material/fluidstates/2p2c.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/fluidstates/isothermalimmiscible.hh>
@@ -78,10 +77,6 @@ int main()
         using FluidSystem = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
         using BaseFluidState = CompositionalFluidState<Scalar, FluidSystem>;
         BaseFluidState baseFs;
-
-        // TwoPTwoCFluidState TODO: doesn't fulfill interface!
-        // TwoPTwoCFluidState<Scalar, FluidSystem> fluidStateTwoPTwoC;
-        // success += checkFluidState<Scalar>(fluidStateTwoPTwoC);
 
         // CompositionalFluidState
         CompositionalFluidState<Scalar, FluidSystem> compositionalFluidState;
