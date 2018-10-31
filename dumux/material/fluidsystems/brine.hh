@@ -71,7 +71,7 @@ public:
     static const std::string phaseName(int phaseIdx = liquidPhaseIdx)
     {
         assert(phaseIdx == liquidPhaseIdx);
-        return IOName::liquid();
+        return IOName::liquidPhase();
     }
 
     /*!

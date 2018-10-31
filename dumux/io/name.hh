@@ -115,20 +115,20 @@ template<class FluidSystem>
 std::string massFraction(int phaseIdx, int compIdx) noexcept
 { return "X^" + FluidSystem::componentName(compIdx) + "_" + FluidSystem::phaseName(phaseIdx); }
 
-//! I/O name of liquid
-std::string liquid() noexcept
+//! I/O name of liquid phase
+std::string liquidPhase() noexcept
 { return "liq"; }
 
-//! I/O name of gaseous
-std::string gaseous() noexcept
+//! I/O name of gaseous phase
+std::string gaseousPhase() noexcept
 { return "gas"; }
 
-//! I/O name of aqueous
-std::string aqueous() noexcept
+//! I/O name of aqueous phase
+std::string aqueousPhase() noexcept
 { return "aq"; }
 
-//! I/O name of napl
-std::string napl() noexcept
+//! I/O name of napl phase
+std::string naplPhase() noexcept
 { return "napl"; }
 
 //! I/O name of capillary pressure

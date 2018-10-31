@@ -90,16 +90,16 @@ public:
         if (!Fluid0::isGas() && !Fluid1::isGas())
         {
             if (phaseIdx == phase0Idx)
-                return Components::IsAqueous<typename Fluid0::Component>::value ? IOName::aqueous() : IOName::napl();
+                return Components::IsAqueous<typename Fluid0::Component>::value ? IOName::aqueousPhase() : IOName::naplPhase();
             else
-                return Components::IsAqueous<typename Fluid1::Component>::value ? IOName::aqueous() : IOName::napl();
+                return Components::IsAqueous<typename Fluid1::Component>::value ? IOName::aqueousPhase() : IOName::naplPhase();
         }
         else
         {
             if (phaseIdx == phase0Idx)
-                return Fluid0::isGas() ? IOName::gaseous() : IOName::liquid();
+                return Fluid0::isGas() ? IOName::gaseousPhase() : IOName::liquidPhase();
             else
-                return Fluid1::isGas() ? IOName::gaseous() : IOName::liquid();
+                return Fluid1::isGas() ? IOName::gaseousPhase() : IOName::liquidPhase();
         }
     }
 

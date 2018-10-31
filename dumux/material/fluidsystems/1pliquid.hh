@@ -74,7 +74,7 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      */
     static std::string phaseName(int phaseIdx = 0)
-    { return IOName::liquid(); }
+    { return IOName::liquidPhase(); }
 
     /*!
      * \brief A human readable name for the component.

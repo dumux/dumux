@@ -43,21 +43,21 @@ public:
         using FS = typename VolumeVariables::FluidSystem;
 
         out.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::liquidPhaseIdx); },
-                              IOName::saturation() + "_" + IOName::liquid());
+                              IOName::saturation() + "_" + IOName::liquidPhase());
         out.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::gasPhaseIdx); },
-                              IOName::saturation() + "_" + IOName::gaseous());
+                              IOName::saturation() + "_" + IOName::gaseousPhase());
         out.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::liquidPhaseIdx); },
-                              IOName::pressure() + "_" + IOName::liquid());
+                              IOName::pressure() + "_" + IOName::liquidPhase());
         out.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::gasPhaseIdx); },
-                              IOName::pressure() + "_" + IOName::gaseous());
+                              IOName::pressure() + "_" + IOName::gaseousPhase());
         out.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); },
                               IOName::capillaryPressure());
         out.addVolumeVariable([](const auto& v){ return v.density(FS::liquidPhaseIdx); },
-                              IOName::density() + "_" + IOName::liquid());
+                              IOName::density() + "_" + IOName::liquidPhase());
         out.addVolumeVariable([](const auto& v){ return v.mobility(FS::liquidPhaseIdx); },
-                              IOName::mobility() + "_" + IOName::liquid());
+                              IOName::mobility() + "_" + IOName::liquidPhase());
         out.addVolumeVariable([](const auto& v){ return v.relativePermeability(VolumeVariables::liquidPhaseIdx); },
-                              IOName::relativePermeability() + "_" + IOName::liquid());
+                              IOName::relativePermeability() + "_" + IOName::liquidPhase());
         out.addVolumeVariable([](const auto& v){ return v.porosity(); },
                               IOName::porosity());
         out.addVolumeVariable([](const auto& v){ return v.temperature(); },

@@ -94,10 +94,10 @@ public:
         switch (phaseIdx)
         {
             case wPhaseIdx: return Components::IsAqueous<typename WettingFluid::Component>::value
-                            ? IOName::aqueous() : IOName::napl();
+                            ? IOName::aqueousPhase() : IOName::naplPhase();
             case nPhaseIdx: return Components::IsAqueous<typename NonwettingFluid::Component>::value
-                            ? IOName::aqueous() : IOName::napl();
-            case gPhaseIdx: return IOName::gaseous();
+                            ? IOName::aqueousPhase() : IOName::naplPhase();
+            case gPhaseIdx: return IOName::gaseousPhase();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

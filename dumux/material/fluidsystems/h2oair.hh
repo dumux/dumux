@@ -106,8 +106,8 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         switch (phaseIdx)
         {
-            case liquidPhaseIdx: return IOName::liquid();
-            case gasPhaseIdx: return IOName::gaseous();
+            case liquidPhaseIdx: return IOName::liquidPhase();
+            case gasPhaseIdx: return IOName::gaseousPhase();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

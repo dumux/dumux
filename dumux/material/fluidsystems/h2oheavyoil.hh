@@ -189,9 +189,9 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         switch (phaseIdx)
         {
-            case wPhaseIdx: return IOName::aqueous();
-            case nPhaseIdx: return IOName::napl();
-            case gPhaseIdx: return IOName::gaseous();
+            case wPhaseIdx: return IOName::aqueousPhase();
+            case nPhaseIdx: return IOName::naplPhase();
+            case gPhaseIdx: return IOName::gaseousPhase();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
