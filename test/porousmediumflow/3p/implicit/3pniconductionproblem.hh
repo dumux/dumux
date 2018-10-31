@@ -159,9 +159,9 @@ public:
         const auto someElemSol = elementSolution(someElement, curSol, this->fvGridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto fvGeometry = localView(this->fvGridGeometry());
-        fvGeometry.bindElement(someElement);
-        const auto someScv = *(scvs(fvGeometry).begin());
+        auto someFvGeometry = localView(this->fvGridGeometry());
+        someFvGeometry.bindElement(someElement);
+        const auto someScv = *(scvs(someFvGeometry).begin());
 
         VolumeVariables volVars;
         volVars.update(someElemSol, *this, someElement, someScv);
@@ -173,7 +173,7 @@ public:
         const auto heatCapacityS = volVars.solidHeatCapacity();
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
-                                                                                                         someElement, fvGeometry, someScv);
+                                                                                                         someElement, someFvGeometry, someScv);
         using std::max;
         time = max(time, 1e-10);
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
