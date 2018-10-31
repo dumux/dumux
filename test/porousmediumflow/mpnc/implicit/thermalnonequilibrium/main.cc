@@ -22,7 +22,7 @@
  * \brief Test for the three-phase box model
  */
 #include <config.h>
-#include "evaporationatmosphereproblem.hh"
+#include "problem.hh"
 
 #include <ctime>
 #include <iostream>
@@ -118,9 +118,8 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(GridView::dimension));
+    SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -171,6 +170,7 @@ int main(int argc, char** argv) try
 
         // make the new solution the old solution
         xOld = x;
+        problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
         gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step

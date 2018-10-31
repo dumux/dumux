@@ -19,10 +19,12 @@
 /*!
  * \file
  * \ingroup MPNCTests
- * \brief Problem where air is injected in a unsaturated porous medium. This test compares a mpnc problem with a 2p2c problem
+ * \brief Problem where liquid water is injected -- by means of a
+ *        Dirichlet condition on the lower right of the domain -- which has to go
+ *        around an obstacle with \f$10^3\f$ lower permeability.
  */
-#ifndef DUMUX_MPNC_TWOPTWOC_COMPARISON_OBSTACLEPROBLEM_HH
-#define DUMUX_MPNC_TWOPTWOC_COMPARISON_OBSTACLEPROBLEM_HH
+#ifndef DUMUX_OBSTACLEPROBLEM_HH
+#define DUMUX_OBSTACLEPROBLEM_HH
 
 #include <dune/common/parametertreeparser.hh>
 #include <dune/grid/yaspgrid.hh>
@@ -32,72 +34,95 @@
 
 #include <dumux/porousmediumflow/mpnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <test/porousmediumflow/2p2c/implicit/mpnccomparison/vtkoutputfields.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
+#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 
-#include "mpnc_comparison_spatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 
 /*!
  * \ingroup MPNCTests
- * \brief Problem where air is injected in a unsaturated porous medium. This test compares a mpnc problem with a 2p2c problem
+ * \brief Problem where liquid water is injected -- by means of a
+ *        Dirichlet condition on the lower right of the domain -- which has to go
+ *        around an obstacle with \f$10^3\f$ lower permeability.
  */
 template <class TypeTag>
-class MPNCComparisonProblem;
+class ObstacleProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(MPNCComparisonTypeTag, INHERITS_FROM(MPNC));
-NEW_TYPE_TAG(MPNCComparisonBoxTypeTag, INHERITS_FROM(BoxModel, MPNCComparisonTypeTag));
-NEW_TYPE_TAG(MPNCComparisonCCTypeTag, INHERITS_FROM(CCTpfaModel, MPNCComparisonTypeTag));
+NEW_TYPE_TAG(ObstacleTypeTag, INHERITS_FROM(MPNC));
+NEW_TYPE_TAG(ObstacleBoxTypeTag, INHERITS_FROM(BoxModel, ObstacleTypeTag));
+NEW_TYPE_TAG(ObstacleCCTypeTag, INHERITS_FROM(CCTpfaModel, ObstacleTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(MPNCComparisonTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ObstacleTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(MPNCComparisonTypeTag, Problem, MPNCComparisonProblem<TypeTag>);
+SET_TYPE_PROP(ObstacleTypeTag, Problem, ObstacleProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_PROP(MPNCComparisonTypeTag, SpatialParams)
+SET_PROP(ObstacleTypeTag, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using type = MPNCComparisonSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+    using type = ObstacleSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
 };
 
 // Set fluid configuration
-SET_TYPE_PROP(MPNCComparisonTypeTag,
+SET_TYPE_PROP(ObstacleTypeTag,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // decide which type to use for floating values (double / quad)
-SET_TYPE_PROP(MPNCComparisonTypeTag, Scalar, double);
-SET_BOOL_PROP(MPNCComparisonTypeTag, UseMoles, true);
-SET_TYPE_PROP(MPNCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields);
-} // end namespace Dumux
+SET_TYPE_PROP(ObstacleTypeTag, Scalar, double);
+
+}
+
 
 /*!
- * \ingroup MPNCTests
- * \briefProblem where air is injected in a unsaturated porous medium. This test compares a mpnc problem with a 2p2c problem
+ * \ingroup MPNCModel
+ * \ingroup ImplicitTestProblems
+ * \brief Problem where liquid water is injected -- by means of a
+ *        Dirichlet condition on the lower right of the domain -- which has to go
+ *        around an obstacle with \f$10^3\f$ lower permeability.
  *
+ * The domain is sized 60m times 40m and consists of two media, a
+ * moderately permeable soil (\f$ K_0=10e-12 m^2\f$) and an obstacle
+ * at \f$[10; 20]m \times [0; 35]m \f$ with a lower permeablility of
+ * \f$ K_1=K_0/1000\f$.
+ *
+ * Initially the whole domain is filled with nitrogen, the temperature
+ * is \f$25\symbol{23}C\f$ in the whole domain. The gas pressure in the
+ * domain is 1 bar, except on the inlet (lower 10 meters of right hand
+ * boundary) where the pressure is 2 bar.
+ *
+ * The boundary is no-flow except on the lower 10 meters of the left
+ * and the right boundary which are Dirichlet conditions with the same
+ * values as the initial condition.
+ *
+ * This problem uses the \ref MPNCModel.
+ *
+ * To run the simulation execute the following line in shell:
+ * <tt>./test_boxmpnc -parameterFile test_boxmpnc.input</tt> or
+ * <tt>./test_ccmpnc -parameterFile test_ccmpnc.input</tt>
  */
 template <class TypeTag>
-class MPNCComparisonProblem
+class ObstacleProblem
     : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -105,29 +130,31 @@ class MPNCComparisonProblem
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using ParameterCache = typename FluidSystem::ParameterCache;
 
-    // world dimension
-    enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
-    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
-    enum {gasPhaseIdx = FluidSystem::gasPhaseIdx};
-    enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
-    enum {wCompIdx = FluidSystem::H2OIdx};
-    enum {nCompIdx = FluidSystem::N2Idx};
-    enum {fug0Idx = Indices::fug0Idx};
-    enum {s0Idx = Indices::s0Idx};
-    enum {p0Idx = Indices::p0Idx};
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
+    enum { dimWorld = GridView::dimensionworld };
+    enum { numPhases = ModelTraits::numPhases() };
+    enum { numComponents = ModelTraits::numComponents() };
+    enum { gasPhaseIdx = FluidSystem::gasPhaseIdx };
+    enum { liquidPhaseIdx = FluidSystem::liquidPhaseIdx };
+    enum { H2OIdx = FluidSystem::H2OIdx };
+    enum { N2Idx = FluidSystem::N2Idx };
+    enum { fug0Idx = Indices::fug0Idx };
+    enum { s0Idx = Indices::s0Idx };
+    enum { p0Idx = Indices::p0Idx };
 
-    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
-    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
 public:
     /*!
      * \brief The constructor
      *
+     * \param timeManager The time manager
+     * \param gridView The grid view
      */
-    MPNCComparisonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    ObstacleProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
         temperature_ = 273.15 + 25; // -> 25°C
@@ -166,6 +193,14 @@ public:
     Scalar temperature() const
     { return temperature_; }
 
+    /*!
+     * \brief Write a restart file?
+     */
+    bool shouldWriteRestartFile() const
+    {
+        return ParentType::shouldWriteRestartFile();
+    }
+
     // \}
 
     /*!
@@ -181,7 +216,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
-        if (onOutlet_(globalPos))
+        if (onInlet_(globalPos) || onOutlet_(globalPos))
             bcTypes.setAllDirichlet();
         else
             bcTypes.setAllNeumann();
@@ -213,20 +248,12 @@ public:
      *
      * Negative values mean influx.
      */
-    NeumannFluxes neumann(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+    NumEqVector neumann(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace& scvf) const
     {
-        NeumannFluxes values(0.0);
-        const auto& globalPos = scvf.ipGlobal();
-        Scalar injectedAirMass = -1e-3;
-        Scalar injectedAirMolarMass = injectedAirMass/FluidSystem::molarMass(nCompIdx);
-        if (onInlet_(globalPos))
-        {
-          values[Indices::conti0EqIdx+1] = injectedAirMolarMass;
-        }
-        return values;
+        return NumEqVector(0.0);
     }
 
     // \}
@@ -235,6 +262,27 @@ public:
      * \name Volume terms
      */
     // \{
+
+    /*!
+     * \brief Evaluate the source term for all balance equations within a given
+     *        sub-control-volume.
+     *
+     * \param values Stores the solution for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
+     *
+     * Positive values mean that mass is created, negative ones mean that it vanishes.
+     */
+    //! \copydoc Dumux::ImplicitProblem::source()
+    NumEqVector source(const Element &element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolume &scv) const
+    {
+       return NumEqVector(0.0);
+    }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
@@ -259,29 +307,64 @@ private:
         PrimaryVariables values(0.0);
         FluidState fs;
 
-       // set the fluid temperatures
+        int refPhaseIdx;
+        int otherPhaseIdx;
+
+        // set the fluid temperatures
         fs.setTemperature(this->temperatureAtPos(globalPos));
 
-        // set water saturation
-        fs.setSaturation(liquidPhaseIdx, 0.8);
-        fs.setSaturation(gasPhaseIdx, 1.0 - fs.saturation(liquidPhaseIdx));
-        // set pressure of the gas phase
-        fs.setPressure(gasPhaseIdx, 1e5);
+        if (onInlet_(globalPos))
+        {
+            // only liquid on inlet
+            refPhaseIdx = liquidPhaseIdx;
+            otherPhaseIdx = gasPhaseIdx;
+
+            // set liquid saturation
+            fs.setSaturation(liquidPhaseIdx, 1.0);
+
+            // set pressure of the liquid phase
+            fs.setPressure(liquidPhaseIdx, 2e5);
+
+            // set the liquid composition to pure water
+            fs.setMoleFraction(liquidPhaseIdx, N2Idx, 0.0);
+            fs.setMoleFraction(liquidPhaseIdx, H2OIdx, 1.0);
+        }
+        else {
+            // elsewhere, only gas
+            refPhaseIdx = gasPhaseIdx;
+            otherPhaseIdx = liquidPhaseIdx;
+
+            // set gas saturation
+            fs.setSaturation(gasPhaseIdx, 1.0);
+
+            // set pressure of the gas phase
+            fs.setPressure(gasPhaseIdx, 1e5);
+
+            // set the gas composition to 99% nitrogen and 1% steam
+            fs.setMoleFraction(gasPhaseIdx, N2Idx, 0.99);
+            fs.setMoleFraction(gasPhaseIdx, H2OIdx, 0.01);
+        }
+
+        // set the other saturation
+        fs.setSaturation(otherPhaseIdx, 1.0 - fs.saturation(refPhaseIdx));
+
         // calulate the capillary pressure
-        const auto& matParams =
-            this->spatialParams().materialLawParamsAtPos(globalPos);
+        const auto& matParams = this->spatialParams().materialLawParamsAtPos(globalPos);
         PhaseVector pc;
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         MaterialLaw::capillaryPressures(pc, matParams, fs);
-        fs.setPressure(liquidPhaseIdx,
-                       fs.pressure(gasPhaseIdx) + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
+        fs.setPressure(otherPhaseIdx,
+                       fs.pressure(refPhaseIdx)
+                       + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
 
         // make the fluid state consistent with local thermodynamic
         // equilibrium
-         using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
+        using ComputeFromReferencePhase = ComputeFromReferencePhase<Scalar, FluidSystem>;
 
         ParameterCache paramCache;
-        MiscibleMultiPhaseComposition::solve(fs, paramCache);
+        ComputeFromReferencePhase::solve(fs,
+                                         paramCache,
+                                         refPhaseIdx);
 
         ///////////
         // assign the primary variables
@@ -289,7 +372,7 @@ private:
 
         // all N component fugacities
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            values[fug0Idx + compIdx] = fs.fugacity(gasPhaseIdx, compIdx);
+            values[fug0Idx + compIdx] = fs.fugacity(refPhaseIdx, compIdx);
 
         // first M - 1 saturations
         for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)

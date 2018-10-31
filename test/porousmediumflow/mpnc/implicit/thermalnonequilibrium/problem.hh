@@ -40,7 +40,7 @@
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/components/constant.hh>
 
-#include "combustionspatialparams.hh"
+#include "spatialparams.hh"
 #include "combustionfluidsystem.hh"
 
 namespace Dumux {
