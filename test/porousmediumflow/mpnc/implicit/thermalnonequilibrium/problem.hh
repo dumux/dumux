@@ -42,7 +42,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 
-#include "combustionspatialparams.hh"
+#include "spatialparams.hh"
 #include "combustionfluidsystem.hh"
 
 namespace Dumux {
