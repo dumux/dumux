@@ -80,6 +80,23 @@ void usage(const char *progName, const std::string &errorMsg)
     }
 }
 
+/*!
+ * \brief Converts a list of doubles into an vector
+ *
+ * \param string  string that should be splited
+ * \return vector vector containing the time steps where to plot
+ *
+ */
+
+std::vector<double> getDoublesFromString(std::string const & numberstring){
+
+    std::istringstream myISS(numberstring);
+
+    return std::vector<double>{
+        std::istream_iterator<double>(myISS),
+        std::istream_iterator<double>()
+        };
+}
 
 ////////////////////////
 // the main function
@@ -152,6 +169,11 @@ int main(int argc, char** argv) try
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
+    std::string plottimesString =  getParam<std::string>("TimeLoop.Plottimes");
+    std::vector<double> plottimes = getDoublesFromString(plottimesString);
+    plottimes.push_back(tEnd + 1.0);
+
+
     // check if we are about to restart a previously interrupted simulation
     Scalar restartTime = 0;
     if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
@@ -200,7 +222,9 @@ int main(int argc, char** argv) try
 
 
     bool doPlot = false;
-    int counter = 0;
+    int timePos = 0;
+    double timestepSuggestedBefore = timeLoop->timeStepSize();
+
     // time loop
     timeLoop->start(); do
     {
@@ -222,14 +246,9 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        if (counter == 10){
-            doPlot = true;
-        }
-        counter += 1;
-
         // write output
         if (doPlot){
-            auto& plotMap = problem->xdmfGetVariable(x, *gridVariables, timeLoop->time());
+            plotMap = problem->xdmfGetVariable(x, *gridVariables, timeLoop->time());
             writer.beginTimeStep(timeLoop->time());
             writer.writeCellData(plotMap["h"],"h","m");
             writer.writeCellData(plotMap["u"],"u","m/s");
@@ -238,16 +257,29 @@ int main(int argc, char** argv) try
             writer.writeCellData(plotMap["theta"],"theta","m");
             writer.endTimeStep();
             doPlot = false;
-            counter = 0;
         }
 
-        // set new dt as suggested by newton controller
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        // set new dt as suggested by newton controller and limited by printout definitions
+        auto optTime = nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize());
+        optTime = std::max(timestepSuggestedBefore,optTime);
 
+        if ((std::max(plottimes[timePos]-timeLoop->time(),1.0E-3) < optTime)&&(plottimes[timePos]-timeLoop->time() > 1.0E-9))
+        {
+            timestepSuggestedBefore = optTime;
+            optTime = std::max(plottimes[timePos]-timeLoop->time(),1.0E-3);
+        }
+
+        timeLoop->setTimeStepSize(optTime);
+
+        //check if time is in plottimes
+        if (timeLoop->time() >= plottimes[timePos]){
+          timePos += 1;
+          doPlot = true;
+        }
         if (mpiHelper.rank() == 0){
             //simple output
             std::cout << "\n=====================================" << std::endl;
-            std::cout << "t " << timeLoop->time() << " dt " << timeLoop->timeStepSize() << std::endl;
+            std::cout << "time " << timeLoop->time() << " dt " << timeLoop->timeStepSize() << std::endl;
             std::cout << "\n" << std::endl;
 
             //show the fluxes over all boundaries
@@ -257,9 +289,18 @@ int main(int argc, char** argv) try
 
     } while (!timeLoop->finished());
 
+    // do the last plot after the timeloop
+    plotMap = problem->xdmfGetVariable(x, *gridVariables, timeLoop->time());
+    writer.beginTimeStep(timeLoop->time());
+    writer.writeCellData(plotMap["h"],"h","m");
+    writer.writeCellData(plotMap["u"],"u","m/s");
+    writer.writeCellData(plotMap["v"],"v","m/s");
+    writer.writeCellData(plotMap["z"],"z","m");
+    writer.writeCellData(plotMap["theta"],"theta","m");
+    writer.endTimeStep();
+
     // output some Newton statistics
     nonLinearSolver.report();
-
     timeLoop->finalize(leafGridView.comm());
 
     ////////////////////////////////////////////////////////////
