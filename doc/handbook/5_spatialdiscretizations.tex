@@ -1,10 +1,9 @@
 \section{Spatial Discretization Schemes}
 \label{spatialdiscretization}
 
-We discretize space with the cell-centered finite volume method (\ref{box} ), the box method (\ref{cc})
+We discretize space with the cell-centered finite volume method (\ref{cc} ), the box method (\ref{box})
 or a staggered grid scheme.
 Grid adaption is available for both box and cell-centered finite volume method.
-Note that the current implementation only ensures mass conservation for incompressible fluids.
 In general, the spatial  parameters, especially the porosity, have to be assigned on
 the coarsest level of discretization.
 
@@ -13,7 +12,7 @@ the coarsest level of discretization.
 The so called box method unites the advantages of the finite-volume (FV) and
 finite-element (FE) methods.
 
-First, the model domain $G$ is discretized with a FE mesh consisting of nodes
+First, the model domain $\Omega$ is discretized with a FE mesh consisting of nodes
 $i$ and corresponding elements $E_k$. Then, a secondary FV mesh is constructed
 by connecting the midpoints and barycenters of the elements surrounding node
 $i$ creating a box $B_i$ around node $i$ (see Figure \ref{pc:box}a).
@@ -46,17 +45,17 @@ In the following, the discretization of the balance equation is going to be deri
 From the \textsc{Reynolds} transport theorem follows the general balance equation:
 
 \begin{equation}
-	\underbrace{\int_G \frac{\partial}{\partial t} \: u \: dG}_{1}
-	+ \underbrace{\int_{\partial G} (\mathbf{v} u + \mathbf w) \cdot \textbf n \: d\varGamma}_{2} = \underbrace{\int_G q \: dG}_{3}
+	\underbrace{\int_\Omega \frac{\partial}{\partial t} \: u \: dx}_{1}
+	+ \underbrace{\int_{\partial\Omega} (\mathbf{v} u + \mathbf w) \cdot \textbf n \: d\varGamma}_{2} = \underbrace{\int_\Omega q \: dx}_{3}
 \end{equation}
 
 \begin{equation}
-	f(u) = \int_G \frac{\partial u}{\partial t} \: dG + \int_{G} \nabla \cdot
-	\underbrace{\left[  \mathbf{v} u + \mathbf w(u)\right] }_{F(u)}  \: dG - \int_G q \: dG = 0
+	f(u) = \int_\Omega \frac{\partial u}{\partial t} \: dx + \int_{\Omega} \nabla \cdot
+	\underbrace{\left[  \mathbf{v} u + \mathbf w(u)\right] }_{F(u)}  \: dx - \int_\Omega q \: dx = 0
 \end{equation}
 where term 1 describes the changes of entity $u$ within a control volume over
 time, term 2 the advective, diffusive and dispersive fluxes over the interfaces
-of the control volume and term 3 is the source and sink term. $G$ denotes the
+of the control volume and term 3 is the source and sink term. $\Omega$ denotes the
 model domain and $F(u) = F(\mathbf v, p) = F(\mathbf v(x,t), p(x,t))$.
 
 Like the FE method, the box method follows the principle of weighted residuals.
@@ -107,43 +106,43 @@ of the residual $\varepsilon$ with a weighting function $W_j$  and claiming that
 this product has to vanish within the whole domain,
 
 \begin{equation}
-	\int_G W_j \cdot \varepsilon \: \overset {!}{=} \: 0 \qquad \textrm{with} \qquad \sum_j W_j =1
+	\int_\Omega W_j \cdot \varepsilon \: \overset {!}{=} \: 0 \qquad \textrm{with} \qquad \sum_j W_j =1
 \end{equation}
 yields the following equation:
 
 \begin{equation}
-	\int_G W_j \frac{\partial \tilde u}{\partial t} \: dG + \int_G W_j
-	\cdot \left[ \nabla \cdot F(\tilde u) \right]  \: dG - \int_G W_j
-	\cdot q \: dG = \int_G W_j \cdot \varepsilon \: dG \: \overset {!}{=} \: 0 .
+	\int_\Omega W_j \frac{\partial \tilde u}{\partial t} \: dx + \int_\Omega W_j
+	\cdot \left[ \nabla \cdot F(\tilde u) \right]  \: dx - \int_\Omega W_j
+	\cdot q \: dx = \int_\Omega W_j \cdot \varepsilon \: dx \: \overset {!}{=} \: 0 .
 \end{equation}
 
 Then, the chain rule and the \textsc{Green-Gaussian} integral theorem are applied.
 
 \begin{equation}
-	\int_G W_j \frac{\partial \sum_i N_i \hat u_i}{\partial t} \: dG
-	+ \int_{\partial G}  \left[ W_j \cdot F(\tilde u)\right]
-	\cdot \mathbf n \: d\varGamma_G + \int_G  \nabla W_j \cdot F(\tilde u)
-	\: dG - \int_G W_j \cdot q \: dG = 0
+	\int_\Omega W_j \frac{\partial \sum_i N_i \hat u_i}{\partial t} \: dx
+	+ \int_{\partial\Omega}  \left[ W_j \cdot F(\tilde u)\right]
+	\cdot \mathbf n \: d\varGamma_\Omega + \int_\Omega  \nabla W_j \cdot F(\tilde u)
+	\: dx - \int_\Omega W_j \cdot q \: dx = 0
 \end{equation}
 
 A mass lumping technique is applied by assuming that the storage capacity is
-reduced to the nodes. This means that the integrals $M_{i,j} = \int_G W_j \: N_i \: dG$
+reduced to the nodes. This means that the integrals $M_{i,j} = \int_\Omega W_j \: N_i \: dx$
 are replaced by the mass lumping term $M^{lump}_{i,j}$ which is defined as:
 
 \begin{equation}
-	 M^{lump}_{i,j} =\begin{cases} \int_G W_j \: dG = \int_G N_i \: dG = V_i &i = j\\
+	 M^{lump}_{i,j} =\begin{cases} \int_\Omega W_j \: dx = \int_\Omega N_i \: dx = V_i &i = j\\
 	0 &i \neq j\\
 	         \end{cases}
 \end{equation}
 where $V_i$ is the volume of the FV box $B_i$ associated with node $i$.
 The application of this assumption in combination with
-$\int_G W_j \:q \: dG = V_i \: q$ yields
+$\int_\Omega W_j \:q \: dx = V_i \: q$ yields
 
 \begin{equation}
 	V_i \frac{\partial \hat u_i}{\partial t}
-	+ \int_{\partial G}  \left[ W_j \cdot F(\tilde u)\right]
-	\cdot \mathbf n \: d\varGamma_G + \int_G  \nabla W_j \cdot F(\tilde u)
-	\: dG- V_i \cdot q = 0 \, .
+	+ \int_{\partial\Omega}  \left[ W_j \cdot F(\tilde u)\right]
+	\cdot \mathbf n \: d\varGamma_\Omega + \int_\Omega  \nabla W_j \cdot F(\tilde u)
+	\: dx- V_i \cdot q = 0 \, .
 \end{equation}
 
 Defining the weighting function $W_j$ to be piecewisely constant over a
