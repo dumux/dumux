@@ -1,0 +1,31 @@
+[TimeLoop]
+DtInitial = 250 # [s]
+TEnd = 1e6 # [s]
+
+[Grid]
+File = ./grids/heterogeneousSmall.dgf # relative path to the grid file
+
+[FluidSystem]
+NTemperature =  50 # [-] number of tabularization entries
+NPressure = 200 # [-] number of tabularization entries
+PressureLow = 1e5 # [Pa] low end for tabularization of fluid properties
+PressureHigh = 3e7 # [Pa] high end for tabularization of fluid properties
+TemperatureLow = 290.15 # [Pa] low end for tabularization of fluid properties
+TemperatureHigh = 330.15 # [Pa] high end for tabularization of fluid properties
+Salinity = 0.1 # [-] salinity of brine
+
+[Problem]
+Name = co2ni # [-] the name of the output files
+EnableGravity = true
+DepthBOR = 1200 # [m] depth below ground surface
+InjectionRate = 1e-4 #  always given as [kg/(m^2/s)]
+InjectionPressure = 16e6 #[Pa]
+InjectionTemperature = 305 # [K]
+
+[LinearSolver]
+ResidualReduction = 1e-10
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790
