@@ -159,9 +159,6 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    Dumux::GnuplotInterface<Scalar> gnuplot_lawOfTheWall;
-    Dumux::GnuplotInterface<Scalar> gnuplot_velocityProfile;
-
     // time loop
     timeLoop->start(); do
     {
@@ -222,54 +219,54 @@ int main(int argc, char** argv) try
 
         if (!system(syscom.c_str()))
         {
-            Dumux::GnuplotInterface<Scalar> gnuplot_lawOfTheWall;
-            Dumux::GnuplotInterface<Scalar> gnuplot_velocityProfile;
+            Dumux::GnuplotInterface<Scalar> gnuplotLawOfTheWall;
+            Dumux::GnuplotInterface<Scalar> gnuplotVelocityProfile;
             char gnuplotFileName[255];
             sprintf(gnuplotFileName, fileNameFormat.c_str(), "lawOfTheWall", timeLoop->timeStepIndex());
-            gnuplot_lawOfTheWall.setOpenPlotWindow(plotLawOfTheWall);
-            gnuplot_lawOfTheWall.setDatafileSeparator(',');
-            gnuplot_lawOfTheWall.resetPlot();
-            gnuplot_lawOfTheWall.setXlabel("y^+ [-]");
-            gnuplot_lawOfTheWall.setYlabel("u_+ [-]");
-            gnuplot_lawOfTheWall.setYRange(0.0, 30.0);
-            gnuplot_lawOfTheWall.setOption("set log x");
-            gnuplot_lawOfTheWall.setOption("set xrange [1:3000]");
-            gnuplot_lawOfTheWall.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
+            gnuplotLawOfTheWall.setOpenPlotWindow(plotLawOfTheWall);
+            gnuplotLawOfTheWall.setDatafileSeparator(',');
+            gnuplotLawOfTheWall.resetPlot();
+            gnuplotLawOfTheWall.setXlabel("y^+ [-]");
+            gnuplotLawOfTheWall.setYlabel("u_+ [-]");
+            gnuplotLawOfTheWall.setYRange(0.0, 30.0);
+            gnuplotLawOfTheWall.setOption("set log x");
+            gnuplotLawOfTheWall.setOption("set xrange [1:3000]");
+            gnuplotLawOfTheWall.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
 #if LOWREKEPSILON
-            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
 #elif KEPSILON
-            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7 t 'with u_{tau}'");
-            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 16:17 w l lc 8 t 'with u_{tau,nom}'");
-            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7 t 'with u_{tau}'");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 16:17 w l lc 8 t 'with u_{tau,nom}'");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
 #elif KOMEGA
-            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
 #elif ONEEQ
-            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
 #else
-            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
 #endif
-            gnuplot_lawOfTheWall.plot(std::string(gnuplotFileName));
+            gnuplotLawOfTheWall.plot(std::string(gnuplotFileName));
 
             sprintf(gnuplotFileName, fileNameFormat.c_str(), "velProfile", timeLoop->timeStepIndex());
-            gnuplot_velocityProfile.setOpenPlotWindow(plotVelocityProfile);
-            gnuplot_velocityProfile.setDatafileSeparator(',');
-            gnuplot_velocityProfile.resetPlot();
-            gnuplot_velocityProfile.setXlabel("v_x/v_{x,max} [-]");
-            gnuplot_velocityProfile.setYRange(0.0, 1.0);
-            gnuplot_velocityProfile.setYlabel("y [-]");
-            gnuplot_velocityProfile.addFileToPlot("laufer_re50000.csv", "u 2:1 w p t 'Laufer 1954, Re=50000'");
+            gnuplotVelocityProfile.setOpenPlotWindow(plotVelocityProfile);
+            gnuplotVelocityProfile.setDatafileSeparator(',');
+            gnuplotVelocityProfile.resetPlot();
+            gnuplotVelocityProfile.setXlabel("v_x/v_{x,max} [-]");
+            gnuplotVelocityProfile.setYRange(0.0, 1.0);
+            gnuplotVelocityProfile.setYlabel("y [-]");
+            gnuplotVelocityProfile.addFileToPlot("laufer_re50000.csv", "u 2:1 w p t 'Laufer 1954, Re=50000'");
 #if LOWREKEPSILON
-            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($26/0.2456) w l lc 7");
+            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($26/0.2456) w l lc 7");
 #elif KEPSILON
-            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($28/0.2456) w l lc 7");
+            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($28/0.2456) w l lc 7");
 #elif KOMEGA
-            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($26/0.2456) w l lc 7");
+            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($26/0.2456) w l lc 7");
 #elif ONEEQ
-            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($25/0.2456) w l lc 7");
+            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($25/0.2456) w l lc 7");
 #else
-            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($24/0.2456) w l lc 7");
+            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($24/0.2456) w l lc 7");
 #endif
-            gnuplot_velocityProfile.plot(std::string(gnuplotFileName));
+            gnuplotVelocityProfile.plot(std::string(gnuplotFileName));
         }
         else
         {
