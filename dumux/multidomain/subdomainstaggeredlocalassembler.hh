@@ -110,7 +110,7 @@ public:
                  (element.partitionType() == Dune::GhostEntity))
     , curElemFaceVars_(localView(assembler.gridVariables(domainId).curGridFaceVars()))
     , prevElemFaceVars_(localView(assembler.gridVariables(domainId).prevGridFaceVars()))
-    , defElemFaceVars_(localView(assembler.gridVariables(domainId).curGridFaceVars()))
+    , defElemFaceVars_(localView(assembler.gridVariables(domainId).defGridFaceVars()))
     , couplingManager_(couplingManager)
     {}
 

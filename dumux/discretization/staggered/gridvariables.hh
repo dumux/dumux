@@ -83,6 +83,10 @@ public:
     const GridFaceVariables& prevGridFaceVars() const
     { return gridVariables_->prevGridFaceVars(); }
 
+    //! return the deferred face variables
+    const GridFaceVariables& defGridFaceVars() const
+    { return gridVariables_->defGridFaceVars(); }
+
     //! return the current face variables
     GridFaceVariables& curGridFaceVars()
     { return gridVariables_->curGridFaceVars(); }
@@ -90,6 +94,10 @@ public:
     //! return the previous face variables
     GridFaceVariables& prevGridFaceVars()
     { return gridVariables_->prevGridFaceVars(); }
+
+    //! return the deferred face variables
+    GridFaceVariables& defGridFaceVars()
+    { return gridVariables_->defGridFaceVars(); }
 
     //! return the fv grid geometry
     const FVGridGeometry& fvGridGeometry() const
@@ -170,6 +178,7 @@ public:
     void init(const SolVector& curSol)
     {
         this->curGridFaceVars().update(this->fvGridGeometry(), curSol);
+        this->defGridFaceVars() = this->curGridFaceVars();
     }
 
     //! initialize all variables (instationary case)
@@ -178,6 +187,7 @@ public:
     {
         this->curGridFaceVars().update(this->fvGridGeometry(), curSol);
         this->prevGridFaceVars().update(this->fvGridGeometry(), initSol);
+        this->defGridFaceVars() = this->curGridFaceVars();
     }
 
     //! update the face variables
@@ -185,6 +195,7 @@ public:
     void update(const SolVector& curSol)
     {
         this->curGridFaceVars().update(this->fvGridGeometry(), curSol);
+        this->defGridFaceVars() = this->curGridFaceVars();
     }
 
     //! resets state to the one before time integration
@@ -192,6 +203,7 @@ public:
     void resetTimeStep(const SolVector& sol)
     {
         this->curGridFaceVars() = this->prevGridFaceVars();
+        this->defGridFaceVars() = this->curGridFaceVars();
     }
 };
 
@@ -235,6 +247,7 @@ public:
     : ParentType(problem, fvGridGeometry)
     , curGridFaceVariables_(*problem)
     , prevGridFaceVariables_(*problem)
+    , defGridFaceVariables_(*problem)
     {}
 
     //! update all variables
@@ -243,6 +256,7 @@ public:
     {
         ParentType::update(curSol[cellCenterIdx]);
         curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
+        defGridFaceVariables_ = curGridFaceVariables_;
     }
 
     //! initialize all variables (stationary case)
@@ -251,6 +265,7 @@ public:
     {
         ParentType::init(curSol[cellCenterIdx]);
         curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
+        defGridFaceVariables_ = curGridFaceVariables_;
     }
 
     //! initialize all variables (instationary case)
@@ -260,6 +275,7 @@ public:
         ParentType::init(curSol[cellCenterIdx], initSol[cellCenterIdx]);
         curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
         prevGridFaceVariables_.update(*this->fvGridGeometry_, initSol[faceIdx]);
+        defGridFaceVariables_ = curGridFaceVariables_;
     }
 
     //! Sets the current state as the previous for next time step
@@ -276,6 +292,7 @@ public:
     {
         ParentType::resetTimeStep(solution);
         curGridFaceVariables_ = prevGridFaceVariables_;
+        defGridFaceVariables_ = curGridFaceVariables_;
     }
 
     //! return the current face variables
@@ -286,6 +303,10 @@ public:
     const GridFaceVariables& prevGridFaceVars() const
     { return prevGridFaceVariables_; }
 
+    //! return the deferred face variables
+    const GridFaceVariables& defGridFaceVars() const
+    { return defGridFaceVariables_; }
+
     //! return the current face variables
     GridFaceVariables& curGridFaceVars()
     { return curGridFaceVariables_; }
@@ -293,6 +314,10 @@ public:
     //! return the previous face variables
     GridFaceVariables& prevGridFaceVars()
     { return prevGridFaceVariables_; }
+
+    //! return the deferred face variables
+    GridFaceVariables& defGridFaceVars()
+    { return defGridFaceVariables_; }
 
     //! Returns a pointer the cell center specific auxiliary class. Required for the multi-domain FVAssembler's ctor.
     std::unique_ptr<CellCenterGridVariablesView<ThisType>> cellCenterGridVariablesPtr()
@@ -322,6 +347,7 @@ public:
 private:
     GridFaceVariables curGridFaceVariables_;
     GridFaceVariables prevGridFaceVariables_;
+    GridFaceVariables defGridFaceVariables_;
 };
 
 } // end namespace Dumux
