@@ -77,6 +77,8 @@ public:
     static std::string primaryVariableName(int pvIdx, int state)
     {
         using Indices = typename ModelTraits::Indices;
+        static constexpr auto numStates = 3;
+        using StringVec = std::array<std::string, numStates>;
 
         int idxSecComps;
         if (state == Indices::firstPhaseOnly
@@ -89,14 +91,14 @@ public:
             return ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(idxSecComps, pvIdx)
                                            : IOName::massFraction<FluidSystem>(idxSecComps, pvIdx);
 
-        const std::vector<std::string> p0s1SwitchedPvNames = {
+        static const StringVec p0s1SwitchedPvNames = {
             ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx)
                                     : IOName::massFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx),
             ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx)
                                     : IOName::massFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx),
             IOName::saturation<FluidSystem>(FluidSystem::phase1Idx)};
 
-        const std::vector<std::string> p1s0SwitchedPvNames = {
+        static const StringVec p1s0SwitchedPvNames = {
             ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx)
                                     : IOName::massFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx),
             ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx)

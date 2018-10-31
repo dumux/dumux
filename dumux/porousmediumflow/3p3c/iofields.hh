@@ -75,49 +75,51 @@ public:
     static std::string primaryVariableName(int pvIdx, int state)
     {
         using Indices = typename ModelTraits::Indices;
+        static constexpr auto numEq = ModelTraits::numEq();
+        using StringVec = std::array<std::string, numEq>;
 
         switch (state)
         {
             case Indices::threePhases:
             {
-                const std::vector<std::string> s1 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
-                                                     IOName::saturation<FluidSystem>(FluidSystem::wPhaseIdx),
-                                                     IOName::saturation<FluidSystem>(FluidSystem::nPhaseIdx)};
+                static const StringVec s1 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
+                                             IOName::saturation<FluidSystem>(FluidSystem::wPhaseIdx),
+                                             IOName::saturation<FluidSystem>(FluidSystem::nPhaseIdx)};
                 return s1[pvIdx];
             }
             case Indices::wPhaseOnly:
             {
-                const std::vector<std::string> s2 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
-                                                     IOName::moleFraction<FluidSystem>(FluidSystem::wPhaseIdx, FluidSystem::gCompIdx),
-                                                     IOName::moleFraction<FluidSystem>(FluidSystem::wPhaseIdx, FluidSystem::nCompIdx)};
+                static const StringVec s2 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
+                                             IOName::moleFraction<FluidSystem>(FluidSystem::wPhaseIdx, FluidSystem::gCompIdx),
+                                             IOName::moleFraction<FluidSystem>(FluidSystem::wPhaseIdx, FluidSystem::nCompIdx)};
                 return s2[pvIdx];
             }
             case Indices::gnPhaseOnly:
             {
-                const std::vector<std::string> s3 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
-                                                     IOName::moleFraction<FluidSystem>(FluidSystem::gPhaseIdx, FluidSystem::wCompIdx),
-                                                     IOName::saturation<FluidSystem>(FluidSystem::nPhaseIdx)};
+                static const StringVec s3 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
+                                             IOName::moleFraction<FluidSystem>(FluidSystem::gPhaseIdx, FluidSystem::wCompIdx),
+                                             IOName::saturation<FluidSystem>(FluidSystem::nPhaseIdx)};
                 return s3[pvIdx];
             }
             case Indices::wnPhaseOnly:
             {
-                const std::vector<std::string> s4 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
-                                                     IOName::moleFraction<FluidSystem>(FluidSystem::wPhaseIdx, FluidSystem::gCompIdx),
-                                                     IOName::saturation<FluidSystem>(FluidSystem::nPhaseIdx)};
+                static const StringVec s4 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
+                                             IOName::moleFraction<FluidSystem>(FluidSystem::wPhaseIdx, FluidSystem::gCompIdx),
+                                             IOName::saturation<FluidSystem>(FluidSystem::nPhaseIdx)};
                 return s4[pvIdx];
             }
             case Indices::gPhaseOnly:
             {
-                const std::vector<std::string> s5 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
-                                                     IOName::moleFraction<FluidSystem>(FluidSystem::gPhaseIdx, FluidSystem::wCompIdx),
-                                                     IOName::moleFraction<FluidSystem>(FluidSystem::gPhaseIdx, FluidSystem::nCompIdx)};
+                static const StringVec s5 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
+                                             IOName::moleFraction<FluidSystem>(FluidSystem::gPhaseIdx, FluidSystem::wCompIdx),
+                                             IOName::moleFraction<FluidSystem>(FluidSystem::gPhaseIdx, FluidSystem::nCompIdx)};
                 return s5[pvIdx];
             }
             case Indices::wgPhaseOnly:
             {
-                const std::vector<std::string> s6 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
-                                                     IOName::saturation<FluidSystem>(FluidSystem::wPhaseIdx),
-                                                     IOName::moleFraction<FluidSystem>(FluidSystem::gPhaseIdx, FluidSystem::nCompIdx)};
+                static const StringVec s6 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
+                                             IOName::saturation<FluidSystem>(FluidSystem::wPhaseIdx),
+                                             IOName::moleFraction<FluidSystem>(FluidSystem::gPhaseIdx, FluidSystem::nCompIdx)};
                 return s6[pvIdx];
             }
         }
