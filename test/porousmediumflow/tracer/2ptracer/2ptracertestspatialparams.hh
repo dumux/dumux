@@ -122,7 +122,8 @@ public:
     { volumeFlux_ = f; }
 
     //! saturation from twoPProblem
-    Scalar saturation(const SubControlVolume& scv) const
+    Scalar saturation(const Element &element,
+                      const SubControlVolume& scv) const
     { return saturation_[scv.dofIndex()]; }
 
     void setSaturation(const std::vector<Scalar>& s)
