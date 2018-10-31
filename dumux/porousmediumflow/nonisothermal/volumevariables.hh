@@ -135,13 +135,22 @@ public:
 
         else
         {
-            for(int phaseIdx=0; phaseIdx < numEnergyEq-1; ++phaseIdx)
+            //if numEnergyEq == 2 this means we have 1 temp for fluid phase, one for solid
+            if (numEnergyEq == 2)
             {
-                // retrieve temperatures from solution vector, phases might have different temperature
-                const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx + phaseIdx];
-                fluidState.setTemperature(phaseIdx, T);
+                const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx];
+                fluidState.setTemperature(T);
             }
-
+            //this is for numEnergyEqFluid > 1
+            else
+            {
+                for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                {
+                    // retrieve temperatures from solution vector, phases might have different temperature
+                    const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx + phaseIdx];
+                    fluidState.setTemperature(phaseIdx, T);
+                }
+            }
             const Scalar solidTemperature = elemSol[scv.localDofIndex()][temperatureIdx+numEnergyEq-1];
             solidState.setTemperature(solidTemperature);
         }

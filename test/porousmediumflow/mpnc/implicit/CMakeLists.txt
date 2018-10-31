@@ -37,7 +37,7 @@ dune_add_test(COMPILE_ONLY # since it currently fails miserably with very differ
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/combustion-reference.vtp
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_boxmpncthermalnonequil-00084.vtp
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_boxmpncthermalnonequil-00073.vtp
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpncthermalnonequil_box test_boxmpncthermalnonequil.input -Problem.Name test_boxmpncthermalnonequil")
 
 

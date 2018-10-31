@@ -35,10 +35,12 @@
 #include <dumux/porousmediumflow/mpnc/model.hh>
 #include <dumux/porousmediumflow/mpnc/pressureformulation.hh>
 
+#include <dumux/material/solidstates/compositionalsolidstate.hh>
+#include <dumux/material/solidsystems/compositionalsolidphase.hh>
+#include <dumux/material/components/constant.hh>
 
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
-#include <dumux/material/components/constant.hh>
 
 #include "combustionspatialparams.hh"
 #include "combustionfluidsystem.hh"
@@ -67,8 +69,7 @@ SET_TYPE_PROP(CombustionOneComponentTypeTag,
               Problem,
               CombustionProblemOneComponent<TypeTag>);
 
-// Set the spatial parameters
-SET_TYPE_PROP(CombustionOneComponentTypeTag, SpatialParams, CombustionSpatialParams<TypeTag>);
+
 
 SET_TYPE_PROP(CombustionOneComponentTypeTag,
               FluidSystem,
@@ -114,13 +115,28 @@ SET_INT_PROP(CombustionOneComponentTypeTag, NumEnergyEqSolid, 1);
 // by default chemical non equilibrium is enabled in the nonequil model, switch that off here
 SET_BOOL_PROP(CombustionOneComponentTypeTag, EnableChemicalNonEquilibrium, false);
 //#################
-// Set the fluid system
+
 SET_PROP(CombustionOneComponentTypeTag, SolidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using InertComponent = Components::Constant<1, Scalar>;
-    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+    using ComponentOne = Dumux::Components::Constant<1, Scalar>;
+    using ComponentTwo = Dumux::Components::Constant<2, Scalar>;
+    static constexpr int numInertComponents = 2;
+    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo, numInertComponents>;
 };
+
+SET_PROP(CombustionOneComponentTypeTag, SolidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+public:
+    using type = CompositionalSolidState<Scalar, SolidSystem>;
+};
+
+// Set the spatial parameters
+SET_TYPE_PROP(CombustionOneComponentTypeTag, SpatialParams, CombustionSpatialParams<TypeTag>);
+
 }
 /*!
  * \ingroup MPNCTests
@@ -324,7 +340,7 @@ public:
         fluidState.setPressure(nPhaseIdx, pn);
         fluidState.setPressure(wPhaseIdx, pw);
 
-        fluidState.setTemperature(TBoundary_ );
+        fluidState.setTemperature(TBoundary_);
         ParameterCache dummyCache;
         fluidState.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
         fluidState.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);

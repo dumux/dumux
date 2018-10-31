@@ -130,6 +130,37 @@ public:
     }
 
     /*!
+     * \brief Function for defining the porosity.
+     *        That is possibly solution dependent.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the porosity
+     */
+    template<class SolidSystem, class ElementSolution>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
+    {
+        if (compIdx == SolidSystem::comp0Idx)
+        {
+            if (inOutFlow(scv.dofPosition()))
+                return 1.0-porosityOutFlow_;
+            else
+                return 0;
+        }
+        else
+        {
+            if (inOutFlow(scv.dofPosition()))
+                return 0;
+            else
+                return 1.0-porosity_;
+        }
+    }
+
+    /*!
      * \brief Return a reference to the material parameters of the material law.
      * \param globalPos The position in global coordinates. */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition & globalPos) const
