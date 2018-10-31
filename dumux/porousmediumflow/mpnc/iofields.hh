@@ -57,6 +57,11 @@ public:
                                       IOName::moleFraction<FluidSystem>(i, j));
         }
 
+        for (int j = 0; j < VolumeVariables::numComponents(); ++j)
+        out.addVolumeVariable([j](const auto& v){ return v.fugacity(j); },
+                              "fugacity^"+ FluidSystem::componentName(j));
+
+
         out.addVolumeVariable([](const auto& v){ return v.porosity(); },
                               IOName::porosity());
     }
