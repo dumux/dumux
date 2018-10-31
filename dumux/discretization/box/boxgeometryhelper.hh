@@ -57,7 +57,7 @@ public:
 
     BoxGeometryHelper(const typename Element::Geometry& geometry)
     : elementGeometry_(geometry), corners_(geometry.corners()),
-      p({geometry.center(), geometry.corner(0), geometry.corner(1)}) {}
+      p_({geometry.center(), geometry.corner(0), geometry.corner(1)}) {}
 
     //! Create a vector with the scv corners
     ScvCornerStorage getScvCorners(unsigned int localScvIdx) const
@@ -69,14 +69,14 @@ public:
             {2, 0}
         };
 
-        return ScvCornerStorage{ {p[map[localScvIdx][0]],
-                                  p[map[localScvIdx][1]]} };
+        return ScvCornerStorage{ {p_[map[localScvIdx][0]],
+                                  p_[map[localScvIdx][1]]} };
     }
 
     //! Create a vector with the corners of sub control volume faces
     ScvfCornerStorage getScvfCorners(unsigned int localScvfIdx) const
     {
-        return ScvfCornerStorage{{p[0]}};
+        return ScvfCornerStorage{{p_[0]}};
     }
 
     //! Create the sub control volume face geometries on the boundary
@@ -91,7 +91,7 @@ public:
     GlobalPosition normal(const ScvfCornerStorage& scvfCorners,
                           const std::vector<unsigned int>& scvIndices) const
     {
-        auto normal = p[2] - p[1];
+        auto normal = p_[2] - p_[1];
         normal /= normal.two_norm();
         return normal;
     }
@@ -111,7 +111,7 @@ public:
 protected:
     const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
-    std::array<GlobalPosition, maxPoints> p; // the points needed for construction of the geometries
+    std::array<GlobalPosition, maxPoints> p_; // the points needed for construction of the geometries
 };
 
 //! A class to create sub control volume and sub control volume face geometries per element
@@ -143,15 +143,15 @@ public:
         const auto referenceElement = ReferenceElements::general(geometry.type());
 
         // the element center
-        p[0] = geometry.center();
+        p_[0] = geometry.center();
 
         // vertices
         for (int i = 0; i < corners_; ++i)
-            p[i+1] = geometry.corner(i);
+            p_[i+1] = geometry.corner(i);
 
         // face midpoints
         for (int i = 0; i < referenceElement.size(1); ++i)
-            p[i+corners_+1] = geometry.global(referenceElement.position(i, 1));
+            p_[i+corners_+1] = geometry.global(referenceElement.position(i, 1));
     }
 
     //! Create a vector with the scv corners
@@ -172,10 +172,10 @@ public:
                 {vo+2, fo+1, fo+2, 0}
             };
 
-            return ScvCornerStorage{ {p[map[localScvIdx][0]],
-                                      p[map[localScvIdx][1]],
-                                      p[map[localScvIdx][2]],
-                                      p[map[localScvIdx][3]]} };
+            return ScvCornerStorage{ {p_[map[localScvIdx][0]],
+                                      p_[map[localScvIdx][1]],
+                                      p_[map[localScvIdx][2]],
+                                      p_[map[localScvIdx][3]]} };
         }
         case 4: // quadrilateral
         {
@@ -190,10 +190,10 @@ public:
                 {vo+3, fo+3, fo+1, 0}
             };
 
-            return ScvCornerStorage{ {p[map[localScvIdx][0]],
-                                      p[map[localScvIdx][1]],
-                                      p[map[localScvIdx][2]],
-                                      p[map[localScvIdx][3]]} };
+            return ScvCornerStorage{ {p_[map[localScvIdx][0]],
+                                      p_[map[localScvIdx][1]],
+                                      p_[map[localScvIdx][2]],
+                                      p_[map[localScvIdx][3]]} };
         }
         default:
             DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
@@ -220,8 +220,8 @@ public:
                 {0, fo+2}
             };
 
-            return ScvfCornerStorage{ {p[map[localScvfIdx][0]],
-                                       p[map[localScvfIdx][1]]} };
+            return ScvfCornerStorage{ {p_[map[localScvfIdx][0]],
+                                       p_[map[localScvfIdx][1]]} };
         }
         case 4: // quadrilateral
         {
@@ -235,8 +235,8 @@ public:
                 {fo+3, 0}
             };
 
-            return ScvfCornerStorage{ {p[map[localScvfIdx][0]],
-                                       p[map[localScvfIdx][1]]} };
+            return ScvfCornerStorage{ {p_[map[localScvfIdx][0]],
+                                       p_[map[localScvfIdx][1]]} };
         }
         default:
             DUNE_THROW(Dune::NotImplemented, "Box scvf geometries for dim=" << dim
@@ -254,9 +254,9 @@ public:
 
         const auto vIdxLocal = referenceElement.subEntity(is.indexInInside(), 1, indexInIntersection, dim);
         if (indexInIntersection == 0)
-            return ScvfCornerStorage({p[vIdxLocal+1], isGeom.center()});
+            return ScvfCornerStorage({p_[vIdxLocal+1], isGeom.center()});
         else if (indexInIntersection == 1)
-            return ScvfCornerStorage({isGeom.center(), p[vIdxLocal+1]});
+            return ScvfCornerStorage({isGeom.center(), p_[vIdxLocal+1]});
         else
             DUNE_THROW(Dune::InvalidStateException, "local index exceeds the number of corners of 2d intersections");
     }
@@ -331,7 +331,7 @@ public:
 protected:
     const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
-    std::array<GlobalPosition, maxPoints> p; // the points needed for construction of the geometries
+    std::array<GlobalPosition, maxPoints> p_; // the points needed for construction of the geometries
 };
 
 //! A class to create sub control volume and sub control volume face geometries per element
@@ -362,19 +362,19 @@ public:
         const auto referenceElement = ReferenceElements::general(geometry.type());
 
         // the element center
-        p[0] = geometry.center();
+        p_[0] = geometry.center();
 
         // vertices
         for (int i = 0; i < corners_; ++i)
-            p[i+1] = geometry.corner(i);
+            p_[i+1] = geometry.corner(i);
 
         // edge midpoints
         for (int i = 0; i < referenceElement.size(dim-1); ++i)
-            p[i+corners_+1] = geometry.global(referenceElement.position(i, dim-1));
+            p_[i+corners_+1] = geometry.global(referenceElement.position(i, dim-1));
 
         // face midpoints
         for (int i = 0; i < referenceElement.size(1); ++i)
-            p[i+corners_+1+referenceElement.size(dim-1)] = geometry.global(referenceElement.position(i, 1));
+            p_[i+corners_+1+referenceElement.size(dim-1)] = geometry.global(referenceElement.position(i, 1));
     }
 
     //! Create a vector with the scv corners
@@ -397,14 +397,14 @@ public:
                 {vo+3, eo+3, eo+5, fo+2, eo+4, fo+1, fo+3,    0}
             };
 
-            return ScvCornerStorage{ {p[map[localScvIdx][0]],
-                                      p[map[localScvIdx][1]],
-                                      p[map[localScvIdx][2]],
-                                      p[map[localScvIdx][3]],
-                                      p[map[localScvIdx][4]],
-                                      p[map[localScvIdx][5]],
-                                      p[map[localScvIdx][6]],
-                                      p[map[localScvIdx][7]]} };
+            return ScvCornerStorage{ {p_[map[localScvIdx][0]],
+                                      p_[map[localScvIdx][1]],
+                                      p_[map[localScvIdx][2]],
+                                      p_[map[localScvIdx][3]],
+                                      p_[map[localScvIdx][4]],
+                                      p_[map[localScvIdx][5]],
+                                      p_[map[localScvIdx][6]],
+                                      p_[map[localScvIdx][7]]} };
         }
         case 8: // hexahedron
         {
@@ -424,14 +424,14 @@ public:
                 {vo+7, eo+9, eo+11, fo+5, eo+3, fo+1, fo+3,    0},
             };
 
-            return ScvCornerStorage{ {p[map[localScvIdx][0]],
-                                      p[map[localScvIdx][1]],
-                                      p[map[localScvIdx][2]],
-                                      p[map[localScvIdx][3]],
-                                      p[map[localScvIdx][4]],
-                                      p[map[localScvIdx][5]],
-                                      p[map[localScvIdx][6]],
-                                      p[map[localScvIdx][7]]} };
+            return ScvCornerStorage{ {p_[map[localScvIdx][0]],
+                                      p_[map[localScvIdx][1]],
+                                      p_[map[localScvIdx][2]],
+                                      p_[map[localScvIdx][3]],
+                                      p_[map[localScvIdx][4]],
+                                      p_[map[localScvIdx][5]],
+                                      p_[map[localScvIdx][6]],
+                                      p_[map[localScvIdx][7]]} };
         }
         default:
             DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
@@ -461,10 +461,10 @@ public:
                 {eo+5, fo+2, fo+3,    0}
             };
 
-            return ScvfCornerStorage{ {p[map[localScvfIdx][0]],
-                                       p[map[localScvfIdx][1]],
-                                       p[map[localScvfIdx][2]],
-                                       p[map[localScvfIdx][3]]} };
+            return ScvfCornerStorage{ {p_[map[localScvfIdx][0]],
+                                       p_[map[localScvfIdx][1]],
+                                       p_[map[localScvfIdx][2]],
+                                       p_[map[localScvfIdx][3]]} };
         }
         case 8: // hexahedron
         {
@@ -487,10 +487,10 @@ public:
                 {eo+11, fo+5, fo+3,   0}
             };
 
-            return ScvfCornerStorage{ {p[map[localScvfIdx][0]],
-                                       p[map[localScvfIdx][1]],
-                                       p[map[localScvfIdx][2]],
-                                       p[map[localScvfIdx][3]]} };
+            return ScvfCornerStorage{ {p_[map[localScvfIdx][0]],
+                                       p_[map[localScvfIdx][1]],
+                                       p_[map[localScvfIdx][2]],
+                                       p_[map[localScvfIdx][3]]} };
         }
         default:
             DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
@@ -525,7 +525,7 @@ public:
         for (int i = 0; i < faceRefElem.size(1); ++i)
         {
             const auto edgeIdxLocal = referenceElement.subEntity(idxInInside, 1, i, dim-1);
-            pi[i+corners+1] = p[edgeIdxLocal+corners_+1];
+            pi[i+corners+1] = p_[edgeIdxLocal+corners_+1];
         }
 
         // procees according to number of corners
@@ -608,7 +608,7 @@ public:
 protected:
     const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
-    std::array<GlobalPosition, maxPoints> p; // the points needed for construction of the scv/scvf geometries
+    std::array<GlobalPosition, maxPoints> p_; // the points needed for construction of the scv/scvf geometries
 };
 
 } // end namespace Dumux

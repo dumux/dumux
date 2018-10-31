@@ -217,7 +217,7 @@ public:
             Scalar rHydration = - massFracH2O_fPhase* (volVars.solidComponentDensity(hPhaseIdx)- realSolidDensityAverage)
                                                      * krh * (T-Teq)/ Teq;
 
-            Scalar qMass =  rHydration;
+            qMass =  rHydration;
         }
 
         //charge or hydration

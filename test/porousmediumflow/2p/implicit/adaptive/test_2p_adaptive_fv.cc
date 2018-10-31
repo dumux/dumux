@@ -216,7 +216,7 @@ int main(int argc, char** argv) try
             indicator.calculate(x, refineTol, coarsenTol);
 
             // mark elements and maybe adapt grid
-            bool wasAdapted = false;
+            wasAdapted = false;
             if (markElements(gridManager.grid(), indicator))
                 wasAdapted = adapt(gridManager.grid(), dataTransfer);
 

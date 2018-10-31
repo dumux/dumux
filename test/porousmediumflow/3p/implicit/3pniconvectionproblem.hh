@@ -170,9 +170,9 @@ public:
         const auto someElemSol = elementSolution(someElement, curSol, this->fvGridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto fvGeometry = localView(this->fvGridGeometry());
-        fvGeometry.bindElement(someElement);
-        const auto someScv = *(scvs(fvGeometry).begin());
+        auto someFvGeometry = localView(this->fvGridGeometry());
+        someFvGeometry.bindElement(someElement);
+        const auto someScv = *(scvs(someFvGeometry).begin());
 
         VolumeVariables volVars;
         volVars.update(someElemSol, *this, someElement, someScv);

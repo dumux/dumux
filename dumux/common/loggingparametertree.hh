@@ -31,8 +31,8 @@
 #include <dune/common/parametertree.hh>
 #include <dumux/common/exceptions.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Common
  * \brief A parameter tree that logs which parameters have been used
@@ -93,6 +93,40 @@ public:
         }
     }
 
+    /*! \brief Do a backwards hierarchical search for a key in a group
+     *
+     * \note Given a group this function starts to look from the back
+     *       for dots. In G1.G2.G3 the function first looks if the key
+     *       "G3.Key" exists, then "G2.Key", ...
+     *       The first compound key that is found is returned. If no
+     *       compound key is found an empty string is returned.
+     * \param tree The tree to look in for keys
+     * \param key The key
+     * \param groupPrefix the group prefix attached to the key
+     */
+    std::string findKeyInGroup(const Dune::ParameterTree& tree,
+                               const std::string& key,
+                               const std::string& groupPrefix) const
+    {
+        // search backwards until key is found
+        std::string prefix = groupPrefix;
+        auto dot = prefix.rfind(".");
+        while (dot != std::string::npos)
+        {
+            prefix = prefix.substr(0, dot);
+            std::string compoundKey = prefix + "." + key;
+
+            if (tree.hasKey(compoundKey))
+                return compoundKey;
+
+            // look for the next dot in the current prefix
+            dot = prefix.rfind(".");
+
+        }
+
+        // the key was not found
+        return "";
+    }
 
     /** \brief get value as string
      *
@@ -148,22 +182,13 @@ public:
         }
 
         // search backwards until key is found
-        std::string prefix = groupPrefix;
-        auto dot = prefix.rfind(".");
-        while (dot != std::string::npos)
+        compoundKey = findKeyInGroup(params_, key, groupPrefix);
+        if (compoundKey != "")
         {
-            prefix = prefix.substr(0, dot);
-            compoundKey = prefix + "." + key;
-            if (params_.hasKey(compoundKey))
-            {
-                // log that we used this parameter
-                const auto returnValue = params_[compoundKey];
-                usedRuntimeParams_[compoundKey] = returnValue;
-                return returnValue;
-            }
-
-            // look for the next dot in the current prefix
-            dot = prefix.rfind(".");
+            // log that we used this parameter
+            const auto returnValue = params_[compoundKey];
+            usedRuntimeParams_[compoundKey] = returnValue;
+            return returnValue;
         }
 
         // finally, look for the key without prefix
@@ -265,21 +290,12 @@ public:
         }
 
         // search backwards until key is found
-        std::string prefix = groupPrefix;
-        auto dot = prefix.rfind(".");
-        while (dot != std::string::npos)
+        compoundKey = findKeyInGroup(params_, key, groupPrefix);
+        if (compoundKey != "")
         {
-            prefix = prefix.substr(0, dot);
-            compoundKey = prefix + "." + key;
-            if (params_.hasKey(compoundKey))
-            {
-                // log that we used this parameter
-                usedRuntimeParams_[compoundKey] = params_[compoundKey];
-                return params_.template get<T>(compoundKey);
-            }
-
-            // look for the next dot in the current prefix
-            dot = prefix.rfind(".");
+            // log that we used this parameter
+            usedRuntimeParams_[compoundKey] = params_[compoundKey];
+            return params_.template get<T>(compoundKey);
         }
 
         // finally, look for the key without prefix
@@ -345,22 +361,14 @@ public:
         }
 
         // search backwards until key is found
-        std::string prefix = groupPrefix;
-        auto dot = prefix.rfind(".");
-        while (dot != std::string::npos)
+        compoundKey = findKeyInGroup(params_, key, groupPrefix);
+        if (compoundKey != "")
         {
-            prefix = prefix.substr(0, dot);
-            compoundKey = prefix + "." + key;
-            if (params_.hasKey(compoundKey))
-            {
-                // log that we used this parameter
-                usedRuntimeParams_[compoundKey] = params_[compoundKey];
-                return params_.template get<T>(compoundKey);
-            }
-
-            // look for the next dot in the current prefix
-            dot = prefix.rfind(".");
+            // log that we used this parameter
+            usedRuntimeParams_[compoundKey] = params_[compoundKey];
+            return params_.template get<T>(compoundKey);
         }
+
         // reset the compoundKey
         compoundKey = groupPrefix + "." + key;
 
@@ -383,21 +391,12 @@ public:
         else
         {
             // search backwards until key is found
-            std::string prefix = groupPrefix;
-            auto dot = prefix.rfind(".");
-            while (dot != std::string::npos)
+            compoundKey = findKeyInGroup(defaultParams_, key, groupPrefix);
+            if (compoundKey != "")
             {
-                prefix = prefix.substr(0, dot);
-                compoundKey = prefix + "." + key;
-                if (defaultParams_.hasKey(compoundKey))
-                {
-                    // log that we used this parameter
-                    usedDefaultParams_[compoundKey] = defaultParams_[compoundKey];
-                    return defaultParams_.template get<T>(compoundKey);
-                }
-
-                // look for the next dot in the current prefix
-                dot = prefix.rfind(".");
+                // log that we used this parameter
+                usedDefaultParams_[compoundKey] = defaultParams_[compoundKey];
+                return defaultParams_.template get<T>(compoundKey);
             }
 
             if(defaultParams_.hasKey(key))
