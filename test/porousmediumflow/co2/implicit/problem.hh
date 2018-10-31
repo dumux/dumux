@@ -39,8 +39,8 @@
 #include <dumux/material/fluidsystems/brineco2.hh>
 #include <dumux/discretization/box/scvftoscvboundarytypes.hh>
 
-#include "heterogeneousspatialparameters.hh"
-#include "heterogeneousco2tables.hh"
+#include "spatialparams.hh"
+#include "co2tables.hh"
 
 // per default use isothermal model
 #ifndef ISOTHERMAL

@@ -49,7 +49,7 @@
 #include <dumux/io/grid/gridmanager.hh>
 
 // the problem definitions
-#include "heterogeneousproblem.hh"
+#include "problem.hh"
 
 int main(int argc, char** argv) try
 {
