@@ -46,33 +46,33 @@ template <class TypeTag> class RootProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(RootTypeTag, INHERITS_FROM(CCTpfaModel, OneP));
+NEW_TYPE_TAG(Root, INHERITS_FROM(CCTpfaModel, OneP));
 
 // Set the grid type
-SET_TYPE_PROP(RootTypeTag, Grid, Dune::FoamGrid<1, 3>);
+SET_TYPE_PROP(Root, Grid, Dune::FoamGrid<1, 3>);
 
-SET_BOOL_PROP(RootTypeTag, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(RootTypeTag, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(RootTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(RootTypeTag, SolutionDependentAdvection, false);
-SET_BOOL_PROP(RootTypeTag, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(RootTypeTag, SolutionDependentHeatConduction, false);
+SET_BOOL_PROP(Root, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(Root, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(Root, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(Root, SolutionDependentAdvection, false);
+SET_BOOL_PROP(Root, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(Root, SolutionDependentHeatConduction, false);
 
 // Set the problem property
-SET_TYPE_PROP(RootTypeTag, Problem, RootProblem<TypeTag>);
+SET_TYPE_PROP(Root, Problem, RootProblem<TypeTag>);
 
 // the fluid system
-SET_PROP(RootTypeTag, FluidSystem)
+SET_PROP(Root, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Set the problem property
-SET_TYPE_PROP(RootTypeTag, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(Root, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RootTypeTag, SpatialParams, RootSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+SET_TYPE_PROP(Root, SpatialParams, RootSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
                                                             typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 } // end namespace Properties

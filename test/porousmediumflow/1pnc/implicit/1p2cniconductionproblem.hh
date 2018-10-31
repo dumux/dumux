@@ -50,23 +50,23 @@ class OnePTwoCNIConductionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTwoCNIConductionTypeTag, INHERITS_FROM(OnePNCNI));
-NEW_TYPE_TAG(OnePTwoCNIConductionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConductionTypeTag));
-NEW_TYPE_TAG(OnePTwoCNIConductionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePTwoCNIConductionTypeTag));
-NEW_TYPE_TAG(OnePTwoCNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, OnePTwoCNIConductionTypeTag));
+NEW_TYPE_TAG(OnePTwoCNIConduction, INHERITS_FROM(OnePNCNI));
+NEW_TYPE_TAG(OnePTwoCNIConductionCCTpfa, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConduction));
+NEW_TYPE_TAG(OnePTwoCNIConductionCCMpfa, INHERITS_FROM(CCMpfaModel, OnePTwoCNIConduction));
+NEW_TYPE_TAG(OnePTwoCNIConductionBox, INHERITS_FROM(BoxModel, OnePTwoCNIConduction));
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(OnePTwoCNIConduction, Grid, Dune::UGGrid<2>);
 #else
-SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(OnePTwoCNIConduction, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, Problem, OnePTwoCNIConductionProblem<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIConduction, Problem, OnePTwoCNIConductionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(OnePTwoCNIConductionTypeTag, FluidSystem)
+SET_PROP(OnePTwoCNIConduction, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
@@ -74,7 +74,7 @@ SET_PROP(OnePTwoCNIConductionTypeTag, FluidSystem)
 };
 
 // Set the spatial parameters
-SET_PROP(OnePTwoCNIConductionTypeTag, SpatialParams)
+SET_PROP(OnePTwoCNIConduction, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -82,7 +82,7 @@ SET_PROP(OnePTwoCNIConductionTypeTag, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCNIConductionTypeTag, UseMoles, true);
+SET_BOOL_PROP(OnePTwoCNIConduction, UseMoles, true);
 }
 
 

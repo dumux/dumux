@@ -54,22 +54,22 @@
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(MatrixTypeTag, CouplingManager)
+SET_PROP(Matrix, CouplingManager)
 {
-    using Traits = MultiDomainTraits<TypeTag, TTAG(FractureTypeTag)>;
+    using Traits = MultiDomainTraits<TypeTag, TTAG(Fracture)>;
     using type = EmbeddedCouplingManager2d3d<Traits>;
 };
 
-SET_PROP(FractureTypeTag, CouplingManager)
+SET_PROP(Fracture, CouplingManager)
 {
-    using Traits = MultiDomainTraits<TTAG(MatrixTypeTag), TypeTag>;
+    using Traits = MultiDomainTraits<TTAG(Matrix), TypeTag>;
     using type = EmbeddedCouplingManager2d3d<Traits>;
 };
 
-SET_TYPE_PROP(MatrixTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
-SET_TYPE_PROP(FractureTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<1>);
-SET_TYPE_PROP(MatrixTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
-SET_TYPE_PROP(FractureTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
+SET_TYPE_PROP(Matrix, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
+SET_TYPE_PROP(Fracture, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<1>);
+SET_TYPE_PROP(Matrix, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
+SET_TYPE_PROP(Fracture, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
 
 } // end namespace Properties
 
@@ -142,8 +142,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using BulkTypeTag = TTAG(MatrixTypeTag);
-    using LowDimTypeTag = TTAG(FractureTypeTag);
+    using BulkTypeTag = TTAG(Matrix);
+    using LowDimTypeTag = TTAG(Fracture);
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains

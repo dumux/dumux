@@ -49,24 +49,24 @@ class OnePNIConvectionProblem;
 namespace Properties
 {
 
-NEW_TYPE_TAG(OnePNIConvectionTypeTag, INHERITS_FROM(OnePNI));
-NEW_TYPE_TAG(OnePNIConvectionBoxTypeTag, INHERITS_FROM(BoxModel, OnePNIConvectionTypeTag));
-NEW_TYPE_TAG(OnePNIConvectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePNIConvectionTypeTag));
-NEW_TYPE_TAG(OnePNIConvectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePNIConvectionTypeTag));
+NEW_TYPE_TAG(OnePNIConvection, INHERITS_FROM(OnePNI));
+NEW_TYPE_TAG(OnePNIConvectionBox, INHERITS_FROM(BoxModel, OnePNIConvection));
+NEW_TYPE_TAG(OnePNIConvectionCCTpfa, INHERITS_FROM(CCTpfaModel, OnePNIConvection));
+NEW_TYPE_TAG(OnePNIConvectionCCMpfa, INHERITS_FROM(CCMpfaModel, OnePNIConvection));
 
 // Set the grid type
-SET_TYPE_PROP(OnePNIConvectionTypeTag, Grid, Dune::YaspGrid<1>);
+SET_TYPE_PROP(OnePNIConvection, Grid, Dune::YaspGrid<1>);
 
 // Set the problem property
-SET_TYPE_PROP(OnePNIConvectionTypeTag, Problem, OnePNIConvectionProblem<TypeTag>);
+SET_TYPE_PROP(OnePNIConvection, Problem, OnePNIConvectionProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(OnePNIConvectionTypeTag, FluidSystem,
+SET_TYPE_PROP(OnePNIConvection, FluidSystem,
               FluidSystems::OnePLiquid<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                            Components::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Set the spatial parameters
-SET_PROP(OnePNIConvectionTypeTag, SpatialParams)
+SET_PROP(OnePNIConvection, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

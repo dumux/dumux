@@ -3,7 +3,7 @@ dune_symlink_to_source_files(FILES test_2pnc_fv.input test_2pnc_diffusion.input)
 # isothermal tests
 dune_add_test(NAME test_2pnc_box
               SOURCES test_2pnc_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=FuelCellBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=FuelCellBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/fuelcell2pncbox-reference.vtu
@@ -12,7 +12,7 @@ dune_add_test(NAME test_2pnc_box
 
 dune_add_test(NAME test_2pnc_tpfa
               SOURCES test_2pnc_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=FuelCellCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=FuelCellCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/fuelcell2pnccc-reference.vtu
@@ -21,7 +21,7 @@ dune_add_test(NAME test_2pnc_tpfa
 
 dune_add_test(NAME test_cc2pnc_maxwellstefan
               SOURCES test_cc2pnc_diffusion.cc
-              COMPILE_DEFINITIONS TYPETAG=TwoPNCDiffusionTypeTag DIFFUSIONTYPE=MaxwellStefansLaw<TypeTag>
+              COMPILE_DEFINITIONS TYPETAG=TwoPNCDiffusion DIFFUSIONTYPE=MaxwellStefansLaw<TypeTag>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/2pncdiffusioncc-reference.vtu
@@ -30,7 +30,7 @@ dune_add_test(NAME test_cc2pnc_maxwellstefan
 
 dune_add_test(NAME test_cc2pnc_fickslaw
               SOURCES test_cc2pnc_diffusion.cc
-              COMPILE_DEFINITIONS TYPETAG=TwoPNCDiffusionTypeTag DIFFUSIONTYPE=FicksLaw<TypeTag>
+              COMPILE_DEFINITIONS TYPETAG=TwoPNCDiffusion DIFFUSIONTYPE=FicksLaw<TypeTag>
               COMMAND  ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/2pncdiffusioncc-reference.vtu
@@ -39,7 +39,7 @@ dune_add_test(NAME test_cc2pnc_fickslaw
 
 dune_add_test(NAME test_2pncni_box
               SOURCES test_2pnc_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=FuelCellNIBoxTypeTag NONISOTHERMAL=1
+              COMPILE_DEFINITIONS TYPETAG=FuelCellNIBox NONISOTHERMAL=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/fuelcell2pncboxni-reference.vtu

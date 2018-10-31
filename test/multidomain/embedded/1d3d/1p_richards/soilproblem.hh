@@ -47,25 +47,25 @@ class SoilProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(SoilTypeTag, INHERITS_FROM(Richards));
-NEW_TYPE_TAG(SoilCCTypeTag, INHERITS_FROM(CCTpfaModel, SoilTypeTag));
-NEW_TYPE_TAG(SoilBoxTypeTag, INHERITS_FROM(BoxModel, SoilTypeTag));
+NEW_TYPE_TAG(Soil, INHERITS_FROM(Richards));
+NEW_TYPE_TAG(SoilCC, INHERITS_FROM(CCTpfaModel, Soil));
+NEW_TYPE_TAG(SoilBox, INHERITS_FROM(BoxModel, Soil));
 
 // Set the grid type
-SET_TYPE_PROP(SoilTypeTag, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
+SET_TYPE_PROP(Soil, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
 
-SET_BOOL_PROP(SoilTypeTag, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(SoilTypeTag, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(SoilTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(SoilTypeTag, SolutionDependentAdvection, false);
-SET_BOOL_PROP(SoilTypeTag, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(SoilTypeTag, SolutionDependentHeatConduction, false);
+SET_BOOL_PROP(Soil, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(Soil, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(Soil, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(Soil, SolutionDependentAdvection, false);
+SET_BOOL_PROP(Soil, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(Soil, SolutionDependentHeatConduction, false);
 
 // Set the problem property
-SET_TYPE_PROP(SoilTypeTag, Problem, SoilProblem<TypeTag>);
+SET_TYPE_PROP(Soil, Problem, SoilProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(SoilTypeTag, SpatialParams, SoilSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+SET_TYPE_PROP(Soil, SpatialParams, SoilSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
                                                             typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 } // end namespace Properties

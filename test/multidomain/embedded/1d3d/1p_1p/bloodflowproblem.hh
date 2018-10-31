@@ -47,35 +47,35 @@ template <class TypeTag> class BloodFlowProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(BloodFlowTypeTag, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(BloodFlowCCTypeTag, INHERITS_FROM(CCTpfaModel, BloodFlowTypeTag));
-NEW_TYPE_TAG(BloodFlowBoxTypeTag, INHERITS_FROM(BoxModel, BloodFlowTypeTag));
+NEW_TYPE_TAG(BloodFlow, INHERITS_FROM(OneP));
+NEW_TYPE_TAG(BloodFlowCC, INHERITS_FROM(CCTpfaModel, BloodFlow));
+NEW_TYPE_TAG(BloodFlowBox, INHERITS_FROM(BoxModel, BloodFlow));
 
 // Set the grid type
-SET_TYPE_PROP(BloodFlowTypeTag, Grid, Dune::FoamGrid<1, 3>);
+SET_TYPE_PROP(BloodFlow, Grid, Dune::FoamGrid<1, 3>);
 
-SET_BOOL_PROP(BloodFlowTypeTag, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(BloodFlowTypeTag, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(BloodFlowTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(BloodFlowTypeTag, SolutionDependentAdvection, false);
-SET_BOOL_PROP(BloodFlowTypeTag, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(BloodFlowTypeTag, SolutionDependentHeatConduction, false);
+SET_BOOL_PROP(BloodFlow, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(BloodFlow, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(BloodFlow, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(BloodFlow, SolutionDependentAdvection, false);
+SET_BOOL_PROP(BloodFlow, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(BloodFlow, SolutionDependentHeatConduction, false);
 
 // Set the problem property
-SET_TYPE_PROP(BloodFlowTypeTag, Problem, BloodFlowProblem<TypeTag>);
+SET_TYPE_PROP(BloodFlow, Problem, BloodFlowProblem<TypeTag>);
 
 // the fluid system
-SET_PROP(BloodFlowTypeTag, FluidSystem)
+SET_PROP(BloodFlow, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the problem property
-SET_TYPE_PROP(BloodFlowTypeTag, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(BloodFlow, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(BloodFlowTypeTag, SpatialParams,
+SET_TYPE_PROP(BloodFlow, SpatialParams,
               BloodFlowSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
                                      typename GET_PROP_TYPE(TypeTag, Scalar)>);
 } // end namespace Properties

@@ -46,24 +46,24 @@ template <class TypeTag>
 class InjectionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(InjectionTypeTag, INHERITS_FROM(TwoPTwoC));
-NEW_TYPE_TAG(InjectionBoxTypeTag, INHERITS_FROM(BoxModel, InjectionTypeTag));
-NEW_TYPE_TAG(InjectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InjectionTypeTag));
-NEW_TYPE_TAG(InjectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, InjectionTypeTag));
+NEW_TYPE_TAG(Injection, INHERITS_FROM(TwoPTwoC));
+NEW_TYPE_TAG(InjectionBoxTypeTag, INHERITS_FROM(BoxModel, Injection));
+NEW_TYPE_TAG(InjectionCCTpfa, INHERITS_FROM(CCTpfaModel, Injection));
+NEW_TYPE_TAG(InjectionCCMpfa, INHERITS_FROM(CCMpfaModel, Injection));
 
 // Set the grid type
-SET_TYPE_PROP(InjectionTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(Injection, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(InjectionTypeTag, Problem, InjectionProblem<TypeTag>);
+SET_TYPE_PROP(Injection, Problem, InjectionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(InjectionTypeTag,
+SET_TYPE_PROP(Injection,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_PROP(InjectionTypeTag, SpatialParams)
+SET_PROP(Injection, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -71,12 +71,12 @@ SET_PROP(InjectionTypeTag, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(InjectionTypeTag, UseMoles, true);
+SET_BOOL_PROP(Injection, UseMoles, true);
 
 // Enable caching or not (reference solutions created without caching)
-SET_BOOL_PROP(InjectionTypeTag, EnableFVGridGeometryCache, ENABLECACHING);
-SET_BOOL_PROP(InjectionTypeTag, EnableGridVolumeVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(InjectionTypeTag, EnableGridFluxVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(Injection, EnableFVGridGeometryCache, ENABLECACHING);
+SET_BOOL_PROP(Injection, EnableGridVolumeVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(Injection, EnableGridFluxVariablesCache, ENABLECACHING);
 } // end namespace Properties
 
 /*!

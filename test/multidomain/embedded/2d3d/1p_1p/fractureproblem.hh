@@ -45,33 +45,33 @@ template <class TypeTag> class FractureProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(FractureTypeTag, INHERITS_FROM(CCTpfaModel, OneP));
+NEW_TYPE_TAG(Fracture, INHERITS_FROM(CCTpfaModel, OneP));
 
 // Set the grid type
-SET_TYPE_PROP(FractureTypeTag, Grid, Dune::FoamGrid<2, 3>);
+SET_TYPE_PROP(Fracture, Grid, Dune::FoamGrid<2, 3>);
 
-SET_BOOL_PROP(FractureTypeTag, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(FractureTypeTag, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(FractureTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(FractureTypeTag, SolutionDependentAdvection, false);
-SET_BOOL_PROP(FractureTypeTag, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(FractureTypeTag, SolutionDependentHeatConduction, false);
+SET_BOOL_PROP(Fracture, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(Fracture, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(Fracture, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(Fracture, SolutionDependentAdvection, false);
+SET_BOOL_PROP(Fracture, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(Fracture, SolutionDependentHeatConduction, false);
 
 // Set the problem property
-SET_TYPE_PROP(FractureTypeTag, Problem, FractureProblem<TypeTag>);
+SET_TYPE_PROP(Fracture, Problem, FractureProblem<TypeTag>);
 
 // the fluid system
-SET_PROP(FractureTypeTag, FluidSystem)
+SET_PROP(Fracture, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the problem property
-SET_TYPE_PROP(FractureTypeTag, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(Fracture, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(FractureTypeTag, SpatialParams, MatrixFractureSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+SET_TYPE_PROP(Fracture, SpatialParams, MatrixFractureSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
                                                                           typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 } // end namespace Properties

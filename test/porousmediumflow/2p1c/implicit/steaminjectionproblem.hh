@@ -44,18 +44,18 @@ template <class TypeTag>
 class InjectionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(InjectionProblemTypeTag, INHERITS_FROM(TwoPOneCNI));
-NEW_TYPE_TAG(TwoPOneCNIBoxTypeTag, INHERITS_FROM(BoxModel, InjectionProblemTypeTag));
-NEW_TYPE_TAG(TwoPOneCNICCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InjectionProblemTypeTag));
+NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPOneCNI));
+NEW_TYPE_TAG(TwoPOneCNIBox, INHERITS_FROM(BoxModel, InjectionProblem));
+NEW_TYPE_TAG(TwoPOneCNICCTpfa, INHERITS_FROM(CCTpfaModel, InjectionProblem));
 
-SET_TYPE_PROP(InjectionProblemTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(InjectionProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(InjectionProblemTypeTag, Problem, InjectionProblem<TypeTag>);
+SET_TYPE_PROP(InjectionProblem, Problem, InjectionProblem<TypeTag>);
 
 
 // Set fluid configuration
-SET_PROP(InjectionProblemTypeTag, FluidSystem)
+SET_PROP(InjectionProblem, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -65,7 +65,7 @@ public:
 };
 
 // Set the spatial parameters
-SET_PROP(InjectionProblemTypeTag, SpatialParams)
+SET_PROP(InjectionProblem, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -73,7 +73,7 @@ SET_PROP(InjectionProblemTypeTag, SpatialParams)
 };
 
 //Define whether spurious cold-water flow into the steam is blocked
-SET_BOOL_PROP(InjectionProblemTypeTag, UseBlockingOfSpuriousFlow, true);
+SET_BOOL_PROP(InjectionProblem, UseBlockingOfSpuriousFlow, true);
 } // end namespace Properties
 
 /*!

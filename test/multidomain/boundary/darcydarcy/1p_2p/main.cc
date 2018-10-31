@@ -60,34 +60,34 @@
 namespace Dumux {
 namespace Properties {
 
-NEW_TYPE_TAG(OnePSubTypeTag, INHERITS_FROM(CCTpfaModel));
+NEW_TYPE_TAG(OnePSub, INHERITS_FROM(CCTpfaModel));
 // differentiate between the two subproblems
-NEW_TYPE_TAG(OnePSubTypeTag0, INHERITS_FROM(OnePSubTypeTag, OneP));
-NEW_TYPE_TAG(OnePSubTypeTag1, INHERITS_FROM(OnePSubTypeTag, TwoP));
+NEW_TYPE_TAG(OnePSub0, INHERITS_FROM(OnePSub, OneP));
+NEW_TYPE_TAG(OnePSub1, INHERITS_FROM(OnePSub, TwoP));
 
 // the coupling manager
-SET_TYPE_PROP(OnePSubTypeTag, CouplingManager,
-              DarcyDarcyBoundaryCouplingManager<MultiDomainTraits<TTAG(OnePSubTypeTag0), TTAG(OnePSubTypeTag1)>>);
+SET_TYPE_PROP(OnePSub, CouplingManager,
+              DarcyDarcyBoundaryCouplingManager<MultiDomainTraits<TTAG(OnePSub0), TTAG(OnePSub1)>>);
 
 // Set the grid type
-SET_PROP(OnePSubTypeTag, Grid)
+SET_PROP(OnePSub, Grid)
 {
     using FullDomainGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
     using type = Dune::SubGrid<FullDomainGrid::dimension, FullDomainGrid>;
 };
 
 // set the spatial params
-SET_TYPE_PROP(OnePSubTypeTag, SpatialParams, TestSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+SET_TYPE_PROP(OnePSub, SpatialParams, TestSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
                                                                typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // differentiate between the two fluid systems
-SET_PROP(OnePSubTypeTag0, FluidSystem)
+SET_PROP(OnePSub0, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
-SET_PROP(OnePSubTypeTag1, FluidSystem)
+SET_PROP(OnePSub1, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::TwoPImmiscible<Scalar, FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar>>,
@@ -95,8 +95,8 @@ SET_PROP(OnePSubTypeTag1, FluidSystem)
 };
 
 // differentiate between the two subproblems
-SET_TYPE_PROP(OnePSubTypeTag0, Problem, OnePTestProblem<TypeTag, 0>);
-SET_TYPE_PROP(OnePSubTypeTag1, Problem, OnePTestProblem<TypeTag, 1>);
+SET_TYPE_PROP(OnePSub0, Problem, OnePTestProblem<TypeTag, 0>);
+SET_TYPE_PROP(OnePSub1, Problem, OnePTestProblem<TypeTag, 1>);
 
 } // end namespace Properties
 } // end namespace Dumux
@@ -116,9 +116,9 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using TypeTag = TTAG(OnePSubTypeTag);
-    using SubTypeTag0 = TTAG(OnePSubTypeTag0);
-    using SubTypeTag1 = TTAG(OnePSubTypeTag1);
+    using TypeTag = TTAG(OnePSub);
+    using SubTypeTag0 = TTAG(OnePSub0);
+    using SubTypeTag1 = TTAG(OnePSub1);
 
     // create the full grid that we are gonna split for the output
     using FullDomainGrid = typename GET_PROP(TypeTag, Grid)::FullDomainGrid;

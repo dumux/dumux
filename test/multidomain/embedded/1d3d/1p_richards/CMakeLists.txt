@@ -1,6 +1,6 @@
 dune_add_test(NAME test_embedded_1p_richards_tpfatpfa
               SOURCES test_1p_richards.cc
-              COMPILE_DEFINITIONS SOILTYPETAG=SoilCCTypeTag
+              COMPILE_DEFINITIONS SOILTYPETAG=SoilCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS  --script fuzzy
@@ -13,7 +13,7 @@ dune_add_test(NAME test_embedded_1p_richards_tpfatpfa
 
 dune_add_test(NAME test_embedded_1p_richards_tpfabox
               SOURCES test_1p_richards.cc
-              COMPILE_DEFINITIONS SOILTYPETAG=SoilBoxTypeTag
+              COMPILE_DEFINITIONS SOILTYPETAG=SoilBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS  --script fuzzy

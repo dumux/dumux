@@ -51,17 +51,17 @@ class TubesTestProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(TubesTestTypeTag, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(TubesTestCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, TubesTestTypeTag));
-NEW_TYPE_TAG(TubesTestBoxTypeTag, INHERITS_FROM(BoxModel, TubesTestTypeTag));
+NEW_TYPE_TAG(TubesTest, INHERITS_FROM(OneP));
+NEW_TYPE_TAG(TubesTestCCTpfa, INHERITS_FROM(CCTpfaModel, TubesTest));
+NEW_TYPE_TAG(TubesTestBox, INHERITS_FROM(BoxModel, TubesTest));
 
 // Set the grid type
 #if HAVE_DUNE_FOAMGRID
-SET_TYPE_PROP(TubesTestTypeTag, Grid, Dune::FoamGrid<1, 3>);
+SET_TYPE_PROP(TubesTest, Grid, Dune::FoamGrid<1, 3>);
 #endif
 
 // if we have pt scotch use the reordering dof mapper to optimally sort the dofs (cc)
-SET_PROP(TubesTestCCTpfaTypeTag, FVGridGeometry)
+SET_PROP(TubesTestCCTpfa, FVGridGeometry)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
@@ -75,7 +75,7 @@ public:
 };
 
 // if we have pt scotch use the reordering dof mapper to optimally sort the dofs (box)
-SET_PROP(TubesTestBoxTypeTag, FVGridGeometry)
+SET_PROP(TubesTestBox, FVGridGeometry)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
@@ -90,10 +90,10 @@ public:
 };
 
 // Set the problem property
-SET_TYPE_PROP(TubesTestTypeTag, Problem, TubesTestProblem<TypeTag>);
+SET_TYPE_PROP(TubesTest, Problem, TubesTestProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_PROP(TubesTestTypeTag, SpatialParams)
+SET_PROP(TubesTest, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -101,7 +101,7 @@ SET_PROP(TubesTestTypeTag, SpatialParams)
 };
 
 // the fluid system
-SET_PROP(TubesTestTypeTag, FluidSystem)
+SET_PROP(TubesTest, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;

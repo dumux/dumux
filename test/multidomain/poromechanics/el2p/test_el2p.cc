@@ -51,20 +51,20 @@
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(TwoPSubTypeTag, CouplingManager)
+SET_PROP(TwoPSub, CouplingManager)
 {
 private:
     // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(TwoPSubTypeTag), TTAG(PoroElasticSubTypeTag)>;
+    using Traits = MultiDomainTraits<TTAG(TwoPSub), TTAG(PoroElasticSub)>;
 public:
     using type = PoroMechanicsCouplingManager< Traits >;
 };
 
-SET_PROP(PoroElasticSubTypeTag, CouplingManager)
+SET_PROP(PoroElasticSub, CouplingManager)
 {
 private:
     // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(TwoPSubTypeTag), TTAG(PoroElasticSubTypeTag)>;
+    using Traits = MultiDomainTraits<TTAG(TwoPSub), TTAG(PoroElasticSub)>;
 public:
     using type = PoroMechanicsCouplingManager< Traits >;
 };
@@ -91,8 +91,8 @@ int main(int argc, char** argv) try
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
-    using TwoPTypeTag = TTAG(TwoPSubTypeTag);
-    using PoroMechTypeTag = TTAG(PoroElasticSubTypeTag);
+    using TwoPTypeTag = TTAG(TwoPSub);
+    using PoroMechTypeTag = TTAG(PoroElasticSub);
 
     // we simply extract the grid creator from one of the type tags
     using GridManager = Dumux::GridManager<typename GET_PROP_TYPE(TwoPTypeTag, Grid)>;

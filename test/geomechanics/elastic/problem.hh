@@ -38,13 +38,13 @@ template <class TypeTag>
 class ElasticProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(ElasticTypeTag, INHERITS_FROM(BoxModel, Elastic));
+NEW_TYPE_TAG(TestElastic, INHERITS_FROM(BoxModel, Elastic));
 // Set the grid type
-SET_TYPE_PROP(ElasticTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TestElastic, Grid, Dune::YaspGrid<2>);
 // Set the problem property
-SET_TYPE_PROP(ElasticTypeTag, Problem, Dumux::ElasticProblem<TypeTag>);
+SET_TYPE_PROP(TestElastic, Problem, Dumux::ElasticProblem<TypeTag>);
 // The spatial parameters property
-SET_TYPE_PROP(ElasticTypeTag, SpatialParams, ElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
+SET_TYPE_PROP(TestElastic, SpatialParams, ElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                    typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
 }
 

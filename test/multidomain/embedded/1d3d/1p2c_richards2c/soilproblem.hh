@@ -51,34 +51,34 @@ class SoilProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(SoilTypeTag, INHERITS_FROM(CCTpfaModel, RichardsNC));
+NEW_TYPE_TAG(Soil, INHERITS_FROM(CCTpfaModel, RichardsNC));
 
 // Set the grid type
-SET_TYPE_PROP(SoilTypeTag, Grid, Dune::UGGrid<3>);
+SET_TYPE_PROP(Soil, Grid, Dune::UGGrid<3>);
 
-SET_BOOL_PROP(SoilTypeTag, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(SoilTypeTag, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(SoilTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(SoilTypeTag, SolutionDependentAdvection, false);
-SET_BOOL_PROP(SoilTypeTag, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(SoilTypeTag, SolutionDependentHeatConduction, false);
+SET_BOOL_PROP(Soil, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(Soil, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(Soil, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(Soil, SolutionDependentAdvection, false);
+SET_BOOL_PROP(Soil, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(Soil, SolutionDependentHeatConduction, false);
 
 // Set the problem property
-SET_TYPE_PROP(SoilTypeTag, Problem, SoilProblem<TypeTag>);
+SET_TYPE_PROP(Soil, Problem, SoilProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(SoilTypeTag, SpatialParams, SoilSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+SET_TYPE_PROP(Soil, SpatialParams, SoilSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
                                                             typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the fluid system
-SET_PROP(SoilTypeTag, FluidSystem)
+SET_PROP(Soil, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::LiquidPhaseTwoC<Scalar, Components::SimpleH2O<Scalar>,
                                                        Components::Constant<1, Scalar>>;
 };
 
-SET_BOOL_PROP(SoilTypeTag, UseMoles, true);
+SET_BOOL_PROP(Soil, UseMoles, true);
 
 } // end namespace Properties
 

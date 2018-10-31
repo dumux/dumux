@@ -46,23 +46,23 @@ class TestProblemOneP;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TestOnePTypeTag, INHERITS_FROM(FVPressureOneP));
+NEW_TYPE_TAG(TestOneP, INHERITS_FROM(FVPressureOneP));
 
 // Set the grid type
-SET_TYPE_PROP(TestOnePTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TestOneP, Grid, Dune::YaspGrid<2>);
 
 // the fluid system
-SET_PROP(TestOnePTypeTag, FluidSystem)
+SET_PROP(TestOneP, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(TestOnePTypeTag, SpatialParams, TestOnePSpatialParams<TypeTag>);
+SET_TYPE_PROP(TestOneP, SpatialParams, TestOnePSpatialParams<TypeTag>);
 
 //Set the problem
-SET_TYPE_PROP(TestOnePTypeTag, Problem, TestProblemOneP<TypeTag>);
+SET_TYPE_PROP(TestOneP, Problem, TestProblemOneP<TypeTag>);
 }
 
 /*!

@@ -73,32 +73,32 @@ template <class TypeTag>
 class EvaporationAtmosphereProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(EvaporationAtmosphereTypeTag, INHERITS_FROM(MPNCNonequil));
-NEW_TYPE_TAG(EvaporationAtmosphereBoxTypeTag, INHERITS_FROM(BoxModel, EvaporationAtmosphereTypeTag));
+NEW_TYPE_TAG(EvaporationAtmosphere, INHERITS_FROM(MPNCNonequil));
+NEW_TYPE_TAG(EvaporationAtmosphereBox, INHERITS_FROM(BoxModel, EvaporationAtmosphere));
 
 // Set the grid type
-SET_TYPE_PROP(EvaporationAtmosphereTypeTag, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(EvaporationAtmosphere, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(EvaporationAtmosphereTypeTag, Problem, EvaporationAtmosphereProblem<TypeTag>);
+SET_TYPE_PROP(EvaporationAtmosphere, Problem, EvaporationAtmosphereProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(EvaporationAtmosphereTypeTag,
+SET_TYPE_PROP(EvaporationAtmosphere,
               FluidSystem,
               FluidSystems::H2ON2Kinetic<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 //! Set the default pressure formulation: either pw first or pn first
-SET_PROP(EvaporationAtmosphereTypeTag, PressureFormulation)
+SET_PROP(EvaporationAtmosphere, PressureFormulation)
 {
 public:
     static const MpNcPressureFormulation value = MpNcPressureFormulation::leastWettingFirst;
 };
 
 // Set the type used for scalar values
-SET_TYPE_PROP(EvaporationAtmosphereTypeTag, Scalar, double);
+SET_TYPE_PROP(EvaporationAtmosphere, Scalar, double);
 
 // Set the fluid system
-SET_PROP(EvaporationAtmosphereTypeTag, SolidSystem)
+SET_PROP(EvaporationAtmosphere, SolidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using InertComponent = Components::Constant<1, Scalar>;
@@ -106,10 +106,10 @@ SET_PROP(EvaporationAtmosphereTypeTag, SolidSystem)
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(EvaporationAtmosphereTypeTag, SpatialParams, EvaporationAtmosphereSpatialParams<TypeTag>);
+SET_TYPE_PROP(EvaporationAtmosphere, SpatialParams, EvaporationAtmosphereSpatialParams<TypeTag>);
 
 // Set the interfacial area relation: wetting -- non-wetting
-SET_PROP(EvaporationAtmosphereTypeTag, AwnSurface)
+SET_PROP(EvaporationAtmosphere, AwnSurface)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
@@ -121,7 +121,7 @@ public:
 
 
 // Set the interfacial area relation: wetting -- solid
-SET_PROP(EvaporationAtmosphereTypeTag, AwsSurface)
+SET_PROP(EvaporationAtmosphere, AwsSurface)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
@@ -132,7 +132,7 @@ public:
 };
 
 // Set the interfacial area relation: non-wetting -- solid
-SET_PROP(EvaporationAtmosphereTypeTag, AnsSurface)
+SET_PROP(EvaporationAtmosphere, AnsSurface)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;

@@ -40,21 +40,21 @@ class DarcySubProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DarcyTwoPTypeTag, INHERITS_FROM(CCTpfaModel, TwoP));
+NEW_TYPE_TAG(DarcyTwoP, INHERITS_FROM(CCTpfaModel, TwoP));
 
 // Set the problem property
-SET_TYPE_PROP(DarcyTwoPTypeTag, Problem, Dumux::DarcySubProblem<TypeTag>);
+SET_TYPE_PROP(DarcyTwoP, Problem, Dumux::DarcySubProblem<TypeTag>);
 
 // Set the grid type
 #if ENABLE_3D
-SET_TYPE_PROP(DarcyTwoPTypeTag, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(DarcyTwoP, Grid, Dune::YaspGrid<3>);
 #else
-SET_TYPE_PROP(DarcyTwoPTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(DarcyTwoP, Grid, Dune::YaspGrid<2>);
 #endif
 
-SET_BOOL_PROP(DarcyTwoPTypeTag, UseMoles, false);
+SET_BOOL_PROP(DarcyTwoP, UseMoles, false);
 
-SET_PROP(DarcyTwoPTypeTag, SpatialParams)
+SET_PROP(DarcyTwoP, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -62,7 +62,7 @@ SET_PROP(DarcyTwoPTypeTag, SpatialParams)
 };
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
-SET_PROP(DarcyTwoPTypeTag, Formulation)
+SET_PROP(DarcyTwoP, Formulation)
 { static constexpr auto value = TwoPFormulation::p1s0; };
 }
 

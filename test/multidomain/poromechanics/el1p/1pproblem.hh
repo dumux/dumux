@@ -46,20 +46,20 @@ class OnePSubProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(OnePSubTypeTag, INHERITS_FROM(CCTpfaModel, OneP));
+NEW_TYPE_TAG(OnePSub, INHERITS_FROM(CCTpfaModel, OneP));
 
 // The fluid phase consists of one constant component
-SET_TYPE_PROP(OnePSubTypeTag,
+SET_TYPE_PROP(OnePSub,
               FluidSystem,
               Dumux::FluidSystems::OnePLiquid< typename GET_PROP_TYPE(TypeTag, Scalar),
                                                Dumux::Components::Constant<0, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Set the grid type
-SET_TYPE_PROP(OnePSubTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(OnePSub, Grid, Dune::YaspGrid<2>);
 // Set the problem property
-SET_TYPE_PROP(OnePSubTypeTag, Problem, OnePSubProblem<TypeTag> );
+SET_TYPE_PROP(OnePSub, Problem, OnePSubProblem<TypeTag> );
 // Set the spatial parameters
-SET_PROP(OnePSubTypeTag, SpatialParams)
+SET_PROP(OnePSub, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

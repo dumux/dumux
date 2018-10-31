@@ -50,33 +50,33 @@ class MatrixProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(MatrixTypeTag, INHERITS_FROM(CCTpfaModel, OneP));
+NEW_TYPE_TAG(Matrix, INHERITS_FROM(CCTpfaModel, OneP));
 
 // Set the grid type
-SET_TYPE_PROP(MatrixTypeTag, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
+SET_TYPE_PROP(Matrix, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
 
-SET_BOOL_PROP(MatrixTypeTag, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(MatrixTypeTag, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(MatrixTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(MatrixTypeTag, SolutionDependentAdvection, false);
-SET_BOOL_PROP(MatrixTypeTag, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(MatrixTypeTag, SolutionDependentHeatConduction, false);
-
-// Set the problem property
-SET_TYPE_PROP(MatrixTypeTag, Problem, MatrixProblem<TypeTag>);
+SET_BOOL_PROP(Matrix, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(Matrix, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(Matrix, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(Matrix, SolutionDependentAdvection, false);
+SET_BOOL_PROP(Matrix, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(Matrix, SolutionDependentHeatConduction, false);
 
 // Set the problem property
-SET_TYPE_PROP(MatrixTypeTag, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(Matrix, Problem, MatrixProblem<TypeTag>);
+
+// Set the problem property
+SET_TYPE_PROP(Matrix, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // the fluid system
-SET_PROP(MatrixTypeTag, FluidSystem)
+SET_PROP(Matrix, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(MatrixTypeTag, SpatialParams, MatrixFractureSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+SET_TYPE_PROP(Matrix, SpatialParams, MatrixFractureSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
                                                                         typename GET_PROP_TYPE(TypeTag, Scalar)>);
 } // end namespace Properties
 

@@ -53,10 +53,10 @@
 
 // default to tpfa for both domains
 #ifndef BULKTYPETAG
-#define BULKTYPETAG=TissueCCTypeTag
+#define BULKTYPETAG=TissueCC
 #endif
 #ifndef LOWDIMTYPETAG
-#define LOWDIMTYPETAG=BloodFlowCCTypeTag
+#define LOWDIMTYPETAG=BloodFlowCC
 #endif
 #ifndef COUPLINGMODE
 #define COUPLINGMODE=EmbeddedCouplingMode::average

@@ -63,15 +63,15 @@
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(StokesOnePTypeTag, CouplingManager)
+SET_PROP(StokesOneP, CouplingManager)
 {
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, TTAG(DarcyTwoPTypeTag)>;
+    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, TTAG(DarcyTwoP)>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
-SET_PROP(DarcyTwoPTypeTag, CouplingManager)
+SET_PROP(DarcyTwoP, CouplingManager)
 {
-    using Traits = StaggeredMultiDomainTraits<TTAG(StokesOnePTypeTag), TTAG(StokesOnePTypeTag), TypeTag>;
+    using Traits = StaggeredMultiDomainTraits<TTAG(StokesOneP), TTAG(StokesOneP), TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
@@ -87,14 +87,14 @@ struct CouplingFluidSystem
 };
 
 // the fluid system for the free-flow model
-SET_PROP(StokesOnePTypeTag, FluidSystem)
+SET_PROP(StokesOneP, FluidSystem)
 {
     static constexpr auto phaseIdx = 1; // simulate the air phase
     using type = FluidSystems::OnePAdapter<typename CouplingFluidSystem<TypeTag>::type, phaseIdx>;
 };
 
 // the fluid system for the Darcy model
-SET_PROP(DarcyTwoPTypeTag, FluidSystem)
+SET_PROP(DarcyTwoP, FluidSystem)
 {
     using type = typename CouplingFluidSystem<TypeTag>::type;
 };
@@ -117,8 +117,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using StokesTypeTag = TTAG(StokesOnePTypeTag);
-    using DarcyTypeTag = TTAG(DarcyTwoPTypeTag);
+    using StokesTypeTag = TTAG(StokesOneP);
+    using DarcyTypeTag = TTAG(DarcyTwoP);
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains

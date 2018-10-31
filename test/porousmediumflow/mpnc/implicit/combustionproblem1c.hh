@@ -58,36 +58,36 @@ struct CombustionModelTraits : public MPNCModelTraits<numP, numC, formulation, u
 };
 
 namespace Properties {
-NEW_TYPE_TAG(CombustionOneComponentTypeTag, INHERITS_FROM(MPNCNonequil));
-NEW_TYPE_TAG(CombustionOneComponentBoxTypeTag, INHERITS_FROM(BoxModel, CombustionOneComponentTypeTag));
+NEW_TYPE_TAG(CombustionOneComponent, INHERITS_FROM(MPNCNonequil));
+NEW_TYPE_TAG(CombustionOneComponentBox, INHERITS_FROM(BoxModel, CombustionOneComponent));
 
 // Set the grid type
-SET_TYPE_PROP(CombustionOneComponentTypeTag, Grid, Dune::OneDGrid);
+SET_TYPE_PROP(CombustionOneComponent, Grid, Dune::OneDGrid);
 
 // Set the problem property
-SET_TYPE_PROP(CombustionOneComponentTypeTag,
+SET_TYPE_PROP(CombustionOneComponent,
               Problem,
               CombustionProblemOneComponent<TypeTag>);
 
 
 
-SET_TYPE_PROP(CombustionOneComponentTypeTag,
+SET_TYPE_PROP(CombustionOneComponent,
               FluidSystem,
               FluidSystems::CombustionFluidsystem<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //! Set the default pressure formulation: either pw first or pn first
-SET_PROP(CombustionOneComponentTypeTag, PressureFormulation)
+SET_PROP(CombustionOneComponent, PressureFormulation)
 {
 public:
     static const MpNcPressureFormulation value = MpNcPressureFormulation::mostWettingFirst;
 };
 
 // Set the type used for scalar values
-SET_TYPE_PROP(CombustionOneComponentTypeTag, Scalar, double );
+SET_TYPE_PROP(CombustionOneComponent, Scalar, double );
 // quad / double
 
 // We use different model traits for the equilibrium part because we want to deactivate diffusion
-SET_PROP(CombustionOneComponentTypeTag, EquilibriumModelTraits)
+SET_PROP(CombustionOneComponent, EquilibriumModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -98,7 +98,7 @@ public:
                                         GET_PROP_VALUE(TypeTag, UseMoles) >;
 };
 
-SET_PROP(CombustionOneComponentTypeTag, FluidState)
+SET_PROP(CombustionOneComponent, FluidState)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -109,14 +109,14 @@ public:
 //#################
 //changes from the default settings which also assume chemical non-equilibrium
 //set the number of energyequations we want to use
-SET_INT_PROP(CombustionOneComponentTypeTag, NumEnergyEqFluid, 1);
-SET_INT_PROP(CombustionOneComponentTypeTag, NumEnergyEqSolid, 1);
+SET_INT_PROP(CombustionOneComponent, NumEnergyEqFluid, 1);
+SET_INT_PROP(CombustionOneComponent, NumEnergyEqSolid, 1);
 
 // by default chemical non equilibrium is enabled in the nonequil model, switch that off here
-SET_BOOL_PROP(CombustionOneComponentTypeTag, EnableChemicalNonEquilibrium, false);
+SET_BOOL_PROP(CombustionOneComponent, EnableChemicalNonEquilibrium, false);
 //#################
 
-SET_PROP(CombustionOneComponentTypeTag, SolidSystem)
+SET_PROP(CombustionOneComponent, SolidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ComponentOne = Dumux::Components::Constant<1, Scalar>;
@@ -125,7 +125,7 @@ SET_PROP(CombustionOneComponentTypeTag, SolidSystem)
     using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo, numInertComponents>;
 };
 
-SET_PROP(CombustionOneComponentTypeTag, SolidState)
+SET_PROP(CombustionOneComponent, SolidState)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -135,7 +135,7 @@ public:
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(CombustionOneComponentTypeTag, SpatialParams, CombustionSpatialParams<TypeTag>);
+SET_TYPE_PROP(CombustionOneComponent, SpatialParams, CombustionSpatialParams<TypeTag>);
 
 }
 /*!

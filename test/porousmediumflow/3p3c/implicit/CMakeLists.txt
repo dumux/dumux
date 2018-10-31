@@ -3,7 +3,7 @@ add_input_file_links()
 # isothermal tests
 dune_add_test(NAME test_3p3c_box
               SOURCES test_3p3c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePThreeCBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePThreeCBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/infiltrationbox-reference.vtu
@@ -12,7 +12,7 @@ dune_add_test(NAME test_3p3c_box
 
 dune_add_test(NAME test_3p3c_tpfa
               SOURCES test_3p3c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePThreeCCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePThreeCCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/infiltrationcc-reference.vtu
@@ -22,7 +22,7 @@ dune_add_test(NAME test_3p3c_tpfa
 # non-isothermal tests
 dune_add_test(NAME test_3p3cni_columnxylol_box
               SOURCES test_3p3c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=ColumnBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=ColumnBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/column3p3cnibox-reference.vtu
@@ -40,7 +40,7 @@ dune_add_test(NAME test_3p3cni_columnxylol_tpfa
 
 dune_add_test(NAME test_3p3cni_kuevette_box
               SOURCES test_3p3c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=KuevetteBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=KuevetteBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/kuevette3p3cnibox-reference.vtu
@@ -49,7 +49,7 @@ dune_add_test(NAME test_3p3cni_kuevette_box
 
 dune_add_test(NAME test_3p3cni_kuevette_tpfa
               SOURCES test_3p3c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=KuevetteCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=KuevetteCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/kuevette3p3cnicc-reference.vtu

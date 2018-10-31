@@ -46,21 +46,21 @@ class TwoPSubProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(TwoPSubTypeTag, INHERITS_FROM(CCTpfaModel, TwoP));
+NEW_TYPE_TAG(TwoPSub, INHERITS_FROM(CCTpfaModel, TwoP));
 
 // Set the fluid system for TwoPSubProblem
-SET_PROP(TwoPSubTypeTag, FluidSystem)
+SET_PROP(TwoPSub, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
 };
 
 // Set the grid type
-SET_TYPE_PROP(TwoPSubTypeTag, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(TwoPSub, Grid, Dune::YaspGrid<3>);
 // Set the problem property
-SET_TYPE_PROP(TwoPSubTypeTag, Problem, TwoPSubProblem<TypeTag> );
+SET_TYPE_PROP(TwoPSub, Problem, TwoPSubProblem<TypeTag> );
 // Set the spatial parameters
-SET_PROP(TwoPSubTypeTag, SpatialParams)
+SET_PROP(TwoPSub, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

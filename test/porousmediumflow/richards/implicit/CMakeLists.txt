@@ -2,10 +2,10 @@ add_input_file_links()
 
 # isothermal tests
 add_executable(test_richards_tpfa EXCLUDE_FROM_ALL test_richardslens_fv.cc)
-target_compile_definitions(test_richards_tpfa PUBLIC TYPETAG=RichardsLensCCTypeTag)
+target_compile_definitions(test_richards_tpfa PUBLIC TYPETAG=RichardsLensCC)
 
 add_executable(test_richards_box EXCLUDE_FROM_ALL test_richardslens_fv.cc)
-target_compile_definitions(test_richards_box PUBLIC TYPETAG=RichardsLensBoxTypeTag)
+target_compile_definitions(test_richards_box PUBLIC TYPETAG=RichardsLensBox)
 
 dune_add_test(TARGET test_richards_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -62,7 +62,7 @@ set_tests_properties(test_richards_tpfa_parallel_yasp_restart PROPERTIES DEPENDS
 dune_add_test(NAME test_richards_box_parallel_ug
               SOURCES test_richardslens_fv.cc
               CMAKE_GUARD "( MPI_FOUND AND HAVE_UG )"
-              COMPILE_DEFINITIONS TYPETAG=RichardsLensBoxTypeTag GRIDTYPE=Dune::UGGrid<2>
+              COMPILE_DEFINITIONS TYPETAG=RichardsLensBox GRIDTYPE=Dune::UGGrid<2>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
@@ -72,7 +72,7 @@ dune_add_test(NAME test_richards_box_parallel_ug
 dune_add_test(NAME test_richards_tpfa_parallel_ug
               SOURCES test_richardslens_fv.cc
               CMAKE_GUARD "( MPI_FOUND AND HAVE_UG )"
-              COMPILE_DEFINITIONS TYPETAG=RichardsLensCCTypeTag GRIDTYPE=Dune::UGGrid<2>
+              COMPILE_DEFINITIONS TYPETAG=RichardsLensCC GRIDTYPE=Dune::UGGrid<2>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
@@ -82,7 +82,7 @@ dune_add_test(NAME test_richards_tpfa_parallel_ug
 dune_add_test(NAME test_richards_box_parallel_alu
               SOURCES test_richardslens_fv.cc
               CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
-              COMPILE_DEFINITIONS TYPETAG=RichardsLensBoxTypeTag GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+              COMPILE_DEFINITIONS TYPETAG=RichardsLensBox GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
@@ -92,7 +92,7 @@ dune_add_test(NAME test_richards_box_parallel_alu
 dune_add_test(NAME test_richards_tpfa_parallel_alu
               SOURCES test_richardslens_fv.cc
               CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
-              COMPILE_DEFINITIONS TYPETAG=RichardsLensCCTypeTag GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+              COMPILE_DEFINITIONS TYPETAG=RichardsLensCC GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
@@ -102,7 +102,7 @@ dune_add_test(NAME test_richards_tpfa_parallel_alu
 # comparison to analytical solution - only with cc
 dune_add_test(SOURCES test_ccrichardsanalytical.cc
               NAME test_ccrichardsanalytical
-              COMPILE_DEFINITIONS TYPETAG=RichardsAnalyticalCCTypeTag
+              COMPILE_DEFINITIONS TYPETAG=RichardsAnalyticalCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsanalyticalcc-reference.vtu
@@ -111,7 +111,7 @@ dune_add_test(SOURCES test_ccrichardsanalytical.cc
 # non-isothermal tests
 dune_add_test(SOURCES test_richardsniconvection_fv.cc
               NAME test_boxrichardsniconvection
-              COMPILE_DEFINITIONS TYPETAG=RichardsNIConvectionBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIConvectionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconvectionbox-reference.vtu
@@ -121,7 +121,7 @@ dune_add_test(SOURCES test_richardsniconvection_fv.cc
 
 dune_add_test(SOURCES test_richardsniconvection_fv.cc
               NAME test_ccrichardsniconvection
-              COMPILE_DEFINITIONS TYPETAG=RichardsNIConvectionCCTypeTag
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIConvectionCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconvectioncc-reference.vtu
@@ -130,7 +130,7 @@ dune_add_test(SOURCES test_richardsniconvection_fv.cc
 
 dune_add_test(SOURCES test_richardsniconduction_fv.cc
               NAME test_boxrichardsniconduction
-              COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductionbox-reference.vtu
@@ -140,7 +140,7 @@ dune_add_test(SOURCES test_richardsniconduction_fv.cc
 
 dune_add_test(SOURCES test_richardsniconduction_fv.cc
               NAME test_ccrichardsniconduction
-              COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionCCTypeTag
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductioncc-reference.vtu
@@ -150,7 +150,7 @@ dune_add_test(SOURCES test_richardsniconduction_fv.cc
 
 dune_add_test(SOURCES test_richardsnievaporation_fv.cc
               NAME test_richardsnievaporation_tpfa
-              COMPILE_DEFINITIONS TYPETAG=RichardsNIEvaporationCCTypeTag
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIEvaporationCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_ccrichardsevaporation-reference.vtu
@@ -160,7 +160,7 @@ dune_add_test(SOURCES test_richardsnievaporation_fv.cc
 
 dune_add_test(SOURCES test_richardsnievaporation_fv.cc
               NAME test_richardsnievaporation_box
-              COMPILE_DEFINITIONS TYPETAG=RichardsNIEvaporationBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIEvaporationBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_boxrichardsevaporation-reference.vtu

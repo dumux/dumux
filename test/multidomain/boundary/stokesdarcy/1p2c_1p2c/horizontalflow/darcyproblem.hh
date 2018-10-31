@@ -44,13 +44,13 @@ class DarcySubProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DarcyOnePTwoCTypeTag, INHERITS_FROM(CCTpfaModel, OnePNC));
+NEW_TYPE_TAG(DarcyOnePTwoC, INHERITS_FROM(CCTpfaModel, OnePNC));
 
 // Set the problem property
-SET_TYPE_PROP(DarcyOnePTwoCTypeTag, Problem, Dumux::DarcySubProblem<TypeTag>);
+SET_TYPE_PROP(DarcyOnePTwoC, Problem, Dumux::DarcySubProblem<TypeTag>);
 
 // The fluid system
-SET_PROP(DarcyOnePTwoCTypeTag, FluidSystem)
+SET_PROP(DarcyOnePTwoC, FluidSystem)
 {
   using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
   static constexpr auto phaseIdx = H2OAir::liquidPhaseIdx; // simulate the water phase
@@ -58,20 +58,20 @@ SET_PROP(DarcyOnePTwoCTypeTag, FluidSystem)
 };
 
 // Use moles
-SET_BOOL_PROP(DarcyOnePTwoCTypeTag, UseMoles, true);
+SET_BOOL_PROP(DarcyOnePTwoC, UseMoles, true);
 
 // Do not replace one equation with a total mass balance
-SET_INT_PROP(DarcyOnePTwoCTypeTag, ReplaceCompEqIdx, 3);
+SET_INT_PROP(DarcyOnePTwoC, ReplaceCompEqIdx, 3);
 
 //! Use a model with constant tortuosity for the effective diffusivity
-SET_TYPE_PROP(DarcyOnePTwoCTypeTag, EffectiveDiffusivityModel,
+SET_TYPE_PROP(DarcyOnePTwoC, EffectiveDiffusivityModel,
               DiffusivityConstantTortuosity<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the grid type
-SET_TYPE_PROP(DarcyOnePTwoCTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(DarcyOnePTwoC, Grid, Dune::YaspGrid<2>);
 
 // Set the spatial paramaters type
-SET_PROP(DarcyOnePTwoCTypeTag, SpatialParams)
+SET_PROP(DarcyOnePTwoC, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

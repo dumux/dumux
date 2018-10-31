@@ -40,10 +40,10 @@ class StokesSubProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(StokesOnePTwoCTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+NEW_TYPE_TAG(StokesOnePTwoC, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 
 // The fluid system
-SET_PROP(StokesOnePTwoCTypeTag, FluidSystem)
+SET_PROP(StokesOnePTwoC, FluidSystem)
 {
   using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
   static constexpr auto phaseIdx = H2OAir::liquidPhaseIdx; // simulate the water phase
@@ -51,21 +51,21 @@ SET_PROP(StokesOnePTwoCTypeTag, FluidSystem)
 };
 
 // Set the grid type
-SET_TYPE_PROP(StokesOnePTwoCTypeTag, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(StokesOnePTwoC, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(StokesOnePTwoCTypeTag, Problem, Dumux::StokesSubProblem<TypeTag> );
+SET_TYPE_PROP(StokesOnePTwoC, Problem, Dumux::StokesSubProblem<TypeTag> );
 
 // Enable all caches
-SET_BOOL_PROP(StokesOnePTwoCTypeTag, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(StokesOnePTwoCTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(StokesOnePTwoCTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(StokesOnePTwoC, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(StokesOnePTwoC, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(StokesOnePTwoC, EnableGridVolumeVariablesCache, true);
 
 // Use moles
-SET_BOOL_PROP(StokesOnePTwoCTypeTag, UseMoles, true);
+SET_BOOL_PROP(StokesOnePTwoC, UseMoles, true);
 
 // Do not replace one equation with a total mass balance
-SET_INT_PROP(StokesOnePTwoCTypeTag, ReplaceCompEqIdx, 3);
+SET_INT_PROP(StokesOnePTwoC, ReplaceCompEqIdx, 3);
 }
 
 /*!

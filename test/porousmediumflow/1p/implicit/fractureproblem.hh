@@ -46,32 +46,32 @@ template <class TypeTag>
 class FractureProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(FractureTypeTag, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(FractureBoxTypeTag, INHERITS_FROM(BoxModel, FractureTypeTag));
-NEW_TYPE_TAG(FractureCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FractureTypeTag));
-NEW_TYPE_TAG(FractureCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, FractureTypeTag));
+NEW_TYPE_TAG(Fracture, INHERITS_FROM(OneP));
+NEW_TYPE_TAG(FractureBox, INHERITS_FROM(BoxModel, Fracture));
+NEW_TYPE_TAG(FractureCCTpfa, INHERITS_FROM(CCTpfaModel, Fracture));
+NEW_TYPE_TAG(FractureCCMpfa, INHERITS_FROM(CCMpfaModel, Fracture));
 
 //! Enable caching (more memory, but faster runtime)
-SET_BOOL_PROP(FractureTypeTag, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(FractureTypeTag, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(FractureTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(Fracture, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(Fracture, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(Fracture, EnableGridFluxVariablesCache, true);
 
 //! The grid type
 #if HAVE_DUNE_FOAMGRID
-SET_TYPE_PROP(FractureTypeTag, Grid, Dune::FoamGrid<2, 3>);
+SET_TYPE_PROP(Fracture, Grid, Dune::FoamGrid<2, 3>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(FractureTypeTag, Problem, Dumux::FractureProblem<TypeTag>);
+SET_TYPE_PROP(Fracture, Problem, Dumux::FractureProblem<TypeTag>);
 
 // the fluid system
-SET_PROP(FractureTypeTag, FluidSystem)
+SET_PROP(Fracture, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 // Set the spatial parameters
-SET_PROP(FractureTypeTag, SpatialParams)
+SET_PROP(Fracture, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

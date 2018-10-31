@@ -54,7 +54,7 @@ struct Grid { };
 struct CCTpfaDisc { using InheritsFrom = std::tuple<Grid, Base>; };
 struct BoxDisc { using InheritsFrom = std::tuple<Grid, Base>; };
 struct OnePModel { using InheritsFrom = std::tuple<Base>; };
-struct OnePTestTypeTag { using InheritsFrom = std::tuple<OnePModel, BoxDisc>; };
+struct OnePTest { using InheritsFrom = std::tuple<OnePModel, BoxDisc>; };
 
 } // end namespace TTag
 
@@ -66,7 +66,7 @@ template<class TypeTag>
 struct Scalar<TypeTag, TTag::OnePModel> { using type = double; };
 
 template<class TypeTag>
-struct Scalar<TypeTag, TTag::OnePTestTypeTag> { using type = int; };
+struct Scalar<TypeTag, TTag::OnePTest> { using type = int; };
 
 template<class TypeTag>
 struct CoordinateType<TypeTag, TTag::Grid> { using type = GetPropType<TypeTag, Scalar>; };
@@ -86,9 +86,9 @@ int main(int argc, char* argv[]) try
             DUNE_THROW(Dune::InvalidStateException, "Property Scalar in TTag::Base should be float but is " << Dune::className<Scalar>());
     }
     {
-        using Scalar = GetPropType<TTag::OnePTestTypeTag, Scalar>;
+        using Scalar = GetPropType<TTag::OnePTest, Scalar>;
         if (!std::is_same<Scalar, int>::value)
-            DUNE_THROW(Dune::InvalidStateException, "Property Scalar in TTag::OnePTestTypeTag should be int but is " << Dune::className<Scalar>());
+            DUNE_THROW(Dune::InvalidStateException, "Property Scalar in TTag::OnePTest should be int but is " << Dune::className<Scalar>());
     }
     {
         using Scalar = GetPropType<TTag::OnePModel, Scalar>;
@@ -96,9 +96,9 @@ int main(int argc, char* argv[]) try
         DUNE_THROW(Dune::InvalidStateException, "Property Scalar in TTag::OnePModel should be double but is " << Dune::className<Scalar>());
     }
     {
-        using CoordinateType = GetPropType<TTag::OnePTestTypeTag, CoordinateType>;
+        using CoordinateType = GetPropType<TTag::OnePTest, CoordinateType>;
         if (!std::is_same<CoordinateType, int>::value)
-            DUNE_THROW(Dune::InvalidStateException, "Property CoordinateType in TTag::OnePTestTypeTag should be int but is " << Dune::className<CoordinateType>());
+            DUNE_THROW(Dune::InvalidStateException, "Property CoordinateType in TTag::OnePTest should be int but is " << Dune::className<CoordinateType>());
     }
     {
         using CoordinateType = GetPropType<TTag::CCTpfaDisc, CoordinateType>;

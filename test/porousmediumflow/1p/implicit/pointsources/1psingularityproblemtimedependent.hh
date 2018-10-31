@@ -34,13 +34,13 @@ class OnePSingularityProblemTimeDependent;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePSingularityTimeDependentCCTpfaTypeTag, INHERITS_FROM(OnePSingularityCCTpfaTypeTag));
+NEW_TYPE_TAG(OnePSingularityTimeDependentCCTpfa, INHERITS_FROM(OnePSingularityCCTpfa));
 
 // Set the problem property
-SET_TYPE_PROP(OnePSingularityTimeDependentCCTpfaTypeTag, Problem, OnePSingularityProblemTimeDependent<TypeTag>);
+SET_TYPE_PROP(OnePSingularityTimeDependentCCTpfa, Problem, OnePSingularityProblemTimeDependent<TypeTag>);
 
 // point source
-SET_TYPE_PROP(OnePSingularityTimeDependentCCTpfaTypeTag, PointSource, SolDependentPointSource<TypeTag>);
+SET_TYPE_PROP(OnePSingularityTimeDependentCCTpfa, PointSource, SolDependentPointSource<TypeTag>);
 }
 
 /*!

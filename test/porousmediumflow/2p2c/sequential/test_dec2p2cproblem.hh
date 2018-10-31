@@ -47,31 +47,31 @@ class TestDecTwoPTwoCProblem;
 // Specify the properties
 namespace Properties
 {
-NEW_TYPE_TAG(TestDecTwoPTwoCTypeTag, INHERITS_FROM(SequentialTwoPTwoC, Test2P2CSpatialParams));
+NEW_TYPE_TAG(TestDecTwoPTwoC, INHERITS_FROM(SequentialTwoPTwoC, Test2P2CSpatialParams));
 
 // Set the grid type
-SET_TYPE_PROP(TestDecTwoPTwoCTypeTag, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(TestDecTwoPTwoC, Grid, Dune::YaspGrid<3>);
 
 // Set the problem property
-SET_TYPE_PROP(TestDecTwoPTwoCTypeTag, Problem, TestDecTwoPTwoCProblem<TypeTag>);
+SET_TYPE_PROP(TestDecTwoPTwoC, Problem, TestDecTwoPTwoCProblem<TypeTag>);
 
 // Set the model properties
-SET_TYPE_PROP(TestDecTwoPTwoCTypeTag, TransportModel, FVTransport2P2C<TypeTag>);
+SET_TYPE_PROP(TestDecTwoPTwoC, TransportModel, FVTransport2P2C<TypeTag>);
 
-SET_TYPE_PROP(TestDecTwoPTwoCTypeTag, PressureModel,FVPressure2P2C<TypeTag>);
+SET_TYPE_PROP(TestDecTwoPTwoC, PressureModel,FVPressure2P2C<TypeTag>);
 
 
-SET_INT_PROP(TestDecTwoPTwoCTypeTag, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureN);
+SET_INT_PROP(TestDecTwoPTwoC, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureN);
 
 // Select fluid system
-SET_PROP(TestDecTwoPTwoCTypeTag, FluidSystem)
+SET_PROP(TestDecTwoPTwoC, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::H2OAir<Scalar, Components::H2O<Scalar>>;
 };
 
-SET_BOOL_PROP(TestDecTwoPTwoCTypeTag, EnableCapillarity, true);
-SET_INT_PROP(TestDecTwoPTwoCTypeTag, BoundaryMobility, GET_PROP_TYPE(TypeTag, Indices)::satDependent);
+SET_BOOL_PROP(TestDecTwoPTwoC, EnableCapillarity, true);
+SET_INT_PROP(TestDecTwoPTwoC, BoundaryMobility, GET_PROP_TYPE(TypeTag, Indices)::satDependent);
 }
 
 /*!

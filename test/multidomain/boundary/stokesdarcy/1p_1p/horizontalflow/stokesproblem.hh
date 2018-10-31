@@ -40,24 +40,24 @@ class StokesSubProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(StokesOnePTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+NEW_TYPE_TAG(StokesOneP, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
 
 // the fluid system
-SET_PROP(StokesOnePTypeTag, FluidSystem)
+SET_PROP(StokesOneP, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
 };
 
 // Set the grid type
-SET_TYPE_PROP(StokesOnePTypeTag, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(StokesOneP, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(StokesOnePTypeTag, Problem, Dumux::StokesSubProblem<TypeTag> );
+SET_TYPE_PROP(StokesOneP, Problem, Dumux::StokesSubProblem<TypeTag> );
 
-SET_BOOL_PROP(StokesOnePTypeTag, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(StokesOnePTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(StokesOnePTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(StokesOneP, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(StokesOneP, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(StokesOneP, EnableGridVolumeVariablesCache, true);
 }
 
 /*!

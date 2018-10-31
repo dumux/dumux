@@ -46,18 +46,18 @@ template <class TypeTag>
 class InfiltrationThreePThreeCProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(InfiltrationThreePThreeCTypeTag, INHERITS_FROM(ThreePThreeC));
-NEW_TYPE_TAG(InfiltrationThreePThreeCBoxTypeTag, INHERITS_FROM(BoxModel, InfiltrationThreePThreeCTypeTag));
-NEW_TYPE_TAG(InfiltrationThreePThreeCCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InfiltrationThreePThreeCTypeTag));
+NEW_TYPE_TAG(InfiltrationThreePThreeC, INHERITS_FROM(ThreePThreeC));
+NEW_TYPE_TAG(InfiltrationThreePThreeCBox, INHERITS_FROM(BoxModel, InfiltrationThreePThreeC));
+NEW_TYPE_TAG(InfiltrationThreePThreeCCCTpfa, INHERITS_FROM(CCTpfaModel, InfiltrationThreePThreeC));
 
 // Set the grid type
-SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(InfiltrationThreePThreeC, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag, Problem, InfiltrationThreePThreeCProblem<TypeTag>);
+SET_TYPE_PROP(InfiltrationThreePThreeC, Problem, InfiltrationThreePThreeCProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_PROP(InfiltrationThreePThreeCTypeTag, SpatialParams)
+SET_PROP(InfiltrationThreePThreeC, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -65,7 +65,7 @@ SET_PROP(InfiltrationThreePThreeCTypeTag, SpatialParams)
 };
 
 // Set the fluid system
-SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag,
+SET_TYPE_PROP(InfiltrationThreePThreeC,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 }

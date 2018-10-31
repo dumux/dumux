@@ -52,18 +52,18 @@ template <class TypeTag>
 class KuevetteProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(KuevetteTypeTag, INHERITS_FROM(ThreePThreeCNI));
-NEW_TYPE_TAG(KuevetteBoxTypeTag, INHERITS_FROM(BoxModel, KuevetteTypeTag));
-NEW_TYPE_TAG(KuevetteCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, KuevetteTypeTag));
+NEW_TYPE_TAG(Kuevette, INHERITS_FROM(ThreePThreeCNI));
+NEW_TYPE_TAG(KuevetteBox, INHERITS_FROM(BoxModel, Kuevette));
+NEW_TYPE_TAG(KuevetteCCTpfa, INHERITS_FROM(CCTpfaModel, Kuevette));
 
 // Set the grid type
-SET_TYPE_PROP(KuevetteTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(Kuevette, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(KuevetteTypeTag, Problem, KuevetteProblem<TypeTag>);
+SET_TYPE_PROP(Kuevette, Problem, KuevetteProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_PROP(KuevetteTypeTag, SpatialParams)
+SET_PROP(Kuevette, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -71,7 +71,7 @@ SET_PROP(KuevetteTypeTag, SpatialParams)
 };
 
 // Set the fluid system
-SET_TYPE_PROP(KuevetteTypeTag,
+SET_TYPE_PROP(Kuevette,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 } // end namespace Properties

@@ -58,32 +58,32 @@ namespace Properties
 
 #if NONISOTHERMAL
   #if LOWREKEPSILON
-  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNCNI));
+  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNCNI));
   #elif KEPSILON
-  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNCNI));
+  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNCNI));
   #elif KOMEGA
-  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNCNI));
+  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNCNI));
   #elif ONEEQ
-  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNCNI));
+  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNCNI));
   #else
-  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
+  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
   #endif
 #else
   #if LOWREKEPSILON
-  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNC));
+  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNC));
   #elif KEPSILON
-  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNC));
+  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNC));
   #elif KOMEGA
-  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNC));
+  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNC));
   #elif ONEEQ
-  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNC));
+  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNC));
   #else
-  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
+  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
   #endif
 #endif
 
 // The fluid system
-SET_PROP(FlatPlateNCTestTypeTag, FluidSystem)
+SET_PROP(FlatPlateNCTest, FluidSystem)
 {
   using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
   static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the air phase
@@ -91,22 +91,22 @@ SET_PROP(FlatPlateNCTestTypeTag, FluidSystem)
 };
 
 // replace the main component balance eq with a total balance eq
-SET_INT_PROP(FlatPlateNCTestTypeTag, ReplaceCompEqIdx, 0);
+SET_INT_PROP(FlatPlateNCTest, ReplaceCompEqIdx, 0);
 
 // Set the grid type
-SET_TYPE_PROP(FlatPlateNCTestTypeTag, Grid,
+SET_TYPE_PROP(FlatPlateNCTest, Grid,
               Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(FlatPlateNCTestTypeTag, Problem, Dumux::FlatPlateNCTestProblem<TypeTag> );
+SET_TYPE_PROP(FlatPlateNCTest, Problem, Dumux::FlatPlateNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(FlatPlateNCTestTypeTag, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(FlatPlateNCTest, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(FlatPlateNCTestTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(FlatPlateNCTestTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(FlatPlateNCTest, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(FlatPlateNCTest, EnableGridVolumeVariablesCache, true);
 
 // Enable gravity
-SET_BOOL_PROP(FlatPlateNCTestTypeTag, UseMoles, true);
+SET_BOOL_PROP(FlatPlateNCTest, UseMoles, true);
 } // end namespace Properties
 
 /*!

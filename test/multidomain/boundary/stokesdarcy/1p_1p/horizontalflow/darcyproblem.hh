@@ -43,22 +43,22 @@ class DarcySubProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DarcyOnePTypeTag, INHERITS_FROM(CCTpfaModel, OneP));
+NEW_TYPE_TAG(DarcyOneP, INHERITS_FROM(CCTpfaModel, OneP));
 
 // Set the problem property
-SET_TYPE_PROP(DarcyOnePTypeTag, Problem, Dumux::DarcySubProblem<TypeTag>);
+SET_TYPE_PROP(DarcyOneP, Problem, Dumux::DarcySubProblem<TypeTag>);
 
 // the fluid system
-SET_PROP(DarcyOnePTypeTag, FluidSystem)
+SET_PROP(DarcyOneP, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
 };
 
 // Set the grid type
-SET_TYPE_PROP(DarcyOnePTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(DarcyOneP, Grid, Dune::YaspGrid<2>);
 
-SET_PROP(DarcyOnePTypeTag, SpatialParams)
+SET_PROP(DarcyOneP, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

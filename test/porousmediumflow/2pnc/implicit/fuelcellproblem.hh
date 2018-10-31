@@ -50,22 +50,22 @@ class FuelCellProblem;
 
 namespace Properties {
 #ifdef NONISOTHERMAL
-NEW_TYPE_TAG(FuelCellTypeTag, INHERITS_FROM(TwoPNCNI));
-NEW_TYPE_TAG(FuelCellNIBoxTypeTag, INHERITS_FROM(BoxModel, FuelCellTypeTag));
+NEW_TYPE_TAG(FuelCell, INHERITS_FROM(TwoPNCNI));
+NEW_TYPE_TAG(FuelCellNIBox, INHERITS_FROM(BoxModel, FuelCell));
 #else
-NEW_TYPE_TAG(FuelCellTypeTag, INHERITS_FROM(TwoPNC));
-NEW_TYPE_TAG(FuelCellBoxTypeTag, INHERITS_FROM(BoxModel, FuelCellTypeTag));
-NEW_TYPE_TAG(FuelCellCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FuelCellTypeTag));
+NEW_TYPE_TAG(FuelCell, INHERITS_FROM(TwoPNC));
+NEW_TYPE_TAG(FuelCellBox, INHERITS_FROM(BoxModel, FuelCell));
+NEW_TYPE_TAG(FuelCellCCTpfa, INHERITS_FROM(CCTpfaModel, FuelCell));
 #endif
 
 // Set the grid type
-SET_TYPE_PROP(FuelCellTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(FuelCell, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(FuelCellTypeTag, Problem, FuelCellProblem<TypeTag>);
+SET_TYPE_PROP(FuelCell, Problem, FuelCellProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_PROP(FuelCellTypeTag, SpatialParams)
+SET_PROP(FuelCell, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -73,11 +73,11 @@ SET_PROP(FuelCellTypeTag, SpatialParams)
 };
 
 // Set the primary variable combination for the 2pnc model
-SET_PROP(FuelCellTypeTag, Formulation)
+SET_PROP(FuelCell, Formulation)
 { static constexpr auto value = TwoPFormulation::p1s0; };
 
 // Set fluid configuration
-SET_PROP(FuelCellTypeTag, FluidSystem)
+SET_PROP(FuelCell, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

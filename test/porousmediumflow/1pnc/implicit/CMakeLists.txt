@@ -2,7 +2,7 @@ add_input_file_links()
 
 dune_add_test(NAME test_1p2c_box
               SOURCES test_1p2c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/outflowbox-reference.vtu
@@ -12,7 +12,7 @@ dune_add_test(NAME test_1p2c_box
 
 dune_add_test(NAME test_1p2c_tpfa
               SOURCES test_1p2c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2ctestcc-reference.vtu
@@ -24,7 +24,7 @@ dune_add_test(NAME test_1p2c_tpfa
 #      solution where the velocities have been removed.
 dune_add_test(NAME test_1p2c_mpfa
               SOURCES test_1p2c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCMpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2ctestmpfa-reference.vtu
@@ -34,7 +34,7 @@ dune_add_test(NAME test_1p2c_mpfa
 # salt-water intrusion test using the box model
 dune_add_test(NAME test_saltwaterintrusion_box
               SOURCES test_1p2c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=SaltWaterIntrusionTestTypeTag
+              COMPILE_DEFINITIONS TYPETAG=SaltWaterIntrusionTest
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/saltwaterintrusion-reference.vtu
@@ -45,7 +45,7 @@ dune_add_test(NAME test_saltwaterintrusion_box
 # conduction
 dune_add_test(NAME test_1p2cni_conduction_box
               SOURCES test_1p2cni_conduction_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniboxconduction-reference.vtu
@@ -55,7 +55,7 @@ dune_add_test(NAME test_1p2cni_conduction_box
 
 dune_add_test(NAME test_1p2cni_conduction_tpfa
               SOURCES test_1p2cni_conduction_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccconduction-reference.vtu
@@ -67,7 +67,7 @@ dune_add_test(NAME test_1p2cni_conduction_tpfa
 #      solution where the velocities have been removed.
 dune_add_test(NAME test_1p2cni_conduction_mpfa
               SOURCES test_1p2cni_conduction_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionCCMpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionCCMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccmpfaconduction-reference.vtu
@@ -77,7 +77,7 @@ dune_add_test(NAME test_1p2cni_conduction_mpfa
 # convection
 dune_add_test(NAME test_1p2cni_convection_box
               SOURCES test_1p2cni_convection_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniboxconvection-reference.vtu
@@ -87,7 +87,7 @@ dune_add_test(NAME test_1p2cni_convection_box
 
 dune_add_test(NAME test_1p2cni_convection_tpfa
               SOURCES test_1p2cni_convection_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccconvection-reference.vtu
@@ -99,7 +99,7 @@ dune_add_test(NAME test_1p2cni_convection_tpfa
 #      solution where the velocities have been removed.
 dune_add_test(NAME test_1p2cni_convection_mpfa
               SOURCES test_1p2cni_convection_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCMpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccmpfaconvection-reference.vtu

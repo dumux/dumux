@@ -54,20 +54,20 @@ namespace Properties {
 
 SET_PROP(SOILTYPETAG, CouplingManager)
 {
-    using Traits = MultiDomainTraits<TypeTag, TTAG(RootTypeTag)>;
+    using Traits = MultiDomainTraits<TypeTag, TTAG(Root)>;
     using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
-SET_PROP(RootTypeTag, CouplingManager)
+SET_PROP(Root, CouplingManager)
 {
     using Traits = MultiDomainTraits<TTAG(SOILTYPETAG), TypeTag>;
     using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
 SET_TYPE_PROP(SOILTYPETAG, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
-SET_TYPE_PROP(RootTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<1>);
+SET_TYPE_PROP(Root, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<1>);
 SET_TYPE_PROP(SOILTYPETAG, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
-SET_TYPE_PROP(RootTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
+SET_TYPE_PROP(Root, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
 
 } // end namespace Properties
 } // end namespace Dumux
@@ -88,7 +88,7 @@ int main(int argc, char** argv) try
 
     // Define the sub problem type tags
     using BulkTypeTag = TTAG(SOILTYPETAG);
-    using LowDimTypeTag = TTAG(RootTypeTag);
+    using LowDimTypeTag = TTAG(Root);
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains

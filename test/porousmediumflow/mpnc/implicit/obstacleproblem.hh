@@ -53,18 +53,18 @@ template <class TypeTag>
 class ObstacleProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(ObstacleTypeTag, INHERITS_FROM(MPNC));
-NEW_TYPE_TAG(ObstacleBoxTypeTag, INHERITS_FROM(BoxModel, ObstacleTypeTag));
-NEW_TYPE_TAG(ObstacleCCTypeTag, INHERITS_FROM(CCTpfaModel, ObstacleTypeTag));
+NEW_TYPE_TAG(Obstacle, INHERITS_FROM(MPNC));
+NEW_TYPE_TAG(ObstacleBox, INHERITS_FROM(BoxModel, Obstacle));
+NEW_TYPE_TAG(ObstacleCC, INHERITS_FROM(CCTpfaModel, Obstacle));
 
 // Set the grid type
-SET_TYPE_PROP(ObstacleTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(Obstacle, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ObstacleTypeTag, Problem, ObstacleProblem<TypeTag>);
+SET_TYPE_PROP(Obstacle, Problem, ObstacleProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_PROP(ObstacleTypeTag, SpatialParams)
+SET_PROP(Obstacle, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -73,12 +73,12 @@ SET_PROP(ObstacleTypeTag, SpatialParams)
 };
 
 // Set fluid configuration
-SET_TYPE_PROP(ObstacleTypeTag,
+SET_TYPE_PROP(Obstacle,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // decide which type to use for floating values (double / quad)
-SET_TYPE_PROP(ObstacleTypeTag, Scalar, double);
+SET_TYPE_PROP(Obstacle, Scalar, double);
 
 }
 
