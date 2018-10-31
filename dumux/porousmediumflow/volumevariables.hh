@@ -96,6 +96,9 @@ public:
     Scalar extrusionFactor() const
     { return extrusionFactor_; }
 
+    Scalar &extrusionFactor()
+    { return extrusionFactor_; }
+
 private:
     PrimaryVariables priVars_;
     Scalar extrusionFactor_;
