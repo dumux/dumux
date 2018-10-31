@@ -31,13 +31,8 @@ factorMassTransfer = 1 #
 [SpatialParams.Outflow]
 permeabilityOutFlow = 1e-6 # m^2
 porosityOutFlow = 0.35 #
-soilThermalConductivityOutFlow = 0.01#
 
 [SpatialParams.soil]
-density = 2600. # kg/m^3
-thermalConductivity = 30 # W / (m K) soil:3, metal:30
-heatCapacity = 466 # J / (kg K) steel:466 granite:800
-
 Swr =  0.0 #  5e-3
 Snr = 0 #
 
@@ -53,12 +48,14 @@ nRestart = 10000 # after so many timesteps a restart file should be written
 AddVelocity = 1 # enable velocity output
 
 [1.Component]
-SolidDensity = 2600
+SolidDensity = 2600.
 SolidThermalConductivity = 0.01
 SolidHeatCapacity = 466
 
 [2.Component]
-SolidDensity = 2600
+SolidDensity = 2600.
 SolidThermalConductivity = 30
 SolidHeatCapacity = 466
 
+[Newton]
+MaxRelativeShift = 1e-7
