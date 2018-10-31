@@ -116,7 +116,7 @@ public:
         for (int i = 0; i < faceRefElem.size(1); ++i)
         {
             const auto edgeIdxLocal = referenceElement.subEntity(idxInInside, 1, i, dim-1);
-            pi[i+1] = this->p[edgeIdxLocal+this->corners_+1];
+            pi[i+1] = this->p_[edgeIdxLocal+this->corners_+1];
         }
 
         // proceed according to number of corners
