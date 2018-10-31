@@ -4,7 +4,6 @@ compositional.hh
 immiscible.hh
 isothermalimmiscible.hh
 nonequilibrium.hh
-nonequilibriumenergy.hh
 nonequilibriummass.hh
 pressureoverlay.hh
 pseudo1p2c.hh

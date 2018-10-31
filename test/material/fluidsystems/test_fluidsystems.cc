@@ -44,12 +44,10 @@
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states
-#include <dumux/material/fluidstates/2p2c.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/fluidstates/isothermalimmiscible.hh>
 #include <dumux/material/fluidstates/nonequilibrium.hh>
-#include <dumux/material/fluidstates/nonequilibriumenergy.hh>
 #include <dumux/material/fluidstates/nonequilibriummass.hh>
 #include <dumux/material/fluidstates/pressureoverlay.hh>
 #include <dumux/material/fluidstates/pseudo1p2c.hh>
@@ -80,10 +78,6 @@ int main()
         using BaseFluidState = CompositionalFluidState<Scalar, FluidSystem>;
         BaseFluidState baseFs;
 
-        // TwoPTwoCFluidState TODO: doesn't fulfill interface!
-        // TwoPTwoCFluidState<Scalar, FluidSystem> fluidStateTwoPTwoC;
-        // success += checkFluidState<Scalar>(fluidStateTwoPTwoC);
-
         // CompositionalFluidState
         CompositionalFluidState<Scalar, FluidSystem> compositionalFluidState;
         success += checkFluidState<Scalar>(compositionalFluidState);
@@ -99,10 +93,6 @@ int main()
         // NonEquilibriumFluidState
         NonEquilibriumFluidState<Scalar, FluidSystem> nonEquilibriumFluidState;
         success += checkFluidState<Scalar>(nonEquilibriumFluidState);
-
-        // NonEquilibriumEnergyFluidState TODO: fails the test
-        // NonEquilibriumEnergyFluidState<Scalar, FluidSystem> nonEquilibriumEnergyFluidState;
-        // success += checkFluidState<Scalar>(nonEquilibriumEnergyFluidState);
 
         // NonEquilibriumMassFluidState
         NonEquilibriumMassFluidState<Scalar, FluidSystem> nonEquilibriumMassFluidState;

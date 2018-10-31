@@ -24,6 +24,8 @@
 #ifndef DUMUX_2P2C_FLUID_STATE_HH
 #define DUMUX_2P2C_FLUID_STATE_HH
 
+#include <dune/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -33,7 +35,7 @@ namespace Dumux {
  * This boils down to so-called "flash calculation", in this case isothermal and isobaric.
  */
 template <class ScalarType, class FluidSystem>
-class TwoPTwoCFluidState
+class DUNE_DEPRECATED_MSG("Use CompositionalFluidState instead!") TwoPTwoCFluidState
 {
 public:
     enum {

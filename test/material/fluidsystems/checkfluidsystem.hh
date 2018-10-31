@@ -49,12 +49,10 @@
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states
-#include <dumux/material/fluidstates/2p2c.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/fluidstates/isothermalimmiscible.hh>
 #include <dumux/material/fluidstates/nonequilibrium.hh>
-#include <dumux/material/fluidstates/nonequilibriumenergy.hh>
 #include <dumux/material/fluidstates/nonequilibriummass.hh>
 #include <dumux/material/fluidstates/pressureoverlay.hh>
 #include <dumux/material/fluidstates/pseudo1p2c.hh>
