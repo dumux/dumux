@@ -37,7 +37,7 @@
 #include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/components/h2o.hh>
 
-#include "steaminjectionspatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 template <class TypeTag>
