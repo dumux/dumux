@@ -23,3 +23,6 @@ MaxIterations = 2000
 
 [Component]
 SolidDensity = 2700
+
+[Vtk]
+OutputName = test_md_poromechanics_el1p

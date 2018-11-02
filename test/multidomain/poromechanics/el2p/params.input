@@ -32,3 +32,6 @@ SolidDensity = 2650
 [Newton]
 TargetSteps = 15
 MaxRelativeShift = 1e-6
+
+[Vtk]
+OutputName = test_md_poromechanics_el2p

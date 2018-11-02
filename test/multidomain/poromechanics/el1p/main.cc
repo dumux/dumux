@@ -25,8 +25,8 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 
-#include "1pproblem.hh"
-#include "poroelasticproblem.hh"
+#include "problem_1p.hh"
+#include "problem_poroelastic.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -149,7 +149,7 @@ int main(int argc, char** argv) try
     onePGridVariables->init(x[onePId]);
     poroMechGridVariables->init(x[poroMechId]);
 
-    // intialize the dune vtk writers
+    // intialize the vtk output module
     using OnePVtkOutputModule = Dumux::VtkOutputModule<OnePGridVariables, typename GET_PROP_TYPE(OnePTypeTag, SolutionVector)>;
     using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, typename GET_PROP_TYPE(PoroMechTypeTag, SolutionVector)>;
     OnePVtkOutputModule onePVtkWriter(*onePGridVariables, x[onePId], onePProblem->name());

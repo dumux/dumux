@@ -19,82 +19,74 @@
 /*!
  * \file
  * \ingroup MultiDomain
- * \ingroup TwoPTests
+ * \ingroup OnePTests
  * \ingroup PoroElastic
- * \brief Definition of the spatial parameters for the two-phase flow
- *        sub-problem in the coupled poro-mechanical elp problem.
+ * \brief Definition of the spatial parameters for the single-phase flow
+ *        sub-problem in the coupled poro-mechanical el1p problem.
  */
-#ifndef DUMUX_2P_SUB_PROBLEM_HH
-#define DUMUX_2P_SUB_PROBLEM_HH
+#ifndef DUMUX_1P_SUB_PROBLEM_HH
+#define DUMUX_1P_SUB_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
-#include <dumux/porousmediumflow/2p/model.hh>
+#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidsystems/brineco2.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/components/constant.hh>
 
-#include "2pspatialparams.hh"
-#include "el2pco2tables.hh"
+#include "spatialparams_1p.hh"
 
 namespace Dumux {
 
 // forward declaration of the problem class
 template <class TypeTag>
-class TwoPSubProblem;
+class OnePSubProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(TwoPSub, INHERITS_FROM(CCTpfaModel, TwoP));
+NEW_TYPE_TAG(OnePSub, INHERITS_FROM(CCTpfaModel, OneP));
 
-// Set the fluid system for TwoPSubProblem
-SET_PROP(TwoPSub, FluidSystem)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
-};
+// The fluid phase consists of one constant component
+SET_TYPE_PROP(OnePSub,
+              FluidSystem,
+              Dumux::FluidSystems::OnePLiquid< typename GET_PROP_TYPE(TypeTag, Scalar),
+                                               Dumux::Components::Constant<0, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Set the grid type
-SET_TYPE_PROP(TwoPSub, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(OnePSub, Grid, Dune::YaspGrid<2>);
 // Set the problem property
-SET_TYPE_PROP(TwoPSub, Problem, TwoPSubProblem<TypeTag> );
+SET_TYPE_PROP(OnePSub, Problem, OnePSubProblem<TypeTag> );
 // Set the spatial parameters
-SET_PROP(TwoPSub, SpatialParams)
+SET_PROP(OnePSub, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
-    using type = TwoPSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
+    using type = OnePSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
 };
 } // end namespace Properties
 
 /*!
  * \ingroup MultiDomain
- * \ingroup TwoPTests
+ * \ingroup OnePTests
  * \ingroup PoroElastic
  *
- * \brief The two-phase sub problem in the el2p coupled problem.
+ * \brief The single-phase sub problem in the el1p coupled problem.
  */
 template <class TypeTag>
-class TwoPSubProblem : public PorousMediumFlowProblem<TypeTag>
+class OnePSubProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     // copy pressure index for convenience
-    enum {
-          pressureIdx = GET_PROP_TYPE(TypeTag, ModelTraits)::Indices::pressureIdx,
-          saturationNIdx = GET_PROP_TYPE(TypeTag, ModelTraits)::Indices::saturationIdx,
-          waterPhaseIdx = FluidSystem::phase0Idx,
-          gasPhaseIdx = FluidSystem::phase1Idx,
-          dimWorld = GridView::dimensionworld
-    };
+    enum { pressureIdx = GET_PROP_TYPE(TypeTag, ModelTraits)::Indices::pressureIdx };
 
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -102,9 +94,19 @@ class TwoPSubProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    TwoPSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    OnePSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "OneP")
     : ParentType(fvGridGeometry, paramGroup)
-    {}
+    {
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
+    }
 
     //! Return the temperature within the domain in [K].
     Scalar temperature() const
@@ -116,29 +118,15 @@ public:
 
     //! Evaluate the initial value for a control volume.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    {
-      PrimaryVariables values;
-
-      values[pressureIdx] = 1.5e7;
-      values[saturationNIdx] = 0.0;
-      return values;
-    }
+    { return PrimaryVariables(1.0e5); }
 
     //! Evaluate source terms
     NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
     {
-        NumEqVector values(0.0);
-
-        static const Scalar sourceG = getParam<Scalar>("Problem.InjectionRateGas");
-        static const Scalar sourceW = getParam<Scalar>("Problem.InjectionRateWater");
-        if(globalPos[0] > 250 + eps_ && globalPos[0] < 750 - eps_
-           && globalPos[1] > 250 + eps_ && globalPos[1] < 750 - eps_
-           && globalPos[dimWorld-1] > 250 + eps_ && globalPos[dimWorld-1] < 750 - eps_)
-        {
-            values[gasPhaseIdx] = sourceG;
-            values[waterPhaseIdx] = sourceW;
-        }
-        return values;
+        static const Scalar source = getParam<Scalar>("Problem.InjectionRate");
+        if (globalPos[0] > 0.4 && globalPos[0] < 0.6 && globalPos[1] < 0.6 && globalPos[1] > 0.4)
+            return NumEqVector(source);
+        return NumEqVector(0.0);
     }
 
     /*!
@@ -149,15 +137,13 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if (globalPos[dimWorld-1] < eps_)
-            values.setAllNeumann();
-        else
-            values.setAllDirichlet();
+        values.setAllDirichlet();
         return values;
     }
 
 private:
     static constexpr Scalar eps_ = 1.0e-6;
+    std::string problemName_;
 };
 
 } //end namespace Dumux

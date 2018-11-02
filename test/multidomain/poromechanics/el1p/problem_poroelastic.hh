@@ -35,7 +35,7 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
-#include "poroelasticspatialparams.hh"
+#include "spatialparams_poroelastic.hh"
 
 namespace Dumux {
 
@@ -94,8 +94,19 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
 
 public:
     //! The constructor
-    PoroElasticSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, paramGroup) {}
+    PoroElasticSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "PoroElastic")
+    : ParentType(fvGridGeometry, paramGroup)
+    {
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
+    }
 
     //! The temperature in the domain
     static constexpr Scalar temperature()
@@ -176,6 +187,7 @@ public:
 private:
     std::shared_ptr<const CouplingManager> couplingManagerPtr_;
     static constexpr Scalar eps_ = 3e-6;
+    std::string problemName_;
 };
 
 } //end namespace
