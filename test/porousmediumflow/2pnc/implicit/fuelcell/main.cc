@@ -32,8 +32,6 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include "fuelcellproblem.hh"
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
@@ -51,7 +49,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
-#include "fuelcellproblem.hh"
+#include "problem.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
