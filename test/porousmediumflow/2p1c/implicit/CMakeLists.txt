@@ -1,45 +1,44 @@
 #add links to input files
 add_input_file_links()
 
-add_executable(test_2p1cni_tpfa EXCLUDE_FROM_ALL test_2p1c_fv.cc)
-target_compile_definitions(test_2p1cni_tpfa PUBLIC "TYPETAG=TwoPOneCNICCTpfaTypeTag")
+add_executable(test_2p1cni_steaminjection_tpfa EXCLUDE_FROM_ALL main.cc)
+target_compile_definitions(test_2p1cni_steaminjection_tpfa PUBLIC "TYPETAG=TwoPOneCNICCTpfaTypeTag")
 
-add_executable(test_2p1cni_box EXCLUDE_FROM_ALL test_2p1c_fv.cc)
-target_compile_definitions(test_2p1cni_box PUBLIC "TYPETAG=TwoPOneCNIBoxTypeTag")
+add_executable(test_2p1cni_steaminjection_box EXCLUDE_FROM_ALL main.cc)
+target_compile_definitions(test_2p1cni_steaminjection_box PUBLIC "TYPETAG=TwoPOneCNIBoxTypeTag")
 
-
-dune_add_test(NAME test_2p1cni_box_waterwet
-              TARGET test_2p1cni_box
+dune_add_test(NAME test_2p1cni_steaminjection_waterwet_box
+              TARGET test_2p1cni_steaminjection_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/steaminjectionbox-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_boxsteaminjection-00007.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_box test_boxsteaminjection.input")
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p1cni_steaminjection_waterwet_box-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_steaminjection_waterwet_box-00007.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_steaminjection_box params_box.input -Problem.Name test_2p1cni_steaminjection_waterwet_box")
 
-dune_add_test(NAME test_2p1cni_tpfa_waterwet
-              TARGET test_2p1cni_tpfa
+dune_add_test(NAME test_2p1cni_steaminjection_waterwet_tpfa
+              TARGET test_2p1cni_steaminjection_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/steaminjectioncc-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_ccsteaminjection-00009.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_tpfa test_ccsteaminjection.input")
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p1cni_steaminjection_waterwet_tpfa-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_steaminjection_waterwet_tpfa-00009.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_steaminjection_tpfa params_tpfa.input -Problem.Name test_2p1cni_steaminjection_waterwet_tpfa")
 
-dune_add_test(NAME test_2p1cni_box_gaswet
-              TARGET test_2p1cni_box
+dune_add_test(NAME test_2p1cni_steaminjection_gaswet_box
+              TARGET test_2p1cni_steaminjection_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/steaminjectionbox_gaswet-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_steaminjectionbox_gaswet-00005.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_box test_boxsteaminjection.input
-                                                                               -Problem.Name test_steaminjectionbox_gaswet
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p1cni_steaminjection_gaswet_box-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_steaminjection_gaswet_box-00005.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_steaminjection_box params_box.input
+                                                                               -Problem.Name test_2p1cni_steaminjection_gaswet_box
                                                                                -SpatialParams.GasWetting true")
 
-dune_add_test(NAME test_2p1cni_tpfa_gaswet
-              TARGET test_2p1cni_tpfa
+dune_add_test(NAME test_2p1cni_steaminjection_gaswet_tpfa
+              TARGET test_2p1cni_steaminjection_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/steaminjectioncc_gaswet-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_steaminjectioncc_gaswet-00005.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_tpfa test_ccsteaminjection.input
-                                                                                -Problem.Name test_steaminjectioncc_gaswet
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p1cni_steaminjection_gaswet_tpfa-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_steaminjection_gaswet_tpfa-00005.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_steaminjection_tpfa params_tpfa.input
+                                                                                -Problem.Name test_2p1cni_steaminjection_gaswet_tpfa
                                                                                 -SpatialParams.GasWetting true")
