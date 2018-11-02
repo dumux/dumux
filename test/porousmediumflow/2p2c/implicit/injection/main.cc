@@ -50,8 +50,7 @@
 #include <dumux/io/loadsolution.hh>
 
 // the problem definitions
-#include "injectionproblem.hh"
-#include "waterairproblem.hh"
+#include "problem.hh"
 
 int main(int argc, char** argv) try
 {
@@ -122,11 +121,11 @@ int main(int argc, char** argv) try
     gridVariables->init(x, xOld);
 
     // intialize the vtk output module
-    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
+    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    VtkOutputFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(restartTime);
 
     // instantiate time loop

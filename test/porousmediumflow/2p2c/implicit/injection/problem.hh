@@ -34,7 +34,7 @@
 #include <dumux/porousmediumflow/2p2c/model.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 
-#include "injectionspatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 
@@ -47,7 +47,7 @@ class InjectionProblem;
 
 namespace Properties {
 NEW_TYPE_TAG(Injection, INHERITS_FROM(TwoPTwoC));
-NEW_TYPE_TAG(InjectionBoxTypeTag, INHERITS_FROM(BoxModel, Injection));
+NEW_TYPE_TAG(InjectionBox, INHERITS_FROM(BoxModel, Injection));
 NEW_TYPE_TAG(InjectionCCTpfa, INHERITS_FROM(CCTpfaModel, Injection));
 NEW_TYPE_TAG(InjectionCCMpfa, INHERITS_FROM(CCMpfaModel, Injection));
 
