@@ -19,18 +19,16 @@
 /*!
  * \file
  *
- * \brief A test problem for the one-phase blood flow model:
- * Blood is flowing through a 1d network grid.
+ * \brief A fracture problem
  */
-#ifndef DUMUX_BLOOD_FLOW_PROBLEM_HH
-#define DUMUX_BLOOD_FLOW_PROBLEM_HH
+#ifndef DUMUX_FRACTURE_PROBLEM_HH
+#define DUMUX_FRACTURE_PROBLEM_HH
 
 #include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
-#include <dumux/discretization/box/properties.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -39,45 +37,43 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include "bloodflowspatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 // forward declaration
-template <class TypeTag> class BloodFlowProblem;
+template <class TypeTag> class FractureProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(BloodFlow, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(BloodFlowCC, INHERITS_FROM(CCTpfaModel, BloodFlow));
-NEW_TYPE_TAG(BloodFlowBox, INHERITS_FROM(BoxModel, BloodFlow));
+NEW_TYPE_TAG(Fracture, INHERITS_FROM(CCTpfaModel, OneP));
 
 // Set the grid type
-SET_TYPE_PROP(BloodFlow, Grid, Dune::FoamGrid<1, 3>);
+SET_TYPE_PROP(Fracture, Grid, Dune::FoamGrid<2, 3>);
 
-SET_BOOL_PROP(BloodFlow, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(BloodFlow, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(BloodFlow, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(BloodFlow, SolutionDependentAdvection, false);
-SET_BOOL_PROP(BloodFlow, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(BloodFlow, SolutionDependentHeatConduction, false);
+SET_BOOL_PROP(Fracture, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(Fracture, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(Fracture, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(Fracture, SolutionDependentAdvection, false);
+SET_BOOL_PROP(Fracture, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(Fracture, SolutionDependentHeatConduction, false);
 
 // Set the problem property
-SET_TYPE_PROP(BloodFlow, Problem, BloodFlowProblem<TypeTag>);
+SET_TYPE_PROP(Fracture, Problem, FractureProblem<TypeTag>);
 
 // the fluid system
-SET_PROP(BloodFlow, FluidSystem)
+SET_PROP(Fracture, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the problem property
-SET_TYPE_PROP(BloodFlow, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(Fracture, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(BloodFlow, SpatialParams,
-              BloodFlowSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                     typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(Fracture, SpatialParams, MatrixFractureSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                          typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
 } // end namespace Properties
 
 /*!
@@ -85,13 +81,14 @@ SET_TYPE_PROP(BloodFlow, SpatialParams,
  * \brief Exact solution 1D-3D
  */
 template <class TypeTag>
-class BloodFlowProblem : public PorousMediumFlowProblem<TypeTag>
+class FractureProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
@@ -100,29 +97,20 @@ class BloodFlowProblem : public PorousMediumFlowProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
 
 public:
-    BloodFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                     std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry)
+    FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                    std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                    std::shared_ptr<CouplingManager> couplingManager,
+                    const std::string& paramGroup = "Fracture")
+    : ParentType(fvGridGeometry, spatialParams, paramGroup)
     , couplingManager_(couplingManager)
     {
         //read parameters from input file
-        name_ = getParam<std::string>("Problem.Name") + "_1d";
-        p_in_ = getParam<Scalar>("BoundaryConditions1D.PressureInput");
-        delta_p_ = getParam<Scalar>("BoundaryConditions1D.DeltaPressure");
-        exactPressure_.resize(this->fvGridGeometry().numDofs());
-
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(this->fvGridGeometry());
-            fvGeometry.bindElement(element);
-
-            for (auto&& scv : scvs(fvGeometry))
-                exactPressure_[scv.dofIndex()] = exactSolution(scv.dofPosition());
-        }
+        name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
     /*!
@@ -136,9 +124,8 @@ public:
                            const SubControlVolume &scv,
                            const ElementSolution& elemSol) const
     {
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
-        const auto radius = this->spatialParams().radius(eIdx);
-        return M_PI*radius*radius;
+        static const Scalar aperture = getParamFromGroup<Scalar>("Fracture", "SpatialParams.Aperture");
+        return aperture;
     }
 
     /*!
@@ -176,7 +163,11 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        values.setAllDirichlet();
+        values.setAllNeumann();
+        if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
+            values.setAllDirichlet();
+        else if (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+            values.setAllDirichlet();
         return values;
     }
 
@@ -190,14 +181,11 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values;
-        if(globalPos[2] > 0.5)
-            values[Indices::pressureIdx] = p_in_;
-        else
-            values[Indices::pressureIdx] = p_in_-delta_p_;
-        return values;
+        if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
+            return PrimaryVariables(2e5);
+        else // (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+            return PrimaryVariables(1e5);
     }
-
 
     // \}
 
@@ -238,9 +226,7 @@ public:
      * the absolute rate mass generated or annihilate in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    template<class ElementVolumeVariables,
-             bool enable = (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel),
-             std::enable_if_t<!enable, int> = 0>
+    template<class ElementVolumeVariables>
     void pointSource(PointSource& source,
                      const Element &element,
                      const FVElementGeometry& fvGeometry,
@@ -248,86 +234,36 @@ public:
                      const SubControlVolume &scv) const
     {
         // compute source at every integration point
-        const Scalar pressure1D = this->couplingManager().lowDimPriVars(source.id())[Indices::pressureIdx];
         const Scalar pressure3D = this->couplingManager().bulkPriVars(source.id())[Indices::pressureIdx];
+        const Scalar pressure1D = this->couplingManager().lowDimPriVars(source.id())[Indices::pressureIdx];
 
         // calculate the source
-        const Scalar radius = this->couplingManager().radius(source.id());
-        const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
-        const Scalar sourceValue = beta*(pressure3D - pressure1D);//*bulkVolVars.density();
-
+        const Scalar meanDistance = this->couplingManager().averageDistance(source.id());
+        static const Scalar matrixPerm = getParamFromGroup<Scalar>("Matrix", "SpatialParams.Permeability");
+        static const Scalar rho = getParam<Scalar>("Component.LiquidDensity");
+        static const Scalar mu = getParam<Scalar>("Component.LiquidKinematicViscosity")*rho;
+        const Scalar sourceValue = rho*(pressure3D - pressure1D)/meanDistance*matrixPerm/mu;
         source = sourceValue*source.quadratureWeight()*source.integrationElement();
-    }
-
-    //! specialization for kernel method
-    template<class ElementVolumeVariables,
-             bool enable = (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel),
-             std::enable_if_t<enable, int> = 0>
-    void pointSource(PointSource& source,
-                     const Element &element,
-                     const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars,
-                     const SubControlVolume &scv) const
-    {
-        static const Scalar kernelWidth = getParam<Scalar>("MixedDimension.KernelWidth");
-        static const Scalar kernelFactor = std::log(kernelWidth)-9.0/10.0;
-
-        // compute source at every integration point
-        const Scalar pressure1D = this->couplingManager().lowDimPriVars(source.id())[Indices::pressureIdx];
-        const Scalar pressure3D = this->couplingManager().bulkPriVars(source.id())[Indices::pressureIdx];
-
-        // calculate the source
-        const Scalar radius = this->couplingManager().radius(source.id());
-        const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
-        const Scalar sourceValue = beta*(pressure3D / kernelFactor * std::log(radius) - pressure1D);//*bulkVolVars.density();
-
-        source = sourceValue*source.quadratureWeight()*source.integrationElement();
-    }
-
-    //! evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
-    //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
-    template<class MatrixBlock, class VolumeVariables>
-    void addSourceDerivatives(MatrixBlock& block,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const VolumeVariables& curElemVolVars,
-                              const SubControlVolume& scv) const
-    {
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
-
-        auto key = std::make_pair(eIdx, 0);
-        if (this->pointSourceMap().count(key))
-        {
-            // call the solDependent function. Herein the user might fill/add values to the point sources
-            // we make a copy of the local point sources here
-            auto pointSources = this->pointSourceMap().at(key);
-
-            // add the point source values to the local residual (negative sign is convention for source term)
-            for (const auto& source : pointSources)
-                block[0][0] -= this->couplingManager().pointSourceDerivative(source, Dune::index_constant<1>{}, Dune::index_constant<1>{});
-        }
     }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
+     * \param globalPos The position for which the initial condition should be evaluated
+     *
      * For this method, the \a priVars parameter stores primary
      * variables.
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    { return PrimaryVariables(0.0); }
+    { return PrimaryVariables(1e5); }
 
     // \}
-
-    //! The exact pressure solution
-    Scalar exactSolution(const GlobalPosition &globalPos) const
-    { return 1 + globalPos[2]; }
 
     //! Called after every time step
     //! Output the total global exchange term
     void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
-        PrimaryVariables source(0.0);
+        NumEqVector source(0.0);
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             auto fvGeometry = localView(this->fvGridGeometry());
@@ -347,15 +283,6 @@ public:
         std::cout << "Global integrated source (1D): " << source << '\n';
     }
 
-    /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
-    template<class VtkOutputModule>
-    void addVtkOutputFields(VtkOutputModule& vtk) const
-    {
-        vtk.addField(exactPressure_, "exact pressure");
-    }
-
     //! Set the coupling manager
     void setCouplingManager(std::shared_ptr<CouplingManager> cm)
     { couplingManager_ = cm; }
@@ -365,13 +292,9 @@ public:
     { return *couplingManager_; }
 
 private:
-    std::vector<Scalar> exactPressure_;
 
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
-
-    Scalar p_in_;
-    Scalar delta_p_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };

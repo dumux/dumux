@@ -19,20 +19,21 @@ Refinement = 0
 LocalRefinement = 1
 
 [Problem]
-Name = test_soilroot
 ContaminantMoleFraction = 3e-7
 OutFile = "tracermass_fine.out"
 EnableVtkOutput = true
 EnableGravity = true
 InitTopSaturation = 0.3
 
-[Soil.SpatialParams]
-Permeability = 2.57e-12 # [m^2]
-Porosity = 0.4 # [-]
+[Soil]
+SpatialParams.Permeability = 2.57e-12 # [m^2]
+SpatialParams.Porosity = 0.4 # [-]
+Problem.Name = 3d
 
-[Root.SpatialParams]
-Kx = 5.0968e-17
-Kr = 2.04e-13
+[Root]
+SpatialParams.Kx = 5.0968e-17
+SpatialParams.Kr = 2.04e-13
+Problem.Name = 1d
 
 [Component]
 LiquidDiffusionCoefficient = 2.3e-9
@@ -49,3 +50,6 @@ PriVarMagnitude = 1e6 1
 [LinearSolver]
 MaxIterations = 20000
 Verbosity = 0
+
+[Vtk]
+OutputName = test_md_embedded1d3d_1p2c_richards2c

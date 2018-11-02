@@ -38,7 +38,7 @@
 #include <dumux/porousmediumflow/richards/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "soilspatialparams.hh"
+#include "spatialparams_soil.hh"
 
 namespace Dumux {
 
@@ -96,11 +96,11 @@ class SoilProblem : public PorousMediumFlowProblem<TypeTag>
 public:
     SoilProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                 std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry)
+    : ParentType(fvGridGeometry, "Soil")
     , couplingManager_(couplingManager)
     {
         //read parameters from input file
-        name_ = getParam<std::string>("Problem.Name") + "_3d";
+        name_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         initPressure_ = getParam<Scalar>("BoundaryConditions.InitialSoilPressure");
     }
 

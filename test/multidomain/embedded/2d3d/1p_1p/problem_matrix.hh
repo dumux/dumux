@@ -19,16 +19,14 @@
 /**
  * \file
  * \ingroup OnePTests
- * \brief Definition of a problem, for the 1p2c problem:
- * Component transport of oxygen in interstitial fluid.
+ * \brief Fracture problem
  */
-#ifndef DUMUX_TISSUE_PROBLEM_HH
-#define DUMUX_TISSUE_PROBLEM_HH
+#ifndef DUMUX_MATRIX_ROBLEM_HH
+#define DUMUX_MATRIX_ROBLEM_HH
 
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/uggrid.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/math.hh>
@@ -36,50 +34,50 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
-#include <dumux/porousmediumflow/richardsnc/model.hh>
+#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/liquidphase2c.hh>
+#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
-#include "soilspatialparams.hh"
+#include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+
+#include "spatialparams.hh"
 
 namespace Dumux {
 
 template <class TypeTag>
-class SoilProblem;
+class MatrixProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(Soil, INHERITS_FROM(CCTpfaModel, RichardsNC));
+NEW_TYPE_TAG(Matrix, INHERITS_FROM(CCTpfaModel, OneP));
 
 // Set the grid type
-SET_TYPE_PROP(Soil, Grid, Dune::UGGrid<3>);
+SET_TYPE_PROP(Matrix, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
 
-SET_BOOL_PROP(Soil, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Soil, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Soil, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(Soil, SolutionDependentAdvection, false);
-SET_BOOL_PROP(Soil, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(Soil, SolutionDependentHeatConduction, false);
+SET_BOOL_PROP(Matrix, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(Matrix, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(Matrix, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(Matrix, SolutionDependentAdvection, false);
+SET_BOOL_PROP(Matrix, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(Matrix, SolutionDependentHeatConduction, false);
 
 // Set the problem property
-SET_TYPE_PROP(Soil, Problem, SoilProblem<TypeTag>);
+SET_TYPE_PROP(Matrix, Problem, MatrixProblem<TypeTag>);
 
-// Set the spatial parameters
-SET_TYPE_PROP(Soil, SpatialParams, SoilSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                            typename GET_PROP_TYPE(TypeTag, Scalar)>);
+// Set the problem property
+SET_TYPE_PROP(Matrix, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
-// Set the fluid system
-SET_PROP(Soil, FluidSystem)
+// the fluid system
+SET_PROP(Matrix, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhaseTwoC<Scalar, Components::SimpleH2O<Scalar>,
-                                                       Components::Constant<1, Scalar>>;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
-SET_BOOL_PROP(Soil, UseMoles, true);
-
+// Set the spatial parameters
+SET_TYPE_PROP(Matrix, SpatialParams, MatrixFractureSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                        typename GET_PROP_TYPE(TypeTag, Scalar)>);
 } // end namespace Properties
 
 
@@ -87,54 +85,43 @@ SET_BOOL_PROP(Soil, UseMoles, true);
  * \ingroup OnePTests
  */
 template <class TypeTag>
-class SoilProblem : public PorousMediumFlowProblem<TypeTag>
+class MatrixProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
-    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+
+    enum {
+        // world dimension
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
+    };
+
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
 
 public:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    enum Indices {
-        // world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
-        pressureIdx = 0,
-        transportCompIdx = 1,
-
-        conti0EqIdx = 0,
-        transportEqIdx = 1,
-
-        liquidPhaseIdx = FluidSystem::liquidPhaseIdx
-    };
-
-    SoilProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry)
+    MatrixProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                  std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                  std::shared_ptr<CouplingManager> couplingManager,
+                  const std::string& paramGroup = "Matrix")
+    : ParentType(fvGridGeometry, spatialParams, paramGroup)
     , couplingManager_(couplingManager)
     {
         //read parameters from input file
-        name_ = getParam<std::string>("Problem.Name") + "_3d";
-        contaminantMoleFraction_ = getParam<Scalar>("Problem.ContaminantMoleFraction");
-
-        // for initial conditions
-        const Scalar sw = getParam<Scalar>("Problem.InitTopSaturation", 0.3); // start with 30% saturation on top
-        using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
-        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(fvGridGeometry->bBoxMax()), sw);
+        name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
     /*!
@@ -153,20 +140,10 @@ public:
     /*!
      * \brief Returns the temperature within the domain [K].
      *
-     * This problem assumes a temperature of 10 degrees Celsius.
+     * This problem assumes a temperature of 37 degrees Celsius.
      */
     Scalar temperature() const
-    { return 273.15 + 10; } // in [K]
-
-    /*
-      * \brief Returns the reference pressure [Pa] of the non-wetting
-     *        fluid phase within a finite volume
-     *
-     * This problem assumes a constant reference pressure of 1 bar.
-     */
-    Scalar nonWettingReferencePressure() const
-    { return 1.0e5; }
-
+    { return 273.15 + 37; } // in [K]
 
     // \}
 
@@ -187,17 +164,6 @@ public:
         values.setAllNeumann();
         return values;
     }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
-     *
-     * \param globalPos The position for which the bc type should be evaluated
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
-    { return initialAtPos(globalPos); }
 
     // \}
 
@@ -245,74 +211,52 @@ public:
                      const ElementVolumeVariables& elemVolVars,
                      const SubControlVolume &scv) const
     {
-        NumEqVector sourceValues;
-
         // compute source at every integration point
-        const auto priVars3D = this->couplingManager().bulkPriVars(source.id());
-        const auto priVars1D = this->couplingManager().lowDimPriVars(source.id());
-        const Scalar pressure3D = priVars3D[pressureIdx];
-        const Scalar pressure1D = priVars1D[pressureIdx];
+        const Scalar pressure3D = this->couplingManager().bulkPriVars(source.id())[Indices::pressureIdx];
+        const Scalar pressure1D = this->couplingManager().lowDimPriVars(source.id())[Indices::pressureIdx];
 
-        const auto& spatialParams = this->couplingManager().problem(Dune::index_constant<1>{}).spatialParams();
-        const auto lowDimElementIdx = this->couplingManager().pointSourceData(source.id()).lowDimElementIdx();
-        const Scalar Kr = spatialParams.Kr(lowDimElementIdx);
-        const Scalar rootRadius = spatialParams.radius(lowDimElementIdx);
-
-        // sink defined as radial flow Jr * density [m^2 s-1]* [kg m-3]
-        const auto molarDensityH20 = 1000 / 0.018;
-        sourceValues[conti0EqIdx] = 2 * M_PI * rootRadius * Kr * (pressure1D - pressure3D) * molarDensityH20;
-
-        const Scalar x3D = priVars3D[transportCompIdx];
-        const Scalar x1D = priVars1D[transportCompIdx];
-
-        //! advective transport over root wall
-        // compute correct upwind concentration
-        if (sourceValues[conti0EqIdx] > 0)
-            sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]*x1D;
-        else
-            sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]*x3D;
-
-        //! diffusive transport over root wall
-        const auto molarDensityD20 = 1000 / 0.020;
-        sourceValues[transportEqIdx] += 2 * M_PI * rootRadius * 1.0e-8 * (x1D - x3D) * molarDensityD20;
-
-        sourceValues *= source.quadratureWeight()*source.integrationElement();
-        source = sourceValues;
+        // calculate the source
+        const Scalar meanDistance = this->couplingManager().averageDistance(source.id());
+        static const Scalar matrixPerm = getParamFromGroup<Scalar>("Matrix", "SpatialParams.Permeability");
+        static const Scalar rho = getParam<Scalar>("Component.LiquidDensity");
+        static const Scalar mu = getParam<Scalar>("Component.LiquidKinematicViscosity")*rho;
+        const Scalar sourceValue = rho*(pressure1D - pressure3D)/meanDistance*matrixPerm/mu;
+        source = sourceValue*source.quadratureWeight()*source.integrationElement();
     }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The position for which the initial condition should be evaluated
      *
      * For this method, the \a values parameter stores primary
      * variables.
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    { return PrimaryVariables({1e5}); }
+
+    //! Called after every time step
+    //! Output the total global exchange term
+    void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
-        const auto& gg = this->fvGridGeometry();
-        static const Scalar extend = 0.15*(gg.bBoxMax()[0]-gg.bBoxMin()[0]);
-        const auto xTracer = [&]()
+        NumEqVector source(0.0);
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            auto contaminationPos = gg.bBoxMax()-gg.bBoxMin();
-            contaminationPos[0] *= 0.26;
-            contaminationPos[1] *= 0.56;
-            contaminationPos[2] *= 0.26;
-            contaminationPos += gg.bBoxMin();
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
 
-            if ((globalPos - contaminationPos).infinity_norm() <  extend + eps_)
-                return contaminantMoleFraction_;
-            else
-                return 0.0;
-        }();
+            auto elemVolVars = localView(gridVars.curGridVolVars());
+            elemVolVars.bindElement(element, fvGeometry, sol);
 
-        PrimaryVariables priVars(0.0);
-        //! hydrostatic pressure profile
-        priVars[pressureIdx] = (nonWettingReferencePressure() - pcTop_)
-                                -9.81*1000*(globalPos[dimWorld-1] - gg.bBoxMax()[dimWorld-1]);
-        priVars[transportCompIdx] = xTracer;
-        return priVars;
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto pointSources = this->scvPointSources(element, fvGeometry, elemVolVars, scv);
+                pointSources *= scv.volume()*elemVolVars[scv].extrusionFactor();
+                source += pointSources;
+            }
+        }
+
+        std::cout << "Global integrated source (3D): " << source << '\n';
     }
 
     //! Set the coupling manager
@@ -324,7 +268,6 @@ public:
     { return *couplingManager_; }
 
 private:
-    Scalar pcTop_, contaminantMoleFraction_;
 
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;

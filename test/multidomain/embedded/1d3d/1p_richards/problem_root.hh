@@ -19,10 +19,11 @@
 /*!
  * \file
  *
- * \brief A fracture problem
+ * \brief A test problem for the one-phase root model:
+ * Sap is flowing through a 1d network root xylem.
  */
-#ifndef DUMUX_FRACTURE_PROBLEM_HH
-#define DUMUX_FRACTURE_PROBLEM_HH
+#ifndef DUMUX_ROOT_PROBLEM_HH
+#define DUMUX_ROOT_PROBLEM_HH
 
 #include <dune/foamgrid/foamgrid.hh>
 
@@ -34,45 +35,45 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
-#include <dumux/material/components/constant.hh>
+#include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include "spatialparams.hh"
+#include "spatialparams_root.hh"
 
 namespace Dumux {
 // forward declaration
-template <class TypeTag> class FractureProblem;
+template <class TypeTag> class RootProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(Fracture, INHERITS_FROM(CCTpfaModel, OneP));
+NEW_TYPE_TAG(Root, INHERITS_FROM(CCTpfaModel, OneP));
 
 // Set the grid type
-SET_TYPE_PROP(Fracture, Grid, Dune::FoamGrid<2, 3>);
+SET_TYPE_PROP(Root, Grid, Dune::FoamGrid<1, 3>);
 
-SET_BOOL_PROP(Fracture, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Fracture, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Fracture, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(Fracture, SolutionDependentAdvection, false);
-SET_BOOL_PROP(Fracture, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(Fracture, SolutionDependentHeatConduction, false);
+SET_BOOL_PROP(Root, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(Root, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(Root, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(Root, SolutionDependentAdvection, false);
+SET_BOOL_PROP(Root, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(Root, SolutionDependentHeatConduction, false);
 
 // Set the problem property
-SET_TYPE_PROP(Fracture, Problem, FractureProblem<TypeTag>);
+SET_TYPE_PROP(Root, Problem, RootProblem<TypeTag>);
 
 // the fluid system
-SET_PROP(Fracture, FluidSystem)
+SET_PROP(Root, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Set the problem property
-SET_TYPE_PROP(Fracture, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(Root, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(Fracture, SpatialParams, MatrixFractureSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                          typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(Root, SpatialParams, RootSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                            typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 } // end namespace Properties
 
@@ -81,36 +82,38 @@ SET_TYPE_PROP(Fracture, SpatialParams, MatrixFractureSpatialParams<typename GET_
  * \brief Exact solution 1D-3D
  */
 template <class TypeTag>
-class FractureProblem : public PorousMediumFlowProblem<TypeTag>
+class RootProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
 
 public:
-    FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                    std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
-                    std::shared_ptr<CouplingManager> couplingManager,
-                    const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+
+    template<class SpatialParams>
+    RootProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                std::shared_ptr<SpatialParams> spatialParams,
+                std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(fvGridGeometry, spatialParams, "Root")
     , couplingManager_(couplingManager)
     {
         //read parameters from input file
-        name_ = getParam<std::string>("Problem.Name") + "_2d";
+        name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+        transpirationRate_ = getParam<Scalar>("BoundaryConditions.TranspirationRate");
     }
 
     /*!
@@ -124,8 +127,9 @@ public:
                            const SubControlVolume &scv,
                            const ElementSolution& elemSol) const
     {
-        static const Scalar aperture = getParamFromGroup<Scalar>("Fracture", "SpatialParams.Aperture");
-        return aperture;
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto radius = this->spatialParams().radius(eIdx);
+        return M_PI*radius*radius;
     }
 
     /*!
@@ -143,10 +147,9 @@ public:
 
     /*!
      * \brief Return the temperature within the domain in [K].
-     *
      */
     Scalar temperature() const
-    { return 273.15 + 37.0; } // Body temperature
+    { return 273.15 + 10.0; }
 
     // \}
     /*!
@@ -164,10 +167,6 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
-        if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
-            values.setAllDirichlet();
-        else if (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
-            values.setAllDirichlet();
         return values;
     }
 
@@ -180,11 +179,31 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    { return initialAtPos(globalPos); }
+
+
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * For this method, the \a priVars parameter stores the mass flux
+     * in normal direction of each component. Negative values mean
+     * influx.
+     */
+    template<class ElementVolumeVariables>
+    NeumannFluxes neumann(const Element& element,
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolvars,
+                          const SubControlVolumeFace& scvf) const
     {
-        if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
-            return PrimaryVariables(2e5);
-        else // (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
-            return PrimaryVariables(1e5);
+        NeumannFluxes values(0.0);
+        if (scvf.center()[2] + eps_ > this->fvGridGeometry().bBoxMax()[2])
+        {
+            const auto r = this->spatialParams().radius(scvf.insideScvIdx());
+            values[Indices::conti0EqIdx] = transpirationRate_/(M_PI*r*r)/scvf.area();
+        }
+        return values;
+
     }
 
     // \}
@@ -237,25 +256,24 @@ public:
         const Scalar pressure3D = this->couplingManager().bulkPriVars(source.id())[Indices::pressureIdx];
         const Scalar pressure1D = this->couplingManager().lowDimPriVars(source.id())[Indices::pressureIdx];
 
-        // calculate the source
-        const Scalar meanDistance = this->couplingManager().averageDistance(source.id());
-        static const Scalar matrixPerm = getParamFromGroup<Scalar>("Matrix", "SpatialParams.Permeability");
-        static const Scalar rho = getParam<Scalar>("Component.LiquidDensity");
-        static const Scalar mu = getParam<Scalar>("Component.LiquidKinematicViscosity")*rho;
-        const Scalar sourceValue = rho*(pressure3D - pressure1D)/meanDistance*matrixPerm/mu;
+        const auto lowDimElementIdx = this->couplingManager().pointSourceData(source.id()).lowDimElementIdx();
+        const Scalar Kr = this->spatialParams().Kr(lowDimElementIdx);
+        const Scalar rootRadius = this->spatialParams().radius(lowDimElementIdx);
+
+        // sink defined as radial flow Jr * density [m^2 s-1]* [kg m-3]
+        const auto density = 1000;
+        const Scalar sourceValue = 2* M_PI *rootRadius * Kr *(pressure3D - pressure1D)*density;
         source = sourceValue*source.quadratureWeight()*source.integrationElement();
     }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param globalPos The position for which the initial condition should be evaluated
-     *
      * For this method, the \a priVars parameter stores primary
      * variables.
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    { return PrimaryVariables(1e5); }
+    { return PrimaryVariables(0.0); }
 
     // \}
 
@@ -263,7 +281,7 @@ public:
     //! Output the total global exchange term
     void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
-        NumEqVector source(0.0);
+        PrimaryVariables source(0.0);
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             auto fvGeometry = localView(this->fvGridGeometry());
@@ -280,7 +298,17 @@ public:
             }
         }
 
-        std::cout << "Global integrated source (1D): " << source << '\n';
+        std::cout << "Global integrated source (root): " << source << " (kg/s) / "
+                  <<                           source*3600*24*1000 << " (g/day)" << '\n';
+    }
+
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    template<class VtkOutputModule>
+    void addVtkOutputFields(VtkOutputModule& vtk) const
+    {
+        vtk.addField(this->spatialParams().getRadii(), "radius");
     }
 
     //! Set the coupling manager
@@ -292,6 +320,7 @@ public:
     { return *couplingManager_; }
 
 private:
+    Scalar transpirationRate_;
 
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
