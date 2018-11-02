@@ -44,27 +44,27 @@ class NavierStokesAnalyticProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(NavierStokesAnalyticTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+NEW_TYPE_TAG(NavierStokesAnalytic, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
 
 // the fluid system
-SET_PROP(NavierStokesAnalyticTypeTag, FluidSystem)
+SET_PROP(NavierStokesAnalytic, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
-SET_TYPE_PROP(NavierStokesAnalyticTypeTag, Grid, Dune::YaspGrid<1>);
+SET_TYPE_PROP(NavierStokesAnalytic, Grid, Dune::YaspGrid<1>);
 
 // Set the problem property
-SET_TYPE_PROP(NavierStokesAnalyticTypeTag, Problem, Dumux::NavierStokesAnalyticProblem<TypeTag> );
+SET_TYPE_PROP(NavierStokesAnalytic, Problem, Dumux::NavierStokesAnalyticProblem<TypeTag> );
 
-SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(NavierStokesAnalytic, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(NavierStokesAnalytic, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(NavierStokesAnalytic, EnableGridVolumeVariablesCache, true);
 
-SET_BOOL_PROP(NavierStokesAnalyticTypeTag, NormalizePressure, false);
+SET_BOOL_PROP(NavierStokesAnalytic, NormalizePressure, false);
 }
 
 /*!

@@ -53,35 +53,35 @@ class TissueProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(TissueTypeTag, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(TissueCCTypeTag, INHERITS_FROM(CCTpfaModel, TissueTypeTag));
-NEW_TYPE_TAG(TissueBoxTypeTag, INHERITS_FROM(BoxModel, TissueTypeTag));
+NEW_TYPE_TAG(Tissue, INHERITS_FROM(OneP));
+NEW_TYPE_TAG(TissueCC, INHERITS_FROM(CCTpfaModel, Tissue));
+NEW_TYPE_TAG(TissueBox, INHERITS_FROM(BoxModel, Tissue));
 
 // Set the grid type
-SET_TYPE_PROP(TissueTypeTag, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
+SET_TYPE_PROP(Tissue, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
 
-SET_BOOL_PROP(TissueTypeTag, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(TissueTypeTag, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(TissueTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(TissueTypeTag, SolutionDependentAdvection, false);
-SET_BOOL_PROP(TissueTypeTag, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(TissueTypeTag, SolutionDependentHeatConduction, false);
-
-// Set the problem property
-SET_TYPE_PROP(TissueTypeTag, Problem, TissueProblem<TypeTag>);
+SET_BOOL_PROP(Tissue, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(Tissue, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(Tissue, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(Tissue, SolutionDependentAdvection, false);
+SET_BOOL_PROP(Tissue, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(Tissue, SolutionDependentHeatConduction, false);
 
 // Set the problem property
-SET_TYPE_PROP(TissueTypeTag, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(Tissue, Problem, TissueProblem<TypeTag>);
+
+// Set the problem property
+SET_TYPE_PROP(Tissue, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // the fluid system
-SET_PROP(TissueTypeTag, FluidSystem)
+SET_PROP(Tissue, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(TissueTypeTag, SpatialParams,
+SET_TYPE_PROP(Tissue, SpatialParams,
               TissueSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
                                   typename GET_PROP_TYPE(TypeTag, Scalar)>);
 } // end namespace Properties

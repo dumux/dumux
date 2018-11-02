@@ -38,21 +38,21 @@ template <class TypeTag>
 class SaltWaterIntrusionTestProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(SaltWaterIntrusionTestTypeTag, INHERITS_FROM(BoxModel, OnePNC));
+NEW_TYPE_TAG(SaltWaterIntrusionTest, INHERITS_FROM(BoxModel, OnePNC));
 
 // Use a structured yasp grid
-SET_TYPE_PROP(SaltWaterIntrusionTestTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(SaltWaterIntrusionTest, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(SaltWaterIntrusionTestTypeTag, Problem, SaltWaterIntrusionTestProblem<TypeTag>);
+SET_TYPE_PROP(SaltWaterIntrusionTest, Problem, SaltWaterIntrusionTestProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(SaltWaterIntrusionTestTypeTag,
+SET_TYPE_PROP(SaltWaterIntrusionTest,
               FluidSystem,
               FluidSystems::Brine< typename GET_PROP_TYPE(TypeTag, Scalar) >);
 
 // Set the spatial parameters
-SET_PROP(SaltWaterIntrusionTestTypeTag, SpatialParams)
+SET_PROP(SaltWaterIntrusionTest, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -60,7 +60,7 @@ SET_PROP(SaltWaterIntrusionTestTypeTag, SpatialParams)
 };
 
 // Use mass fractions to set salinity conveniently
-SET_BOOL_PROP(SaltWaterIntrusionTestTypeTag, UseMoles, false);
+SET_BOOL_PROP(SaltWaterIntrusionTest, UseMoles, false);
 
 } // end namespace Properties
 

@@ -41,25 +41,25 @@ class KovasznayTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(KovasznayTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+NEW_TYPE_TAG(KovasznayTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
 
 // the fluid system
-SET_PROP(KovasznayTestTypeTag, FluidSystem)
+SET_PROP(KovasznayTest, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
-SET_TYPE_PROP(KovasznayTestTypeTag, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(KovasznayTest, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(KovasznayTestTypeTag, Problem, Dumux::KovasznayTestProblem<TypeTag> );
+SET_TYPE_PROP(KovasznayTest, Problem, Dumux::KovasznayTestProblem<TypeTag> );
 
-SET_BOOL_PROP(KovasznayTestTypeTag, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(KovasznayTest, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(KovasznayTestTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(KovasznayTestTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(KovasznayTest, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(KovasznayTest, EnableGridVolumeVariablesCache, true);
 }
 
 /*!

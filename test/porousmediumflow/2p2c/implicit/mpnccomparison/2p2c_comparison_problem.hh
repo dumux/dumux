@@ -47,25 +47,25 @@ template <class TypeTag>
 class TwoPTwoCComparisonProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TwoPTwoCComparisonTypeTag, INHERITS_FROM(TwoPTwoC));
-NEW_TYPE_TAG(TwoPTwoCComparisonBoxTypeTag, INHERITS_FROM(BoxModel, TwoPTwoCComparisonTypeTag));
-NEW_TYPE_TAG(TwoPTwoCComparisonCCTypeTag, INHERITS_FROM(CCTpfaModel, TwoPTwoCComparisonTypeTag));
+NEW_TYPE_TAG(TwoPTwoCComparison, INHERITS_FROM(TwoPTwoC));
+NEW_TYPE_TAG(TwoPTwoCComparisonBox, INHERITS_FROM(BoxModel, TwoPTwoCComparison));
+NEW_TYPE_TAG(TwoPTwoCComparisonCC, INHERITS_FROM(CCTpfaModel, TwoPTwoCComparison));
 
 // Set the grid type
-SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TwoPTwoCComparison, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(TwoPTwoCComparisonTypeTag,
+SET_TYPE_PROP(TwoPTwoCComparison,
               Problem,
               TwoPTwoCComparisonProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(TwoPTwoCComparisonTypeTag,
+SET_TYPE_PROP(TwoPTwoCComparison,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_PROP(TwoPTwoCComparisonTypeTag, SpatialParams)
+SET_PROP(TwoPTwoCComparison, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -73,16 +73,16 @@ SET_PROP(TwoPTwoCComparisonTypeTag, SpatialParams)
 };
 
 // decide which type to use for floating values (double / quad)
-SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, Scalar, double);
-SET_PROP(TwoPTwoCComparisonTypeTag, Formulation)
+SET_TYPE_PROP(TwoPTwoCComparison, Scalar, double);
+SET_PROP(TwoPTwoCComparison, Formulation)
 {
 public:
     static const TwoPFormulation value = TwoPFormulation::p1s0;
 };
 
-SET_BOOL_PROP(TwoPTwoCComparisonTypeTag, UseMoles, true);
+SET_BOOL_PROP(TwoPTwoCComparison, UseMoles, true);
 
-SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields);
+SET_TYPE_PROP(TwoPTwoCComparison, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields);
 } // end namespace Properties
 
 

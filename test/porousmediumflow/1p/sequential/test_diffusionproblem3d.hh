@@ -54,21 +54,21 @@ class TestDiffusion3DProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(DiffusionTestTypeTag, INHERITS_FROM(SequentialTwoP, TestDiffusionSpatialParams3d));
+NEW_TYPE_TAG(DiffusionTest, INHERITS_FROM(SequentialTwoP, TestDiffusionSpatialParams3d));
 
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(DiffusionTestTypeTag, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(DiffusionTest, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
 #elif HAVE_UG
-SET_TYPE_PROP(DiffusionTestTypeTag, Grid, Dune::UGGrid<3>);
+SET_TYPE_PROP(DiffusionTest, Grid, Dune::UGGrid<3>);
 #else
-SET_TYPE_PROP(DiffusionTestTypeTag, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(DiffusionTest, Grid, Dune::YaspGrid<3>);
 #endif
 
-SET_TYPE_PROP(DiffusionTestTypeTag, Problem, TestDiffusion3DProblem<TypeTag>);
+SET_TYPE_PROP(DiffusionTest, Problem, TestDiffusion3DProblem<TypeTag>);
 
 // Set the fluid system
-SET_PROP(DiffusionTestTypeTag, FluidSystem)
+SET_PROP(DiffusionTest, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
@@ -77,19 +77,19 @@ SET_PROP(DiffusionTestTypeTag, FluidSystem)
 };
 
 #if HAVE_SUPERLU
-SET_TYPE_PROP(DiffusionTestTypeTag, LinearSolver, SuperLUBackend);
+SET_TYPE_PROP(DiffusionTest, LinearSolver, SuperLUBackend);
 #else
-SET_TYPE_PROP(DiffusionTestTypeTag, LinearSolver, ILUnRestartedGMResBackend);
+SET_TYPE_PROP(DiffusionTest, LinearSolver, ILUnRestartedGMResBackend);
 #endif
 
 // set the types for the 2PFA FV method
-NEW_TYPE_TAG(FVTestTypeTag, INHERITS_FROM(FVPressureTwoP, DiffusionTestTypeTag));
+NEW_TYPE_TAG(FVTest, INHERITS_FROM(FVPressureTwoP, DiffusionTest));
 
 // set the types for the MPFA-L FV method
-NEW_TYPE_TAG(FVMPFAL3DTestTypeTag, INHERITS_FROM(FvMpfaL3dPressureTwoP, DiffusionTestTypeTag));
+NEW_TYPE_TAG(FVMPFAL3DTestTypeTag, INHERITS_FROM(FvMpfaL3dPressureTwoP, DiffusionTest));
 
 // set the types for the mimetic FD method
-NEW_TYPE_TAG(MimeticTestTypeTag, INHERITS_FROM(MimeticPressureTwoP, DiffusionTestTypeTag));
+NEW_TYPE_TAG(MimeticTest, INHERITS_FROM(MimeticPressureTwoP, DiffusionTest));
 }
 
 /*!

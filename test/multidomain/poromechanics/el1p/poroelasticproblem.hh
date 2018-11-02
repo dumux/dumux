@@ -45,18 +45,18 @@ class PoroElasticSubProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(PoroElasticSubTypeTag, INHERITS_FROM(BoxModel, PoroElastic));
+NEW_TYPE_TAG(PoroElasticSub, INHERITS_FROM(BoxModel, PoroElastic));
 // Set the grid type
-SET_TYPE_PROP(PoroElasticSubTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(PoroElasticSub, Grid, Dune::YaspGrid<2>);
 // Set the problem property
-SET_TYPE_PROP(PoroElasticSubTypeTag, Problem, Dumux::PoroElasticSubProblem<TypeTag>);
+SET_TYPE_PROP(PoroElasticSub, Problem, Dumux::PoroElasticSubProblem<TypeTag>);
 // The fluid phase consists of one constant component
-SET_TYPE_PROP(PoroElasticSubTypeTag,
+SET_TYPE_PROP(PoroElasticSub,
               FluidSystem,
               Dumux::FluidSystems::OnePLiquid< typename GET_PROP_TYPE(TypeTag, Scalar),
                                                Dumux::Components::Constant<0, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 // The spatial parameters property
-SET_TYPE_PROP(PoroElasticSubTypeTag, SpatialParams, PoroElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
+SET_TYPE_PROP(PoroElasticSub, SpatialParams, PoroElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                               typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
 
 } // end namespace Properties

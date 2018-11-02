@@ -42,30 +42,30 @@ class DensityDrivenFlowProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(DensityDrivenFlowTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+NEW_TYPE_TAG(DensityDrivenFlow, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 
 // Select the fluid system
-SET_PROP(DensityDrivenFlowTypeTag, FluidSystem)
+SET_PROP(DensityDrivenFlow, FluidSystem)
 {
     using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
     static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
     using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
-SET_INT_PROP(DensityDrivenFlowTypeTag, ReplaceCompEqIdx, 0);
+SET_INT_PROP(DensityDrivenFlow, ReplaceCompEqIdx, 0);
 
 // Set the grid type
-SET_TYPE_PROP(DensityDrivenFlowTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(DensityDrivenFlow, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(DensityDrivenFlowTypeTag, Problem, Dumux::DensityDrivenFlowProblem<TypeTag> );
+SET_TYPE_PROP(DensityDrivenFlow, Problem, Dumux::DensityDrivenFlowProblem<TypeTag> );
 
-SET_BOOL_PROP(DensityDrivenFlowTypeTag, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(DensityDrivenFlow, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(DensityDrivenFlowTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(DensityDrivenFlowTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(DensityDrivenFlow, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(DensityDrivenFlow, EnableGridVolumeVariablesCache, true);
 
-SET_BOOL_PROP(DensityDrivenFlowTypeTag, UseMoles, true);
+SET_BOOL_PROP(DensityDrivenFlow, UseMoles, true);
 }
 
 /*!

@@ -45,18 +45,18 @@ template <class TypeTag>
 class MaxwellStefanTestProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(MaxwellStefanTestTypeTag, INHERITS_FROM(Tracer));
-NEW_TYPE_TAG(MaxwellStefanTestCCTypeTag, INHERITS_FROM(CCTpfaModel, MaxwellStefanTestTypeTag));
-NEW_TYPE_TAG(MaxwellStefanTestBoxTypeTag, INHERITS_FROM(BoxModel, MaxwellStefanTestTypeTag));
+NEW_TYPE_TAG(MaxwellStefanTest, INHERITS_FROM(Tracer));
+NEW_TYPE_TAG(MaxwellStefanTestCC, INHERITS_FROM(CCTpfaModel, MaxwellStefanTest));
+NEW_TYPE_TAG(MaxwellStefanTestBox, INHERITS_FROM(BoxModel, MaxwellStefanTest));
 
 // Set the grid type
-SET_TYPE_PROP(MaxwellStefanTestTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(MaxwellStefanTest, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(MaxwellStefanTestTypeTag, Problem, MaxwellStefanTestProblem<TypeTag>);
+SET_TYPE_PROP(MaxwellStefanTest, Problem, MaxwellStefanTestProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_PROP(MaxwellStefanTestTypeTag, SpatialParams)
+SET_PROP(MaxwellStefanTest, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -64,10 +64,10 @@ SET_PROP(MaxwellStefanTestTypeTag, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(MaxwellStefanTestTypeTag, UseMoles, true);
+SET_BOOL_PROP(MaxwellStefanTest, UseMoles, true);
 
 //! Here we set FicksLaw or MaxwellStefansLaw
-SET_TYPE_PROP(MaxwellStefanTestTypeTag, MolecularDiffusionType, MaxwellStefansLaw<TypeTag>);
+SET_TYPE_PROP(MaxwellStefanTest, MolecularDiffusionType, MaxwellStefansLaw<TypeTag>);
 
 //! A simple fluid system with one MaxwellStefan component
 template<class TypeTag>
@@ -179,7 +179,7 @@ public:
     }
 };
 
-SET_TYPE_PROP(MaxwellStefanTestTypeTag, FluidSystem, H2N2CO2FluidSystem<TypeTag>);
+SET_TYPE_PROP(MaxwellStefanTest, FluidSystem, H2N2CO2FluidSystem<TypeTag>);
 
 } // end namespace Properties
 

@@ -50,19 +50,19 @@ class TestIMPESAdaptiveProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TestIMPESAdaptiveTypeTag, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, TestIMPESAdaptiveSpatialParams));
-NEW_TYPE_TAG(TestIMPESAdaptiveRestartTypeTag, INHERITS_FROM(TestIMPESAdaptiveTypeTag));
+NEW_TYPE_TAG(TestIMPESAdaptive, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, TestIMPESAdaptiveSpatialParams));
+NEW_TYPE_TAG(TestIMPESAdaptiveRestart, INHERITS_FROM(TestIMPESAdaptive));
 
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(TestIMPESAdaptiveTypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(TestIMPESAdaptive, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(TestIMPESAdaptiveTypeTag, Problem, TestIMPESAdaptiveProblem<TypeTag>);
+SET_TYPE_PROP(TestIMPESAdaptive, Problem, TestIMPESAdaptiveProblem<TypeTag>);
 
 // Set the fluid system
-SET_PROP(TestIMPESAdaptiveTypeTag, FluidSystem)
+SET_PROP(TestIMPESAdaptive, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;

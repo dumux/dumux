@@ -46,7 +46,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! Create a type tag for all sequential models
-NEW_TYPE_TAG(SequentialModel, INHERITS_FROM(ModelProperties, GridAdaptTypeTag, GridProperties));
+NEW_TYPE_TAG(SequentialModel, INHERITS_FROM(ModelProperties, GridAdapt, GridProperties));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

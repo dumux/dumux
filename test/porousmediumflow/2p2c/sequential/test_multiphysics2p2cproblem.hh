@@ -48,32 +48,32 @@ class TestMultTwoPTwoCProblem;
 // Specify the properties
 namespace Properties
 {
-NEW_TYPE_TAG(TestMultTwoPTwoCTypeTag, INHERITS_FROM(SequentialTwoPTwoC, Test2P2CSpatialParams));
+NEW_TYPE_TAG(TestMultTwoPTwoC, INHERITS_FROM(SequentialTwoPTwoC, Test2P2CSpatialParams));
 
-SET_TYPE_PROP(TestMultTwoPTwoCTypeTag, CellData, CellData2P2CMultiPhysics<TypeTag>);
+SET_TYPE_PROP(TestMultTwoPTwoC, CellData, CellData2P2CMultiPhysics<TypeTag>);
 
 // Set the grid type
-SET_TYPE_PROP(TestMultTwoPTwoCTypeTag, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(TestMultTwoPTwoC, Grid, Dune::YaspGrid<3>);
 
 // Set the problem property
-SET_TYPE_PROP(TestMultTwoPTwoCTypeTag, Problem, TestMultTwoPTwoCProblem<TypeTag>);
+SET_TYPE_PROP(TestMultTwoPTwoC, Problem, TestMultTwoPTwoCProblem<TypeTag>);
 
 // Set the model properties
-SET_TYPE_PROP(TestMultTwoPTwoCTypeTag, TransportModel,FVTransport2P2CMultiPhysics<TypeTag>);
+SET_TYPE_PROP(TestMultTwoPTwoC, TransportModel,FVTransport2P2CMultiPhysics<TypeTag>);
 
-SET_TYPE_PROP(TestMultTwoPTwoCTypeTag, PressureModel, FVPressure2P2CMultiPhysics<TypeTag>);
+SET_TYPE_PROP(TestMultTwoPTwoC, PressureModel, FVPressure2P2CMultiPhysics<TypeTag>);
 
-SET_INT_PROP(TestMultTwoPTwoCTypeTag, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
+SET_INT_PROP(TestMultTwoPTwoC, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
 
 // Select fluid system
-SET_PROP(TestMultTwoPTwoCTypeTag, FluidSystem)
+SET_PROP(TestMultTwoPTwoC, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::H2OAir<Scalar, Components::H2O<Scalar>>;
 };
 
-SET_BOOL_PROP(TestMultTwoPTwoCTypeTag, EnableCapillarity, true);
-SET_INT_PROP(TestMultTwoPTwoCTypeTag, BoundaryMobility, GET_PROP_TYPE(TypeTag, Indices)::satDependent);
+SET_BOOL_PROP(TestMultTwoPTwoC, EnableCapillarity, true);
+SET_INT_PROP(TestMultTwoPTwoC, BoundaryMobility, GET_PROP_TYPE(TypeTag, Indices)::satDependent);
 }
 
 /*!

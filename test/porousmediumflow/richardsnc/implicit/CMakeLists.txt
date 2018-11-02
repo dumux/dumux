@@ -2,7 +2,7 @@ add_input_file_links()
 
 dune_add_test(SOURCES test_richardsnc_fv.cc
               NAME test_richardsnc_box
-              COMPILE_DEFINITIONS TYPETAG=RichardsWellTracerBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=RichardsWellTracerBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardswelltracerbox-reference.vtu
@@ -11,7 +11,7 @@ dune_add_test(SOURCES test_richardsnc_fv.cc
 
 dune_add_test(SOURCES test_richardsnc_fv.cc
               NAME test_richardsnc_tpfa
-              COMPILE_DEFINITIONS TYPETAG=RichardsWellTracerCCTypeTag
+              COMPILE_DEFINITIONS TYPETAG=RichardsWellTracerCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardswelltracercc-reference.vtu

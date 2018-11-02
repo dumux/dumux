@@ -49,24 +49,24 @@ template <class TypeTag>
 class DissolutionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(DissolutionTypeTag, INHERITS_FROM(TwoPNCMin));
-NEW_TYPE_TAG(DissolutionBoxTypeTag, INHERITS_FROM(BoxModel, DissolutionTypeTag));
-NEW_TYPE_TAG(DissolutionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, DissolutionTypeTag));
+NEW_TYPE_TAG(Dissolution, INHERITS_FROM(TwoPNCMin));
+NEW_TYPE_TAG(DissolutionBox, INHERITS_FROM(BoxModel, Dissolution));
+NEW_TYPE_TAG(DissolutionCCTpfa, INHERITS_FROM(CCTpfaModel, Dissolution));
 
 // Set the grid type
-SET_TYPE_PROP(DissolutionTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(Dissolution, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(DissolutionTypeTag, Problem, DissolutionProblem<TypeTag>);
+SET_TYPE_PROP(Dissolution, Problem, DissolutionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(DissolutionTypeTag, FluidSystem)
+SET_PROP(Dissolution, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::BrineAir<Scalar, Components::H2O<Scalar>>;
 };
 
-SET_PROP(DissolutionTypeTag, SolidSystem)
+SET_PROP(Dissolution, SolidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ComponentOne = Components::NaCl<Scalar>;
@@ -76,7 +76,7 @@ SET_PROP(DissolutionTypeTag, SolidSystem)
 };
 
 // Set the spatial parameters
-SET_PROP(DissolutionTypeTag, SpatialParams)
+SET_PROP(Dissolution, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -84,8 +84,8 @@ SET_PROP(DissolutionTypeTag, SpatialParams)
 };
 
 //Set properties here to override the default property settings
-SET_INT_PROP(DissolutionTypeTag, ReplaceCompEqIdx, 1); //!< Replace gas balance by total mass balance
-SET_PROP(DissolutionTypeTag, Formulation)
+SET_INT_PROP(Dissolution, ReplaceCompEqIdx, 1); //!< Replace gas balance by total mass balance
+SET_PROP(Dissolution, Formulation)
 { static constexpr auto value = TwoPFormulation::p1s0; };
 
 } // end namespace Properties

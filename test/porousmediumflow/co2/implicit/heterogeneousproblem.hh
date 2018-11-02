@@ -56,51 +56,51 @@ template <class TypeTag>
 class HeterogeneousProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(HeterogeneousTypeTag, INHERITS_FROM(TwoPTwoCCO2));
-NEW_TYPE_TAG(HeterogeneousBoxTypeTag, INHERITS_FROM(BoxModel, HeterogeneousTypeTag));
-NEW_TYPE_TAG(HeterogeneousCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, HeterogeneousTypeTag));
+NEW_TYPE_TAG(Heterogeneous, INHERITS_FROM(TwoPTwoCCO2));
+NEW_TYPE_TAG(HeterogeneousBox, INHERITS_FROM(BoxModel, Heterogeneous));
+NEW_TYPE_TAG(HeterogeneousCCTpfa, INHERITS_FROM(CCTpfaModel, Heterogeneous));
 
 //Set the grid type
-SET_TYPE_PROP(HeterogeneousTypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(Heterogeneous, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 
 // Set the problem property
-SET_TYPE_PROP(HeterogeneousTypeTag, Problem, HeterogeneousProblem<TypeTag>);
+SET_TYPE_PROP(Heterogeneous, Problem, HeterogeneousProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(HeterogeneousTypeTag, SpatialParams, HeterogeneousSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+SET_TYPE_PROP(Heterogeneous, SpatialParams, HeterogeneousSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
                                                                               typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set fluid configuration
-SET_TYPE_PROP(HeterogeneousTypeTag, FluidSystem,
+SET_TYPE_PROP(Heterogeneous, FluidSystem,
     FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
                            HeterogeneousCO2Tables::CO2Tables,
                            Components::TabulatedComponent<Components::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>>,
                            FluidSystems::BrineCO2DefaultPolicy</*constantSalinity=*/true, /*simpleButFast=*/true>>);
 
 // Use Moles
-SET_BOOL_PROP(HeterogeneousTypeTag, UseMoles, false);
+SET_BOOL_PROP(Heterogeneous, UseMoles, false);
 
 #if !ISOTHERMAL
-NEW_TYPE_TAG(HeterogeneousNITypeTag, INHERITS_FROM(TwoPTwoCCO2NI));
-NEW_TYPE_TAG(HeterogeneousNIBoxTypeTag, INHERITS_FROM(BoxModel, HeterogeneousNITypeTag));
-NEW_TYPE_TAG(HeterogeneousNICCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, HeterogeneousNITypeTag));
+NEW_TYPE_TAG(HeterogeneousNI, INHERITS_FROM(TwoPTwoCCO2NI));
+NEW_TYPE_TAG(HeterogeneousNIBox, INHERITS_FROM(BoxModel, HeterogeneousNI));
+NEW_TYPE_TAG(HeterogeneousNICCTpfa, INHERITS_FROM(CCTpfaModel, HeterogeneousNI));
 
 // Set the grid type
-SET_TYPE_PROP(HeterogeneousNITypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(HeterogeneousNI, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 
 // Set the problem property
-SET_TYPE_PROP(HeterogeneousNITypeTag, Problem, HeterogeneousProblem<TypeTag>);
+SET_TYPE_PROP(HeterogeneousNI, Problem, HeterogeneousProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(HeterogeneousNITypeTag, SpatialParams,HeterogeneousSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+SET_TYPE_PROP(HeterogeneousNI, SpatialParams,HeterogeneousSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
                                                                                typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set fluid configuration
-SET_TYPE_PROP(HeterogeneousNITypeTag, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
+SET_TYPE_PROP(HeterogeneousNI, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                         HeterogeneousCO2Tables::CO2Tables>);
 
 // Use Moles
-SET_BOOL_PROP(HeterogeneousNITypeTag, UseMoles, false);
+SET_BOOL_PROP(HeterogeneousNI, UseMoles, false);
 #endif
 } // end namespace Properties
 

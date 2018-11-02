@@ -3,7 +3,7 @@ add_input_file_links()
 # tracer tests
 dune_add_test(NAME test_maxwellstefan_tpfa
               SOURCES test_tracer_maxwellstefan.cc
-              COMPILE_DEFINITIONS TYPETAG=MaxwellStefanTestCCTypeTag
+              COMPILE_DEFINITIONS TYPETAG=MaxwellStefanTestCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/cctracermaxwellstefan-reference.vtu
@@ -12,7 +12,7 @@ dune_add_test(NAME test_maxwellstefan_tpfa
 
 dune_add_test(NAME test_maxwellstefan_box
               SOURCES test_tracer_maxwellstefan.cc
-              COMPILE_DEFINITIONS TYPETAG=MaxwellStefanTestBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=MaxwellStefanTestBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/boxtracermaxwellstefan-reference.vtu

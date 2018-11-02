@@ -41,18 +41,18 @@ template <class TypeTag>
 class PoroElasticProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(PoroElasticTypeTag, INHERITS_FROM(BoxModel, PoroElastic));
+NEW_TYPE_TAG(TestPoroElastic, INHERITS_FROM(BoxModel, PoroElastic));
 // Set the grid type
-SET_TYPE_PROP(PoroElasticTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TestPoroElastic, Grid, Dune::YaspGrid<2>);
 // Set the problem property
-SET_TYPE_PROP(PoroElasticTypeTag, Problem, Dumux::PoroElasticProblem<TypeTag>);
+SET_TYPE_PROP(TestPoroElastic, Problem, Dumux::PoroElasticProblem<TypeTag>);
 // The fluid phase consists of one constant component
-SET_TYPE_PROP(PoroElasticTypeTag,
+SET_TYPE_PROP(TestPoroElastic,
               FluidSystem,
               Dumux::FluidSystems::OnePLiquid< typename GET_PROP_TYPE(TypeTag, Scalar),
                                                Dumux::Components::Constant<0, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 // The spatial parameters property
-SET_TYPE_PROP(PoroElasticTypeTag, SpatialParams, PoroElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
+SET_TYPE_PROP(TestPoroElastic, SpatialParams, PoroElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                            typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
 }
 

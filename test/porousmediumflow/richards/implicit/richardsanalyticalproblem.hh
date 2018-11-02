@@ -59,18 +59,18 @@ class RichardsAnalyticalProblem;
 // Specify the properties for the analytical problem
 //////////
 namespace Properties {
-NEW_TYPE_TAG(RichardsAnalyticalTypeTag, INHERITS_FROM(Richards));
-NEW_TYPE_TAG(RichardsAnalyticalBoxTypeTag, INHERITS_FROM(BoxModel, RichardsAnalyticalTypeTag));
-NEW_TYPE_TAG(RichardsAnalyticalCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsAnalyticalTypeTag));
+NEW_TYPE_TAG(RichardsAnalytical, INHERITS_FROM(Richards));
+NEW_TYPE_TAG(RichardsAnalyticalBox, INHERITS_FROM(BoxModel, RichardsAnalytical));
+NEW_TYPE_TAG(RichardsAnalyticalCC, INHERITS_FROM(CCTpfaModel, RichardsAnalytical));
 
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsAnalyticalTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(RichardsAnalytical, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsAnalyticalTypeTag, Problem, RichardsAnalyticalProblem<TypeTag>);
+SET_TYPE_PROP(RichardsAnalytical, Problem, RichardsAnalyticalProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_PROP(RichardsAnalyticalTypeTag, SpatialParams)
+SET_PROP(RichardsAnalytical, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

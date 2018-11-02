@@ -48,17 +48,17 @@ template <class TypeTag>
 class SagdProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(SagdTypeTag, INHERITS_FROM(ThreePWaterOilNI));
-NEW_TYPE_TAG(ThreePWaterOilSagdBoxTypeTag, INHERITS_FROM(BoxModel, SagdTypeTag));
+NEW_TYPE_TAG(Sagd, INHERITS_FROM(ThreePWaterOilNI));
+NEW_TYPE_TAG(ThreePWaterOilSagdBox, INHERITS_FROM(BoxModel, Sagd));
 
 // Set the grid type
-SET_TYPE_PROP(SagdTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(Sagd, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(SagdTypeTag, Problem, Dumux::SagdProblem<TypeTag>);
+SET_TYPE_PROP(Sagd, Problem, Dumux::SagdProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_PROP(SagdTypeTag, SpatialParams)
+SET_PROP(Sagd, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -66,16 +66,16 @@ SET_PROP(SagdTypeTag, SpatialParams)
 };
 
 // Set the fluid system
-SET_TYPE_PROP(SagdTypeTag,
+SET_TYPE_PROP(Sagd,
               FluidSystem,
               Dumux::FluidSystems::H2OHeavyOil<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-SET_BOOL_PROP(SagdTypeTag, OnlyGasPhaseCanDisappear, true);
+SET_BOOL_PROP(Sagd, OnlyGasPhaseCanDisappear, true);
 
-SET_BOOL_PROP(SagdTypeTag, UseMoles, true);
+SET_BOOL_PROP(Sagd, UseMoles, true);
 
 // Set the fluid system
-SET_PROP(SagdTypeTag, SolidSystem)
+SET_PROP(Sagd, SolidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using InertComponent = Components::Constant<1, Scalar>;

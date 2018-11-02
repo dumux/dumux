@@ -50,25 +50,25 @@ template <class TypeTag>
 class ThreePNIConvectionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(ThreePNIConvectionTypeTag, INHERITS_FROM(ThreePNI));
-NEW_TYPE_TAG(ThreePNIConvectionBoxTypeTag, INHERITS_FROM(BoxModel, ThreePNIConvectionTypeTag));
-NEW_TYPE_TAG(ThreePNIConvectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ThreePNIConvectionTypeTag));
-NEW_TYPE_TAG(ThreePNIConvectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, ThreePNIConvectionTypeTag));
+NEW_TYPE_TAG(ThreePNIConvection, INHERITS_FROM(ThreePNI));
+NEW_TYPE_TAG(ThreePNIConvectionBox, INHERITS_FROM(BoxModel, ThreePNIConvection));
+NEW_TYPE_TAG(ThreePNIConvectionCCTpfa, INHERITS_FROM(CCTpfaModel, ThreePNIConvection));
+NEW_TYPE_TAG(ThreePNIConvectionCCMpfa, INHERITS_FROM(CCMpfaModel, ThreePNIConvection));
 
 // Set the grid type
-SET_TYPE_PROP(ThreePNIConvectionTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ThreePNIConvection, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ThreePNIConvectionTypeTag, Problem, ThreePNIConvectionProblem<TypeTag>);
+SET_TYPE_PROP(ThreePNIConvection, Problem, ThreePNIConvectionProblem<TypeTag>);
 
 
 // Set the fluid system
-SET_TYPE_PROP(ThreePNIConvectionTypeTag,
+SET_TYPE_PROP(ThreePNIConvection,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
-SET_PROP(ThreePNIConvectionTypeTag, SpatialParams)
+SET_PROP(ThreePNIConvection, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

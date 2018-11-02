@@ -51,10 +51,10 @@ class ThreeDChannelTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(ThreeDChannelTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+NEW_TYPE_TAG(ThreeDChannelTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
 
 // the fluid system
-SET_PROP(ThreeDChannelTestTypeTag, FluidSystem)
+SET_PROP(ThreeDChannelTest, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
@@ -62,17 +62,17 @@ SET_PROP(ThreeDChannelTestTypeTag, FluidSystem)
 
 // Set the grid type
 #if DIM_3D
-SET_TYPE_PROP(ThreeDChannelTestTypeTag, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(ThreeDChannelTest, Grid, Dune::YaspGrid<3>);
 #else
-SET_TYPE_PROP(ThreeDChannelTestTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ThreeDChannelTest, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(ThreeDChannelTestTypeTag, Problem, ThreeDChannelTestProblem<TypeTag> );
+SET_TYPE_PROP(ThreeDChannelTest, Problem, ThreeDChannelTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ThreeDChannelTestTypeTag, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(ThreeDChannelTestTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(ThreeDChannelTestTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(ThreeDChannelTest, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(ThreeDChannelTest, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(ThreeDChannelTest, EnableGridVolumeVariablesCache, true);
 }
 
 /*!

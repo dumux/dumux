@@ -43,7 +43,7 @@ class GridAdapt;
 namespace Properties
 {
 //! Grid adaption type tag for all sequential models.
-NEW_TYPE_TAG(GridAdaptTypeTag);
+NEW_TYPE_TAG(GridAdapt);
 
 //! Defines if the grid is h-adaptive
 NEW_PROP_TAG( AdaptiveGrid);
@@ -64,17 +64,17 @@ NEW_PROP_TAG(GridAdaptRefineThreshold);
 NEW_PROP_TAG(GridAdaptCoarsenThreshold);
 
 //no adaptive grid
-SET_BOOL_PROP(GridAdaptTypeTag, AdaptiveGrid, false);
+SET_BOOL_PROP(GridAdapt, AdaptiveGrid, false);
 
 //Set default class for adaptation initialization indicator
-SET_TYPE_PROP(GridAdaptTypeTag,  AdaptionInitializationIndicator, GridAdaptInitializationIndicatorDefault<TypeTag>);
+SET_TYPE_PROP(GridAdapt,  AdaptionInitializationIndicator, GridAdaptInitializationIndicatorDefault<TypeTag>);
 //Set default class for adaptation
-SET_TYPE_PROP(GridAdaptTypeTag,  GridAdaptModel, GridAdapt<TypeTag, GET_PROP_VALUE(TypeTag, AdaptiveGrid)>);
+SET_TYPE_PROP(GridAdapt,  GridAdaptModel, GridAdapt<TypeTag, GET_PROP_VALUE(TypeTag, AdaptiveGrid)>);
 
 
 //standard setting
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptRefineThreshold, 0.0);
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptCoarsenThreshold, 0.0);
+SET_SCALAR_PROP(GridAdapt, GridAdaptRefineThreshold, 0.0);
+SET_SCALAR_PROP(GridAdapt, GridAdaptCoarsenThreshold, 0.0);
 } // namespace Properties
 } // namespace Dumux
 

@@ -41,34 +41,34 @@ class StokesSubProblem;
 namespace Properties
 {
 #if !NONISOTHERMAL
-NEW_TYPE_TAG(StokesOnePTwoCTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+NEW_TYPE_TAG(StokesOnePTwoC, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 #else
-NEW_TYPE_TAG(StokesOnePTwoCTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI));
+NEW_TYPE_TAG(StokesOnePTwoC, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI));
 #endif
 
 
 // Set the grid type
-SET_TYPE_PROP(StokesOnePTwoCTypeTag, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(StokesOnePTwoC, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // The fluid system
-SET_PROP(StokesOnePTwoCTypeTag, FluidSystem)
+SET_PROP(StokesOnePTwoC, FluidSystem)
 {
   using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
   static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the water phase
   using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
-SET_INT_PROP(StokesOnePTwoCTypeTag, ReplaceCompEqIdx, 3);
+SET_INT_PROP(StokesOnePTwoC, ReplaceCompEqIdx, 3);
 
 // Use formulation based on mass fractions
-SET_BOOL_PROP(StokesOnePTwoCTypeTag, UseMoles, true);
+SET_BOOL_PROP(StokesOnePTwoC, UseMoles, true);
 
 // Set the problem property
-SET_TYPE_PROP(StokesOnePTwoCTypeTag, Problem, Dumux::StokesSubProblem<TypeTag> );
+SET_TYPE_PROP(StokesOnePTwoC, Problem, Dumux::StokesSubProblem<TypeTag> );
 
-SET_BOOL_PROP(StokesOnePTwoCTypeTag, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(StokesOnePTwoCTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(StokesOnePTwoCTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(StokesOnePTwoC, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(StokesOnePTwoC, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(StokesOnePTwoC, EnableGridVolumeVariablesCache, true);
 
 }
 

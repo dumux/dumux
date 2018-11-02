@@ -45,22 +45,22 @@ template <class TypeTag>
 class TwoPNCDiffusionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TwoPNCDiffusionTypeTag, INHERITS_FROM(TwoPNC));
-NEW_TYPE_TAG(TwoPNCDiffusionCCTypeTag, INHERITS_FROM(CCTpfaModel, TwoPNCDiffusionTypeTag));
+NEW_TYPE_TAG(TwoPNCDiffusion, INHERITS_FROM(TwoPNC));
+NEW_TYPE_TAG(TwoPNCDiffusionCC, INHERITS_FROM(CCTpfaModel, TwoPNCDiffusion));
 
 // Set the grid type
-SET_TYPE_PROP(TwoPNCDiffusionTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TwoPNCDiffusion, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(TwoPNCDiffusionTypeTag, Problem, TwoPNCDiffusionProblem<TypeTag>);
+SET_TYPE_PROP(TwoPNCDiffusion, Problem, TwoPNCDiffusionProblem<TypeTag>);
 
 // // Set fluid configuration
-SET_TYPE_PROP(TwoPNCDiffusionTypeTag,
+SET_TYPE_PROP(TwoPNCDiffusion,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_PROP(TwoPNCDiffusionTypeTag, SpatialParams)
+SET_PROP(TwoPNCDiffusion, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -68,13 +68,13 @@ SET_PROP(TwoPNCDiffusionTypeTag, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(TwoPNCDiffusionTypeTag, UseMoles, true);
+SET_BOOL_PROP(TwoPNCDiffusion, UseMoles, true);
 
 //! Here we set FicksLaw or TwoPNCDiffusionsLaw
-SET_TYPE_PROP(TwoPNCDiffusionTypeTag, MolecularDiffusionType, DIFFUSIONTYPE);
+SET_TYPE_PROP(TwoPNCDiffusion, MolecularDiffusionType, DIFFUSIONTYPE);
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
-SET_PROP(TwoPNCDiffusionTypeTag, Formulation)
+SET_PROP(TwoPNCDiffusion, Formulation)
 { static constexpr auto value = TwoPFormulation::p0s1; };
 
 } // end namespace Properties

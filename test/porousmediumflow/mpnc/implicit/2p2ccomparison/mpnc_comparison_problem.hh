@@ -50,18 +50,18 @@ template <class TypeTag>
 class MPNCComparisonProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(MPNCComparisonTypeTag, INHERITS_FROM(MPNC));
-NEW_TYPE_TAG(MPNCComparisonBoxTypeTag, INHERITS_FROM(BoxModel, MPNCComparisonTypeTag));
-NEW_TYPE_TAG(MPNCComparisonCCTypeTag, INHERITS_FROM(CCTpfaModel, MPNCComparisonTypeTag));
+NEW_TYPE_TAG(MPNCComparison, INHERITS_FROM(MPNC));
+NEW_TYPE_TAG(MPNCComparisonBox, INHERITS_FROM(BoxModel, MPNCComparison));
+NEW_TYPE_TAG(MPNCComparisonCC, INHERITS_FROM(CCTpfaModel, MPNCComparison));
 
 // Set the grid type
-SET_TYPE_PROP(MPNCComparisonTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(MPNCComparison, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(MPNCComparisonTypeTag, Problem, MPNCComparisonProblem<TypeTag>);
+SET_TYPE_PROP(MPNCComparison, Problem, MPNCComparisonProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_PROP(MPNCComparisonTypeTag, SpatialParams)
+SET_PROP(MPNCComparison, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -70,14 +70,14 @@ SET_PROP(MPNCComparisonTypeTag, SpatialParams)
 };
 
 // Set fluid configuration
-SET_TYPE_PROP(MPNCComparisonTypeTag,
+SET_TYPE_PROP(MPNCComparison,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // decide which type to use for floating values (double / quad)
-SET_TYPE_PROP(MPNCComparisonTypeTag, Scalar, double);
-SET_BOOL_PROP(MPNCComparisonTypeTag, UseMoles, true);
-SET_TYPE_PROP(MPNCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields);
+SET_TYPE_PROP(MPNCComparison, Scalar, double);
+SET_BOOL_PROP(MPNCComparison, UseMoles, true);
+SET_TYPE_PROP(MPNCComparison, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields);
 } // end namespace Dumux
 
 /*!

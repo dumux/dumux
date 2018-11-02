@@ -48,21 +48,21 @@ template <class TypeTag>
 class WaterAirProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(WaterAirTypeTag, INHERITS_FROM(TwoPTwoCNI));
-NEW_TYPE_TAG(WaterAirBoxTypeTag, INHERITS_FROM(BoxModel, WaterAirTypeTag));
-NEW_TYPE_TAG(WaterAirCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, WaterAirTypeTag));
+NEW_TYPE_TAG(WaterAir, INHERITS_FROM(TwoPTwoCNI));
+NEW_TYPE_TAG(WaterAirBox, INHERITS_FROM(BoxModel, WaterAir));
+NEW_TYPE_TAG(WaterAirCCTpfa, INHERITS_FROM(CCTpfaModel, WaterAir));
 
 // Set the grid type
-SET_TYPE_PROP(WaterAirTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(WaterAir, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(WaterAirTypeTag, Problem, WaterAirProblem<TypeTag>);
+SET_TYPE_PROP(WaterAir, Problem, WaterAirProblem<TypeTag>);
 
 // Set the wetting phase
-SET_TYPE_PROP(WaterAirTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(WaterAir, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
-SET_PROP(WaterAirTypeTag, SpatialParams)
+SET_PROP(WaterAir, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -70,7 +70,7 @@ SET_PROP(WaterAirTypeTag, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(WaterAirTypeTag, UseMoles, true);
+SET_BOOL_PROP(WaterAir, UseMoles, true);
 } // end namespace Dumux
 
 /*!

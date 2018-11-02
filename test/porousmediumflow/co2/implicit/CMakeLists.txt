@@ -7,7 +7,7 @@ dune_symlink_to_source_files(FILES grids)
 # Depending on the order of the elements, the porosity would differ in these cases.
 dune_add_test(NAME test_co2_box
               SOURCES test_co2_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=HeterogeneousBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=HeterogeneousBox
               CMAKE_GUARD "( dune-alugrid_FOUND AND DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -18,7 +18,7 @@ dune_add_test(NAME test_co2_box
 
 dune_add_test(NAME test_co2_tpfa
               SOURCES test_co2_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=HeterogeneousCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=HeterogeneousCCTpfa
               CMAKE_GUARD "( dune-alugrid_FOUND AND DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -29,7 +29,7 @@ dune_add_test(NAME test_co2_tpfa
 # build target for the CO2 non-isothermal test problem
 dune_add_test(NAME test_co2ni_box
               SOURCES test_co2_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=HeterogeneousNIBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=HeterogeneousNIBox
                                   ISOTHERMAL=0
               CMAKE_GUARD "( dune-alugrid_FOUND AND DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -41,7 +41,7 @@ dune_add_test(NAME test_co2ni_box
 
 dune_add_test(NAME test_co2ni_tpfa
               SOURCES test_co2_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=HeterogeneousNICCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=HeterogeneousNICCTpfa
                                   ISOTHERMAL=0
               CMAKE_GUARD "( dune-alugrid_FOUND AND DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

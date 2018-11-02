@@ -55,36 +55,36 @@ class IMPESTestProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(IMPESTestTypeTag, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, TestIMPESSpatialParams));
+NEW_TYPE_TAG(IMPESTest, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, TestIMPESSpatialParams));
 
 // Set the grid type
-SET_TYPE_PROP(IMPESTestTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(IMPESTest, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(IMPESTestTypeTag, Problem, IMPESTestProblem<TypeTag>);
+SET_TYPE_PROP(IMPESTest, Problem, IMPESTestProblem<TypeTag>);
 
 ////////////////////////////////////////////////////////////////////////
 //Switch to a p_n-S_w formulation
 //
-//SET_INT_PROP(IMPESTestTypeTag, Formulation, SequentialTwoPCommonIndices::pnsn);
+//SET_INT_PROP(IMPESTest, Formulation, SequentialTwoPCommonIndices::pnsn);
 //
 ////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////
 //Switch to a p_global-S_w formulation
 //
-//SET_INT_PROP(IMPESTestTypeTag, Formulation, SequentialTwoPCommonIndices::pGlobalSw);
+//SET_INT_PROP(IMPESTest, Formulation, SequentialTwoPCommonIndices::pGlobalSw);
 //
 //Define the capillary pressure term in the transport equation -> only needed in case of a p_global-S_w formulation!
-//SET_TYPE_PROP(IMPESTestTypeTag, CapillaryFlux, CapillaryDiffusion<TypeTag>);
+//SET_TYPE_PROP(IMPESTest, CapillaryFlux, CapillaryDiffusion<TypeTag>);
 //
 //Define the gravity term in the transport equation -> only needed in case of a p_global-S_w formulation!
-//SET_TYPE_PROP(IMPESTestTypeTag, GravityFlux, GravityPart<TypeTag>);
+//SET_TYPE_PROP(IMPESTest, GravityFlux, GravityPart<TypeTag>);
 //
 ////////////////////////////////////////////////////////////////////////
 
 // Set the fluid system
-SET_PROP(IMPESTestTypeTag, FluidSystem)
+SET_PROP(IMPESTest, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
@@ -92,14 +92,14 @@ SET_PROP(IMPESTestTypeTag, FluidSystem)
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
-SET_TYPE_PROP(IMPESTestTypeTag, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
+SET_TYPE_PROP(IMPESTest, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
 
 // set up an additional problem where the AMG backend is used
-NEW_TYPE_TAG(IMPESTestWithAMGTypeTag, INHERITS_FROM(IMPESTestTypeTag));
+NEW_TYPE_TAG(IMPESTestWithAMG, INHERITS_FROM(IMPESTest));
 // use the AMG backend for the corresponding test
-SET_TYPE_PROP(IMPESTestWithAMGTypeTag, LinearSolver, AMGBackend<TypeTag>);
+SET_TYPE_PROP(IMPESTestWithAMG, LinearSolver, AMGBackend<TypeTag>);
 // Set the grid type
-SET_TYPE_PROP(IMPESTestWithAMGTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(IMPESTestWithAMG, Grid, Dune::YaspGrid<2>);
 
 } // end namespace Properties
 

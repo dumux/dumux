@@ -50,23 +50,23 @@ class OnePTwoCNIConvectionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTwoCNIConvectionTypeTag, INHERITS_FROM(OnePNCNI));
-NEW_TYPE_TAG(OnePTwoCNIConvectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConvectionTypeTag));
-NEW_TYPE_TAG(OnePTwoCNIConvectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePTwoCNIConvectionTypeTag));
-NEW_TYPE_TAG(OnePTwoCNIConvectionBoxTypeTag, INHERITS_FROM(BoxModel, OnePTwoCNIConvectionTypeTag));
+NEW_TYPE_TAG(OnePTwoCNIConvection, INHERITS_FROM(OnePNCNI));
+NEW_TYPE_TAG(OnePTwoCNIConvectionCCTpfa, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConvection));
+NEW_TYPE_TAG(OnePTwoCNIConvectionCCMpfa, INHERITS_FROM(CCMpfaModel, OnePTwoCNIConvection));
+NEW_TYPE_TAG(OnePTwoCNIConvectionBox, INHERITS_FROM(BoxModel, OnePTwoCNIConvection));
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(OnePTwoCNIConvectionTypeTag, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(OnePTwoCNIConvection, Grid, Dune::UGGrid<2>);
 #else
-SET_TYPE_PROP(OnePTwoCNIConvectionTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(OnePTwoCNIConvection, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(OnePTwoCNIConvectionTypeTag, Problem, OnePTwoCNIConvectionProblem<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIConvection, Problem, OnePTwoCNIConvectionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(OnePTwoCNIConvectionTypeTag, FluidSystem)
+SET_PROP(OnePTwoCNIConvection, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
@@ -74,7 +74,7 @@ SET_PROP(OnePTwoCNIConvectionTypeTag, FluidSystem)
 };
 
 // Set the spatial parameters
-SET_PROP(OnePTwoCNIConvectionTypeTag, SpatialParams)
+SET_PROP(OnePTwoCNIConvection, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -82,7 +82,7 @@ SET_PROP(OnePTwoCNIConvectionTypeTag, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCNIConvectionTypeTag, UseMoles, true);
+SET_BOOL_PROP(OnePTwoCNIConvection, UseMoles, true);
 }
 
 

@@ -43,26 +43,26 @@ class OnePSingularityProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePSingularityTypeTag, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePSingularityBoxTypeTag, INHERITS_FROM(BoxModel, OnePSingularityTypeTag));
-NEW_TYPE_TAG(OnePSingularityCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePSingularityTypeTag));
+NEW_TYPE_TAG(OnePSingularity, INHERITS_FROM(OneP));
+NEW_TYPE_TAG(OnePSingularityBox, INHERITS_FROM(BoxModel, OnePSingularity));
+NEW_TYPE_TAG(OnePSingularityCCTpfa, INHERITS_FROM(CCTpfaModel, OnePSingularity));
 
 // the fluid system
-SET_PROP(OnePSingularityTypeTag, FluidSystem)
+SET_PROP(OnePSingularity, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Set the grid type
-SET_TYPE_PROP(OnePSingularityTypeTag, Grid,
+SET_TYPE_PROP(OnePSingularity, Grid,
     Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(OnePSingularityTypeTag, Problem, OnePSingularityProblem<TypeTag> );
+SET_TYPE_PROP(OnePSingularity, Problem, OnePSingularityProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_PROP(OnePSingularityTypeTag, SpatialParams)
+SET_PROP(OnePSingularity, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

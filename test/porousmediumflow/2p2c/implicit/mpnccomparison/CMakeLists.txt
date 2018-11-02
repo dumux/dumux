@@ -2,7 +2,7 @@ add_input_file_links()
 
 dune_add_test(SOURCES test_2p2c_comparison_fv.cc
               NAME test_2p2c_comparison_box
-              COMPILE_DEFINITIONS TYPETAG=TwoPTwoCComparisonBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=TwoPTwoCComparisonBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/mpnc_2p2c_box-reference.vtu
@@ -11,7 +11,7 @@ dune_add_test(SOURCES test_2p2c_comparison_fv.cc
 
 dune_add_test(SOURCES test_2p2c_comparison_fv.cc
               NAME test_2p2c_comparison_tpfa
-              COMPILE_DEFINITIONS TYPETAG=TwoPTwoCComparisonCCTypeTag
+              COMPILE_DEFINITIONS TYPETAG=TwoPTwoCComparisonCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/mpnc_2p2c_tpfa-reference.vtu

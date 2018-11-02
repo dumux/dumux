@@ -3,7 +3,7 @@ add_input_file_links()
 # isothermal tests
 dune_add_test(NAME test_box3p
               SOURCES test_3p_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/infiltration3pbox-reference.vtu
@@ -12,7 +12,7 @@ dune_add_test(NAME test_box3p
 
 dune_add_test(NAME test_cc3p
               SOURCES test_3p_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/infiltration3pcc-reference.vtu
@@ -22,7 +22,7 @@ dune_add_test(NAME test_cc3p
 # non-isothermal tests
 dune_add_test(NAME test_box3pniconvection
               SOURCES test_3pni_fv_convection.cc
-              COMPILE_DEFINITIONS TYPETAG=ThreePNIConvectionBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=ThreePNIConvectionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/3pniconvectionbox-reference.vtu
@@ -32,7 +32,7 @@ dune_add_test(NAME test_box3pniconvection
 
 dune_add_test(NAME test_cc3pniconvection
               SOURCES test_3pni_fv_convection.cc
-              COMPILE_DEFINITIONS TYPETAG=ThreePNIConvectionCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=ThreePNIConvectionCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/3pniconvectioncc-reference.vtu
@@ -42,7 +42,7 @@ dune_add_test(NAME test_cc3pniconvection
 
 dune_add_test(NAME test_box3pniconduction
               SOURCES test_3pni_fv_conduction.cc
-              COMPILE_DEFINITIONS TYPETAG=ThreePNIConductionBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=ThreePNIConductionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/3pniconductionbox-reference.vtu
@@ -52,7 +52,7 @@ dune_add_test(NAME test_box3pniconduction
 
 dune_add_test(NAME test_cc3pniconduction
               SOURCES test_3pni_fv_conduction.cc
-              COMPILE_DEFINITIONS TYPETAG=ThreePNIConductionCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=ThreePNIConductionCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/3pniconductioncc-reference.vtu

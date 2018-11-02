@@ -55,15 +55,15 @@
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(StokesOnePTypeTag, CouplingManager)
+SET_PROP(StokesOneP, CouplingManager)
 {
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, TTAG(DarcyOnePTypeTag)>;
+    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, TTAG(DarcyOneP)>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
-SET_PROP(DarcyOnePTypeTag, CouplingManager)
+SET_PROP(DarcyOneP, CouplingManager)
 {
-    using Traits = StaggeredMultiDomainTraits<TTAG(StokesOnePTypeTag), TTAG(StokesOnePTypeTag), TypeTag>;
+    using Traits = StaggeredMultiDomainTraits<TTAG(StokesOneP), TTAG(StokesOneP), TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
@@ -85,8 +85,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using StokesTypeTag = TTAG(StokesOnePTypeTag);
-    using DarcyTypeTag = TTAG(DarcyOnePTypeTag);
+    using StokesTypeTag = TTAG(StokesOneP);
+    using DarcyTypeTag = TTAG(DarcyOneP);
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains

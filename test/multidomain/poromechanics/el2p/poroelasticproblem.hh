@@ -45,21 +45,21 @@ class PoroElasticSubProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(PoroElasticSubTypeTag, INHERITS_FROM(BoxModel, PoroElastic));
+NEW_TYPE_TAG(PoroElasticSub, INHERITS_FROM(BoxModel, PoroElastic));
 // Set the grid type
-SET_TYPE_PROP(PoroElasticSubTypeTag, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(PoroElasticSub, Grid, Dune::YaspGrid<3>);
 // Set the problem property
-SET_TYPE_PROP(PoroElasticSubTypeTag, Problem, Dumux::PoroElasticSubProblem<TypeTag>);
+SET_TYPE_PROP(PoroElasticSub, Problem, Dumux::PoroElasticSubProblem<TypeTag>);
 
 // Set the fluid system for TwoPSubProblem
-SET_PROP(PoroElasticSubTypeTag, FluidSystem)
+SET_PROP(PoroElasticSub, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
 };
 
 // The spatial parameters property
-SET_TYPE_PROP(PoroElasticSubTypeTag, SpatialParams, PoroElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
+SET_TYPE_PROP(PoroElasticSub, SpatialParams, PoroElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                               typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
 
 } // end namespace Properties

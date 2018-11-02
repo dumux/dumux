@@ -2,10 +2,10 @@
 add_input_file_links()
 
 add_executable(test_2p1cni_tpfa EXCLUDE_FROM_ALL test_2p1c_fv.cc)
-target_compile_definitions(test_2p1cni_tpfa PUBLIC "TYPETAG=TwoPOneCNICCTpfaTypeTag")
+target_compile_definitions(test_2p1cni_tpfa PUBLIC "TYPETAG=TwoPOneCNICCTpfa")
 
 add_executable(test_2p1cni_box EXCLUDE_FROM_ALL test_2p1c_fv.cc)
-target_compile_definitions(test_2p1cni_box PUBLIC "TYPETAG=TwoPOneCNIBoxTypeTag")
+target_compile_definitions(test_2p1cni_box PUBLIC "TYPETAG=TwoPOneCNIBox")
 
 
 dune_add_test(NAME test_2p1cni_box_waterwet

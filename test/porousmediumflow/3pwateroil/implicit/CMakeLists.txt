@@ -2,7 +2,7 @@ add_input_file_links()
 
 dune_add_test(NAME test_box3pwateroil
               SOURCES test_box3pwateroil.cc
-              COMPILE_DEFINITIONS TYPETAG=ThreePWaterOilSagdBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=ThreePWaterOilSagdBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                 CMD_ARGS --script fuzzy
             --files ${CMAKE_SOURCE_DIR}/test/references/3pwateroilbox-reference.vtu

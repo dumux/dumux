@@ -48,29 +48,29 @@ template <class TypeTag>
 class RichardsNIEvaporationProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(RichardsNIEvaporationTypeTag, INHERITS_FROM(RichardsNI));
-NEW_TYPE_TAG(RichardsNIEvaporationBoxTypeTag, INHERITS_FROM(BoxModel, RichardsNIEvaporationTypeTag));
-NEW_TYPE_TAG(RichardsNIEvaporationCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsNIEvaporationTypeTag));
+NEW_TYPE_TAG(RichardsNIEvaporation, INHERITS_FROM(RichardsNI));
+NEW_TYPE_TAG(RichardsNIEvaporationBox, INHERITS_FROM(BoxModel, RichardsNIEvaporation));
+NEW_TYPE_TAG(RichardsNIEvaporationCC, INHERITS_FROM(CCTpfaModel, RichardsNIEvaporation));
 
 // Set the grid type
-SET_TYPE_PROP(RichardsNIEvaporationTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(RichardsNIEvaporation, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(RichardsNIEvaporationTypeTag, Problem,
+SET_TYPE_PROP(RichardsNIEvaporation, Problem,
               RichardsNIEvaporationProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(RichardsNIEvaporationTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+SET_TYPE_PROP(RichardsNIEvaporation, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_PROP(RichardsNIEvaporationTypeTag, SpatialParams)
+SET_PROP(RichardsNIEvaporation, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = RichardsNISpatialParams<FVGridGeometry, Scalar>;
 };
 
-SET_BOOL_PROP(RichardsNIEvaporationTypeTag, EnableWaterDiffusionInAir, true);
+SET_BOOL_PROP(RichardsNIEvaporation, EnableWaterDiffusionInAir, true);
 } // end namespace Properties
 
 /*!

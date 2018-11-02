@@ -47,37 +47,37 @@ class ChannelNCTestProblem;
 namespace Properties {
 
 #if !NONISOTHERMAL
-NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+NEW_TYPE_TAG(ChannelNCTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 #else
-NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI));
+NEW_TYPE_TAG(ChannelNCTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI));
 #endif
 
 // Select the fluid system
-SET_PROP(ChannelNCTestTypeTag, FluidSystem)
+SET_PROP(ChannelNCTest, FluidSystem)
 {
     using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
     static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
     using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
-SET_INT_PROP(ChannelNCTestTypeTag, ReplaceCompEqIdx, 0);
+SET_INT_PROP(ChannelNCTest, ReplaceCompEqIdx, 0);
 
 // Set the grid type
-SET_TYPE_PROP(ChannelNCTestTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ChannelNCTest, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ChannelNCTestTypeTag, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
+SET_TYPE_PROP(ChannelNCTest, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableFVGridGeometryCache, ENABLECACHING);
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridFluxVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridVolumeVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridFaceVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(ChannelNCTest, EnableFVGridGeometryCache, ENABLECACHING);
+SET_BOOL_PROP(ChannelNCTest, EnableGridFluxVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(ChannelNCTest, EnableGridVolumeVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(ChannelNCTest, EnableGridFaceVariablesCache, ENABLECACHING);
 
 // Use mole fraction formulation
 #if USE_MASS
-SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, false);
+SET_BOOL_PROP(ChannelNCTest, UseMoles, false);
 #else
-SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, true);
+SET_BOOL_PROP(ChannelNCTest, UseMoles, true);
 #endif
 
 }

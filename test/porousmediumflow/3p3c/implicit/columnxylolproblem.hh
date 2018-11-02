@@ -51,22 +51,22 @@ template <class TypeTag>
 class ColumnProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(ColumnTypeTag, INHERITS_FROM(ThreePThreeCNI));
-NEW_TYPE_TAG(ColumnBoxTypeTag, INHERITS_FROM(BoxModel, ColumnTypeTag));
-NEW_TYPE_TAG(ColumnCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ColumnTypeTag));
+NEW_TYPE_TAG(Column, INHERITS_FROM(ThreePThreeCNI));
+NEW_TYPE_TAG(ColumnBox, INHERITS_FROM(BoxModel, Column));
+NEW_TYPE_TAG(ColumnCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, Column));
 
 // Set the grid type
-SET_TYPE_PROP(ColumnTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(Column, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ColumnTypeTag, Problem, ColumnProblem<TypeTag>);
+SET_TYPE_PROP(Column, Problem, ColumnProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(ColumnTypeTag,
+SET_TYPE_PROP(Column,
               FluidSystem,
               FluidSystems::H2OAirXylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-SET_PROP(ColumnTypeTag, SolidSystem)
+SET_PROP(Column, SolidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ComponentOne = Dumux::Components::Constant<1, Scalar>;
@@ -77,7 +77,7 @@ SET_PROP(ColumnTypeTag, SolidSystem)
 
 
 //! The two-phase model uses the immiscible fluid state
-SET_PROP(ColumnTypeTag, SolidState)
+SET_PROP(Column, SolidState)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -87,7 +87,7 @@ public:
 };
 
 // Set the spatial parameters
-SET_PROP(ColumnTypeTag, SpatialParams)
+SET_PROP(Column, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

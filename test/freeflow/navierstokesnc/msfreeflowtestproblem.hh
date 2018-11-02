@@ -44,26 +44,26 @@ class MaxwellStefanNCTestProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(MaxwellStefanNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+NEW_TYPE_TAG(MaxwellStefanNCTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 
-SET_INT_PROP(MaxwellStefanNCTestTypeTag, ReplaceCompEqIdx, 0);
+SET_INT_PROP(MaxwellStefanNCTest, ReplaceCompEqIdx, 0);
 
 // Set the grid type
-SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(MaxwellStefanNCTest, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, Problem, Dumux::MaxwellStefanNCTestProblem<TypeTag> );
+SET_TYPE_PROP(MaxwellStefanNCTest, Problem, Dumux::MaxwellStefanNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(MaxwellStefanNCTestTypeTag, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(MaxwellStefanNCTest, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(MaxwellStefanNCTestTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(MaxwellStefanNCTestTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(MaxwellStefanNCTest, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(MaxwellStefanNCTest, EnableGridVolumeVariablesCache, true);
 
-SET_BOOL_PROP(MaxwellStefanNCTestTypeTag, UseMoles, true);
+SET_BOOL_PROP(MaxwellStefanNCTest, UseMoles, true);
 
 
 //! Here we set FicksLaw or MaxwellStefansLaw
-SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, MolecularDiffusionType, MaxwellStefansLaw<TypeTag>);
+SET_TYPE_PROP(MaxwellStefanNCTest, MolecularDiffusionType, MaxwellStefansLaw<TypeTag>);
 
 
 /*!
@@ -181,7 +181,7 @@ public:
     }
 };
 
-SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, FluidSystem, MaxwellStefanFluidSystem<TypeTag>);
+SET_TYPE_PROP(MaxwellStefanNCTest, FluidSystem, MaxwellStefanFluidSystem<TypeTag>);
 
 } //end namespace Property
 /*!

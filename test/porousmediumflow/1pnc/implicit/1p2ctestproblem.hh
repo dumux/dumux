@@ -50,23 +50,23 @@ class OnePTwoCTestProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(OnePTwoCTestTypeTag, INHERITS_FROM(OnePNC));
-NEW_TYPE_TAG(OnePTwoCTestBoxTypeTag, INHERITS_FROM(BoxModel, OnePTwoCTestTypeTag));
-NEW_TYPE_TAG(OnePTwoCTestCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePTwoCTestTypeTag));
-NEW_TYPE_TAG(OnePTwoCTestCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePTwoCTestTypeTag));
+NEW_TYPE_TAG(OnePTwoCTest, INHERITS_FROM(OnePNC));
+NEW_TYPE_TAG(OnePTwoCTestBox, INHERITS_FROM(BoxModel, OnePTwoCTest));
+NEW_TYPE_TAG(OnePTwoCTestCCTpfa, INHERITS_FROM(CCTpfaModel, OnePTwoCTest));
+NEW_TYPE_TAG(OnePTwoCTestCCMpfa, INHERITS_FROM(CCMpfaModel, OnePTwoCTest));
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(OnePTwoCTestTypeTag, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(OnePTwoCTest, Grid, Dune::UGGrid<2>);
 #else
-SET_TYPE_PROP(OnePTwoCTestTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(OnePTwoCTest, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(OnePTwoCTestTypeTag, Problem, OnePTwoCTestProblem<TypeTag>);
+SET_TYPE_PROP(OnePTwoCTest, Problem, OnePTwoCTestProblem<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(OnePTwoCTestTypeTag, FluidSystem)
+SET_PROP(OnePTwoCTest, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
@@ -74,7 +74,7 @@ SET_PROP(OnePTwoCTestTypeTag, FluidSystem)
 };
 
 // Set the spatial parameters
-SET_PROP(OnePTwoCTestTypeTag, SpatialParams)
+SET_PROP(OnePTwoCTest, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -82,7 +82,7 @@ SET_PROP(OnePTwoCTestTypeTag, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCTestTypeTag, UseMoles, true);
+SET_BOOL_PROP(OnePTwoCTest, UseMoles, true);
 }
 
 

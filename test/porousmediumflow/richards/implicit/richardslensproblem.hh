@@ -57,23 +57,23 @@ class RichardsLensProblem;
 
 // Specify the properties for the lens problem
 namespace Properties {
-NEW_TYPE_TAG(RichardsLensTypeTag, INHERITS_FROM(Richards));
-NEW_TYPE_TAG(RichardsLensBoxTypeTag, INHERITS_FROM(BoxModel, RichardsLensTypeTag));
-NEW_TYPE_TAG(RichardsLensCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsLensTypeTag));
+NEW_TYPE_TAG(RichardsLens, INHERITS_FROM(Richards));
+NEW_TYPE_TAG(RichardsLensBox, INHERITS_FROM(BoxModel, RichardsLens));
+NEW_TYPE_TAG(RichardsLensCC, INHERITS_FROM(CCTpfaModel, RichardsLens));
 
 #ifndef GRIDTYPE
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsLensTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(RichardsLens, Grid, Dune::YaspGrid<2>);
 #else
 // Use GRIDTYPE from CMakeLists.txt
-SET_TYPE_PROP(RichardsLensTypeTag, Grid, GRIDTYPE);
+SET_TYPE_PROP(RichardsLens, Grid, GRIDTYPE);
 #endif
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsLensTypeTag, Problem, RichardsLensProblem<TypeTag>);
+SET_TYPE_PROP(RichardsLens, Problem, RichardsLensProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsLensTypeTag, SpatialParams, RichardsLensSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+SET_TYPE_PROP(RichardsLens, SpatialParams, RichardsLensSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
                                                                             typename GET_PROP_TYPE(TypeTag, Scalar)>);
 } // end namespace Dumux
 

@@ -49,18 +49,18 @@ class RichardsWellTracerProblem;
 
 // Specify the properties for the lens problem
 namespace Properties {
-NEW_TYPE_TAG(RichardsWellTracerTypeTag, INHERITS_FROM(RichardsNC));
-NEW_TYPE_TAG(RichardsWellTracerBoxTypeTag, INHERITS_FROM(BoxModel, RichardsWellTracerTypeTag));
-NEW_TYPE_TAG(RichardsWellTracerCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsWellTracerTypeTag));
+NEW_TYPE_TAG(RichardsWellTracer, INHERITS_FROM(RichardsNC));
+NEW_TYPE_TAG(RichardsWellTracerBox, INHERITS_FROM(BoxModel, RichardsWellTracer));
+NEW_TYPE_TAG(RichardsWellTracerCC, INHERITS_FROM(CCTpfaModel, RichardsWellTracer));
 
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsWellTracerTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(RichardsWellTracer, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsWellTracerTypeTag, Problem, RichardsWellTracerProblem<TypeTag>);
+SET_TYPE_PROP(RichardsWellTracer, Problem, RichardsWellTracerProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_PROP(RichardsWellTracerTypeTag, SpatialParams)
+SET_PROP(RichardsWellTracer, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -68,7 +68,7 @@ SET_PROP(RichardsWellTracerTypeTag, SpatialParams)
 };
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsWellTracerTypeTag, PointSource, SolDependentPointSource<TypeTag>);
+SET_TYPE_PROP(RichardsWellTracer, PointSource, SolDependentPointSource<TypeTag>);
 } // end namespace Properties
 
 /*!

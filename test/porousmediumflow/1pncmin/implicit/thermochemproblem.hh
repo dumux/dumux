@@ -48,16 +48,16 @@ template <class TypeTag>
 class ThermoChemProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(ThermoChemTypeTag, INHERITS_FROM(OnePNCMinNI));
-NEW_TYPE_TAG(ThermoChemBoxTypeTag, INHERITS_FROM(BoxModel, ThermoChemTypeTag));
+NEW_TYPE_TAG(ThermoChem, INHERITS_FROM(OnePNCMinNI));
+NEW_TYPE_TAG(ThermoChemBox, INHERITS_FROM(BoxModel, ThermoChem));
 
 // Set the grid type
-SET_TYPE_PROP(ThermoChemTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ThermoChem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
-SET_TYPE_PROP(ThermoChemTypeTag, Problem, ThermoChemProblem<TypeTag>);
+SET_TYPE_PROP(ThermoChem, Problem, ThermoChemProblem<TypeTag>);
 
 // The fluid system
-SET_PROP(ThermoChemTypeTag, FluidSystem)
+SET_PROP(ThermoChem, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using H2ON2 = FluidSystems::H2ON2<Scalar>;
@@ -65,7 +65,7 @@ SET_PROP(ThermoChemTypeTag, FluidSystem)
     using type = FluidSystems::OnePAdapter<H2ON2, phaseIdx>;
 };
 
-SET_PROP(ThermoChemTypeTag, SolidSystem)
+SET_PROP(ThermoChem, SolidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ComponentOne = Components::ModifiedCaO<Scalar>;
@@ -74,10 +74,10 @@ SET_PROP(ThermoChemTypeTag, SolidSystem)
 };
 
 // // Enable velocity output
-// SET_BOOL_PROP(ThermoChemTypeTag, VtkAddVelocity, false);
+// SET_BOOL_PROP(ThermoChem, VtkAddVelocity, false);
 
 // Set the spatial parameters
-SET_PROP(ThermoChemTypeTag, SpatialParams)
+SET_PROP(ThermoChem, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -85,7 +85,7 @@ SET_PROP(ThermoChemTypeTag, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(ThermoChemTypeTag, UseMoles, true);
+SET_BOOL_PROP(ThermoChem, UseMoles, true);
 }
 
 /*!

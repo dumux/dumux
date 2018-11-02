@@ -49,22 +49,22 @@ template <class TypeTag>
 class RichardsNIConductionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(RichardsNIConductionTypeTag, INHERITS_FROM(RichardsNI));
-NEW_TYPE_TAG(RichardsNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, RichardsNIConductionTypeTag));
-NEW_TYPE_TAG(RichardsNIConductionCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsNIConductionTypeTag));
+NEW_TYPE_TAG(RichardsNIConduction, INHERITS_FROM(RichardsNI));
+NEW_TYPE_TAG(RichardsNIConductionBox, INHERITS_FROM(BoxModel, RichardsNIConduction));
+NEW_TYPE_TAG(RichardsNIConductionCC, INHERITS_FROM(CCTpfaModel, RichardsNIConduction));
 
 // Set the grid type
-SET_TYPE_PROP(RichardsNIConductionTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(RichardsNIConduction, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(RichardsNIConductionTypeTag, Problem,
+SET_TYPE_PROP(RichardsNIConduction, Problem,
               RichardsNIConductionProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(RichardsNIConductionTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+SET_TYPE_PROP(RichardsNIConduction, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_PROP(RichardsNIConductionTypeTag, SpatialParams)
+SET_PROP(RichardsNIConduction, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

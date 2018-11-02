@@ -3,7 +3,7 @@ dune_symlink_to_source_files(FILES test_2pncmin.input)
 # isothermal tests
 dune_add_test(NAME test_2pncmin_box
               SOURCES test_2pncmin_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=DissolutionBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=DissolutionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/saltflushbox2pncmin-reference.vtu
@@ -23,7 +23,7 @@ set_tests_properties(test_2pncmin_box_restart PROPERTIES DEPENDS test_2pncmin_bo
 
 dune_add_test(NAME test_2pncmin_tpfa
               SOURCES test_2pncmin_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=DissolutionCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=DissolutionCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/saltflushtpfa2pncmin-reference.vtu

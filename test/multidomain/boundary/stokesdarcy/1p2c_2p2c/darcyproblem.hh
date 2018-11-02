@@ -43,30 +43,30 @@ class DarcySubProblem;
 namespace Properties
 {
 #if !NONISOTHERMAL
-NEW_TYPE_TAG(DarcyTwoPTwoCTypeTag, INHERITS_FROM(CCTpfaModel, TwoPTwoC));
+NEW_TYPE_TAG(DarcyTwoPTwoC, INHERITS_FROM(CCTpfaModel, TwoPTwoC));
 #else
-NEW_TYPE_TAG(DarcyTwoPTwoCTypeTag, INHERITS_FROM(CCTpfaModel, TwoPTwoCNI));
+NEW_TYPE_TAG(DarcyTwoPTwoC, INHERITS_FROM(CCTpfaModel, TwoPTwoCNI));
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(DarcyTwoPTwoCTypeTag, Problem, Dumux::DarcySubProblem<TypeTag>);
+SET_TYPE_PROP(DarcyTwoPTwoC, Problem, Dumux::DarcySubProblem<TypeTag>);
 
 // the fluid system
-SET_TYPE_PROP(DarcyTwoPTwoCTypeTag, FluidSystem, FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(DarcyTwoPTwoC, FluidSystem, FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
-SET_PROP(DarcyTwoPTwoCTypeTag, Formulation)
+SET_PROP(DarcyTwoPTwoC, Formulation)
 { static constexpr auto value = TwoPFormulation::p1s0; };
 
 //// The gas component balance (air) is replaced by the total mass balance
-SET_INT_PROP(DarcyTwoPTwoCTypeTag, ReplaceCompEqIdx, 3);
+SET_INT_PROP(DarcyTwoPTwoC, ReplaceCompEqIdx, 3);
 
 // Set the grid type
-SET_TYPE_PROP(DarcyTwoPTwoCTypeTag, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(DarcyTwoPTwoC, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
-SET_BOOL_PROP(DarcyTwoPTwoCTypeTag, UseMoles, true);
+SET_BOOL_PROP(DarcyTwoPTwoC, UseMoles, true);
 
-SET_PROP(DarcyTwoPTwoCTypeTag, SpatialParams)
+SET_PROP(DarcyTwoPTwoC, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
