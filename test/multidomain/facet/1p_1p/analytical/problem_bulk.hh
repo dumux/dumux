@@ -95,11 +95,21 @@ class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
 public:
     OnePBulkProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
-                    const std::string& paramGroup = "")
+                    const std::string& paramGroup = "Bulk")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
     , lowDimPermeability_(getParam<Scalar>("LowDim.SpatialParams.Permeability"))
     , aperture_(getParam<Scalar>("Problem.FractureAperture"))
-    {}
+    {
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
+    }
 
     //! Specifies the type of boundary condition at a given position
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -191,6 +201,7 @@ private:
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
     Scalar lowDimPermeability_;
     Scalar aperture_;
+    std::string problemName_;
 };
 
 } // end namespace Dumux

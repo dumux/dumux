@@ -20,13 +20,12 @@
  * \file
  * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \brief The problem for the (d-1)-dimensional facet domain in the single-phase
- *        facet coupling test involving three domains.
+ * \brief The problem for the bulk domain in the single-phase facet coupling test
  */
-#ifndef DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_FACETPROBLEM_HH
-#define DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_FACETPROBLEM_HH
+#ifndef DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_BULKPROBLEM_HH
+#define DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_BULKPROBLEM_HH
 
-#include <dune/foamgrid/foamgrid.hh>
+#include <dune/alugrid/grid.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -39,19 +38,19 @@
 
 namespace Dumux {
 // forward declarations
-template<class TypeTag> class OnePFacetProblem;
+template<class TypeTag> class OnePBulkProblem;
 
 namespace Properties {
 // create the type tag nodes
-NEW_TYPE_TAG(OnePFacet, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePFacetTpfa, INHERITS_FROM(OnePFacet, CCTpfaFacetCouplingModel));
+NEW_TYPE_TAG(OnePBulk, INHERITS_FROM(OneP));
+NEW_TYPE_TAG(OnePBulkTpfa, INHERITS_FROM(OnePBulk, CCTpfaFacetCouplingModel));
 
 // Set the grid type
-SET_TYPE_PROP(OnePFacet, Grid, Dune::FoamGrid<2, 3>);
+SET_TYPE_PROP(OnePBulk, Grid, Dune::ALUGrid<3, 3, Dune::simplex, Dune::nonconforming>);
 // Set the problem type
-SET_TYPE_PROP(OnePFacet, Problem, OnePFacetProblem<TypeTag>);
+SET_TYPE_PROP(OnePBulk, Problem, OnePBulkProblem<TypeTag>);
 // set the spatial params
-SET_PROP(OnePFacet, SpatialParams)
+SET_PROP(OnePBulk, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -59,7 +58,7 @@ SET_PROP(OnePFacet, SpatialParams)
 };
 
 // the fluid system
-SET_PROP(OnePFacet, FluidSystem)
+SET_PROP(OnePBulk, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -71,23 +70,20 @@ public:
 
 /*!
  * \ingroup OnePTests
- * \brief The (d-1)-dimensional test problem for the incompressible
- *        one-phase model with coupling across the bulk grid facets
+ * \brief Test problem for the incompressible one-phase model
+ *        with coupling across the bulk grid facets
  */
 template<class TypeTag>
-class OnePFacetProblem : public PorousMediumFlowProblem<TypeTag>
+class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using PrimaryVariables = typename GridVariables::PrimaryVariables;
     using Scalar = typename GridVariables::Scalar;
 
     using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -98,18 +94,29 @@ class OnePFacetProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     //! The constructor
-    OnePFacetProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
-                     const std::string& paramGroup = "")
+    OnePBulkProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                    std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                    const std::string& paramGroup = "Bulk")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
-    , aperture_(getParam<Scalar>("Extrusion.Aperture"))
-    {}
+    {
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
 
-    //! Specifies the kind of boundary condition at a boundary position
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
+    }
+
+    //! Specifies the kind of boundary condition on a given boundary position.
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
         values.setAllNeumann();
+        if (globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + 1e-6 || globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - 1e-6)
+            values.setAllDirichlet();
         return values;
     }
 
@@ -128,32 +135,23 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     */
-    NumEqVector source(const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolume& scv) const
+    //! Evaluate the Dirichlet boundary conditions at a given position
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        // forward to solution independent, fully-implicit specific interface
-        auto source = couplingManagerPtr_->evalSourcesFromBulk(element, fvGeometry, elemVolVars, scv);
-        source /= scv.volume()*elemVolVars[scv].extrusionFactor();
-        return source;
+        const auto y = globalPos[1];
+        const auto yMin = this->fvGridGeometry().bBoxMin()[1];
+        const auto yMax = this->fvGridGeometry().bBoxMax()[1];
+
+        return PrimaryVariables( {2.0 - (y-yMin)/(yMax-yMin)} );
     }
 
-    //! Set the aperture as extrusion factor.
-    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
-    { return aperture_; }
-
-    //! Evaluate the initial conditions
+    //! Evaluat the initial conditions
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(1.0); }
 
-    //! Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
+    //! Return the temperature in \f$\mathrm{[K]}\f$ in the domain
     Scalar temperature() const
-    { return 283.15; /*10°*/ }
+    { return 283.15; /*10°C*/ }
 
     //! Return const reference to the coupling manager.
     const CouplingManager& couplingManager() const
@@ -164,7 +162,7 @@ public:
     { couplingManagerPtr_ = cm; }
 
 private:
-    Scalar aperture_;
+    std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
 };
 

@@ -20,19 +20,18 @@
  * \file
  * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \brief The problem for the (d-2)-dimensional edge domain in the single-phase
+ * \brief The problem for the (d-1)-dimensional facet domain in the single-phase
  *        facet coupling test involving three domains.
  */
-#ifndef DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_EDGEPROBLEM_HH
-#define DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_EDGEPROBLEM_HH
+#ifndef DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_FACETPROBLEM_HH
+#define DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_FACETPROBLEM_HH
 
 #include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
-
+#include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 
@@ -40,19 +39,19 @@
 
 namespace Dumux {
 // forward declarations
-template<class TypeTag> class OnePEdgeProblem;
+template<class TypeTag> class OnePFacetProblem;
 
 namespace Properties {
 // create the type tag nodes
-NEW_TYPE_TAG(OnePEdge, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePEdgeTpfa, INHERITS_FROM(CCTpfaModel, OnePEdge));
+NEW_TYPE_TAG(OnePFacet, INHERITS_FROM(OneP));
+NEW_TYPE_TAG(OnePFacetTpfa, INHERITS_FROM(OnePFacet, CCTpfaFacetCouplingModel));
 
 // Set the grid type
-SET_TYPE_PROP(OnePEdge, Grid, Dune::FoamGrid<1, 3>);
+SET_TYPE_PROP(OnePFacet, Grid, Dune::FoamGrid<2, 3>);
 // Set the problem type
-SET_TYPE_PROP(OnePEdge, Problem, OnePEdgeProblem<TypeTag>);
+SET_TYPE_PROP(OnePFacet, Problem, OnePFacetProblem<TypeTag>);
 // set the spatial params
-SET_PROP(OnePEdge, SpatialParams)
+SET_PROP(OnePFacet, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -60,7 +59,7 @@ SET_PROP(OnePEdge, SpatialParams)
 };
 
 // the fluid system
-SET_PROP(OnePEdge, FluidSystem)
+SET_PROP(OnePFacet, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -69,13 +68,14 @@ public:
 };
 
 } // end namespace Properties
+
 /*!
  * \ingroup OnePTests
- * \brief The (d-2)-dimensional test problem for the incompressible
+ * \brief The (d-1)-dimensional test problem for the incompressible
  *        one-phase model with coupling across the bulk grid facets
  */
 template<class TypeTag>
-class OnePEdgeProblem : public PorousMediumFlowProblem<TypeTag>
+class OnePFacetProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
@@ -98,17 +98,40 @@ class OnePEdgeProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     //! The constructor
-    OnePEdgeProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                    std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
-                    const std::string& paramGroup = "")
+    OnePFacetProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                     const std::string& paramGroup = "Facet")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    , aperture_(getParam<Scalar>("Extrusion.Aperture"))
     {
-        const auto a = getParam<Scalar>("Extrusion.Aperture");
-        exFactor_ = a*a;
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
-    //!Specifies the type of boundary condition on a boundary position
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
+    }
+
+    //! Specifies the kind of boundary condition at a boundary position
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    {
+        BoundaryTypes values;
+        values.setAllNeumann();
+        return values;
+    }
+
+    /*!
+     * \brief Specifies which kind of interior boundary condition should be
+     *        used for which equation on a given sub-control volume face
+     *        that couples to a facet element.
+     *
+     * \param element The finite element the scvf is embedded in
+     * \param scvf The sub-control volume face
+     */
+    BoundaryTypes interiorBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     {
         BoundaryTypes values;
         values.setAllNeumann();
@@ -130,9 +153,9 @@ public:
         return source;
     }
 
-    //! Set the aperture squared as extrusion factor.
+    //! Set the aperture as extrusion factor.
     Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
-    { return exFactor_; }
+    { return aperture_; }
 
     //! Evaluate the initial conditions
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
@@ -151,7 +174,8 @@ public:
     { couplingManagerPtr_ = cm; }
 
 private:
-    Scalar exFactor_;
+    Scalar aperture_;
+    std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
 };
 

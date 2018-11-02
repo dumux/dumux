@@ -32,9 +32,9 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
-#include "bulkproblem.hh"
-#include "facetproblem.hh"
-#include "edgeproblem.hh"
+#include "problem_bulk.hh"
+#include "problem_facet.hh"
+#include "problem_edge.hh"
 
 #include <dumux/assembly/diffmethod.hh>
 
@@ -178,8 +178,10 @@ int main(int argc, char** argv) try
     using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
     using FacetSolutionVector = std::decay_t<decltype(x[facetId])>;
     using EdgeSolutionVector = std::decay_t<decltype(x[edgeId])>;
+
+    // intialize the vtk output module
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkProblem->name());
-    VtkOutputModule<FacetGridVariables, FacetSolutionVector> facetVtkWriter(*facetGridVariables, x[facetId], facetProblem->name());
+    VtkOutputModule<FacetGridVariables, FacetSolutionVector> facetVtkWriter(*facetGridVariables, x[facetId],  facetProblem->name());
     VtkOutputModule<EdgeGridVariables, EdgeSolutionVector> edgeVtkWriter(*edgeGridVariables, x[edgeId], edgeProblem->name());
 
     // Add model specific output fields

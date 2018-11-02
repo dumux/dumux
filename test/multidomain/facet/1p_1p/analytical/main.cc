@@ -28,8 +28,8 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/geometry/quadraturerules.hh>
 
-#include "bulkproblem.hh"
-#include "lowdimproblem.hh"
+#include "problem_bulk.hh"
+#include "problem_lowdim.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -266,7 +266,7 @@ int main(int argc, char** argv) try
     bulkGridVariables->init(x[bulkId]);
     lowDimGridVariables->init(x[lowDimId]);
 
-    // intialize the vtk output module
+    // intialize the vtk output modulell
     const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethod::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
     using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
     using LowDimSolutionVector = std::decay_t<decltype(x[lowDimId])>;
