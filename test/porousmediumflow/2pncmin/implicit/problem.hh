@@ -38,7 +38,7 @@
 #include <dumux/material/components/granite.hh>
 #include <dumux/material/solidsystems/compositionalsolidphase.hh>
 
-#include "dissolutionspatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 /*!
