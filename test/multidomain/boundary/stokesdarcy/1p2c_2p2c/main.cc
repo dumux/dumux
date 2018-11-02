@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A test problem for the coupled Stokes/Darcy problem (1p)
+ * \brief A test problem for the isothermal coupled Stokes/Darcy problem (1p2c/2p2c)
  */
 #include <config.h>
 
@@ -45,25 +45,25 @@
 
 #include <dumux/multidomain/staggeredtraits.hh>
 #include <dumux/multidomain/fvassembler.hh>
-#include <dumux/multidomain/newtonsolver.hh>
+#include <dumux/multidomain/privarswitchnewtonsolver.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
 
-#include "darcyproblem.hh"
-#include "stokesproblem.hh"
+#include "problem_darcy.hh"
+#include "problem_stokes.hh"
 
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(StokesOnePTypeTag, CouplingManager)
+SET_PROP(StokesOnePTwoCTypeTag, CouplingManager)
 {
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, TTAG(DarcyOnePTypeTag)>;
+    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, TTAG(DarcyTwoPTwoCTypeTag)>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
-SET_PROP(DarcyOnePTypeTag, CouplingManager)
+SET_PROP(DarcyTwoPTwoCTypeTag, CouplingManager)
 {
-    using Traits = StaggeredMultiDomainTraits<TTAG(StokesOnePTypeTag), TTAG(StokesOnePTypeTag), TypeTag>;
+    using Traits = StaggeredMultiDomainTraits<TTAG(StokesOnePTwoCTypeTag), TTAG(StokesOnePTwoCTypeTag), TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
@@ -85,8 +85,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using StokesTypeTag = TTAG(StokesOnePTypeTag);
-    using DarcyTypeTag = TTAG(DarcyOnePTypeTag);
+    using StokesTypeTag = TTAG(StokesOnePTwoCTypeTag);
+    using DarcyTypeTag = TTAG(DarcyTwoPTwoCTypeTag);
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains
@@ -127,6 +127,21 @@ int main(int argc, char** argv) try
     using DarcyProblem = typename GET_PROP_TYPE(DarcyTypeTag, Problem);
     auto darcyProblem = std::make_shared<DarcyProblem>(darcyFvGridGeometry, couplingManager);
 
+    // initialize the fluidsystem (tabulation)
+    GET_PROP_TYPE(StokesTypeTag, FluidSystem)::init();
+
+    // get some time loop parameters
+    using Scalar = typename GET_PROP_TYPE(StokesTypeTag, Scalar);
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
+    // instantiate time loop
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
+
+    stokesProblem->setTimeLoop(timeLoop); // needed for boundary value variations
+
     // the solution vector
     Traits::SolutionVector sol;
     sol[stokesCellCenterIdx].resize(stokesFvGridGeometry->numCellCenterDofs());
@@ -141,18 +156,24 @@ int main(int argc, char** argv) try
     std::get<0>(stokesSol) = cellCenterSol;
     std::get<1>(stokesSol) = faceSol;
     stokesProblem->applyInitialSolution(stokesSol);
+    auto solStokesOld = stokesSol;
     sol[stokesCellCenterIdx] = stokesSol[stokesCellCenterIdx];
     sol[stokesFaceIdx] = stokesSol[stokesFaceIdx];
+
+    darcyProblem->applyInitialSolution(sol[darcyIdx]);
+    auto solDarcyOld = sol[darcyIdx];
+
+    auto solOld = sol;
 
     couplingManager->init(stokesProblem, darcyProblem, sol);
 
     // the grid variables
     using StokesGridVariables = typename GET_PROP_TYPE(StokesTypeTag, GridVariables);
     auto stokesGridVariables = std::make_shared<StokesGridVariables>(stokesProblem, stokesFvGridGeometry);
-    stokesGridVariables->init(stokesSol);
+    stokesGridVariables->init(stokesSol, solStokesOld);
     using DarcyGridVariables = typename GET_PROP_TYPE(DarcyTypeTag, GridVariables);
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyFvGridGeometry);
-    darcyGridVariables->init(sol[darcyIdx]);
+    darcyGridVariables->init(sol[darcyIdx], solDarcyOld);
 
     // intialize the vtk output module
     const auto stokesName = getParam<std::string>("Problem.Name") + "_" + stokesProblem->name();
@@ -168,7 +189,7 @@ int main(int argc, char** argv) try
     GET_PROP_TYPE(DarcyTypeTag, VtkOutputFields)::init(darcyVtkWriter);
     darcyVtkWriter.write(0.0);
 
-    // the assembler for a stationary problem
+    // the assembler with time loop for instationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(stokesProblem, stokesProblem, darcyProblem),
                                                  std::make_tuple(stokesFvGridGeometry->cellCenterFVGridGeometryPtr(),
@@ -177,22 +198,52 @@ int main(int argc, char** argv) try
                                                  std::make_tuple(stokesGridVariables->cellCenterGridVariablesPtr(),
                                                                  stokesGridVariables->faceGridVariablesPtr(),
                                                                  darcyGridVariables),
-                                                 couplingManager);
+                                                 couplingManager,
+                                                 timeLoop);
 
     // the linear solver
     using LinearSolver = UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
+    // the primary variable switches used by the sub models
+    using PriVarSwitchTuple = std::tuple<NoPrimaryVariableSwitch, NoPrimaryVariableSwitch, typename GET_PROP_TYPE(DarcyTypeTag, PrimaryVariableSwitch)>;
+
     // the non-linear solver
-    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+    using NewtonSolver = MultiDomainPriVarSwitchNewtonSolver<Assembler, LinearSolver, CouplingManager, PriVarSwitchTuple>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
-    // solve the non-linear system
-    nonLinearSolver.solve(sol);
+    // time loop
+    timeLoop->start(); do
+    {
+        // set previous solution for storage evaluations
+        assembler->setPreviousSolution(solOld);
 
-    // write vtk output
-    stokesVtkWriter.write(1.0);
-    darcyVtkWriter.write(1.0);
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(sol, *timeLoop);
+
+        // make the new solution the old solution
+        solOld = sol;
+        darcyProblem->postTimeStep(sol[darcyIdx], *darcyGridVariables, timeLoop->timeStepSize());
+        stokesGridVariables->advanceTimeStep();
+        darcyGridVariables->advanceTimeStep();
+
+        // advance to the time loop to the next step
+        timeLoop->advanceTimeStep();
+
+        // write vtk output
+        stokesVtkWriter.write(timeLoop->time());
+        darcyVtkWriter.write(timeLoop->time());
+
+        // report statistics of this time step
+        timeLoop->reportTimeStep();
+
+        // set new dt as suggested by newton solver
+        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+    } while (!timeLoop->finished());
+
+    timeLoop->finalize(stokesGridView.comm());
+    timeLoop->finalize(darcyGridView.comm());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

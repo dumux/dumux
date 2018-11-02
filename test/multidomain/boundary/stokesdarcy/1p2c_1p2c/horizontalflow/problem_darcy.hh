@@ -28,13 +28,14 @@
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
-#include <dumux/porousmediumflow/1p/model.hh>
+#include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "./../1pspatialparams.hh"
+#include "./../spatialparams.hh"
 
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 
 namespace Dumux
 {
@@ -43,22 +44,34 @@ class DarcySubProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DarcyOnePTypeTag, INHERITS_FROM(CCTpfaModel, OneP));
+NEW_TYPE_TAG(DarcyOnePTwoCTypeTag, INHERITS_FROM(CCTpfaModel, OnePNC));
 
 // Set the problem property
-SET_TYPE_PROP(DarcyOnePTypeTag, Problem, Dumux::DarcySubProblem<TypeTag>);
+SET_TYPE_PROP(DarcyOnePTwoCTypeTag, Problem, Dumux::DarcySubProblem<TypeTag>);
 
-// the fluid system
-SET_PROP(DarcyOnePTypeTag, FluidSystem)
+// The fluid system
+SET_PROP(DarcyOnePTwoCTypeTag, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
+  using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+  static constexpr auto phaseIdx = H2OAir::liquidPhaseIdx; // simulate the water phase
+  using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
-// Set the grid type
-SET_TYPE_PROP(DarcyOnePTypeTag, Grid, Dune::YaspGrid<2>);
+// Use moles
+SET_BOOL_PROP(DarcyOnePTwoCTypeTag, UseMoles, true);
 
-SET_PROP(DarcyOnePTypeTag, SpatialParams)
+// Do not replace one equation with a total mass balance
+SET_INT_PROP(DarcyOnePTwoCTypeTag, ReplaceCompEqIdx, 3);
+
+//! Use a model with constant tortuosity for the effective diffusivity
+SET_TYPE_PROP(DarcyOnePTwoCTypeTag, EffectiveDiffusivityModel,
+              DiffusivityConstantTortuosity<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
+// Set the grid type
+SET_TYPE_PROP(DarcyOnePTwoCTypeTag, Grid, Dune::YaspGrid<2>);
+
+// Set the spatial paramaters type
+SET_PROP(DarcyOnePTwoCTypeTag, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -73,14 +86,13 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
@@ -95,7 +107,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
 
@@ -104,7 +116,8 @@ public:
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
     {
-        pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure", 0.0);
+        pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
+        initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction");
     }
 
     /*!
@@ -127,7 +140,6 @@ public:
     bool shouldWriteOutput() const // define output
     { return true; }
 
-
     /*!
      * \brief Return the temperature within the domain in [K].
      *
@@ -136,7 +148,7 @@ public:
     { return 273.15 + 10; } // 10°C
     // \}
 
-     /*!
+    /*!
      * \name Boundary conditions
      */
     // \{
@@ -148,13 +160,10 @@ public:
       * \param element The element
       * \param scvf The boundary sub control volume face
       */
-    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolumeFace &scvf) const
+    BoundaryTypes boundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     {
         BoundaryTypes values;
-        values.setAllNeumann(); // right wall, top
-
-       if (onLowerBoundary_(scvf.center()))
-           values.setAllDirichlet();
+        values.setAllNeumann();
 
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
             values.setAllCouplingNeumann();
@@ -162,25 +171,8 @@ public:
         return values;
     }
 
-        /*!
-     * \brief Evaluate the boundary conditions for a Dirichlet control volume.
-     *
-     * \param element The element for which the Dirichlet boundary condition is set
-     * \param scvf The boundary subcontrolvolumeface
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
-    {
-        PrimaryVariables values(0.0);
-        values = initial(element);
-
-        return values;
-    }
-
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann
-     *        control volume.
+     * \brief Evaluate the boundary conditions for a Neumann control volume.
      *
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeomentry The fvGeometry
@@ -189,6 +181,7 @@ public:
      *
      * For this method, the \a values variable stores primary variables.
      */
+    template<class ElementVolumeVariables>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
@@ -197,7 +190,7 @@ public:
         NumEqVector values(0.0);
 
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
-            values[pressureIdx] = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, scvf);
+            values = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, scvf);
 
         return values;
     }
@@ -217,6 +210,7 @@ public:
      * \param elemVolVars The element volume variables
      * \param scv The subcontrolvolume
      */
+    template<class ElementVolumeVariables>
     NumEqVector source(const Element &element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
@@ -237,6 +231,7 @@ public:
     {
         PrimaryVariables values(0.0);
         values[pressureIdx] = pressure_;
+        values[conti0EqIdx + 1] = initialMoleFraction_;
 
         return values;
     }
@@ -266,6 +261,7 @@ private:
 
     Scalar eps_;
     Scalar pressure_;
+    Scalar initialMoleFraction_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };

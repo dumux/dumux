@@ -1,26 +1,28 @@
 add_input_file_links()
 
-dune_add_test(NAME test_stokes1p2cdarcy2p2chorizontal
-              SOURCES test_stokes1p2cdarcy2p2chorizontal.cc
+dune_add_test(NAME test_md_boundary_darcy2p2c_stokes1p2c_horizontal
+              SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_stokes1p2cdarcy2p2chorizontal_stokes-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cdarcy2p2chorizontal_stokes-00040.vtu
-                                     ${CMAKE_SOURCE_DIR}/test/references/test_stokes1p2cdarcy2p2chorizontal_darcy-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cdarcy2p2chorizontal_darcy-00040.vtu
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy2p2c_stokes1p2c_horizontal_stokes-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2c_stokes1p2c_horizontal_stokes-00040.vtu
+                                     ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy2p2c_stokes1p2c_horizontal_darcy-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2c_stokes1p2c_horizontal_darcy-00040.vtu
 
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cdarcy2p2chorizontal test_stokes1p2cdarcy2p2chorizontal.input")
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2c_stokes1p2c_horizontal params.input
+                             -Problem.Name test_md_boundary_darcy2p2c_stokes1p2c_horizontal")
 
-dune_add_test(NAME test_stokes1p2cnidarcy2p2cnihorizontal
-              SOURCES test_stokes1p2cdarcy2p2chorizontal.cc
+dune_add_test(NAME test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal
+              SOURCES main.cc
               COMPILE_DEFINITIONS NONISOTHERMAL=1
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_stokes1p2cnidarcy2p2cnihorizontal_stokes-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cnidarcy2p2cnihorizontal_stokes-00040.vtu
-                                     ${CMAKE_SOURCE_DIR}/test/references/test_stokes1p2cnidarcy2p2cnihorizontal_darcy-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cnidarcy2p2cnihorizontal_darcy-00040.vtu
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal_stokes-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal_stokes-00040.vtu
+                                     ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal_darcy-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal_darcy-00040.vtu
 
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cnidarcy2p2cnihorizontal test_stokes1p2cdarcy2p2chorizontal.input -Problem.Name test_stokes1p2cnidarcy2p2cnihorizontal")
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal params_nonisothermal.input
+                             -Problem.Name test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal")

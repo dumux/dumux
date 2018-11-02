@@ -31,7 +31,7 @@
 #include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "./../1pspatialparams.hh"
+#include "./../spatialparams.hh"
 
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>

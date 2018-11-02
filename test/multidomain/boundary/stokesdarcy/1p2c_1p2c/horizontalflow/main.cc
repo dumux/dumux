@@ -49,8 +49,8 @@
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
 
-#include "darcyproblem.hh"
-#include "stokesproblem.hh"
+#include "problem_darcy.hh"
+#include "problem_stokes.hh"
 
 namespace Dumux {
 namespace Properties {
@@ -121,15 +121,7 @@ int main(int argc, char** argv) try
     constexpr auto stokesFaceIdx = CouplingManager::stokesFaceIdx;
     constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
-    // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(StokesTypeTag, Scalar);
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    const bool isDiffusionProblem = getParam<bool>("Problem.OnlyDiffusion", false);
-
-    // the problem (initial and boundary conditions)
+    // the problems (initial and boundary conditions)
     using StokesProblem = typename GET_PROP_TYPE(StokesTypeTag, Problem);
     auto stokesProblem = std::make_shared<StokesProblem>(stokesFvGridGeometry, couplingManager);
     using DarcyProblem = typename GET_PROP_TYPE(DarcyTypeTag, Problem);
@@ -138,17 +130,24 @@ int main(int argc, char** argv) try
     // initialize the fluidsystem (tabulation)
     GET_PROP_TYPE(StokesTypeTag, FluidSystem)::init();
 
+    // get some time loop parameters
+    using Scalar = typename GET_PROP_TYPE(StokesTypeTag, Scalar);
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    if(!isDiffusionProblem)
-        timeLoop->setPeriodicCheckPoint(tEnd/30.0);
-    // else
-        // timeLoop->setCheckPoint({1e10, 1.1e10, 1.2e10});
-    // TODO This does not work due to an issue with Dune's eq()
+    // control the injection period
+    const Scalar injectionBegin = getParam<Scalar>("Stokes.Problem.InjectionBegin");
+    const Scalar injectionEnd = getParam<Scalar>("Stokes.Problem.InjectionEnd");
 
-    stokesProblem->setTimeLoop(timeLoop);
+    if(injectionBegin > 0.0)
+        timeLoop->setCheckPoint({injectionBegin, injectionEnd});
+    else
+        timeLoop->setCheckPoint({injectionEnd});
 
     // the solution vector
     Traits::SolutionVector sol;
@@ -217,18 +216,19 @@ int main(int argc, char** argv) try
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
+    constexpr auto eps = 1e-6;
+
     // time loop
     timeLoop->start(); do
     {
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(solOld);
 
-        // revert the concentration gradient after some time
-        if(isDiffusionProblem && timeLoop->time() > 1e10)
-        {
-            darcyProblem->setBottomMoleFraction(1e-3);
-            stokesProblem->setTopMoleFraction(0.0);
-        }
+
+        if(timeLoop->time() > injectionBegin - eps && timeLoop->time() < injectionEnd + eps)
+            stokesProblem->setInjectionState(true);
+        else
+            stokesProblem->setInjectionState(false);
 
         // solve the non-linear system with time step control
         nonLinearSolver.solve(sol, *timeLoop);
@@ -242,7 +242,6 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // write vtk output
-//        vtkWriter.write(timeLoop->time());
         stokesVtkWriter.write(timeLoop->time());
         darcyVtkWriter.write(timeLoop->time());
 

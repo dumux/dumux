@@ -49,8 +49,8 @@
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
 
-#include "darcyproblem.hh"
-#include "stokesproblem.hh"
+#include "problem_darcy.hh"
+#include "problem_stokes.hh"
 
 namespace Dumux {
 namespace Properties {
@@ -143,9 +143,6 @@ int main(int argc, char** argv) try
     stokesProblem->applyInitialSolution(stokesSol);
     sol[stokesCellCenterIdx] = stokesSol[stokesCellCenterIdx];
     sol[stokesFaceIdx] = stokesSol[stokesFaceIdx];
-
-    darcyProblem->applyInitialSolution(sol[darcyIdx]);
-
 
     couplingManager->init(stokesProblem, darcyProblem, sol);
 

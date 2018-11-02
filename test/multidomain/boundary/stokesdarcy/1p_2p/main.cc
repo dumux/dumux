@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A test problem for the isothermal coupled Stokes/Darcy problem (1p2c/2p2c)
+ * \brief A test problem for the coupled Stokes/Darcy problem (1p/2p)
  */
 #include <config.h>
 
@@ -45,26 +45,58 @@
 
 #include <dumux/multidomain/staggeredtraits.hh>
 #include <dumux/multidomain/fvassembler.hh>
-#include <dumux/multidomain/privarswitchnewtonsolver.hh>
+#include <dumux/multidomain/newtonsolver.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
 
-#include "darcyproblem.hh"
-#include "stokesproblem.hh"
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
+#include <dumux/material/components/air.hh>
+#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/tabulatedcomponent.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
+
+#include "problem_darcy.hh"
+#include "problem_stokes.hh"
 
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(StokesOnePTwoCTypeTag, CouplingManager)
+SET_PROP(StokesOnePTypeTag, CouplingManager)
 {
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, TTAG(DarcyTwoPTwoCTypeTag)>;
+    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, TTAG(DarcyTwoPTypeTag)>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
-SET_PROP(DarcyTwoPTwoCTypeTag, CouplingManager)
+SET_PROP(DarcyTwoPTypeTag, CouplingManager)
 {
-    using Traits = StaggeredMultiDomainTraits<TTAG(StokesOnePTwoCTypeTag), TTAG(StokesOnePTwoCTypeTag), TypeTag>;
+    using Traits = StaggeredMultiDomainTraits<TTAG(StokesOnePTypeTag), TTAG(StokesOnePTypeTag), TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
+};
+
+template<class TypeTag>
+struct CouplingFluidSystem
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using H2OType = Dumux::Components::SimpleH2O<Scalar>;
+    using H2OPhase = Dumux::FluidSystems::OnePLiquid<Scalar, H2OType>;
+    using AirType = Dumux::Components::TabulatedComponent<Components::Air<Scalar>, false >;
+    using AirPhase = Dumux::FluidSystems::OnePGas<Scalar, AirType>;
+    using type = FluidSystems::TwoPImmiscible<Scalar, H2OPhase, AirPhase> ;
+};
+
+// the fluid system for the free-flow model
+SET_PROP(StokesOnePTypeTag, FluidSystem)
+{
+    static constexpr auto phaseIdx = 1; // simulate the air phase
+    using type = FluidSystems::OnePAdapter<typename CouplingFluidSystem<TypeTag>::type, phaseIdx>;
+};
+
+// the fluid system for the Darcy model
+SET_PROP(DarcyTwoPTypeTag, FluidSystem)
+{
+    using type = typename CouplingFluidSystem<TypeTag>::type;
 };
 
 } // end namespace Properties
@@ -85,8 +117,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using StokesTypeTag = TTAG(StokesOnePTwoCTypeTag);
-    using DarcyTypeTag = TTAG(DarcyTwoPTwoCTypeTag);
+    using StokesTypeTag = TTAG(StokesOnePTypeTag);
+    using DarcyTypeTag = TTAG(DarcyTwoPTypeTag);
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains
@@ -128,19 +160,12 @@ int main(int argc, char** argv) try
     auto darcyProblem = std::make_shared<DarcyProblem>(darcyFvGridGeometry, couplingManager);
 
     // initialize the fluidsystem (tabulation)
-    GET_PROP_TYPE(StokesTypeTag, FluidSystem)::init();
-
-    // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(StokesTypeTag, Scalar);
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
-
-    stokesProblem->setTimeLoop(timeLoop); // needed for boundary value variations
+    GET_PROP_TYPE(StokesTypeTag, FluidSystem)::init(/*tempMin=*/273.15,
+                                                    /*tempMax=*/320,
+                                                    /*numTemp=*/100,
+                                                    /*pMin=*/1e4,
+                                                    /*pMax=*/2e5,
+                                                    /*numP=*/200);
 
     // the solution vector
     Traits::SolutionVector sol;
@@ -175,6 +200,12 @@ int main(int argc, char** argv) try
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyFvGridGeometry);
     darcyGridVariables->init(sol[darcyIdx], solDarcyOld);
 
+    // get some time loop parameters
+    using Scalar = typename GET_PROP_TYPE(StokesTypeTag, Scalar);
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
     // intialize the vtk output module
     const auto stokesName = getParam<std::string>("Problem.Name") + "_" + stokesProblem->name();
     const auto darcyName = getParam<std::string>("Problem.Name") + "_" + darcyProblem->name();
@@ -188,6 +219,10 @@ int main(int argc, char** argv) try
     darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
     GET_PROP_TYPE(DarcyTypeTag, VtkOutputFields)::init(darcyVtkWriter);
     darcyVtkWriter.write(0.0);
+
+    // instantiate time loop
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
@@ -205,11 +240,8 @@ int main(int argc, char** argv) try
     using LinearSolver = UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
-    // the primary variable switches used by the sub models
-    using PriVarSwitchTuple = std::tuple<NoPrimaryVariableSwitch, NoPrimaryVariableSwitch, typename GET_PROP_TYPE(DarcyTypeTag, PrimaryVariableSwitch)>;
-
     // the non-linear solver
-    using NewtonSolver = MultiDomainPriVarSwitchNewtonSolver<Assembler, LinearSolver, CouplingManager, PriVarSwitchTuple>;
+    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
     // time loop
@@ -223,7 +255,6 @@ int main(int argc, char** argv) try
 
         // make the new solution the old solution
         solOld = sol;
-        darcyProblem->postTimeStep(sol[darcyIdx], *darcyGridVariables, timeLoop->timeStepSize());
         stokesGridVariables->advanceTimeStep();
         darcyGridVariables->advanceTimeStep();
 
