@@ -27,8 +27,8 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 
-#include "2pproblem.hh"
-#include "poroelasticproblem.hh"
+#include "problem_2p.hh"
+#include "problem_poroelastic.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -157,11 +157,13 @@ int main(int argc, char** argv) try
     const auto maxDT = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // intialize the dune vtk writers
+    // intialize the vtk output module
+    const auto twoPName = getParam<std::string>("Problem.Name") + "_" + twoPProblem->name();
+    const auto poroMechName = getParam<std::string>("Problem.Name") + "_" + poroMechProblem->name();
     using TwoPVtkOutputModule = Dumux::VtkOutputModule<TwoPGridVariables, typename GET_PROP_TYPE(TwoPTypeTag, SolutionVector)>;
     using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, typename GET_PROP_TYPE(PoroMechTypeTag, SolutionVector)>;
-    TwoPVtkOutputModule twoPVtkWriter(*twoPGridVariables, x[twoPId], twoPProblem->name());
-    PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechProblem->name());
+    TwoPVtkOutputModule twoPVtkWriter(*twoPGridVariables, x[twoPId], twoPName);
+    PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechName);
 
     // add output fields to writers
     using TwoPOutputFields = typename GET_PROP_TYPE(TwoPTypeTag, VtkOutputFields);

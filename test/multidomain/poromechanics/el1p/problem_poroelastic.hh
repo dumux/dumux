@@ -21,7 +21,7 @@
  * \ingroup MultiDomain
  * \ingroup Geomechanics
  * \ingroup PoroElastic
- * \brief The poro-elastic sub-problem in the el2p coupled problem.
+ * \brief The poro-elastic sub-problem in the el1p coupled problem.
  */
 #ifndef DUMUX_POROELASTIC_SUBPROBLEM_HH
 #define DUMUX_POROELASTIC_SUBPROBLEM_HH
@@ -32,10 +32,10 @@
 #include <dumux/geomechanics/poroelastic/model.hh>
 #include <dumux/geomechanics/fvproblem.hh>
 
-#include <dumux/material/fluidsystems/brineco2.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/components/constant.hh>
 
-#include "poroelasticspatialparams.hh"
-#include "el2pco2tables.hh"
+#include "spatialparams_poroelastic.hh"
 
 namespace Dumux {
 
@@ -47,17 +47,14 @@ namespace Properties {
 
 NEW_TYPE_TAG(PoroElasticSubTypeTag, INHERITS_FROM(BoxModel, PoroElastic));
 // Set the grid type
-SET_TYPE_PROP(PoroElasticSubTypeTag, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(PoroElasticSubTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(PoroElasticSubTypeTag, Problem, Dumux::PoroElasticSubProblem<TypeTag>);
-
-// Set the fluid system for TwoPSubProblem
-SET_PROP(PoroElasticSubTypeTag, FluidSystem)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
-};
-
+// The fluid phase consists of one constant component
+SET_TYPE_PROP(PoroElasticSubTypeTag,
+              FluidSystem,
+              Dumux::FluidSystems::OnePLiquid< typename GET_PROP_TYPE(TypeTag, Scalar),
+                                               Dumux::Components::Constant<0, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 // The spatial parameters property
 SET_TYPE_PROP(PoroElasticSubTypeTag, SpatialParams, PoroElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                               typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
@@ -69,14 +66,13 @@ SET_TYPE_PROP(PoroElasticSubTypeTag, SpatialParams, PoroElasticSpatialParams< ty
  * \ingroup Geomechanics
  * \ingroup PoroElastic
  *
- * \brief The poro-elastic sub-problem in the el2p coupled problem.
+ * \brief The poro-elastic sub-problem in the el1p coupled problem.
  */
 template<class TypeTag>
 class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
 {
     using ParentType = GeomechanicsFVProblem<TypeTag>;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -120,19 +116,14 @@ public:
     /*!
      * \brief Returns the effective fluid density
      */
-    Scalar effectiveFluidDensity(const Element& element, const SubControlVolume& scv) const
+    Scalar effectiveFluidDensity(const Element& element,
+                                 const SubControlVolume& scv) const
     {
         // get context from coupling manager
+        // here, we know that the flow problem uses cell-centered finite volumes,
+        // thus, we simply take the volume variables of the element and return the density
         const auto& context = couplingManager().poroMechanicsCouplingContext();
-
-        // here, we know that the flow problem uses cell-centered finite volumes, thus,
-        // we simply take the volume variables of the scv (i.e. element) to obtain fluid properties
-        const auto& facetVolVars = (*context.pmFlowElemVolVars)[scv.elementIndex()];
-        Scalar wPhaseDensity = facetVolVars.density(FluidSystem::phase0Idx);
-        Scalar nPhaseDensity = facetVolVars.density(FluidSystem::phase1Idx);
-        Scalar Sw = facetVolVars.saturation(FluidSystem::phase0Idx);
-        Scalar Sn = facetVolVars.saturation(FluidSystem::phase1Idx);
-        return (wPhaseDensity * Sw + nPhaseDensity * Sn);
+        return (*context.pmFlowElemVolVars)[scv.elementIndex()].density();
     }
 
     /*!
@@ -145,17 +136,11 @@ public:
                                  const FluxVarsCache& fluxVarsCache) const
     {
         // get context from coupling manager
+        // here, we know that the flow problem uses cell-centered finite volumes,
+        // thus, we simply take the volume variables of the element and return the pressure
         const auto& context = couplingManager().poroMechanicsCouplingContext();
-
-        // here, we know that the flow problem uses cell-centered finite volumes, thus,
-        // we simply take the volume variables of the element to obtain fluid properties
         const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
-        const auto& facetVolVars = (*context.pmFlowElemVolVars)[eIdx];
-        Scalar pw = facetVolVars.pressure(FluidSystem::phase0Idx);
-        Scalar pn = facetVolVars.pressure(FluidSystem::phase1Idx);
-        Scalar Sw = facetVolVars.saturation(FluidSystem::phase0Idx);
-        Scalar Sn = facetVolVars.saturation(FluidSystem::phase1Idx);
-        return (pw * Sw + pn * Sn);
+        return (*context.pmFlowElemVolVars)[eIdx].pressure();
     }
 
     /*!

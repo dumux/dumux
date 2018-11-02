@@ -8,6 +8,7 @@ UpperRight = 1000 1000 1000
 Cells = 4 4 4
 
 [Problem]
+Name = test_md_poromechanics_el2p
 InjectionRateGas = 0.125e-5
 InjectionRateWater = 0.0
 EnableGravity = false

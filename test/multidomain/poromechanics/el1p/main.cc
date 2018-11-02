@@ -25,8 +25,8 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 
-#include "1pproblem.hh"
-#include "poroelasticproblem.hh"
+#include "problem_1p.hh"
+#include "problem_poroelastic.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -149,11 +149,13 @@ int main(int argc, char** argv) try
     onePGridVariables->init(x[onePId]);
     poroMechGridVariables->init(x[poroMechId]);
 
-    // intialize the dune vtk writers
+    // intialize the vtk output module
+    const auto onePName = getParam<std::string>("Problem.Name") + "_" + onePProblem->name();
+    const auto poroMechName = getParam<std::string>("Problem.Name") + "_" + poroMechProblem->name();
     using OnePVtkOutputModule = Dumux::VtkOutputModule<OnePGridVariables, typename GET_PROP_TYPE(OnePTypeTag, SolutionVector)>;
     using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, typename GET_PROP_TYPE(PoroMechTypeTag, SolutionVector)>;
-    OnePVtkOutputModule onePVtkWriter(*onePGridVariables, x[onePId], onePProblem->name());
-    PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechProblem->name());
+    OnePVtkOutputModule onePVtkWriter(*onePGridVariables, x[onePId], onePName);
+    PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechName);
 
     // add output fields to writers
     using OnePOutputFields = typename GET_PROP_TYPE(OnePTypeTag, VtkOutputFields);
