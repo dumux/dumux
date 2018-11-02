@@ -32,7 +32,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 
-#include "2pncdiffusionspatialparams.hh"
+#include "spatialparams.hh"
 #include <dumux/discretization/maxwellstefanslaw.hh>
 
 #ifndef DIFFUSIONTYPE // default to Fick's law if not set through CMake
