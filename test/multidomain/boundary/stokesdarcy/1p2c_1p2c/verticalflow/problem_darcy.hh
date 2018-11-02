@@ -19,21 +19,23 @@
 /*!
  * \file
  *
- * \brief A simple Darcy test problem (cell-centered finite volume method).
+ * \brief TODO docme
  */
-#ifndef DUMUX_DARCY2P2C_SUBPROBLEM_HH
-#define DUMUX_DARCY2P2C_SUBPROBLEM_HH
+#ifndef DUMUX_DARCY_SUBPROBLEM_HH
+#define DUMUX_DARCY_SUBPROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
-#include <dumux/porousmediumflow/2p2c/model.hh>
+#include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidsystems/h2oair.hh>
+#include "./../spatialparams.hh"
 
-#include "spatialparams.hh"
+#include <dumux/material/fluidsystems/1padapter.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 
 namespace Dumux
 {
@@ -42,37 +44,39 @@ class DarcySubProblem;
 
 namespace Properties
 {
-#if !NONISOTHERMAL
-NEW_TYPE_TAG(DarcyTwoPTwoC, INHERITS_FROM(CCTpfaModel, TwoPTwoC));
-#else
-NEW_TYPE_TAG(DarcyTwoPTwoC, INHERITS_FROM(CCTpfaModel, TwoPTwoCNI));
-#endif
+NEW_TYPE_TAG(DarcyOnePTwoC, INHERITS_FROM(CCTpfaModel, OnePNC));
 
 // Set the problem property
-SET_TYPE_PROP(DarcyTwoPTwoC, Problem, Dumux::DarcySubProblem<TypeTag>);
+SET_TYPE_PROP(DarcyOnePTwoC, Problem, Dumux::DarcySubProblem<TypeTag>);
 
-// the fluid system
-SET_TYPE_PROP(DarcyTwoPTwoC, FluidSystem, FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+// The fluid system
+SET_PROP(DarcyOnePTwoC, FluidSystem)
+{
+  using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+  static constexpr auto phaseIdx = H2OAir::liquidPhaseIdx; // simulate the water phase
+  using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
+};
 
-//! Set the default formulation to pw-Sn: This can be over written in the problem.
-SET_PROP(DarcyTwoPTwoC, Formulation)
-{ static constexpr auto value = TwoPFormulation::p1s0; };
+// Use moles
+SET_BOOL_PROP(DarcyOnePTwoC, UseMoles, true);
 
-//// The gas component balance (air) is replaced by the total mass balance
-SET_INT_PROP(DarcyTwoPTwoC, ReplaceCompEqIdx, 3);
+// Do not replace one equation with a total mass balance
+SET_INT_PROP(DarcyOnePTwoC, ReplaceCompEqIdx, 3);
+
+//! Use a model with constant tortuosity for the effective diffusivity
+SET_TYPE_PROP(DarcyOnePTwoC, EffectiveDiffusivityModel,
+              DiffusivityConstantTortuosity<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the grid type
-SET_TYPE_PROP(DarcyTwoPTwoC, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(DarcyOnePTwoC, Grid, Dune::YaspGrid<2>);
 
-SET_BOOL_PROP(DarcyTwoPTwoC, UseMoles, true);
-
-SET_PROP(DarcyTwoPTwoC, SpatialParams)
+// Set the spatial paramaters type
+SET_PROP(DarcyOnePTwoC, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = TwoPTwoCSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePSpatialParams<FVGridGeometry, Scalar>;
 };
-
 }
 
 template <class TypeTag>
@@ -82,6 +86,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -91,17 +96,16 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
+        // grid and world dimension
+        dim = GridView::dimension,
+        dimworld = GridView::dimensionworld,
+
         // primary variable indices
         conti0EqIdx = Indices::conti0EqIdx,
-        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx,
-        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::AirIdx,
         pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
@@ -109,58 +113,27 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
 
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
 
-    using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
-
 public:
     DarcySubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                    std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
+    : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager), xBottom_(0.0)
     {
-        pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
-        initialSw_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Saturation");
-        temperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Temperature");
-        initialPhasePresence_ = getParamFromGroup<int>(this->paramGroup(), "Problem.InitPhasePresence");
+        pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure", 0.0);
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
 
-        diffCoeffAvgType_ = StokesDarcyCouplingOptions::stringToEnum(DiffusionCoefficientAveragingType{},
-                                                                     getParamFromGroup<std::string>(this->paramGroup(), "Problem.InterfaceDiffusionCoefficientAvg"));
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
     }
 
     /*!
      * \name Simulation steering
      */
     // \{
-
-    template<class SolutionVector, class GridVariables>
-    void postTimeStep(const SolutionVector& curSol,
-                      const GridVariables& gridVariables,
-                      const Scalar timeStepSize)
-
-    {
-        // compute the mass in the entire domain
-        Scalar massWater = 0.0;
-
-        // bulk elements
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(this->fvGridGeometry());
-            fvGeometry.bindElement(element);
-
-            auto elemVolVars = localView(gridVariables.curGridVolVars());
-            elemVolVars.bindElement(element, fvGeometry, curSol);
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto& volVars = elemVolVars[scv];
-                for(int phaseIdx = 0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
-                {
-                    massWater += volVars.massFraction(phaseIdx, FluidSystem::H2OIdx)*volVars.density(phaseIdx)
-                    * scv.volume() * volVars.saturation(phaseIdx) * volVars.porosity() * volVars.extrusionFactor();
-                }
-            }
-        }
-
-        std::cout << std::setprecision(15) << "mass of water is: " << massWater << std::endl;
-    }
 
     /*!
      * \brief Returns true if a restart file should be written to
@@ -174,20 +147,23 @@ public:
      */
     // \{
 
-    bool shouldWriteOutput() const //define output
+    bool shouldWriteOutput() const // define output
     { return true; }
+
 
     /*!
      * \brief Return the temperature within the domain in [K].
+     *
      */
     Scalar temperature() const
-    { return temperature_; }
+    { return 273.15 + 10; } // 10°C
     // \}
 
      /*!
      * \name Boundary conditions
      */
     // \{
+
     /*!
       * \brief Specifies which kind of boundary condition should be
       *        used for which equation on a given boundary control volume.
@@ -198,15 +174,18 @@ public:
     BoundaryTypes boundaryTypes(const Element &element, const SubControlVolumeFace &scvf) const
     {
         BoundaryTypes values;
-        values.setAllNeumann();
+        values.setAllNeumann(); // left/right wall, top
 
-        if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+       if(onLowerBoundary_(scvf.center()))
+           values.setAllDirichlet();
+
+        if(couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
             values.setAllCouplingNeumann();
 
         return values;
     }
 
-    /*!
+        /*!
      * \brief Evaluate the boundary conditions for a Dirichlet control volume.
      *
      * \param element The element for which the Dirichlet boundary condition is set
@@ -217,7 +196,10 @@ public:
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
         PrimaryVariables values(0.0);
-        values = initialAtPos(scvf.center());
+        values = initial(element);
+
+        if(onLowerBoundary_(scvf.center()))
+            values[Indices::conti0EqIdx + 1] = xBottom_;
 
         return values;
     }
@@ -231,6 +213,7 @@ public:
      * \param elemVolVars The element volume variables
      * \param scvf The boundary sub control volume face
      *
+     * For this method, the \a values variable stores primary variables.
      */
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
@@ -239,19 +222,8 @@ public:
     {
         NumEqVector values(0.0);
 
-        if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
-        {
-#if !NONISOTHERMAL
-            values = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, scvf, diffCoeffAvgType_);
-#else
-            const auto massFlux = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, scvf, diffCoeffAvgType_);
-
-            for(int i = 0; i< massFlux.size(); ++i)
-                values[i] = massFlux[i];
-
-            values[Indices::energyEqIdx] = couplingManager().couplingData().energyCouplingCondition(fvGeometry, elemVolVars, scvf, diffCoeffAvgType_);
-#endif
-        }
+        if(couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+            values = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, scvf);
 
         return values;
     }
@@ -270,11 +242,6 @@ public:
      * \param fvGeomentry The fvGeometry
      * \param elemVolVars The element volume variables
      * \param scv The subcontrolvolume
-     *
-     * For this method, the \a values variable stores the rate mass
-     * of a component is generated or annihilate per volume
-     * unit. Positive values mean that mass is created, negative ones
-     * mean that it vanishes.
      */
     NumEqVector source(const Element &element,
                        const FVElementGeometry& fvGeometry,
@@ -287,20 +254,16 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
+     * \param element The element
+     *
      * For this method, the \a priVars parameter stores primary
      * variables.
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables initial(const Element &element) const
     {
         PrimaryVariables values(0.0);
-        values.setState(initialPhasePresence_);
+        values[pressureIdx] = pressure_;
 
-        values[pressureIdx] = pressure_ + 1000. * this->gravity()[1] * (globalPos[1] - this->fvGridGeometry().bBoxMax()[1]);
-        values[switchIdx] = initialSw_;
-
-#if NONISOTHERMAL
-        values[Indices::temperatureIdx] = temperature_;
-#endif
         return values;
     }
 
@@ -318,6 +281,12 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
+    /*!
+     * \brief Set the fixed value of the mole fraction at the bottom of the domain
+     */
+    void setBottomMoleFraction(const Scalar x)
+    { xBottom_ = x; }
+
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_; }
@@ -331,16 +300,12 @@ private:
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
 
-    Scalar pressure_;
-    Scalar initialSw_;
-    Scalar temperature_;
-    int initialPhasePresence_;
-
     Scalar eps_;
-
     std::shared_ptr<CouplingManager> couplingManager_;
-    DiffusionCoefficientAveragingType diffCoeffAvgType_;
+    Scalar xBottom_;
+    Scalar pressure_;
+    std::string problemName_;
 };
 } //end namespace
 
-#endif //DUMUX_DARCY2P2C_SUBPROBLEM_HH
+#endif //DUMUX_DARCY_SUBPROBLEM_HH

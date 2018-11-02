@@ -31,7 +31,7 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "./../1pspatialparams.hh"
+#include "./../spatialparams.hh"
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -92,7 +92,18 @@ public:
     DarcySubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
-    {}
+    {
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
+    }
+
 
     /*!
      * \name Simulation steering
@@ -247,6 +258,7 @@ private:
 
     Scalar eps_;
     std::shared_ptr<CouplingManager> couplingManager_;
+    std::string problemName_;
 };
 } //end namespace
 

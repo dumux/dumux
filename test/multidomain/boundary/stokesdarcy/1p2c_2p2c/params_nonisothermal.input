@@ -43,7 +43,7 @@ VgAlpha = 6.371e-4
 VgN = 6.9
 
 [Problem]
-Name = test_stokes1p2cdarcy2p2chorizontal
+Name = test_stokes1p2cnidarcy2p2cnihorizontal
 EnableGravity = true
 InterfaceDiffusionCoefficientAvg = FreeFlowOnly
 EnableInertiaTerms = false
@@ -51,6 +51,7 @@ EnableInertiaTerms = false
 [Vtk]
 AddVelocity = true
 WriteFaceData = false
+OutputName = test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal
 
 [Newton]
 MaxSteps = 12

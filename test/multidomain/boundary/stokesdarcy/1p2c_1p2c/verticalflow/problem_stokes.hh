@@ -19,10 +19,10 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief A simple Navier-Stokes test problem for the staggered grid (Navier-)Stokes model.
+ * \brief A simple Stokes test problem for the staggered grid (Navier-)Stokes model.
  */
-#ifndef DUMUX_STOKES_SUBPROBLEM_HH
-#define DUMUX_STOKES_SUBPROBLEM_HH
+#ifndef DUMUX_STOKES_1P2C_SUBPROBLEM_HH
+#define DUMUX_STOKES_1P2C_SUBPROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
 
@@ -56,6 +56,7 @@ SET_TYPE_PROP(StokesOnePTwoC, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoo
 // Set the problem property
 SET_TYPE_PROP(StokesOnePTwoC, Problem, Dumux::StokesSubProblem<TypeTag> );
 
+// Enable all caches
 SET_BOOL_PROP(StokesOnePTwoC, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(StokesOnePTwoC, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(StokesOnePTwoC, EnableGridVolumeVariablesCache, true);
@@ -71,41 +72,54 @@ SET_INT_PROP(StokesOnePTwoC, ReplaceCompEqIdx, 3);
  * \ingroup NavierStokesTests
  * \brief  Test problem for the one-phase (Navier-) Stokes problem.
  *
- * Horizontal flow from left to right with a parabolic velocity profile.
+ * Vertical flow from top to bottom with a parabolic velocity profile.
  */
 template <class TypeTag>
 class StokesSubProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
+
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables)::LocalView;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
 public:
     StokesSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6), injectionState_(false), couplingManager_(couplingManager)
+    : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6), couplingManager_(couplingManager), xTop_(1e-3)
     {
         inletVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Velocity");
-        pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
-        inletMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletMoleFraction");
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
     }
 
    /*!
      * \name Problem parameters
      */
     // \{
+
 
     bool shouldWriteRestartFile() const
     { return false; }
@@ -146,18 +160,16 @@ public:
 
         const auto& globalPos = scvf.dofPosition();
 
-        if(onLeftBoundary_(globalPos))
+        // inflow
+        if(onUpperBoundary_(globalPos))
         {
-            values.setDirichlet(Indices::conti0EqIdx + 1);
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
+            values.setDirichlet(Indices::conti0EqIdx + 1);
         }
-        else if(onRightBoundary_(globalPos))
-        {
-            values.setDirichlet(Indices::pressureIdx);
-            values.setOutflow(Indices::conti0EqIdx + 1);
-        }
-        else
+
+        // left/right wall
+        if (onRightBoundary_(globalPos) || (onLeftBoundary_(globalPos)))
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
@@ -165,7 +177,8 @@ public:
             values.setNeumann(Indices::conti0EqIdx + 1);
         }
 
-        if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+        // outflow/coupling
+        if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
             values.setCouplingNeumann(Indices::conti0EqIdx);
             values.setCouplingNeumann(Indices::conti0EqIdx + 1);
@@ -182,28 +195,33 @@ public:
      * \param element The element
      * \param scvf The sub control volume face
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition& pos) const
     {
         PrimaryVariables values(0.0);
-        values = initialAtPos(globalPos);
+        values = initialAtPos(pos);
 
-        // start injecting after the velocity field had enough time to initialize
-        if(globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_ && isInjectionPeriod())
-            values[Indices::conti0EqIdx + 1] = inletMoleFraction_;
+        if(pos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
+            values[Indices::conti0EqIdx + 1] = xTop_;
+
+        // reverse the flow direction after some time
+        if(time() >= 3e5)
+            values[Indices::velocityYIdx] *= -1.0;
 
         return values;
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann control volume.
+     * \brief Evaluate the boundary conditions for a Neumann
+     *        control volume.
      *
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeomentry The fvGeometry
      * \param elemVolVars The element volume variables
      * \param elemFaceVars The element face variables
      * \param scvf The boundary sub control volume face
+     *
+     * For this method, the \a values variable stores primary variables.
      */
-    template<class ElementVolumeVariables, class ElementFaceVariables>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
@@ -225,13 +243,28 @@ public:
 
     // \}
 
-    //! Set the coupling manager
+    /*!
+     * \brief Set the coupling manager
+     */
     void setCouplingManager(std::shared_ptr<CouplingManager> cm)
     { couplingManager_ = cm; }
 
-    //! Get the coupling manager
+    /*!
+     * \brief Get the coupling manager
+     */
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
+
+    /*!
+     * \brief Check if on coupling interface
+     *
+     * \param globalPos The global position
+     *
+     * Returns true if globalPos is on coupling interface
+     * (here: lower boundary of Stokes domain)
+     */
+    bool onCouplingInterface(const GlobalPosition &globalPos) const
+    {return onLowerBoundary_(globalPos); }
 
    /*!
      * \name Volume terms
@@ -246,11 +279,10 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[Indices::pressureIdx] = pressure_;
-        values[Indices::velocityXIdx] = inletVelocity_ * (globalPos[1] - this->fvGridGeometry().bBoxMin()[1])
-                                              * (this->fvGridGeometry().bBoxMax()[1] - globalPos[1])
-                                              / (0.25 * (this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1])
-                                              * (this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]));
+
+        values[Indices::pressureIdx] = 1e5;
+        values[Indices::velocityYIdx] = inletVelocity_ * globalPos[0] * (this->fvGridGeometry().bBoxMax()[0] - globalPos[0]);
+        values[Indices::conti0EqIdx + 1] = 0.0;
 
         return values;
     }
@@ -268,18 +300,26 @@ public:
      */
     Scalar alphaBJ(const SubControlVolumeFace& scvf) const
     {
-        return 1.0;
+        return couplingManager().problem(CouplingManager::darcyIdx).spatialParams().beaversJosephCoeffAtPos(scvf.center());
     }
 
-    void setInjectionState(const bool yesNo)
-    {
-        injectionState_ = yesNo;
-    }
+    /*!
+     * \brief Sets the time loop pointer
+     */
+    void setTimeLoop(TimeLoopPtr timeLoop)
+    { timeLoop_ = timeLoop; }
 
-    bool isInjectionPeriod() const
-    {
-        return injectionState_;
-    }
+    /*!
+     * \brief Returns the time
+     */
+    Scalar time() const
+    { return timeLoop_->time(); }
+
+    /*!
+     * \brief Set the fixed value of the mole fraction at the top of the domain
+     */
+    void setTopMoleFraction(const Scalar x)
+    { xTop_ = x; }
 
     // \}
 
@@ -298,11 +338,12 @@ private:
 
     Scalar eps_;
     Scalar inletVelocity_;
-    Scalar pressure_;
-    Scalar inletMoleFraction_;
-    bool injectionState_;
+    std::string problemName_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
+    Scalar xTop_;
+
+    TimeLoopPtr timeLoop_;
 };
 } //end namespace
 

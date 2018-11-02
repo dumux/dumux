@@ -5,6 +5,9 @@ DtInitial = 1.0
 [Problem]
 EnableGravity = true
 
+[Vtk]
+OutputName = test_md_boundary_darcy1p_darcy1p
+
 [1.Problem]
 Name = 1p_0
 

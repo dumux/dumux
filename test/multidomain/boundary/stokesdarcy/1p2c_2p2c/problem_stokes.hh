@@ -120,6 +120,15 @@ public:
 
         diffCoeffAvgType_ = StokesDarcyCouplingOptions::stringToEnum(DiffusionCoefficientAveragingType{},
                                                                      getParamFromGroup<std::string>(this->paramGroup(), "Problem.InterfaceDiffusionCoefficientAvg"));
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
     }
 
    /*!
@@ -396,7 +405,7 @@ private:
     Scalar refPressure_;
     Scalar refMoleFrac_;
     Scalar refTemperature_;
-
+    std::string problemName_;
     TimeLoopPtr timeLoop_;
 
     std::shared_ptr<CouplingManager> couplingManager_;

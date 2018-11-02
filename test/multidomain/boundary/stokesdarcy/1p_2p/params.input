@@ -34,12 +34,12 @@ VgAlpha = 6.371e-4
 VgN = 8.0
 
 [Problem]
-Name = test_stokes1pdarcy2pvertical
 EnableGravity = false
 EnableInertiaTerms = false
 
 [Vtk]
 AddVelocity = 1
+OutputName = test_md_boundary_darcy2p_stokes1p_vertical
 
 [Assembly.NumericDifference]
 BaseEpsilon = 1e-6

@@ -58,14 +58,13 @@ SET_TYPE_PROP(StokesOneP, Problem, Dumux::StokesSubProblem<TypeTag> );
 SET_BOOL_PROP(StokesOneP, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(StokesOneP, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(StokesOneP, EnableGridVolumeVariablesCache, true);
-
 }
 
 /*!
  * \ingroup NavierStokesTests
  * \brief  Test problem for the one-phase (Navier-) Stokes problem.
  *
- * Vertical flow from top to bottom with a parabolic velocity profile.
+ * Horizontal flow from left to right with a parabolic velocity profile.
  */
 template <class TypeTag>
 class StokesSubProblem : public NavierStokesProblem<TypeTag>
@@ -83,8 +82,6 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables)::LocalView;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -97,14 +94,22 @@ public:
     StokesSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6), couplingManager_(couplingManager)
     {
-        inletVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Velocity");
+        deltaP_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference");
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
     }
 
    /*!
      * \name Problem parameters
      */
     // \{
-
 
     bool shouldWriteRestartFile() const
     { return false; }
@@ -145,22 +150,15 @@ public:
 
         const auto& globalPos = scvf.dofPosition();
 
-        // inflow
-        if(onUpperBoundary_(globalPos))
+        if(onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
+            values.setDirichlet(Indices::pressureIdx);
+        else
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
         }
 
-        // left/right wall
-        if (onRightBoundary_(globalPos) || (onLeftBoundary_(globalPos)))
-        {
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
-        }
-
-        // outflow/coupling
-        if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+        if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
             values.setCouplingNeumann(Indices::conti0EqIdx);
             values.setCouplingNeumann(Indices::momentumYBalanceIdx);
@@ -176,26 +174,24 @@ public:
      * \param element The element
      * \param scvf The sub control volume face
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& pos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values = initialAtPos(pos);
+        values = initialAtPos(globalPos);
 
         return values;
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann
-     *        control volume.
+     * \brief Evaluate the boundary conditions for a Neumann control volume.
      *
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeomentry The fvGeometry
      * \param elemVolVars The element volume variables
      * \param elemFaceVars The element face variables
      * \param scvf The boundary sub control volume face
-     *
-     * For this method, the \a values variable stores primary variables.
      */
+    template<class ElementVolumeVariables, class ElementFaceVariables>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
@@ -222,17 +218,6 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
-    /*!
-     * \brief Check if on coupling interface
-     *
-     * \param globalPos The global position
-     *
-     * Returns true if globalPos is on coupling interface
-     * (here: lower boundary of Stokes domain)
-     */
-    bool onCouplingInterface(const GlobalPosition &globalPos) const
-    {return onLowerBoundary_(globalPos); }
-
    /*!
      * \name Volume terms
      */
@@ -247,7 +232,8 @@ public:
     {
         PrimaryVariables values(0.0);
 
-        values[Indices::velocityYIdx] = inletVelocity_ * globalPos[0] * (this->fvGridGeometry().bBoxMax()[0] - globalPos[0]);
+        if(onLeftBoundary_(globalPos))
+            values[Indices::pressureIdx] = deltaP_;
 
         return values;
     }
@@ -284,7 +270,8 @@ private:
     { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
 
     Scalar eps_;
-    Scalar inletVelocity_;
+    Scalar deltaP_;
+    std::string problemName_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };

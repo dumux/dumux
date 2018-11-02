@@ -7,6 +7,9 @@ EnableGravity = false # horizontal layer
 TwoPhaseDomainRadius = 1000 # 1km
 InjectionRate = 1.0 # kg/s
 
+[Vtk]
+OutputName = test_md_boundary_darcy1p_darcy2p
+
 [1.Problem]
 Name = 1p
 
