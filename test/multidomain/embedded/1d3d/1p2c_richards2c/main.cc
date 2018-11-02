@@ -45,14 +45,15 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
+#include <dumux/multidomain/embedded/mixeddimensionglue.hh>
 
-#include "rootproblem.hh"
-#include "soilproblem.hh"
+#include "problem_root.hh"
+#include "problem_soil.hh"
 
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(SOILTYPETAG, CouplingManager)
+SET_PROP(SoilTypeTag, CouplingManager)
 {
     using Traits = MultiDomainTraits<TypeTag, TTAG(RootTypeTag)>;
     using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
@@ -60,16 +61,105 @@ SET_PROP(SOILTYPETAG, CouplingManager)
 
 SET_PROP(RootTypeTag, CouplingManager)
 {
-    using Traits = MultiDomainTraits<TTAG(SOILTYPETAG), TypeTag>;
+    using Traits = MultiDomainTraits<TTAG(SoilTypeTag), TypeTag>;
     using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
-SET_TYPE_PROP(SOILTYPETAG, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
+SET_TYPE_PROP(SoilTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
 SET_TYPE_PROP(RootTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<1>);
-SET_TYPE_PROP(SOILTYPETAG, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
+SET_TYPE_PROP(SoilTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
 SET_TYPE_PROP(RootTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
 
 } // end namespace Properties
+
+//! helper function for mass balance evaluations
+template<class Problem, class SolutionVector, class GridVariables>
+double computeSourceIntegral(const Problem& problem, const SolutionVector& sol, const GridVariables& gridVars)
+{
+    const auto& gg = problem.fvGridGeometry();
+    typename SolutionVector::block_type source(0.0);
+    for (const auto& element : elements(gg.gridView()))
+    {
+        auto fvGeometry = localView(gg);
+        fvGeometry.bindElement(element);
+
+        auto elemVolVars = localView(gridVars.curGridVolVars());
+        elemVolVars.bindElement(element, fvGeometry, sol);
+
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            auto pointSources = problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
+            // conversion to kg/s
+            const auto& volVars = elemVolVars[scv];
+            pointSources *= scv.volume()*volVars.extrusionFactor()
+                            * volVars.density(Problem::Indices::liquidPhaseIdx) / volVars.molarDensity(Problem::Indices::liquidPhaseIdx);
+
+            source += pointSources;
+        }
+    }
+
+    std::cout << "Global integrated source (" << problem.name() << "): " << source[Problem::Indices::conti0EqIdx] << " (kg/s) / "
+              <<                           source[Problem::Indices::conti0EqIdx]*3600*24*1000 << " (g/day)" << '\n';
+
+    return source[Problem::Indices::conti0EqIdx];
+}
+
+//! helper function for mass balance evaluations
+template<class Problem, class SolutionVector, class GridVariables>
+double computeGlobalMass(const Problem& problem, const SolutionVector& sol, const GridVariables& gridVars)
+{
+    static constexpr int liquidPhaseIdx = Problem::Indices::liquidPhaseIdx;
+    static constexpr int transportCompIdx = Problem::Indices::transportCompIdx;
+    double mass = 0.0;
+
+    const auto& gg = problem.fvGridGeometry();
+    for (const auto& element : elements(gg.gridView()))
+    {
+        auto fvGeometry = localView(gg);
+        fvGeometry.bindElement(element);
+
+        auto elemVolVars = localView(gridVars.curGridVolVars());
+        elemVolVars.bindElement(element, fvGeometry, sol);
+
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            const auto& volVars = elemVolVars[scv];
+            mass += volVars.massFraction(liquidPhaseIdx, transportCompIdx)*volVars.density(liquidPhaseIdx)
+                     *scv.volume() * volVars.porosity() * volVars.saturation(liquidPhaseIdx) * volVars.extrusionFactor();
+        }
+    }
+
+    return mass;
+}
+
+//! helper function for mass balance evaluations
+template<class Problem, class SolutionVector, class GridVariables>
+double computeGlobalBoundaryMass(const Problem& problem, const SolutionVector& sol, const GridVariables& gridVars, double dt)
+{
+    static constexpr int transportCompIdx = Problem::Indices::transportCompIdx;
+    static constexpr int transportEqIdx = Problem::Indices::transportEqIdx;
+    double mass = 0.0;
+
+    const auto& gg = problem.fvGridGeometry();
+    for (const auto& element : elements(gg.gridView()))
+    {
+        auto fvGeometry = localView(gg);
+        fvGeometry.bindElement(element);
+
+        auto elemVolVars = localView(gridVars.curGridVolVars());
+        elemVolVars.bindElement(element, fvGeometry, sol);
+
+        for (auto&& scvf : scvfs(fvGeometry))
+            if (scvf.boundary())
+                mass += problem.neumann(element, fvGeometry, elemVolVars, scvf)[transportEqIdx]
+                        * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor()
+                        * Problem::FluidSystem::molarMass(transportCompIdx)
+                        * dt;
+    }
+
+    return mass;
+}
+
 } // end namespace Dumux
 
 int main(int argc, char** argv) try
@@ -87,7 +177,7 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using BulkTypeTag = TTAG(SOILTYPETAG);
+    using BulkTypeTag = TTAG(SoilTypeTag);
     using LowDimTypeTag = TTAG(RootTypeTag);
 
     // try to create a grid (from the given grid file or the input file)
@@ -100,13 +190,13 @@ int main(int argc, char** argv) try
     LowDimGridManager lowDimGridManager;
     lowDimGridManager.init("Root"); // pass parameter group
 
-    ////////////////////////////////////////////////////////////
-    // run instationary non-linear problem on this grid
-    ////////////////////////////////////////////////////////////
-
     // we compute on the leaf grid view
     const auto& bulkGridView = bulkGridManager.grid().leafGridView();
     const auto& lowDimGridView = lowDimGridManager.grid().leafGridView();
+
+    ////////////////////////////////////////////////////////////
+    // run instationary non-linear problem on this grid
+    ////////////////////////////////////////////////////////////
 
     // create the finite volume grid geometry
     using BulkFVGridGeometry = typename GET_PROP_TYPE(BulkTypeTag, FVGridGeometry);
@@ -125,7 +215,7 @@ int main(int argc, char** argv) try
     using CouplingManager = typename GET_PROP_TYPE(BulkTypeTag, CouplingManager);
     auto couplingManager = std::make_shared<CouplingManager>(bulkFvGridGeometry, lowDimFvGridGeometry);
 
-    // the problem (initial and boundary conditions)
+    // the bulk problem (initial and boundary conditions)
     using BulkProblem = typename GET_PROP_TYPE(BulkTypeTag, Problem);
     auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, couplingManager);
 
@@ -136,6 +226,97 @@ int main(int argc, char** argv) try
     // the low dim problem (initial and boundary conditions)
     using LowDimProblem = typename GET_PROP_TYPE(LowDimTypeTag, Problem);
     auto lowDimProblem = std::make_shared<LowDimProblem>(lowDimFvGridGeometry, lowDimSpatialParams, couplingManager);
+
+    // locally refine levels deep around the embedded grid
+    int levels = getParam<int>("Soil.Grid.LocalRefinement");
+    for (int i = 0; i < levels; ++i)
+    {
+        auto& soilGrid = bulkGridManager.grid();
+        using BulkGridView = typename GET_PROP_TYPE(BulkTypeTag, GridView);
+        using LowDimGridView = typename GET_PROP_TYPE(LowDimTypeTag, GridView);
+
+        MixedDimensionGlue<BulkGridView, LowDimGridView>
+            glue(bulkFvGridGeometry->boundingBoxTree(), lowDimFvGridGeometry->boundingBoxTree());
+
+        // refine all 3D cells intersected
+        for (const auto& is : intersections(glue))
+        {
+            for (unsigned int outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
+            {
+                const auto cutElement = is.outside(outsideIdx);
+
+                // mark the cut element and all it's neighbors
+                soilGrid.mark(1, cutElement);
+                for (const auto& intersection : intersections(bulkGridView, cutElement))
+                    if (intersection.neighbor())
+                        soilGrid.mark(1, intersection.outside());
+            }
+
+        }
+
+        // refine all 3D cells that are where the contamination is
+        const double extend = 0.15*(bulkFvGridGeometry->bBoxMax()[0]-bulkFvGridGeometry->bBoxMin()[0]);
+        for (const auto& element : elements(bulkGridView))
+        {
+            const auto globalPos = element.geometry().center();
+            auto contaminationPos = bulkFvGridGeometry->bBoxMax()-bulkFvGridGeometry->bBoxMin();
+            contaminationPos[0] *= 0.25;
+            contaminationPos[1] *= 0.55;
+            contaminationPos[2] *= 0.25;
+            contaminationPos += bulkFvGridGeometry->bBoxMin();
+
+            if ((globalPos - contaminationPos).infinity_norm() <  extend + 1e-7)
+                soilGrid.mark(1, element);
+        }
+
+        soilGrid.preAdapt();
+        soilGrid.adapt();
+        soilGrid.postAdapt();
+
+        // make sure there is only one level difference
+        for (int i = 0; i < levels; ++i)
+        {
+            for (const auto& element : elements(bulkGridView))
+            {
+                for (const auto& intersection : intersections(bulkGridView, element))
+                {
+                    if (intersection.neighbor())
+                        if (intersection.outside().level()-1 > element.level())
+                            soilGrid.mark(1, element);
+                }
+            }
+
+            soilGrid.preAdapt();
+            soilGrid.adapt();
+            soilGrid.postAdapt();
+        }
+
+        // update the bounding box tree
+        bulkFvGridGeometry->update();
+    }
+
+    // update geometry after refinement
+    bulkFvGridGeometry->update();
+    lowDimFvGridGeometry->update();
+
+    // output min max h
+    double bulkHMin = 1.0; double bulkHMax = 0.0;
+    for (const auto& element : elements(bulkGridView))
+    {
+        const auto geometry = element.geometry();
+        const auto h = (geometry.corner(1)-geometry.corner(0)).two_norm();
+        bulkHMin = std::min(bulkHMin, h);
+        bulkHMax = std::max(bulkHMax, h);
+    }
+
+    double ldHMin = 1.0; double ldHMax = 0.0;
+    for (const auto& element : elements(lowDimGridView))
+    {
+        const auto geometry = element.geometry();
+        const auto h = (geometry.corner(1)-geometry.corner(0)).two_norm();
+        ldHMin = std::min(ldHMin, h);
+        ldHMax = std::max(ldHMax, h);
+    }
 
     // the solution vector
     Traits::SolutionVector sol;
@@ -163,6 +344,8 @@ int main(int argc, char** argv) try
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     const auto episodeLength = getParam<Scalar>("TimeLoop.EpisodeLength");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
+    const bool outputVtk = getParam<bool>("Problem.EnableVtkOutput", true);
 
     // intialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
@@ -195,11 +378,30 @@ int main(int argc, char** argv) try
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
+    // keep track of mass that left the system
+    double massLeft = 0.0;
+
+    // output file
+    const auto outFileName = getParam<std::string>("Problem.OutFile");
+    std::ofstream outFile(outFileName, std::ios::out);
+
+    outFile << "[3D] hMax: " << bulkHMax << ", hMin: " << bulkHMin << std::endl;
+    outFile << "[1D] hMax: " << ldHMax << ", hMin: " << ldHMin << std::endl << std::endl;
+
+    double lowDimMass = computeGlobalMass(*lowDimProblem, sol[lowDimIdx], *lowDimGridVariables);
+    double bulkMass = computeGlobalMass(*bulkProblem, sol[bulkIdx], *bulkGridVariables);
+    const double initialMass = lowDimMass + bulkMass;
+
+    std::cout << "\033[1;33m" << "The domain initially contains " << (lowDimMass + bulkMass)*1e12 << " ng tracer"
+              << " (root: " << lowDimMass*1e12 << ", soil: " << bulkMass*1e12 << ")\033[0m" << '\n';
+
     // time loop
     timeLoop->setPeriodicCheckPoint(episodeLength);
     timeLoop->start();
     while (!timeLoop->finished())
     {
+        std::cout << '\n' << "\033[1m" << "Simulation time in hours: " << timeLoop->time()/3600 << "\033[0m\n\n";
+
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(oldSol);
 
@@ -214,12 +416,24 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // output the source terms
-        bulkProblem->computeSourceIntegral(sol[bulkIdx], *bulkGridVariables);
-        lowDimProblem->computeSourceIntegral(sol[lowDimIdx], *lowDimGridVariables);
+        lowDimMass = computeGlobalMass(*lowDimProblem, sol[lowDimIdx], *lowDimGridVariables);
+        bulkMass = computeGlobalMass(*bulkProblem, sol[bulkIdx], *bulkGridVariables);
+        massLeft += computeGlobalBoundaryMass(*lowDimProblem, sol[lowDimIdx], *lowDimGridVariables, timeLoop->timeStepSize());
+
+        std::cout << "\033[1;33m" << "The domain contains " << (lowDimMass + bulkMass)*1e12 << " ng tracer"
+                  << " (root: " << lowDimMass*1e12 << ", soil: " << bulkMass*1e12 << ")\033[0m" << '\n';
+
+        std::cout << "\033[1;33m" << massLeft*1e12 << " ng left domain over the root collar -> "
+                  << ((lowDimMass + bulkMass) + massLeft)*1e12 << " ng balanced.\033[0m" << '\n';
+
+        std::cout << "\033[1;33m" << "Global mass balance error: "
+                  << (lowDimMass + bulkMass + massLeft - initialMass)*1e12 << " ng.\033[0m" << '\n';
+
+        outFile << timeLoop->time() << std::scientific << std::setprecision(8)
+                << " " << massLeft*1e12 << " " << lowDimMass + bulkMass + massLeft - initialMass << '\n';
 
         // write vtk output
-        if (timeLoop->isCheckPoint() || timeLoop->finished())
+        if (outputVtk && (timeLoop->isCheckPoint() || timeLoop->finished()))
         {
             bulkVtkWriter.write(timeLoop->time());
             lowDimVtkWriter.write(timeLoop->time());
@@ -231,6 +445,8 @@ int main(int argc, char** argv) try
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
     }
+
+    outFile.close();
 
     timeLoop->finalize(mpiHelper.getCollectiveCommunication());
 

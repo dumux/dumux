@@ -37,7 +37,7 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/liquidphase2c.hh>
 
-#include "rootspatialparams.hh"
+#include "spatialparams_root.hh"
 
 namespace Dumux {
 // forward declaration

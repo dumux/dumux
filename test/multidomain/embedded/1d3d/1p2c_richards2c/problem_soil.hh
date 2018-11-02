@@ -42,7 +42,7 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/liquidphase2c.hh>
 
-#include "soilspatialparams.hh"
+#include "spatialparams_soil.hh"
 
 namespace Dumux {
 

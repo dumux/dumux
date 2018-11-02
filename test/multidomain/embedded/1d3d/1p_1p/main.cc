@@ -47,8 +47,8 @@
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
 
-#include "bloodflowproblem.hh"
-#include "tissueproblem.hh"
+#include "problem_bloodflow.hh"
+#include "problem_tissue.hh"
 #include "l2norm.hh"
 
 // default to tpfa for both domains

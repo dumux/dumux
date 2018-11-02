@@ -30,12 +30,10 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -46,85 +44,32 @@
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
-#include <dumux/multidomain/embedded/couplingmanager2d3d.hh>
+#include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
 
-#include "matrixproblem.hh"
-#include "fractureproblem.hh"
+#include "problem_root.hh"
+#include "problem_soil.hh"
 
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(MatrixTypeTag, CouplingManager)
+SET_PROP(SOILTYPETAG, CouplingManager)
 {
-    using Traits = MultiDomainTraits<TypeTag, TTAG(FractureTypeTag)>;
-    using type = EmbeddedCouplingManager2d3d<Traits>;
+    using Traits = MultiDomainTraits<TypeTag, TTAG(RootTypeTag)>;
+    using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
-SET_PROP(FractureTypeTag, CouplingManager)
+SET_PROP(RootTypeTag, CouplingManager)
 {
-    using Traits = MultiDomainTraits<TTAG(MatrixTypeTag), TypeTag>;
-    using type = EmbeddedCouplingManager2d3d<Traits>;
+    using Traits = MultiDomainTraits<TTAG(SOILTYPETAG), TypeTag>;
+    using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
-SET_TYPE_PROP(MatrixTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
-SET_TYPE_PROP(FractureTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<1>);
-SET_TYPE_PROP(MatrixTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
-SET_TYPE_PROP(FractureTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
+SET_TYPE_PROP(SOILTYPETAG, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
+SET_TYPE_PROP(RootTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<1>);
+SET_TYPE_PROP(SOILTYPETAG, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
+SET_TYPE_PROP(RootTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
 
 } // end namespace Properties
-
-struct SolverTag { struct Nonlinear {}; struct Linear {}; };
-
-template<class Assembler, class LinearSolver, class CouplingManager, class SolutionVector>
-void assembleSolveUpdate(Assembler& assembler, LinearSolver& linearSolver, CouplingManager& couplingManager, SolutionVector& sol, SolverTag::Nonlinear)
-{
-    // the non-linear solver
-    using NewtonSolver = MultiDomainNewtonSolver<typename Assembler::element_type, typename LinearSolver::element_type, typename CouplingManager::element_type>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-
-    // solve the non-linear system
-    nonLinearSolver.solve(sol);
-}
-
-template<class Assembler, class LinearSolver, class CouplingManager, class SolutionVector>
-void assembleSolveUpdate(Assembler& assembler, LinearSolver& linearSolver, CouplingManager& couplingManager, SolutionVector& sol, SolverTag::Linear)
-{
-    Dune::Timer assembleTimer(false), solveTimer(false), updateTimer(false);
-    std::cout << "\nAssembling linear system... " << std::flush;
-
-    // assemble stiffness matrix
-    assembleTimer.start();
-    couplingManager->updateSolution(sol);
-    assembler->assembleJacobianAndResidual(sol);
-    assembleTimer.stop();
-
-    std::cout << "done.\n";
-    std::cout << "Solving linear system ("
-              << linearSolver->name() << ") ... " << std::flush;
-
-    // solve linear system
-    solveTimer.start();
-    auto deltaSol = sol;
-    const bool converged = linearSolver->template solve<2>(assembler->jacobian(), deltaSol, assembler->residual());
-    if (!converged) DUNE_THROW(Dune::MathError, "Linear solver did not converge!");
-    solveTimer.stop();
-
-    // update variables
-    updateTimer.start();
-    sol -= deltaSol;
-    couplingManager->updateSolution(sol);
-    assembler->updateGridVariables(sol);
-    updateTimer.stop();
-
-    std::cout << "done.\n";
-    const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
-    std::cout << "Assemble/solve/update time: "
-              <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
-              <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
-              <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
-              << "\n";
-}
-
 } // end namespace Dumux
 
 int main(int argc, char** argv) try
@@ -142,18 +87,18 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using BulkTypeTag = TTAG(MatrixTypeTag);
-    using LowDimTypeTag = TTAG(FractureTypeTag);
+    using BulkTypeTag = TTAG(SOILTYPETAG);
+    using LowDimTypeTag = TTAG(RootTypeTag);
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains
     using BulkGridManager = Dumux::GridManager<typename GET_PROP_TYPE(BulkTypeTag, Grid)>;
     BulkGridManager bulkGridManager;
-    bulkGridManager.init("Matrix"); // pass parameter group
+    bulkGridManager.init("Soil"); // pass parameter group
 
     using LowDimGridManager = Dumux::GridManager<typename GET_PROP_TYPE(LowDimTypeTag, Grid)>;
     LowDimGridManager lowDimGridManager;
-    lowDimGridManager.init("Fracture"); // pass parameter group
+    lowDimGridManager.init("Root"); // pass parameter group
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
@@ -182,11 +127,15 @@ int main(int argc, char** argv) try
 
     // the problem (initial and boundary conditions)
     using BulkProblem = typename GET_PROP_TYPE(BulkTypeTag, Problem);
-    auto bulkSpatialParams = std::make_shared<typename BulkProblem::SpatialParams>(bulkFvGridGeometry, "Matrix");
-    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, bulkSpatialParams, couplingManager, "Matrix");
+    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, couplingManager);
+
+    // the low dim spatial parameters
+    using LowDimSpatialParams = typename GET_PROP_TYPE(LowDimTypeTag, SpatialParams);
+    auto lowDimSpatialParams = std::make_shared<LowDimSpatialParams>(lowDimFvGridGeometry, lowDimGridManager.getGridData());
+
+    // the low dim problem (initial and boundary conditions)
     using LowDimProblem = typename GET_PROP_TYPE(LowDimTypeTag, Problem);
-    auto lowDimSpatialParams = std::make_shared<typename LowDimProblem::SpatialParams>(lowDimFvGridGeometry, "Fracture");
-    auto lowDimProblem = std::make_shared<LowDimProblem>(lowDimFvGridGeometry, lowDimSpatialParams, couplingManager, "Fracture");
+    auto lowDimProblem = std::make_shared<LowDimProblem>(lowDimFvGridGeometry, lowDimSpatialParams, couplingManager);
 
     // the solution vector
     Traits::SolutionVector sol;
@@ -208,6 +157,13 @@ int main(int argc, char** argv) try
     auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
     lowDimGridVariables->init(sol[lowDimIdx], oldSol[lowDimIdx]);
 
+    // get some time loop parameters
+    using Scalar = Traits::Scalar;
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    const auto episodeLength = getParam<Scalar>("TimeLoop.EpisodeLength");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
     // intialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
@@ -217,35 +173,66 @@ int main(int argc, char** argv) try
     using LowDimSolutionVector = std::decay_t<decltype(sol[lowDimIdx])>;
     VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, sol[lowDimIdx], lowDimProblem->name());
     GET_PROP_TYPE(LowDimTypeTag, VtkOutputFields)::init(lowDimVtkWriter);
+    lowDimProblem->addVtkOutputFields(lowDimVtkWriter);
     lowDimVtkWriter.write(0.0);
+
+    // instantiate time loop
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(bulkProblem, lowDimProblem),
                                                  std::make_tuple(bulkFvGridGeometry, lowDimFvGridGeometry),
                                                  std::make_tuple(bulkGridVariables, lowDimGridVariables),
-                                                 couplingManager);
+                                                 couplingManager, timeLoop);
 
     // the linear solver
     using LinearSolver = BlockDiagILU0BiCGSTABSolver;
     auto linearSolver = std::make_shared<LinearSolver>();
 
-    // assemble & solve & udpate
-    const auto solverType = getParam<std::string>("Problem.SolverType", "linear");
-    if (solverType == "linear")
-        assembleSolveUpdate(assembler, linearSolver, couplingManager, sol, SolverTag::Linear{});
-    else if (solverType == "nonlinear")
-        assembleSolveUpdate(assembler, linearSolver, couplingManager, sol, SolverTag::Nonlinear{});
-    else
-        DUNE_THROW(Dune::IOError, "Invalid solver type " << solverType << "specified in 'Problem.SolverType'!");
+    // the non-linear solver
+    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
-    // output the source terms
-    bulkProblem->computeSourceIntegral(sol[bulkIdx], *bulkGridVariables);
-    lowDimProblem->computeSourceIntegral(sol[lowDimIdx], *lowDimGridVariables);
+    // time loop
+    timeLoop->setPeriodicCheckPoint(episodeLength);
+    timeLoop->start();
+    while (!timeLoop->finished())
+    {
+        // set previous solution for storage evaluations
+        assembler->setPreviousSolution(oldSol);
 
-    // write vtk output
-    bulkVtkWriter.write(1.0);
-    lowDimVtkWriter.write(1.0);
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(sol, *timeLoop);
+
+        // make the new solution the old solution
+        oldSol = sol;
+        bulkGridVariables->advanceTimeStep();
+        lowDimGridVariables->advanceTimeStep();
+
+        // advance to the time loop to the next step
+        timeLoop->advanceTimeStep();
+
+        // output the source terms
+        bulkProblem->computeSourceIntegral(sol[bulkIdx], *bulkGridVariables);
+        lowDimProblem->computeSourceIntegral(sol[lowDimIdx], *lowDimGridVariables);
+
+        // write vtk output
+        if (timeLoop->isCheckPoint() || timeLoop->finished())
+        {
+            bulkVtkWriter.write(timeLoop->time());
+            lowDimVtkWriter.write(timeLoop->time());
+        }
+
+        // report statistics of this time step
+        timeLoop->reportTimeStep();
+
+        // set new dt as suggested by newton controller
+        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+    }
+
+    timeLoop->finalize(mpiHelper.getCollectiveCommunication());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
