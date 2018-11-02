@@ -46,7 +46,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
-#include "2p2c_comparison_problem.hh"
+#include "problem.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with

@@ -36,7 +36,7 @@
 #include <dumux/porousmediumflow/2p2c/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "waterairspatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 /*!
