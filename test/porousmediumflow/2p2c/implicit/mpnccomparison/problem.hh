@@ -35,7 +35,7 @@
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 
-#include "2p2c_comparison_spatialparams.hh"
+#include "spatialparams.hh"
 #include "vtkoutputfields.hh"
 
 namespace Dumux {
