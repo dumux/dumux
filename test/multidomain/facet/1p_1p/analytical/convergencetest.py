@@ -50,7 +50,8 @@ for permIndex in range(0, len(k)):
         tmpGeoFile.close()
 
         subprocess.call(['gmsh', '-2', 'grids/tmp.geo'])
-        subprocess.call(['./' + execName, 'facetcoupling_1p1p.input',
+        subprocess.call(['./' + execName, 'params.input',
+                                          '-Problem.Name', execName,
                                           '-Grid.File', 'grids/tmp.msh',
                                           '-Grid.NumElemsPerSide', str(int(cells)),
                                           '-LowDim.SpatialParams.Permeability', str(k[permIndex]),

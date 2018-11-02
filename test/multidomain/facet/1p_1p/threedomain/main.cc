@@ -32,9 +32,9 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
-#include "bulkproblem.hh"
-#include "facetproblem.hh"
-#include "edgeproblem.hh"
+#include "problem_bulk.hh"
+#include "problem_facet.hh"
+#include "problem_edge.hh"
 
 #include <dumux/assembly/diffmethod.hh>
 
@@ -178,9 +178,15 @@ int main(int argc, char** argv) try
     using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
     using FacetSolutionVector = std::decay_t<decltype(x[facetId])>;
     using EdgeSolutionVector = std::decay_t<decltype(x[edgeId])>;
-    VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkProblem->name());
-    VtkOutputModule<FacetGridVariables, FacetSolutionVector> facetVtkWriter(*facetGridVariables, x[facetId], facetProblem->name());
-    VtkOutputModule<EdgeGridVariables, EdgeSolutionVector> edgeVtkWriter(*edgeGridVariables, x[edgeId], edgeProblem->name());
+
+    // intialize the vtk output module
+    const auto bulkName = getParam<std::string>("Problem.Name") + "_" + bulkProblem->name();
+    const auto facetName = getParam<std::string>("Problem.Name") + "_" + facetProblem->name();
+    const auto edgeName = getParam<std::string>("Problem.Name") + "_" + edgeProblem->name();
+
+    VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkName);
+    VtkOutputModule<FacetGridVariables, FacetSolutionVector> facetVtkWriter(*facetGridVariables, x[facetId], facetName);
+    VtkOutputModule<EdgeGridVariables, EdgeSolutionVector> edgeVtkWriter(*edgeGridVariables, x[edgeId], edgeName);
 
     // Add model specific output fields
     using BulkVtkOutputFields = typename GET_PROP_TYPE(BulkProblemTypeTag, VtkOutputFields);
