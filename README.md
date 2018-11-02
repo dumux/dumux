@@ -50,6 +50,6 @@ number will show a detailed overview of the build).
 [1]: http://dune-project.org
 [2]: http://dumux.org/documents/dumux_awrpaper.pdf
 [3]: http://www.dumux.org/installation.php
-[4]: http://www.dumux.org/documents/dumux-handbook-2.8.pdf
+[4]: http://www.dumux.org/documents/dumux-handbook-2.12.pdf
 [5]: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 [6]: http://www.hydrosys.uni-stuttgart.de/index.en.php
