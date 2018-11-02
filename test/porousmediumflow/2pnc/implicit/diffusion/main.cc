@@ -32,7 +32,7 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include "fuelcellproblem.hh"
+#include "problem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -50,8 +50,6 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-
-#include "fuelcellproblem.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -81,7 +79,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(TYPETAG);
+    using TypeTag = TTAG(TwoPNCDiffusionCC);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -130,13 +128,12 @@ int main(int argc, char** argv) try
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // initialize the vtk output module
+    // intialize the vtk output module
     using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
-    problem->addVtkFields(vtkWriter); //!< Add problem specific output fields
+    IOFields::initOutputModule(vtkWriter); //! Add model specific output fields
     vtkWriter.write(0.0);
 
     // instantiate time loop
@@ -149,7 +146,7 @@ int main(int argc, char** argv) try
 
     // the linear solver
     using LinearSolver = AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    auto linearSolver =  std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonSolver = PriVarSwitchNewtonSolver<Assembler, LinearSolver,
@@ -171,9 +168,6 @@ int main(int argc, char** argv) try
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
-
-        // update the output fields with the current solution before write
-        problem->updateVtkFields(x);
 
         // write vtk output
         vtkWriter.write(timeLoop->time());

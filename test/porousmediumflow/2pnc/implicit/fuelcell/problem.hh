@@ -37,7 +37,7 @@
 #else
 #include <dumux/material/chemistry/electrochemistry/electrochemistry.hh>
 #endif
-#include "fuelcellspatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 
