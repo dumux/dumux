@@ -1,95 +1,99 @@
 add_input_file_links()
 
-dune_add_test(NAME test_flatplate_kepsilon2c
-              SOURCES test_flatplate.cc
+dune_add_test(NAME test_ff_rans2c_kepsilon
+              SOURCES main.cc
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
-target_compile_definitions(test_flatplate_kepsilon2c PUBLIC "KEPSILON=1")
+target_compile_definitions(test_ff_rans2c_kepsilon PUBLIC "KEPSILON=1")
 
-add_executable(test_flatplate_kepsilon2cni EXCLUDE_FROM_ALL test_flatplate.cc)
-target_compile_definitions(test_flatplate_kepsilon2cni PUBLIC "KEPSILON=1" "NONISOTHERMAL=1")
+add_executable(test_ff_rans2cni_kepsilon EXCLUDE_FROM_ALL main.cc)
+target_compile_definitions(test_ff_rans2cni_kepsilon PUBLIC "KEPSILON=1" "NONISOTHERMAL=1")
 
-dune_add_test(NAME test_flatplate_kepsilon2cni_twolayer
-              TARGET test_flatplate_kepsilon2cni
+dune_add_test(NAME test_ff_rans2cni_kepsilon_twolayer
+              TARGET test_ff_rans2cni_kepsilon
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_kepsilon2cni.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00033.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_kepsilon2cni
-                                       test_flatplate2cni.input")
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_kepsilon_twolayer-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon_twolayer-00033.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon params_nonisothermal.input
+                             -Problem.Name test_ff_rans2cni_kepsilon_twolayer")
 
-dune_add_test(NAME test_flatplate_kepsilon2cni_wallfunction
-              TARGET test_flatplate_kepsilon2cni
+dune_add_test(NAME test_ff_rans2cni_kepsilon_wallfunction
+              TARGET test_ff_rans2cni_kepsilon
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_kepsilon2cni_wallfunction.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni_wallfunction-00024.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_kepsilon2cni
-                                       test_flatplate2cni_wallfunction.input")
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_kepsilon_wallfunction-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon_wallfunction-00024.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon params_niwallfunction.input
+                             -Problem.Name test_ff_rans2cni_kepsilon_wallfunction")
 
-dune_add_test(NAME test_flatplate_komega2c
-              SOURCES test_flatplate.cc
+dune_add_test(NAME test_ff_rans2c_komega
+              SOURCES main.cc
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
-target_compile_definitions(test_flatplate_komega2c PUBLIC "KOMEGA=1")
+target_compile_definitions(test_ff_rans2c_komega PUBLIC "KOMEGA=1")
 
-dune_add_test(NAME test_flatplate_komega2cni
-              SOURCES test_flatplate.cc
+dune_add_test(NAME test_ff_rans2cni_komega
+              SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_komega2cni.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00032.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_komega2cni
-                                       test_flatplate2cni.input
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_komega-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_komega-00032.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_komega params_nonisothermal.input
+                                       -Problem.Name test_ff_rans2cni_komega
                                        -Newton.TargetSteps 12")
-target_compile_definitions(test_flatplate_komega2cni PUBLIC "KOMEGA=1" "NONISOTHERMAL=1")
+target_compile_definitions(test_ff_rans2cni_komega PUBLIC "KOMEGA=1" "NONISOTHERMAL=1")
 
-dune_add_test(NAME test_flatplate_lowrekepsilon2c
-              SOURCES test_flatplate.cc
+dune_add_test(NAME test_ff_rans2c_lowrekepsilon
+              SOURCES main.cc
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
-target_compile_definitions(test_flatplate_lowrekepsilon2c PUBLIC "LOWREKEPSILON=1")
+target_compile_definitions(test_ff_rans2c_lowrekepsilon PUBLIC "LOWREKEPSILON=1")
 
-dune_add_test(NAME test_flatplate_lowrekepsilon2cni
-              SOURCES test_flatplate.cc
+dune_add_test(NAME test_ff_rans2cni_lowrekepsilon
+              SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_lowrekepsilon2cni.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00032.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_lowrekepsilon2cni test_flatplate2cni.input")
-target_compile_definitions(test_flatplate_lowrekepsilon2cni PUBLIC "LOWREKEPSILON=1" "NONISOTHERMAL=1")
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_lowrekepsilon-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_lowrekepsilon-00032.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_lowrekepsilon params_nonisothermal.input
+                             -Problem.Name test_ff_rans2cni_lowrekepsilon")
+target_compile_definitions(test_ff_rans2cni_lowrekepsilon PUBLIC "LOWREKEPSILON=1" "NONISOTHERMAL=1")
 
-dune_add_test(NAME test_flatplate_oneeq2c
-              SOURCES test_flatplate.cc
+dune_add_test(NAME test_ff_rans2c_oneeq
+              SOURCES main.cc
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
-target_compile_definitions(test_flatplate_oneeq2c PUBLIC "ONEEQ=1")
+target_compile_definitions(test_ff_rans2c_oneeq PUBLIC "ONEEQ=1")
 
-dune_add_test(NAME test_flatplate_oneeq2cni
-              SOURCES test_flatplate.cc
+dune_add_test(NAME test_ff_rans2cni_oneeq
+              SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_oneeq2cni.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00031.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_oneeq2cni test_flatplate2cni.input")
-target_compile_definitions(test_flatplate_oneeq2cni PUBLIC "ONEEQ=1" "NONISOTHERMAL=1")
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_oneeq-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_oneeq-00031.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_oneeq params_nonisothermal.input
+                             -Problem.Name test_ff_rans2cni_oneeq")
+target_compile_definitions(test_ff_rans2cni_oneeq PUBLIC "ONEEQ=1" "NONISOTHERMAL=1")
 
-dune_add_test(NAME test_flatplate_zeroeq2c
-              SOURCES test_flatplate.cc
+dune_add_test(NAME test_ff_rans2c_zeroeq
+              SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_zeroeq2c.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2c-00031.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_zeroeq2c test_flatplate2c.input")
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_zeroeq.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq-00031.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq params.input
+                             -Problem.Name test_ff_rans2c_zeroeq")
 
-dune_add_test(NAME test_flatplate_zeroeq2cni
-              SOURCES test_flatplate.cc
+dune_add_test(NAME test_ff_rans2cni_zeroeq
+              SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_zeroeq2cni.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00032.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_zeroeq2cni test_flatplate2cni.input")
-target_compile_definitions(test_flatplate_zeroeq2cni PUBLIC "NONISOTHERMAL=1")
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_zeroeq.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_zeroeq-00032.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_zeroeq params_nonisothermal.input
+                             -Problem.Name test_ff_rans2cni_zeroeq")
+target_compile_definitions(test_ff_rans2cni_zeroeq PUBLIC "NONISOTHERMAL=1")
