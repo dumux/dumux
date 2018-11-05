@@ -19,61 +19,64 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief Test for the staggered grid (Navier-)Stokes model with analytical solution (Donea et al., 2003)
+ * \brief Test for the 1-D Navier-Stokes model with an analytical solution
+ *
+ * \copydoc NavierStokesAnalyticProblem
  */
 #ifndef DUMUX_DONEA_TEST_PROBLEM_HH
 #define DUMUX_DONEA_TEST_PROBLEM_HH
 
-#ifndef ENABLECACHING
-#define ENABLECACHING 0
-#endif
-
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
-#include "l2error.hh"
+#include <dumux/freeflow/navierstokes/problem.hh>
+#include "../../l2error.hh"
 
 
 namespace Dumux
 {
 template <class TypeTag>
-class DoneaTestProblem;
+class NavierStokesAnalyticProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DoneaTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+NEW_TYPE_TAG(NavierStokesAnalyticTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
 
 // the fluid system
-SET_PROP(DoneaTestTypeTag, FluidSystem)
+SET_PROP(NavierStokesAnalyticTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
-SET_TYPE_PROP(DoneaTestTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(NavierStokesAnalyticTypeTag, Grid, Dune::YaspGrid<1>);
 
 // Set the problem property
-SET_TYPE_PROP(DoneaTestTypeTag, Problem, Dumux::DoneaTestProblem<TypeTag> );
+SET_TYPE_PROP(NavierStokesAnalyticTypeTag, Problem, Dumux::NavierStokesAnalyticProblem<TypeTag> );
 
-SET_BOOL_PROP(DoneaTestTypeTag, EnableFVGridGeometryCache, ENABLECACHING);
-SET_BOOL_PROP(DoneaTestTypeTag, EnableGridFluxVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(DoneaTestTypeTag, EnableGridVolumeVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(DoneaTestTypeTag, EnableGridFaceVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableFVGridGeometryCache, true);
+
+SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableGridVolumeVariablesCache, true);
+
+SET_BOOL_PROP(NavierStokesAnalyticTypeTag, NormalizePressure, false);
 }
 
 /*!
  * \ingroup NavierStokesTests
- * \brief  Test problem for the staggered grid (Donea et al., 2003)
- * \todo doc me!
+ * \brief Test for the 1-D Navier-Stokes model with an analytical solution
+ *
+ * The 1-D analytic solution is given by
+ * \f[ p = 2 - 2 \cdot x \f]
+ * \f[ v_\text{x} = 2 \cdot x^3 \f]
  */
 template <class TypeTag>
-class DoneaTestProblem : public NavierStokesProblem<TypeTag>
+class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
@@ -87,15 +90,17 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldVector<Dune::FieldVector<Scalar, dimWorld>, dimWorld>;
 
 public:
-    DoneaTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    NavierStokesAnalyticProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
+        density_ = getParam<Scalar>("Component.LiquidDensity");
+        kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity");
         createAnalyticalSolution_();
     }
 
@@ -122,7 +127,6 @@ public:
                     << std::scientific
                     << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
                     << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                    << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
                     << std::endl;
         }
     }
@@ -143,16 +147,40 @@ public:
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
         NumEqVector source(0.0);
-        Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
 
-        source[Indices::momentumXBalanceIdx] = (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x
-                                             + (-48.0*y + 72.0*y*y - 48.0*y*y*y + 12.0)* x*x
-                                             + (-2.0 + 24.0*y - 72.0*y*y + 48.0*y*y*y)*x
-                                             + 1.0 - 4.0*y + 12.0*y*y - 8.0*y*y*y;
-        source[Indices::momentumYBalanceIdx] = (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
-                                             + (4.0 - 24.0*y + 48.0*y*y - 48.0*y*y*y + 24.0*y*y*y*y)*x - 12.0*y*y
-                                             + 24.0*y*y*y - 12.0*y*y*y*y;
+        // mass balance - term div(rho*v)
+        for (unsigned int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
+        {
+            source[Indices::conti0EqIdx] += dvdx(globalPos)[dimIdx][dimIdx];
+        }
+        source[Indices::conti0EqIdx] *= density_;
+
+        // momentum balance
+        for (unsigned int velIdx = 0; velIdx < dimWorld; ++velIdx)
+        {
+            for (unsigned int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
+            {
+                // inertia term
+                if (this->enableInertiaTerms())
+                  source[Indices::velocity(velIdx)] += density_ * dv2dx(globalPos)[velIdx][dimIdx];
+
+                // viscous term (molecular)
+                source[Indices::velocity(velIdx)] -= density_ * kinematicViscosity_* dvdx2(globalPos)[velIdx][dimIdx];
+                static const bool enableUnsymmetrizedVelocityGradient = getParam<bool>("FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+                if (!enableUnsymmetrizedVelocityGradient)
+                    source[Indices::velocity(velIdx)] -= density_ * kinematicViscosity_* dvdx2(globalPos)[dimIdx][velIdx];
+            }
+            // pressure term
+            source[Indices::velocity(velIdx)] += dpdx(globalPos)[velIdx];
+
+            // gravity term
+            static const bool enableGravity = getParam<bool>("Problem.EnableGravity");
+            if (enableGravity)
+            {
+                source[Indices::velocity(velIdx)] -= density_ * this->gravity()[velIdx];
+            }
+        }
+
         return source;
     }
     // \}
@@ -172,9 +200,8 @@ public:
         BoundaryTypes values;
 
         // set Dirichlet values for the velocity and pressure everywhere
-        values.setDirichlet(Indices::velocityXIdx);
-        values.setDirichlet(Indices::velocityYIdx);
-        values.setDirichletCell(Indices::pressureIdx);
+        values.setDirichletCell(Indices::conti0EqIdx);
+        values.setDirichlet(Indices::momentumXBalanceIdx);
 
         return values;
     }
@@ -197,15 +224,61 @@ public:
      */
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
     {
-        Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
-
         PrimaryVariables values;
-        values[Indices::pressureIdx] = x * (1.0-x); // p(x,y) = x(1-x) [Donea2003]
-        values[Indices::velocityXIdx] = x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);
-        values[Indices::velocityYIdx] = -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);
-
+        values[Indices::pressureIdx] = p(globalPos);
+        values[Indices::velocityXIdx] = v(globalPos);
         return values;
+    }
+
+    //! \brief The velocity
+    const DimVector v(const DimVector& globalPos) const
+    {
+        DimVector v(0.0);
+        v[0] = 2.0 * globalPos[0] * globalPos[0] * globalPos[0];
+        return v;
+    }
+
+    //! \brief The velocity gradient
+    const DimMatrix dvdx(const DimVector& globalPos) const
+    {
+        DimMatrix dvdx(0.0);
+        dvdx[0][0] = 6.0 * globalPos[0] * globalPos[0];
+        return dvdx;
+    }
+
+    //! \brief The gradient of the velocity squared (using product rule -> nothing to do here)
+    const DimMatrix dv2dx(const DimVector& globalPos) const
+    {
+        DimMatrix dv2dx;
+        for (unsigned int velIdx = 0; velIdx < dimWorld; ++velIdx)
+        {
+            for (unsigned int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
+            {
+                dv2dx[velIdx][dimIdx] = dvdx(globalPos)[velIdx][dimIdx] * v(globalPos)[dimIdx]
+                                        + dvdx(globalPos)[dimIdx][dimIdx] * v(globalPos)[velIdx];
+            }
+        }
+        return dv2dx;
+    }
+
+    //! \brief The gradient of the velocity gradient
+    const DimMatrix dvdx2(const DimVector& globalPos) const
+    {
+        DimMatrix dvdx2(0.0);
+        dvdx2[0][0] = 12.0 * globalPos[0];
+        return dvdx2;
+    }
+
+    //! \brief The pressure
+    const Scalar p(const DimVector& globalPos) const
+    { return 2.0 - 2.0 * globalPos[0]; }
+
+    //! \brief The pressure gradient
+    const DimVector dpdx(const DimVector& globalPos) const
+    {
+        DimVector dpdx(0.0);
+        dpdx[0] = -2.0;
+        return dpdx;
     }
 
     // \}
@@ -222,12 +295,7 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 0.0;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
-
-        return values;
+        return analyticalSolution(globalPos);
     }
 
    /*!
@@ -295,9 +363,11 @@ private:
 
     Scalar eps_;
     bool printL2Error_;
+    Scalar density_;
+    Scalar kinematicViscosity_;
     std::vector<Scalar> analyticalPressure_;
-    std::vector<VelocityVector> analyticalVelocity_;
-    std::vector<VelocityVector> analyticalVelocityOnFace_;
+    std::vector<GlobalPosition> analyticalVelocity_;
+    std::vector<GlobalPosition> analyticalVelocityOnFace_;
 };
 } //end namespace
 

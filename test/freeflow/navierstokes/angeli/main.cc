@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Channel flow test for the staggered grid (Navier-)Stokes model
+ * \brief Test for the instationary staggered grid Navier-Stokes model with analytical solution (Angeli et al., 2017)
  */
  #include <config.h>
 
@@ -32,7 +32,8 @@
  #include <dune/grid/io/file/vtk.hh>
  #include <dune/istl/io.hh>
 
-#include "channeltestproblem.hh"
+
+#include "problem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -50,9 +51,6 @@
 
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/loadsolution.hh>
-
-#include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -91,7 +89,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(ChannelTestTypeTag);
+    using TypeTag = TTAG(AngeliTestTypeTag);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -119,18 +117,20 @@ int main(int argc, char** argv) try
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
-    // the problem (initial and boundary conditions)
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
-
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
+    // instantiate time loop
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
+
+    // the problem (initial and boundary conditions)
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    problem->setTimeLoop(timeLoop);
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -139,38 +139,22 @@ int main(int argc, char** argv) try
     SolutionVector x;
     x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
     x[FVGridGeometry::faceIdx()].resize(numDofsFace);
-    if (restartTime > 0)
-    {
-        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-
-        auto fileNameCell = getParamFromGroup<std::string>("CellCenter", "Restart.File");
-        loadSolution(x[FVGridGeometry::cellCenterIdx()], fileNameCell,
-                     [](int pvIdx, int state){ return "p"; }, // test option with lambda
-                     *fvGridGeometry);
-
-        auto fileNameFace = getParamFromGroup<std::string>("Face", "Restart.File");
-        loadSolution(x[FVGridGeometry::faceIdx()], fileNameFace,
-                     ModelTraits::primaryVariableNameFace<>, *fvGridGeometry);
-    }
-    else
-        problem->applyInitialSolution(x);
+    problem->applyInitialSolution(x);
     auto xOld = x;
-
-    // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
-    problem->setTimeLoop(timeLoop);
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
-    // initialize the vtk output module
-    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    // intialize the vtk output module
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
-    vtkWriter.write(restartTime);
+    vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
+    vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");
+    vtkWriter.addFaceField(problem->getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
+    vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
@@ -183,36 +167,6 @@ int main(int argc, char** argv) try
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
-
-    // set up two surfaces over which fluxes are calculated
-    FluxOverSurface<TypeTag> flux(*problem, *gridVariables, x);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
-    const Scalar xMin = fvGridGeometry->bBoxMin()[0];
-    const Scalar xMax = fvGridGeometry->bBoxMax()[0];
-    const Scalar yMin = fvGridGeometry->bBoxMin()[1];
-    const Scalar yMax = fvGridGeometry->bBoxMax()[1];
-
-    // The first surface shall be placed at the middle of the channel.
-    // If we have an odd number of cells in x-direction, there would not be any cell faces
-    // at the position of the surface (which is required for the flux calculation).
-    // In this case, we add half a cell-width to the x-position in order to make sure that
-    // the cell faces lie on the surface. This assumes a regular cartesian grid.
-    const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
-    const int numCellsX = getParam<std::vector<int>>("Grid.Cells")[0];
-    const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
-
-    const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin};
-    const auto p1middle = GlobalPosition{planePosMiddleX + offsetX, yMax};
-    flux.addSurface("middle", p0middle, p1middle);
-
-    // The second surface is placed at the outlet of the channel.
-    const auto p0outlet = GlobalPosition{xMax, yMin};
-    const auto p1outlet = GlobalPosition{xMax, yMax};
-    flux.addSurface("outlet", p0outlet, p1outlet);
 
     // time loop
     timeLoop->start(); do
@@ -227,29 +181,15 @@ int main(int argc, char** argv) try
         xOld = x;
         gridVariables->advanceTimeStep();
 
+        problem->createAnalyticalSolution();
+
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
+        problem->postTimeStep(x);
+
         // write vtk output
         vtkWriter.write(timeLoop->time());
-
-        // calculate and print mass fluxes over the planes
-        flux.calculateMassOrMoleFluxes();
-        if(GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance())
-        {
-            std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
-            std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;
-        }
-        else
-        {
-            std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
-            std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
-        }
-
-        // calculate and print volume fluxes over the planes
-        flux.calculateVolumeFluxes();
-        std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
-        std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
 
         // report statistics of this time step
         timeLoop->reportTimeStep();

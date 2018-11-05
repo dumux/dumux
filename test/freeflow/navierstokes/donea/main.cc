@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Test for the staggered grid Navier-Stokes model (Kovasznay 1947)
+ */
+
  #include <config.h>
 
  #include <ctime>
@@ -28,7 +34,7 @@
  #include <dune/istl/io.hh>
 
 
-#include "stokeschannel3dproblem.hh"
+#include "problem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -44,7 +50,8 @@
 
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
+
+#include <dumux/io/grid/gridmanager.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -83,7 +90,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(ThreeDChannelTestTypeTag);
+    using TypeTag = TTAG(DoneaTestTypeTag);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -96,7 +103,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv, usage);
 
     // try to create a grid (from the given grid file or the input file)
-    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    using GridManager = Dumux::GridManager<typename GET_PROP_TYPE(TypeTag, Grid)>;
+    GridManager gridManager;
     gridManager.init();
 
     ////////////////////////////////////////////////////////////
@@ -117,13 +125,11 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
-    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
     const auto numDofsCellCenter = leafGridView.size(0);
     const auto numDofsFace = leafGridView.size(1);
     SolutionVector x;
-    x[cellCenterIdx].resize(numDofsCellCenter);
-    x[faceIdx].resize(numDofsFace);
+    x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
+    x[FVGridGeometry::faceIdx()].resize(numDofsFace);
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -134,9 +140,12 @@ int main(int argc, char** argv) try
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
+    vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
+    vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");
+    vtkWriter.addFaceField(problem->getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
     vtkWriter.write(0.0);
 
-    // the assembler with time loop for instationary problem
+    // use the staggered FV assembler
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
 
@@ -148,106 +157,20 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    // set up two planes over which fluxes are calculated
-    FluxOverSurface<TypeTag> flux(*problem, *gridVariables, x);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-
-    const Scalar xMin = fvGridGeometry->bBoxMin()[0];
-    const Scalar xMax = fvGridGeometry->bBoxMax()[0];
-    const Scalar yMin = fvGridGeometry->bBoxMin()[1];
-    const Scalar yMax = fvGridGeometry->bBoxMax()[1];
-#if DIM_3D
-    const Scalar zMin = fvGridGeometry->bBoxMin()[2];
-    const Scalar zMax = fvGridGeometry->bBoxMax()[2];
-#endif
-
-    // The first plane shall be placed at the middle of the channel.
-    // If we have an odd number of cells in x-direction, there would not be any cell faces
-    // at the postion of the plane (which is required for the flux calculation).
-    // In this case, we add half a cell-width to the x-position in order to make sure that
-    // the cell faces lie on the plane. This assumes a regular cartesian grid.
-    // The second plane is placed at the outlet of the channel.
-#if DIM_3D
-    const auto p0inlet = GlobalPosition{xMin, yMin, zMin};
-    const auto p1inlet = GlobalPosition{xMin, yMax, zMin};
-    const auto p2inlet = GlobalPosition{xMin, yMin, zMax};
-    const auto p3inlet = GlobalPosition{xMin, yMax, zMax};
-    flux.addSurface("inlet", p0inlet, p1inlet, p2inlet, p3inlet);
-#else
-    const auto p0inlet = GlobalPosition{xMin, yMin};
-    const auto p1inlet = GlobalPosition{xMin, yMax};
-    flux.addSurface("inlet", p0inlet, p1inlet);
-#endif
-
-    const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
-    const int numCellsX = getParam<std::vector<int>>("Grid.Cells")[0];
-    const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
-
-#if DIM_3D
-    const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin, zMin};
-    const auto p1middle = GlobalPosition{planePosMiddleX + offsetX, yMax, zMin};
-    const auto p2middle = GlobalPosition{planePosMiddleX + offsetX, yMin, zMax};
-    const auto p3middle = GlobalPosition{planePosMiddleX + offsetX, yMax, zMax};
-    flux.addSurface("middle", p0middle, p1middle, p2middle, p3middle);
-#else
-    const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin};
-    const auto p1middle = GlobalPosition{planePosMiddleX + offsetX, yMax};
-flux.addSurface("middle", p0middle, p1middle);
-#endif
-
-    // The second plane is placed at the outlet of the channel.
-#if DIM_3D
-    const auto p0outlet = GlobalPosition{xMax, yMin, zMin};
-    const auto p1outlet = GlobalPosition{xMax, yMax, zMin};
-    const auto p2outlet = GlobalPosition{xMax, yMin, zMax};
-    const auto p3outlet = GlobalPosition{xMax, yMax, zMax};
-    flux.addSurface("outlet", p0outlet, p1outlet, p2outlet, p3outlet);
-#else
-    const auto p0outlet = GlobalPosition{xMax, yMin};
-    const auto p1outlet = GlobalPosition{xMax, yMax};
-    flux.addSurface("outlet", p0outlet, p1outlet);
-#endif
-
     // linearize & solve
     Dune::Timer timer;
     nonLinearSolver.solve(x);
 
     // write vtk output
+    problem->postTimeStep(x);
     vtkWriter.write(1.0);
 
-    // calculate and print mass fluxes over the planes
-    flux.calculateMassOrMoleFluxes();
-    if(GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance())
-    {
-        std::cout << "mass / energy flux at inlet is: " << flux.netFlux("inlet") << std::endl;
-        std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
-        std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;
-    }
-    else
-    {
-        std::cout << "mass flux at inlet is: " << flux.netFlux("inlet") << std::endl;
-        std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
-        std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
-    }
-
-    // calculate and print volume fluxes over the planes
-    flux.calculateVolumeFluxes();
-    std::cout << "volume flux at inlet is: " << flux.netFlux("inlet")[0] << std::endl;
-    std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
-    std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
-
-
     timer.stop();
-
-    std::cout << "analyticalFlux: " << problem->analyticalFlux() << std::endl;
 
     const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
               << comm.size() << " processes.\n"
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
-
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

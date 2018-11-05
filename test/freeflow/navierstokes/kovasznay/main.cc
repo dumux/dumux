@@ -19,35 +19,37 @@
 /*!
  * \file
  *
- * \brief Test for a 1-D staggered grid Navier-Stokes model
+ * \brief Stationary test for the staggered grid Navier-Stokes model (Kovasznay 1947)
  */
+ #include <config.h>
 
-#include <config.h>
+ #include <ctime>
+ #include <iostream>
 
-#include <ctime>
-#include <iostream>
+ #include <dune/common/parallel/mpihelper.hh>
+ #include <dune/common/timer.hh>
+ #include <dune/grid/io/file/dgfparser/dgfexception.hh>
+ #include <dune/grid/io/file/vtk.hh>
+ #include <dune/istl/io.hh>
 
-#include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
-#include <dumux/common/defaultusagemessage.hh>
-#include <dumux/common/dumuxmessage.hh>
+#include "problem.hh"
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
+#include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/defaultusagemessage.hh>
 
-#include <dumux/assembly/staggeredfvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
-#include <dumux/discretization/methods.hh>
-#include <dumux/io/staggeredvtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-#include "navierstokesanalyticproblem.hh"
+#include <dumux/assembly/staggeredfvassembler.hh>
+#include <dumux/assembly/diffmethod.hh>
+
+
+#include <dumux/io/staggeredvtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -66,7 +68,16 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += errorMsg;
                     errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
                                         "\t-TimeManager.TEnd               End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n";
+                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
+                                        "\t-Grid.File                      Name of the file containing the grid \n"
+                                        "\t                                definition in DGF format\n"
+                                        "\t-SpatialParams.LensLowerLeftX   x-coordinate of the lower left corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensLowerLeftY   y-coordinate of the lower left corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensUpperRightX  x-coordinate of the upper right corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensUpperRightY  y-coordinate of the upper right corner of the lens [m] \n"
+                                        "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
+                                        "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
+
         std::cout << errorMessageOut
                   << "\n";
     }
@@ -77,7 +88,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(NavierStokesAnalyticTypeTag);
+    using TypeTag = TTAG(KovasznayTestTypeTag);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -148,8 +159,8 @@ int main(int argc, char** argv) try
     nonLinearSolver.solve(x);
 
     // write vtk output
-    problem->postTimeStep(x);
     vtkWriter.write(1.0);
+    problem->postTimeStep(x);
 
     timer.stop();
 
@@ -157,6 +168,7 @@ int main(int argc, char** argv) try
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
               << comm.size() << " processes.\n"
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
+
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
