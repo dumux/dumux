@@ -32,7 +32,7 @@
  #include <dune/grid/io/file/vtk.hh>
  #include <dune/istl/io.hh>
 
-#include "densityflowproblem.hh"
+#include "problem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -88,7 +88,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(DensityDrivenFlow);
+    using TypeTag = TTAG(MaxwellStefanNCTest);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -127,7 +127,7 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the solution vector
@@ -148,8 +148,7 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
-    vtkWriter.addField(problem->getDeltaRho(), "deltaRho");
+    IOFields::initOutputModule(vtkWriter); //! Add model specific output fields
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
@@ -164,6 +163,9 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
+    //! set some check points for the time loop
+    timeLoop->setPeriodicCheckPoint(tEnd/5.0);
+
     // time loop
     timeLoop->start(); do
     {
@@ -176,14 +178,14 @@ int main(int argc, char** argv) try
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
+        problem->postTimeStep(x, *gridVariables,timeLoop->time()+timeLoop->timeStepSize());
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        problem->calculateDeltaRho(*gridVariables, x);
-
-        // write vtk output
-        vtkWriter.write(timeLoop->time());
+        // write vtk output on check points
+        if (timeLoop->isCheckPoint())
+            vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();

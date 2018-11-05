@@ -19,23 +19,20 @@
 /*!
  * \file
  *
- * \brief Pipe flow test for the staggered grid RANS model
- *
- * This test simulates is based on pipe flow experiments by
- * John Laufers experiments in 1954 \cite Laufer1954a.
+ * \brief Test for the staggered grid multi-component (Navier-)Stokes model
  */
-#include <config.h>
+ #include <config.h>
 
-#include <ctime>
-#include <iostream>
+ #include <ctime>
+ #include <iostream>
 
-#include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
+ #include <dune/common/parallel/mpihelper.hh>
+ #include <dune/common/timer.hh>
+ #include <dune/grid/io/file/dgfparser/dgfexception.hh>
+ #include <dune/grid/io/file/vtk.hh>
+ #include <dune/istl/io.hh>
 
-#include "pipelauferproblem.hh"
+#include "problem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -51,7 +48,6 @@
 
 #include <dumux/discretization/methods.hh>
 
-#include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
@@ -70,7 +66,18 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += progName;
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
-                    errorMessageOut += "\nPlease use the provided input files.\n";
+                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
+                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
+                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
+                                        "\t-Grid.File                      Name of the file containing the grid \n"
+                                        "\t                                definition in DGF format\n"
+                                        "\t-SpatialParams.LensLowerLeftX   x-coordinate of the lower left corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensLowerLeftY   y-coordinate of the lower left corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensUpperRightX  x-coordinate of the upper right corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensUpperRightY  y-coordinate of the upper right corner of the lens [m] \n"
+                                        "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
+                                        "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
+
         std::cout << errorMessageOut
                   << "\n";
     }
@@ -81,7 +88,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(PipeLauferProblem);
+    using TypeTag = TTAG(ChannelNCTest);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -132,8 +139,6 @@ int main(int argc, char** argv) try
     x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
     x[FVGridGeometry::faceIdx()].resize(numDofsFace);
     problem->applyInitialSolution(x);
-    problem->updateStaticWallProperties();
-    problem->updateDynamicWallProperties(x);
     auto xOld = x;
 
     // the grid variables
@@ -145,6 +150,7 @@ int main(int argc, char** argv) try
     using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    vtkWriter.addField(problem->getDeltaP(), "deltaP");
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
@@ -172,11 +178,10 @@ int main(int argc, char** argv) try
         xOld = x;
         gridVariables->advanceTimeStep();
 
-        // update wall properties
-        problem->updateDynamicWallProperties(x);
-
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
+
+        problem->calculateDeltaP(*gridVariables, x);
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
@@ -194,86 +199,6 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////
-
-#if HAVE_PVPYTHON
-    static const bool plotLawOfTheWall = getParam<bool>("Output.PlotLawOfTheWall", false);
-    static const bool plotVelocityProfile = getParam<bool>("Output.PlotVelocityProfile", false);
-    if (plotLawOfTheWall || plotVelocityProfile)
-    {
-        char fileName[255];
-        std::string fileNameFormat = "%s-%05d";
-        sprintf(fileName, fileNameFormat.c_str(), problem->name().c_str(), timeLoop->timeStepIndex());
-        std::cout << fileName << std::endl;
-        std::string vtuFileName = std::string(fileName) + ".vtu";
-        std::string script = std::string(DUMUX_SOURCE_DIR) + "/bin/postprocessing/extractlinedata.py";
-        std::string syscom;
-
-        // execute the pvpython script
-        std::string command = std::string(PVPYTHON_EXECUTABLE) + " " + script
-                              + " -f " + vtuFileName
-                              + " -v 0"
-                              + " -r 10000";
-        syscom =  command + " -p1 8.0 0.0 0.0"
-                          + " -p2 8.0 0.2469 0.0"
-                          + " -of " + std::string(fileName) + "\n";
-
-        if (!system(syscom.c_str()))
-        {
-            Dumux::GnuplotInterface<Scalar> gnuplotLawOfTheWall;
-            Dumux::GnuplotInterface<Scalar> gnuplotVelocityProfile;
-            char gnuplotFileName[255];
-            sprintf(gnuplotFileName, fileNameFormat.c_str(), "lawOfTheWall", timeLoop->timeStepIndex());
-            gnuplotLawOfTheWall.setOpenPlotWindow(plotLawOfTheWall);
-            gnuplotLawOfTheWall.setDatafileSeparator(',');
-            gnuplotLawOfTheWall.resetPlot();
-            gnuplotLawOfTheWall.setXlabel("y^+ [-]");
-            gnuplotLawOfTheWall.setYlabel("u_+ [-]");
-            gnuplotLawOfTheWall.setYRange(0.0, 30.0);
-            gnuplotLawOfTheWall.setOption("set log x");
-            gnuplotLawOfTheWall.setOption("set xrange [1:3000]");
-            gnuplotLawOfTheWall.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
-#if LOWREKEPSILON
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
-#elif KEPSILON
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7 t 'with u_{tau}'");
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 16:17 w l lc 8 t 'with u_{tau,nom}'");
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
-#elif KOMEGA
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
-#elif ONEEQ
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
-#else
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
-#endif
-            gnuplotLawOfTheWall.plot(std::string(gnuplotFileName));
-
-            sprintf(gnuplotFileName, fileNameFormat.c_str(), "velProfile", timeLoop->timeStepIndex());
-            gnuplotVelocityProfile.setOpenPlotWindow(plotVelocityProfile);
-            gnuplotVelocityProfile.setDatafileSeparator(',');
-            gnuplotVelocityProfile.resetPlot();
-            gnuplotVelocityProfile.setXlabel("v_x/v_{x,max} [-]");
-            gnuplotVelocityProfile.setYRange(0.0, 1.0);
-            gnuplotVelocityProfile.setYlabel("y [-]");
-            gnuplotVelocityProfile.addFileToPlot("laufer_re50000.csv", "u 2:1 w p t 'Laufer 1954, Re=50000'");
-#if LOWREKEPSILON
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($26/0.2456) w l lc 7");
-#elif KEPSILON
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($28/0.2456) w l lc 7");
-#elif KOMEGA
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($26/0.2456) w l lc 7");
-#elif ONEEQ
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($25/0.2456) w l lc 7");
-#else
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($24/0.2456) w l lc 7");
-#endif
-            gnuplotVelocityProfile.plot(std::string(gnuplotFileName));
-        }
-        else
-        {
-            std::cerr << "An error occurred when calling pvpython.";
-        }
-    }
-#endif
 
     // print dumux end message
     if (mpiHelper.rank() == 0)

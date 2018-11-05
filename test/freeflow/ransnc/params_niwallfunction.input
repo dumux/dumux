@@ -10,7 +10,7 @@ Cells0 = 10
 Cells1 = 5
 
 [Problem]
-Name = test_flatplate2cni_wallfunction # name passed to the output routines
+Name = test_ff_rans2cni_wallfunction # name passed to the output routines
 InletVelocity = 0.1 # [m/s]
 EnableGravity = false
 

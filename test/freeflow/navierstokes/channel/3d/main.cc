@@ -16,11 +16,6 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- *
- * \brief Channel flow test for the staggered grid (Navier-)Stokes model
- */
  #include <config.h>
 
  #include <ctime>
@@ -32,7 +27,8 @@
  #include <dune/grid/io/file/vtk.hh>
  #include <dune/istl/io.hh>
 
-#include "channeltestproblem.hh"
+
+#include "problem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -46,12 +42,8 @@
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
-#include <dumux/discretization/methods.hh>
-
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/loadsolution.hh>
-
 #include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
 
 /*!
@@ -91,7 +83,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(ChannelTest);
+    using TypeTag = TTAG(ThreeDChannelTest);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -119,48 +111,34 @@ int main(int argc, char** argv) try
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
-    // the problem (initial and boundary conditions)
+    // the problem (boundary conditions)
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
-    // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
-
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
+    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
     const auto numDofsCellCenter = leafGridView.size(0);
     const auto numDofsFace = leafGridView.size(1);
     SolutionVector x;
-    x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
-    x[FVGridGeometry::faceIdx()].resize(numDofsFace);
-    problem->applyInitialSolution(x);
-    auto xOld = x;
-
-    // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
-    problem->setTimeLoop(timeLoop);
+    x[cellCenterIdx].resize(numDofsCellCenter);
+    x[faceIdx].resize(numDofsFace);
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
-    gridVariables->init(x, xOld);
+    gridVariables->init(x);
 
-    // initialize the vtk output module
+    // intialize the vtk output module
     using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
-    vtkWriter.write(restartTime);
+    vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
@@ -170,82 +148,106 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    // set up two surfaces over which fluxes are calculated
+    // set up two planes over which fluxes are calculated
     FluxOverSurface<TypeTag> flux(*problem, *gridVariables, x);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
     const Scalar xMin = fvGridGeometry->bBoxMin()[0];
     const Scalar xMax = fvGridGeometry->bBoxMax()[0];
     const Scalar yMin = fvGridGeometry->bBoxMin()[1];
     const Scalar yMax = fvGridGeometry->bBoxMax()[1];
+#if DIM_3D
+    const Scalar zMin = fvGridGeometry->bBoxMin()[2];
+    const Scalar zMax = fvGridGeometry->bBoxMax()[2];
+#endif
 
-    // The first surface shall be placed at the middle of the channel.
+    // The first plane shall be placed at the middle of the channel.
     // If we have an odd number of cells in x-direction, there would not be any cell faces
-    // at the position of the surface (which is required for the flux calculation).
+    // at the postion of the plane (which is required for the flux calculation).
     // In this case, we add half a cell-width to the x-position in order to make sure that
-    // the cell faces lie on the surface. This assumes a regular cartesian grid.
+    // the cell faces lie on the plane. This assumes a regular cartesian grid.
+    // The second plane is placed at the outlet of the channel.
+#if DIM_3D
+    const auto p0inlet = GlobalPosition{xMin, yMin, zMin};
+    const auto p1inlet = GlobalPosition{xMin, yMax, zMin};
+    const auto p2inlet = GlobalPosition{xMin, yMin, zMax};
+    const auto p3inlet = GlobalPosition{xMin, yMax, zMax};
+    flux.addSurface("inlet", p0inlet, p1inlet, p2inlet, p3inlet);
+#else
+    const auto p0inlet = GlobalPosition{xMin, yMin};
+    const auto p1inlet = GlobalPosition{xMin, yMax};
+    flux.addSurface("inlet", p0inlet, p1inlet);
+#endif
+
     const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
     const int numCellsX = getParam<std::vector<int>>("Grid.Cells")[0];
     const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
 
+#if DIM_3D
+    const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin, zMin};
+    const auto p1middle = GlobalPosition{planePosMiddleX + offsetX, yMax, zMin};
+    const auto p2middle = GlobalPosition{planePosMiddleX + offsetX, yMin, zMax};
+    const auto p3middle = GlobalPosition{planePosMiddleX + offsetX, yMax, zMax};
+    flux.addSurface("middle", p0middle, p1middle, p2middle, p3middle);
+#else
     const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin};
     const auto p1middle = GlobalPosition{planePosMiddleX + offsetX, yMax};
-    flux.addSurface("middle", p0middle, p1middle);
+flux.addSurface("middle", p0middle, p1middle);
+#endif
 
-    // The second surface is placed at the outlet of the channel.
+    // The second plane is placed at the outlet of the channel.
+#if DIM_3D
+    const auto p0outlet = GlobalPosition{xMax, yMin, zMin};
+    const auto p1outlet = GlobalPosition{xMax, yMax, zMin};
+    const auto p2outlet = GlobalPosition{xMax, yMin, zMax};
+    const auto p3outlet = GlobalPosition{xMax, yMax, zMax};
+    flux.addSurface("outlet", p0outlet, p1outlet, p2outlet, p3outlet);
+#else
     const auto p0outlet = GlobalPosition{xMax, yMin};
     const auto p1outlet = GlobalPosition{xMax, yMax};
     flux.addSurface("outlet", p0outlet, p1outlet);
+#endif
 
-    // time loop
-    timeLoop->start(); do
+    // linearize & solve
+    Dune::Timer timer;
+    nonLinearSolver.solve(x);
+
+    // write vtk output
+    vtkWriter.write(1.0);
+
+    // calculate and print mass fluxes over the planes
+    flux.calculateMassOrMoleFluxes();
+    if(GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance())
     {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
+        std::cout << "mass / energy flux at inlet is: " << flux.netFlux("inlet") << std::endl;
+        std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
+        std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+    }
+    else
+    {
+        std::cout << "mass flux at inlet is: " << flux.netFlux("inlet") << std::endl;
+        std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
+        std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+    }
 
-        // solve the non-linear system with time step control
-        nonLinearSolver.solve(x, *timeLoop);
+    // calculate and print volume fluxes over the planes
+    flux.calculateVolumeFluxes();
+    std::cout << "volume flux at inlet is: " << flux.netFlux("inlet")[0] << std::endl;
+    std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
+    std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
 
-        // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
 
-        // advance to the time loop to the next step
-        timeLoop->advanceTimeStep();
+    timer.stop();
 
-        // write vtk output
-        vtkWriter.write(timeLoop->time());
+    std::cout << "analyticalFlux: " << problem->analyticalFlux() << std::endl;
 
-        // calculate and print mass fluxes over the planes
-        flux.calculateMassOrMoleFluxes();
-        if(GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance())
-        {
-            std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
-            std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;
-        }
-        else
-        {
-            std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
-            std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
-        }
+    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    std::cout << "Simulation took " << timer.elapsed() << " seconds on "
+              << comm.size() << " processes.\n"
+              << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
 
-        // calculate and print volume fluxes over the planes
-        flux.calculateVolumeFluxes();
-        std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
-        std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
-
-        // report statistics of this time step
-        timeLoop->reportTimeStep();
-
-        // set new dt as suggested by newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
-
-    } while (!timeLoop->finished());
-
-    timeLoop->finalize(leafGridView.comm());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

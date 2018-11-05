@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Stationary test for the staggered grid Navier-Stokes model (Kovasznay 1947)
+ * \brief Test for the instationary staggered grid Navier-Stokes model with analytical solution (Angeli et al., 2017)
  */
  #include <config.h>
 
@@ -33,7 +33,7 @@
  #include <dune/istl/io.hh>
 
 
-#include "kovasznaytestproblem.hh"
+#include "problem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -47,6 +47,7 @@
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
+#include <dumux/discretization/methods.hh>
 
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
@@ -88,7 +89,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(KovasznayTest);
+    using TypeTag = TTAG(AngeliTest);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -116,9 +117,20 @@ int main(int argc, char** argv) try
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
-    // the problem (boundary conditions)
+    // get some time loop parameters
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
+    // instantiate time loop
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
+
+    // the problem (initial and boundary conditions)
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
+    problem->setTimeLoop(timeLoop);
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -127,15 +139,17 @@ int main(int argc, char** argv) try
     SolutionVector x;
     x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
     x[FVGridGeometry::faceIdx()].resize(numDofsFace);
+    problem->applyInitialSolution(x);
+    auto xOld = x;
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
-    gridVariables->init(x);
+    gridVariables->init(x, xOld);
 
     // intialize the vtk output module
-    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
     vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");
@@ -144,7 +158,7 @@ int main(int argc, char** argv) try
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
+    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
@@ -154,21 +168,38 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    // linearize & solve
-    Dune::Timer timer;
-    nonLinearSolver.solve(x);
+    // time loop
+    timeLoop->start(); do
+    {
+        // set previous solution for storage evaluations
+        assembler->setPreviousSolution(xOld);
 
-    // write vtk output
-    vtkWriter.write(1.0);
-    problem->postTimeStep(x);
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(x, *timeLoop);
 
-    timer.stop();
+        // make the new solution the old solution
+        xOld = x;
+        gridVariables->advanceTimeStep();
 
-    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
-    std::cout << "Simulation took " << timer.elapsed() << " seconds on "
-              << comm.size() << " processes.\n"
-              << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
+        problem->createAnalyticalSolution();
 
+        // advance to the time loop to the next step
+        timeLoop->advanceTimeStep();
+
+        problem->postTimeStep(x);
+
+        // write vtk output
+        vtkWriter.write(timeLoop->time());
+
+        // report statistics of this time step
+        timeLoop->reportTimeStep();
+
+        // set new dt as suggested by newton solver
+        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+    } while (!timeLoop->finished());
+
+    timeLoop->finalize(leafGridView.comm());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

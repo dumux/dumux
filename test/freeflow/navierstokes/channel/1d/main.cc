@@ -19,8 +19,9 @@
 /*!
  * \file
  *
- * \brief Test for the staggered grid multi-component RANS model
+ * \brief Test for a 1-D staggered grid Navier-Stokes model
  */
+
 #include <config.h>
 
 #include <ctime>
@@ -32,24 +33,21 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include "flatplatetestproblem.hh"
-
+#include <dumux/common/defaultusagemessage.hh>
+#include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
-#include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
-
-#include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
-
 #include <dumux/discretization/methods.hh>
-
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
+
+#include "problem.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -66,7 +64,9 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += progName;
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
-                    errorMessageOut += "\nPlease use the provided input files.\n";
+                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
+                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
+                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n";
         std::cout << errorMessageOut
                   << "\n";
     }
@@ -77,7 +77,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(FlatPlateNCTest);
+    using TypeTag = TTAG(NavierStokesAnalytic);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -105,20 +105,9 @@ int main(int argc, char** argv) try
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
-    // the problem (initial and boundary conditions)
+    // the problem (boundary conditions)
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
-
-    // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
-    problem->setTimeLoop(timeLoop);
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -127,25 +116,24 @@ int main(int argc, char** argv) try
     SolutionVector x;
     x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
     x[FVGridGeometry::faceIdx()].resize(numDofsFace);
-    problem->applyInitialSolution(x);
-    problem->updateStaticWallProperties();
-    problem->updateDynamicWallProperties(x);
-    auto xOld = x;
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
-    gridVariables->init(x, xOld);
+    gridVariables->init(x);
 
     // intialize the vtk output module
     using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
+    vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");
+    vtkWriter.addFaceField(problem->getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
@@ -155,37 +143,20 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    // time loop
-    timeLoop->start(); do
-    {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
+    // linearize & solve
+    Dune::Timer timer;
+    nonLinearSolver.solve(x);
 
-        // solve the non-linear system with time step control
-        nonLinearSolver.solve(x, *timeLoop);
+    // write vtk output
+    problem->postTimeStep(x);
+    vtkWriter.write(1.0);
 
-        // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
+    timer.stop();
 
-        // advance to the time loop to the next step
-        timeLoop->advanceTimeStep();
-
-        // update wall properties
-        problem->updateDynamicWallProperties(x);
-
-        // write vtk output
-        vtkWriter.write(timeLoop->time());
-
-        // report statistics of this time step
-        timeLoop->reportTimeStep();
-
-        // set new dt as suggested by newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
-
-    } while (!timeLoop->finished());
-
-    timeLoop->finalize(leafGridView.comm());
+    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    std::cout << "Simulation took " << timer.elapsed() << " seconds on "
+              << comm.size() << " processes.\n"
+              << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

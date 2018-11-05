@@ -36,7 +36,7 @@
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
-#include "l2error.hh"
+#include "../l2error.hh"
 
 
 namespace Dumux

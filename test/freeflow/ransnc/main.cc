@@ -19,20 +19,20 @@
 /*!
  * \file
  *
- * \brief Test for the staggered grid multi-component (Navier-)Stokes model
+ * \brief Test for the staggered grid multi-component RANS model
  */
- #include <config.h>
+#include <config.h>
 
- #include <ctime>
- #include <iostream>
+#include <ctime>
+#include <iostream>
 
- #include <dune/common/parallel/mpihelper.hh>
- #include <dune/common/timer.hh>
- #include <dune/grid/io/file/dgfparser/dgfexception.hh>
- #include <dune/grid/io/file/vtk.hh>
- #include <dune/istl/io.hh>
+#include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/timer.hh>
+#include <dune/grid/io/file/dgfparser/dgfexception.hh>
+#include <dune/grid/io/file/vtk.hh>
+#include <dune/istl/io.hh>
 
-#include "msfreeflowtestproblem.hh"
+#include "problem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -66,18 +66,7 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += progName;
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
-                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
-                                        "\t-Grid.File                      Name of the file containing the grid \n"
-                                        "\t                                definition in DGF format\n"
-                                        "\t-SpatialParams.LensLowerLeftX   x-coordinate of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensLowerLeftY   y-coordinate of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRightX  x-coordinate of the upper right corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRightY  y-coordinate of the upper right corner of the lens [m] \n"
-                                        "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
-                                        "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
-
+                    errorMessageOut += "\nPlease use the provided input files.\n";
         std::cout << errorMessageOut
                   << "\n";
     }
@@ -88,7 +77,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(MaxwellStefanNCTest);
+    using TypeTag = TTAG(FlatPlateNCTest);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -129,6 +118,7 @@ int main(int argc, char** argv) try
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
+    problem->setTimeLoop(timeLoop);
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -138,6 +128,8 @@ int main(int argc, char** argv) try
     x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
     x[FVGridGeometry::faceIdx()].resize(numDofsFace);
     problem->applyInitialSolution(x);
+    problem->updateStaticWallProperties();
+    problem->updateDynamicWallProperties(x);
     auto xOld = x;
 
     // the grid variables
@@ -148,7 +140,7 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    IOFields::initOutputModule(vtkWriter); //! Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
@@ -163,9 +155,6 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    //! set some check points for the time loop
-    timeLoop->setPeriodicCheckPoint(tEnd/5.0);
-
     // time loop
     timeLoop->start(); do
     {
@@ -178,14 +167,15 @@ int main(int argc, char** argv) try
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
-        problem->postTimeStep(x, *gridVariables,timeLoop->time()+timeLoop->timeStepSize());
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // write vtk output on check points
-        if (timeLoop->isCheckPoint())
-            vtkWriter.write(timeLoop->time());
+        // update wall properties
+        problem->updateDynamicWallProperties(x);
+
+        // write vtk output
+        vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
