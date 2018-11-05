@@ -1,0 +1,21 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 3e4 # [s]
+MaxTimeStepSize = 1e3
+
+[Grid]
+UpperRight = 5 1
+Cells = 200 1
+
+[Problem]
+Name = test_1p2c_nonequilibrium # name passed to the output routines
+EnableGravity = 0 # disable gravity
+DarcyVelocity = 1e-4 # [m/s] inflow at the left boundary
+
+[Vtk]
+AddVelocity = 1 # enable velocity output
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790
