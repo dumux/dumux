@@ -270,10 +270,6 @@ class NonEquilibriumVolumeVariablesImplementation< Traits,
     static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
     static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
 
-    static constexpr auto phase0Idx = FS::phase0Idx;
-    static constexpr auto phase1Idx = FS::phase1Idx;
-    static constexpr auto sPhaseIdx = FS::numPhases;
-
     using DimLessNum = DimensionlessNumbers<Scalar>;
 
 public:

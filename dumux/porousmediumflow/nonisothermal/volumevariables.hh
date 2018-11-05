@@ -179,7 +179,10 @@ public:
             if (numEnergyEq == 2)
             {
                 const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx];
-                fluidState.setTemperature(T);
+                for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                {
+                    fluidState.setTemperature(phaseIdx, T);
+                }
             }
             //this is for numEnergyEqFluid > 1
             else
