@@ -63,7 +63,7 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
-    enum { numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases()} ;
+
     enum { numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>() };
     enum {sPhaseIdx = FluidSystem::numPhases};
 
@@ -88,8 +88,9 @@ public:
        // effective diffusion tensors
         if (phaseIdx != sPhaseIdx)
         {
-           if (numEnergyEqFluid == 1)
-            {   //when only one energy equation for fluids is used, we need an effective law for that
+            //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
+            if (numEnergyEqFluid < FluidSystem::numPhases)
+            {
                 insideLambda += ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
                 outsideLambda += ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
             }

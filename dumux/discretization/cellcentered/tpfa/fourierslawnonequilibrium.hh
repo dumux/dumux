@@ -121,8 +121,9 @@ public:
         // effective diffusion tensors
         if (phaseIdx != sPhaseIdx)
         {
-           if (numEnergyEqFluid == 1)
-            {   //when only one energy equation for fluids is used, we need an effective law for that
+            //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
+           if (numEnergyEqFluid < FluidSystem::numPhases)
+            {
                 insideLambda += ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
             }
             else //numEnergyEqFluid >1
@@ -153,8 +154,9 @@ public:
        // effective diffusion tensors
         if (phaseIdx != sPhaseIdx)
         {
-           if (numEnergyEqFluid == 1)
-            {   //when only one energy equation for fluids is used, we need an effective law for that
+            //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
+           if (numEnergyEqFluid < FluidSystem::numPhases)
+            {
                 outsideLambda += ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
             }
             else
