@@ -34,7 +34,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
-#include "tracertestspatialparams.hh"
+#include "spatialparams.hh"
 
 #ifndef USEMOLES // default to true if not set through CMake
 #define USEMOLES true
