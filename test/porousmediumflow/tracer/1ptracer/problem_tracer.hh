@@ -27,18 +27,12 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
-#include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/tracer/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
-#include "tracertestspatialparams.hh"
-
-#ifndef USEMOLES // default to true if not set through CMake
-#define USEMOLES true
-#endif
+#include "spatialparams_tracer.hh"
 
 namespace Dumux {
 /**
@@ -47,13 +41,11 @@ namespace Dumux {
  * A rotating velocity field mixes a tracer band in a porous groundwater reservoir.
  */
 template <class TypeTag>
-class TracerTest;
+class TracerTestProblem;
 
 namespace Properties {
 NEW_TYPE_TAG(TracerTest, INHERITS_FROM(Tracer));
-NEW_TYPE_TAG(TracerTestTpfa, INHERITS_FROM(CCTpfaModel, TracerTest));
-NEW_TYPE_TAG(TracerTestMpfa, INHERITS_FROM(CCMpfaModel, TracerTest));
-NEW_TYPE_TAG(TracerTestBox, INHERITS_FROM(BoxModel, TracerTest));
+NEW_TYPE_TAG(TracerTestCC, INHERITS_FROM(CCTpfaModel, TracerTest));
 
 // enable caching
 SET_BOOL_PROP(TracerTest, EnableGridVolumeVariablesCache, true);
@@ -64,7 +56,7 @@ SET_BOOL_PROP(TracerTest, EnableFVGridGeometryCache, true);
 SET_TYPE_PROP(TracerTest, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(TracerTest, Problem, TracerTest<TypeTag>);
+SET_TYPE_PROP(TracerTest, Problem, TracerTestProblem<TypeTag>);
 
 // Set the spatial parameters
 SET_PROP(TracerTest, SpatialParams)
@@ -75,7 +67,8 @@ SET_PROP(TracerTest, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(TracerTest, UseMoles, USEMOLES);
+SET_BOOL_PROP(TracerTest, UseMoles, false);
+SET_BOOL_PROP(TracerTestCC, SolutionDependentMolecularDiffusion, false);
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
@@ -90,16 +83,16 @@ class TracerFluidSystem : public FluidSystems::Base<typename GET_PROP_TYPE(TypeT
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:
+    //! If the fluid system only contains tracer components
     static constexpr bool isTracerFluidSystem()
     { return true; }
 
-    //! None of the components are the main component of the phase
+    //! No component is the main component
     static constexpr int getMainComponent(int phaseIdx)
     { return -1; }
 
     //! The number of components
-    static constexpr int numComponents = 2;
-    static constexpr int numPhases = 1;
+    static constexpr int numComponents = 1;
 
     //! Human readable component name (index compIdx) (for vtk output)
     static std::string componentName(int compIdx)
@@ -119,26 +112,7 @@ public:
                                              const Problem& problem,
                                              const Element& element,
                                              const SubControlVolume& scv)
-    {
-        static const Scalar D = getParam<Scalar>("Problem.D");
-        static const Scalar D2 = getParam<Scalar>("Problem.D2");
-        if (compIdx == 0)
-            return D;
-        else
-            return D2;
-    }
-
-    /*!
-     * \copydoc Base::isCompressible
-     */
-    static constexpr bool isCompressible(int phaseIdx)
-    { return false; }
-
-     /*!
-     * \copydoc Base::viscosityIsConstant
-     */
-    static constexpr bool viscosityIsConstant(int phaseIdx)
-    { return true; }
+    { return 0.0; }
 };
 
 SET_TYPE_PROP(TracerTest, FluidSystem, TracerFluidSystem<TypeTag>);
@@ -160,7 +134,7 @@ SET_TYPE_PROP(TracerTest, FluidSystem, TracerFluidSystem<TypeTag>);
  * <tt>./test_cctracer -ParameterFile ./test_cctracer.input</tt>
  */
 template <class TypeTag>
-class TracerTest : public PorousMediumFlowProblem<TypeTag>
+class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
@@ -175,11 +149,12 @@ class TracerTest : public PorousMediumFlowProblem<TypeTag>
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    TracerTest(std::shared_ptr<const FVGridGeometry> fvGridGeom)
+    TracerTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeom)
     : ParentType(fvGridGeom)
     {
         // stating in the console whether mole or mass fractions are used
@@ -203,7 +178,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        values.setAllNeumann(); // no-flow
+        values.setAllNeumann();
         return values;
     }
     // \}
@@ -224,7 +199,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables initialValues(0.0);
-        if (globalPos[1] > 0.4 - eps_ && globalPos[1] < 0.6 + eps_)
+        if (globalPos[1] < 0.1 + eps_)
         {
             if (useMoles)
                 initialValues = 1e-9;

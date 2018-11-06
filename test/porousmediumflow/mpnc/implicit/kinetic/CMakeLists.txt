@@ -3,7 +3,7 @@ add_input_file_links()
 # build target for the full kinetic test problem
 dune_add_test(NAME test_mpnc_kinetic_box
               SOURCES main.cc
-              COMPILE_DEFINITIONS TYPETAG=EvaporationAtmosphereBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=EvaporationAtmosphereBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_mpnc_kinetic_box-reference.vtu

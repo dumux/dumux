@@ -33,7 +33,7 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
-#include "1ptestspatialparams.hh"
+#include "spatialparams_1p.hh"
 
 namespace Dumux {
 

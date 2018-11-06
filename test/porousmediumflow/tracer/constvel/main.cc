@@ -42,7 +42,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
-#include "tracertestproblem.hh"
+#include "problem.hh"
 
 int main(int argc, char** argv) try
 {
