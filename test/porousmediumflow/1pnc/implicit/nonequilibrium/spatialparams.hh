@@ -28,6 +28,7 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/material/spatialparams/fvnonequilibrium.hh>
+#include <dumux/material/fluidmatrixinteractions/1pia/fluidsolidinterfacialareashiwang.hh>
 
 namespace Dumux {
 
@@ -54,6 +55,7 @@ class OnePNCNonequilibriumTestSpatialParams
 public:
     // export permeability type
     using PermeabilityType = Scalar;
+    using FluidSolidInterfacialAreaFormulation = FluidSolidInterfacialAreaShiWang<Scalar>;
 
     OnePNCNonequilibriumTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)

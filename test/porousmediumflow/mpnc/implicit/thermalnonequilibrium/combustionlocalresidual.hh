@@ -84,7 +84,7 @@ public:
 
         //interfacial area
         // Shi & Wang, Transport in porous media (2011)
-        const Scalar as = 6.0 * (1.0-volVars.porosity()) / characteristicLength ;
+        const Scalar as = volVars.fluidSolidInterfacialArea();
 
         //temperature fluid is the same for both fluids
         const Scalar TFluid     = volVars.temperatureFluid(0);

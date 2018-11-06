@@ -296,6 +296,7 @@ public:
         paramCache.updateAll(this->fluidState());
         //only update of DimLessNumbers is necessary here, as interfacial area is easy due to only one fluid with a solid and is directly computed in localresidual
         updateDimLessNumbers(elemSol, this->fluidState(), paramCache, problem, element, scv);
+        updateInterfacialArea(elemSol, this->fluidState(), paramCache, problem, element, scv);
     }
 
     /*!
@@ -339,8 +340,30 @@ public:
                                                                         prandtlNumber_[phaseIdx],
                                                                         porosity,
                                                                         ModelTraits::nusseltFormulation());
-
         }
+    }
+
+
+    /*!
+     * \brief Updates the volume specific interfacial area [m^2 / m^3] between the solid and the fluid phase.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache The parameter cache corresponding to the fluid state
+     * \param problem The problem to be solved
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateInterfacialArea(const ElemSol& elemSol,
+                               const FluidState& fluidState,
+                               const ParameterCache& paramCache,
+                               const Problem& problem,
+                               const Element& element,
+                               const Scv& scv)
+    {
+       using FluidSolidInterfacialAreaFormulation = typename Problem::SpatialParams::FluidSolidInterfacialAreaFormulation;
+       interfacialArea_ =  FluidSolidInterfacialAreaFormulation::fluidSolidInterfacialArea(this->porosity(), characteristicLength());
     }
 
     //! access function Reynolds Number
@@ -354,6 +377,8 @@ public:
     //! access function pre factor energy transfer
     const Scalar factorEnergyTransfer() const { return factorEnergyTransfer_; }
 
+    const Scalar fluidSolidInterfacialArea() const {return interfacialArea_;}
+
 private:
     //! dimensionless numbers
     Scalar reynoldsNumber_[ModelTraits::numPhases()];
@@ -362,7 +387,7 @@ private:
 
     Scalar characteristicLength_;
     Scalar factorEnergyTransfer_;
-    Scalar solidSurface_ ;
+    Scalar interfacialArea_ ;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
