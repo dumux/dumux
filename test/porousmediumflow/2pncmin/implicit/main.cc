@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Test for the 2pnc cc model used for water management in PEM fuel cells.
+ * \brief Test for the two-phase n-component finite volume model used to model e.g. salt dissolution.
  */
 #include <config.h>
 
@@ -32,7 +32,7 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include "2pncdiffusionproblem.hh"
+#include "problem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -50,6 +50,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/loadsolution.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -79,7 +80,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(TwoPNCDiffusionCCTypeTag);
+    using TypeTag = TTAG(TYPETAG);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -111,10 +112,29 @@ int main(int argc, char** argv) try
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
+    // get some time loop parameters
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
+    // check if we are about to restart a previously interrupted simulation
+    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
+
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     SolutionVector x(fvGridGeometry->numDofs());
-    problem->applyInitialSolution(x);
+    if (restartTime > 0)
+    {
+        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+        using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+        const auto fileName = getParam<std::string>("Restart.File");
+        const auto pvName = createPVNameFunctionWithState<ModelTraits, FluidSystem, SolidSystem>();
+        loadSolution(x, fileName, pvName, *fvGridGeometry);
+    }
+    else
+        problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
@@ -122,22 +142,20 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
-    // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // intialize the vtk output module
+    // initialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    VtkOutputFields::init(vtkWriter); //! Add model specific output fields
-    vtkWriter.write(0.0);
+    VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
+    //add specific output
+    vtkWriter.addField(problem->getPermeability(), "Permeability");
+    // update the output fields before write
+    problem->updateVtkOutput(x);
+    vtkWriter.write(restartTime);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
@@ -146,7 +164,7 @@ int main(int argc, char** argv) try
 
     // the linear solver
     using LinearSolver = AMGBackend<TypeTag>;
-    auto linearSolver =  std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonSolver = PriVarSwitchNewtonSolver<Assembler, LinearSolver,
@@ -156,6 +174,10 @@ int main(int argc, char** argv) try
     // time loop
     timeLoop->start(); do
     {
+        // set time for problem for implicit Euler scheme
+        problem->setTime( timeLoop->time() + timeLoop->timeStepSize() );
+        problem->setTimeStepSize( timeLoop->timeStepSize() );
+
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
@@ -168,6 +190,9 @@ int main(int argc, char** argv) try
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
+
+        // update the output fields before write
+        problem->updateVtkOutput(x);
 
         // write vtk output
         vtkWriter.write(timeLoop->time());

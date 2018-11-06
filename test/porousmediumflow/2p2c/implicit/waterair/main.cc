@@ -50,8 +50,7 @@
 #include <dumux/io/loadsolution.hh>
 
 // the problem definitions
-#include "injectionproblem.hh"
-#include "waterairproblem.hh"
+#include "problem.hh"
 
 int main(int argc, char** argv) try
 {

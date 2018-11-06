@@ -34,7 +34,7 @@
 #include <dumux/porousmediumflow/2p2c/model.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 
-#include "injectionspatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 

@@ -19,10 +19,9 @@
 /*!
  * \file
  *
- * \brief Test for the 2pnc cc model used for water management in PEM fuel cells.
+ * \brief Test for the two-phase two-component CC model.
  */
 #include <config.h>
-
 #include <ctime>
 #include <iostream>
 
@@ -31,8 +30,6 @@
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
-
-#include "fuelcellproblem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -50,31 +47,10 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/loadsolution.hh>
 
-#include "fuelcellproblem.hh"
-
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-ParameterFile Parameter file (Input file) \n";
-
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
+// the problem definitions
+#include "problem.hh"
 
 int main(int argc, char** argv) try
 {
@@ -91,7 +67,7 @@ int main(int argc, char** argv) try
         DumuxMessage::print(/*firstCall=*/true);
 
     // parse command line arguments and input file
-    Parameters::init(argc, argv, usage);
+    Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
     GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
@@ -113,10 +89,28 @@ int main(int argc, char** argv) try
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
+    // get some time loop parameters
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
+    // check if we are about to restart a previously interrupted simulation
+    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
+
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     SolutionVector x(fvGridGeometry->numDofs());
-    problem->applyInitialSolution(x);
+    if (restartTime > 0)
+    {
+        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+        const auto fileName = getParam<std::string>("Restart.File");
+        const auto pvName = createPVNameFunctionWithState<ModelTraits, FluidSystem>();
+        loadSolution(x, fileName, pvName, *fvGridGeometry);
+    }
+    else
+        problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
@@ -124,23 +118,16 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
-    // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // initialize the vtk output module
+    // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
-    problem->addVtkFields(vtkWriter); //!< Add problem specific output fields
-    vtkWriter.write(0.0);
+    vtkWriter.write(restartTime);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
@@ -153,7 +140,7 @@ int main(int argc, char** argv) try
 
     // the non-linear solver
     using NewtonSolver = PriVarSwitchNewtonSolver<Assembler, LinearSolver,
-                                                  typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch)>;
+                                                 typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch)>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
@@ -172,17 +159,14 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // update the output fields with the current solution before write
-        problem->updateVtkFields(x);
-
-        // write vtk output
-        vtkWriter.write(timeLoop->time());
-
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by the newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+        // write vtk output
+        vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());
 
