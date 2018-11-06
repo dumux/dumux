@@ -1,4 +1,5 @@
 add_subdirectory(1p)
+add_subdirectory(1pia)
 add_subdirectory(2p)
 add_subdirectory(2pia)
 add_subdirectory(3p)
