@@ -32,7 +32,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
-#include "tracertestspatialparams.hh"
+#include "spatialparams_tracer.hh"
 
 namespace Dumux {
 /**
