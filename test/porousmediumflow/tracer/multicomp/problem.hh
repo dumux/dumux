@@ -34,7 +34,7 @@
 #include <dumux/porousmediumflow/tracer/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "maxwellstefantestspatialparams.hh"
+#include "spatialparams.hh"
 #include <dumux/discretization/maxwellstefanslaw.hh>
 
 #include <dumux/io/gnuplotinterface.hh>

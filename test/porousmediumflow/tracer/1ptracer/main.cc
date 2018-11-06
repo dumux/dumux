@@ -23,8 +23,8 @@
  */
 #include <config.h>
 
-#include "1ptestproblem.hh"
-#include "tracertestproblem.hh"
+#include "problem_1p.hh"
+#include "problem_tracer.hh"
 
 #include <ctime>
 #include <iostream>
