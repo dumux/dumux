@@ -1357,7 +1357,7 @@ public:
         static const double velResred = getParamFromGroup<double>(paramGroup_, "LinearSolver.VelocityResidualReduction");
         using Identity = Dune::Richardson<PVector, PVector>;
         Identity identity(1.0);
-        // SchurComplement<AType, BType, CType, DType, AInvOpType, PVector, PVector> schurOperator(A, B, C, D, aInvOp_);
+        // SchurComplement<AType, BType, CType, DType, AInvOpType, PVector, PVector> schurOperator(A, B, C, D, aInvOp_); //requires RestartedFlexibleGMResSolver !
         SchurApproximate<AType, BType, CType, DType, PVector, PVector> schurOperator(A, B, C, D);
         Dune::RestartedGMResSolver<PVector> invOpS(schurOperator, identity, schurResred*g.two_norm(), 100, schurMaxIter, verbosity);
         // Dune::BiCGSTABSolver<PVector> invOpS(schurOperator, identity, schurResred*g.two_norm(), schurMaxIter, verbosity);
