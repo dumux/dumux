@@ -154,6 +154,7 @@ public:
     : ParentType(fvGridGeometry, spatialParams)
     {
         name_ = getParam<std::string>("Problem.Name");
+        minBoundaryH_ = getParam<Scalar>("Problem.MinBoundaryH",1.0E-6);
     }
 
     /*!
@@ -251,7 +252,7 @@ public:
                 bdValue = getBoundaryValue(time_,myBoundaryId);
                 bdType = 2;
             }
-            if (boundaryValues.type == "discharge")
+            if ((boundaryValues.type == "discharge")&&(cellStatesLeft[0] > minBoundaryH_))
             {
                 bdValue = getBoundaryValue(time_,myBoundaryId);
                 using std::abs;
@@ -272,7 +273,7 @@ public:
 
 
         //call boundaryfluxes for computing the Riemann invariants
-        auto localBD = this->minHBoundary_;
+        auto localBD = this->minBoundaryH_;
 
         boundaryFluxes(nxy,scvf.area(),localBD,
                        cellStatesLeft,cellStatesRight,bdType,bdValue);
@@ -393,7 +394,7 @@ public:
                        //check that key does not allready exist
                        if (this->hBoundarySegmentMap_.find(scvf.index()) == this->hBoundarySegmentMap_.end())
                        {
-                            if (h > this->minHBoundary_){
+                            if (h > this->minBoundaryH_){
                                 this->hBoundarySegmentMap_[scvf.index()] = scvf.area() * h;
 
                                 //save for sum
@@ -410,7 +411,6 @@ public:
                             }
                        }
                     }
-
                 }
             }
         }
@@ -495,11 +495,12 @@ public:
                                     bdValue = getBoundaryValue(time_,myBoundaryId);
                                     bdType = 2;
                                 }
-                                if (boundaryValues.type == "discharge")
+
+                                if ((boundaryValues.type == "discharge")&&(cellStatesLeft[0]>minBoundaryH_))
                                 {
                                     bdValue = getBoundaryValue(time_,myBoundaryId);
                                     using std::abs;
-                                    if (abs(bdValue) < (1.0E-20))
+                                    if (abs(bdValue) < 1E-20)
                                     {
                                         bdValue = 0.0;
                                         bdType = 0;
@@ -511,7 +512,7 @@ public:
                                 }
 
                                 //call boundaryfluxes for computing the Riemann invariants
-                                boundaryFluxes(nxy,scvf.area(),0.2,
+                                boundaryFluxes(nxy,scvf.area(),minBoundaryH_,
                                                cellStatesLeft,cellStatesRight,bdType,bdValue);
 
                                 stateRotation(nxy,cellStatesLeft);
@@ -806,7 +807,7 @@ private:
 
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
-    static constexpr Scalar minHBoundary_ = 1.0E-6;
+    Scalar minBoundaryH_ = 0.2;
 
     /*Initial data */
     std::vector<double> hInit_;

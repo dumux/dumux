@@ -238,6 +238,7 @@ int main(int argc, char** argv) try
         // make the new solution the old solution
         xOld = x;
         problem->postTimeStep(x, *gridVariables, timeLoop->timeStepSize());
+
         gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step

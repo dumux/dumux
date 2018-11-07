@@ -9,6 +9,7 @@ File = "mesh.dgf"
 [Problem]
 Name = test_swe # name passed to the output routines
 OutputInterval = 10
+MinBoundaryH = 1.0E-6
 
 [Newton]
 #EnableAbsoluteResidualCriterion = "true"

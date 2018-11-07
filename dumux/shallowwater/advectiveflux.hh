@@ -95,7 +95,7 @@ class SweAdvectiveFlux
         Scalar thetar = cellStatesRight[3] + cellStatesRight[0];
 
         Scalar mobility[3] = {1.0};
-        letmobility(cellStatesLeft[0],cellStatesRight[0],1.0E-4,1.0E-6,mobility);
+        letmobility(cellStatesLeft[0],cellStatesRight[0],0.01,0.0001,mobility);
 
         //-------------------------------------------------------------
         //

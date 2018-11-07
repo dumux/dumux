@@ -16,7 +16,8 @@ GXX_OPTS=" \
     -fstrict-overflow \
     -fno-finite-math-only \
     -O3 \
-    -march=native \
+    -march=skylake-avx512 \
+    -mtune=skylake-avx512 \
     -Wl,-rpath /cluster/tools/spack/opt/spack/linux-centos7-x86_64/gcc-7.2.0/hdf5-1.10.1-5zhgy3nytiap6rwcbpiovjvufdtzbmun/lib \
     -L /cluster/tools/spack/opt/spack/linux-centos7-x86_64/gcc-7.2.0/hdf5-1.10.1-5zhgy3nytiap6rwcbpiovjvufdtzbmun/lib \
     -DNDEBUG=1"
