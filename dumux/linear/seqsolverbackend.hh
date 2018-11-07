@@ -32,6 +32,8 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/superlu.hh>
 #include <dune/istl/umfpack.hh>
+#include <dune/istl/matrixmatrix.hh>
+#include <dune/istl/matrixindexset.hh>
 #include <dune/common/version.hh>
 #include <dune/common/hybridutilities.hh>
 
@@ -1232,72 +1234,92 @@ public:
     bool solve(const Matrix& coefficientMatrix, Vector& CCVector, const Vector& b, const FaceVector& sampleFaceVec)
     {
         int verbosity = getParamFromGroup<int>(this->paramGroup(), "LinearSolver2.schurVerbosity");
-        const int maxIter = getParamFromGroup<double>(this->paramGroup(), "LinearSolver2.schurMaxIter");
-        const double residReduction = getParamFromGroup<double>(this->paramGroup(), "LinearSolver2.schurResidualReduction");
-        const int restartGMRes = getParamFromGroup<int>(this->paramGroup(), "LinearSolver2.schurGMResRestart");
 
-        Vector bTmp(b);
-
-        // LU decompose vel sub matrix and hand it to the preconditioner
         using namespace Dune::Indices;
-        using VelMatrixType = std::decay_t<decltype(coefficientMatrix[_1][_1])>;
-        using VVector = std::decay_t<decltype(sampleFaceVec)>;
-        // using InnerSolver = Dune::UMFPack<VelMatrixType>;
-        // auto invOpVel = std::make_shared<InnerSolver>(coefficientMatrix[_1][_1], false);
-        // using InnerPreconditioner = Dune::SeqJac<VelMatrixType, VVector, VVector, 1>;
-        // auto innerPrec = std::make_shared<InnerPreconditioner>(coefficientMatrix[_1][_1], 1, 1.0);
-
-        // or use an AMG approximation instead instead
-        using Comm = Dune::Amg::SequentialInformation;
-        using LinearOperator = Dune::MatrixAdapter<VelMatrixType, VVector, VVector>;
-        using ScalarProduct = Dune::SeqScalarProduct<VVector>;
-        using Smoother = Dune::SeqSSOR<VelMatrixType, VVector, VVector>;
-        auto comm = std::make_shared<Comm>();
-        auto fop = std::make_shared<LinearOperator>(coefficientMatrix[_1][_1]);
-        auto sp = std::make_shared<ScalarProduct>();
-
-        using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
-        using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<VelMatrixType, Dune::Amg::FirstDiagonal> >;
-        Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
-        params.setDefaultValuesIsotropic(GridView::Traits::Grid::dimension);
-        params.setDebugLevel(verbosity);
-        params.setGamma(1); // one V-cycle
-        Criterion criterion(params);
-        SmootherArgs smootherArgs;
-        smootherArgs.iterations = 1;
-        smootherArgs.relaxationFactor = 1.0;
-
-        using InnerPreconditioner = Dune::Amg::AMG<LinearOperator, VVector, Smoother, Comm>;
-        auto innerPrec = std::make_shared<InnerPreconditioner>(*fop, criterion, smootherArgs, *comm);
-        static const int precVerbosity = getParamFromGroup<int>(this->paramGroup(), "LinearSolver2.precVerbosity");
-        static const int precMaxIter = getParamFromGroup<int>(this->paramGroup(), "LinearSolver2.precMaxIter");
-        const double precResidReduction = getParamFromGroup<double>(this->paramGroup(), "LinearSolver2.precResidReduction");
-        using InnerSolver = Dune::RestartedFlexibleGMResSolver<VVector>;
-        auto invOpVel = std::make_shared<InnerSolver>(*fop, *sp, *innerPrec, precResidReduction, 100, precMaxIter, precVerbosity);
-
         auto& A = coefficientMatrix[_1][_1];
         auto& B = coefficientMatrix[_1][_0];
         auto& C = coefficientMatrix[_0][_1];
         auto& D = coefficientMatrix[_0][_0];
 
+        using AType = std::decay_t<decltype(A)>;
         using BType = std::decay_t<decltype(B)>;
         using CType = std::decay_t<decltype(C)>;
-        using PresMatrixType = std::decay_t<decltype(D)>;
+        using DType = std::decay_t<decltype(D)>;
+
+        using VVector = std::decay_t<decltype(sampleFaceVec)>;
         using PVector = std::decay_t<decltype(CCVector)>;
-        using InvOpVelType = std::decay_t<decltype(*invOpVel)>;
 
-        using SchurComplementType = SchurComplement<VelMatrixType, BType, CType, PresMatrixType, InvOpVelType, PVector, PVector>;
-        SchurComplementType schur(A, B, C, D, invOpVel);
+        // or use an AMG approximation
+        static const int precVerbosityA = getParamFromGroup<int>(this->paramGroup(), "LinearSolver2.precVerbosityA");
+        static const int precMaxIter = getParamFromGroup<int>(this->paramGroup(), "LinearSolver2.precMaxIter");
+        const double precResidReduction = getParamFromGroup<double>(this->paramGroup(), "LinearSolver2.precResidReduction");
+        static const int precVerbositySchurAppr = getParamFromGroup<int>(this->paramGroup(), "LinearSolver2.precVerbositySchurAppr");
 
-        using InnerPreconditioner2 = Dune::Richardson<PVector, PVector>;
-        auto schurPrec = std::make_shared<InnerPreconditioner2>();
+        Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
+        params.setDefaultValuesIsotropic(GridView::Traits::Grid::dimension);
+        params.setDebugLevel(verbosity);
+        params.setGamma(1); // one V-cycle
 
-//         using Solver = Dune::MINRESSolver<Vector>;
+        // matrix A
+        using LinearOperatorA = Dune::MatrixAdapter<AType, VVector, VVector>;
+        using ScalarProductA = Dune::SeqScalarProduct<VVector>;
+        using SmootherA = Dune::SeqSSOR<AType, VVector, VVector>;
+        using CommA = Dune::Amg::SequentialInformation;
+        auto Aop = std::make_shared<LinearOperatorA>(coefficientMatrix[_1][_1]);
+        auto spA = std::make_shared<ScalarProductA>();
+        auto commA = std::make_shared<CommA>();
+
+        using SmootherArgsA = typename Dune::Amg::SmootherTraits<SmootherA>::Arguments;
+        using CriterionA = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<AType, Dune::Amg::FirstDiagonal> >;
+        CriterionA criterionA(params);
+        SmootherArgsA smootherArgsA;
+        smootherArgsA.iterations = 1;
+        smootherArgsA.relaxationFactor = 1.0;
+
+        using InnerPreconditionerA = Dune::Amg::AMG<LinearOperatorA, VVector, SmootherA, CommA>;
+        auto innerPrecA = std::make_shared<InnerPreconditionerA>(*Aop, criterionA, smootherArgsA, *commA);
+
+        using InnerSolverA = Dune::RestartedFlexibleGMResSolver<VVector>;
+        auto invOpA = std::make_shared<InnerSolverA>(*Aop, *spA, *innerPrecA, precResidReduction, 100, precMaxIter, precVerbosityA);
+        using InvOpVelType = std::decay_t<decltype(*invOpA)>;
+
+        //schurApproximate
+        DType schurApproximate = schurApproximate_(coefficientMatrix);
+
+        using LinearOperatorSchurAppr = Dune::MatrixAdapter<DType, PVector, PVector>;
+        using ScalarProductSchurAppr = Dune::SeqScalarProduct<PVector>;
+        using SmootherSchurAppr = Dune::SeqSSOR<DType, PVector, PVector>;
+        using CommSchurAppr = Dune::Amg::SequentialInformation;
+        auto schurApprOp = std::make_shared<LinearOperatorSchurAppr>(schurApproximate);
+        auto spSchurAppr = std::make_shared<ScalarProductSchurAppr>();
+        auto commSchurAppr = std::make_shared<CommSchurAppr>();
+
+        using SmootherArgsSchurAppr = typename Dune::Amg::SmootherTraits<SmootherSchurAppr>::Arguments;
+        using CriterionSchurAppr = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<DType, Dune::Amg::FirstDiagonal> >;
+        CriterionSchurAppr criterionSchurAppr(params);
+        SmootherArgsSchurAppr smootherArgsSchurAppr;
+        smootherArgsSchurAppr.iterations = 1;
+        smootherArgsSchurAppr.relaxationFactor = 1.0;
+
+        using InnerPreconditionerSchurAppr = Dune::Amg::AMG<LinearOperatorSchurAppr, PVector, SmootherSchurAppr, CommSchurAppr>;
+        auto innerPrecASchurAppr = std::make_shared<InnerPreconditionerSchurAppr>(*schurApprOp, criterionSchurAppr, smootherArgsSchurAppr, *commSchurAppr);
+
+        using InnerSolverSchurAppr = Dune::RestartedFlexibleGMResSolver<PVector>;
+        auto invOpSchurAppr = std::make_shared<InnerSolverSchurAppr>(*schurApprOp, *spSchurAppr, *innerPrecASchurAppr, precResidReduction, 100, precMaxIter, precVerbositySchurAppr);
+
+        auto schurPrec = std::make_shared<Dune::InverseOperator2Preconditioner<InnerSolverSchurAppr>>(*invOpSchurAppr);
+
+        //schur solver
+        using SchurComplementType = SchurComplement<AType, BType, CType, DType, InvOpVelType, PVector, PVector>;
+        auto schur = std::make_shared<SchurComplementType>(A, B, C, D, invOpA);
+
+        const int maxIter = getParamFromGroup<double>(this->paramGroup(), "LinearSolver2.schurMaxIter");
+        const double residReduction = getParamFromGroup<double>(this->paramGroup(), "LinearSolver2.schurResidualReduction");
+        const int restartGMRes = getParamFromGroup<int>(this->paramGroup(), "LinearSolver2.schurGMResRestart");
+
+        Vector bTmp(b);
         using Solver = Dune::RestartedGMResSolver<Vector>;
-//         using Solver = Dune::BiCGSTABSolver<Vector>;
-
-        Solver solver(schur, *schurPrec, residReduction, restartGMRes, maxIter, verbosity);
-//         the above line without restartGMRes
+        Solver solver(*schur, *schurPrec, residReduction, restartGMRes, maxIter, verbosity);
         solver.apply(CCVector, bTmp, result_);
 
         return result_.converged;
@@ -1309,6 +1331,67 @@ public:
     }
 
 private:
+    template <class Matrix>
+    auto schurApproximate_(const Matrix& coefficientMatrix)
+    {
+        using namespace Dune::Indices;
+        auto& A = coefficientMatrix[_1][_1];
+        auto& B = coefficientMatrix[_1][_0];
+        auto& C = coefficientMatrix[_0][_1];
+        auto& D = coefficientMatrix[_0][_0];
+
+        using AType = std::decay_t<decltype(A)>;
+        using BType = std::decay_t<decltype(B)>;
+        using DType = std::decay_t<decltype(D)>;
+
+        const std::size_t numDofsFaceReduced = A.N();
+
+        //get a diagonal matrix
+        AType invDiagA;
+        invDiagA.setBuildMode(AType::random);
+        setInvDiagAPattern_(invDiagA, numDofsFaceReduced);
+        auto row = A.begin();
+
+        for(; row != A.end(); ++row)
+        {
+            using size_type = typename AType::size_type;
+            size_type rowIdx = row.index();
+
+            //invDigaA = inverse(diagonal(A))
+            invDiagA[rowIdx][rowIdx] = 1./(A[rowIdx][rowIdx]);
+        }
+
+        BType invAB;
+        Dune::matMultMat(invAB, invDiagA, B);
+
+        DType schurApproximate;
+        Dune::matMultMat(schurApproximate, C, invAB);
+
+        return schurApproximate;
+    }
+
+    /*!
+     * \brief Resizes the  matrix invDiagA and sets the matrix' sparsity pattern.
+     */
+    template <class AType>
+    void setInvDiagAPattern_(AType& invDiagA, std::size_t numDofsFaceReduced)
+    {
+        // set the size of the sub-matrizes
+        invDiagA.setSize(numDofsFaceReduced, numDofsFaceReduced);
+
+        // set occupation pattern of the coefficient matrix
+        Dune::MatrixIndexSet occupationPatternInvDiagA;
+        occupationPatternInvDiagA.resize(numDofsFaceReduced, numDofsFaceReduced);
+
+        // evaluate the acutal pattern
+        for (int i = 0; i < invDiagA.N(); ++i)
+        {
+             occupationPatternInvDiagA.add(i, i);
+        }
+
+        occupationPatternInvDiagA.exportIdx(invDiagA);
+    }
+
     Dune::InverseOperatorResult result_;
 };
 

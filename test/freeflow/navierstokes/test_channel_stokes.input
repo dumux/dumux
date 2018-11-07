@@ -28,3 +28,15 @@ NumericDifference.PriVarMagnitude = 1e5 # pressure is in the order of 1e5
 
 [Face.Assembly]
 NumericDifference.PriVarMagnitude = 1 # velocity is in the order of 1
+
+[LinearSolver2]
+schurGMResRestart = 100
+schurResidualReduction = 1e-20
+schurVerbosity = 0
+schurMaxIter = 2000
+precVerbosity = 0
+precMaxIter = 2000
+precResidReduction = 1e-13
+
+[Algorithm]
+AlgorithmType = 4
