@@ -160,8 +160,6 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
-    std::cout << "\n x " << x[0] << std::endl;
-
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
@@ -228,7 +226,6 @@ int main(int argc, char** argv) try
     // time loop
     timeLoop->start(); do
     {
-
         //preprocessing
         problem->preTimeStep(x, *gridVariables, timeLoop->time(),timeLoop->timeStepSize());
 
@@ -279,8 +276,7 @@ int main(int argc, char** argv) try
         if (mpiHelper.rank() == 0){
             //simple output
             std::cout << "\n=====================================" << std::endl;
-            std::cout << "time " << timeLoop->time() << " dt " << timeLoop->timeStepSize() << std::endl;
-            std::cout << "\n" << std::endl;
+            std::cout << "time " << timeLoop->time() << " dt " << timeLoop->timeStepSize() << "\n" << std::endl;
 
             //show the fluxes over all boundaries
             problem->printBoundaryFluxes();
