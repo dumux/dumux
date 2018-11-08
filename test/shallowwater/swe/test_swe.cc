@@ -261,6 +261,14 @@ int main(int argc, char** argv) try
         auto optTime = nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize());
         optTime = std::max(timestepSuggestedBefore,optTime);
 
+        if (mpiHelper.rank() == 0){
+            //simple output
+            std::cout << "\n=====================================" << std::endl;
+            std::cout << "time " << timeLoop->time() << " dt " << timeLoop->timeStepSize() << "\n" << std::endl;
+            //show the fluxes over all boundaries
+            problem->printBoundaryFluxes();
+        }
+
         if ((std::max(plottimes[timePos]-timeLoop->time(),1.0E-3) < optTime)&&(plottimes[timePos]-timeLoop->time() > 1.0E-9))
         {
             timestepSuggestedBefore = optTime;
@@ -274,14 +282,7 @@ int main(int argc, char** argv) try
           timePos += 1;
           doPlot = true;
         }
-        if (mpiHelper.rank() == 0){
-            //simple output
-            std::cout << "\n=====================================" << std::endl;
-            std::cout << "time " << timeLoop->time() << " dt " << timeLoop->timeStepSize() << "\n" << std::endl;
 
-            //show the fluxes over all boundaries
-            problem->printBoundaryFluxes();
-        }
 
 
     } while (!timeLoop->finished());
