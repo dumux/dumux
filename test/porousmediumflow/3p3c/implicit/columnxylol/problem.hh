@@ -37,7 +37,7 @@
 #include <dumux/porousmediumflow/3p3c/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "columnxylolspatialparams.hh"
+#include "spatialparams.hh"
 
 #define ISOTHERMAL 0
 
@@ -53,7 +53,7 @@ class ColumnProblem;
 namespace Properties {
 NEW_TYPE_TAG(Column, INHERITS_FROM(ThreePThreeCNI));
 NEW_TYPE_TAG(ColumnBox, INHERITS_FROM(BoxModel, Column));
-NEW_TYPE_TAG(ColumnCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, Column));
+NEW_TYPE_TAG(ColumnCCTpfa, INHERITS_FROM(CCTpfaModel, Column));
 
 // Set the grid type
 SET_TYPE_PROP(Column, Grid, Dune::YaspGrid<2>);

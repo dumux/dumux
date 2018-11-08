@@ -47,9 +47,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
-#include "infiltration3p3cproblem.hh"
-#include "kuevetteproblem.hh"
-#include "columnxylolproblem.hh"
+#include "problem.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with

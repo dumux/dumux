@@ -33,7 +33,7 @@
 #include <dumux/porousmediumflow/3p3c/model.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 
-#include "infiltration3p3cspatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 
