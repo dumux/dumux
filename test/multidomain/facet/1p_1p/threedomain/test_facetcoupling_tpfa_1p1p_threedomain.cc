@@ -186,9 +186,9 @@ int main(int argc, char** argv) try
     using BulkIOFields = typename GET_PROP_TYPE(BulkProblemTypeTag, IOFields);
     using FacetIOFields = typename GET_PROP_TYPE(FacetProblemTypeTag, IOFields);
     using EdgeIOFields = typename GET_PROP_TYPE(EdgeProblemTypeTag, IOFields);
-    BulkIOFields::init(bulkVtkWriter);
-    FacetIOFields::init(facetVtkWriter);
-    EdgeIOFields::init(edgeVtkWriter);
+    BulkIOFields::initOutputModule(bulkVtkWriter);
+    FacetIOFields::initOutputModule(facetVtkWriter);
+    EdgeIOFields::initOutputModule(edgeVtkWriter);
     bulkVtkWriter.write(0.0);
     facetVtkWriter.write(0.0);
     edgeVtkWriter.write(0.0);

@@ -283,8 +283,8 @@ int main(int argc, char** argv) try
     {
         using BulkIOFields = typename GET_PROP_TYPE(BulkProblemTypeTag, IOFields);
         using LowDimIOFields = typename GET_PROP_TYPE(LowDimProblemTypeTag, IOFields);
-        BulkIOFields::init(bulkVtkWriter);
-        LowDimIOFields::init(lowDimVtkWriter);
+        BulkIOFields::initOutputModule(bulkVtkWriter);
+        LowDimIOFields::initOutputModule(lowDimVtkWriter);
 
         bulkExact.resize(bulkFvGridGeometry->numDofs());
         lowDimExact.resize(lowDimFvGridGeometry->numDofs());

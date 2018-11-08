@@ -211,12 +211,12 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
-    GET_PROP_TYPE(BulkTypeTag, IOFields)::init(bulkVtkWriter);
+    GET_PROP_TYPE(BulkTypeTag, IOFields)::initOutputModule(bulkVtkWriter);
     bulkVtkWriter.write(0.0);
 
     using LowDimSolutionVector = std::decay_t<decltype(sol[lowDimIdx])>;
     VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, sol[lowDimIdx], lowDimProblem->name());
-    GET_PROP_TYPE(LowDimTypeTag, IOFields)::init(lowDimVtkWriter);
+    GET_PROP_TYPE(LowDimTypeTag, IOFields)::initOutputModule(lowDimVtkWriter);
     lowDimVtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
