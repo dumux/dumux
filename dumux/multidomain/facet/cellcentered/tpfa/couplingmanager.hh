@@ -538,7 +538,7 @@ public:
                                    [&] (auto lowDimElemIdx)
                                    {
                                        auto element = ldGridGeometry.element(lowDimElemIdx);
-                                       for (unsigned int i = 0; i < element.geometry().corners(); ++i)
+                                       for (int i = 0; i < element.geometry().corners(); ++i)
                                        {
                                            const auto dofIdx = ldGridGeometry.vertexMapper().subIndex(element, i, lowDimDim);
                                            if (dofIdxGlobalJ == dofIdx) { lowDimElems.emplace_back( std::move(element) ); break; }
