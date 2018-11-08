@@ -35,7 +35,7 @@
 #include <dumux/material/solidsystems/inertsolidphase.hh>
 #include <dumux/material/components/constant.hh>
 
-#include "3pwateroilsagdspatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 

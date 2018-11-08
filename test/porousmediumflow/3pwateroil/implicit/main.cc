@@ -47,7 +47,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
-#include "3pwateroilsagdproblem.hh"
+#include "problem.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
