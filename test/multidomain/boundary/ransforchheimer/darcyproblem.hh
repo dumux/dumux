@@ -114,6 +114,8 @@ public:
     {
       pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
       temperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Temperature");
+      baseClosed_ = getParamFromGroup<bool>(this->paramGroup(),"Problem.BaseClosed");
+      inletRelPressure_ = getParamFromGroup<Scalar>(this->paramGroup(),"Problem.InletRelPressure");
     }
 
     /*!
@@ -165,6 +167,11 @@ public:
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
             values.setAllCouplingNeumann();
 
+        if (!baseClosed_ && onLowerBoundary_(scvf.ipGlobal()))
+        {
+            values.setDirichlet(Indices::pressureIdx);
+        }
+
         return values;
     }
 
@@ -180,6 +187,11 @@ public:
     {
         PrimaryVariables values(0.0);
         values = initial(element);
+
+        if (!baseClosed_ && onLowerBoundary_(scvf.ipGlobal()))
+        {
+            values[pressureIdx] = pressure_ + inletRelPressure_;
+        }
 
         return values;
     }
@@ -203,7 +215,9 @@ public:
         NumEqVector values(0.0);
 
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+        {
             values[Indices::conti0EqIdx] = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, scvf);
+        }
 
         return values;
     }
@@ -282,6 +296,8 @@ private:
     Scalar pressure_;
     Scalar temperature_;
     Scalar eps_;
+    Scalar inletRelPressure_;
+    bool baseClosed_;
 
     TimeLoopPtr timeLoop_;
     std::shared_ptr<CouplingManager> couplingManager_;

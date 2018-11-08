@@ -59,7 +59,7 @@ public:
         porosity_ = getParam<Scalar>("Darcy.SpatialParams.Porosity");
         alphaBJ_ = getParam<Scalar>("Darcy.SpatialParams.AlphaBeaversJoseph");
         fittedAlpha_ = getParam<bool>("Darcy.SpatialParams.FittedAlpha");
-        baseClosed_ = getParam<bool>("Darcy.SpatialParams.BaseClosed");
+        baseClosed_ = getParam<bool>("Darcy.Problem.BaseClosed");
     }
 
     /*!

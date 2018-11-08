@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 1e-4 # [s]
+DtInitial = 1e-5 # [s]
 MaxTimeStepSize = 2 # [s]
 TEnd = 10 # [s]
 
@@ -35,14 +35,14 @@ SmoothingSlipVelocity = 0.05
 Name = darcy
 Pressure = 1e5
 Temperature = 298.15 # [K]
+BaseClosed = false
+InletRelPressure = 10
 
 [Darcy.SpatialParams]
 Porosity = 0.75
 Permeability = 3.1e-7
 AlphaBeaversJoseph = 2.0
 FittedAlpha = true
-BaseClosed = true
-
 
 [SpatialParams]
 ForchCoeff = 2.65e-2 #
