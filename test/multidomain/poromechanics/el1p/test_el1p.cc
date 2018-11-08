@@ -156,8 +156,8 @@ int main(int argc, char** argv) try
     PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechProblem->name());
 
     // add output fields to writers
-    using OnePOutputFields = typename GET_PROP_TYPE(OnePTypeTag, VtkOutputFields);
-    using PoroMechOutputFields = typename GET_PROP_TYPE(PoroMechTypeTag, VtkOutputFields);
+    using OnePOutputFields = typename GET_PROP_TYPE(OnePTypeTag, IOFields);
+    using PoroMechOutputFields = typename GET_PROP_TYPE(PoroMechTypeTag, IOFields);
     OnePOutputFields::init(onePVtkWriter);
     PoroMechOutputFields::init(poroMechVtkWriter);
 

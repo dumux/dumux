@@ -350,13 +350,13 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
-    GET_PROP_TYPE(BulkTypeTag, VtkOutputFields)::init(bulkVtkWriter);
+    GET_PROP_TYPE(BulkTypeTag, IOFields)::init(bulkVtkWriter);
     bulkVtkWriter.write(0.0);
 
     using LowDimSolutionVector = std::decay_t<decltype(sol[lowDimIdx])>;
     VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, sol[lowDimIdx], lowDimProblem->name());
-    GET_PROP_TYPE(LowDimTypeTag, VtkOutputFields)::init(lowDimVtkWriter);
-    lowDimProblem->addVtkOutputFields(lowDimVtkWriter);
+    GET_PROP_TYPE(LowDimTypeTag, IOFields)::init(lowDimVtkWriter);
+    lowDimProblem->addIOFields(lowDimVtkWriter);
     lowDimVtkWriter.write(0.0);
 
     // instantiate time loop

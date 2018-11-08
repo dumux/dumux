@@ -281,10 +281,10 @@ int main(int argc, char** argv) try
     const bool writeVTK = getParam<bool>("Output.EnableVTK");
     if (writeVTK)
     {
-        using BulkVtkOutputFields = typename GET_PROP_TYPE(BulkProblemTypeTag, VtkOutputFields);
-        using LowDimVtkOutputFields = typename GET_PROP_TYPE(LowDimProblemTypeTag, VtkOutputFields);
-        BulkVtkOutputFields::init(bulkVtkWriter);
-        LowDimVtkOutputFields::init(lowDimVtkWriter);
+        using BulkIOFields = typename GET_PROP_TYPE(BulkProblemTypeTag, IOFields);
+        using LowDimIOFields = typename GET_PROP_TYPE(LowDimProblemTypeTag, IOFields);
+        BulkIOFields::init(bulkVtkWriter);
+        LowDimIOFields::init(lowDimVtkWriter);
 
         bulkExact.resize(bulkFvGridGeometry->numDofs());
         lowDimExact.resize(lowDimFvGridGeometry->numDofs());

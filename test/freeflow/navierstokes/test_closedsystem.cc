@@ -142,9 +142,9 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
-    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
+    IOFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 
     // instantiate time loop
