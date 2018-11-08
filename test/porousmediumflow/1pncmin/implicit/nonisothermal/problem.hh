@@ -38,8 +38,8 @@
 #include <dumux/material/components/cao2h2.hh>
 #include <dumux/material/solidsystems/compositionalsolidphase.hh>
 
-#include "thermochemspatialparams.hh"
-#include "thermochemreaction.hh"
+#include "spatialparams.hh"
+#include "reaction.hh"
 #include "modifiedcao.hh"
 
 namespace Dumux {
