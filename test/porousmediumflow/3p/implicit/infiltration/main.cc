@@ -19,10 +19,10 @@
 /*!
  * \file
  *
- * \brief test for the 3pni CC model
+ * \brief Test for the three-phase CC model
  */
 #include <config.h>
-#include "3pniconvectionproblem.hh"
+#include "problem.hh"
 #include <ctime>
 #include <iostream>
 
@@ -141,10 +141,7 @@ int main(int argc, char** argv) try
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
-    vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
     vtkWriter.write(0.0);
-    // output every vtkOutputInterval time step
-    const auto vtkOutputInterval = getParam<int>("Problem.OutputInterval");
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
@@ -168,11 +165,12 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
+        // set the end of the next time step as time in the problem to control
+        // the boundary conditions for the implicit Euler scheme
+        problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
+
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);
-
-        // compute the new analytical temperature field for the output
-        problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
 
         // make the new solution the old solution
         xOld = x;
@@ -188,8 +186,7 @@ int main(int argc, char** argv) try
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
         // write vtk output
-        if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->finished())
-            vtkWriter.write(timeLoop->time());
+        vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());
 

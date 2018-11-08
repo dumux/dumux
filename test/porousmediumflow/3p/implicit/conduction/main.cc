@@ -22,7 +22,7 @@
  * \brief test for the 3pni CC model
  */
 #include <config.h>
-#include "3pniconductionproblem.hh"
+#include "problem.hh"
 #include <ctime>
 #include <iostream>
 

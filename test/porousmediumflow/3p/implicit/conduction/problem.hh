@@ -19,11 +19,11 @@
 /**
  * \file
  * \ingroup ThreePTests
- * \brief Definition of a 1p2cni problem:
+ * \brief Definition of a 3pni problem:
  *        Component transport of nitrogen dissolved in the water phase.
  */
-#ifndef DUMUX_3PNI_CONVECTION_PROBLEM_HH
-#define DUMUX_3PNI_CONVECTION_PROBLEM_HH
+#ifndef DUMUX_3PNI_CONDUCTION_PROBLEM_HH
+#define DUMUX_3PNI_CONDUCTION_PROBLEM_HH
 
 #include <cmath>
 #include <dune/grid/yaspgrid.hh>
@@ -38,86 +38,84 @@
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
 
-#include "3pnispatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 /**
  * \ingroup ThreePTests
- * \brief Definition of a 1p2cni problem:
+ * \brief Definition of a 3pni problem:
  *        Component transport of nitrogen dissolved in the water phase.
  */
 template <class TypeTag>
-class ThreePNIConvectionProblem;
+class ThreePNIConductionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(ThreePNIConvectionTypeTag, INHERITS_FROM(ThreePNI));
-NEW_TYPE_TAG(ThreePNIConvectionBoxTypeTag, INHERITS_FROM(BoxModel, ThreePNIConvectionTypeTag));
-NEW_TYPE_TAG(ThreePNIConvectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ThreePNIConvectionTypeTag));
-NEW_TYPE_TAG(ThreePNIConvectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, ThreePNIConvectionTypeTag));
+NEW_TYPE_TAG(ThreePNIConductionTypeTag, INHERITS_FROM(ThreePNI));
+NEW_TYPE_TAG(ThreePNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, ThreePNIConductionTypeTag));
+NEW_TYPE_TAG(ThreePNIConductionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ThreePNIConductionTypeTag));
+NEW_TYPE_TAG(ThreePNIConductionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, ThreePNIConductionTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(ThreePNIConvectionTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ThreePNIConductionTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ThreePNIConvectionTypeTag, Problem, ThreePNIConvectionProblem<TypeTag>);
+SET_TYPE_PROP(ThreePNIConductionTypeTag, Problem, ThreePNIConductionProblem<TypeTag>);
 
 
 // Set the fluid system
-SET_TYPE_PROP(ThreePNIConvectionTypeTag,
+SET_TYPE_PROP(ThreePNIConductionTypeTag,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
-SET_PROP(ThreePNIConvectionTypeTag, SpatialParams)
+SET_PROP(ThreePNIConductionTypeTag, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = ThreePNISpatialParams<FVGridGeometry, Scalar>;
 };
-} // end namespace Properties
+}// end namespace Properties
+
 
 /*!
  * \ingroup ThreePModel
  * \ingroup ImplicitTestProblems
  *
- * \brief Test for the ThreePModel in combination with the NI model for a convection problem:
- * The simulation domain is a tube where water with an elevated temperature is injected
- * at a constant rate on the left hand side.
+ * \brief Test for the ThreePModel in combination with the NI model for a conduction problem:
+ * The simulation domain is a tube where with an elevated temperature on the left hand side.
  *
  * Initially the domain is fully saturated with water at a constant temperature.
- * On the left hand side water is injected at a constant rate and on the right hand side
+ * On the left hand side there is a Dirichlet boundary condition with an increased temperature and on the right hand side
  * a Dirichlet boundary with constant pressure, saturation and temperature is applied.
  *
- * The results are compared to an analytical solution where a retarded front velocity is calculated as follows:
+ * The results are compared to an analytical solution for a diffusion process:
   \f[
-     v_{Front}=\frac{q S_{water}}{\phi S_{total}}
+     T =T_{high} + (T_{init} - T_{high})erf \left(0.5\sqrt{\frac{x^2 S_{total}}{t \lambda_{eff}}}\right)
  \f]
  *
  * The result of the analytical solution is written into the vtu files.
  * This problem uses the \ref ThreePModel and \ref NIModel model.
  *
  * To run the simulation execute the following line in shell: <br>
- * <tt>./test_box3pcniconvection -ParameterFile ./test_box3pniconvection.input</tt> or <br>
- * <tt>./test_cc3pcniconvection -ParameterFile ./test_cc3pniconvection.input</tt>
+ * <tt>./test_box3pniconduction -ParameterFile ./test_box3pniconduction.input</tt> or <br>
+ * <tt>./test_cc3pniconduction -ParameterFile ./test_cc3pniconduction.input</tt>
  */
 template <class TypeTag>
-class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
+class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using IapwsH2O = Components::H2O<Scalar>;
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
@@ -127,36 +125,27 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
         swIdx = Indices::swIdx,
         snIdx = Indices::snIdx,
         temperatureIdx = Indices::temperatureIdx,
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        conti0EqIdx = Indices::conti0EqIdx,
-        energyEqIdx = Indices::energyEqIdx
+        wPhaseIdx = FluidSystem::wPhaseIdx
     };
 
     enum { dimWorld = GridView::dimensionworld };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    ThreePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    ThreePNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
 
         name_ = getParam<std::string>("Problem.Name");
-        outputInterval_ = getParam<int>("Problem.OutputInterval");
-        darcyVelocity_ = getParam<Scalar>("Problem.DarcyVelocity");
+        temperatureHigh_ = 300.0;
+        temperatureExact_.resize(fvGridGeometry->numDofs());
+   }
 
-        temperatureHigh_ = 291.;
-        temperatureLow_ = 290.;
-        pressureHigh_ = 2e5;
-        pressureLow_ = 1e5;
-
-        temperatureExact_.resize(this->fvGridGeometry().numDofs());
-    }
-
-    //! Get exact temperature vector for output
+    //! get the analytical temperature
     const std::vector<Scalar>& getExactTemperature()
     {
         return temperatureExact_;
@@ -180,26 +169,27 @@ public:
         const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
         const auto densityW = volVars.density(wPhaseIdx);
         const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
-        const auto storageW =  densityW*heatCapacityW*porosity;
         const auto densityS = volVars.solidDensity();
         const auto heatCapacityS = volVars.solidHeatCapacity();
-        const auto storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
-        std::cout << "storage: " << storageTotal << '\n';
-
+        const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
+        const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
+                                                                                                         someElement, fvGeometry, someScv);
         using std::max;
         time = max(time, 1e-10);
-        const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
-        std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
-
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
+
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto dofIdxGlobal = scv.dofIndex();
-                auto dofPosition = scv.dofPosition();
-                temperatureExact_[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
+               auto globalIdx = scv.dofIndex();
+               const auto& globalPos = scv.dofPosition();
+               using std::erf;
+               using std::sqrt;
+               temperatureExact_[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
+                                              *erf(0.5*sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
+
             }
         }
     }
@@ -218,7 +208,6 @@ public:
     {
         return name_;
     }
-
     // \}
 
     /*!
@@ -235,7 +224,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if(globalPos[0] < eps_ || globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
         {
             values.setAllDirichlet();
         }
@@ -251,39 +240,30 @@ public:
      *        boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
-     *
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        return initialAtPos(globalPos);
+        PrimaryVariables values = initialAtPos(globalPos);
+
+        if (globalPos[0] < eps_)
+            values[temperatureIdx] = temperatureHigh_;
+        return values;
     }
 
-    /*!
+  /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param elemVolVars The element volume variables
-     * \param scvf The subcontrolvolume face
-     *  Negative values mean influx.
+     * \param values Stores the Neumann values for the conservation equations in
+     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
+     * \param globalPos The position of the integration point of the boundary segment.
+     *
+     * For this method, the \a values parameter stores the mass flux
+     * in normal direction of each phase. Negative values mean influx.
      */
-    NumEqVector neumann(const Element &element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace& scvf) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
-        NumEqVector values(0.0);
-        const auto globalPos = scvf.ipGlobal();
-        const auto& volVars = elemVolVars[scvf.insideScvIdx()];
-
-        if(globalPos[0] < eps_)
-        {
-            values[conti0EqIdx] = -darcyVelocity_*volVars.density(wPhaseIdx);
-            values[energyEqIdx] = -darcyVelocity_*volVars.density(wPhaseIdx)
-                                     *IapwsH2O::liquidEnthalpy(temperatureHigh_, volVars.pressure(wPhaseIdx));
-        }
-        return values;
+        return NumEqVector(0.0);
     }
 
     // \}
@@ -294,6 +274,23 @@ public:
     // \{
 
     /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
+     *
+     * \param globalPos The position for which the source should be evaluated
+     *
+     * Returns the rate mass of a component is generated or annihilate
+     * per volume unit. Positive values mean that mass is created,
+     * negative ones mean that it vanishes.
+     *
+     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
+     */
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
+    {
+        return NumEqVector(0.0);
+    }
+
+    /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
@@ -302,10 +299,10 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[pressureIdx] = pressureLow_; // initial condition for the pressure
+        values[pressureIdx] = 1e5; // initial condition for the pressure
         values[swIdx] = 1.0;  // initial condition for the wetting phase saturation
-        values[snIdx] = 1e-10;  // initial condition for the non-wetting phase saturation
-        values[temperatureIdx] = temperatureLow_;
+        values[snIdx] = 1e-5;  // initial condition for the non-wetting phase saturation
+        values[temperatureIdx] = 290;
         return values;
     }
 
@@ -313,16 +310,10 @@ public:
 
 private:
     Scalar temperatureHigh_;
-    Scalar temperatureLow_;
-    Scalar pressureHigh_;
-    Scalar pressureLow_;
-    Scalar darcyVelocity_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
-    int outputInterval_;
     std::vector<Scalar> temperatureExact_;
 };
 
-} //end namespace Dumux
-
+} //end namespace
 #endif

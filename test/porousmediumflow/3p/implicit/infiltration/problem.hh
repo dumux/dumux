@@ -39,9 +39,8 @@
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/mesitylene.hh>
 #include <dumux/material/components/h2o.hh>
-// #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 
-#include "infiltration3pspatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux
 {
