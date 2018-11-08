@@ -19,12 +19,11 @@
 /**
  * \file
  * \ingroup RichardsTests
- * \brief Test for the RichardsModel in combination with the NI model for a convection problem:
- * The simulation domain is a tube where water with an elevated temperature is injected
- * at a constant rate on the left hand side.
+ * \brief Test for the RichardsModel in combination with the NI model for a conduction problem:
+ * The simulation domain is a tube where with an elevated temperature on the left hand side.
  */
-#ifndef DUMUX_RICHARDS_CONVECTION_PROBLEM_HH
-#define DUMUX_RICHARDS_CONVECTION_PROBLEM_HH
+#ifndef DUMUX_RICHARDS_CONDUCTION_PROBLEM_HH
+#define DUMUX_RICHARDS_CONDUCTION_PROBLEM_HH
 
 #include <cmath>
 #include <dune/grid/yaspgrid.hh>
@@ -37,34 +36,35 @@
 #include <dumux/porousmediumflow/richards/model.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
-#include "richardsnispatialparams.hh"
+#include "../spatialparams.hh"
 
 namespace Dumux {
+
 /**
  * \ingroup RichardsTests
- * \brief Test for the RichardsModel in combination with the NI model for a convection problem:
- * The simulation domain is a tube where water with an elevated temperature is injected
- * at a constant rate on the left hand side.
+ * \brief Test for the RichardsModel in combination with the NI model for a conduction problem:
+ * The simulation domain is a tube where with an elevated temperature on the left hand side.
  */
 template <class TypeTag>
-class RichardsNIConvectionProblem;
+class RichardsNIConductionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(RichardsNIConvection, INHERITS_FROM(RichardsNI));
-NEW_TYPE_TAG(RichardsNIConvectionBox, INHERITS_FROM(BoxModel, RichardsNIConvection));
-NEW_TYPE_TAG(RichardsNIConvectionCC, INHERITS_FROM(CCTpfaModel, RichardsNIConvection));
+NEW_TYPE_TAG(RichardsNIConduction, INHERITS_FROM(RichardsNI));
+NEW_TYPE_TAG(RichardsNIConductionBox, INHERITS_FROM(BoxModel, RichardsNIConduction));
+NEW_TYPE_TAG(RichardsNIConductionCC, INHERITS_FROM(CCTpfaModel, RichardsNIConduction));
 
 // Set the grid type
-SET_TYPE_PROP(RichardsNIConvection, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(RichardsNIConduction, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(RichardsNIConvection, Problem, RichardsNIConvectionProblem<TypeTag>);
+SET_TYPE_PROP(RichardsNIConduction, Problem,
+              RichardsNIConductionProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(RichardsNIConvection, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+SET_TYPE_PROP(RichardsNIConduction, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_PROP(RichardsNIConvection, SpatialParams)
+SET_PROP(RichardsNIConduction, SpatialParams)
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -76,47 +76,41 @@ SET_PROP(RichardsNIConvection, SpatialParams)
  * \ingroup RichardsModel
  * \ingroup ImplicitTestProblems
  *
- * \brief Test for the RichardsModel in combination with the NI model for a convection problem:
- * The simulation domain is a tube where water with an elevated temperature is injected
- * at a constant rate on the left hand side.
+ * \brief Test for the RichardsModel in combination with the NI model for a conduction problem:
+ * The simulation domain is a tube where with an elevated temperature on the left hand side.
  *
  * Initially the domain is fully saturated with water at a constant temperature.
- * On the left hand side water is injected at a constant rate and on the right hand side
+ * On the left hand side there is a Dirichlet boundary condition with an increased temperature and on the right hand side
  * a Dirichlet boundary with constant pressure, saturation and temperature is applied.
  *
- * The results are compared to an analytical solution where a retarded front velocity is calculated as follows:
+ * The results are compared to an analytical solution for a diffusion process:
   \f[
-     v_{Front}=\frac{q S_{water}}{\phi S_{total}}
+     T =T_{high} + (T_{init} - T_{high})erf \left(0.5\sqrt{\frac{x^2 S_{total}}{t \lambda_{eff}}}\right)
  \f]
  *
- * The result of the analytical solution is written into the vtu files.
  * This problem uses the \ref RichardsModel and \ref NIModel model.
  *
  * To run the simulation execute the following line in shell: <br>
- * <tt>./test_boxrichardsniconvection -ParameterFile ./test_boxrichardsniconvection.input</tt> or <br>
- * <tt>./test_ccrichardsniconvection -ParameterFile ./test_ccrichardsniconvection.input</tt>
+ * <tt>./test_boxrichardsniconduction -ParameterFile ./test_boxrichardsniconduction.input</tt> or <br>
+ * <tt>./test_ccrichardsniconduction -ParameterFile ./test_ccrichardsniconduction.input</tt>
  */
 template <class TypeTag>
-class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
+class RichardsNIConductionProblem :public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using IapwsH2O = Components::H2O<Scalar>;
 
-    // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum { dimWorld = GridView::dimensionworld };
 
@@ -129,26 +123,21 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    RichardsNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    RichardsNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
 
-        name_ =  getParam<std::string>("Problem.Name");
-        darcyVelocity_ =  getParam<Scalar>("Problem.DarcyVelocity");
-        temperatureHigh_ = 291.;
-        temperatureLow_ = 290.;
-        pressureHigh_ = 2e5;
-        pressureLow_ = 1e5;
+        name_ = getParam<std::string>("Problem.Name");
+        temperatureHigh_ = 300.;
         temperatureExact_.resize(fvGridGeometry->numDofs());
     }
 
-
-   /*!
+    /*!
      * \brief Append all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
      *        writer.
@@ -177,7 +166,7 @@ public:
         const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
         const auto densityW = volVars.density(liquidPhaseIdx);
         const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
-        const auto densityS = volVars.solidDensity();
+        const auto densityS =volVars.solidDensity();
         const auto heatCapacityS = volVars.solidHeatCapacity();
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
@@ -215,7 +204,6 @@ public:
     {
         return name_;
     }
-
     // \}
 
     /*!
@@ -232,7 +220,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if(globalPos[0] < eps_ || globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
         {
             values.setAllDirichlet();
         }
@@ -254,33 +242,27 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        return initial_(globalPos);
+        PrimaryVariables values(0.0);
+        values = initial_(globalPos);
+
+        if (globalPos[0] < eps_)
+        {
+            values[temperatureIdx] = temperatureHigh_;
+        }
+        return values;
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
+     * \brief Evaluate the boundary conditions for a Neumann
      *        boundary segment.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param elemVolVars The element volume variables
-     * \param scvf The subcontrolvolume face
-     *  Negative values mean influx.
+     * For this method, the \a priVars parameter stores the mass flux
+     * in normal direction of each component. Negative values mean
+     * influx.
      */
-    NumEqVector neumann(const Element &element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace& scvf) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         NumEqVector values(0.0);
-        const auto globalPos = scvf.ipGlobal();
-
-        if(globalPos[0] < eps_)
-        {
-            values[pressureIdx] = -darcyVelocity_*elemVolVars[scvf.insideScvIdx()].density(liquidPhaseIdx);
-            values[temperatureIdx] = -darcyVelocity_*elemVolVars[scvf.insideScvIdx()].density(liquidPhaseIdx)
-                                     *IapwsH2O::liquidEnthalpy(temperatureHigh_, elemVolVars[scvf.insideScvIdx()].pressure(liquidPhaseIdx));
-        }
         return values;
     }
 
@@ -290,7 +272,6 @@ public:
      * \name Volume terms
      */
     // \{
-
 
     /*!
      * \brief Returns the reference pressure [Pa] of the non-wetting
@@ -304,7 +285,7 @@ public:
      * \param scvIdx The sub control volume index inside the finite
      *               volume geometry
      */
-    Scalar nonWettingReferencePressure() const
+     Scalar nonWettingReferencePressure() const
     { return 1e5; };
 
     /*!
@@ -318,7 +299,7 @@ public:
      */
    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        return initial_(globalPos);
+         return initial_(globalPos);
     }
 
     // \}
@@ -328,20 +309,18 @@ private:
     {
         PrimaryVariables priVars(0.0);
         priVars.setState(liquidPhaseOnly);
-        priVars[pressureIdx] = pressureLow_; // initial condition for the pressure
-        priVars[temperatureIdx] = temperatureLow_;
+        priVars[pressureIdx] = 1e5; // initial condition for the pressure
+
+        priVars[temperatureIdx] = 290.;
         return priVars;
     }
 
     Scalar temperatureHigh_;
-    Scalar temperatureLow_;
-    Scalar pressureHigh_;
-    Scalar pressureLow_;
-    Scalar darcyVelocity_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
+    int outputInterval_;
     std::vector<Scalar> temperatureExact_;
 };
 
 } //end namespace
-#endif // DUMUX_RICHARDSNI_CONVECTION_PROBLEM_HH
+#endif // DUMUX_RICHARDSNINI_CONDUCTION_PROBLEM_HH

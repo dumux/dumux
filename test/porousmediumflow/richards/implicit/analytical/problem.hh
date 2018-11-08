@@ -40,7 +40,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include "richardsanalyticalspatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 

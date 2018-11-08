@@ -23,7 +23,7 @@
  */
 #include <config.h>
 
-#include "richardsniconductionproblem.hh"
+#include "problem.hh"
 
 #include <ctime>
 #include <iostream>

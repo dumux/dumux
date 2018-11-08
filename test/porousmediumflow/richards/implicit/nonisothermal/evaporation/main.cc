@@ -23,6 +23,8 @@
  */
 #include <config.h>
 
+#include "problem.hh"
+
 #include <ctime>
 #include <iostream>
 
@@ -34,20 +36,15 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
 
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/porousmediumflow/richards/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/loadsolution.hh>
-
-#include "richardslensproblem.hh"
 
 ////////////////////////
 // the main function
@@ -89,27 +86,10 @@ int main(int argc, char** argv) try
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
-    // check if we are about to restart a previously interrupted simulation
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    const auto restartTime = getParam<Scalar>("Restart.Time", 0);
-
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     SolutionVector x(fvGridGeometry->numDofs());
-    if (restartTime > 0)
-    {
-        using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
-        using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-        const auto fileName = getParam<std::string>("Restart.File");
-        loadSolution(x, fileName, createPVNameFunction<IOFields, PrimaryVariables, ModelTraits, FluidSystem>(), *fvGridGeometry);
-    }
-    else
-    {
-        problem->applyInitialSolution(x);
-    }
-
+    problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
@@ -117,21 +97,22 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
+    // get some time loop parameters
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
     // intialize the vtk output module
     using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
-    vtkWriter.write(restartTime);
-
-    // get some time loop parameters
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    vtkWriter.write(0.0);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
@@ -139,8 +120,8 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = Dumux::AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    using LinearSolver = Dumux::ILU0BiCGSTABBackend;
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
     using NewtonSolver = Dumux::RichardsNewtonSolver<TypeTag, Assembler, LinearSolver>;
