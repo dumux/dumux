@@ -22,7 +22,7 @@
  * \brief test for the 3pni CC model
  */
 #include <config.h>
-#include "3pniconductionproblem.hh"
+#include "problem.hh"
 #include <ctime>
 #include <iostream>
 
@@ -88,7 +88,7 @@ int main(int argc, char** argv) try
     // define the type tag for this problem
     using TypeTag = TTAG(TYPETAG);
 
-// initialize MPI, finalize is done automatically on exit
+    // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
     // print dumux start message
@@ -171,7 +171,7 @@ int main(int argc, char** argv) try
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);
 
-        // update the exact time temperature
+        // compute the new analytical temperature field for the output
         problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
 
         // make the new solution the old solution
@@ -187,7 +187,8 @@ int main(int argc, char** argv) try
         // set new dt as suggested by the newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
-       if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->finished())
+        // write vtk output
+        if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->finished())
             vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());

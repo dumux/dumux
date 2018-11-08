@@ -19,10 +19,10 @@
 /*!
  * \file
  *
- * \brief Test for the three-phase CC model
+ * \brief test for the 3pni CC model
  */
 #include <config.h>
-#include "infiltration3pproblem.hh"
+#include "problem.hh"
 #include <ctime>
 #include <iostream>
 
@@ -88,7 +88,7 @@ int main(int argc, char** argv) try
     // define the type tag for this problem
     using TypeTag = TTAG(TYPETAG);
 
-    // initialize MPI, finalize is done automatically on exit
+// initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
     // print dumux start message
@@ -141,7 +141,10 @@ int main(int argc, char** argv) try
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
     vtkWriter.write(0.0);
+    // output every vtkOutputInterval time step
+    const auto vtkOutputInterval = getParam<int>("Problem.OutputInterval");
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
@@ -165,12 +168,11 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
-        // set the end of the next time step as time in the problem to control
-        // the boundary conditions for the implicit Euler scheme
-        problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
-
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);
+
+        // update the exact time temperature
+        problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
 
         // make the new solution the old solution
         xOld = x;
@@ -185,8 +187,8 @@ int main(int argc, char** argv) try
         // set new dt as suggested by the newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
-        // write vtk output
-        vtkWriter.write(timeLoop->time());
+       if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->finished())
+            vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());
 
