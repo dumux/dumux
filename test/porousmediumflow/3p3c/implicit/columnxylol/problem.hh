@@ -37,7 +37,7 @@
 #include <dumux/porousmediumflow/3p3c/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "columnxylolspatialparams.hh"
+#include "spatialparams.hh"
 
 #define ISOTHERMAL 0
 
