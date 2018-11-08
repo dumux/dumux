@@ -30,7 +30,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/heatpipelaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
 #include <dumux/material/fluidmatrixinteractions/1pia/fluidsolidinterfacialareashiwang.hh>
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
@@ -62,7 +61,7 @@ public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the material law type used
-    using MaterialLaw = TwoPAdapter<EffToAbsLaw<EffectiveLaw>>;
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     using FluidSolidInterfacialAreaFormulation = FluidSolidInterfacialAreaShiWang<Scalar>;
 

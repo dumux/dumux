@@ -461,7 +461,8 @@ private:
         const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
         //obtain pc according to saturation
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        MaterialLaw::capillaryPressures(capPress, materialParams, equilibriumFluidState, wPhaseIdx);
+        using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
+        MPAdapter::capillaryPressures(capPress, materialParams, equilibriumFluidState, wPhaseIdx);
 
         Scalar p[numPhases];
         if (this->spatialParams().inPM_(globalPos)){

@@ -19,9 +19,9 @@
 /*!
  * \file
  * \ingroup Fluidmatrixinteractions
- * \brief Makes the twophase capillary pressure-saturation relations available under the M-phase API for material laws
+ * \brief Makes the capillary pressure-saturation relations available under the M-phase API for material laws
  *
- * Makes the twophase capillary pressure-saturation relations
+ * Makes the capillary pressure-saturation relations
  * available under the M-phase API for material laws
  */
 #ifndef DUMUX_MP_2P_ADAPTER_HH
@@ -33,20 +33,19 @@ namespace Dumux
 {
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief Implements a brookscorey saturation-capillary pressure relation
- *
- * Implements a brookscorey saturation-capillary pressure relation for
- * M-phase fluid systems.
- *
- * \sa MpBrookscoreyMaterialParams
+ * \brief An adapter for mpnc to use the capillary pressure-saturation relationships
  */
-template <class TwoPLaw>
-class TwoPAdapter
+template <class MaterialLaw, int numPhases>
+class MPAdapter
+{
+    static_assert(numPhases == 2, "only adapter for 2 phases is implemented");
+};
+
+template <class MaterialLaw>
+class MPAdapter<MaterialLaw, 2 /*numPhases*/>
 {
 public:
-    using Params = typename TwoPLaw::Params;
-    enum { numPhases = 2 };
-
+    using Params = typename MaterialLaw::Params;
     /*!
      * \brief The capillary pressure-saturation curve.
      * \param values Container for the return values
@@ -64,7 +63,7 @@ public:
         values[nPhaseIdx] = 0;
 
         // wetting phase does not get anything added
-        values[wPhaseIdx] = - TwoPLaw::pc(params, state.saturation(wPhaseIdx));
+        values[wPhaseIdx] = - MaterialLaw::pc(params, state.saturation(wPhaseIdx));
     }
 
     /*!
@@ -80,8 +79,8 @@ public:
                                        const int wPhaseIdx)
     {
         const int nPhaseIdx = 1 - wPhaseIdx;
-        values[wPhaseIdx] = TwoPLaw::krw(params, state.saturation(wPhaseIdx));
-        values[nPhaseIdx] = TwoPLaw::krn(params, state.saturation(wPhaseIdx));
+        values[wPhaseIdx] = MaterialLaw::krw(params, state.saturation(wPhaseIdx));
+        values[nPhaseIdx] = MaterialLaw::krn(params, state.saturation(wPhaseIdx));
     }
 };
 }

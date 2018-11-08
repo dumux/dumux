@@ -32,6 +32,7 @@
 #include <dumux/material/constraintsolvers/compositionfromfugacities.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
+#include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
 #include "pressureformulation.hh"
 
 namespace Dumux {
@@ -109,7 +110,8 @@ public:
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         // relative permeabilities
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        MaterialLaw::relativePermeabilities(relativePermeability_,
+        using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
+        MPAdapter::relativePermeabilities(relativePermeability_,
                                             materialParams,
                                             fluidState_,
                                             wPhaseIdx);
@@ -188,7 +190,8 @@ public:
         // capillary pressures
         Scalar capPress[numPhases()];
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        MaterialLaw::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
+        using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
+        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
         // add to the pressure of the first fluid phase
 
         // depending on which pressure is stored in the primary variables
@@ -563,7 +566,8 @@ public:
         // relative permeabilities
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        MaterialLaw::relativePermeabilities(relativePermeability_,
+        using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
+        MPAdapter::relativePermeabilities(relativePermeability_,
                                             materialParams,
                                             fluidState_,
                                             wPhaseIdx);
@@ -641,7 +645,8 @@ public:
         // capillary pressures
         Scalar capPress[numPhases()];
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        MaterialLaw::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
+        using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
+        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
         // add to the pressure of the first fluid phase
 
         // depending on which pressure is stored in the primary variables

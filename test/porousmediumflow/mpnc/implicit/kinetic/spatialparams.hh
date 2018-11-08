@@ -32,8 +32,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchtenoftemperature.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
-#include <dumux/material/fluidmatrixinteractions/mp/2poftadapter.hh>
 #include <dumux/common/parameters.hh>
 
 // material laws for interfacial area
@@ -66,7 +64,7 @@ public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the material law type used
-    using MaterialLaw = TwoPAdapter<EffToAbsLaw<RegularizedBrooksCorey<Scalar>>>;
+    using MaterialLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
     //! convenience aliases of the law parameters
     using MaterialLawParams = typename MaterialLaw::Params;
 

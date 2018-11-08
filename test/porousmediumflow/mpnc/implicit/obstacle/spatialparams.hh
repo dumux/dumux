@@ -30,8 +30,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
-
 namespace Dumux {
 
 /**
@@ -60,7 +58,7 @@ public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the material law type used
-    using MaterialLaw = TwoPAdapter<EffToAbsLaw<EffectiveLaw>>;
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     //! the constructor

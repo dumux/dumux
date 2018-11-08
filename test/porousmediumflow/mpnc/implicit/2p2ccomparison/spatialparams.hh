@@ -30,8 +30,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
-
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 
 namespace Dumux {
@@ -60,7 +58,7 @@ class MPNCComparisonSpatialParams
 
 public:
     using PermeabilityType = Scalar;
-    using MaterialLaw = TwoPAdapter<EffToAbsLaw<EffectiveLaw>>;
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     //! The constructor

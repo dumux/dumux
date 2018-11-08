@@ -65,7 +65,8 @@ public:
     template <class ContainerT, class FluidState>
     static void capillaryPressures(ContainerT &values,
                                    const Params &params,
-                                   const FluidState &state)
+                                   const FluidState &state,
+                                   const int wPhaseIdx)
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             Scalar S = state.saturation(phaseIdx);
@@ -84,7 +85,8 @@ public:
     template <class ContainerT, class FluidState>
     static void relativePermeabilities(ContainerT &values,
                                        const Params &params,
-                                       const FluidState &state)
+                                       const FluidState &state,
+                                       const int wPhaseIdx)
     {
         using std::max;
         using std::min;
