@@ -436,17 +436,17 @@ public:
 
 protected:
     //! zero-initialize all data members with braces syntax
-    Scalar moleFraction_[numPhases][numComponents] = {};
-    Scalar fugacityCoefficient_[numPhases][numComponents] = {};
-    Scalar averageMolarMass_[numPhases] = {};
-    Scalar sumMoleFractions_[numPhases] = {};
-    Scalar pressure_[numPhases] = {};
-    Scalar saturation_[numPhases] = {};
-    Scalar density_[numPhases] = {};
-    Scalar molarDensity_[numPhases] = {};
-    Scalar enthalpy_[numPhases] = {};
-    Scalar viscosity_[numPhases] = {};
-    Scalar temperature_[numPhases] = {};
+    std::array<std::array<Scalar, numComponents>, numPhases> moleFraction_ = {};
+    std::array<std::array<Scalar, numComponents>, numPhases> fugacityCoefficient_ = {};
+    std::array<Scalar, numPhases> averageMolarMass_ = {};
+    std::array<Scalar, numPhases> sumMoleFractions_ = {};
+    std::array<Scalar, numPhases> pressure_ = {};
+    std::array<Scalar, numPhases> saturation_ = {};
+    std::array<Scalar, numPhases> density_ = {};
+    std::array<Scalar, numPhases> molarDensity_ = {};
+    std::array<Scalar, numPhases> enthalpy_ = {};
+    std::array<Scalar, numPhases> viscosity_ = {};
+    std::array<Scalar, numPhases> temperature_ = {};
 
     // For porous medium flow models, here we ... the index of the wetting
     // phase (needed for vapor pressure evaluation if kelvin equation is used)
