@@ -33,7 +33,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/richardsnc/model.hh>
 
-#include "richardswelltracerspatialparams.hh"
+#include "spatialparams.hh"
 
 namespace Dumux {
 
