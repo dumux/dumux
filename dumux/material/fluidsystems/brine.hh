@@ -423,6 +423,11 @@ public:
     {
         if (phaseIdx == liquidPhaseIdx)
         {
+            if (compIIdx > compJIdx)
+            {
+                using std::swap;
+                swap(compIIdx, compJIdx);
+            }
             //! \todo TODO implement binary coefficients
             // http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.htm
             // The link above was given as a reference in brine_air fluid system.
