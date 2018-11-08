@@ -40,7 +40,7 @@
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/components/h2o.hh>
-#include "1pnctestspatialparams.hh"
+#include "../../spatialparams.hh"
 
 namespace Dumux
 {

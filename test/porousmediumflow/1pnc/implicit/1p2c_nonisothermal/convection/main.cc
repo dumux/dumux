@@ -23,7 +23,7 @@
  */
 #include <config.h>
 
-#include "1p2cniconductionproblem.hh"
+#include "problem.hh"
 
 #include <ctime>
 #include <iostream>
@@ -64,7 +64,7 @@ int main(int argc, char** argv) try
 
     // print dumux start message
     if (mpiHelper.rank() == 0)
-    DumuxMessage::print(/*firstCall=*/true);
+        DumuxMessage::print(/*firstCall=*/true);
 
     // initialize parameter tree
     Parameters::init(argc, argv);

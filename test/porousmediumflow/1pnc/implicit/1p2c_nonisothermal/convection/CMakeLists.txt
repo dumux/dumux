@@ -1,0 +1,34 @@
+add_input_file_links()
+
+# non-isothermal tests
+# convection
+dune_add_test(NAME test_1p2c_ni_convection_box
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionBoxTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_ni_convection_box-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_ni_convection_box-00009.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_ni_convection_box params.input -Problem.Name test_1p2c_ni_convection_box"
+                        --zeroThreshold {"velocity_liq \(m/s\)":1e-9})
+
+dune_add_test(NAME test_1p2c_ni_convection_tpfa
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCTpfaTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_ni_convection_cc-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_ni_convection_tpfa-00009.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_ni_convection_tpfa params.input -Problem.Name test_1p2c_ni_convection_tpfa"
+                        --zeroThreshold {"velocity_liq \(m/s\)_0":1e-9})
+
+#Note: The mpfa model does not support velocity output yet. We therefore deactivate it for the test and use a copy of the tpfa reference
+#      solution where the velocities have been removed.
+dune_add_test(NAME test_1p2c_ni_convection_mpfa
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCMpfaTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_ni_convection_mpfa-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_ni_convection_mpfa-00009.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_ni_convection_mpfa params.input -Problem.Name test_1p2c_ni_convection_mpfa -Vtk.AddVelocity false")
