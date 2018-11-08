@@ -47,28 +47,26 @@ namespace Dumux {
 /**
  * \brief Definition of the spatial parameters for the evaporation atmosphere Problem (using a "poor man's coupling")
  */
-template<class FVGridGeometry, class Scalar, class FluidSystem>
+template<class FVGridGeometry, class Scalar>
 class EvaporationAtmosphereSpatialParams
 : public FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
-                                       EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar, FluidSystem>>
+                                       EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar>>
 {
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ThisType = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+    using ThisType = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar>;
     using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
     enum { dimWorld = GridView::dimensionworld };
-    enum { numPhases = FluidSystem::numPhases };
-    enum { liquidPhaseIdx   = FluidSystem::liquidPhaseIdx };
 public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the material law type used
-    using MaterialLaw = TwoPAdapter<liquidPhaseIdx, EffToAbsLaw<RegularizedBrooksCorey<Scalar>>>;
+    using MaterialLaw = TwoPAdapter<EffToAbsLaw<RegularizedBrooksCorey<Scalar>>>;
     //! convenience aliases of the law parameters
     using MaterialLawParams = typename MaterialLaw::Params;
 
@@ -301,6 +299,18 @@ public:
         else if (inPM_(globalPos))
             return factorMassTransfer_ ;
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
+    }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        return FluidSystem::phase0Idx;
     }
 
     /*!\brief Give back whether the tested position (input) is a specific region (porous medium part) in the domain

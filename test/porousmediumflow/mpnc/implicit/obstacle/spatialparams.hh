@@ -30,7 +30,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/material/fluidmatrixinteractions/mp/mplinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
 
 namespace Dumux {
@@ -41,30 +40,27 @@ namespace Dumux {
  * \brief Definition of the spatial params properties for the obstacle problem
  *
  */
-template<class FVGridGeometry, class Scalar, class FluidSystem>
+template<class FVGridGeometry, class Scalar>
 class ObstacleSpatialParams
 : public FVSpatialParams<FVGridGeometry, Scalar,
-                         ObstacleSpatialParams<FVGridGeometry, Scalar, FluidSystem>>
+                         ObstacleSpatialParams<FVGridGeometry, Scalar>>
 {
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       ObstacleSpatialParams<FVGridGeometry, Scalar, FluidSystem>>;
+                                       ObstacleSpatialParams<FVGridGeometry, Scalar>>;
 
     enum {dimWorld=GridView::dimensionworld};
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
-
-    enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
-
     using EffectiveLaw = RegularizedLinearMaterial<Scalar>;
 
 public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the material law type used
-    using MaterialLaw = TwoPAdapter<liquidPhaseIdx, EffToAbsLaw<EffectiveLaw>>;
+    using MaterialLaw = TwoPAdapter<EffToAbsLaw<EffectiveLaw>>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     //! the constructor
@@ -125,6 +121,18 @@ public:
             return fineMaterialParams_;
         else
             return coarseMaterialParams_;
+    }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        return FluidSystem::phase0Idx;
     }
 
 private:

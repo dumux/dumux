@@ -122,8 +122,7 @@ struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere>
 {
     using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using type = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+    using type = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Set the interfacial area relation: wetting -- non-wetting
@@ -458,10 +457,11 @@ private:
         const auto &materialParams =
             this->spatialParams().materialLawParamsAtPos(globalPos);
         Scalar capPress[numPhases];
-
+        //get the index for the wettingphase
+        const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
         //obtain pc according to saturation
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        MaterialLaw::capillaryPressures(capPress, materialParams, equilibriumFluidState);
+        MaterialLaw::capillaryPressures(capPress, materialParams, equilibriumFluidState, wPhaseIdx);
 
         Scalar p[numPhases];
         if (this->spatialParams().inPM_(globalPos)){

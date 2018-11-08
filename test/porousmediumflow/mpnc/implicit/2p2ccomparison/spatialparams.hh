@@ -42,10 +42,10 @@ namespace Dumux {
  * \brief Definition of the spatial params properties for the obstacle problem
  *
  */
-template<class FVGridGeometry, class Scalar, class FluidSystem>
+template<class FVGridGeometry, class Scalar>
 class MPNCComparisonSpatialParams
 : public FVSpatialParams<FVGridGeometry, Scalar,
-                         MPNCComparisonSpatialParams<FVGridGeometry, Scalar, FluidSystem>>
+                         MPNCComparisonSpatialParams<FVGridGeometry, Scalar>>
 {
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
@@ -53,17 +53,14 @@ class MPNCComparisonSpatialParams
 
     using Element = typename GridView::template Codim<0>::Entity;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       MPNCComparisonSpatialParams<FVGridGeometry, Scalar, FluidSystem>>;
+                                       MPNCComparisonSpatialParams<FVGridGeometry, Scalar>>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
-
-    enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
-
     using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
 
 public:
     using PermeabilityType = Scalar;
-    using MaterialLaw = TwoPAdapter<liquidPhaseIdx, EffToAbsLaw<EffectiveLaw>>;
+    using MaterialLaw = TwoPAdapter<EffToAbsLaw<EffectiveLaw>>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     //! The constructor
@@ -125,6 +122,18 @@ public:
             return fineMaterialParams_;
         else
             return coarseMaterialParams_;
+    }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        return FluidSystem::phase0Idx;
     }
 
 private:

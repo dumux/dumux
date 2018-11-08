@@ -40,11 +40,9 @@ namespace Dumux
  *
  * \sa MpBrookscoreyMaterialParams
  */
-template <int wPhaseIdx, class TwoPLaw >
+template <class TwoPLaw>
 class TwoPAdapter
 {
-    enum { nPhaseIdx = (wPhaseIdx == 0)?1:0 };
-
 public:
     using Params = typename TwoPLaw::Params;
     enum { numPhases = 2 };
@@ -58,8 +56,10 @@ public:
     template <class ContainerT, class FluidState>
     static void capillaryPressures(ContainerT &values,
                                    const Params &params,
-                                   const FluidState &state)
+                                   const FluidState &state,
+                                   const int wPhaseIdx)
     {
+        const int nPhaseIdx = 1 - wPhaseIdx;
         // non-wetting phase gets the capillary pressure added
         values[nPhaseIdx] = 0;
 
@@ -76,8 +76,10 @@ public:
     template <class ContainerT, class FluidState>
     static void relativePermeabilities(ContainerT &values,
                                        const Params &params,
-                                       const FluidState &state)
+                                       const FluidState &state,
+                                       const int wPhaseIdx)
     {
+        const int nPhaseIdx = 1 - wPhaseIdx;
         values[wPhaseIdx] = TwoPLaw::krw(params, state.saturation(wPhaseIdx));
         values[nPhaseIdx] = TwoPLaw::krn(params, state.saturation(wPhaseIdx));
     }

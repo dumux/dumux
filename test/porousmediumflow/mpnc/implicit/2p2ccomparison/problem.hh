@@ -71,8 +71,7 @@ struct SpatialParams<TypeTag, TTag::MPNCComparison>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using type = MPNCComparisonSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+    using type = MPNCComparisonSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Set fluid configuration
@@ -283,8 +282,9 @@ private:
         const auto& matParams =
             this->spatialParams().materialLawParamsAtPos(globalPos);
         PhaseVector pc;
+        const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        MaterialLaw::capillaryPressures(pc, matParams, fs);
+        MaterialLaw::capillaryPressures(pc, matParams, fs, wPhaseIdx);
         fs.setPressure(liquidPhaseIdx,
                        fs.pressure(gasPhaseIdx) + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
 

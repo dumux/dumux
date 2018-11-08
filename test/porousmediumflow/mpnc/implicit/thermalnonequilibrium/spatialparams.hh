@@ -41,16 +41,16 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for the one component combustion problem
  *
  */
-template<class FVGridGeometry, class Scalar, class FluidSystem>
+template<class FVGridGeometry, class Scalar>
 class CombustionSpatialParams
 : public FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
-                                       CombustionSpatialParams<FVGridGeometry, Scalar, FluidSystem>>
+                                       CombustionSpatialParams<FVGridGeometry, Scalar>>
 {
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ThisType = CombustionSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+    using ThisType = CombustionSpatialParams<FVGridGeometry, Scalar>;
     using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
     enum {dimWorld = GridView::dimensionworld};
@@ -58,13 +58,11 @@ class CombustionSpatialParams
 
     using EffectiveLaw = HeatPipeLaw<Scalar>;
 
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-
 public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the material law type used
-    using MaterialLaw = TwoPAdapter<wPhaseIdx, EffToAbsLaw<EffectiveLaw>>;
+    using MaterialLaw = TwoPAdapter<EffToAbsLaw<EffectiveLaw>>;
     using MaterialLawParams = typename MaterialLaw::Params;
     using FluidSolidInterfacialAreaFormulation = FluidSolidInterfacialAreaShiWang<Scalar>;
 
@@ -157,6 +155,18 @@ public:
             else
                 return 1.0-porosity_;
         }
+    }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        return FluidSystem::phase0Idx;
     }
 
     /*!

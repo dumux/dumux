@@ -80,8 +80,7 @@ struct SpatialParams<TypeTag, TTag::CombustionOneComponent>
 {
     using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-        using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using type = CombustionSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+    using type = CombustionSpatialParams<FVGridGeometry, Scalar>;
 };
 
 template<class TypeTag>
@@ -455,8 +454,9 @@ private:
         //obtain pc according to saturation
         const auto &materialParams =
         this->spatialParams().materialLawParamsAtPos(globalPos);
+        const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-         MaterialLaw::capillaryPressures(capPress, materialParams, fluidState);
+        MaterialLaw::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
 
         Scalar p[numPhases];
 
