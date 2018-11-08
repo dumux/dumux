@@ -131,7 +131,7 @@ public:
             {
                 moleFracOutside -= moleFracInside;
                 reducedDiffusionMatrixInside.solve(reducedFlux, moleFracOutside);
-                reducedFlux *= omegai;
+                reducedFlux *= omegai*rhoInside;
             }
             else //we need outside cells as well if we are not on the boundary
             {
@@ -153,8 +153,8 @@ public:
 
                 reducedDiffusionMatrixInside.invert();
                 reducedDiffusionMatrixOutside.invert();
-                reducedDiffusionMatrixInside *= omegai;
-                reducedDiffusionMatrixOutside *= omegaj;
+                reducedDiffusionMatrixInside *= omegai*rhoInside;
+                reducedDiffusionMatrixOutside *= omegaj*rhoOutside;
 
                 //in the helpervector we store the values for x*
                 ReducedComponentVector helperVector(0.0);
@@ -176,7 +176,7 @@ public:
                 reducedDiffusionMatrixInside.mv(helperVector, reducedFlux);
             }
 
-            reducedFlux *= -0.5*(rhoInside+rhoOutside)*scvf.area();
+            reducedFlux *= -scvf.area();
             for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
             {
                 componentFlux[compIdx] = reducedFlux[compIdx];
