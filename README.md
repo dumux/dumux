@@ -45,6 +45,15 @@ Click <a href="https://git.iws.uni-stuttgart.de/buildbot/#/builders" target="_bl
 to see the latest builds (clicking on a build
 number will show a detailed overview of the build).
 
+Contributing
+=============
+
+Contributions are highly welcome. Please ask questions over the [mailing list](mailto:dumux@listserv.uni-stuttgart.de).
+Please review the [contribution guidelines](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md)
+before opening issues and merge requests. For bug reports contact us
+over the mailing list, or file an [issue](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/issues). For bug fixes,
+feature implementations open a [merge request](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/merge_requests)
+or send us formatted patches.
 
 [0]: http://dumux.org
 [1]: http://dune-project.org
