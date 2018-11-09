@@ -100,11 +100,20 @@ public:
     //! The constructor
     OnePEdgeProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
-                    const std::string& paramGroup = "")
+                    const std::string& paramGroup = "Edge")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
     {
         const auto a = getParam<Scalar>("Extrusion.Aperture");
         exFactor_ = a*a;
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
     }
 
     //!Specifies the type of boundary condition on a boundary position
@@ -152,6 +161,7 @@ public:
 
 private:
     Scalar exFactor_;
+    std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
 };
 

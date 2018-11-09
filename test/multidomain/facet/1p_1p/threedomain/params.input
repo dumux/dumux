@@ -1,6 +1,5 @@
 [Problem]
 EnableGravity = false
-Name = test_md_facet_1p1p_threedomain_tpfa
 
 [Grid]
 File = ./grids/grid.msh
@@ -23,3 +22,6 @@ FacetCoupling.Xi = 1.0
 SpatialParams.Permeability = 1e5
 Problem.Name = edge
 Problem.Aperture = 1e-3
+
+[Vtk]
+OutputName = test_md_facet_1p1p_threedomain_tpfa

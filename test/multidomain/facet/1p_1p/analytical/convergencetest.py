@@ -51,7 +51,7 @@ for permIndex in range(0, len(k)):
 
         subprocess.call(['gmsh', '-2', 'grids/tmp.geo'])
         subprocess.call(['./' + execName, 'params.input',
-                                          '-Problem.Name', execName,
+                                          '-Vtk.OutputName', execName,
                                           '-Grid.File', 'grids/tmp.msh',
                                           '-Grid.NumElemsPerSide', str(int(cells)),
                                           '-LowDim.SpatialParams.Permeability', str(k[permIndex]),

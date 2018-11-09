@@ -180,13 +180,9 @@ int main(int argc, char** argv) try
     using EdgeSolutionVector = std::decay_t<decltype(x[edgeId])>;
 
     // intialize the vtk output module
-    const auto bulkName = getParam<std::string>("Problem.Name") + "_" + bulkProblem->name();
-    const auto facetName = getParam<std::string>("Problem.Name") + "_" + facetProblem->name();
-    const auto edgeName = getParam<std::string>("Problem.Name") + "_" + edgeProblem->name();
-
-    VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkName);
-    VtkOutputModule<FacetGridVariables, FacetSolutionVector> facetVtkWriter(*facetGridVariables, x[facetId], facetName);
-    VtkOutputModule<EdgeGridVariables, EdgeSolutionVector> edgeVtkWriter(*edgeGridVariables, x[edgeId], edgeName);
+    VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkProblem->name());
+    VtkOutputModule<FacetGridVariables, FacetSolutionVector> facetVtkWriter(*facetGridVariables, x[facetId],  facetProblem->name());
+    VtkOutputModule<EdgeGridVariables, EdgeSolutionVector> edgeVtkWriter(*edgeGridVariables, x[edgeId], edgeProblem->name());
 
     // Add model specific output fields
     using BulkVtkOutputFields = typename GET_PROP_TYPE(BulkProblemTypeTag, VtkOutputFields);

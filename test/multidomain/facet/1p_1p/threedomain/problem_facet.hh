@@ -100,10 +100,20 @@ public:
     //! The constructor
     OnePFacetProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                      std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
-                     const std::string& paramGroup = "")
+                     const std::string& paramGroup = "Facet")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
     , aperture_(getParam<Scalar>("Extrusion.Aperture"))
-    {}
+    {
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
+    }
 
     //! Specifies the kind of boundary condition at a boundary position
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -165,6 +175,7 @@ public:
 
 private:
     Scalar aperture_;
+    std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
 };
 

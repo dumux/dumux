@@ -96,9 +96,19 @@ public:
     //! The constructor
     OnePBulkProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
-                    const std::string& paramGroup = "")
+                    const std::string& paramGroup = "Bulk")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
-    {}
+    {
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
+    }
 
     //! Specifies the kind of boundary condition on a given boundary position.
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
@@ -152,6 +162,7 @@ public:
     { couplingManagerPtr_ = cm; }
 
 private:
+    std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
 };
 

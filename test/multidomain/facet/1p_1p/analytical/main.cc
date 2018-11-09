@@ -266,15 +266,12 @@ int main(int argc, char** argv) try
     bulkGridVariables->init(x[bulkId]);
     lowDimGridVariables->init(x[lowDimId]);
 
-    // intialize the vtk output module
-    const auto bulkName = getParam<std::string>("Problem.Name") + "_" + bulkProblem->name();
-    const auto lowDimName = getParam<std::string>("Problem.Name") + "_" + lowDimProblem->name();
-
+    // intialize the vtk output modulell
     const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethod::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
     using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
     using LowDimSolutionVector = std::decay_t<decltype(x[lowDimId])>;
-    VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkName, "Bulk", bulkDM);
-    VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, x[lowDimId], lowDimName, "LowDim");
+    VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkProblem->name(), "Bulk", bulkDM);
+    VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, x[lowDimId], lowDimProblem->name(), "LowDim");
 
     // container for the output of the exact solutions
     std::vector<typename GET_PROP_TYPE(BulkProblemTypeTag, Scalar)> bulkExact;
