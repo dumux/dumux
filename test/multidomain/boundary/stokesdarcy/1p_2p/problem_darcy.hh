@@ -106,6 +106,15 @@ public:
         pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
         saturation_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Saturation");
         temperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Temperature");
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
     }
 
     /*!
@@ -281,7 +290,7 @@ private:
     Scalar pressure_;
     Scalar saturation_;
     Scalar temperature_;
-
+    std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 } //end namespace

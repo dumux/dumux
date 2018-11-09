@@ -11,5 +11,5 @@ dune_add_test(NAME test_md_boundary_darcy1p_stokes1p_vertical
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_stokes1p_vertical_darcy-00001.vtu
 
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_stokes1p_vertical params.input
-                             -Problem.Name test_md_boundary_darcy1p_stokes1p_vertical"
+                             -Vtk.OutputName test_md_boundary_darcy1p_stokes1p_vertical"
                              --zeroThreshold {"velocity_liq \(m/s\)_0":6e-17})

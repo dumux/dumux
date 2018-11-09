@@ -118,6 +118,15 @@ public:
     {
         pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
         initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction");
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
     }
 
     /*!
@@ -262,7 +271,7 @@ private:
     Scalar eps_;
     Scalar pressure_;
     Scalar initialMoleFraction_;
-
+    std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 } //end namespace

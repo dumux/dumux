@@ -18,9 +18,10 @@ Name = darcy
 Permeability = 1e-6 # m^2
 AlphaBeaversJoseph = 1.0
 
+[Vtk]
+OutputName = test_md_boundary_stokes1p_darcy1p_horizontal
 
 [Problem]
-Name = test_stokes1pdarcy1phorizontal
 EnableGravity = false
 EnableInertiaTerms = false
 

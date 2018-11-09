@@ -11,7 +11,7 @@ dune_add_test(NAME test_md_boundary_darcy2p2c_stokes1p2c_horizontal
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2c_stokes1p2c_horizontal_darcy-00040.vtu
 
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2c_stokes1p2c_horizontal params.input
-                             -Problem.Name test_md_boundary_darcy2p2c_stokes1p2c_horizontal")
+                             -Vtk.OutputName test_md_boundary_darcy2p2c_stokes1p2c_horizontal")
 
 dune_add_test(NAME test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal
               SOURCES main.cc
@@ -25,4 +25,4 @@ dune_add_test(NAME test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal_darcy-00040.vtu
 
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal params_nonisothermal.input
-                             -Problem.Name test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal")
+                             -Vtk.OutputName test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal")

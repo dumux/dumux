@@ -6,7 +6,7 @@ dune_add_test(NAME test_md_boundary_darcy1p_darcy1p_half
                         --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_darcy1p_half_combined.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_darcy1p_half params.input \
-                                   -Problem.Name test_md_boundary_darcy1p_darcy1p_half")
+                                   -Vtk.OutputName test_md_boundary_darcy1p_darcy1p_half")
 
 dune_add_test(NAME test_md_boundary_darcy1p_darcy1p_lens
               SOURCES main.cc
@@ -17,6 +17,6 @@ dune_add_test(NAME test_md_boundary_darcy1p_darcy1p_lens
                         --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_darcy1p_lens_combined.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_darcy1p_lens params.input \
-                                   -Problem.Name test_md_boundary_darcy1p_darcy1p_lens")
+                                    -Vtk.OutputName test_md_boundary_darcy1p_darcy1p_lens")
 
 dune_symlink_to_source_files(FILES "params.input")

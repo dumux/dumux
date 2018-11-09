@@ -63,6 +63,15 @@ public:
     , couplingManager_(couplingManager)
     {
         injectionRate_ = getParam<double>("Problem.InjectionRate");
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(paramGroup, "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
     }
 
     /*!
@@ -179,6 +188,7 @@ private:
     Scalar injectionRate_;
     std::shared_ptr<CouplingManager> couplingManager_;
     static constexpr Scalar eps_ = 1e-7;
+    std::string problemName_;
 };
 
 } // end namespace Dumux

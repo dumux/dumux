@@ -98,6 +98,15 @@ public:
     : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6), couplingManager_(couplingManager)
     {
         inletVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Velocity");
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
     }
 
    /*!
@@ -285,7 +294,7 @@ private:
 
     Scalar eps_;
     Scalar inletVelocity_;
-
+    std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 } //end namespace

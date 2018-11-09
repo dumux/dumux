@@ -100,6 +100,15 @@ public:
         inletVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Velocity");
         pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
         inletMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletMoleFraction");
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
     }
 
    /*!
@@ -301,7 +310,7 @@ private:
     Scalar pressure_;
     Scalar inletMoleFraction_;
     bool injectionState_;
-
+    std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 } //end namespace

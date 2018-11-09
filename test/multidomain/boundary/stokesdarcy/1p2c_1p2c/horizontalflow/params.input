@@ -31,12 +31,12 @@ Porosity = 0.3
 Tortuosity = 0.5
 
 [Problem]
-Name = test_stokes1p2cdarcy1p2chorizontal
 EnableGravity = false
 EnableInertiaTerms = true
 
 [Vtk]
 AddVelocity = 1
+OutputName = test_md_boundary_darcy1p2c_stokes1p2c_horizontal
 
 [Assembly.NumericDifference]
 BaseEpsilon = 1e-6

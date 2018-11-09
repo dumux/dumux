@@ -51,6 +51,7 @@ EnableInertiaTerms = false
 [Vtk]
 AddVelocity = true
 WriteFaceData = false
+OutputName = test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal
 
 [Newton]
 MaxSteps = 12

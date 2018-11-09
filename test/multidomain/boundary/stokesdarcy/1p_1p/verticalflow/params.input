@@ -20,9 +20,11 @@ Permeability = 1e-10 # m^2
 AlphaBeaversJoseph = 1.0
 
 [Problem]
-Name = test_stokes1pdarcy1pvertical
 EnableGravity = false
 EnableInertiaTerms = false
+
+[Vtk]
+OutputName = test_md_boundary_darcy1p_stokes1p_vertical
 
 [Vtk]
 AddVelocity = 1

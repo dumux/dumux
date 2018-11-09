@@ -311,7 +311,7 @@ int main(int argc, char** argv) try
     Dune::VTKWriter<typename FullDomainGrid::LeafGridView> vtkWriter(gridView);
     vtkWriter.addCellData(processRank, "process rank");
     vtkWriter.addCellData(pressure, "pressure");
-    const auto filename = getParam<std::string>("Problem.Name") + "_combined";
+    const auto filename = getParam<std::string>("Vtk.OutputName") + "_combined";
     vtkWriter.write(filename);
 
     ////////////////////////////////////////////////////////////

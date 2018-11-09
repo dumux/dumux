@@ -13,7 +13,7 @@ dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_vertical_diffusion
                                      ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p2c_stokes1p2c_vertical_diffusion_darcy-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_vertical_diffusion_darcy-00003.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_vertical params_diffusion.input
-                             -Problem.Name test_md_boundary_darcy1p2c_stokes1p2c_vertical_diffusion")
+                             -Vtk.OutputName test_md_boundary_darcy1p2c_stokes1p2c_vertical_diffusion")
 
 dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_vertical_advection
               TARGET test_md_boundary_darcy1p2c_stokes1p2c_vertical
@@ -26,4 +26,4 @@ dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_vertical_advection
                                      ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p2c_stokes1p2c_vertical_advection_darcy-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_vertical_darcy-00030.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_vertical params.input
-                             -Problem.Name test_md_boundary_darcy1p2c_stokes1p2c_vertical")
+                             -Vtk.OutputName test_md_boundary_darcy1p2c_stokes1p2c_vertical")

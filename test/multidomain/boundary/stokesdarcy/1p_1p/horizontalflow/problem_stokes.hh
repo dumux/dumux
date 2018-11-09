@@ -95,6 +95,15 @@ public:
     : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6), couplingManager_(couplingManager)
     {
         deltaP_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference");
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
     }
 
    /*!
@@ -262,6 +271,7 @@ private:
 
     Scalar eps_;
     Scalar deltaP_;
+    std::string problemName_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };
