@@ -242,7 +242,6 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
 
         //! xi factor for the coupling conditions
         static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
-        static const Scalar oneMinusXi = 1.0 - xi;
 
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
@@ -275,28 +274,12 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
                                                                                fvGeometry.scv(outsideScvIdx),
                                                                                outsideVolVars.permeability(),
                                                                                outsideVolVars.extrusionFactor());
-                const Scalar xiWIn = xi*wIn;
-                const Scalar xiWOut = xi*wOut;
-                const Scalar oneMinusXiWIn = oneMinusXi*wIn;
-                const Scalar oneMinusXiWOut = oneMinusXi*wOut;
 
-                // assemble matrices
-                Dune::FieldMatrix<Scalar, 2, 2> A, B;
-                A[0][0] = xiWIn+wFacet;
-                A[0][1] = oneMinusXiWOut;
-                A[1][0] = oneMinusXiWIn;
-                A[1][1] = xiWOut-wFacet;
+                const Scalar factor = wIn * wFacet / ( wIn * wOut * ( 2.0 * xi - 1.0 ) + wFacet * ( xi * ( wIn + wOut ) + wFacet ) );
 
-                B[0][0] = xiWIn;
-                B[0][1] = oneMinusXiWOut;
-                B[1][0] = oneMinusXiWIn;
-                B[1][1] = xiWOut;
-
-                // tij = C(A^-1)B
-                const Scalar detA = A[0][0]*A[1][1] - A[1][0]*A[0][1];
-                tij[Cache::insideTijIdx] = xiWIn - xiWIn*(A[1][1]*B[0][0] - A[0][1]*B[1][0])/detA;
-                tij[Cache::outsideTijIdx] = -xiWIn*(A[1][1]*B[0][1] - A[0][1]*B[1][1])/detA;
-                tij[Cache::facetTijIdx] = -xiWIn*wFacet*(A[1][1] + A[0][1])/detA;
+                tij[Cache::insideTijIdx]  = factor * ( wOut * xi + wFacet );
+                tij[Cache::outsideTijIdx] = factor * ( wOut * ( 1.0 - xi ) );
+                tij[Cache::facetTijIdx]   = factor * ( - wOut - wFacet );
             }
             else
             {
