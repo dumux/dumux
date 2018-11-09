@@ -100,10 +100,6 @@ public:
     static void init(Scalar tempMin, Scalar tempMax, std::size_t nTemp,
                      Scalar pressMin, Scalar pressMax, std::size_t nPress)
     {
-#ifndef NDEBUG
-        initialized_  = true;
-        warningPrinted_ = false;
-#endif
         tempMin_ = tempMin;
         tempMax_ = tempMax;
         nTemp_ = nTemp;
@@ -145,8 +141,29 @@ public:
         gasPressure_.resize(numEntriesTp, NaN);
         liquidPressure_.resize(numEntriesTp, NaN);
 
+        // reset all flags
+        minMaxLiquidDensityInitialized_ = false;
+        minMaxGasDensityInitialized_ = false;
+        gasEnthalpyInitialized_ = false;
+        liquidEnthalpyInitialized_ = false;
+        gasHeatCapacityInitialized_ = false;
+        liquidHeatCapacityInitialized_ = false;
+        gasDensityInitialized_ = false;
+        liquidDensityInitialized_ = false;
+        gasViscosityInitialized_ = false;
+        liquidViscosityInitialized_ = false;
+        gasThermalConductivityInitialized_ = false;
+        liquidThermalConductivityInitialized_ = false;
+        gasPressureInitialized_ = false;
+        liquidPressureInitialized_ = false;
+
         //! initialize vapor pressure array depending on useVaporPressure
         initVaporPressure_();
+
+#ifndef NDEBUG
+        initialized_  = true;
+        warningPrinted_ = false;
+#endif
     }
 
     /*!
