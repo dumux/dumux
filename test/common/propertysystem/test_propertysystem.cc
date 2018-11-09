@@ -46,6 +46,9 @@ struct Scalar { using type = UndefinedProperty;  };
 template<class TypeTag, class MyTypeTag>
 struct CoordinateType { using type = UndefinedProperty; };
 
+template<class TypeTag, class MyTypeTag>
+struct UseTpfaFlux { using type = UndefinedProperty; };
+
 namespace TTag {
 // create some TypeTags (equivalent to old macro NEW_TYPE_TAG(..., INHERITS_FROM(...)))
 // the tuple is sorted by precedence, the first one overwriting the following
@@ -70,6 +73,9 @@ struct Scalar<TypeTag, TTag::OnePTest> { using type = int; };
 
 template<class TypeTag>
 struct CoordinateType<TypeTag, TTag::Grid> { using type = GetPropType<TypeTag, Scalar>; };
+
+template<class TypeTag>
+struct UseTpfaFlux<TypeTag, TTag::CCTpfaDisc> { static constexpr bool value = true; };
 
 } // end namespace Properties
 } // end namespace Dumux
@@ -104,6 +110,11 @@ int main(int argc, char* argv[]) try
         using CoordinateType = GetPropType<TTag::CCTpfaDisc, CoordinateType>;
         if (!std::is_same<CoordinateType, float>::value)
             DUNE_THROW(Dune::InvalidStateException, "Property CoordinateType in TTag::CCTpfaDisc should be float but is " << Dune::className<CoordinateType>());
+    }
+    {
+        constexpr bool useTpfaFlux = getPropValue<TTag::CCTpfaDisc, UseTpfaFlux>();
+        if (!useTpfaFlux)
+            DUNE_THROW(Dune::InvalidStateException, "Property UseTpfaFlux in TTag::CCTpfaDisc should be true!");
     }
 
     std::cout << "All tests passed!" << std::endl;
