@@ -158,12 +158,10 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
-    const auto twoPName = getParam<std::string>("Problem.Name") + "_" + twoPProblem->name();
-    const auto poroMechName = getParam<std::string>("Problem.Name") + "_" + poroMechProblem->name();
     using TwoPVtkOutputModule = Dumux::VtkOutputModule<TwoPGridVariables, typename GET_PROP_TYPE(TwoPTypeTag, SolutionVector)>;
     using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, typename GET_PROP_TYPE(PoroMechTypeTag, SolutionVector)>;
-    TwoPVtkOutputModule twoPVtkWriter(*twoPGridVariables, x[twoPId], twoPName);
-    PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechName);
+    TwoPVtkOutputModule twoPVtkWriter(*twoPGridVariables, x[twoPId], twoPProblem->name());
+    PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechProblem->name());
 
     // add output fields to writers
     using TwoPOutputFields = typename GET_PROP_TYPE(TwoPTypeTag, VtkOutputFields);

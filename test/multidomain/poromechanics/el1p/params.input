@@ -6,7 +6,6 @@ Cells = 10 10
 [Problem]
 InjectionRate = 1e-3
 EnableGravity = false
-Name = test_md_poromechanics_el1p
 
 [PoroElastic.Problem]
 Name = poroelastic # name passed to the output routines
@@ -24,3 +23,6 @@ MaxIterations = 2000
 
 [Component]
 SolidDensity = 2700
+
+[Vtk]
+OutputName = test_md_poromechanics_el1p

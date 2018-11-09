@@ -94,9 +94,19 @@ class OnePSubProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    OnePSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    OnePSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "OneP")
     : ParentType(fvGridGeometry, paramGroup)
-    {}
+    {
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
+    }
 
     //! Return the temperature within the domain in [K].
     Scalar temperature() const
@@ -133,6 +143,7 @@ public:
 
 private:
     static constexpr Scalar eps_ = 1.0e-6;
+    std::string problemName_;
 };
 
 } //end namespace Dumux

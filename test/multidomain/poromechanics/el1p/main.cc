@@ -150,12 +150,10 @@ int main(int argc, char** argv) try
     poroMechGridVariables->init(x[poroMechId]);
 
     // intialize the vtk output module
-    const auto onePName = getParam<std::string>("Problem.Name") + "_" + onePProblem->name();
-    const auto poroMechName = getParam<std::string>("Problem.Name") + "_" + poroMechProblem->name();
     using OnePVtkOutputModule = Dumux::VtkOutputModule<OnePGridVariables, typename GET_PROP_TYPE(OnePTypeTag, SolutionVector)>;
     using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, typename GET_PROP_TYPE(PoroMechTypeTag, SolutionVector)>;
-    OnePVtkOutputModule onePVtkWriter(*onePGridVariables, x[onePId], onePName);
-    PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechName);
+    OnePVtkOutputModule onePVtkWriter(*onePGridVariables, x[onePId], onePProblem->name());
+    PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechProblem->name());
 
     // add output fields to writers
     using OnePOutputFields = typename GET_PROP_TYPE(OnePTypeTag, VtkOutputFields);

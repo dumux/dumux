@@ -10,7 +10,7 @@ dune_add_test(NAME test_md_poromechanics_el2p
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_poromechanics_el2p_poroelastic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el2p_poroelastic-00010.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el2p params.input
-                       -Problem.Name test_md_poromechanics_el2p")
+                       -Vtk.OutputName test_md_poromechanics_el2p")
 
 set(CMAKE_BUILD_TYPE Release)
 
