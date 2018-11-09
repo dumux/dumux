@@ -301,6 +301,24 @@ public:
         // - p_pm * n_pm = p_pm * n_ff
         const Scalar darcyPressure = stokesContext.volVars.pressure(darcyPhaseIdx);
 
+        // TODO: use interface (reconstructed) pressure instead
+        // For this we need to set up an element flux variables cache object of the darcy domain
+        // All objects for this should be available
+        // The pressure reconstruction should be done as follows: this is pseudo code!
+
+        // const auto& fluxVarsCache = darcyElemFluxVarsCache[darcyScvf];
+        //
+        // const auto& AB = fluxVarsCache.AB(); // B right-multiplied to the inverse of A
+        // const auto& A = fluxVarsCache.A();   // the inverse of A
+        // const auto& N = fluxVarsCache.N();   // container with the Neumann fluxes per local scvf
+        // const auto& p = fluxVarsCache.pressures(phaseIdx); // the iv-local pressures
+        //
+        // // compute vector with face pressures as follows:
+        // facePressures = AB*p +A*N;
+        // // then find the iv-local index of the scvf and obtain the face pressure
+        // fp = facePressures[ivLocalScvfIdx];
+
+
         if(true)
         {
             momentumFlux = darcyPressure;

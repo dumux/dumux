@@ -26,7 +26,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -43,7 +43,7 @@ class DarcySubProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DarcyOneP, INHERITS_FROM(CCTpfaModel, OneP));
+NEW_TYPE_TAG(DarcyOneP, INHERITS_FROM(CCMpfaModel, OneP));
 
 // Set the problem property
 SET_TYPE_PROP(DarcyOneP, Problem, Dumux::DarcySubProblem<TypeTag>);
@@ -183,6 +183,25 @@ public:
             values[Indices::conti0EqIdx] = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, scvf);
 
         return values;
+    }
+
+    /*!
+     * \brief Function to add the coupling Neumann boundary condition
+     *        into the local system of equations in the mpfa interaction volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeomentry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementVolumeVariables>
+    Scalar neumannTerm(const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolumeFace& scvf) const
+    {
+        // TODO: return velocity from stokes problem here! Is this correct?
+        return this->couplingManager().darcyCouplingContext(scvf).velocity*scvf.unitOuterNormal();
     }
 
     // \}
