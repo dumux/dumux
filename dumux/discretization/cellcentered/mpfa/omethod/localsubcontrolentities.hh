@@ -158,8 +158,10 @@ public:
     CCMpfaOInteractionVolumeLocalScvf(const SubControlVolumeFace& scvf,
                                       const ScvfNeighborLocalIndexSet& localScvIndices,
                                       const LocalIndexType localDofIdx,
+                                      const bool isBoundary,
                                       const bool isDirichlet)
-    : isDirichlet_(isDirichlet)
+    : isBoundary_(isBoundary)
+    , isDirichlet_(isDirichlet)
     , scvfIdxGlobal_(scvf.index())
     , localDofIndex_(localDofIdx)
     , neighborScvIndicesLocal_(&localScvIndices)
@@ -175,10 +177,14 @@ public:
     //! Returns the local indices of the scvs neighboring this scvf
     const ScvfNeighborLocalIndexSet& neighboringLocalScvIndices() const { return *neighborScvIndicesLocal_; }
 
+    //! states if this is scvf is on a boundary
+    bool isBoundary() const { return isBoundary_; }
+
     //! states if this is scvf is on a Dirichlet boundary
     bool isDirichlet() const { return isDirichlet_; }
 
 private:
+    bool isBoundary_;
     bool isDirichlet_;
     GridIndexType scvfIdxGlobal_;
     LocalIndexType localDofIndex_;

@@ -69,6 +69,8 @@ public:
         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
             resizeVector(p_[pIdx], iv.numKnowns());
 
+        resizeVector(N_, iv.numFaces());
+
         // maybe resize gravity container
         static const bool enableGravity = getParam<bool>("Problem.EnableGravity");
         if (enableGravity)
@@ -151,9 +153,18 @@ public:
     const AMatrix& advectionA() const { return A_; }
     AMatrix& advectionA() { return A_; }
 
+    //! Additional projection matrix needed on surface grids
+    const AMatrix& advectionAB() const { return AB_; }
+    AMatrix& advectionAB() { return AB_; }
+
+
     //! The transmissibilities associated with advective fluxes
     const TMatrix& advectionT() const { return T_; }
     TMatrix& advectionT() { return T_; }
+
+    //! Additional projection matrix needed on surface grids
+    const FaceVector& advectionN() const { return N_; }
+    FaceVector& advectionN() { return N_; }
 
     //! The transmissibilities for "outside" faces (used on surface grids)
     const std::vector< std::vector<CellVector> >& advectionTout() const { return outsideT_; }
@@ -171,6 +182,8 @@ private:
     TMatrix T_;                                       //!< The transmissibilities such that f_i = T_ij*p_j
     CMatrix CA_;                                      //!< Matrix to project gravitational acceleration to all scvfs
     AMatrix A_;                                       //!< Matrix additionally needed for the projection on surface grids
+    AMatrix AB_;                                      //!< Matrix additionally needed for the projection on surface grids
+    FaceVector N_;                                    //!< The Neumann terms (not possible to set different for the different phases!!!)
     std::array< CellVector, numPhases > p_;           //!< The interaction volume-wide phase pressures
     std::array< FaceVector, numPhases > g_;           //!< The gravitational acceleration at each scvf (only for enabled gravity)
     std::vector< std::vector<CellVector> > outsideT_; //!< The transmissibilities for "outside" faces (only on surface grids)

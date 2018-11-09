@@ -471,6 +471,9 @@ private:
                     localAssembler.assembleWithGravity( handle.advectionT(),
                                                         handle.gravity(),
                                                         handle.advectionCA(),
+                                                        handle.advectionA(),
+                                                        handle.advectionAB(),
+                                                        handle.advectionN(),
                                                         iv,
                                                         LambdaFactory::getAdvectionLambda() );
                 else

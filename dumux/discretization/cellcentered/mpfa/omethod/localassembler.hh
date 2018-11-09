@@ -70,7 +70,7 @@ public:
     void assemble(typename IV::Traits::MatVecTraits::TMatrix& T, IV& iv, const TensorFunc& getT)
     {
         // assemble D into T directly
-        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getT);
+        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv.N(), iv, getT);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
@@ -101,7 +101,7 @@ public:
     void assemble(TOutside& outsideTij, typename IV::Traits::MatVecTraits::TMatrix& T, IV& iv, const TensorFunc& getT)
     {
         // assemble D into T directly
-        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getT);
+        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv.N(), iv, getT);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
@@ -174,18 +174,23 @@ public:
     void assembleWithGravity(typename IV::Traits::MatVecTraits::TMatrix& T,
                              GC& g,
                              typename IV::Traits::MatVecTraits::CMatrix& CA,
+                             typename IV::Traits::MatVecTraits::AMatrix& A,
+                             typename IV::Traits::MatVecTraits::AMatrix& AB,
+                             typename IV::Traits::MatVecTraits::FaceVector& N,
                              IV& iv,
                              const TensorFunc& getT)
     {
         // assemble D into T & C into CA directly
-        assembleLocalMatrices_(iv.A(), iv.B(), CA, T, iv, getT);
+        assembleLocalMatrices_(iv.A(), iv.B(), CA, T, N, iv, getT);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
         {
             // T = C*A^-1*B + D
             iv.A().invert();
+            A = iv.A();
             CA.rightmultiply(iv.A());
+            AB = multiplyMatrices(A, iv.B());
             T += multiplyMatrices(CA, iv.B());
         }
 
@@ -228,7 +233,7 @@ public:
                              const TensorFunc& getT)
     {
         // assemble D into T directly
-        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getT);
+        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv.N(), iv, getT);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
@@ -635,6 +640,7 @@ private:
                                 typename IV::Traits::MatVecTraits::BMatrix& B,
                                 typename IV::Traits::MatVecTraits::CMatrix& C,
                                 typename IV::Traits::MatVecTraits::DMatrix& D,
+                                typename IV::Traits::MatVecTraits::FaceVector& N,
                                 IV& iv, const TensorFunc& getT)
     {
         using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
@@ -690,6 +696,7 @@ private:
             B = 0.0;
             C = 0.0;
             D = 0.0;
+            N = 0.0;
 
             auto& wijk = iv.omegas();
             for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
@@ -697,6 +704,7 @@ private:
                 const auto& curLocalScvf = iv.localScvf(faceIdx);
                 const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.globalScvfIndex());
                 const auto curIsDirichlet = curLocalScvf.isDirichlet();
+                const auto curIsNeumann = curLocalScvf.isBoundary() && !curIsDirichlet;
                 const auto curLocalDofIdx = curLocalScvf.localDofIndex();
 
                 // get tensor in "positive" sub volume
@@ -739,6 +747,10 @@ private:
                     if (!curIsDirichlet)
                         B[curLocalDofIdx][posScvLocalDofIdx] -= wijk[faceIdx][0][localDir];
                 }
+
+                // if we are on a Neumann face, add user-defined Neumann BC to N vector
+                if (curIsNeumann)
+                    N[faceIdx] = this->problem().neumannTerm(posElement, this->fvGeometry(), this->elemVolVars(), curGlobalScvf);
 
                 // If we are on an interior face, add values from negative sub volume
                 if (!curGlobalScvf.boundary())

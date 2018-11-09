@@ -125,6 +125,7 @@ class CCMpfaOInteractionVolume
     using AMatrix = typename Traits::MatVecTraits::AMatrix;
     using BMatrix = typename Traits::MatVecTraits::BMatrix;
     using CMatrix = typename Traits::MatVecTraits::CMatrix;
+    using FaceVector = typename Traits::MatVecTraits::FaceVector;
 
     using LocalScvType = typename Traits::LocalScvType;
     using LocalScvfType = typename Traits::LocalScvfType;
@@ -216,15 +217,15 @@ public:
 
                 if (bcTypes.hasOnlyDirichlet())
                 {
-                    scvfs_.emplace_back(scvf, neighborScvIndicesLocal, numKnowns_++, /*isDirichlet*/true);
+                    scvfs_.emplace_back(scvf, neighborScvIndicesLocal, numKnowns_++, /*isBoundary*/true, /*isDirichlet*/true);
                     dirichletData_.emplace_back(scvf.outsideScvIdx());
                 }
                 else
-                    scvfs_.emplace_back(scvf, neighborScvIndicesLocal, numUnknowns_++, /*isDirichlet*/false);
+                    scvfs_.emplace_back(scvf, neighborScvIndicesLocal, numUnknowns_++, /*isBoundary*/true, /*isDirichlet*/false);
             }
             else
             {
-                scvfs_.emplace_back(scvf, neighborScvIndicesLocal, numUnknowns_++, /*isDirichlet*/false);
+                scvfs_.emplace_back(scvf, neighborScvIndicesLocal, numUnknowns_++, /*isBoundary*/false, /*isDirichlet*/false);
 
                 // add local face data objects for the outside faces
                 for (LocalIndexType i = 1; i < numNeighborScvs; ++i)
@@ -309,6 +310,10 @@ public:
     const CMatrix& C() const { return C_; }
     CMatrix& C() { return C_; }
 
+    //! returns the vector containing the Neumann BCs
+    const FaceVector& N() const { return N_; }
+    FaceVector& N() { return N_; }
+
     //! returns container storing the transmissibilities for each face & coordinate
     const TransmissibilityStorage& omegas() const { return wijk_; }
     TransmissibilityStorage& omegas() { return wijk_; }
@@ -354,6 +359,9 @@ private:
     AMatrix A_;
     BMatrix B_;
     CMatrix C_;
+
+    // Vector storing the Neumann BC values
+    FaceVector N_;
 
     // The omega factors are stored during assembly of local system
     TransmissibilityStorage wijk_;
