@@ -258,17 +258,36 @@ public:
             values.setDirichlet(Indices::turbulentKineticEnergyIdx);
             values.setDirichlet(Indices::dissipationIdx);
 #endif
-#if KOMEGA
-            // set a fixed dissipation (omega) in one cell
-            if (isOnWallAtPos(globalPos))
-                values.setDirichletCell(Indices::dissipationIdx);
-#endif
+
 #if ONEEQ
             values.setDirichlet(Indices::viscosityTildeIdx);
 #endif
         }
         return values;
     }
+
+#if KOMEGA
+    /*!
+     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scv The sub control volume
+     */
+    template<class Element, class FVElementGeometry, class SubControlVolume>
+    bool isDirichletCell(const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const SubControlVolume& scv,
+                         int pvIdx) const
+    {
+        // set a fixed dissipation (omega) for all cells at the wall
+        for (const auto& scvf : scvfs(fvGeometry))
+            if (isOnWallAtPos(scvf.center()) && pvIdx == Indices::dissipationIdx)
+                return true;
+
+        return false;
+    }
+#endif
 
      /*!
       * \brief Evaluate the boundary conditions for a dirichlet values at the boundary.

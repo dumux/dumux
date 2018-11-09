@@ -103,10 +103,6 @@ public:
         useWholeLength_ = getParam<bool>("Problem.UseWholeLength");
         FluidSystem::init();
         deltaRho_.resize(this->fvGridGeometry().numCellCenterDofs());
-
-        using CellArray = std::array<unsigned int, dimWorld>;
-        const CellArray numCells = getParam<CellArray>("Grid.Cells");
-        cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
     }
 
    /*!
@@ -159,9 +155,6 @@ public:
         values.setNeumann(Indices::conti0EqIdx);
         values.setNeumann(transportEqIdx);
 
-        if(isLowerLeftCell_(globalPos))
-            values.setDirichletCell(Indices::pressureIdx);
-
         if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
         {
             if(useWholeLength_)
@@ -172,6 +165,23 @@ public:
         }
 
         return values;
+    }
+
+    /*!
+     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scv The sub control volume
+     */
+    template<class FVElementGeometry, class SubControlVolume>
+    bool isDirichletCell(const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const SubControlVolume& scv,
+                         int pvIdx) const
+    {
+        // set a fixed pressure in one cell
+        return (isLowerLeftCell_(scv) && pvIdx == Indices::pressureIdx);
     }
 
    /*!
@@ -240,22 +250,22 @@ public:
         }
     }
 
-    auto& getDeltaRho() const
+    const std::vector<Scalar>& getDeltaRho() const
     { return deltaRho_; }
 
 
-    bool isLowerLeftCell_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < (0.5*cellSizeX_ + eps_) && globalPos[1] < eps_;
-    }
 
     // \}
 
 private:
+
+    template<class SubControlVolume>
+    bool isLowerLeftCell_(const SubControlVolume& scv) const
+    { return scv.dofIndex() == 0; }
+
     const Scalar eps_;
     bool useWholeLength_;
     std::vector<Scalar> deltaRho_;
-    Scalar cellSizeX_;
 };
 } //end namespace
 

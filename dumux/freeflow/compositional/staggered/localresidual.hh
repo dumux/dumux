@@ -97,37 +97,6 @@ public:
 
         return storage;
     }
-
-
-    /*!
-     * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
-     *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
-     */
-    template<class ElementVolumeVariables, class BoundaryTypes>
-    void setFixedCell(CellCenterResidual& residual,
-                      const Problem& problem,
-                      const Element& element,
-                      const SubControlVolume& insideScv,
-                      const ElementVolumeVariables& elemVolVars,
-                      const BoundaryTypes& bcTypes) const
-    {
-        ParentType::setFixedCell(residual, problem, element, insideScv, elemVolVars, bcTypes);
-
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-        {
-            // get equation index
-            const auto eqIdx = Indices::conti0EqIdx + compIdx;
-
-            // set a fixed mole fraction for cells
-            if(eqIdx != Indices::conti0EqIdx && bcTypes.isDirichletCell(eqIdx))
-            {
-                const auto& insideVolVars = elemVolVars[insideScv];
-                const Scalar massOrMoleFraction = useMoles ? insideVolVars.moleFraction(compIdx) : insideVolVars.massFraction(compIdx);
-                residual[eqIdx - cellCenterOffset] = massOrMoleFraction - problem.dirichlet(element, insideScv)[eqIdx];
-            }
-        }
-
-    }
 };
 }
 

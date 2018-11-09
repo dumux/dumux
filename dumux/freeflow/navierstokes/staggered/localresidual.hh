@@ -185,26 +185,6 @@ public:
         return fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
     }
 
-    /*!
-     * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
-     *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
-     */
-    template<class BoundaryTypes>
-    void setFixedCell(CellCenterResidual& residual,
-                      const Problem& problem,
-                      const Element& element,
-                      const SubControlVolume& insideScv,
-                      const ElementVolumeVariables& elemVolVars,
-                      const BoundaryTypes& bcTypes) const
-    {
-        // set a fixed pressure for cells adjacent to a wall
-        if(bcTypes.isDirichletCell(Indices::pressureIdx))
-        {
-            const auto& insideVolVars = elemVolVars[insideScv];
-            residual[Indices::pressureIdx - cellCenterOffset] = insideVolVars.pressure() - problem.dirichlet(element, insideScv)[Indices::pressureIdx];
-        }
-    }
-
 protected:
 
      /*!
@@ -258,10 +238,6 @@ protected:
                     // add the flux over the boundary scvf to the residual
                     residual += boundaryFlux;
                 }
-
-                // if specified, set a fixed value at the center of a cell at the boundary
-                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-                asImp_().setFixedCell(residual, problem, element, scv, elemVolVars, bcTypes);
             }
         }
     }
