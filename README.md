@@ -55,6 +55,15 @@ over the mailing list, or file an [issue](https://git.iws.uni-stuttgart.de/dumux
 feature implementations open a [merge request](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/merge_requests)
 or send us formatted patches.
 
+Major version update, 2.12 to 3.0
+===================================
+
+With the version update to version 3, many features have been added and a lot has been improved in DuMuX. See the
+[changelog](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CHANGELOG.md) for a list of changes.
+If you decide to update from version 2.12, please have a look at our small
+[guide](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/wikis/Updating-programs-from-version-2.12-to-version-3.0)
+on how to update an application to the new version.
+
 [0]: http://dumux.org
 [1]: http://dune-project.org
 [2]: http://dumux.org/documents/dumux_awrpaper.pdf
