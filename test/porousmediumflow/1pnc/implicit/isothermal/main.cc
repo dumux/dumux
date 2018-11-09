@@ -23,9 +23,6 @@
  */
 #include <config.h>
 
-#include "problem.hh"
-#include "problem_saltwaterintrusion.hh"
-
 #include <ctime>
 #include <iostream>
 
@@ -49,6 +46,8 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+
+#include "problem.hh"
 
 int main(int argc, char** argv) try
 {
