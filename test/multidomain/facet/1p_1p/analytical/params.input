@@ -1,0 +1,28 @@
+[Problem]
+UseInteriorDirichletBCs = false
+EnableGravity = false
+FractureAperture = 1e-3
+
+[Grid]
+NumElemsPerSide = 25
+File = ./grids/hybridgrid.msh
+
+[Bulk]
+SpatialParams.Permeability = 1
+Problem.Name = bulk
+
+[LowDim]
+SpatialParams.Permeability = 1e4
+Problem.Name = lowdim
+
+[L2Error]
+QuadratureOrder = 1
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e10
+
+[Output]
+EnableVTK = false # do not write .vtk files per default
+
+[Vtk]
+OutputName = test_md_facet_1p1p

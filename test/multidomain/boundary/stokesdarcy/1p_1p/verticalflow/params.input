@@ -1,0 +1,33 @@
+[Darcy.Grid]
+UpperRight = 2.0 2.0
+Cells = 20 20
+
+[Stokes.Grid]
+LowerLeft = 0.0 2.0
+UpperRight = 2.0 4.0
+Cells = 20 20
+
+[Stokes.Problem]
+Name = stokes
+Velocity = -1e-6
+
+[Darcy.Problem]
+Name = darcy
+Pressure = 0.0
+
+[Darcy.SpatialParams]
+Permeability = 1e-10 # m^2
+AlphaBeaversJoseph = 1.0
+
+[Problem]
+EnableGravity = false
+EnableInertiaTerms = false
+
+[Vtk]
+OutputName = test_md_boundary_darcy1p_stokes1p_vertical
+
+[Vtk]
+AddVelocity = 1
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-6

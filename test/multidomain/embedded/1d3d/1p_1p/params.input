@@ -1,0 +1,47 @@
+[MixedDimension]
+NumCircleSegments = 100
+IntegrationOrder = 2
+KernelWidth = 0.3
+
+[Vessel.Grid]
+LowerLeft = 0 0 0
+UpperRight = 0 0 1
+Cells = 20
+
+[Tissue.Grid]
+LowerLeft = -1 -1 0
+UpperRight = 1 1 1
+Cells = 20 20 20
+
+[Vessel.Problem]
+Name = 1d
+
+[Tissue.Problem]
+Name = 3d
+
+[Problem]
+NormIntegrationOrder = 2
+NormExcludeInnerBulk = true
+EnableGravity = false
+
+[Vtk]
+OutputName = test_md_embedded1d3d_1p1p
+
+[Component]
+LiquidKinematicViscosity = 1 # [m^2/s]
+LiquidDensity = 1 # [kg/m^3]
+
+[SpatialParams]
+PermeabilityTissue = 1 # [m^2]
+Radius = 0.3 # [m]
+
+[BoundaryConditions1D]
+PressureInput = 2.0
+DeltaPressure = 1.0
+
+[LinearSolver]
+ResidualReduction = 1e-25
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1e5
+BaseEpsilon = 1e5

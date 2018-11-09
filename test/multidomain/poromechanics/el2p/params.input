@@ -1,0 +1,37 @@
+[TimeLoop]
+DtInitial = 10 # [s]
+TEnd = 1000 # [s]
+
+[Grid]
+LowerLeft = 0 0 0
+UpperRight = 1000 1000 1000
+Cells = 4 4 4
+
+[Problem]
+InjectionRateGas = 0.125e-5
+InjectionRateWater = 0.0
+EnableGravity = false
+
+[PoroElastic.Problem]
+Name = poroelastic # name passed to the output routines
+
+[TwoP.Problem]
+Name = twop # name passed to the output routines
+
+[SpatialParams]
+Permeability = 1e-14 # [m^2]
+InitialPorosity = 0.2 # [-]
+
+[LinearSolver]
+ResidualReduction = 1e-20
+MaxIterations = 2000
+
+[Component]
+SolidDensity = 2650
+
+[Newton]
+TargetSteps = 15
+MaxRelativeShift = 1e-6
+
+[Vtk]
+OutputName = test_md_poromechanics_el2p

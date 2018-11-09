@@ -60,7 +60,18 @@ public:
                     const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     , couplingManager_(couplingManager)
-    {}
+    {
+        // set a default name for the problem
+        problemName_ = getParam<std::string>("Vtk.OutputName")+ "_" + getParamFromGroup<std::string>(paramGroup, "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    {
+        return problemName_;
+    }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -156,6 +167,8 @@ public:
 private:
     std::shared_ptr<CouplingManager> couplingManager_;
     static constexpr Scalar eps_ = 1e-7;
+    std::string problemName_;
+
 };
 
 } // end namespace Dumux

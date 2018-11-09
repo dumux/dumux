@@ -1,0 +1,38 @@
+[TimeLoop]
+TEnd = 6e5 # s
+DtInitial = 2e4 # s
+MaxTimeStepSize = 2e4
+
+[Darcy.Grid]
+UpperRight = 2.0 2.0
+Cells = 20 20
+
+[Stokes.Grid]
+LowerLeft = 0.0 2.0
+UpperRight = 2.0 4.0
+Cells = 20 20
+
+[Stokes.Problem]
+Name = stokes
+Velocity = -1e-5
+
+[Darcy.Problem]
+Name = darcy
+Pressure = 1.0e5
+
+[SpatialParams]
+AlphaBeaversJoseph = 1.0
+Permeability = 1e-10 # m^2
+Porosity = 1.0
+Tortuosity = 0.5
+
+[Problem]
+EnableGravity = false
+EnableInertiaTerms = false
+
+[Vtk]
+AddVelocity = 1
+OutputName = test_md_boundary_darcy1p2c_stokes1p2c_vertical
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-6
