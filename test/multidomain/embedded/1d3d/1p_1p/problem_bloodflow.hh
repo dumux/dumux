@@ -106,11 +106,11 @@ class BloodFlowProblem : public PorousMediumFlowProblem<TypeTag>
 public:
     BloodFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                      std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry)
+    : ParentType(fvGridGeometry, "Vessel")
     , couplingManager_(couplingManager)
     {
         //read parameters from input file
-        name_ = getParam<std::string>("Problem.Name") + "_1d";
+        name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         p_in_ = getParam<Scalar>("BoundaryConditions1D.PressureInput");
         delta_p_ = getParam<Scalar>("BoundaryConditions1D.DeltaPressure");
         exactPressure_.resize(this->fvGridGeometry().numDofs());

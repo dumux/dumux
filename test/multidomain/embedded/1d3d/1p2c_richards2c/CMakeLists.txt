@@ -8,6 +8,6 @@ dune_add_test(NAME test_md_embedded1d3d_1p2c_richards2c
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p2c_richards2c_3d-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p2c_richards2c_3d-00003.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p2c_richards2c params.input
-                        -Problem.Name test_md_embedded1d3d_1p2c_richards2c")
+                        -Vtk.OutputName test_md_embedded1d3d_1p2c_richards2c")
 dune_symlink_to_source_files(FILES "params.input")
 set(CMAKE_BUILD_TYPE Release)

@@ -13,11 +13,19 @@ LowerLeft = -1 -1 0
 UpperRight = 1 1 1
 Cells = 20 20 20
 
+[Vessel.Problem]
+Name = 1d
+
+[Tissue.Problem]
+Name = 3d
+
 [Problem]
-Name = test_1p1p_embedded
 NormIntegrationOrder = 2
 NormExcludeInnerBulk = true
 EnableGravity = false
+
+[Vtk]
+OutputName = test_md_embedded1d3d_1p1p
 
 [Component]
 LiquidKinematicViscosity = 1 # [m^2/s]

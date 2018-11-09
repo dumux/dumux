@@ -10,7 +10,7 @@ dune_add_test(NAME test_md_embedded2d3d_fracture1p_tpfa_linearsolver
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded2d3d_fracture1p_tpfa_3d-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded2d3d_fracture1p_tpfa_linearsolver_3d-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded2d3d_fracture1p_tpfa params.input \
-                                   -Problem.Name test_md_embedded2d3d_fracture1p_tpfa_linearsolver -Problem.SolverType linear")
+                                   -Vtk.OutputName test_md_embedded2d3d_fracture1p_tpfa_linearsolver -Problem.SolverType linear")
 
 dune_add_test(NAME test_md_embedded2d3d_fracture1p_tpfa_nonlinearsolver
               TARGET test_md_embedded2d3d_fracture1p_tpfa
@@ -22,6 +22,6 @@ dune_add_test(NAME test_md_embedded2d3d_fracture1p_tpfa_nonlinearsolver
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded2d3d_fracture1p_tpfa_3d-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded2d3d_fracture1p_tpfa_nonlinearsolver_3d-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded2d3d_fracture1p_tpfa params.input \
-                                   -Problem.Name test_md_embedded2d3d_fracture1p_tpfa_nonlinearsolver -Problem.SolverType nonlinear")
+                                   -Vtk.OutputName test_md_embedded2d3d_fracture1p_tpfa_nonlinearsolver -Problem.SolverType nonlinear")
 dune_symlink_to_source_files(FILES "fracture.msh" "params.input")
 set(CMAKE_BUILD_TYPE Release)

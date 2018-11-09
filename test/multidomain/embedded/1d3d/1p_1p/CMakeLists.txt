@@ -9,7 +9,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_average
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p1p_tpfatpfa_average_3d-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p1p_tpfatpfa_average_3d-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p1p_tpfatpfa_average params.input \
-                                   -Problem.Name test_md_embedded1d3d_1p1p_tpfatpfa_average")
+                                   -Vtk.OutputName test_md_embedded1d3d_1p1p_tpfatpfa_average")
 
 dune_add_test(NAME test_md_embedded1d3d_1p1p_boxtpfa_average
               SOURCES main.cc
@@ -22,7 +22,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p1p_boxtpfa_average
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p1p_boxbox_average_3d-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p1p_boxtpfa_average_3d-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p1p_boxtpfa_average params.input \
-                                   -Problem.Name test_md_embedded1d3d_1p1p_boxtpfa_average -Tissue.Grid.Cells \"19 19 19\"")
+                                   -Vtk.OutputName test_md_embedded1d3d_1p1p_boxtpfa_average -Tissue.Grid.Cells \"19 19 19\"")
 
 dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfabox_average
               SOURCES main.cc
@@ -35,7 +35,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfabox_average
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p1p_tpfatpfa_average_3d-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p1p_tpfabox_average_3d-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p1p_tpfabox_average params.input \
-                                   -Problem.Name test_md_embedded1d3d_1p1p_tpfabox_average")
+                                   -Vtk.OutputName test_md_embedded1d3d_1p1p_tpfabox_average")
 
 dune_add_test(NAME test_md_embedded1d3d_1p1p_boxbox_average
               SOURCES main.cc
@@ -48,7 +48,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p1p_boxbox_average
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p1p_boxbox_average_3d-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p1p_boxbox_average_3d-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p1p_boxbox_average params.input \
-                                   -Problem.Name test_md_embedded1d3d_1p1p_boxbox_average -Tissue.Grid.Cells \"19 19 19\"")
+                                   -Vtk.OutputName test_md_embedded1d3d_1p1p_boxbox_average -Tissue.Grid.Cells \"19 19 19\"")
 
 # make sure these configurations compile and run too
 dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_cylindersources

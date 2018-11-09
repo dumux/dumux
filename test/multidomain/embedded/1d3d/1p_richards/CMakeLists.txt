@@ -9,7 +9,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p_richards_tpfatpfa
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p_richards_tpfatpfa_3d-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p_richards_tpfatpfa_3d-00004.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p_richards_tpfatpfa params.input \
-                                   -Problem.Name test_md_embedded1d3d_1p_richards_tpfatpfa")
+                                   -Vtk.OutputName test_md_embedded1d3d_1p_richards_tpfatpfa")
 
 dune_add_test(NAME test_md_embedded1d3d_1p_richards_tpfabox
               SOURCES main.cc
@@ -22,6 +22,6 @@ dune_add_test(NAME test_md_embedded1d3d_1p_richards_tpfabox
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p_richards_tpfabox_3d-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p_richards_tpfabox_3d-00004.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p_richards_tpfabox params.input \
-                                   -Problem.Name test_md_embedded1d3d_1p_richards_tpfabox")
+                                   -Vtk.OutputName test_md_embedded1d3d_1p_richards_tpfabox")
 dune_symlink_to_source_files(FILES "params.input")
 set(CMAKE_BUILD_TYPE Release)

@@ -105,12 +105,12 @@ public:
     FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                     std::shared_ptr<CouplingManager> couplingManager,
-                    const std::string& paramGroup = "")
+                    const std::string& paramGroup = "Fracture")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
     , couplingManager_(couplingManager)
     {
         //read parameters from input file
-        name_ = getParam<std::string>("Problem.Name") + "_2d";
+        name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
     /*!

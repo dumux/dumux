@@ -108,11 +108,11 @@ public:
     RootProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                 std::shared_ptr<SpatialParams> spatialParams,
                 std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, spatialParams)
+    : ParentType(fvGridGeometry, spatialParams, "Root")
     , couplingManager_(couplingManager)
     {
         //read parameters from input file
-        name_ = getParam<std::string>("Problem.Name") + "_1d";
+        name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         transpirationRate_ = getParam<Scalar>("BoundaryConditions.TranspirationRate");
     }
 
