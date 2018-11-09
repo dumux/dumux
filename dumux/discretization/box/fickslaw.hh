@@ -63,8 +63,8 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box>
     enum { dimWorld = GridView::dimensionworld} ;
     enum
     {
-        numPhases = ModelTraits::numPhases(),
-        numComponents = ModelTraits::numComponents()
+        numPhases = ModelTraits::numFluidPhases(),
+        numComponents = ModelTraits::numFluidComponents()
     };
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;

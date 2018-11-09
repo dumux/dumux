@@ -57,8 +57,8 @@ class CompositionalLocalResidual: public GetPropType<TypeTag, Properties::BaseLo
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    static constexpr int numPhases = ModelTraits::numPhases();
-    static constexpr int numComponents = ModelTraits::numComponents();
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
+    static constexpr int numComponents = ModelTraits::numFluidComponents();
     static constexpr bool useMoles = ModelTraits::useMoles();
 
     enum { conti0EqIdx = Indices::conti0EqIdx };

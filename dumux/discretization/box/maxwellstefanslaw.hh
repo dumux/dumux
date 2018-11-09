@@ -52,23 +52,14 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box >
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum { dim = GridView::dimension} ;
-    enum { dimWorld = GridView::dimensionworld} ;
-    enum
-    {
-        numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases(),
-        numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents()
-    };
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    static constexpr auto numFluidPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
+    static constexpr auto numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
+
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;
@@ -113,7 +104,7 @@ public:
 
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
-            Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
+            Dune::FieldVector<Scalar, GridView::dimensionworld> gradX(0.0);
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];

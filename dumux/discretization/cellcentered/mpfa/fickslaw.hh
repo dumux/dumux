@@ -58,7 +58,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
     using BalanceEqOpts = GetPropType<TypeTag, Properties::BalanceEqOpts>;
 
-    static constexpr int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents();
+    static constexpr int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
     //! Class that fills the cache corresponding to mpfa Fick's Law
@@ -97,7 +97,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
         using DualGridNodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
         using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
 
-        static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases();
+        static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
         static constexpr bool considerSecondaryIVs = FVGridGeometry::MpfaHelper::considerSecondaryIVs();
         using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle::DiffusionHandle;
         using SecondaryDataHandle = typename ElementFluxVariablesCache::SecondaryIvDataHandle::DiffusionHandle;

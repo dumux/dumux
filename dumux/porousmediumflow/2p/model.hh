@@ -92,8 +92,8 @@ struct TwoPModelTraits
     { return formulation; }
 
     static constexpr int numEq() { return 2; }
-    static constexpr int numPhases() { return 2; }
-    static constexpr int numComponents() { return 2; }
+    static constexpr int numFluidPhases() { return 2; }
+    static constexpr int numFluidComponents() { return 2; }
 
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }

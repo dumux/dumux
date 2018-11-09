@@ -77,7 +77,7 @@ private:
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
-    static constexpr bool isCompositional = GetPropType<SubDomainTypeTag<0>, Properties::ModelTraits>::numComponents() > 1;
+    static constexpr bool isCompositional = GetPropType<SubDomainTypeTag<0>, Properties::ModelTraits>::numFluidComponents()> 1;
 
     template<std::size_t id> using GridView = GetPropType<SubDomainTypeTag<id>, Properties::GridView>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;

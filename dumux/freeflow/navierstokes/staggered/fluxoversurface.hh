@@ -248,7 +248,7 @@ public:
      */
     void calculateVolumeFluxes()
     {
-        const auto isCompositional = std::integral_constant<bool, (GetPropType<TypeTag, Properties::ModelTraits>::numComponents() > 1) >();
+        const auto isCompositional = std::integral_constant<bool, (GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents() > 1) >();
         calculateVolumeFluxesImpl_(isCompositional);
     }
 
@@ -375,7 +375,7 @@ private:
             const auto avgDensity = 0.5*density(insideVolVars) + 0.5*density(outsideVolVars);
 
             constexpr auto replaceCompEqIdx = getPropValue<TypeTag, Properties::ReplaceCompEqIdx>();
-            constexpr auto numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents();
+            constexpr auto numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
 
             const Scalar cumulativeFlux = [replaceCompEqIdx, numComponents, &massOrMoleFlux]()
             {

@@ -111,8 +111,8 @@ struct ThreePThreeCModelTraits
     using Indices = ThreePThreeCIndices;
 
     static constexpr int numEq() { return 3; }
-    static constexpr int numPhases() { return 3; }
-    static constexpr int numComponents() { return 3; }
+    static constexpr int numFluidPhases() { return 3; }
+    static constexpr int numFluidComponents() { return 3; }
 
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
@@ -177,7 +177,7 @@ struct UseConstraintSolver<TypeTag, TTag::ThreePThreeC> { static constexpr bool 
 
 //! Set as default that _no_ component mass balance is replaced by the total mass balance
 template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::ThreePThreeC> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(); };
+struct ReplaceCompEqIdx<TypeTag, TTag::ThreePThreeC> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents(); };
 /*!
  * \brief The fluid state which is used by the volume variables to
  *        store the thermodynamic state. This should be chosen

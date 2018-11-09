@@ -66,13 +66,13 @@ public:
         out.addVolumeVariable([](const auto& v){ return v.mobility(FS::phase1Idx); },
                               IOName::mobility<FS>(FS::phase1Idx));
 
-        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
-            for (int j = 0; j < VolumeVariables::numComponents(); ++j)
+        for (int i = 0; i < VolumeVariables::numFluidPhases(); ++i)
+            for (int j = 0; j < VolumeVariables::numFluidComponents(); ++j)
                 out.addVolumeVariable([i,j](const auto& v){ return v.massFraction(i,j); },
                                       IOName::massFraction<FS>(i, j));
 
-        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
-            for (int j = 0; j < VolumeVariables::numComponents(); ++j)
+        for (int i = 0; i < VolumeVariables::numFluidPhases(); ++i)
+            for (int j = 0; j < VolumeVariables::numFluidComponents(); ++j)
                 out.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },
                                       IOName::moleFraction<FS>(i, j));
     }

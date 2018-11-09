@@ -76,7 +76,7 @@ public:
     std::string phaseName(int phaseIdx) const override { return FluidSystem::phaseName(phaseIdx); }
 
     //! returns the number of phases
-    int numPhases() const override { return VolumeVariables::numPhases(); }
+    int numFluidPhases() const override { return VolumeVariables::numFluidPhases(); }
 
     //! Calculate the velocities for the scvs in the element
     //! We assume the local containers to be bound to the complete stencil

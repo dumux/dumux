@@ -58,8 +58,8 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cct
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
-    enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
-    enum { sPhaseIdx = ModelTraits::numPhases() };
+    static constexpr auto numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr auto sPhaseIdx = ModelTraits::numFluidPhases();
 
 public:
     //! state the discretization method this implementation belongs to
@@ -114,7 +114,7 @@ public:
         if (phaseIdx != sPhaseIdx)
         {
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-           if (numEnergyEqFluid < ModelTraits::numPhases())
+           if (numEnergyEqFluid < ModelTraits::numFluidPhases())
             {
                 insideLambda += ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
             }
@@ -147,7 +147,7 @@ public:
         if (phaseIdx != sPhaseIdx)
         {
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-           if (numEnergyEqFluid < ModelTraits::numPhases())
+           if (numEnergyEqFluid < ModelTraits::numFluidPhases())
             {
                 outsideLambda += ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
             }

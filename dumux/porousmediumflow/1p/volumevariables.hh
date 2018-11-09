@@ -50,7 +50,7 @@ class OnePVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using Indices = typename Traits::ModelTraits::Indices;
     using PermeabilityType = typename Traits::PermeabilityType;
-    static constexpr int numFluidComps = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
 public:
     //! export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;

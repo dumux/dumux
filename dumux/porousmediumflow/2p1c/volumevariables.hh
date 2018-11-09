@@ -53,12 +53,12 @@ class TwoPOneCVolumeVariables
     using PermeabilityType = typename Traits::PermeabilityType;
     using FS = typename Traits::FluidSystem;
     using Idx = typename Traits::ModelTraits::Indices;
-    static constexpr int numFluidComps = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
 
     // primary variable indices
     enum
     {
-        numPhases = Traits::ModelTraits::numPhases(),
+        numFluidPhases = Traits::ModelTraits::numFluidPhases(),
         switchIdx = Idx::switchIdx,
         pressureIdx = Idx::pressureIdx
     };
@@ -100,8 +100,8 @@ public:
     static constexpr TwoPFormulation priVarFormulation() { return formulation; }
 
     // check for permissive combinations
-    static_assert(Traits::ModelTraits::numPhases() == 2, "NumPhases set in the model is not two!");
-    static_assert(Traits::ModelTraits::numComponents() == 1, "NumComponents set in the model is not one!");
+    static_assert(Traits::ModelTraits::numFluidPhases() == 2, "NumPhases set in the model is not two!");
+    static_assert(Traits::ModelTraits::numFluidComponents() == 1, "NumComponents set in the model is not one!");
     static_assert((formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0), "Chosen TwoPFormulation not supported!");
 
     /*!
@@ -135,7 +135,7 @@ public:
         // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < numFluidPhases; ++phaseIdx)
         {
             // relative permeabilities
             Scalar kr;
@@ -220,7 +220,7 @@ public:
         updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
         // set the densities
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < numFluidPhases; ++phaseIdx)
         {
             Scalar rho = FluidSystem::density(fluidState, phaseIdx);
             Scalar rhoMolar = FluidSystem::molarDensity(fluidState, phaseIdx);
@@ -230,7 +230,7 @@ public:
         }
 
         //get the viscosity and mobility
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < numFluidPhases; ++phaseIdx)
         {
             // Mobilities
             const Scalar mu =
@@ -240,7 +240,7 @@ public:
         }
 
         // the enthalpies (internal energies are directly calculated in the fluidstate
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < numFluidPhases; ++phaseIdx)
         {
             const Scalar h = FluidSystem::enthalpy(fluidState, phaseIdx);
             fluidState.setEnthalpy(phaseIdx, h);
@@ -390,7 +390,7 @@ private:
     PermeabilityType permeability_; //!< Effective permeability within the control volume
 
     //!< Relative permeability within the control volume
-    std::array<Scalar, numPhases> relativePermeability_;
+    std::array<Scalar, numFluidPhases> relativePermeability_;
 };
 
 } // end namespace Dumux

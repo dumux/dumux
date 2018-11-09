@@ -136,8 +136,8 @@ template<int nPhases, int nComp, MpNcPressureFormulation formulation, bool useM,
 struct MPNCModelTraits
 {
     static constexpr int numEq() { return numTransportEq()+numConstraintEq(); }
-    static constexpr int numPhases() { return nPhases; }
-    static constexpr int numComponents() { return nComp; }
+    static constexpr int numFluidPhases() { return nPhases; }
+    static constexpr int numFluidComponents() { return nComp; }
     static constexpr int numTransportEq() { return nComp;}
     static constexpr int numConstraintEq() { return nPhases; }
     static constexpr int replaceCompEqIdx() { return repCompEqIdx; }
@@ -152,7 +152,7 @@ struct MPNCModelTraits
     static constexpr MpNcPressureFormulation pressureFormulation() { return formulation; }
 
     //! Per default, we use the indices without offset
-    using Indices = MPNCIndices< numPhases(), numEq() >;
+    using Indices = MPNCIndices< numFluidPhases(), numEq() >;
 };
 
 /*!
@@ -170,7 +170,7 @@ struct MPNCNonequilibriumModelTraits : public NonEquilTraits
 private:
     //! we overwrite the indices as the underlying mpnc indices depend on numTransportEq,
     //! which is again dependent on which form of non-equilibrium is considered
-    using MpNcIndices = MPNCIndices< NonEquilTraits::numPhases(),
+    using MpNcIndices = MPNCIndices< NonEquilTraits::numFluidPhases(),
                                      NonEquilTraits::numTransportEq()+NonEquilTraits::numConstraintEq() >;
 public:
     using Indices = NonEquilbriumIndices< MpNcIndices,

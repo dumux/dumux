@@ -57,8 +57,8 @@ protected:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     enum {
-        numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases(),
-        numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(),
+        numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases(),
+        numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents(),
 
         conti0EqIdx = Indices::conti0EqIdx,//!< Index of the mass conservation equation for the water component
         conti1EqIdx = conti0EqIdx + 1,//!< Index of the mass conservation equation for the contaminant component

@@ -49,7 +49,6 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -59,22 +58,15 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
-    static const int numComponents = ModelTraits::numComponents();
+    static const int numComponents = ModelTraits::numFluidComponents();
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;
 
-    static_assert(ModelTraits::numPhases() == 1, "Only one phase allowed supported!");
-
-    enum {
-        conti0EqIdx = Indices::conti0EqIdx,
-    };
+    static_assert(ModelTraits::numFluidPhases() == 1, "Only one phase allowed supported!");
 
 public:
     // state the discretization method this implementation belongs to
@@ -113,7 +105,7 @@ public:
                 continue;
 
             // get equation index
-            const auto eqIdx = conti0EqIdx + compIdx;
+            const auto eqIdx = Indices::conti0EqIdx + compIdx;
             if(scvf.boundary())
             {
                const auto bcTypes = problem.boundaryTypes(element, scvf);

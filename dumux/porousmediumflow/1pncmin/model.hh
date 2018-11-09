@@ -110,10 +110,10 @@ private:
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
-    static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
-    static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
-    static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
-    static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
+    static_assert(FSY::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid system");
+    static_assert(FST::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid state");
+    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
 
     using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
     using NonMinVolVars = OnePNCVolumeVariables<Traits>;

@@ -53,7 +53,7 @@ class MPNCLocalResidual : public CompositionalLocalResidual<TypeTag>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    enum {numPhases = ModelTraits::numPhases()};
+    enum {numPhases = ModelTraits::numFluidPhases()};
     enum {phase0NcpIdx = Indices::phase0NcpIdx};
 
 public:

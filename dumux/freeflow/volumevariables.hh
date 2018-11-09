@@ -57,9 +57,9 @@ public:
     using Indices = typename Traits::ModelTraits::Indices;
 
     //! return number of phases considered by the model
-    static constexpr int numPhases() { return Traits::ModelTraits::numPhases(); }
+    static constexpr int numFluidPhases() { return Traits::ModelTraits::numFluidPhases(); }
     //! return number of components considered by the model
-    static constexpr int numComponents() { return Traits::ModelTraits::numComponents(); }
+    static constexpr int numFluidComponents() { return Traits::ModelTraits::numFluidComponents(); }
 
 
     /*!

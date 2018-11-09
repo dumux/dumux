@@ -64,8 +64,8 @@ class PorousMediumFluxVariables
 
     enum
     {
-        numPhases = ModelTraits::numPhases(),
-        numComponents = ModelTraits::numComponents()
+        numPhases = ModelTraits::numFluidPhases(),
+        numComponents = ModelTraits::numFluidComponents()
     };
 
 public:

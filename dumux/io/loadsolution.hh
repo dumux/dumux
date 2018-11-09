@@ -241,7 +241,7 @@ auto createPVNameFunction(const std::string& paramGroup = "")
 {
     return  [paramGroup](int pvIdx, int state = 0)
             {
-                static auto numStates = (1 << ModelTraits::numPhases()) - 1;
+                static auto numStates = (1 << ModelTraits::numFluidPhases()) - 1;
                 const auto paramNameWithState = "LoadSolution.PriVarNamesState" + std::to_string(state);
 
                 if (hasParamInGroup(paramGroup, "LoadSolution.PriVarNames") && !hasParamInGroup(paramGroup, paramNameWithState))

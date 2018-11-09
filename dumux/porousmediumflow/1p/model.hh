@@ -68,8 +68,8 @@ struct OnePModelTraits
     using Indices = OnePIndices<>;
 
     static constexpr int numEq() { return 1; }
-    static constexpr int numPhases() { return 1; }
-    static constexpr int numComponents() { return 1; }
+    static constexpr int numFluidPhases() { return 1; }
+    static constexpr int numFluidComponents() { return 1; }
 
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }

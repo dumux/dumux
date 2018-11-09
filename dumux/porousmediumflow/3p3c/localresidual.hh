@@ -57,8 +57,8 @@ class ThreePThreeCLocalResidual : public GetPropType<TypeTag, Properties::BaseLo
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     enum {
-        numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases(),
-        numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(),
+        numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases(),
+        numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents(),
 
         contiWEqIdx = Indices::conti0EqIdx + FluidSystem::wPhaseIdx,//!< index of the mass conservation equation for the water component
         contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nPhaseIdx,//!< index of the mass conservation equation for the contaminant component

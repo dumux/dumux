@@ -44,11 +44,16 @@ public:
 
         EquilibriumIOFields::initOutputModule(out);
         for (int i = 0; i < ModelTraits::numEnergyEqFluid(); ++i)
+        {
             out.addVolumeVariable([i](const auto& v){ return v.temperatureFluid(i); },
-                                  IOName::fluidTemperature<FluidSystem>(i));
+            IOName::fluidTemperature<FluidSystem>(i));
+        }
+
         out.addVolumeVariable([](const auto& v){ return v.temperatureSolid(); },
                               IOName::solidTemperature());
-        for (int i = 0; i < ModelTraits::numPhases(); ++i){
+
+        for (int i = 0; i < ModelTraits::numFluidPhases(); ++i)
+        {
             out.addVolumeVariable( [i](const auto& v){ return v.reynoldsNumber(i); }, "reynoldsNumber_" + FluidSystem::phaseName(i) );
             out.addVolumeVariable( [i](const auto& v){ return v.nusseltNumber(i); }, "nusseltNumber_" + FluidSystem::phaseName(i) );
             out.addVolumeVariable( [i](const auto& v){ return v.prandtlNumber(i); }, "prandtlNumber_" + FluidSystem::phaseName(i) );

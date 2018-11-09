@@ -60,8 +60,8 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, false>: public Ge
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    static constexpr int numPhases = ModelTraits::numPhases();
-    static constexpr int numComponents = ModelTraits::numComponents();
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
+    static constexpr int numComponents = ModelTraits::numFluidComponents();
     enum { conti0EqIdx = Indices::conti0EqIdx };
 public:
     using ParentType::ParentType;
@@ -161,11 +161,9 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public Get
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
@@ -177,16 +175,16 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public Get
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    static constexpr int numPhases = ModelTraits::numPhases();
-    static constexpr int numComponents = ModelTraits::numComponents();
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
+    static constexpr int numComponents = ModelTraits::numFluidComponents();
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
-    enum { conti0EqIdx = Indices::conti0EqIdx };
-    enum { comp1Idx = FluidSystem::comp1Idx } ;
-    enum { comp0Idx = FluidSystem::comp0Idx } ;
-    enum { phase0Idx = FluidSystem::phase0Idx} ;
-    enum { phase1Idx = FluidSystem::phase1Idx} ;
+    static constexpr auto conti0EqIdx = Indices::conti0EqIdx;
+    static constexpr auto comp1Idx = FluidSystem::comp1Idx;
+    static constexpr auto comp0Idx = FluidSystem::comp0Idx;
+    static constexpr auto phase0Idx = FluidSystem::phase0Idx;
+    static constexpr auto phase1Idx = FluidSystem::phase1Idx;
 
 public:
      using ParentType::ParentType;

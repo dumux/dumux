@@ -112,8 +112,8 @@ struct StaggeredGridDefaultGridVolumeVariablesTraits
         }
 
         // make sure that a potential outflow condition is set for all components
-        std::array<bool, VolumeVariables::numComponents() - 1> isComponentOutflow;
-        for(int compIdx = 1; compIdx < VolumeVariables::numComponents(); ++compIdx)
+        std::array<bool, VolumeVariables::numFluidComponents() - 1> isComponentOutflow;
+        for(int compIdx = 1; compIdx < VolumeVariables::numFluidComponents(); ++compIdx)
         {
             const auto eqIdx = VolumeVariables::Indices::conti0EqIdx + compIdx;
             isComponentOutflow[compIdx -1] = bcTypes.isOutflow(eqIdx);

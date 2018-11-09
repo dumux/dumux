@@ -46,10 +46,8 @@ class DUNE_DEPRECATED_MSG("Implement SolidSystems instead!") EffectiveSolidDensi
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-    static const int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents();
-    static const int numSolidPhases = GetPropType<TypeTag, Properties::ModelTraits>::numSPhases();
+    static const int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
+    static const int numSolidPhases = GetPropType<TypeTag, Properties::ModelTraits>::numSolidPhases();
 
     using Element = typename GridView::template Codim<0>:: Entity;
 

@@ -62,9 +62,9 @@ struct KEpsilonIOFields
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
         std::cout << "kepsi called with " << pvIdx << std::endl;
-        if (pvIdx < ModelTraits::dim() + ModelTraits::numComponents())
+        if (pvIdx < ModelTraits::dim() + ModelTraits::numFluidComponents())
             return RANSIOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
-        else if (pvIdx == ModelTraits::dim() + ModelTraits::numComponents())
+        else if (pvIdx == ModelTraits::dim() + ModelTraits::numFluidComponents())
             return "k";
         else
             return "epsilon";

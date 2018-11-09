@@ -44,7 +44,7 @@ public:
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
         // register standardized output fields
-        for (int phaseIdx = 0; phaseIdx < VolumeVariables::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < VolumeVariables::numFluidPhases(); ++phaseIdx)
         {
             out.addVolumeVariable( [phaseIdx](const auto& v){ return v.saturation(phaseIdx); },
                                    IOName::saturation<FluidSystem>(phaseIdx));
@@ -53,7 +53,7 @@ public:
             out.addVolumeVariable( [phaseIdx](const auto& v){ return v.density(phaseIdx); },
                                    IOName::density<FluidSystem>(phaseIdx));
 
-            for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
+            for (int compIdx = 0; compIdx < VolumeVariables::numFluidComponents(); ++compIdx)
                 out.addVolumeVariable([phaseIdx, compIdx](const auto& v){ return v.moleFraction(phaseIdx, compIdx); },
                                       IOName::moleFraction<FluidSystem>(phaseIdx, compIdx));
         }

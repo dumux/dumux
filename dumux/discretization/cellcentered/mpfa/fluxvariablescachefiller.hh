@@ -312,8 +312,8 @@ private:
         using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
         using DiffusionFiller = typename DiffusionType::Cache::Filler;
 
-        static constexpr int numPhases = ModelTraits::numPhases();
-        static constexpr int numComponents = ModelTraits::numComponents();
+        static constexpr int numPhases = ModelTraits::numFluidPhases();
+        static constexpr int numComponents = ModelTraits::numFluidComponents();
 
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
@@ -446,7 +446,7 @@ private:
             localAssembler.assembleMatrices(handle.advectionHandle(), iv, LambdaFactory::getAdvectionLambda());
 
         // assemble pressure vectors
-        for (unsigned int pIdx = 0; pIdx < ModelTraits::numPhases(); ++pIdx)
+        for (unsigned int pIdx = 0; pIdx < ModelTraits::numFluidPhases(); ++pIdx)
         {
             // set context in handle
             handle.advectionHandle().setPhaseIndex(pIdx);

@@ -121,8 +121,8 @@ struct TwoPNCModelTraits
     using Indices = TwoPNCIndices;
 
     static constexpr int numEq() { return nComp; }
-    static constexpr int numPhases() { return 2; }
-    static constexpr int numComponents() { return nComp; }
+    static constexpr int numFluidPhases() { return 2; }
+    static constexpr int numFluidComponents() { return nComp; }
     static constexpr int replaceCompEqIdx() { return repCompEqIdx; }
 
     static constexpr bool enableAdvection() { return true; }

@@ -51,15 +51,12 @@ class TwoPOneCLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    // first index for the mass balance
-    enum { conti0EqIdx = Indices::conti0EqIdx };
 
-    static const int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases();
+    static const auto numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
 
 public:
     //! Use the parent type's constructor
     using ParentType::ParentType;
-
 
     //! Evaluate the storage term within a given scv
     NumEqVector computeStorage(const Problem& problem,
@@ -70,7 +67,7 @@ public:
         // Compute storage term of all components within all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            storage[conti0EqIdx] +=
+            storage[Indices::conti0EqIdx] +=
                 volVars.porosity()
                 * volVars.saturation(phaseIdx) * volVars.density(phaseIdx);
 
@@ -101,7 +98,7 @@ public:
             auto upwindTerm = [phaseIdx](const auto& volVars)
                               { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx); };
 
-            flux[conti0EqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+            flux[Indices::conti0EqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
             // Add advective phase energy fluxes. For isothermal model the contribution is zero.
             EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);

@@ -47,13 +47,13 @@ public:
         TwoPIOFields::initOutputModule(out);
 
         // output additional to TwoP output:
-        for (int phaseIdx = 0; phaseIdx < VolumeVariables::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < VolumeVariables::numFluidPhases(); ++phaseIdx)
         {
-            for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
+            for (int compIdx = 0; compIdx < VolumeVariables::numFluidComponents(); ++compIdx)
             {
                 out.addVolumeVariable([phaseIdx,compIdx](const auto& v){ return v.moleFraction(phaseIdx,compIdx); },
                                       IOName::moleFraction<FluidSystem>(phaseIdx, compIdx));
-                if (VolumeVariables::numComponents() < 3)
+                if (VolumeVariables::numFluidComponents() < 3)
                     out.addVolumeVariable([phaseIdx,compIdx](const auto& v){ return v.massFraction(phaseIdx,compIdx); },
                                           IOName::massFraction<FluidSystem>(phaseIdx, compIdx));
             }

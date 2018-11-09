@@ -45,7 +45,7 @@ public:
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
         // register standardized out output fields
-        for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
+        for (int compIdx = 0; compIdx < VolumeVariables::numFluidComponents(); ++compIdx)
         {
             out.addVolumeVariable([compIdx](const auto& v){ return v.moleFraction(0, compIdx); },
                                   "x^" + FluidSystem::componentName(compIdx));

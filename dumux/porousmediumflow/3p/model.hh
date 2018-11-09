@@ -83,8 +83,8 @@ struct ThreePModelTraits
     using Indices = ThreePIndices;
 
     static constexpr int numEq() { return 3; }
-    static constexpr int numPhases() { return 3; }
-    static constexpr int numComponents() { return 3; }
+    static constexpr int numFluidPhases() { return 3; }
+    static constexpr int numFluidComponents() { return 3; }
 
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }

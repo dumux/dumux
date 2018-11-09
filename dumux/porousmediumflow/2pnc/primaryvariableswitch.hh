@@ -59,10 +59,10 @@ protected:
         static constexpr int comp0Idx = FluidSystem::comp0Idx;
         static constexpr int comp1Idx = FluidSystem::comp1Idx;
 
-        static constexpr auto numComponents = VolumeVariables::numComponents();
+        static constexpr auto numComponents = VolumeVariables::numFluidComponents();
         static constexpr bool useMoles = VolumeVariables::useMoles();
         static_assert(useMoles || numComponents < 3, "!useMoles is only implemented for numComponents < 3.");
-        static constexpr auto numMajorComponents = VolumeVariables::numPhases();
+        static constexpr auto numMajorComponents = VolumeVariables::numFluidPhases();
         static constexpr auto formulation = VolumeVariables::priVarFormulation();
         static_assert( (formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0),
                         "Chosen TwoPFormulation not supported!");

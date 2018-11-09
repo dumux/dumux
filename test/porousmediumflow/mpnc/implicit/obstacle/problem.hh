@@ -143,8 +143,8 @@ class ObstacleProblem
     using Indices = typename ModelTraits::Indices;
 
     enum { dimWorld = GridView::dimensionworld };
-    enum { numPhases = ModelTraits::numPhases() };
-    enum { numComponents = ModelTraits::numComponents() };
+    enum { numPhases = ModelTraits::numFluidPhases() };
+    enum { numComponents = ModelTraits::numFluidComponents() };
     enum { gasPhaseIdx = FluidSystem::gasPhaseIdx };
     enum { liquidPhaseIdx = FluidSystem::liquidPhaseIdx };
     enum { H2OIdx = FluidSystem::H2OIdx };

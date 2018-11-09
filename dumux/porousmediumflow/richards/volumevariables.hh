@@ -68,7 +68,7 @@ class RichardsVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     using ModelTraits = typename Traits::ModelTraits;
-    static constexpr int numFluidComps = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
 public:
     //! export type of the fluid system
     using FluidSystem = typename Traits::FluidSystem;
@@ -445,8 +445,8 @@ protected:
     Scalar relativePermeabilityWetting_; //!< the relative permeability of the wetting phase
     PermeabilityType permeability_; //!< the instrinsic permeability
     Scalar minPc_; //!< the minimum capillary pressure (entry pressure)
-    Scalar moleFraction_[ParentType::numPhases()]; //!< The water mole fractions in water and air
-    Scalar molarDensity_[ParentType::numPhases()]; //!< The molar density of water and air
+    Scalar moleFraction_[ParentType::numFluidPhases()]; //!< The water mole fractions in water and air
+    Scalar molarDensity_[ParentType::numFluidPhases()]; //!< The molar density of water and air
     Scalar diffCoeff_; //!< The binary diffusion coefficient of water in air
 };
 

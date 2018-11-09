@@ -58,10 +58,10 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered >
     using Indices = typename ModelTraits::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-    static constexpr int numComponents = ModelTraits::numComponents();
+    static constexpr int numComponents = ModelTraits::numFluidComponents();
     using NumEqVector = Dune::FieldVector<Scalar, numComponents>;
 
-    static_assert(ModelTraits::numPhases() == 1, "Only one phase supported!");
+    static_assert(ModelTraits::numFluidPhases() == 1, "Only one phase supported!");
 
 public:
     // state the discretization method this implementation belongs to

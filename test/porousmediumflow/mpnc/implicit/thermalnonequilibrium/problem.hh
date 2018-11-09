@@ -189,8 +189,8 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using Indices = typename ModelTraits::Indices;
 
     enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = ModelTraits::numPhases()};
-    enum {numComponents = ModelTraits::numComponents()};
+    enum {numPhases = ModelTraits::numFluidPhases()};
+    enum {numComponents = ModelTraits::numFluidComponents()};
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
     enum {conti00EqIdx = Indices::conti0EqIdx};
