@@ -37,7 +37,7 @@ template <class IsothermalIndices, int numEq>
 class FreeflowNonIsothermalIndices : public IsothermalIndices
 {
 public:
-    static constexpr int energyBalanceIdx = numEq - 1;
+    static constexpr int energyEqIdx = numEq - 1;
     static constexpr int temperatureIdx = numEq - 1;
 };
 

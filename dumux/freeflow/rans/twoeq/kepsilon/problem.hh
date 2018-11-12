@@ -428,7 +428,7 @@ public:
                                * elemVolVars[scvf.insideScvIdx()].density()
                                * elemVolVars[scvf.insideScvIdx()].heatCapacity()
                                / elemVolVars[scvf.insideScvIdx()].thermalConductivity();
-        wallFunctionFlux[Indices::energyBalanceIdx - cellCenterOffset] +=
+        wallFunctionFlux[Indices::energyEqIdx - cellCenterOffset] +=
             -1.0 * (asImp_().dirichlet(element, scvf)[Indices::temperatureIdx]
                     - elemVolVars[scvf.insideScvIdx()].temperature())
             * elemVolVars[scvf.insideScvIdx()].density()
