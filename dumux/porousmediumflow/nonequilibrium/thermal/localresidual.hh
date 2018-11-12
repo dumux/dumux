@@ -149,7 +149,7 @@ public:
          //heat conduction for the solid phases
         for(int sPhaseIdx=0; sPhaseIdx<numEnergyEqSolid; ++sPhaseIdx)
         {
-                flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(numPhases + sPhaseIdx);
+            flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(numPhases + sPhaseIdx);
         }
     }
 
@@ -370,16 +370,16 @@ public:
         //we only need to do this for when there is more than 1 fluid phase
         if (enableChemicalNonEquilibrium)
         {
-                // Here comes the catch: We are not doing energy conservation for the whole
-                // system, but rather for each individual phase.
-                //        -> Therefore the energy fluxes over each phase boundary need be
-                //           individually accounted for.
-                //        -> Each particle crossing a phase boundary does carry some mass and
-                //           thus energy!
-                //        -> Therefore, this contribution needs to be added.
-                //        -> the particle always brings the energy of the originating phase.
-                //        -> Energy advectivly transported into a phase = the moles of a component that go into a  phase
-                //           * molMass * enthalpy of the component in the *originating* phase
+            // Here comes the catch: We are not doing energy conservation for the whole
+            // system, but rather for each individual phase.
+            //        -> Therefore the energy fluxes over each phase boundary need be
+            //           individually accounted for.
+            //        -> Each particle crossing a phase boundary does carry some mass and
+            //           thus energy!
+            //        -> Therefore, this contribution needs to be added.
+            //        -> the particle always brings the energy of the originating phase.
+            //        -> Energy advectivly transported into a phase = the moles of a component that go into a  phase
+            //           * molMass * enthalpy of the component in the *originating* phase
 
             const auto& fluidState = volVars.fluidState();
 

@@ -31,7 +31,7 @@ namespace Dumux
 {
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief Relation for a simple effective thermal conductivity
+ * \brief Description of a interfacial area between solid and fluid phase
  */
 template<class Scalar>
 class FluidSolidInterfacialAreaShiWang

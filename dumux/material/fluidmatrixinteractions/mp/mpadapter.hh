@@ -38,7 +38,7 @@ namespace Dumux
 template <class MaterialLaw, int numPhases>
 class MPAdapter
 {
-    static_assert(numPhases == 2, "only adapter for 2 phases is implemented");
+    static_assert(AlwaysFalse<MaterialLaw>::value, "Adapter not implemented for the specified number of phases");
 };
 
 template <class MaterialLaw>
