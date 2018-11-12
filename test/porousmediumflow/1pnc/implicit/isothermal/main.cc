@@ -23,8 +23,6 @@
  */
 #include <config.h>
 
-#include "1p2cniconvectionproblem.hh"
-
 #include <ctime>
 #include <iostream>
 
@@ -41,13 +39,15 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
-#include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+
+#include "problem.hh"
 
 int main(int argc, char** argv) try
 {
@@ -115,10 +115,7 @@ int main(int argc, char** argv) try
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
-    vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
     vtkWriter.write(0.0);
-    // output every vtkOutputInterval time step
-    const auto vtkOutputInterval = getParam<int>("Problem.OutputInterval");
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
@@ -129,13 +126,11 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    //  using LinearSolver = UMFPackBackend;
     using LinearSolver = ILU0BiCGSTABBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    NewtonSolver<Assembler, LinearSolver> nonLinearSolver(assembler, linearSolver);
 
     // time loop
     timeLoop->start(); do
@@ -143,11 +138,8 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
-        // linearize & solve
+        // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);
-
-        // update the exact time temperature
-        problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
 
         // make the new solution the old solution
         xOld = x;
@@ -157,8 +149,7 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->finished())
-            vtkWriter.write(timeLoop->time());
+        vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
@@ -179,8 +170,8 @@ int main(int argc, char** argv) try
         DumuxMessage::print(/*firstCall=*/false);
 
     return 0;
-
 }
+
 catch (Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;
@@ -189,10 +180,10 @@ catch (Dumux::ParameterException &e)
 catch (Dune::DGFException & e)
 {
     std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << " ---> Abort!" << std::endl;
+              "). Most likely, the DGF file name is wrong "
+              "or the DGF file is corrupted, "
+              "e.g. missing hash at end of file or wrong number (dimensions) of entries."
+              << " ---> Abort!" << std::endl;
     return 2;
 }
 catch (Dune::Exception &e)

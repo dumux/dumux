@@ -30,7 +30,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/fluidsystems/brine.hh>
-#include "1pnctestspatialparams.hh"
+#include "../spatialparams.hh"
 
 namespace Dumux {
 

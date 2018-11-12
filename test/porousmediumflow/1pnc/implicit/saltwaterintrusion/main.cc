@@ -23,8 +23,7 @@
  */
 #include <config.h>
 
-#include "1p2ctestproblem.hh"
-#include "saltwaterintrusionproblem.hh"
+#include "problem.hh"
 
 #include <ctime>
 #include <iostream>
