@@ -104,7 +104,7 @@ public:
     //! We use the same name as in the TpfaDarcysLawCache so
     //! that this cache and the law implementation for non-coupled
     //! models can be reused here on facets that do not lie on an
-    //! interior boundary, i.e. do not coincide with a fracture
+    //! interior boundary, i.e. do not coincide with a facet element
     Scalar advectionTij() const { return tij_[insideTijIdx]; }
 
     //! returns the transmissibility associated with the inside cell
@@ -337,17 +337,21 @@ public:
     //! We use the same name as in the TpfaDarcysLawCache so
     //! that this cache and the law implementation for non-coupled
     //! models can be reused here on facets that do not lie on an
-    //! interior boundary, i.e. do not coincide with a fracture
-    Scalar advectionTij() const { return tij_[insideTijIdx]; }
+    //! interior boundary, i.e. do not coincide with a facet element
+    Scalar advectionTij() const
+    { return tij_[insideTijIdx]; }
 
     //! returns the transmissibility associated with the inside cell
-    Scalar advectionTijInside() const { return tij_[insideTijIdx]; }
+    Scalar advectionTijInside() const
+    { return tij_[insideTijIdx]; }
 
     //! returns the transmissibility associated with the outside cell
-    Scalar advectionTijOutside(unsigned int idxInOutside) const {return tij_[firstOutsideTijIdx+idxInOutside]; }
+    Scalar advectionTijOutside(unsigned int idxInOutside) const
+    { return tij_[firstOutsideTijIdx+idxInOutside]; }
 
     //! returns the transmissibility associated with the outside cell
-    Scalar advectionTijFacet() const {return tij_[facetTijIdx]; }
+    Scalar advectionTijFacet() const
+    { return tij_[facetTijIdx]; }
 
 private:
     std::vector<Scalar> tij_;
@@ -394,7 +398,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
     {
         static const Scalar gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
         if (gravity)
-            DUNE_THROW(Dune::NotImplemented, "gravity for darcys law with facet coupling on surface grids");
+            DUNE_THROW(Dune::NotImplemented, "Gravity for darcys law with facet coupling on surface grids");
 
         if (!problem.couplingManager().isOnInteriorBoundary(element, scvf))
             return TpfaDarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarsCache);
@@ -458,9 +462,10 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
         if (iBcTypes.hasOnlyNeumann())
         {
             const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
-            using std::sqrt;
+
             // Here we use the square root of the facet extrusion factor
             // as an approximate average distance from scvf ip to facet center
+            using std::sqrt;
             const auto wFacet = 2.0*area*insideVolVars.extrusionFactor()
                                         /sqrt(facetVolVars.extrusionFactor())
                                         *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
