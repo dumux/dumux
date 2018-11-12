@@ -25,10 +25,11 @@
 #define DUMUX_MODEL_PROPERTIES_HH
 
 #include <dune/common/fvector.hh>
+#include <dune/common/deprecated.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/balanceequationopts.hh>
-#include <dumux/io/defaultvtkoutputfields.hh>
+#include <dumux/io/defaultiofields.hh>
 
 // Forward declaration
 namespace Dune { class ParameterTree; }
@@ -54,8 +55,13 @@ SET_PROP(ModelProperties, ModelDefaultParameters)
     static void defaultParams(Dune::ParameterTree& tree, const std::string& group = "") { }
 };
 
-//! Set the default to a function throwing a NotImplemented error
-SET_TYPE_PROP(ModelProperties, VtkOutputFields, DefaultVtkOutputFields);
+//! \todo this property is deprecated use IOFields instead!
+SET_PROP(ModelProperties, VtkOutputFields) {
+    using type DUNE_DEPRECATED_MSG("This property is deprecated use property IOFields instead") = typename GET_PROP_TYPE(TypeTag, IOFields);
+};
+
+//! Set the default to an implementation throwing a NotImplemented error
+SET_TYPE_PROP(ModelProperties, IOFields, DefaultIOFields);
 
 //! Set the default class for the balance equation options
 SET_TYPE_PROP(ModelProperties, BalanceEqOpts, BalanceEquationOptions<TypeTag>);

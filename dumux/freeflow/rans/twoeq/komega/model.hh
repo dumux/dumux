@@ -79,7 +79,7 @@
 #include "indices.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux
 {
@@ -106,21 +106,6 @@ struct KOmegaModelTraits : RANSModelTraits<dimension>
 
     //! The indices
     using Indices = KOmegaIndices<dim(), numComponents()>;
-
-    //! return the names of the primary variables in cells
-    template<class FluidSystem = void>
-    static std::string primaryVariableNameCell(int pvIdx, int state = 0)
-    {
-        using ParentType = RANSModelTraits<dimension>;
-        switch (pvIdx) {
-            case 0:
-                return ParentType::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
-            case 1:
-                return "k";
-            default:
-                return "omega";
-        }
-    }
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -177,14 +162,8 @@ public:
     using type = KOmegaVolumeVariables<Traits, NSVolVars>;
 };
 
-//! The specific vtk output fields
-SET_PROP(KOmega, VtkOutputFields)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-public:
-    using type = KOmegaVtkOutputFields<FVGridGeometry>;
-};
+//! The specific I/O fields
+SET_TYPE_PROP(KOmega, IOFields, KOmegaIOFields);
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal k-omega single phase model
@@ -224,16 +203,8 @@ public:
     using type = KOmegaVolumeVariables<Traits, NSVolVars>;
 };
 
-//! The specific non-isothermal vtk output fields
-SET_PROP(KOmegaNI, VtkOutputFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = KOmegaVtkOutputFields<FVGridGeometry>;
-public:
-    using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
-};
+//! The specific non-isothermal I/O fields
+SET_TYPE_PROP(KOmegaNI, IOFields, FreeflowNonIsothermalIOFields<KOmegaIOFields, true/*turbulenceModel*/>);
 
 // \}
 }

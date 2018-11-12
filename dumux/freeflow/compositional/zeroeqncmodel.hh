@@ -30,10 +30,10 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
-#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/iofields.hh>
 #include <dumux/freeflow/rans/zeroeq/model.hh>
 
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux {
 
@@ -98,17 +98,8 @@ public:
     using type = ZeroEqVolumeVariables<Traits, CompositionalVolVars>;
 };
 
-//! The specific vtk output fields
-SET_PROP(ZeroEqNC, VtkOutputFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BaseVtkOutputFields = RANSVtkOutputFields<FVGridGeometry>;
-public:
-     using type = FreeflowNCVtkOutputFields<BaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem>;
-};
+//! The specific I/O fields
+SET_TYPE_PROP(ZeroEqNC, IOFields, FreeflowNCIOFields<RANSIOFields, true/*turbulenceModel*/>);
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component ZeroEq model
@@ -152,17 +143,13 @@ public:
     using type = ZeroEqVolumeVariables<Traits, NCVolVars>;
 };
 
-//! The specific vtk output fields
-SET_PROP(ZeroEqNCNI, VtkOutputFields)
+//! The specific I/O fields
+SET_PROP(ZeroEqNCNI, IOFields)
 {
 private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BaseVtkOutputFields = RANSVtkOutputFields<FVGridGeometry>;
-    using NonIsothermalFields = FreeflowNonIsothermalVtkOutputFields<BaseVtkOutputFields, ModelTraits>;
+    using IsothermalIOFields = FreeflowNCIOFields<RANSIOFields, true/*turbulenceModel*/>;
 public:
-    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem>;
+    using type = FreeflowNonIsothermalIOFields<IsothermalIOFields, true/*turbulenceModel*/>;
 };
 
 // \}

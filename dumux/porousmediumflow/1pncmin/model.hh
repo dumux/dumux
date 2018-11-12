@@ -76,10 +76,10 @@ v = - \frac{k_{r}}{\mu} \mbox{\bf K}
 #include <dumux/porousmediumflow/mineralization/model.hh>
 #include <dumux/porousmediumflow/mineralization/localresidual.hh>
 #include <dumux/porousmediumflow/mineralization/volumevariables.hh>
-#include <dumux/porousmediumflow/mineralization/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/mineralization/iofields.hh>
 
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
 namespace Dumux {
@@ -124,9 +124,8 @@ SET_TYPE_PROP(OnePNCMin, LocalResidual, MineralizationLocalResidual<TypeTag>);
 SET_PROP(OnePNCMin, ModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using NonMinTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using NonMinTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
 public:
     using type = MineralizationModelTraits<NonMinTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 };
@@ -142,23 +141,25 @@ public:
 };
 
 //! Use the mineralization vtk output fields
-SET_TYPE_PROP(OnePNCMin, VtkOutputFields, MineralizationVtkOutputFields<OnePNCVtkOutputFields>);
+SET_TYPE_PROP(OnePNCMin, IOFields, MineralizationIOFields<OnePNCIOFields>);
 
 //////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
 
 //! non-isothermal vtk output
-//! non-isothermal vtk output
-SET_TYPE_PROP(OnePNCMinNI, VtkOutputFields, EnergyVtkOutputFields<MineralizationVtkOutputFields<OnePNCVtkOutputFields>>);
+SET_PROP(OnePNCMinNI, IOFields)
+{
+    using MineralizationIOF = MineralizationIOFields<OnePNCIOFields>;
+    using type = EnergyIOFields<MineralizationIOF>;
+};
 
 //! The non-isothermal model traits
 SET_PROP(OnePNCMinNI, ModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using OnePNCTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using OnePNCTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
     using IsothermalTraits = MineralizationModelTraits<OnePNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;

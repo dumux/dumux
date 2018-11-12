@@ -108,13 +108,13 @@
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 #include <dumux/porousmediumflow/nonequilibrium/model.hh>
 #include <dumux/porousmediumflow/nonequilibrium/volumevariables.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 #include "localresidual.hh"
 #include "pressureformulation.hh"
 
@@ -299,7 +299,7 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(MPNC, VtkOutputFields, MPNCVtkOutputFields);
+SET_TYPE_PROP(MPNC, IOFields, MPNCIOFields);
 
 /////////////////////////////////////////////////
 // Properties for the non-isothermal mpnc model
@@ -326,7 +326,7 @@ public:
 SET_TYPE_PROP(MPNCNonequil, EquilibriumLocalResidual, MPNCLocalResidual<TypeTag>);
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(MPNCNonequil, EquilibriumVtkOutputFields, MPNCVtkOutputFields);
+SET_TYPE_PROP(MPNCNonequil, EquilibriumIOFields, MPNCIOFields);
 
 //! For non-equilibrium with mpnc we have to overwrite the model traits again,
 //! because the mpnc indices depend on the status of the non-equilibrium model traits

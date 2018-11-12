@@ -55,14 +55,14 @@
 #include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/freeflow/nonisothermal/model.hh>
 #include <dumux/freeflow/nonisothermal/indices.hh>
-#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/iofields.hh>
 #include <dumux/discretization/fickslaw.hh>
 #include <dumux/discretization/fourierslaw.hh>
 
 #include "volumevariables.hh"
 #include "localresidual.hh"
 #include "fluxvariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 #include <dumux/assembly/staggeredlocalresidual.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>
@@ -102,18 +102,6 @@ struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension>
 
     //! the indices
     using Indices = NavierStokesIndices<dimension>;
-
-    //! return the names of the primary variables in cells
-    template <class FluidSystem>
-    static std::string primaryVariableNameCell(int pvIdx = 0, int state = 0)
-    {
-        const std::string xString = useMoles() ? "x" : "X";
-        if (pvIdx == 0)
-            return NavierStokesModelTraits<dimension>::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
-        else
-            return xString + "^" + FluidSystem::componentName(pvIdx)
-                   + "_" + FluidSystem::phaseName(0);
-    }
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -182,17 +170,8 @@ SET_TYPE_PROP(NavierStokesNC, FluxVariables, FreeflowNCFluxVariables<TypeTag>);
 //! The flux variables cache class, by default the one for free flow
 SET_TYPE_PROP(NavierStokesNC, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
-//! The specific vtk output fields
-SET_PROP(NavierStokesNC, VtkOutputFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BaseVtkOutputFields = NavierStokesVtkOutputFields<FVGridGeometry>;
-public:
-    using type = FreeflowNCVtkOutputFields<BaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem>;
-};
+//! The specific I/O fields
+SET_TYPE_PROP(NavierStokesNC, IOFields, FreeflowNCIOFields<NavierStokesIOFields>);
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -231,17 +210,13 @@ public:
     using type = FreeflowNIModelTraits<IsothermalModelTraits>;
 };
 
-//! The non-isothermal vtk output fields
-SET_PROP(NavierStokesNCNI, VtkOutputFields)
+//! The non-isothermal I/O fields
+SET_PROP(NavierStokesNCNI, IOFields)
 {
 private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BaseVtkOutputFields = NavierStokesVtkOutputFields<FVGridGeometry>;
-    using NonIsothermalFields = FreeflowNonIsothermalVtkOutputFields<BaseVtkOutputFields, ModelTraits>;
+    using IsothermalIOFields = FreeflowNCIOFields<NavierStokesIOFields>;
 public:
-    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem>;
+    using type = FreeflowNonIsothermalIOFields<IsothermalIOFields>;
 };
 
 //! Use Fourier's Law as default heat conduction type

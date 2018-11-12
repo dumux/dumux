@@ -18,37 +18,37 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ThreePModel
- * \brief Adds vtk output fields specific to the three-phase model
+ * \ingroup PoroElastic
+ * \brief Adds I/O fields specific to the poro-elastic model
  */
-#ifndef DUMUX_THREEP_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_THREEP_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_POROELASTIC_IO_FIELDS_HH
+#define DUMUX_POROELASTIC_IO_FIELDS_HH
+
+#include <dumux/io/name.hh>
 
 namespace Dumux {
 
 /*!
- * \ingroup ThreePModel
- * \brief Adds vtk output fields specific to the three-phase model
+ * \ingroup PoroElastic
+ * \brief Adds I/O fields specific to the poro-elastic model
  */
-class ThreePVtkOutputFields
+class PoroElasticIOFields
 {
 public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
-        using FluidSystem = typename VolumeVariables::FluidSystem;
+        out.addVolumeVariable([](const auto& volVars){ return volVars.displacement(); },
+                              IOName::displacement());
+        out.addVolumeVariable([](const auto& volVars){ return volVars.porosity(); },
+                              IOName::porosity());
+    }
 
-        // register standardized vtk output fields
-        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
-        {
-            vtk.addVolumeVariable([i](const auto& v){ return v.saturation(i); }, "S_"+ FluidSystem::phaseName(i));
-            vtk.addVolumeVariable([i](const auto& v){ return v.pressure(i); }, "p_"+ FluidSystem::phaseName(i));
-            vtk.addVolumeVariable([i](const auto& v){ return v.density(i); }, "rho_"+ FluidSystem::phaseName(i));
-        }
-
-        vtk.addVolumeVariable( [](const auto& v){ return v.porosity(); },"porosity");
-        vtk.addVolumeVariable( [](const auto& v){ return v.permeability(); },"permeability");
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
+    {
+        initOutputModule(out);
     }
 };
 

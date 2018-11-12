@@ -126,11 +126,13 @@ int main(int argc, char** argv) try
     SolutionVector x(fvGridGeometry->numDofs());
     if (restartTime > 0)
     {
+        using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
+        using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
         using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
         using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
         using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
         const auto fileName = getParam<std::string>("Restart.File");
-        const auto pvName = createPVNameFunctionWithState<ModelTraits, FluidSystem, SolidSystem>();
+        const auto pvName = createPVNameFunction<IOFields, PrimaryVariables, ModelTraits, FluidSystem, SolidSystem>();
         loadSolution(x, fileName, pvName, *fvGridGeometry);
     }
     else
@@ -143,11 +145,11 @@ int main(int argc, char** argv) try
     gridVariables->init(x, xOld);
 
     // initialize the vtk output module
-    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     //add specific output
     vtkWriter.addField(problem->getPermeability(), "Permeability");
     // update the output fields before write

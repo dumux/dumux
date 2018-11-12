@@ -69,10 +69,10 @@
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 
 #include "darcyslaw.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 #include "localresidual.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -217,7 +217,7 @@ SET_TYPE_PROP(TwoPOneCNI, ThermalConductivityModel, ThermalConductivitySomerton<
 SET_TYPE_PROP(TwoPOneCNI, ModelTraits, TwoPOneCNIModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
 
 //! The non-isothermal vtk output fields.
-SET_TYPE_PROP(TwoPOneCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPOneCVtkOutputFields>);
+SET_TYPE_PROP(TwoPOneCNI, IOFields, EnergyIOFields<TwoPOneCIOFields>);
 
 } // end namespace Properties
 } // end namespace Dumux

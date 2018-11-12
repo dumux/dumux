@@ -137,11 +137,11 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
-    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
 
     // if we are using a random permeability field with gstat
     bool isRandomField = getParam<bool>("SpatialParams.RandomField", false);

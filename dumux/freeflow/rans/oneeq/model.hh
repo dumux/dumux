@@ -80,12 +80,13 @@
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/rans/model.hh>
+#include <dumux/freeflow/nonisothermal/iofields.hh>
 
 #include "fluxvariables.hh"
 #include "indices.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux
 {
@@ -112,17 +113,6 @@ struct OneEqModelTraits : RANSModelTraits<dimension>
 
     //! the indices
     using Indices = OneEqIndices<dim(), numComponents()>;
-
-    //! return the names of the primary variables in cells
-    template <class FluidSystem = void>
-    static std::string primaryVariableNameCell(int pvIdx, int state = 0)
-    {
-        using ParentType = RANSModelTraits<dimension>;
-        if (pvIdx == 0)
-            return ParentType::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
-        else
-            return "nu_tilde";
-    }
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -179,14 +169,8 @@ public:
     using type = OneEqVolumeVariables<Traits, NSVolVars>;
 };
 
-//! The specific vtk output fields
-SET_PROP(OneEq, VtkOutputFields)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-public:
-    using type = OneEqVtkOutputFields<FVGridGeometry>;
-};
+//! The specific I/O fields
+SET_TYPE_PROP(OneEq, IOFields, OneEqIOFields);
 
 //////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal Spalart-Allmaras model
@@ -225,16 +209,8 @@ public:
     using type = OneEqVolumeVariables<Traits, NSVolVars>;
 };
 
-//! The specific non-isothermal vtk output fields
-SET_PROP(OneEqNI, VtkOutputFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = OneEqVtkOutputFields<FVGridGeometry>;
-public:
-    using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
-};
+//! The specific non-isothermal I/O fields
+SET_TYPE_PROP(OneEqNI, IOFields, FreeflowNonIsothermalIOFields<OneEqIOFields, true/*turbulenceModel*/>);
 
 // \}
 }

@@ -180,13 +180,13 @@ int main(int argc, char** argv) try
     const auto darcyName = getParam<std::string>("Problem.Name") + "_" + darcyProblem->name();
 
     StaggeredVtkOutputModule<StokesGridVariables, typename GET_PROP_TYPE(StokesTypeTag, SolutionVector)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesName);
-    GET_PROP_TYPE(StokesTypeTag, VtkOutputFields)::init(stokesVtkWriter);
+    GET_PROP_TYPE(StokesTypeTag, IOFields)::initOutputModule(stokesVtkWriter);
     stokesVtkWriter.write(0.0);
 
     VtkOutputModule<DarcyGridVariables, typename GET_PROP_TYPE(DarcyTypeTag, SolutionVector)> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx], darcyName);
     using DarcyVelocityOutput = typename GET_PROP_TYPE(DarcyTypeTag, VelocityOutput);
     darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
-    GET_PROP_TYPE(DarcyTypeTag, VtkOutputFields)::init(darcyVtkWriter);
+    GET_PROP_TYPE(DarcyTypeTag, IOFields)::initOutputModule(darcyVtkWriter);
     darcyVtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem

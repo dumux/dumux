@@ -45,10 +45,13 @@ NEW_PROP_TAG(PrimaryVariables);       //!< A vector of primary variables
 NEW_PROP_TAG(NumEqVector);            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
 NEW_PROP_TAG(GridView);               //!< The type of the grid view according to the grid type
 NEW_PROP_TAG(ModelTraits);            //!< Traits class encapsulating model specifications
+NEW_PROP_TAG(BaseModelTraits);        //!< Model traits to be used as a base for nonisothermal, mineralization ... models
 NEW_PROP_TAG(Problem);                //!< Property to specify the type of a problem which has to be solved
 NEW_PROP_TAG(PointSource);            //!< Property defining the type of point source used
 NEW_PROP_TAG(PointSourceHelper);      //!< Property defining the class that computes which sub control volume point sources belong to
+// TODO: Remove deprecated property VtkOutputFields
 NEW_PROP_TAG(VtkOutputFields);        //!< A class helping models to define default vtk output parameters
+NEW_PROP_TAG(IOFields);               //!< A class helping models to define input and output fields
 NEW_PROP_TAG(BaseLocalResidual);      //!< The type of the base class of the local residual (specific to a discretization scheme)
 NEW_PROP_TAG(JacobianMatrix);         //!< Type of the global jacobian matrix
 NEW_PROP_TAG(SolutionVector);         //!< Vector containing all primary variable vector of the grid
@@ -172,7 +175,7 @@ NEW_PROP_TAG(PressureFormulation); //! the formulation of the pressure e.g most 
 NEW_PROP_TAG(EquilibriumModelTraits);
 NEW_PROP_TAG(EquilibriumLocalResidual);
 NEW_PROP_TAG(EquilibriumIndices);
-NEW_PROP_TAG(EquilibriumVtkOutputFields);
+NEW_PROP_TAG(EquilibriumIOFields);
 NEW_PROP_TAG(NumEqBalance);
 NEW_PROP_TAG(EnableThermalNonEquilibrium);
 NEW_PROP_TAG(EnableChemicalNonEquilibrium);

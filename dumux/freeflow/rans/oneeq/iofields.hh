@@ -18,31 +18,46 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TwoPOneCModel
- * \copydoc Dumux::TwoPOneCVtkOutputFields
+ * \ingroup OneEqModel
+ * \copydoc Dumux::OneEqIOFields
  */
-#ifndef DUMUX_TWOP_ONEC_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_TWOP_ONEC_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_ONEEQ_IO_FIELDS_HH
+#define DUMUX_ONEEQ_IO_FIELDS_HH
 
-#include <dumux/porousmediumflow/2p/vtkoutputfields.hh>
+#include <dumux/freeflow/rans/iofields.hh>
 
-namespace Dumux {
+namespace Dumux
+{
 
 /*!
- * \ingroup TwoPOneCModel
- * \brief Adds vtk output fields specific to two-phase one-component model.
+ * \ingroup OneEqModel
+ * \brief Adds I/O fields for the one-equation turbulence model by Spalart-Allmaras
  */
-class TwoPOneCVtkOutputFields
+struct OneEqIOFields
 {
-public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
     {
-        // use default fields from the 2p model
-        TwoPVtkOutputFields::init(vtk);
+        initOutputModule(out);
+    }
 
-        // output additional to TwoP output:
-        vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phase presence");
+    //! Initialize the OneEq specific output fields.
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
+    {
+        RANSIOFields::initOutputModule(out);
+        out.addVolumeVariable([](const auto& v){ return v.viscosityTilde(); }, "nu_tilde");
+    }
+
+    //! return the names of the primary variables
+    template <class ModelTraits, class FluidSystem>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        if (pvIdx < ModelTraits::dim() + 1)
+            return RANSIOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
+        else
+            return "nu_tilde";
     }
 };
 

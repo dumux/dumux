@@ -30,10 +30,10 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
-#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/iofields.hh>
 #include <dumux/freeflow/rans/twoeq/komega/model.hh>
 
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux {
 
@@ -141,17 +141,8 @@ public:
     using type = KOmegaFluxVariables<TypeTag, BaseFluxVariables>;
 };
 
-//! The specific vtk output fields
-SET_PROP(KOmegaNC, VtkOutputFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SinglePhaseVtkOutputFields = KOmegaVtkOutputFields<FVGridGeometry>;
-public:
-    using type = FreeflowNCVtkOutputFields<SinglePhaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem>;
-};
+//! The specific I/O fields
+SET_TYPE_PROP(KOmegaNC, IOFields, FreeflowNCIOFields<KOmegaIOFields, true/*turbulenceModel*/>);
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component k-omega model
@@ -213,17 +204,13 @@ public:
     using type = KOmegaFluxVariables<TypeTag, BaseFluxVariables>;
 };
 
-//! The specific vtk output fields
-SET_PROP(KOmegaNCNI, VtkOutputFields)
+//! The specific I/O fields
+SET_PROP(KOmegaNCNI, IOFields)
 {
 private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BaseVtkOutputFields = KOmegaVtkOutputFields<FVGridGeometry>;
-    using NonIsothermalFields = FreeflowNonIsothermalVtkOutputFields<BaseVtkOutputFields, ModelTraits>;
+    using IsothermalIOFields = FreeflowNCIOFields<KOmegaIOFields, true/*turbulenceModel*/>;
 public:
-    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem>;
+    using type = FreeflowNonIsothermalIOFields<IsothermalIOFields, true/*turbulenceModel*/>;
 };
 
 // \}

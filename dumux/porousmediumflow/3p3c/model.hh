@@ -84,7 +84,7 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidstates/compositional.hh>
@@ -95,7 +95,7 @@
 
 #include "indices.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 #include "primaryvariableswitch.hh"
 #include "localresidual.hh"
 
@@ -206,7 +206,7 @@ NEW_TYPE_TAG(ThreePThreeCNI, INHERITS_FROM(ThreePThreeC));
 //////////////////////////////////////////////////////////////////
 
 //! Set the model traits
-SET_PROP(ThreePThreeC, ModelTraits)
+SET_PROP(ThreePThreeC, BaseModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -215,6 +215,7 @@ private:
 public:
     using type = ThreePThreeCModelTraits<GET_PROP_VALUE(TypeTag, UseConstraintSolver), GET_PROP_VALUE(TypeTag, UseMoles)>;
 };
+SET_TYPE_PROP(ThreePThreeC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits));
 
 //! Determines whether a constraint solver should be used explicitly
 SET_BOOL_PROP(ThreePThreeC, UseConstraintSolver, false);
@@ -272,7 +273,7 @@ public:
 SET_TYPE_PROP(ThreePThreeC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(ThreePThreeC, VtkOutputFields, ThreePThreeCVtkOutputFields);
+SET_TYPE_PROP(ThreePThreeC, IOFields, ThreePThreeCIOFields);
 
 //! Use mole fractions in the balance equations by default
 SET_BOOL_PROP(ThreePThreeC, UseMoles, true);
@@ -288,16 +289,13 @@ SET_TYPE_PROP(ThreePThreeCNI, ThermalConductivityModel, ThermalConductivitySomer
 SET_PROP(ThreePThreeCNI, ModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p3c model!");
-    static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p3c model!");
-    using IsothermalModelTraits = ThreePThreeCModelTraits<GET_PROP_VALUE(TypeTag, UseConstraintSolver), GET_PROP_VALUE(TypeTag, UseMoles)>;
+    using IsothermalModelTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalModelTraits>;
 };
 
 //! Set the non-isothermal vktoutputfields
-SET_TYPE_PROP(ThreePThreeCNI, VtkOutputFields, EnergyVtkOutputFields<ThreePThreeCVtkOutputFields>);
+SET_TYPE_PROP(ThreePThreeCNI, IOFields, EnergyIOFields<ThreePThreeCIOFields>);
 
 } // end namespace Properties
 } // end namespace Dumux

@@ -98,12 +98,12 @@
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 
 #include "volumevariables.hh"
 #include "primaryvariableswitch.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 #include "indices.hh"
 
 namespace Dumux {
@@ -153,19 +153,19 @@ struct TwoPNCModelTraits
         const std::vector<std::string> p0s1SwitchedPvNames = {
             xString + "^" + FluidSystem::componentName(FluidSystem::comp1Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase0Idx),
             xString + "^" + FluidSystem::componentName(FluidSystem::comp0Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase1Idx),
-            "S_" + FluidSystem::phaseName(FluidSystem::phase1Idx)};
+            IOName::saturation<FluidSystem>(FluidSystem::phase1Idx)};
         const std::vector<std::string> p1s0SwitchedPvNames = {
             xString + "^" + FluidSystem::componentName(FluidSystem::comp1Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase0Idx),
             xString + "^" + FluidSystem::componentName(FluidSystem::comp0Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase1Idx),
-            "S_" + FluidSystem::phaseName(FluidSystem::phase0Idx)};
+            IOName::saturation<FluidSystem>(FluidSystem::phase0Idx)};
 
         switch (priVarFormulation())
         {
         case TwoPFormulation::p0s1:
-            return pvIdx == 0 ? "p_" + FluidSystem::phaseName(FluidSystem::phase0Idx)
+            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase0Idx)
                               : p0s1SwitchedPvNames[state-1];
         case TwoPFormulation::p1s0:
-            return pvIdx == 0 ? "p_" + FluidSystem::phaseName(FluidSystem::phase1Idx)
+            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase1Idx)
                               : p1s0SwitchedPvNames[state-1];
         default: DUNE_THROW(Dune::InvalidStateException, "Invalid formulation ");
         }
@@ -193,7 +193,6 @@ struct TwoPNCVolumeVariablesTraits
     using PermeabilityType = PT;
     using ModelTraits = MT;
 };
-
 
 namespace Properties {
 //////////////////////////////////////////////////////////////////
@@ -234,8 +233,8 @@ public:
     using type = TwoPNCVolumeVariables<Traits>;
 };
 
-//! Set the model traits
-SET_PROP(TwoPNC, ModelTraits)
+//! Set the base model traits
+SET_PROP(TwoPNC, BaseModelTraits)
 {
 private:
     //! we use the number of components specified by the fluid system here
@@ -247,9 +246,10 @@ public:
                                    GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
                                    GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
+SET_TYPE_PROP(TwoPNC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits)); //!< default the actually used traits to the base traits
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(TwoPNC, VtkOutputFields, TwoPNCVtkOutputFields);
+SET_TYPE_PROP(TwoPNC, IOFields, TwoPNCIOFields);
 
 SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
 
@@ -283,19 +283,13 @@ public:
 SET_PROP(TwoPNCNI, ModelTraits)
 {
 private:
-    //! we use the number of components specified by the fluid system here
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
-    using IsothermalTraits = TwoPNCModelTraits<FluidSystem::numComponents,
-                                               GET_PROP_VALUE(TypeTag, UseMoles),
-                                               GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
-                                               GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
 //! Set non-isothermal output fields
-SET_TYPE_PROP(TwoPNCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPNCVtkOutputFields>);
+SET_TYPE_PROP(TwoPNCNI, IOFields, EnergyIOFields<TwoPNCIOFields>);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNCNI, ThermalConductivityModel)

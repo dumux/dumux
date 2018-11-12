@@ -52,14 +52,14 @@
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/nonisothermal/model.hh>
 #include <dumux/freeflow/nonisothermal/indices.hh>
-#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/iofields.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "fluxvariables.hh"
 #include "fluxvariablescache.hh"
 #include "indices.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/methods.hh>
@@ -103,20 +103,6 @@ struct NavierStokesModelTraits
 
     //! the indices
     using Indices = NavierStokesIndices<dim()>;
-
-    //! return the names of the primary variables in cells
-    template <class FluidSystem = void>
-    static std::string primaryVariableNameCell(int pvIdx = 0, int state = 0)
-    {
-        return "p";
-    }
-
-    //! return the names of the primary variables on faces
-    template <class FluidSystem = void>
-    static std::string primaryVariableNameFace(int pvIdx = 0, int state = 0)
-    {
-        return "v";
-    }
 };
 
 /*!
@@ -212,14 +198,9 @@ SET_TYPE_PROP(NavierStokes, FluxVariables, NavierStokesFluxVariables<TypeTag>);
 //! The flux variables cache class, by default the one for free flow
 SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
-//! The specific vtk output fields
-SET_PROP(NavierStokes, VtkOutputFields)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-public:
-     using type = NavierStokesVtkOutputFields<FVGridGeometry>;
-};
+//! The specific I/O fields
+SET_TYPE_PROP(NavierStokes, IOFields, NavierStokesIOFields);
+
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Navier-Stokes model
 //////////////////////////////////////////////////////////////////
@@ -235,16 +216,8 @@ public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };
 
-//! The specific non-isothermal vtk output fields
-SET_PROP(NavierStokesNI, VtkOutputFields)
-{
-private:
-     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-     using IsothermalFields = NavierStokesVtkOutputFields<FVGridGeometry>;
-public:
-     using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
-};
+//! The specific non-isothermal I/O fields
+SET_TYPE_PROP(NavierStokesNI, IOFields, FreeflowNonIsothermalIOFields<NavierStokesIOFields>);
 
  // \}
 }

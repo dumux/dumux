@@ -32,7 +32,7 @@
 
 #include <dumux/porousmediumflow/mpnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <test/porousmediumflow/2p2c/implicit/mpnccomparison/vtkoutputfields.hh>
+#include <test/porousmediumflow/2p2c/implicit/mpnccomparison/iofields.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidstates/compositional.hh>
@@ -77,7 +77,7 @@ SET_TYPE_PROP(MPNCComparison,
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(MPNCComparison, Scalar, double);
 SET_BOOL_PROP(MPNCComparison, UseMoles, true);
-SET_TYPE_PROP(MPNCComparison, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields);
+SET_TYPE_PROP(MPNCComparison, IOFields, TwoPTwoCMPNCIOFields);
 } // end namespace Dumux
 
 /*!

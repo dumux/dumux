@@ -7,5 +7,5 @@ localresidual.hh
 model.hh
 problem.hh
 volumevariables.hh
-vtkoutputfields.hh
+iofields.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/rans/oneeq)

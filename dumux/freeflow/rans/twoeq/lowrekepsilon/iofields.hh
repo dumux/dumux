@@ -18,29 +18,50 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup InputOutput
- * \brief Adds vtk output fields specific to a model, this is the default if a
-          model doesn't implement this functionality
+ * \ingroup LowReKEpsilonModel
+ * \copydoc Dumux::LowReKEpsilonIOFields
  */
-#ifndef DUMUX_DEFAULT_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_DEFAULT_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_LOWREKEPSILON_IO_FIELDS_HH
+#define DUMUX_LOWREKEPSILON_IO_FIELDS_HH
 
-#include <dune/common/exceptions.hh>
+#include <dumux/freeflow/rans/iofields.hh>
+#include <dune/common/deprecated.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup InputOutput
- * \brief Adds vtk output fields specific to a model
+ * \ingroup LowReKEpsilonModel
+ * \brief Adds I/O fields for the low-Re k-epsilon turbulence model
  */
-class DefaultVtkOutputFields
+struct LowReKEpsilonIOFields
 {
-public:
-    template<class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
     {
-        DUNE_THROW(Dune::NotImplemented, "This model doesn't implement default vtk fields!");
+        initOutputModule(out);
+    }
+
+    //! Initialize the LowReKEpsilon specific output fields.
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
+    {
+        RANSIOFields::initOutputModule(out);
+        out.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
+        out.addVolumeVariable([](const auto& v){ return v.dissipationTilde(); }, "epsilon");
+    }
+
+    //! return the names of the primary variables
+    template <class ModelTraits, class FluidSystem>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        if (pvIdx < ModelTraits::dim() + ModelTraits::numComponents())
+            return RANSIOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
+        else if (pvIdx == ModelTraits::dim() + ModelTraits::numComponents())
+            return "k";
+        else
+            return "epsilon";
     }
 };
 

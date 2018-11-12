@@ -18,41 +18,34 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup LowReKEpsilonModel
- * \copydoc Dumux::LowReKEpsilonVtkOutputFields
+ * \ingroup InputOutput
+ * \brief Adds output fields to a given output module, this is the default if a
+          model doesn't implement this functionality
  */
-#ifndef DUMUX_LOWREKEPSILON_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_LOWREKEPSILON_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_IO_DEFAULT_IO_FIELDS_HH
+#define DUMUX_IO_DEFAULT_IO_FIELDS_HH
 
-#include <dumux/freeflow/rans/vtkoutputfields.hh>
+#include <dune/common/exceptions.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup LowReKEpsilonModel
- * \brief Adds vtk output fields for the low-Re k-epsilon turbulence model
+ * \ingroup InputOutput
+ * \brief Adds output fields to a given output module
  */
-template<class FVGridGeometry>
-class LowReKEpsilonVtkOutputFields : public RANSVtkOutputFields<FVGridGeometry>
+class DefaultIOFields
 {
-    enum { dim = FVGridGeometry::GridView::dimension };
-
 public:
-    //! Initialize the Reynolds-averagedNavier-Stokes specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template<class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        RANSVtkOutputFields<FVGridGeometry>::init(vtk);
-        add(vtk);
+        DUNE_THROW(Dune::NotImplemented, "This model doesn't implement default output fields!");
     }
 
-    //! Add the LowReKEpsilon specific vtk output fields.
-    template <class VtkOutputModule>
-    static void add(VtkOutputModule& vtk)
+    template <class FluidSystem = void, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
-        vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
-        vtk.addVolumeVariable([](const auto& v){ return v.dissipationTilde(); }, "epsilon");
+        DUNE_THROW(Dune::NotImplemented, "This model doesn't implement primaryVariableName!");
     }
 };
 

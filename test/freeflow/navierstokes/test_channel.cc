@@ -139,21 +139,7 @@ int main(int argc, char** argv) try
     SolutionVector x;
     x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
     x[FVGridGeometry::faceIdx()].resize(numDofsFace);
-    if (restartTime > 0)
-    {
-        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-
-        auto fileNameCell = getParamFromGroup<std::string>("CellCenter", "Restart.File");
-        loadSolution(x[FVGridGeometry::cellCenterIdx()], fileNameCell,
-                     [](int pvIdx, int state){ return "p"; }, // test option with lambda
-                     *fvGridGeometry);
-
-        auto fileNameFace = getParamFromGroup<std::string>("Face", "Restart.File");
-        loadSolution(x[FVGridGeometry::faceIdx()], fileNameFace,
-                     ModelTraits::primaryVariableNameFace<>, *fvGridGeometry);
-    }
-    else
-        problem->applyInitialSolution(x);
+    problem->applyInitialSolution(x);
     auto xOld = x;
 
     // instantiate time loop
@@ -167,9 +153,9 @@ int main(int argc, char** argv) try
     gridVariables->init(x, xOld);
 
     // initialize the vtk output module
-    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(restartTime);
 
     // the assembler with time loop for instationary problem

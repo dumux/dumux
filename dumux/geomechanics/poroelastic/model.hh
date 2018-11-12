@@ -37,7 +37,7 @@
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux {
 
@@ -73,7 +73,7 @@ NEW_TYPE_TAG(PoroElastic, INHERITS_FROM(Elastic));
 SET_TYPE_PROP(PoroElastic, LocalResidual, PoroElasticLocalResidual<TypeTag>);
 
 //! default vtk output fields specific to this model
-SET_TYPE_PROP(PoroElastic, VtkOutputFields, PoroElasticVtkOutputFields);
+SET_TYPE_PROP(PoroElastic, IOFields, PoroElasticIOFields);
 
 //! The deault model traits of the poro-elastic model
 SET_PROP(PoroElastic, ModelTraits)

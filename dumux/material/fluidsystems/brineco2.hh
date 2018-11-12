@@ -41,6 +41,8 @@
 
 #include <dumux/material/binarycoefficients/brine_co2.hh>
 
+#include <dumux/io/name.hh>
+
 namespace Dumux {
 
 // include the default tables for CO2
@@ -195,8 +197,8 @@ public:
     {
         switch (phaseIdx)
         {
-            case liquidPhaseIdx: return "liq";
-            case gasPhaseIdx: return "gas";
+            case liquidPhaseIdx: return IOName::liquidPhase();
+            case gasPhaseIdx: return IOName::gaseousPhase();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

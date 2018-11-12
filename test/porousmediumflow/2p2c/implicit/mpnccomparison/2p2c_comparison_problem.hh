@@ -36,7 +36,7 @@
 #include <dumux/material/fluidstates/compositional.hh>
 
 #include "2p2c_comparison_spatialparams.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux {
 /*!
@@ -82,7 +82,7 @@ public:
 
 SET_BOOL_PROP(TwoPTwoCComparison, UseMoles, true);
 
-SET_TYPE_PROP(TwoPTwoCComparison, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields);
+SET_TYPE_PROP(TwoPTwoCComparison, IOFields, TwoPTwoCMPNCIOFields);
 } // end namespace Properties
 
 

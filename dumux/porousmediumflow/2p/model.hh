@@ -69,12 +69,12 @@
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 
 #include "formulation.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 #include "saturationreconstruction.hh"
 
 namespace Dumux
@@ -103,11 +103,11 @@ struct TwoPModelTraits
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         if (priVarFormulation() == TwoPFormulation::p0s1)
-            return pvIdx == 0 ? "p_" + FluidSystem::phaseName(FluidSystem::phase0Idx)
-                              : "S_" + FluidSystem::phaseName(FluidSystem::phase1Idx) ;
+            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase0Idx)
+                              : IOName::saturation<FluidSystem>(FluidSystem::phase1Idx) ;
         else
-            return pvIdx == 0 ? "p_" + FluidSystem::phaseName(FluidSystem::phase1Idx)
-                              : "S_" + FluidSystem::phaseName(FluidSystem::phase0Idx);
+            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase1Idx)
+                              : IOName::saturation<FluidSystem>(FluidSystem::phase0Idx);
     }
 };
 
@@ -138,6 +138,9 @@ struct TwoPVolumeVariablesTraits
     using SaturationReconstruction = SR;
 };
 
+// necessary for models derived from 2p
+class TwoPIOFields;
+
 ////////////////////////////////
 // properties
 ////////////////////////////////
@@ -162,11 +165,12 @@ SET_PROP(TwoP, Formulation)
 
 SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
 
-//! The model traits class
-SET_TYPE_PROP(TwoP, ModelTraits, TwoPModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
+//! The base model traits class
+SET_TYPE_PROP(TwoP, BaseModelTraits, TwoPModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
+SET_TYPE_PROP(TwoP, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits)); //!< default the actually used traits to the base traits
 
 //! Set the vtk output fields specific to the twop model
-SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields);
+SET_TYPE_PROP(TwoP, IOFields, TwoPIOFields);
 
 //! Set the volume variables property
 SET_PROP(TwoP, VolumeVariables)
@@ -205,10 +209,10 @@ public:
 ////////////////////////////////////////////////////////
 
 //! The non-isothermal model traits class
-SET_TYPE_PROP(TwoPNI, ModelTraits, PorousMediumFlowNIModelTraits<TwoPModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>>);
+SET_TYPE_PROP(TwoPNI, ModelTraits, PorousMediumFlowNIModelTraits<typename GET_PROP_TYPE(TypeTag, BaseModelTraits)>);
 
 //! Set the vtk output fields specific to the non-isothermal twop model
-SET_TYPE_PROP(TwoPNI, VtkOutputFields, EnergyVtkOutputFields<TwoPVtkOutputFields>);
+SET_TYPE_PROP(TwoPNI, IOFields, EnergyIOFields<TwoPIOFields>);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNI, ThermalConductivityModel)

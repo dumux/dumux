@@ -131,9 +131,11 @@ int main(int argc, char** argv) try
     SolutionVector x(fvGridGeometry->numDofs());
     if (restartTime > 0)
     {
+        using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
+        using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
         using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
         const auto fileName = getParam<std::string>("Restart.File");
-        loadSolution(x, fileName, createPVNameFunction<ModelTraits>(), *fvGridGeometry);
+        loadSolution(x, fileName, createPVNameFunction<IOFields, PrimaryVariables, ModelTraits>(), *fvGridGeometry);
     }
     else
         problem->applyInitialSolution(x);
@@ -145,11 +147,11 @@ int main(int argc, char** argv) try
     gridVariables->init(x, xOld);
 
     // intialize the vtk output module
-    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
     vtkWriter.write(restartTime);
 

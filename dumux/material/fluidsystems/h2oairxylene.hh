@@ -36,6 +36,8 @@
 
 #include <dumux/material/fluidsystems/base.hh>
 
+#include <dumux/io/name.hh>
+
 namespace Dumux
 {
 namespace FluidSystems
@@ -198,9 +200,9 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         switch (phaseIdx)
         {
-            case wPhaseIdx: return "aq";
-            case nPhaseIdx: return "napl";
-            case gPhaseIdx: return "gas";
+            case wPhaseIdx: return IOName::aqueousPhase();
+            case nPhaseIdx: return IOName::naplPhase();
+            case gPhaseIdx: return IOName::gaseousPhase();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

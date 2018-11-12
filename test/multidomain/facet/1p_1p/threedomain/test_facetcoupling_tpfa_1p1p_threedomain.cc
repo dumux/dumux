@@ -183,12 +183,12 @@ int main(int argc, char** argv) try
     VtkOutputModule<EdgeGridVariables, EdgeSolutionVector> edgeVtkWriter(*edgeGridVariables, x[edgeId], edgeProblem->name());
 
     // Add model specific output fields
-    using BulkVtkOutputFields = typename GET_PROP_TYPE(BulkProblemTypeTag, VtkOutputFields);
-    using FacetVtkOutputFields = typename GET_PROP_TYPE(FacetProblemTypeTag, VtkOutputFields);
-    using EdgeVtkOutputFields = typename GET_PROP_TYPE(EdgeProblemTypeTag, VtkOutputFields);
-    BulkVtkOutputFields::init(bulkVtkWriter);
-    FacetVtkOutputFields::init(facetVtkWriter);
-    EdgeVtkOutputFields::init(edgeVtkWriter);
+    using BulkIOFields = typename GET_PROP_TYPE(BulkProblemTypeTag, IOFields);
+    using FacetIOFields = typename GET_PROP_TYPE(FacetProblemTypeTag, IOFields);
+    using EdgeIOFields = typename GET_PROP_TYPE(EdgeProblemTypeTag, IOFields);
+    BulkIOFields::initOutputModule(bulkVtkWriter);
+    FacetIOFields::initOutputModule(facetVtkWriter);
+    EdgeIOFields::initOutputModule(edgeVtkWriter);
     bulkVtkWriter.write(0.0);
     facetVtkWriter.write(0.0);
     edgeVtkWriter.write(0.0);

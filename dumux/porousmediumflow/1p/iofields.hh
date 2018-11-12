@@ -18,37 +18,43 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumNonEquilibriumModel
- * \brief Adds vtk output fields specific to non-isothermal models
+ * \ingroup OnePModel
+ * \brief Adds I/O fields specific to the one phase model
  */
-#ifndef DUMUX_NONEQUILBRIUM_OUTPUT_FIELDS_HH
-#define DUMUX_NONEQUILBRIUM_OUTPUT_FIELDS_HH
+#ifndef DUMUX_ONEP_IO_FIELDS_HH
+#define DUMUX_ONEP_IO_FIELDS_HH
+
+#include <dune/common/deprecated.hh>
+
+#include <dumux/io/name.hh>
 
 namespace Dumux {
 
 /*!
- * \ingroup PorousmediumNonEquilibriumModel
- * \brief Adds vtk output fields specific to non-isothermal models
+ * \ingroup OnePModel
+ * \brief Adds I/O fields specific to the one phase model
  */
-template<class ModelTraits, class EquilibriumVtkOutputFields>
-class NonEquilibriumVtkOutputFields
+class OnePIOFields
 {
 public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        using FluidSystem = typename VtkOutputModule::VolumeVariables::FluidSystem;
+        out.addVolumeVariable([](const auto& volVars){ return volVars.pressure(); },
+                              IOName::pressure());
+    }
 
-        EquilibriumVtkOutputFields::init(vtk);
-        for (int i = 0; i < ModelTraits::numEnergyEqFluid(); ++i)
-            vtk.addVolumeVariable( [i](const auto& v){ return v.temperatureFluid(i); }, "T_" + FluidSystem::phaseName(i) );
-        for (int i = 0; i < ModelTraits::numEnergyEqSolid(); ++i)
-            vtk.addVolumeVariable( [i](const auto& v){ return v.temperatureSolid(); }, "T_s" );
-        for (int i = 0; i < ModelTraits::numPhases(); ++i){
-            vtk.addVolumeVariable( [i](const auto& v){ return v.reynoldsNumber(i); }, "reynoldsNumber_" + FluidSystem::phaseName(i) );
-            vtk.addVolumeVariable( [i](const auto& v){ return v.nusseltNumber(i); }, "nusseltNumber_" + FluidSystem::phaseName(i) );
-            vtk.addVolumeVariable( [i](const auto& v){ return v.prandtlNumber(i); }, "prandtlNumber_" + FluidSystem::phaseName(i) );
-        }
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
+    {
+        initOutputModule(out);
+    }
+
+    template <class ModelTraits = void, class FluidSystem = void, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        return IOName::pressure();
     }
 };
 

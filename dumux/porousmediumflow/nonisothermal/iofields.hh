@@ -18,45 +18,49 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup KEpsilonModel
- * \copydoc Dumux::KEpsilonVtkOutputFields
+ * \ingroup NIModel
+ * \brief Adds I/O fields specific to non-isothermal models
  */
-#ifndef DUMUX_KEPSILON_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_KEPSILON_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_ENERGY_OUTPUT_FIELDS_HH
+#define DUMUX_ENERGY_OUTPUT_FIELDS_HH
 
-#include <dumux/freeflow/rans/vtkoutputfields.hh>
+#include <dumux/io/name.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup KEpsilonModel
- * \brief Adds vtk output fields for the k-epsilon turbulence model
+ * \ingroup NIModel
+ * \brief Adds I/O fields specific to non-isothermal models
  */
-template<class FVGridGeometry>
-class KEpsilonVtkOutputFields : public RANSVtkOutputFields<FVGridGeometry>
+template<class IsothermalIOFields>
+class EnergyIOFields
 {
-    enum { dim = FVGridGeometry::GridView::dimension };
 
 public:
-    //! Initialize the Reynolds-averaged Navier-Stokes specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        RANSVtkOutputFields<FVGridGeometry>::init(vtk);
-        add(vtk);
+        IsothermalIOFields::initOutputModule(out);
+        out.addVolumeVariable( [](const auto& v){ return v.temperature(); },
+                               IOName::temperature());
     }
 
-    //! Add the KEpsilon specific vtk output fields.
-    template <class VtkOutputModule>
-    static void add(VtkOutputModule& vtk)
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
     {
-        vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
-        vtk.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "epsilon");
-        vtk.addVolumeVariable([](const auto& v){ return v.yPlusNominal(); }, "y^+_nom");
-        vtk.addVolumeVariable([](const auto& v){ return v.uPlusNominal(); }, "u^+_nom");
-        vtk.addVolumeVariable([](const auto& v){ return v.inNearWallRegion(); }, "inNearWallRegion");
-        vtk.addVolumeVariable([](const auto& v){ return v.isMatchingPoint(); }, "isMatchingPoint");
+        initOutputModule(out);
+    }
+
+    template <class ModelTraits, class FluidSystem = void, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        using IsothermalTraits = typename ModelTraits::IsothermalTraits;
+
+        if (pvIdx < ModelTraits::numEq() - 1)
+            return IsothermalIOFields::template primaryVariableName<IsothermalTraits, FluidSystem, SolidSystem>(pvIdx, state);
+        else
+            return IOName::temperature();
     }
 };
 

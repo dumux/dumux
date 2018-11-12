@@ -38,7 +38,7 @@
 #include "localresidual.hh"
 #include "indices.hh"
 #include "gridvariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 /*!
  * \ingroup \ingroup PorousmediumNonEquilibriumModel
@@ -132,13 +132,13 @@ public:
 SET_TYPE_PROP(NonEquilibrium, GridVariables, NonEquilibriumGridVariables<TypeTag>);
 
 //! indices for non-isothermal models
-SET_PROP(NonEquilibrium, VtkOutputFields)
+SET_PROP(NonEquilibrium, IOFields)
 {
 private:
-    using EquilibriumVtkOutputFields = typename GET_PROP_TYPE(TypeTag, EquilibriumVtkOutputFields);
+    using EquilibriumIOFields = typename GET_PROP_TYPE(TypeTag, EquilibriumIOFields);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 public:
-     using type = NonEquilibriumVtkOutputFields<ModelTraits, EquilibriumVtkOutputFields>;
+     using type = NonEquilibriumIOFields<ModelTraits, EquilibriumIOFields>;
 };
 
 SET_PROP(NonEquilibrium, NusseltFormulation)

@@ -28,6 +28,7 @@
 
 #include <dumux/common/spline.hh>
 #include <dumux/material/eos/pengrobinsonmixture.hh>
+#include <dumux/io/name.hh>
 
 namespace Dumux
 {
@@ -89,9 +90,9 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         switch (phaseIdx)
         {
-            case gPhaseIdx: return "gas";
-            case wPhaseIdx: return "aq";
-            case oPhaseIdx: return "napl";
+            case gPhaseIdx: return IOName::gaseousPhase();
+            case wPhaseIdx: return IOName::aqueousPhase();
+            case oPhaseIdx: return IOName::naplPhase();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

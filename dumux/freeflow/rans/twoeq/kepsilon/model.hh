@@ -72,7 +72,7 @@
 #include "indices.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux
 {
@@ -99,21 +99,6 @@ struct KEpsilonModelTraits : RANSModelTraits<dimension>
 
     //! the indices
     using Indices = KEpsilonIndices<dim(), numComponents()>;
-
-    //! return the names of the primary variables in cells
-    template<class FluidSystem = void>
-    static std::string primaryVariableNameCell(int pvIdx, int state = 0)
-    {
-        using ParentType = RANSModelTraits<dimension>;
-        switch (pvIdx) {
-            case 0:
-                return ParentType::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
-            case 1:
-                return "k";
-            default:
-                return "epsilon";
-        }
-    }
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -170,14 +155,8 @@ public:
     using type = KEpsilonVolumeVariables<Traits, NSVolVars>;
 };
 
-//! The specific vtk output fields
-SET_PROP(KEpsilon, VtkOutputFields)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-public:
-    using type = KEpsilonVtkOutputFields<FVGridGeometry>;
-};
+//! The specific I/O fields
+SET_TYPE_PROP(KEpsilon, IOFields, KEpsilonIOFields);
 
 //////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal k-epsilon model
@@ -216,16 +195,8 @@ public:
     using type = KEpsilonVolumeVariables<Traits, NSVolVars>;
 };
 
-//! The specific non-isothermal vtk output fields
-SET_PROP(KEpsilonNI, VtkOutputFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = KEpsilonVtkOutputFields<FVGridGeometry>;
-public:
-    using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
-};
+//! The specific non-isothermal I/O fields
+SET_TYPE_PROP(KEpsilonNI, IOFields, FreeflowNonIsothermalIOFields<KEpsilonIOFields, true/*turbulenceModel*/>);
 
 // \}
 }

@@ -30,10 +30,10 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
-#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/iofields.hh>
 #include <dumux/freeflow/rans/twoeq/kepsilon/model.hh>
 
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux {
 
@@ -69,19 +69,6 @@ struct KEpsilonNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useMo
 
     //! the indices
     using Indices = KEpsilonIndices<dimension, nComp>;
-
-    //! return the names of the primary variables in cells
-    template <class FluidSystem>
-    static std::string primaryVariableNameCell(int pvIdx, int state = 0)
-    {
-        using ParentType = NavierStokesNCModelTraits<dimension, nComp, useMoles, replaceCompEqIdx>;
-        if (pvIdx < nComp)
-            return ParentType::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
-        else if (pvIdx == nComp)
-            return "k";
-        else
-            return "epsilon";
-    }
 };
 
 //!< states some specifics of the isothermal multi-component low-Reynolds k-epsilon model
@@ -136,17 +123,8 @@ public:
     using type = KEpsilonFluxVariables<TypeTag, BaseFluxVariables>;
 };
 
-//! The specific vtk output fields
-SET_PROP(KEpsilonNC, VtkOutputFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SinglePhaseVtkOutputFields = KEpsilonVtkOutputFields<FVGridGeometry>;
-public:
-    using type = FreeflowNCVtkOutputFields<SinglePhaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem>;
-};
+//! The specific I/O fields
+SET_TYPE_PROP(KEpsilonNC, IOFields, FreeflowNCIOFields<KEpsilonIOFields, true/*turbulenceModel*/>);
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component k-epsilon model
@@ -208,17 +186,13 @@ public:
     using type = KEpsilonFluxVariables<TypeTag, BaseFluxVariables>;
 };
 
-//! The specific vtk output fields
-SET_PROP(KEpsilonNCNI, VtkOutputFields)
+//! The specific I/O fields
+SET_PROP(KEpsilonNCNI, IOFields)
 {
 private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BaseVtkOutputFields = KEpsilonVtkOutputFields<FVGridGeometry>;
-    using NonIsothermalFields = FreeflowNonIsothermalVtkOutputFields<BaseVtkOutputFields, ModelTraits>;
+    using IsothermalIOFields = FreeflowNCIOFields<KEpsilonIOFields, true/*turbulenceModel*/>;
 public:
-    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem>;
+    using type = FreeflowNonIsothermalIOFields<IsothermalIOFields, true/*turbulenceModel*/>;
 };
 
 // \}

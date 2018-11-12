@@ -81,7 +81,7 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 
 #include "indices.hh"
@@ -89,7 +89,7 @@
 #include "volumevariables.hh"
 #include "localresidual.hh"
 #include "primaryvariableswitch.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux {
 
@@ -274,7 +274,7 @@ public:
 };
 
 //! Set the non-isothermal vkt output fields
-SET_TYPE_PROP(ThreePWaterOilNI, VtkOutputFields, EnergyVtkOutputFields<ThreePWaterOilVtkOutputFields>);
+SET_TYPE_PROP(ThreePWaterOilNI, IOFields, EnergyIOFields<ThreePWaterOilIOFields>);
 
 } // end namespace Properties
 } // end namespace Dumux

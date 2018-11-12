@@ -144,10 +144,10 @@ int main(int argc, char** argv) try
     gridVariables->init(x);
 
     // intialize the vtk output module and output fields
-    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     using VtkOutputModule = Dumux::VtkOutputModule<GridVariables, SolutionVector>;
     VtkOutputModule vtkWriter(*gridVariables, x, problem->name());
-    VtkOutputFields::init(vtkWriter);
+    IOFields::initOutputModule(vtkWriter);
 
     // also, add exact solution to the output
     SolutionVector xExact(fvGridGeometry->numDofs());

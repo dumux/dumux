@@ -66,11 +66,11 @@
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux {
 
@@ -186,14 +186,7 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_PROP(ThreeP, VtkOutputFields)
-{
-private:
-   using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-
-public:
-    using type = ThreePVtkOutputFields;
-};
+SET_TYPE_PROP(ThreeP, IOFields, ThreePIOFields);
 
 /////////////////////////////////////////////////
 // Properties for the non-isothermal 3p model
@@ -209,14 +202,7 @@ public:
 };
 
 //! Set non-isothermal output fields
-SET_PROP(ThreePNI, VtkOutputFields)
-{
-private:
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using IsothermalFields = ThreePVtkOutputFields;
-public:
-    using type = EnergyVtkOutputFields<IsothermalFields>;
-};
+SET_TYPE_PROP(ThreePNI, IOFields, EnergyIOFields<ThreePIOFields>);
 
 //! Set non-isothermal model traits
 SET_PROP(ThreePNI, ModelTraits)

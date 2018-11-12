@@ -18,38 +18,51 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TracerModel
- * \brief Adds vtk output fields specific to the tracer model
+ * \ingroup KOmegaModel
+ * \copydoc Dumux::KOmegaIOFields
  */
-#ifndef DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_KOMEGA_IO_FIELDS_HH
+#define DUMUX_KOMEGA_IO_FIELDS_HH
 
-#include <string>
+#include <dumux/freeflow/rans/iofields.hh>
+#include <dune/common/deprecated.hh>
 
-namespace Dumux {
+namespace Dumux
+{
 
 /*!
- * \ingroup TracerModel
- * \brief Adds vtk output fields specific to the tracer model
+ * \ingroup KOmegaModel
+ * \brief Adds I/O fields for the Reynolds-Averaged Navier-Stokes model
  */
-class TracerVtkOutputFields
+struct KOmegaIOFields
 {
-public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
     {
-        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
-        using FluidSystem = typename VolumeVariables::FluidSystem;
+        initOutputModule(out);
+    }
 
-        // register standardized vtk output fields
-        for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
-        {
-            vtk.addVolumeVariable( [compIdx](const auto& v){  return v.moleFraction(0, compIdx); },
-                                   "x^" + std::string(FluidSystem::componentName(compIdx)));
-            vtk.addVolumeVariable( [compIdx](const auto& v){  return v.massFraction(0, compIdx); },
-                                   "X^" + std::string(FluidSystem::componentName(compIdx)));
-        }
-        vtk.addVolumeVariable( [](const auto& v){ return v.density(); }, "rho");
+    //! Initialize the KOmegaModel specific output fields.
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
+    {
+        RANSIOFields::initOutputModule(out);
+
+        out.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
+        out.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "omega");
+    }
+
+    //! return the names of the primary variables
+    template <class ModelTraits, class FluidSystem>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        if (pvIdx < ModelTraits::dim() + ModelTraits::numComponents())
+            return RANSIOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
+        else if (pvIdx == ModelTraits::dim() + ModelTraits::numComponents())
+            return "k";
+        else
+            return "omega";
     }
 };
 

@@ -115,7 +115,7 @@
           921.42 921.42 921.42 921.42 921.42 921.42 921.419 921.419 921.419 921.419 921.419 921.419
           921.419 921.419 921.419 921.419 921.392 921.392
         </DataArray>
-        <DataArray type="Float32" Name="kr" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="kr_liq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
