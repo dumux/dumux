@@ -66,9 +66,8 @@ public:
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
         const auto numScv = fvGridGeometry.numScv();
-        const auto numBoundaryScvf = fvGridGeometry.numBoundaryScvf();
+        volumeVariables_.resize(numScv);
 
-        volumeVariables_.resize(numScv + numBoundaryScvf);
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {
             auto fvGeometry = localView(fvGridGeometry);
@@ -78,31 +77,6 @@ public:
             {
                 const auto elemSol = elementSolution(element, sol, fvGridGeometry);
                 volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
-            }
-
-            if (fvGeometry.hasBoundaryScvf())
-            {
-                // handle the boundary volume variables
-                for (auto&& scvf : scvfs(fvGeometry))
-                {
-                    // if we are not on a boundary, skip the rest
-                    if (!scvf.boundary())
-                        continue;
-
-                    // check if boundary is a pure dirichlet boundary
-                    const auto bcTypes = problem().boundaryTypes(element, scvf);
-                    if (bcTypes.hasOnlyDirichlet())
-                    {
-                        const auto insideScvIdx = scvf.insideScvIdx();
-                        const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                        const auto dirichletPriVars = elementSolution<typename FVGridGeometry::LocalView>(problem().dirichlet(element, scvf));
-
-                        volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars,
-                                                                      problem(),
-                                                                      element,
-                                                                      insideScv);
-                    }
-                }
             }
         }
     }
