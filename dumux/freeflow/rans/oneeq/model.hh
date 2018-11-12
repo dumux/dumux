@@ -79,12 +79,14 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
+#include <dumux/freeflow/turbulencemodel.hh>
 #include <dumux/freeflow/rans/model.hh>
 #include <dumux/freeflow/nonisothermal/iofields.hh>
 
 #include "fluxvariables.hh"
 #include "indices.hh"
 #include "localresidual.hh"
+#include "problem.hh"
 #include "volumevariables.hh"
 #include "iofields.hh"
 
@@ -112,6 +114,10 @@ struct OneEqModelTraits : RANSModelTraits<dimension>
 
     //! the indices
     using Indices = OneEqIndices<dim(), numFluidComponents()>;
+
+    //! return the type of turbulence model used
+    static constexpr auto turbulenceModel()
+    { return TurbulenceModel::oneeq; }
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -185,7 +191,7 @@ struct IOFields<TypeTag, TTag::OneEq> { using type = OneEqIOFields; };
 
 // Create new type tags
 namespace TTag {
-//! The type tag for the single-phase, isothermal Spalart-Allmaras model
+//! The type tag for the single-phase, non-isothermal Spalart-Allmaras model
 struct OneEqNI { using InheritsFrom = std::tuple<RANSNI>; };
 } // end namespace TTag
 

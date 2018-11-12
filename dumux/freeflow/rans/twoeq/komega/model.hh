@@ -74,7 +74,9 @@
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/rans/model.hh>
 #include <dumux/freeflow/rans/twoeq/indices.hh>
+#include <dumux/freeflow/turbulencemodel.hh>
 
+#include "problem.hh"
 #include "fluxvariables.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
@@ -104,6 +106,10 @@ struct KOmegaModelTraits : RANSModelTraits<dimension>
 
     //! The indices
     using Indices = RANSTwoEqIndices<dim(), numFluidComponents()>;
+
+    //! return the type of turbulence model used
+    static constexpr auto turbulenceModel()
+    { return TurbulenceModel::komega; }
 };
 
 ///////////////////////////////////////////////////////////////////////////

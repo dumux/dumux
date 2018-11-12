@@ -82,7 +82,9 @@
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/rans/model.hh>
 #include <dumux/freeflow/rans/twoeq/indices.hh>
+#include <dumux/freeflow/turbulencemodel.hh>
 
+#include "problem.hh"
 #include "fluxvariables.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
@@ -112,6 +114,10 @@ struct LowReKEpsilonModelTraits : RANSModelTraits<dimension>
 
     //! the indices
     using Indices = RANSTwoEqIndices<dim(), numFluidComponents()>;
+
+    //! return the type of turbulence model used
+    static constexpr auto turbulenceModel()
+    { return TurbulenceModel::lowrekepsilon; }
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -185,7 +191,7 @@ struct IOFields<TypeTag, TTag::LowReKEpsilon> { using type = LowReKEpsilonIOFiel
 
 // Create new type tags
 namespace TTag {
-//! The type tag for the single-phase, isothermal low-Reynolds k-epsilon model
+//! The type tag for the single-phase, non-isothermal low-Reynolds k-epsilon model
 struct LowReKEpsilonNI { using InheritsFrom = std::tuple<RANSNI>; };
 } // end namespace TTag
 

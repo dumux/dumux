@@ -40,6 +40,7 @@
 #include <dumux/freeflow/rans/model.hh>
 #include <dumux/freeflow/navierstokes/volumevariables.hh>
 
+#include "problem.hh"
 #include "volumevariables.hh"
 
 namespace Dumux {
@@ -54,6 +55,33 @@ namespace TTag {
 //! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes 0-Eq. model
 struct ZeroEq { using InheritsFrom = std::tuple<RANS>; };
 } // end namespace TTag
+
+/*!
+ * \ingroup ZeroEqModel
+ * \brief Traits for the ZeroEq model
+ *
+ * \tparam dimension The dimension of the problem
+ */
+template<int dimension>
+struct ZeroEqModelTraits : RANSModelTraits<dimension>
+{
+    //! The dimension of the model
+    static constexpr int dim() { return dimension; }
+
+    //! return the type of turbulence model used
+    static constexpr auto turbulenceModel()
+    { return TurbulenceModel::zeroeq; }
+};
+
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ZeroEq>
+{
+private:
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    static constexpr int dim = GridView::dimension;
+public:
+    using type = ZeroEqModelTraits<dim>;
+};
 
 //! Set the volume variables property
 template<class TypeTag>
@@ -81,9 +109,21 @@ public:
 
 // Create new type tags
 namespace TTag {
-//! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes model
+//! The type tag for the single-phase, non-isothermal Reynolds-Averaged Navier-Stokes model
 struct ZeroEqNI { using InheritsFrom = std::tuple<RANSNI>; };
 } // end namespace TTag
+
+//! The model traits of the non-isothermal model
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ZeroEqNI>
+{
+private:
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    static constexpr int dim = GridView::dimension;
+    using IsothermalTraits = ZeroEqModelTraits<dim>;
+public:
+    using type = FreeflowNIModelTraits<IsothermalTraits>;
+};
 
 //! Set the volume variables property
 template<class TypeTag>
