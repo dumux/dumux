@@ -95,8 +95,10 @@ class OnePLowDimProblem : public PorousMediumFlowProblem<TypeTag>
 public:
     OnePLowDimProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                       std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                      std::shared_ptr<CouplingManager> couplingManagerPtr,
                       const std::string& paramGroup = "LowDim")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    , couplingManagerPtr_(couplingManagerPtr)
     , aperture_(getParam<Scalar>("Problem.FractureAperture"))
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
@@ -157,10 +159,6 @@ public:
     //! returns the temperature in \f$\mathrm{[K]}\f$ in the domain
     Scalar temperature() const
     { return 283.15; /*10°*/ }
-
-    //! sets the pointer to the coupling manager.
-    void setCouplingManager(std::shared_ptr<CouplingManager> cm)
-    { couplingManagerPtr_ = cm; }
 
     //! returns reference to the coupling manager.
     const CouplingManager& couplingManager() const

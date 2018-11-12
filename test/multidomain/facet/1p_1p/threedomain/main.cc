@@ -122,16 +122,20 @@ int main(int argc, char** argv) try
     facetFvGridGeometry->update();
     edgeFvGridGeometry->update();
 
+    // the coupling manager
+    using CouplingManager = typename TestTraits::CouplingManager;
+    auto couplingManager = std::make_shared<CouplingManager>();
+
     // the problems (boundary conditions)
     using BulkProblem = typename GET_PROP_TYPE(BulkProblemTypeTag, Problem);
     using FacetProblem = typename GET_PROP_TYPE(FacetProblemTypeTag, Problem);
     using EdgeProblem = typename GET_PROP_TYPE(EdgeProblemTypeTag, Problem);
     auto bulkSpatialParams = std::make_shared<typename BulkProblem::SpatialParams>(bulkFvGridGeometry, "Bulk");
-    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, bulkSpatialParams, "Bulk");
+    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, bulkSpatialParams, couplingManager, "Bulk");
     auto facetSpatialParams = std::make_shared<typename FacetProblem::SpatialParams>(facetFvGridGeometry, "Facet");
-    auto facetProblem = std::make_shared<FacetProblem>(facetFvGridGeometry, facetSpatialParams, "Facet");
+    auto facetProblem = std::make_shared<FacetProblem>(facetFvGridGeometry, facetSpatialParams, couplingManager, "Facet");
     auto edgeSpatialParams = std::make_shared<typename EdgeProblem::SpatialParams>(edgeFvGridGeometry, "Edge");
-    auto edgeProblem = std::make_shared<EdgeProblem>(edgeFvGridGeometry, edgeSpatialParams, "Edge");
+    auto edgeProblem = std::make_shared<EdgeProblem>(edgeFvGridGeometry, edgeSpatialParams, couplingManager, "Edge");
 
     // the solution vector
     using Traits = typename TestTraits::MDTraits;
@@ -153,15 +157,8 @@ int main(int argc, char** argv) try
     auto couplingMapper = std::make_shared<CouplingMapper>();
     couplingMapper->update(*bulkFvGridGeometry, *facetFvGridGeometry, *edgeFvGridGeometry, gridManager.getEmbeddings());
 
-    // the coupling manager
-    using CouplingManager = typename TestTraits::CouplingManager;
-    auto couplingManager = std::make_shared<CouplingManager>();
+    // initialize the coupling manager
     couplingManager->init(bulkProblem, facetProblem, edgeProblem, couplingMapper, x);
-
-    // set coupling manager pointer in sub-problems
-    bulkProblem->setCouplingManager(couplingManager);
-    facetProblem->setCouplingManager(couplingManager);
-    edgeProblem->setCouplingManager(couplingManager);
 
     // the grid variables
     using BulkGridVariables = typename GET_PROP_TYPE(BulkProblemTypeTag, GridVariables);

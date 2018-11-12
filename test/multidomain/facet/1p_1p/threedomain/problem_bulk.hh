@@ -96,8 +96,10 @@ public:
     //! The constructor
     OnePBulkProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                    std::shared_ptr<CouplingManager> couplingManagerPtr,
                     const std::string& paramGroup = "Bulk")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    , couplingManagerPtr_(couplingManagerPtr)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
@@ -156,10 +158,6 @@ public:
     //! Return const reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
-
-    //! sets the pointer to the coupling manager.
-    void setCouplingManager(std::shared_ptr<CouplingManager> cm)
-    { couplingManagerPtr_ = cm; }
 
 private:
     std::string problemName_;

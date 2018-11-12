@@ -100,8 +100,10 @@ public:
     //! The constructor
     OnePEdgeProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                    std::shared_ptr<CouplingManager> couplingManagerPtr,
                     const std::string& paramGroup = "Edge")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    , couplingManagerPtr_(couplingManagerPtr)
     {
         const auto a = getParam<Scalar>("Extrusion.Aperture");
         exFactor_ = a*a;
@@ -155,14 +157,10 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 
-    //! sets the pointer to the coupling manager.
-    void setCouplingManager(std::shared_ptr<CouplingManager> cm)
-    { couplingManagerPtr_ = cm; }
-
 private:
-    Scalar exFactor_;
-    std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
+    std::string problemName_;
+    Scalar exFactor_;
 };
 
 } // end namespace Dumux

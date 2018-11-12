@@ -224,16 +224,20 @@ int main(int argc, char** argv) try
     updateBulkFVGridGeometry(*bulkFvGridGeometry, gridManager, lowDimGridView);
     lowDimFvGridGeometry->update();
 
+    // the coupling manager
+    using TestTraits = TestTraits<BulkProblemTypeTag, LowDimProblemTypeTag>;
+    using CouplingManager = typename TestTraits::CouplingManager;
+    auto couplingManager = std::make_shared<CouplingManager>();
+
     // the problems (boundary conditions)
     using BulkProblem = typename GET_PROP_TYPE(BulkProblemTypeTag, Problem);
     using LowDimProblem = typename GET_PROP_TYPE(LowDimProblemTypeTag, Problem);
     auto bulkSpatialParams = std::make_shared<typename BulkProblem::SpatialParams>(bulkFvGridGeometry, "Bulk");
-    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, bulkSpatialParams, "Bulk");
+    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, bulkSpatialParams, couplingManager, "Bulk");
     auto lowDimSpatialParams = std::make_shared<typename LowDimProblem::SpatialParams>(lowDimFvGridGeometry, "LowDim");
-    auto lowDimProblem = std::make_shared<LowDimProblem>(lowDimFvGridGeometry, lowDimSpatialParams, "LowDim");
+    auto lowDimProblem = std::make_shared<LowDimProblem>(lowDimFvGridGeometry, lowDimSpatialParams, couplingManager, "LowDim");
 
     // the solution vector
-    using TestTraits = TestTraits<BulkProblemTypeTag, LowDimProblemTypeTag>;
     using MDTraits = typename TestTraits::MDTraits;
     using SolutionVector = typename MDTraits::SolutionVector;
     SolutionVector x;
@@ -249,14 +253,8 @@ int main(int argc, char** argv) try
     auto couplingMapper = std::make_shared<typename TestTraits::CouplingMapper>();
     couplingMapper->update(*bulkFvGridGeometry, *lowDimFvGridGeometry, gridManager.getEmbeddings());
 
-    // the coupling manager
-    using CouplingManager = typename TestTraits::CouplingManager;
-    auto couplingManager = std::make_shared<CouplingManager>();
+    // initialize the coupling manager
     couplingManager->init(bulkProblem, lowDimProblem, couplingMapper, x);
-
-    // set coupling manager pointer in sub-problems
-    bulkProblem->setCouplingManager(couplingManager);
-    lowDimProblem->setCouplingManager(couplingManager);
 
     // the grid variables
     using BulkGridVariables = typename GET_PROP_TYPE(BulkProblemTypeTag, GridVariables);

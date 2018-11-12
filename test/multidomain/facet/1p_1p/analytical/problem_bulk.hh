@@ -95,8 +95,10 @@ class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
 public:
     OnePBulkProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                    std::shared_ptr<CouplingManager> couplingManagerPtr,
                     const std::string& paramGroup = "Bulk")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    , couplingManagerPtr_(couplingManagerPtr)
     , lowDimPermeability_(getParam<Scalar>("LowDim.SpatialParams.Permeability"))
     , aperture_(getParam<Scalar>("Problem.FractureAperture"))
     {
@@ -188,10 +190,6 @@ public:
     //! returns the temperature in \f$\mathrm{[K]}\f$ in the domain
     Scalar temperature() const
     { return 283.15; /*10°*/ }
-
-    //! sets the pointer to the coupling manager.
-    void setCouplingManager(std::shared_ptr<CouplingManager> cm)
-    { couplingManagerPtr_ = cm; }
 
     //! returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
