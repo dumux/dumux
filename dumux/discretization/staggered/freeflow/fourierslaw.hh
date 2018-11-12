@@ -41,7 +41,7 @@ class FouriersLawImplementation;
  * \brief Specialization of Fourier's Law for the staggered free flow method.
  */
 template <class TypeTag>
-class FouriersLawImplementation<TypeTag, DiscretizationMethod::staggered >
+class FouriersLawImplementation<TypeTag, DiscretizationMethod::staggered>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -50,8 +50,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::staggered >
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-
-    enum { energyBalanceIdx = Indices::energyBalanceIdx };
 
 public:
     // state the discretization method this implementation belongs to
@@ -72,7 +70,7 @@ public:
         Scalar flux(0.0);
 
         // conductive energy flux is zero for outflow boundary conditions
-        if (scvf.boundary() && problem.boundaryTypes(element, scvf).isOutflow(Indices::energyBalanceIdx))
+        if (scvf.boundary() && problem.boundaryTypes(element, scvf).isOutflow(Indices::energyEqIdx))
             return flux;
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());

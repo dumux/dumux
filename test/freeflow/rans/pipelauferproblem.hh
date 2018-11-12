@@ -237,7 +237,7 @@ public:
             values.setDirichlet(Indices::pressureIdx);
 
 #if NONISOTHERMAL
-            values.setOutflow(Indices::energyBalanceIdx);
+            values.setOutflow(Indices::energyEqIdx);
 #endif
 
 #if LOWREKEPSILON || KEPSILON || KOMEGA

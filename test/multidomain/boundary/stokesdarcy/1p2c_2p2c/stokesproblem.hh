@@ -162,7 +162,7 @@ public:
         const auto& globalPos = scvf.center();
 
 #if NONISOTHERMAL
-            values.setNeumann(Indices::energyBalanceIdx);
+            values.setNeumann(Indices::energyEqIdx);
 #endif
 
         if (onUpperBoundary_(globalPos) || onLeftBoundary_(globalPos))
@@ -179,7 +179,7 @@ public:
             values.setOutflow(Indices::conti0EqIdx + 1);
 
 #if NONISOTHERMAL
-            values.setOutflow(Indices::energyBalanceIdx);
+            values.setOutflow(Indices::energyEqIdx);
 #endif
         }
 
@@ -239,7 +239,7 @@ public:
             values[Indices::conti0EqIdx] = -xVelocity * density * (1.0 - refMoleFrac());
 
 #if NONISOTHERMAL
-            values[Indices::energyBalanceIdx] = -xVelocity * fluidState.density(0) * fluidState.enthalpy(0);
+            values[Indices::energyEqIdx] = -xVelocity * fluidState.density(0) * fluidState.enthalpy(0);
 #endif
         }
 
@@ -252,7 +252,7 @@ public:
             values[Indices::conti0EqIdx + 1] = massFlux[1];
 
 #if NONISOTHERMAL
-            values[Indices::energyBalanceIdx] = couplingManager().couplingData().energyCouplingCondition(fvGeometry, elemVolVars, elemFaceVars, scvf, diffCoeffAvgType_);
+            values[Indices::energyEqIdx] = couplingManager().couplingData().energyCouplingCondition(fvGeometry, elemVolVars, elemFaceVars, scvf, diffCoeffAvgType_);
 #endif
 
         }

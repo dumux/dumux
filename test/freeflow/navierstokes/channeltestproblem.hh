@@ -157,7 +157,7 @@ public:
         {
             values.setDirichlet(Indices::pressureIdx);
 #if NONISOTHERMAL
-            values.setOutflow(Indices::energyBalanceIdx);
+            values.setOutflow(Indices::energyEqIdx);
 #endif
         }
         else
@@ -165,7 +165,7 @@ public:
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
 #if NONISOTHERMAL
-            values.setNeumann(Indices::energyBalanceIdx);
+            values.setNeumann(Indices::energyEqIdx);
 #endif
         }
 

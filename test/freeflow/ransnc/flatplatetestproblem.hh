@@ -255,7 +255,7 @@ public:
             values.setOutflow(transportEqIdx);
 
 #if NONISOTHERMAL
-            values.setOutflow(Indices::energyBalanceIdx);
+            values.setOutflow(Indices::energyEqIdx);
 #endif
 
 #if KEPSILON || KOMEGA || LOWREKEPSILON
