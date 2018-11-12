@@ -112,14 +112,19 @@ int main(int argc, char** argv) try
     onePFvGridGeometry->update();
     poroMechFvGridGeometry->update();
 
+    // the coupling manager
+    using Traits = MultiDomainTraits<OnePTypeTag, PoroMechTypeTag>;
+    using CouplingManager = PoroMechanicsCouplingManager<Traits>;
+    auto couplingManager = std::make_shared<CouplingManager>();
+
     // the problems (boundary conditions)
     using OnePProblem = typename GET_PROP_TYPE(OnePTypeTag, Problem);
     using PoroMechProblem = typename GET_PROP_TYPE(PoroMechTypeTag, Problem);
-    auto onePProblem = std::make_shared<OnePProblem>(onePFvGridGeometry, "OneP");
-    auto poroMechProblem = std::make_shared<PoroMechProblem>(poroMechFvGridGeometry, "PoroElastic");
+    auto onePSpatialParams = std::make_shared<typename OnePProblem::SpatialParams>(onePFvGridGeometry, couplingManager);
+    auto onePProblem = std::make_shared<OnePProblem>(onePFvGridGeometry, onePSpatialParams, "OneP");
+    auto poroMechProblem = std::make_shared<PoroMechProblem>(poroMechFvGridGeometry, couplingManager, "PoroElastic");
 
     // the solution vectors
-    using Traits = MultiDomainTraits<OnePTypeTag, PoroMechTypeTag>;
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
 
@@ -131,15 +136,8 @@ int main(int argc, char** argv) try
     poroMechProblem->applyInitialSolution(x[poroMechId]);
     SolutionVector xOld = x;
 
-    // the coupling manager
-    using CouplingManager = PoroMechanicsCouplingManager<Traits>;
-    auto couplingManager = std::make_shared<CouplingManager>();
+    // initialize the coupling manager
     couplingManager->init(onePProblem, poroMechProblem, x);
-
-    // set coupling manager pointer in sub-problems
-    // (in 1p problem the coupling enters in the parameters)
-    onePProblem->spatialParams().setCouplingManager(couplingManager);
-    poroMechProblem->setCouplingManager(couplingManager);
 
     // the grid variables
     using OnePGridVariables = typename GET_PROP_TYPE(OnePTypeTag, GridVariables);
