@@ -283,10 +283,6 @@ public:
         std::cout << "Global integrated source (1D): " << source << '\n';
     }
 
-    //! Set the coupling manager
-    void setCouplingManager(std::shared_ptr<CouplingManager> cm)
-    { couplingManager_ = cm; }
-
     //! Get the coupling manager
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
