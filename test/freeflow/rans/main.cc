@@ -24,7 +24,6 @@
  * This test simulates is based on pipe flow experiments by
  * John Laufers experiments in 1954 \cite Laufer1954a.
  */
-
 #include <config.h>
 
 #include <ctime>
@@ -46,6 +45,7 @@
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/discretization/method.hh>
 
 #include "problem.hh"
 
@@ -75,7 +75,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::PipeLauferProblem;
+    using TypeTag = Properties::TTag::TYPETAG;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
