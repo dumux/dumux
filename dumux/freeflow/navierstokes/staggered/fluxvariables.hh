@@ -209,11 +209,12 @@ public:
         {
             // Get the average velocity at the center of the element (i.e. the location of the staggered face).
             const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
+            const Scalar defTransportingVelocity = (defElemFaceVars[scvf].velocitySelf() + defElemFaceVars[scvf].velocityOpposite()) * 0.5;
 
             // Check if the the velocity of the dof at interest lies up- or downstream w.r.t. to the transporting velocity.
             const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
 
-            Scalar momentum = 0.0;
+            Scalar momentumSecondOrder = 0.0;
 
             // Variables that will store the velocities of interest:
             // velocities[0]: downstream velocity
@@ -239,17 +240,17 @@ public:
                 {
                     case TvdApproach::uniform :
                     {
-                        momentum = highOrder.tvd(upstreamVelocity, defVelocities, insideVolVars.density());
+                        momentumSecondOrder = highOrder.tvd(defVelocities, insideVolVars.density());
                         break;
                     }
                     case TvdApproach::li :
                     {
-                        momentum = highOrder.tvd(upstreamVelocity, defVelocities, distances, selfIsUpstream, insideVolVars.density());
+                        momentumSecondOrder = highOrder.tvd(defVelocities, distances, selfIsUpstream, insideVolVars.density());
                         break;
                     }
                     case TvdApproach::hou :
                     {
-                        momentum = highOrder.tvd(upstreamVelocity, defVelocities, distances, insideVolVars.density());
+                        momentumSecondOrder = highOrder.tvd(defVelocities, distances, insideVolVars.density());
                         break;
                     }
                     default:
@@ -262,12 +263,12 @@ public:
                     }
                 }
             }
-            else
-                momentum = highOrder.upwind(upstreamVelocity, insideVolVars.density());
+
+            const Scalar momentumFirstOrder = highOrder.upwind(upstreamVelocity, insideVolVars.density());
 
             // Account for the orientation of the staggered face's normal outer normal vector
             // (pointing in opposite direction of the scvf's one).
-            frontalFlux += transportingVelocity * momentum * -1.0 * scvf.directionSign();
+            frontalFlux += (transportingVelocity * momentumFirstOrder + defTransportingVelocity * momentumSecondOrder) * -1.0 * scvf.directionSign();
         }
 
         // Diffusive flux.
@@ -435,6 +436,7 @@ private:
         // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
         // of interest is located.
         const Scalar transportingVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
+        const Scalar defTransportingVelocity = defFaceVars.velocityNormalInside(localSubFaceIdx);
 
         // Check whether the own or the neighboring element is upstream.
         const bool selfIsUpstream = ( normalFace.directionSign() == sign(transportingVelocity) );
@@ -443,7 +445,8 @@ private:
         const auto& insideVolVars = elemVolVars[normalFace.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[normalFace.outsideScvIdx()];
 
-        Scalar momentum = 0.0;
+        Scalar momentumFirstOrder = 0.0;
+        Scalar momentumSecondOrder = 0.0;
 
         // Variables that will store the velocities of interest:
         // velocities[0]: downstream velocity
@@ -470,17 +473,17 @@ private:
                 {
                     case TvdApproach::uniform :
                     {
-                        momentum = highOrder.tvd(upstreamVelocity, defVelocities, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+                        momentumSecondOrder = highOrder.tvd(defVelocities, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
                         break;
                     }
                     case TvdApproach::li :
                     {
-                        momentum = highOrder.tvd(upstreamVelocity, defVelocities, distances, selfIsUpstream, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+                        momentumSecondOrder = highOrder.tvd(defVelocities, distances, selfIsUpstream, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
                         break;
                     }
                     case TvdApproach::hou :
                     {
-                        momentum = highOrder.tvd(upstreamVelocity, defVelocities, distances, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+                        momentumSecondOrder = highOrder.tvd(defVelocities, distances, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
                         break;
                     }
                     default:
@@ -493,8 +496,8 @@ private:
                     }
                 }
             }
-            else
-                momentum = highOrder.upwind(upstreamVelocity, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+
+            momentumFirstOrder = highOrder.upwind(upstreamVelocity, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
         }
         else
         {
@@ -502,13 +505,13 @@ private:
                                                ? faceVars.velocityParallel(localSubFaceIdx, 0)
                                                : getParallelVelocityFromBoundary_(problem, scvf, normalFace, faceVars.velocitySelf(), localSubFaceIdx, element, isDirichletPressure, isBJS);
 
-            momentum = selfIsUpstream ? highOrder.upwind(faceVars.velocitySelf(), insideVolVars.density())
-                                      : highOrder.upwind(velocityFirstParallel, outsideVolVars.density());
+            momentumFirstOrder = selfIsUpstream ? highOrder.upwind(faceVars.velocitySelf(), insideVolVars.density())
+                                                : highOrder.upwind(velocityFirstParallel, outsideVolVars.density());
         }
 
         // Account for the orientation of the staggered normal face's outer normal vector
         // and its area (0.5 of the coinciding scfv).
-        return transportingVelocity * momentum * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);
+        return (transportingVelocity * momentumFirstOrder + defTransportingVelocity * momentumSecondOrder) * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);
     }
 
     /*!

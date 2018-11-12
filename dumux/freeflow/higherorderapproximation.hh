@@ -189,8 +189,7 @@ public:
     /**
       * \brief Tvd Scheme: Total Variation Diminuishing
       */
-    Scalar tvd(const Scalar upstreamVelocity,
-               const std::array<Scalar, 3>& defVelocities,
+    Scalar tvd(const std::array<Scalar, 3>& defVelocities,
                const Scalar density) const
     {
         const Scalar ratio = (defVelocities[1] - defVelocities[2]) / (defVelocities[0] - defVelocities[1]);
@@ -199,10 +198,10 @@ public:
         if(ratio > 0.0 && std::isfinite(ratio))
         {
             const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (defVelocities[0] - defVelocities[1]);
-            return density * (upstreamVelocity + secondOrderTerm);
+            return density * secondOrderTerm;
         }
         else
-            return density * upstreamVelocity;
+            return 0.0;
     }
 
     /**
@@ -212,8 +211,7 @@ public:
       * It tries to reconstruct the value for the velocity at the upstream-upstream point
       * if the grid was uniform.
       */
-    Scalar tvd(const Scalar upstreamVelocity,
-               const std::array<Scalar, 3>& defVelocities,
+    Scalar tvd(const std::array<Scalar, 3>& defVelocities,
                const std::array<Scalar, 3>& distances,
                const bool selfIsUpstream,
                const Scalar density) const
@@ -230,10 +228,10 @@ public:
         if(ratio > 0.0 && std::isfinite(ratio))
         {
             const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (defVelocities[0] - defVelocities[1]);
-            return density * (upstreamVelocity + secondOrderTerm);
+            return density * secondOrderTerm;
         }
         else
-            return density * upstreamVelocity;
+            return 0.0;
     }
 
     /**
@@ -242,8 +240,7 @@ public:
      * This functions manages the non uniformities of the grid according to [Hou, Simons, Hinkelmann 2007].
      * It should behave better then the Li's version in very stretched grids.
      */
-    Scalar tvd(const Scalar upstreamVelocity,
-               const std::array<Scalar, 3>& defVelocities,
+    Scalar tvd(const std::array<Scalar, 3>& defVelocities,
                const std::array<Scalar, 3>& distances,
                const Scalar density) const
     {
@@ -256,10 +253,10 @@ public:
             const Scalar upstreamStaggeredCellSize = 0.5 * (distances[0] + distances[1]);
             const Scalar R = (upstreamStaggeredCellSize + distances[2]) / upstreamStaggeredCellSize;
             const Scalar secondOrderTerm = limiter_(ratio, R) / R * (defVelocities[0] - defVelocities[1]);
-            return density * (upstreamVelocity + secondOrderTerm);
+            return density * secondOrderTerm;
         }
         else
-            return density * upstreamVelocity;
+            return 0.0;
     }
 
     /**
