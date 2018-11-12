@@ -442,7 +442,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
 
         //! xi factor for the coupling conditions
         static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
-        static const Scalar oneMinusXi = 1.0 - xi;
+        static const Scalar xiMinusOne = xi - 1.0;
 
         const auto area = scvf.area();
         const auto insideScvIdx = scvf.insideScvIdx();
@@ -480,7 +480,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
             {
                 // assemble matrices
                 const Scalar xiWIn = xi*wIn;
-                const Scalar oneMinusXiWIn = oneMinusXi*wIn;
+                const Scalar xiMinusOneWIn = xiMinusOne*wIn;
                 const auto numDofs = numOutsideScvs+1;
 
                 Dune::DynamicMatrix<Scalar> A(numDofs, numDofs, 0.0);
@@ -507,12 +507,12 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
                                                          flipScvf.unitOuterNormal());
                     // assemble local system matrices
                     const auto xiWOut = xi*wOut;
-                    const auto oneMinusXiWOut = oneMinusXi*wOut;
+                    const auto xiMinusOneWOut = xiMinusOne*wOut;
                     const auto curDofIdx = i+1;
 
                     M[curDofIdx] = wFacetOut;
-                    A[curDofIdx][0] += oneMinusXiWIn;
-                    B[curDofIdx][0] += oneMinusXiWIn;
+                    A[curDofIdx][0] += xiMinusOneWIn;
+                    B[curDofIdx][0] += xiMinusOneWIn;
 
                     for (unsigned int otherDofIdx = 0; otherDofIdx < numDofs; ++otherDofIdx)
                     {
@@ -523,8 +523,8 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
                         }
                         else
                         {
-                            A[otherDofIdx][curDofIdx] += oneMinusXiWOut;
-                            B[otherDofIdx][curDofIdx] += oneMinusXiWOut;
+                            A[otherDofIdx][curDofIdx] += xiMinusOneWOut;
+                            B[otherDofIdx][curDofIdx] += xiMinusOneWOut;
                         }
                     }
                 }
@@ -539,8 +539,8 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
                     for (unsigned int idxInOutside = 0; idxInOutside < numOutsideScvs; ++idxInOutside)
                         tij[Cache::firstOutsideTijIdx+idxInOutside] -= A[0][i]*B[i][idxInOutside+1];
                 }
-                std::for_each(tij.begin(), tij.end(), [xiWIn] (auto& t) { t *= xiWIn; });
-                tij[Cache::insideTijIdx] += xiWIn;
+                std::for_each(tij.begin(), tij.end(), [wIn] (auto& t) { t *= wIn; });
+                tij[Cache::insideTijIdx] += wIn;
             }
             else
             {
