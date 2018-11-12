@@ -123,9 +123,9 @@ using GetProp = typename Properties::Detail::GetPropImpl<TypeTag, Property>::typ
 template<class TypeTag, template<class,class> class Property>
 using GetPropType = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type::type;
 
-//! get the value data member of a property (C++17 only, equivalent to old macro GET_PROP_VALUE(...))
-// template<class TypeTag, template<class,class> class Property>
-// constexpr auto getPropValue = Detail::GetPropImpl<TypeTag, Property>::type::value;
+//! get the value data member of a property
+template<class TypeTag, template<class,class> class Property>
+constexpr auto getPropValue() { return Properties::Detail::GetPropImpl<TypeTag, Property>::type::value; }
 
 } // end namespace Dumux
 
