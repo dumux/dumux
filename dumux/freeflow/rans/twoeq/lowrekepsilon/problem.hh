@@ -30,6 +30,7 @@
 #include <dumux/discretization/staggered/elementsolution.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/rans/problem.hh>
+#include <dumux/freeflow/turbulencemodel.hh>
 
 #include "model.hh"
 
@@ -42,11 +43,10 @@ namespace Dumux {
  * This implements some base functionality for low-Re k-epsilon models.
  */
 template<class TypeTag>
-class LowReKEpsilonProblem : public RANSProblem<TypeTag>
+class RANSProblemImpl<TypeTag, TurbulenceModel::lowrekepsilon> : public RANSProblemBase<TypeTag>
 {
-    using ParentType = RANSProblem<TypeTag>;
+    using ParentType = RANSProblemBase<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
-
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
@@ -60,7 +60,7 @@ class LowReKEpsilonProblem : public RANSProblem<TypeTag>
 
 public:
     //! The constructor sets the gravity, if desired by the user.
-    LowReKEpsilonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    RANSProblemImpl(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     {
         useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", true);

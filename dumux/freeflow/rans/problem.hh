@@ -36,6 +36,14 @@
 
 namespace Dumux {
 
+//! forward declare
+template<class TypeTag, TurbulenceModel turbulenceModel>
+class RANSProblemImpl;
+
+//! the turbulence-model-specfic RANS problem
+template<class TypeTag>
+using RANSProblem = RANSProblemImpl<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::turbulenceModel()>;
+
 /*!
  * \ingroup RANSModel
  * \brief Reynolds-Averaged Navier-Stokes problem base class.
@@ -45,7 +53,7 @@ namespace Dumux {
  * by the volumevariables.
  */
 template<class TypeTag>
-class RANSProblem : public NavierStokesProblem<TypeTag>
+class RANSProblemBase : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
@@ -76,7 +84,7 @@ public:
      * \param fvGridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    RANSProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    RANSProblemBase(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     { }
 
@@ -489,6 +497,12 @@ public:
      */
     const Scalar karmanConstant() const
     { return 0.41; }
+
+    //! \brief Returns the \$f \beta_{\omega} \$f constant
+    const Scalar betaOmega() const
+    {
+        return 0.0708;
+    }
 
     /*!
      * \brief Return the turbulent Prandtl number \f$ [-] \f$ which is used to convert

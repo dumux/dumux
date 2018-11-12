@@ -30,6 +30,7 @@
 #include <dumux/discretization/staggered/elementsolution.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/rans/problem.hh>
+#include <dumux/freeflow/turbulencemodel.hh>
 
 #include "model.hh"
 
@@ -42,9 +43,10 @@ namespace Dumux {
  * This implements some base functionality for one-equation Spalart-Allmaras model.
  */
 template<class TypeTag>
-class OneEqProblem : public RANSProblem<TypeTag>
+class RANSProblemImpl<TypeTag, TurbulenceModel::oneeq> : public RANSProblemBase<TypeTag>
 {
-    using ParentType = RANSProblem<TypeTag>;
+
+    using ParentType = RANSProblemBase<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
@@ -64,7 +66,7 @@ class OneEqProblem : public RANSProblem<TypeTag>
 
 public:
     //! The constructor sets the gravity, if desired by the user.
-    OneEqProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    RANSProblemImpl(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     {
         useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(),
