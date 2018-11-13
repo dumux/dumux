@@ -148,7 +148,7 @@ public:
     {
         this->asImp_().bindLocalViews();
         const auto globalI = this->fvGeometry().fvGridGeometry().elementMapper().index(this->element());
-        res[globalI] = this->asImp_().assembleResidualImpl(); // forward to the internal implementation
+        res[globalI] = this->evalLocalResidual()[0]; // forward to the internal implementation
     }
 
     //! evaluates the local source term for an element and element volume variables
@@ -216,13 +216,6 @@ public:
             elemFluxVarsCache.bind(element, fvGeometry, prevElemVolVars);
         }
     }
-
-    /*!
-     * \brief Computes the residual
-     * \return The element residual at the current solution.
-     */
-    LocalResidualValues assembleResidualImpl()
-    { return this->evalLocalResidual()[0]; }
 
     const Problem& problem() const
     { return this->assembler().problem(domainId); }
@@ -315,7 +308,7 @@ public:
         // assemble the undeflected residual
         using Residuals = ReservedBlockVector<LocalResidualValues, maxNeighbors*2+1>;
         Residuals origResiduals(numNeighbors + 1); origResiduals = 0.0;
-        origResiduals[0] = this->assembleResidualImpl();
+        origResiduals[0] = this->evalLocalResidual()[0];
 
         // get the elements in which we need to evaluate the fluxes
         // and calculate these in the undeflected state
@@ -609,7 +602,7 @@ public:
         }
 
         // return element residual
-        return this->assembleResidualImpl();
+        return this->evalLocalResidual()[0];
     }
 
     /*!
