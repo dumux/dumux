@@ -151,6 +151,7 @@ public:
         res[globalI] = this->asImp_().assembleResidualImpl(); // forward to the internal implementation
     }
 
+    //! evaluates the local source term for an element and element volume variables
     ElementResidualVector evalLocalSourceResidual(const Element& element, const ElementVolumeVariables& elemVolVars) const
     {
         // initialize the residual vector for all scvs in this element
@@ -169,6 +170,10 @@ public:
         return residual;
     }
 
+    //! evaluates the local source term depending on time discretization scheme
+    ElementResidualVector evalLocalSourceResidual(const Element& neighbor) const
+    { return this->evalLocalSourceResidual(neighbor, implicit ? this->curElemVolVars() : this->prevElemVolVars()); }
+
     LocalResidualValues evalLocalStorageResidual() const
     {
         return this->localResidual().evalStorage(this->element(), this->fvGeometry(), this->prevElemVolVars(), this->curElemVolVars())[0];
@@ -180,6 +185,45 @@ public:
         return this->localResidual().evalFlux(problem(), neighbor, this->fvGeometry(), this->curElemVolVars(), this->elemFluxVarsCache(), scvf);
     }
 
+    //! prepares all necessary local views
+    void bindLocalViews()
+    {
+        // get some references for convenience
+        const auto& element = this->element();
+        const auto& curSol = this->curSol()[domainId];
+        auto&& fvGeometry = this->fvGeometry();
+        auto&& curElemVolVars = this->curElemVolVars();
+        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
+
+        // bind the caches
+        couplingManager_.bindCouplingContext(domainId, element, this->assembler());
+        fvGeometry.bind(element);
+
+        if (implicit)
+        {
+            curElemVolVars.bind(element, fvGeometry, curSol);
+            elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
+            if (!this->assembler().isStationaryProblem())
+                this->prevElemVolVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
+        }
+        else
+        {
+            auto& prevElemVolVars = this->prevElemVolVars();
+            const auto& prevSol = this->assembler().prevSol()[domainId];
+
+            curElemVolVars.bindElement(element, fvGeometry, curSol);
+            prevElemVolVars.bind(element, fvGeometry, prevSol);
+            elemFluxVarsCache.bind(element, fvGeometry, prevElemVolVars);
+        }
+    }
+
+    /*!
+     * \brief Computes the residual
+     * \return The element residual at the current solution.
+     */
+    LocalResidualValues assembleResidualImpl()
+    { return this->evalLocalResidual()[0]; }
+
     const Problem& problem() const
     { return this->assembler().problem(domainId); }
 
@@ -188,66 +232,6 @@ public:
 
 private:
     CouplingManager& couplingManager_; //!< the coupling manager
-};
-
-/*!
- * \ingroup Assembly
- * \ingroup CCDiscretization
- * \ingroup MultiDomain
- * \brief A base class for all implicit multidomain local assemblers
- * \tparam id the id of the sub domain
- * \tparam TypeTag the TypeTag
- * \tparam Assembler the assembler type
- * \tparam Implementation the actual assembler implementation
- */
-template<std::size_t id, class TypeTag, class Assembler, class Implementation>
-class SubDomainCCLocalAssemblerImplicitBase : public SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, Implementation, true>
-{
-    using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, Implementation, true>;
-
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
-
-public:
-    //! export the domain id of this sub-domain
-    static constexpr auto domainId = Dune::index_constant<id>();
-    //! pull up constructor of parent class
-    using ParentType::ParentType;
-
-    //! prepares all necessary local views
-    void bindLocalViews()
-    {
-        // get some references for convenience
-        auto& couplingManager = this->couplingManager();
-        const auto& element = this->element();
-        const auto& curSol = this->curSol()[domainId];
-        auto&& fvGeometry = this->fvGeometry();
-        auto&& curElemVolVars = this->curElemVolVars();
-        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
-
-        // bind the caches
-        couplingManager.bindCouplingContext(domainId, element, this->assembler());
-        fvGeometry.bind(element);
-        curElemVolVars.bind(element, fvGeometry, curSol);
-        elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
-        if (!this->assembler().isStationaryProblem())
-            this->prevElemVolVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
-    }
-
-    using ParentType::evalLocalSourceResidual;
-    ElementResidualVector evalLocalSourceResidual(const Element& neighbor) const
-    { return this->evalLocalSourceResidual(neighbor, this->curElemVolVars()); }
-
-    /*!
-     * \brief Computes the residual
-     * \return The element residual at the current solution.
-     */
-    LocalResidualValues assembleResidualImpl()
-    { return this->elementIsGhost() ? LocalResidualValues(0.0) : this->evalLocalResidual()[0]; }
 };
 
 /*!
@@ -272,11 +256,11 @@ class SubDomainCCLocalAssembler;
  */
 template<std::size_t id, class TypeTag, class Assembler>
 class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
-: public SubDomainCCLocalAssemblerImplicitBase<id, TypeTag, Assembler,
-            SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true> >
+: public SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler,
+            SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true>, true>
 {
     using ThisType = SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
-    using ParentType = SubDomainCCLocalAssemblerImplicitBase<id, TypeTag, Assembler, ThisType>;
+    using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/true>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
@@ -550,11 +534,11 @@ public:
  */
 template<std::size_t id, class TypeTag, class Assembler>
 class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true>
-: public SubDomainCCLocalAssemblerImplicitBase<id, TypeTag, Assembler,
-            SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, true> >
+: public SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler,
+            SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, true>, true>
 {
     using ThisType = SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true>;
-    using ParentType = SubDomainCCLocalAssemblerImplicitBase<id, TypeTag, Assembler, ThisType>;
+    using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/true>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
