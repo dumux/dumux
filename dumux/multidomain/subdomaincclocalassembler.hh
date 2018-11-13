@@ -523,7 +523,7 @@ public:
 /*!
  * \ingroup Assembly
  * \ingroup CCDiscretization
- * \brief Cell-centered scheme local assembler using numeric differentiation and implicit time discretization
+ * \brief Cell-centered scheme local assembler using analytic differentiation and implicit time discretization
  */
 template<std::size_t id, class TypeTag, class Assembler>
 class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true>
