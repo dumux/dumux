@@ -1,0 +1,37 @@
+[TimeLoop]
+TEnd = 1.0
+DtInitial = 1.0
+
+[Problem]
+EnableGravity = true
+
+[Vtk]
+OutputName = test_md_boundary_darcy1p_darcy1p
+
+[1.Problem]
+Name = 1p_0
+
+[2.Problem]
+Name = 1p_1
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 10 10
+
+[1.Grid]
+LowerLeft = 0 0
+UpperRight = 1 0.5
+Cells = 10 5
+
+[2.Grid]
+LowerLeft = 0 0.5
+UpperRight = 1 1
+Cells = 10 5
+
+[SpatialParams]
+LensLowerLeft = 0.2 0.2
+LensUpperRight = 0.8 0.8
+
+Permeability = 1e-10 # [m^2]
+PermeabilityLens = 1e-12 # [m^2]

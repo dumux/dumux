@@ -1,0 +1,55 @@
+[MixedDimension]
+NumCircleSegments = 10
+
+[TimeLoop]
+DtInitial = 8640 # [s]
+TEnd = 259200 # [s]
+EpisodeLength = 86400 # [s]
+
+[Root.Grid]
+File = ../grids/lupine.dgf
+Refinement = 0
+
+[Soil.Grid]
+LowerLeft = -0.05 -0.05 -0.1
+UpperRight = 0.05 0.05 0
+Cells = 10 10 10
+ClosureType = None
+Refinement = 0
+LocalRefinement = 1
+
+[Problem]
+ContaminantMoleFraction = 3e-7
+OutFile = "tracermass_fine.out"
+EnableVtkOutput = true
+EnableGravity = true
+InitTopSaturation = 0.3
+
+[Soil]
+SpatialParams.Permeability = 2.57e-12 # [m^2]
+SpatialParams.Porosity = 0.4 # [-]
+Problem.Name = 3d
+
+[Root]
+SpatialParams.Kx = 5.0968e-17
+SpatialParams.Kr = 2.04e-13
+Problem.Name = 1d
+
+[Component]
+LiquidDiffusionCoefficient = 2.3e-9
+Name = D2O
+MolarMass = 20e-3 # in kg/mol, molar mass heavy water D2O
+
+[BoundaryConditions]
+InitialRootPressure = -1.2e6 # [Pa]
+TranspirationRate = 2.15e-8 # [kg / s]
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1e6 1
+
+[LinearSolver]
+MaxIterations = 20000
+Verbosity = 0
+
+[Vtk]
+OutputName = test_md_embedded1d3d_1p2c_richards2c

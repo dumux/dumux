@@ -1,0 +1,16 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+LowerLeft = -1 -1
+UpperRight = 1 1
+Cells = 100 100
+
+[Problem]
+Name = 1pfv_singularity
+EnableGravity = false
+
+[SpatialParams]
+Permeability = 1e-10 # [m^2]
+Porosity = 0.3

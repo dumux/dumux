@@ -1,0 +1,34 @@
+[Fracture.Grid]
+File = fracture.msh
+
+[Matrix.Grid]
+LowerLeft = 0 0 0
+UpperRight = 8 8 5
+Cells = 20 20 10
+
+[Problem]
+EnableGravity = false
+
+[Component]
+LiquidKinematicViscosity = 1e-6 # [m^2/s]
+LiquidDensity = 1000 # [kg/m^3]
+
+[Matrix]
+SpatialParams.Permeability = 1e-15 # [m^2]
+Problem.Name = 3d
+
+[Fracture]
+Problem.Name = 2d
+SpatialParams.Permeability = 1e-7 # [m^2]
+SpatialParams.Aperture = 0.05 # [m]
+
+[LinearSolver]
+MaxIterations = 2000
+ResidualReduction = 1e-24
+
+[Assembly.NumericDifference]
+BaseEpsilon = 0.1e5
+PriVarMagnitude = 1e5
+
+[Vtk]
+OutputName = test_md_embedded2d3d_fracture1p
