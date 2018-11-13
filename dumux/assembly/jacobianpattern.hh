@@ -26,7 +26,7 @@
 
 #include <type_traits>
 #include <dune/istl/matrixindexset.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

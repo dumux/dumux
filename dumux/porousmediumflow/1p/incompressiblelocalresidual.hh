@@ -25,7 +25,7 @@
 #ifndef DUMUX_1P_INCOMPRESSIBLE_LOCAL_RESIDUAL_HH
 #define DUMUX_1P_INCOMPRESSIBLE_LOCAL_RESIDUAL_HH
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 
 namespace Dumux

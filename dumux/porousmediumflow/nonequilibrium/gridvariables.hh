@@ -28,7 +28,7 @@
 #include <dune/grid/common/partitionset.hh>
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvgridvariables.hh>
 
 namespace Dumux {

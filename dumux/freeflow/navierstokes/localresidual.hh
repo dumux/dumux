@@ -25,7 +25,7 @@
 #define DUMUX_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/staggered/localresidual.hh>
 
 namespace Dumux

@@ -31,7 +31,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/staggeredtraits.hh>

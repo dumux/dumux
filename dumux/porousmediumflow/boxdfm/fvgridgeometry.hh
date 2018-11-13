@@ -32,7 +32,7 @@
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>

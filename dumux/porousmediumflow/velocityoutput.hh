@@ -28,7 +28,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/io/velocityoutput.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 
 namespace Dumux {

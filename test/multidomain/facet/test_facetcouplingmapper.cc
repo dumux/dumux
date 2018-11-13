@@ -32,7 +32,7 @@
 #include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/multidomain/facet/box/fvgridgeometry.hh>
 #include <dumux/multidomain/facet/gridmanager.hh>

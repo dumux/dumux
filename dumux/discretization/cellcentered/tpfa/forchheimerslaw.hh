@@ -32,7 +32,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>
 
 namespace Dumux {

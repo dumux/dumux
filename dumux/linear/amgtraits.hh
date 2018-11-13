@@ -32,7 +32,7 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/grid/common/capabilities.hh>
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 // TODO: The following is a temporary solution to make the parallel AMG work
 // for UGGrid. Once it is resolved upstream

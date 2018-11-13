@@ -21,7 +21,7 @@ fvproperties.hh
 hookeslaw.hh
 localview.hh
 maxwellstefanslaw.hh
-methods.hh
+method.hh
 scvandscvfiterators.hh
 stationaryvelocityfield.hh
 subcontrolvolumebase.hh

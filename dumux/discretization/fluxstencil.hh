@@ -27,7 +27,7 @@
 #include <vector>
 
 #include <dune/common/reservedvector.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux
 {

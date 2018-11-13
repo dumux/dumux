@@ -31,7 +31,7 @@
 
 #include <dumux/assembly/cclocalresidual.hh>
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
 
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>

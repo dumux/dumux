@@ -30,7 +30,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/parallel/vertexhandles.hh>
 
 #include "jacobianpattern.hh"

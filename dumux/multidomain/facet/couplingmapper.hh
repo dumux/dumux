@@ -24,7 +24,7 @@
 #define DUMUX_FACETCOUPLING_MAPPER_HH
 
 #include <dune/common/indices.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

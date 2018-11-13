@@ -23,7 +23,7 @@
 #include <dumux/common/properties/model.hh>
 #include <dumux/common/properties/grid.hh>
 #include <dumux/common/defaultmappertraits.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptproperties.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptinitializationindicatordefault.hh>
 
@@ -81,7 +81,7 @@ NEW_PROP_TAG( PressureCoefficientMatrix ); //!< Gives maximum number of intersec
 #include <dumux/common/timemanager.hh>
 #include <dumux/common/boundarytypes.hh>
 #include<dumux/common/boundaryconditions.hh>
-#include<dumux/discretization/methods.hh>
+#include<dumux/discretization/method.hh>
 
 namespace Dumux
 {

@@ -25,7 +25,7 @@
 
 #include <dune/common/indices.hh>
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/couplingmapperbase.hh>
 

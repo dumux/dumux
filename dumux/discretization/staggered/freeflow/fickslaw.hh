@@ -31,7 +31,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>
 
 namespace Dumux

@@ -25,7 +25,7 @@
 #define DUMUX_FREELOW_NAVIERSTOKES_FLUXVARIABLES_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/staggered/fluxvariables.hh>
 
 namespace Dumux

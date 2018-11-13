@@ -25,7 +25,7 @@
 #ifndef DUMUX_DISCRETIZATION_HOOKES_LAW_HH
 #define DUMUX_DISCRETIZATION_HOOKES_LAW_HH
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

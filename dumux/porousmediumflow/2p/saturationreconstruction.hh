@@ -24,7 +24,7 @@
 #ifndef DUMUX_2P_SCV_SATURATION_RECONSTRUCTION_HH
 #define DUMUX_2P_SCV_SATURATION_RECONSTRUCTION_HH
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

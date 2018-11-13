@@ -30,7 +30,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/io/grid/subgridgridcreator.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 /*!
  * \brief A method providing an () operator in order to select elements for a subgrid.

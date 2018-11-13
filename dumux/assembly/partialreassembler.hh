@@ -31,7 +31,7 @@
 #include <dune/istl/multitypeblockvector.hh>
 
 #include <dumux/common/typetraits/isvalid.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/parallel/vertexhandles.hh>
 
 #include "entitycolor.hh"

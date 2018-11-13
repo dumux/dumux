@@ -30,7 +30,7 @@
 #include <dune/istl/multitypeblockvector.hh> // TODO: needed? or is forward declare enough?
 
 #include <dumux/common/parameters.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/io/name.hh>
 
 namespace Dumux

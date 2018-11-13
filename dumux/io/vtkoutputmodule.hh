@@ -41,7 +41,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/typetraits.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dune/common/deprecated.hh>
 
 #include "vtkfunction.hh"

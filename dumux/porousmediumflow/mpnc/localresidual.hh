@@ -28,7 +28,7 @@
 
 #include <dune/istl/bvector.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 
 namespace Dumux {

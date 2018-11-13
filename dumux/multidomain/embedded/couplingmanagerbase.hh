@@ -38,7 +38,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/geometry/intersectingentities.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/embedded/mixeddimensionglue.hh>
 #include <dumux/multidomain/embedded/pointsourcedata.hh>

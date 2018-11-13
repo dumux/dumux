@@ -25,7 +25,7 @@
 #define DUMUX_DISCRETIZATION_UPWINDSCHEME_HH
 
 #include <dumux/common/parameters.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

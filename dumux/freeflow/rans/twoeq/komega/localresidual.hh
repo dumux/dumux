@@ -25,7 +25,7 @@
 #define DUMUX_KOMEGA_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/localresidual.hh>
 #include <dumux/freeflow/rans/twoeq/komega/staggered/localresidual.hh>
 
