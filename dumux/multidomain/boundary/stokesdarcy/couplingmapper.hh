@@ -35,7 +35,7 @@
 
 #include <dune/common/timer.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

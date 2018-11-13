@@ -27,7 +27,7 @@
 #define DUMUX_DISCRETIZATION_FICKS_LAW_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux
 {

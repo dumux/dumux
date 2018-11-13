@@ -25,7 +25,7 @@
 #define DUMUX_ONEEQ_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/localresidual.hh>
 #include <dumux/freeflow/rans/oneeq/staggered/localresidual.hh>
 

@@ -27,7 +27,7 @@
 #include <cassert>
 #include <utility>
 #include <type_traits>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

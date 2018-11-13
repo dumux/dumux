@@ -29,7 +29,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
 

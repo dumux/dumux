@@ -26,7 +26,7 @@
 
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

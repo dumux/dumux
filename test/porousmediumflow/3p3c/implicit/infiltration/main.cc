@@ -42,7 +42,7 @@
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>

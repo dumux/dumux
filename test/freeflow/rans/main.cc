@@ -49,7 +49,7 @@
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>

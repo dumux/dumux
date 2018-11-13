@@ -29,7 +29,7 @@
 #include <cassert>
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/facet/couplingmanager.hh>

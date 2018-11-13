@@ -31,7 +31,7 @@
 #include <type_traits>
 #include <dune/common/reservedvector.hh>
 #include <dumux/common/pointsource.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

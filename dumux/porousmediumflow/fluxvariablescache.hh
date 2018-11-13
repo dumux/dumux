@@ -24,7 +24,7 @@
 #define DUMUX_POROUSMEDIUM_FLUXVARIABLESCACHE_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>
 #include <dumux/discretization/box/fluxvariablescache.hh>
 

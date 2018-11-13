@@ -37,7 +37,7 @@
 #include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/linear/seqsolverbackend.hh>

@@ -28,7 +28,7 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/discretization/hookeslaw.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

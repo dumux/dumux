@@ -24,7 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_CHECK_OVERLAP_SIZE_HH
 #define DUMUX_DISCRETIZATION_CHECK_OVERLAP_SIZE_HH
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

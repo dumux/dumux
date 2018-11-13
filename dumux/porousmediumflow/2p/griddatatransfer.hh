@@ -31,7 +31,7 @@
 
 #include <dumux/common/properties.hh>
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/adaptive/griddatatransfer.hh>

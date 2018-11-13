@@ -26,7 +26,7 @@
 #include <dune/common/indices.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/couplingmapperbase.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>

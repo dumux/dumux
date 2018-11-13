@@ -24,7 +24,7 @@
 #ifndef DUMUX_FREE_FLOW_ENERGY_LOCAL_RESIDUAL_HH
 #define DUMUX_FREE_FLOW_ENERGY_LOCAL_RESIDUAL_HH
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

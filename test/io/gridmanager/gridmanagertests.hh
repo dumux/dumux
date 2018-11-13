@@ -31,7 +31,7 @@
 #include <dune/grid/io/file/vtk.hh>
 
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

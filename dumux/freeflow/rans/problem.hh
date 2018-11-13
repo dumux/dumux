@@ -29,7 +29,7 @@
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
 #include "model.hh"

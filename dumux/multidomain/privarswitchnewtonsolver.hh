@@ -28,7 +28,7 @@
 #include <memory>
 
 #include <dumux/common/typetraits/utility.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
