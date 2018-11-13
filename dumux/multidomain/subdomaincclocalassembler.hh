@@ -539,6 +539,131 @@ public:
     }
 };
 
+/*!
+ * \ingroup Assembly
+ * \ingroup CCDiscretization
+ * \ingroup MultiDomain
+ * \brief Cell-centered scheme multidomain local assembler using numeric differentiation and explicit time discretization
+ */
+template<std::size_t id, class TypeTag, class Assembler>
+class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>
+: public SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler,
+            SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, false>, false>
+{
+    using ThisType = SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>;
+    using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/false>;
+
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+    static constexpr auto domainI = Dune::index_constant<id>();
+
+public:
+    using ParentType::ParentType;
+
+    /*!
+     * \brief Computes the derivatives with respect to the given element and adds them
+     *        to the global matrix.
+     *
+     * \note In an explicit scheme, only the storage terms need to be differentiated.
+     *       Thus, this can be done as in the uncoupled case as the coupling can only
+     *       enter sources or fluxes.
+     *
+     * \return The element residual at the current solution.
+     */
+    template<class JacobianMatrixDiagBlock, class GridVariables>
+    LocalResidualValues assembleJacobianAndResidualImplInverse(JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
+    {
+        if (this->assembler().isStationaryProblem())
+            DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
+
+        // assemble the undeflected residual
+        const auto residual = this->evalLocalResidual()[0];
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
+        // neighboring elements all derivatives are zero. For the assembled element only the storage    //
+        // derivatives are non-zero.                                                                    //
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // get some aliases for convenience
+        const auto& element = this->element();
+        const auto& fvGeometry = this->fvGeometry();
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        auto&& curElemVolVars = this->curElemVolVars();
+
+        // reference to the element's scv (needed later) and corresponding vol vars
+        const auto globalI = fvGridGeometry.elementMapper().index(element);
+        const auto& scv = fvGeometry.scv(globalI);
+        auto& curVolVars = ParentType::getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
+
+        // save a copy of the original privars and vol vars in order
+        // to restore the original solution after deflection
+        const auto& curSol = this->curSol()[domainI];
+        const auto origPriVars = curSol[globalI];
+        const auto origVolVars = curVolVars;
+
+        // element solution container to be deflected
+        auto elemSol = elementSolution(element, curSol, fvGridGeometry);
+
+        // derivatives in the neighbors with repect to the current elements
+        LocalResidualValues partialDeriv;
+        for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
+        {
+            // reset derivatives of element dof with respect to itself
+            partialDeriv = 0.0;
+
+            auto evalStorage = [&](Scalar priVar)
+            {
+                // update the volume variables and calculate
+                // the residual with the deflected primary variables
+                elemSol[0][pvIdx] = priVar;
+                curVolVars.update(elemSol, this->problem(), element, scv);
+                return this->evalLocalStorageResidual()[0];
+            };
+
+            // for non-ghosts compute the derivative numerically
+            if (!this->elementIsGhost())
+            {
+                static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                NumericDifferentiation::partialDerivative(evalStorage, elemSol[0][pvIdx], partialDeriv, residual,
+                                                          eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);
+            }
+
+            // for ghost elements we assemble a 1.0 where the primary variable and zero everywhere else
+            // as we always solve for a delta of the solution with repect to the initial solution this
+            // results in a delta of zero for ghosts
+            else partialDeriv[pvIdx] = 1.0;
+
+            // add the current partial derivatives to the global jacobian matrix
+            // only diagonal entries for explicit jacobians
+            for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                A[globalI][globalI][eqIdx][pvIdx] += partialDeriv[eqIdx];
+
+            // restore the original state of the scv's volume variables
+            curVolVars = origVolVars;
+
+            // restore the current element solution
+            elemSol[0][pvIdx] = origPriVars[pvIdx];
+        }
+
+        // return the original residual
+        return residual;
+    }
+
+    /*!
+     * \brief Computes the coupling derivatives with respect to the given element and adds them
+     *        to the global matrix.
+     * \note Since the coupling can only enter sources or fluxes and these are evaluated on
+     *       the old time level (explicit scheme), the coupling blocks are empty.
+     */
+    template<std::size_t otherId, class JacobianBlock, class GridVariables>
+    void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
+                                  const LocalResidualValues& res, GridVariables& gridVariables)
+    {}
+};
 
 /*!
  * \ingroup Assembly
