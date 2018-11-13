@@ -456,7 +456,7 @@ private:
 
         const auto &materialParams =
             this->spatialParams().materialLawParamsAtPos(globalPos);
-        Scalar capPress[numPhases];
+        std::vector<Scalar> capPress(numPhases);
         //get the index for the wettingphase
         const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
         //obtain pc according to saturation

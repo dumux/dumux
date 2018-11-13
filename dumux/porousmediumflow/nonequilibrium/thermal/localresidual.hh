@@ -148,9 +148,7 @@ public:
         flux[energyEq0Idx] += fluxVars.heatConductionFlux(0);
          //heat conduction for the solid phases
         for(int sPhaseIdx=0; sPhaseIdx<numEnergyEqSolid; ++sPhaseIdx)
-        {
             flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(numPhases + sPhaseIdx);
-        }
     }
 
     /*!

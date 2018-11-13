@@ -45,7 +45,7 @@ public:
      */
     static Scalar fluidSolidInterfacialArea(const Scalar porosity,
                                             const Scalar characteristicLength)
-    { return 6*(1-porosity)/characteristicLength; }
+    { return 6.0*(1.0-porosity)/characteristicLength; }
 };
 }
 #endif

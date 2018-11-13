@@ -103,8 +103,8 @@ public:
         //solid phase
         else
         {
-            insideLambda += insideVolVars.solidThermalConductivity()*(1-insideVolVars.porosity());
-            outsideLambda +=outsideVolVars.solidThermalConductivity()*(1-outsideVolVars.porosity());
+            insideLambda += insideVolVars.solidThermalConductivity()*(1.0-insideVolVars.porosity());
+            outsideLambda += outsideVolVars.solidThermalConductivity()*(1.0-outsideVolVars.porosity());
         }
 
         // scale by extrusion factor

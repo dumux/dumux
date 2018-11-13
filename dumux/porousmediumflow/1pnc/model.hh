@@ -249,7 +249,7 @@ public:
 } // end namespace Properties
 
 template<class OnePNCModelTraits>
-struct OnePNCNonequilibriumModelTraits : public OnePNCModelTraits
+struct OnePNCUnconstrainedModelTraits : public OnePNCModelTraits
 {
     static constexpr int numConstraintEq() { return 0; }
 };
@@ -261,6 +261,7 @@ namespace Properties {
 namespace TTag {
 struct OnePNCNonEquil { using InheritsFrom = std::tuple<NonEquilibrium, OnePNC>; };
 } // end namespace TTag
+
 
 /////////////////////////////////////////////////
 // Properties for the non-equilibrium OnePNC model
@@ -289,6 +290,7 @@ private:
 public:
     using type = NonEquilTraits;
 };
+
 // by default chemical non equilibrium is enabled in the nonequil model, switch that off here
 template<class TypeTag>
 struct EnableChemicalNonEquilibrium<TypeTag, TTag::OnePNCNonEquil> { static constexpr bool value = false; };
@@ -301,7 +303,7 @@ private:
      using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
      using EquilibriumTraits = OnePNCModelTraits<FluidSystem::numComponents,  getPropValue<TypeTag, Properties::UseMoles>(), getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 public:
-    using type = OnePNCNonequilibriumModelTraits<EquilibriumTraits>;
+    using type = OnePNCUnconstrainedModelTraits<EquilibriumTraits>;
 };
 
 //! in case we do not assume full non-equilibrium one needs a thermal conductivity

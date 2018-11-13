@@ -449,7 +449,7 @@ private:
         //////////////////////////////////////
         priVars[energyEq0Idx] = thisTemperature;
         priVars[energyEqSolidIdx] = thisTemperature;
-        Scalar capPress[numPhases];
+        std::vector<Scalar> capPress(numPhases);
 
         //obtain pc according to saturation
         const auto &materialParams =

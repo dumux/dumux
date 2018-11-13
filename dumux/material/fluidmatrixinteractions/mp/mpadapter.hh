@@ -28,6 +28,8 @@
 #define DUMUX_MP_2P_ADAPTER_HH
 
 #include <algorithm>
+#include <cassert>
+#include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux
 {
@@ -58,10 +60,10 @@ public:
                                    const FluidState &state,
                                    const int wPhaseIdx)
     {
+        assert(values.size() == 2);
         const int nPhaseIdx = 1 - wPhaseIdx;
         // non-wetting phase gets the capillary pressure added
         values[nPhaseIdx] = 0;
-
         // wetting phase does not get anything added
         values[wPhaseIdx] = - MaterialLaw::pc(params, state.saturation(wPhaseIdx));
     }
@@ -78,6 +80,7 @@ public:
                                        const FluidState &state,
                                        const int wPhaseIdx)
     {
+        assert(values.size() == 2);
         const int nPhaseIdx = 1 - wPhaseIdx;
         values[wPhaseIdx] = MaterialLaw::krw(params, state.saturation(wPhaseIdx));
         values[nPhaseIdx] = MaterialLaw::krn(params, state.saturation(wPhaseIdx));

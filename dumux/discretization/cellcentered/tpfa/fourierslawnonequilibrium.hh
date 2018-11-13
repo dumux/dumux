@@ -95,7 +95,7 @@ public:
         else //temp solid
         {
             tInside += elemVolVars[scvf.insideScvIdx()].temperatureSolid();
-            tOutside +=  elemVolVars[scvf.outsideScvIdx()].temperatureSolid();
+            tOutside += elemVolVars[scvf.outsideScvIdx()].temperatureSolid();
         }
 
         Scalar tij = calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx);
@@ -134,7 +134,7 @@ public:
         //solid phase
         else
         {
-            insideLambda += insideVolVars.solidThermalConductivity()*(1-insideVolVars.porosity());
+            insideLambda += insideVolVars.solidThermalConductivity()*(1.0-insideVolVars.porosity());
         }
 
         const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideLambda, insideVolVars.extrusionFactor());
@@ -167,7 +167,7 @@ public:
         //solid phase
         else
         {
-            outsideLambda +=outsideVolVars.solidThermalConductivity()*(1-outsideVolVars.porosity());
+            outsideLambda +=outsideVolVars.solidThermalConductivity()*(1.0-outsideVolVars.porosity());
         }
             Scalar tj;
             if (dim == dimWorld)

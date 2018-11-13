@@ -34,17 +34,13 @@ namespace Dumux {
  */
 template<class FVGridGeometry, class Scalar, class Implementation>
 class FVNonEquilibriumSpatialParams
-: public FVSpatialParams<FVGridGeometry,
-                         Scalar,
-                         Implementation>
+: public FVSpatialParams<FVGridGeometry, Scalar, Implementation>
 {
-
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, Implementation>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:

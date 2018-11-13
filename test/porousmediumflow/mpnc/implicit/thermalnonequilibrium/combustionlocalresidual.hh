@@ -87,23 +87,22 @@ public:
         const Scalar as = volVars.fluidSolidInterfacialArea();
 
         //temperature fluid is the same for both fluids
-        const Scalar TFluid     = volVars.temperatureFluid(0);
-        const Scalar TSolid     = volVars.temperatureSolid();
+        const Scalar TFluid = volVars.temperatureFluid(0);
+        const Scalar TSolid = volVars.temperatureSolid();
 
-        const Scalar satW       = fs.saturation(0) ;
-        const Scalar satN       = fs.saturation(1) ;
+        const Scalar satW = fs.saturation(0) ;
+        const Scalar satN = fs.saturation(1) ;
 
         const Scalar eps = 1e-6 ;
         Scalar solidToFluidEnergyExchange ;
 
         Scalar fluidConductivity ;
-            if (satW < 1.0 - eps)
-                fluidConductivity = volVars.fluidThermalConductivity(1) ;
-            else if (satW >= 1.0 - eps)
-                fluidConductivity = volVars.fluidThermalConductivity(0) ;
-            else
-                DUNE_THROW(Dune::NotImplemented,
-                        "wrong range");
+        if (satW < 1.0 - eps)
+            fluidConductivity = volVars.fluidThermalConductivity(1) ;
+        else if (satW >= 1.0 - eps)
+            fluidConductivity = volVars.fluidThermalConductivity(0) ;
+        else
+            DUNE_THROW(Dune::NotImplemented, "wrong range");
 
         const Scalar factorEnergyTransfer   = volVars.factorEnergyTransfer()  ;
 
@@ -112,7 +111,7 @@ public:
 
         if (satW < (0 + eps) )
         {
-                solidToFluidEnergyExchange *=  volVars.nusseltNumber(1) ;
+            solidToFluidEnergyExchange *=  volVars.nusseltNumber(1) ;
         }
         else if ( (satW >= 0 + eps) and (satW < 1.0-eps) )
         {
@@ -125,11 +124,11 @@ public:
                         QBoilFunc(volVars, 0.0), QBoilFunc(volVars, epsRegul),       // y1, y2
                         0.0,dQBoil_dSw(volVars, epsRegul));    // m1, m2
 
-                qBoil = sp.eval(satW) ;
+                qBoil = sp.eval(satW);
             }
 
             else if (satW>= (1.0-epsRegul) )
-            {// regularize
+            {   // regularize
                 typedef Dumux::Spline<Scalar> Spline;
                 Spline sp(1.0-epsRegul, 1.0,    // x1, x2
                         QBoilFunc(volVars, 1.0-epsRegul), 0.0,    // y1, y2
@@ -140,7 +139,7 @@ public:
             else
             {
                 qBoil = QBoilFunc(volVars, satW)  ;
-             }
+            }
 
             solidToFluidEnergyExchange += qBoil;
         }
@@ -149,8 +148,7 @@ public:
             solidToFluidEnergyExchange *=  volVars.nusseltNumber(0) ;
         }
         else
-            DUNE_THROW(Dune::NotImplemented,
-                    "wrong range");
+            DUNE_THROW(Dune::NotImplemented, "wrong range");
 
         using std::isfinite;
         if (!isfinite(solidToFluidEnergyExchange))
@@ -184,27 +182,26 @@ public:
     {
         // using saturation as input (instead of from volVars)
         // in order to make regularization (evaluation at different points) easyer
-        const auto& fs = volVars.fluidState() ;
-        const Scalar g( 9.81 ) ;
-        const Scalar gamma(0.0589) ;
-        const Scalar TSolid     = volVars.temperatureSolid();
-        const Scalar characteristicLength   = volVars.characteristicLength()  ;
+        const auto& fs = volVars.fluidState();
+        const Scalar g( 9.81 );
+        const Scalar gamma(0.0589);
+        const Scalar TSolid = volVars.temperatureSolid();
         using std::pow;
-        const Scalar as = 6.0 * (1.0-volVars.porosity()) / characteristicLength ;
-        const Scalar mul = fs.viscosity(0) ;
+        const Scalar as = volVars.fluidSolidInterfacialArea();
+        const Scalar mul = fs.viscosity(0);
         const Scalar deltahv = fs.enthalpy(1) - fs.enthalpy(0);
-        const Scalar deltaRho = fs.density(0) - fs.density(1) ;
+        const Scalar deltaRho = fs.density(0) - fs.density(1);
         const Scalar firstBracket = pow(g * deltaRho / gamma, 0.5);
-        const Scalar cp = FluidSystem::heatCapacity(fs, 0) ;
+        const Scalar cp = FluidSystem::heatCapacity(fs, 0);
         // This use of Tsat is only justified if the fluid is always boiling (tsat equals boiling conditions)
         // If a different state is to be simulated, please use the actual fluid temperature instead.
         const Scalar Tsat = FluidSystem::vaporTemperature(fs, 1 ) ;
-        const Scalar deltaT = TSolid - Tsat ;
-        const Scalar secondBracket = pow( (cp *deltaT / (0.006 * deltahv)  ) , 3.0 ) ;
-        const Scalar Prl = volVars.prandtlNumber(0) ;
-        const Scalar thirdBracket = pow( 1/Prl , (1.7/0.33) );
-        const Scalar QBoil = satW * as * mul * deltahv * firstBracket * secondBracket * thirdBracket ;
-            return QBoil;
+        const Scalar deltaT = TSolid - Tsat;
+        const Scalar secondBracket = pow( (cp *deltaT / (0.006 * deltahv)  ) , 3.0 );
+        const Scalar Prl = volVars.prandtlNumber(0);
+        const Scalar thirdBracket = pow( 1/Prl , (1.7/0.33));
+        const Scalar QBoil = satW * as * mul * deltahv * firstBracket * secondBracket * thirdBracket;
+        return QBoil;
     }
 
     /*! \brief Calculate the derivative of the energy transfer function during boiling. Needed for regularization.
