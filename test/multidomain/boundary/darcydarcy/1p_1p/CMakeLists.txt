@@ -1,4 +1,5 @@
 dune_add_test(NAME test_md_boundary_darcy1p_darcy1p_half
+              LABELS multidomain
               SOURCES main.cc
               COMPILE_DEFINITIONS DOMAINSPLIT=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -9,6 +10,7 @@ dune_add_test(NAME test_md_boundary_darcy1p_darcy1p_half
                                    -Vtk.OutputName test_md_boundary_darcy1p_darcy1p_half")
 
 dune_add_test(NAME test_md_boundary_darcy1p_darcy1p_lens
+              LABELS multidomain
               SOURCES main.cc
               COMPILE_DEFINITIONS DOMAINSPLIT=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

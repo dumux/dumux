@@ -1,6 +1,7 @@
 dune_symlink_to_source_files(FILES "grids" "params.input")
 
 dune_add_test(NAME test_md_facet_1p1p_threedomain_tpfa
+              LABELS multidomain
               SOURCES main.cc
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

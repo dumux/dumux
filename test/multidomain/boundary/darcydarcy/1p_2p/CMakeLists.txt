@@ -1,4 +1,5 @@
 dune_add_test(NAME test_md_boundary_darcy1p_darcy2p
+              LABELS multidomain
               SOURCES main.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMAKE_GUARD dune-subgrid_FOUND

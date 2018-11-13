@@ -1,6 +1,7 @@
 dune_symlink_to_source_files(FILES "params.input")
 
 dune_add_test(NAME test_md_poromechanics_el1p
+              LABELS multidomain
               SOURCES main.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
