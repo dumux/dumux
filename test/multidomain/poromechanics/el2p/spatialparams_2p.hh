@@ -62,8 +62,10 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    TwoPSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TwoPSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                      std::shared_ptr<CouplingManager> couplingManagerPtr)
     : ParentType(fvGridGeometry)
+    , couplingManagerPtr_(couplingManagerPtr)
     , initPermeability_(getParam<Scalar>("SpatialParams.Permeability"))
     , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
     {
@@ -136,10 +138,6 @@ public:
     {
         return FluidSystem::phase0Idx;
     }
-
-    //! sets the pointer to the coupling manager.
-    void setCouplingManager(std::shared_ptr<const CouplingManager> cm)
-    { couplingManagerPtr_ = cm; }
 
     //! returns reference to the coupling manager.
     const CouplingManager& couplingManager() const

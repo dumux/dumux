@@ -94,8 +94,11 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
 
 public:
     //! The constructor
-    PoroElasticSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "PoroElastic")
+    PoroElasticSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                          std::shared_ptr<CouplingManager> couplingManagerPtr,
+                          const std::string& paramGroup = "PoroElastic")
     : ParentType(fvGridGeometry, paramGroup)
+    , couplingManagerPtr_(couplingManagerPtr)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
@@ -175,10 +178,6 @@ public:
                             const ElementVolumeVariables& elemVolVars,
                             const SubControlVolume& scv) const
     { return PrimaryVariables(0.0); }
-
-    //! sets the pointer to the coupling manager.
-    void setCouplingManager(std::shared_ptr<const CouplingManager> cm)
-    { couplingManagerPtr_ = cm; }
 
     //! returns reference to the coupling manager.
     const CouplingManager& couplingManager() const

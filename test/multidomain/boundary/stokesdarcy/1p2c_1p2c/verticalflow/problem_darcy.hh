@@ -270,12 +270,6 @@ public:
     // \}
 
     /*!
-     * \brief Set the coupling manager
-     */
-    void setCouplingManager(std::shared_ptr<CouplingManager> cm)
-    { couplingManager_ = cm; }
-
-    /*!
      * \brief Get the coupling manager
      */
     const CouplingManager& couplingManager() const

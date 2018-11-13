@@ -94,8 +94,10 @@ class OnePSubProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    OnePSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "OneP")
-    : ParentType(fvGridGeometry, paramGroup)
+    OnePSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                   std::shared_ptr<typename GET_PROP_TYPE(TypeTag, SpatialParams)> spatialParams,
+                   const std::string& paramGroup = "OneP")
+    : ParentType(fvGridGeometry, spatialParams, paramGroup)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }

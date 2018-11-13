@@ -58,8 +58,10 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                      std::shared_ptr<CouplingManager> couplingManagerPtr)
     : ParentType(fvGridGeometry)
+    , couplingManagerPtr_(couplingManagerPtr)
     , permeability_(getParam<Scalar>("SpatialParams.Permeability"))
     , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
     {}
@@ -82,10 +84,6 @@ public:
         // evaluate the deformation-dependent porosity at the scv center
         return PorosityDeformation<Scalar>::evaluatePorosity(poroMechGridGeom, element, scv.center(), poroMechElemSol, initPorosity_);
     }
-
-    //! sets the pointer to the coupling manager.
-    void setCouplingManager(std::shared_ptr<const CouplingManager> cm)
-    { couplingManagerPtr_ = cm; }
 
     //! returns reference to the coupling manager.
     const CouplingManager& couplingManager() const

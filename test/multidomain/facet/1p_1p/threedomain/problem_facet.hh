@@ -100,8 +100,10 @@ public:
     //! The constructor
     OnePFacetProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                      std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                     std::shared_ptr<CouplingManager> couplingManagerPtr,
                      const std::string& paramGroup = "Facet")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    , couplingManagerPtr_(couplingManagerPtr)
     , aperture_(getParam<Scalar>("Extrusion.Aperture"))
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
@@ -169,14 +171,10 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 
-    //! sets the pointer to the coupling manager.
-    void setCouplingManager(std::shared_ptr<CouplingManager> cm)
-    { couplingManagerPtr_ = cm; }
-
 private:
-    Scalar aperture_;
-    std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
+    std::string problemName_;
+    Scalar aperture_;
 };
 
 } // end namespace Dumux
