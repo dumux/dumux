@@ -426,7 +426,7 @@ public:
 
             for (const auto lowDimElemIdx : elementStencil)
             {
-                const auto& ldSol = this->curSol()[lowDimId];
+                const auto& ldSol = Assembler::isImplicit() ? this->curSol()[lowDimId] : assembler.prevSol()[lowDimId];
                 const auto& ldProblem = this->problem(lowDimId);
                 const auto& ldGridGeometry = this->problem(lowDimId).fvGridGeometry();
 
@@ -489,11 +489,14 @@ public:
 
             // then simply bind the local views of that first neighbor
             auto bulkFvGeom = localView(bulkGridGeom);
-            auto bulkElemVolVars = localView(assembler.gridVariables(bulkId).curGridVolVars());
+            auto bulkElemVolVars = Assembler::isImplicit() ? localView(assembler.gridVariables(bulkId).curGridVolVars())
+                                                           : localView(assembler.gridVariables(bulkId).prevGridVolVars());
             auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache());
 
+            // evaluate variables on old/new time level depending on time disc scheme
+            const auto& bulkSol = Assembler::isImplicit() ? this->curSol()[bulkId] : assembler.prevSol()[bulkId];
             bulkFvGeom.bind(bulkElem);
-            bulkElemVolVars.bind(bulkElem, bulkFvGeom, this->curSol()[bulkId]);
+            bulkElemVolVars.bind(bulkElem, bulkFvGeom, bulkSol);
             bulkElemFluxVarsCache.bind(bulkElem, bulkFvGeom, bulkElemVolVars);
 
             lowDimContext_.isSet = true;
@@ -518,6 +521,12 @@ public:
     {
         // communicate deflected solution
         ParentType::updateCouplingContext(domainI, bulkLocalAssembler, domainJ, dofIdxGlobalJ, priVarsJ, pvIdxJ);
+
+        // Since coupling only occurs via the fluxes, the context does not
+        // have to be updated in explicit time discretization schemes, where
+        // they are strictly evaluated on the old time level
+        if (!BulkLocalAssembler::isImplicit())
+            return;
 
         // skip the rest if context is empty
         if (bulkContext_.isSet)
@@ -610,6 +619,12 @@ public:
         // communicate deflected solution
         ParentType::updateCouplingContext(domainI, lowDimLocalAssembler, domainJ, dofIdxGlobalJ, priVarsJ, pvIdxJ);
 
+        // Since coupling only occurs via the fluxes, the context does not
+        // have to be updated in explicit time discretization schemes, where
+        // they are strictly evaluated on the old time level
+        if (!LowDimLocalAssembler::isImplicit())
+            return;
+
         // skip the rest if context is empty
         if (lowDimContext_.isSet)
         {
@@ -650,6 +665,12 @@ public:
     {
         // communicate deflected solution
         ParentType::updateCouplingContext(domainI, lowDimLocalAssembler, domainJ, dofIdxGlobalJ, priVarsJ, pvIdxJ);
+
+        // Since coupling only occurs via the fluxes, the context does not
+        // have to be updated in explicit time discretization schemes, where
+        // they are strictly evaluated on the old time level
+        if (!LowDimLocalAssembler::isImplicit())
+            return;
 
         // skip the rest if context is empty
         if (lowDimContext_.isSet)
@@ -703,10 +724,11 @@ public:
                                 ElementVolumeVariables<bulkId>& elemVolVars,
                                 UpdatableFluxVarCache& fluxVarsCache)
     {
-        // update transmissibilities after low dim context has changed
-        fluxVarsCache.update(bulkLocalAssembler.element(),
-                             bulkLocalAssembler.fvGeometry(),
-                             bulkLocalAssembler.curElemVolVars());
+        // update transmissibilities after low dim context has changed (implicit only)
+        if (BulkLocalAssembler::isImplicit())
+            fluxVarsCache.update(bulkLocalAssembler.element(),
+                                 bulkLocalAssembler.fvGeometry(),
+                                 bulkLocalAssembler.curElemVolVars());
     }
 
     /*!
@@ -719,10 +741,13 @@ public:
                                 GridVolumeVariables<bulkId>& gridVolVars,
                                 UpdatableFluxVarCache& fluxVarsCache)
     {
-        // update transmissibilities after low dim context has changed
-        auto elemVolVars = localView(gridVolVars);
-        elemVolVars.bind(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), this->curSol()[bulkId]);
-        fluxVarsCache.update(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), elemVolVars);
+        // update transmissibilities after low dim context has changed (implicit only)
+        if (BulkLocalAssembler::isImplicit())
+        {
+            auto elemVolVars = localView(gridVolVars);
+            elemVolVars.bind(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), this->curSol()[bulkId]);
+            fluxVarsCache.update(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), elemVolVars);
+        }
     }
 
     //! Empty stencil to be returned for elements that aren't coupled
