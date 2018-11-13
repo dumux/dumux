@@ -29,6 +29,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/dynvector.hh>
+#include <dune/common/float_cmp.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
@@ -303,7 +304,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
                                                                                outsideVolVars.permeability(),
                                                                                outsideVolVars.extrusionFactor());
 
-                if (xi != 1.0)
+                if ( !Dune::FloatCmp::eq(xi, 1.0, 1e-6) )
                 {
                     // The gravity coefficients are the first row of the inverse of the A matrix in the local eq system
                     // multiplied with wIn. Note that we never compute the inverse but use an optimized implementation below.
@@ -530,7 +531,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
             // intermediate face unknowns in the matrix domain. Equivalently, flux continuity reads:
             // \f$\mathbf{A} \bar{\mathbf{u}} = \mathbf{B} \mathbf{u} + \mathbf{M} \mathbf{u}_\gamma\f$.
             // Combining the two, we can eliminate the intermediate unknowns and compute the transmissibilities.
-            if (!scvf.boundary() && xi != 1.0)
+            if (!scvf.boundary() && !Dune::FloatCmp::eq(xi, 1.0, 1e-6))
             {
                 // assemble matrices
                 const Scalar xiWIn = xi*wIn;
