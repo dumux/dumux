@@ -93,6 +93,8 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
@@ -115,7 +117,12 @@ public:
       pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
       temperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Temperature");
       baseClosed_ = getParamFromGroup<bool>(this->paramGroup(),"Problem.BaseClosed");
-      inletRelPressure_ = getParamFromGroup<Scalar>(this->paramGroup(),"Problem.InletRelPressure");
+      bottomVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(),"Problem.BottomVelocity");
+
+      FluidState fluidState;
+      fluidState.setPressure(0, pressure_);
+      fluidState.setTemperature(temperature_);
+      density_ = FluidSystem::density(fluidState, 0);
     }
 
     /*!
@@ -167,10 +174,10 @@ public:
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
             values.setAllCouplingNeumann();
 
-        if (!baseClosed_ && onLowerBoundary_(scvf.ipGlobal()))
-        {
-            values.setDirichlet(Indices::pressureIdx);
-        }
+        // if (!baseClosed_ && onLowerBoundary_(scvf.ipGlobal()))
+        // {
+        //     values.setDirichlet(Indices::pressureIdx);
+        // }
 
         return values;
     }
@@ -187,11 +194,6 @@ public:
     {
         PrimaryVariables values(0.0);
         values = initial(element);
-
-        if (!baseClosed_ && onLowerBoundary_(scvf.ipGlobal()))
-        {
-            values[pressureIdx] = pressure_ + inletRelPressure_;
-        }
 
         return values;
     }
@@ -217,6 +219,11 @@ public:
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
         {
             values[Indices::conti0EqIdx] = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, scvf);
+        }
+
+        if (!baseClosed_ && onLowerBoundary_(scvf.ipGlobal()))
+        {
+            values[Indices::conti0EqIdx] = -bottomVelocity_ * density_;
         }
 
         return values;
@@ -296,8 +303,9 @@ private:
     Scalar pressure_;
     Scalar temperature_;
     Scalar eps_;
-    Scalar inletRelPressure_;
     bool baseClosed_;
+    Scalar bottomVelocity_;
+    Scalar density_;
 
     TimeLoopPtr timeLoop_;
     std::shared_ptr<CouplingManager> couplingManager_;
