@@ -182,7 +182,8 @@ public:
     LocalResidualValues evalFluxResidual(const Element& neighbor,
                                          const SubControlVolumeFace& scvf) const
     {
-        return this->localResidual().evalFlux(problem(), neighbor, this->fvGeometry(), this->curElemVolVars(), this->elemFluxVarsCache(), scvf);
+        const auto& elemVolVars = implicit ? this->curElemVolVars() : this->prevElemVolVars();
+        return this->localResidual().evalFlux(problem(), neighbor, this->fvGeometry(), elemVolVars, this->elemFluxVarsCache(), scvf);
     }
 
     //! prepares all necessary local views
