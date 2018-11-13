@@ -214,13 +214,31 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
 * Try to order your new header into the existing directory structure.
 * Headers are named like the classes they contain (usually one class per file, exception: closely tied helper classes / functions).
 * Headers are named lower case only (using underscores only if absolutely necessary for readability).
-* Folder names are lower case only.
-* Tests should be called after model and discretization scheme using underscores and lower case only, e.g.
+* Folder names are lower case only (no underscores)
 
+## Tests
+
+* Test names should follow the naming scheme `test_<model>_<topic>_<discretization>`.
     ```
-    test_1p_tpfa
-    test_2p2c_box_infiltration
+    test_1p_injection_tpfa
+    test_2p2c_infiltration_box
     ```
+  look at other test to keep a unified style.
+
+* Tests with problem and spatial params should have there own folder with the files
+  - `problem.hh`
+  - `spatialparams.hh`
+  - `main.cc`
+  - `params.input`
+
+* If you need to distinguish several tests that use generally the same files but have e.g. a different input file
+  use underscores to clarify
+  - `params_stationary.input`
+  - `params_instationary.input`
+
+* Reference files should have the same name as the test + `-reference.vtu/vtp`, if the same reference file is used
+  for multiple tests drop the distinguishing suffix from the reference name.
+
 
 ## CMake
 
