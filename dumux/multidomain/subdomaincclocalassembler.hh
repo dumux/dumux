@@ -50,11 +50,12 @@ namespace Dumux {
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
  * \tparam Implementation the actual assembler implementation
+ * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<std::size_t id, class TypeTag, class Assembler, class Implementation>
-class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler,Implementation, true>
+template<std::size_t id, class TypeTag, class Assembler, class Implementation, bool implicit>
+class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler,Implementation, implicit>
 {
-    using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, true>;
+    using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, implicit>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
@@ -200,9 +201,9 @@ private:
  * \tparam Implementation the actual assembler implementation
  */
 template<std::size_t id, class TypeTag, class Assembler, class Implementation>
-class SubDomainCCLocalAssemblerImplicitBase : public SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, Implementation>
+class SubDomainCCLocalAssemblerImplicitBase : public SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, Implementation, true>
 {
-    using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, Implementation>;
+    using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, Implementation, true>;
 
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
