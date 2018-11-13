@@ -269,7 +269,7 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
     static constexpr bool enableGridVolVarsCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
-    static constexpr int maxNeighbors = 4*(2*dim);
+    static constexpr int maxElementStencilSize = FVGridGeometry::maxElementStencilSize;;
     static constexpr auto domainI = Dune::index_constant<id>();
 
 public:
@@ -303,11 +303,11 @@ public:
         const auto numNeighbors = connectivityMap[globalI].size();
 
         // container to store the neighboring elements
-        Dune::ReservedVector<Element, maxNeighbors*2+1> neighborElements;
+        Dune::ReservedVector<Element, maxElementStencilSize> neighborElements;
         neighborElements.resize(numNeighbors);
 
         // assemble the undeflected residual
-        using Residuals = ReservedBlockVector<LocalResidualValues, maxNeighbors*2+1>;
+        using Residuals = ReservedBlockVector<LocalResidualValues, maxElementStencilSize>;
         Residuals origResiduals(numNeighbors + 1); origResiduals = 0.0;
         origResiduals[0] = this->evalLocalResidual()[0];
 
@@ -541,9 +541,6 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*
     enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
     enum { dim = GridView::dimension };
 
-    static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
-    static constexpr bool enableGridVolVarsCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
-    static constexpr int maxNeighbors = 4*(2*dim);
     static constexpr auto domainI = Dune::index_constant<id>();
 
 public:
