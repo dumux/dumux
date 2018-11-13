@@ -127,12 +127,19 @@ public:
         });
     }
 
+    /*!
+     * \brief Assemble the entries in a coupling block of the jacobian.
+     *        There is no coupling block between a domain and itself.
+     */
     template<std::size_t otherId, class JacRow, class GridVariables,
              typename std::enable_if_t<(otherId == id), int> = 0>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacRow& jacRow,
                                   const LocalResidualValues& res, GridVariables& gridVariables)
     {}
 
+    /*!
+     * \brief Assemble the entries in a coupling block of the jacobian.
+     */
     template<std::size_t otherId, class JacRow, class GridVariables,
              typename std::enable_if_t<(otherId != id), int> = 0>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacRow& jacRow,
@@ -151,7 +158,9 @@ public:
         res[globalI] = this->evalLocalResidual()[0]; // forward to the internal implementation
     }
 
-    //! evaluates the local source term for an element and element volume variables
+    /*!
+     * \brief Evaluates the local source term for an element and given element volume variables
+     */
     ElementResidualVector evalLocalSourceResidual(const Element& element, const ElementVolumeVariables& elemVolVars) const
     {
         // initialize the residual vector for all scvs in this element
@@ -170,15 +179,23 @@ public:
         return residual;
     }
 
-    //! evaluates the local source term depending on time discretization scheme
+    /*!
+     * \brief Evaluates the local source term depending on time discretization scheme
+     */
     ElementResidualVector evalLocalSourceResidual(const Element& neighbor) const
     { return this->evalLocalSourceResidual(neighbor, implicit ? this->curElemVolVars() : this->prevElemVolVars()); }
 
+    /*!
+     * \brief Evaluates the storage terms within the element
+     */
     LocalResidualValues evalLocalStorageResidual() const
     {
         return this->localResidual().evalStorage(this->element(), this->fvGeometry(), this->prevElemVolVars(), this->curElemVolVars())[0];
     }
 
+    /*!
+     * \brief Evaluates the fluxes depending on the chose time discretization scheme
+     */
     LocalResidualValues evalFluxResidual(const Element& neighbor,
                                          const SubControlVolumeFace& scvf) const
     {
@@ -186,7 +203,9 @@ public:
         return this->localResidual().evalFlux(problem(), neighbor, this->fvGeometry(), elemVolVars, this->elemFluxVarsCache(), scvf);
     }
 
-    //! prepares all necessary local views
+    /*!
+     * \brief Prepares all local views necessary for local assembly.
+     */
     void bindLocalViews()
     {
         // get some references for convenience
@@ -218,9 +237,11 @@ public:
         }
     }
 
+    //! return reference to the underlying problem
     const Problem& problem() const
     { return this->assembler().problem(domainId); }
 
+    //! return reference to the coupling manager
     CouplingManager& couplingManager()
     { return couplingManager_; }
 
@@ -421,8 +442,6 @@ public:
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix.
-     *
-     * \return The element residual at the current solution.
      */
     template<std::size_t otherId, class JacobianBlock, class GridVariables>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
