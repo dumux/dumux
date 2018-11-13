@@ -1,4 +1,5 @@
-dune_add_test(SOURCES test_ncpflash.cc)
+dune_add_test(SOURCES test_ncpflash.cc
+              LABELS unit)
 
 #install sources
 install(FILES

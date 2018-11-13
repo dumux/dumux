@@ -1,4 +1,5 @@
-dune_add_test(SOURCES test_immiscibleflash.cc)
+dune_add_test(SOURCES test_immiscibleflash.cc
+              LABELS unit)
 
 #install sources
 install(FILES

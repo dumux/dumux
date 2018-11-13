@@ -1,4 +1,5 @@
-dune_add_test(SOURCES test_fluidsystems.cc)
+dune_add_test(SOURCES test_fluidsystems.cc
+              LABELS unit)
 
 #install sources
 install(FILES

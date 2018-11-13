@@ -1,10 +1,12 @@
 dune_add_test(NAME test_boxfvgeometry
               SOURCES test_boxfvgeometry.cc
-              COMPILE_DEFINITIONS ENABLE_CACHING=false)
+              COMPILE_DEFINITIONS ENABLE_CACHING=false
+              LABELS unit)
 
 dune_add_test(NAME test_boxfvgeometry_caching
               SOURCES test_boxfvgeometry.cc
-              COMPILE_DEFINITIONS ENABLE_CACHING=true)
+              COMPILE_DEFINITIONS ENABLE_CACHING=true
+              LABELS unit)
 
 #install sources
 install(FILES

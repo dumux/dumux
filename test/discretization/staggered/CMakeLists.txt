@@ -1,8 +1,10 @@
 dune_add_test(NAME test_staggeredfvgeometry
-              SOURCES test_staggeredfvgeometry.cc)
+              SOURCES test_staggeredfvgeometry.cc
+              LABELS unit)
 
 dune_add_test(NAME test_staggered_free_flow_geometry
-              SOURCES test_staggered_free_flow_geometry.cc)
+              SOURCES test_staggered_free_flow_geometry.cc
+              LABELS unit)
 
 #install sources
 install(FILES
