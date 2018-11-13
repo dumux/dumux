@@ -40,7 +40,7 @@ namespace Dumux {
  * \brief A base class for all local assemblers
  * \tparam TypeTag The TypeTag
  * \tparam Assembler The assembler type
- * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ * \tparam Implementation The assembler implementation
  */
 template<class TypeTag, class Assembler, class Implementation, bool isImplicit>
 class FVLocalAssemblerBase
