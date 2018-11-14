@@ -177,7 +177,7 @@ public:
         this->asImp_().bindLocalViews();
         this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
 
-        const auto residual = this->asImp_().assembleResidualImpl();
+        const auto residual = this->evalLocalResidual();
         for (const auto& scv : scvs(this->fvGeometry()))
             res[scv.dofIndex()] += residual[scv.localDofIndex()];
     }
@@ -280,13 +280,6 @@ public:
             elemFluxVarsCache.bind(element, fvGeometry, prevElemVolVars);
         }
     }
-
-    /*!
-     * \brief Computes the residual
-     * \return The element residual at the current solution.
-     */
-    ElementResidualVector assembleResidualImpl()
-    { return this->evalLocalResidual(); }
 
     //! return reference to the underlying problem
     const Problem& problem() const
