@@ -1,11 +1,12 @@
 [Darcy.Grid]
 UpperRight = 1 1
-Cells = 20 20
+Cells = 1 1
 
 [Stokes.Grid]
 LowerLeft = 0 1
 UpperRight = 1 2
-Cells = 20 20
+Cells = 1 1
+Refinement = 1
 
 [Stokes.Problem]
 Name = stokes
@@ -25,4 +26,7 @@ EnableGravity = false
 EnableInertiaTerms = false
 
 [Vtk]
-AddVelocity = 1
+AddVelocity = 0
+
+[Mpfa]
+Q = 0.5

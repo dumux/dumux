@@ -201,7 +201,7 @@ public:
                        const SubControlVolumeFace& scvf) const
     {
         // TODO: return velocity from stokes problem here! Is this correct?
-        return this->couplingManager().darcyCouplingContext(scvf).velocity*scvf.unitOuterNormal();
+        return this->neumann(element, fvGeometry, elemVolVars, scvf);
     }
 
     // \}

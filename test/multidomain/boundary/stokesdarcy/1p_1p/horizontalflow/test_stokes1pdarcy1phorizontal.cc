@@ -47,7 +47,7 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
-#include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
+#include <dumux/multidomain/boundary/stokesdarcy/mpfa/couplingmanager.hh>
 
 #include "darcyproblem.hh"
 #include "stokesproblem.hh"
