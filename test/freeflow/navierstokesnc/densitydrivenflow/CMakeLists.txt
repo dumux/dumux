@@ -1,6 +1,7 @@
 
 dune_add_test(NAME test_ff_stokes2c_densitydrivenflow
               SOURCES main.cc
+              LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy

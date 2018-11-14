@@ -17,6 +17,7 @@ dune_add_test(NAME test_ff_rans_lauferpipe_kepsilon_twolayers
 dune_add_test(NAME test_ff_rans_lauferpipe_kepsilon_wallfunction
               TARGET test_ff_rans_lauferpipe_kepsilon
               CMAKE_GUARD HAVE_UMFPACK
+              LABELS freeflow rans
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans_lauferpipe_kepsilon_wallfunction-reference.vtu
@@ -26,6 +27,7 @@ dune_add_test(NAME test_ff_rans_lauferpipe_kepsilon_wallfunction
 
 dune_add_test(NAME test_ff_rans_lauferpipe_lowrekepsilon
               SOURCES main.cc
+              LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -37,6 +39,7 @@ target_compile_definitions(test_ff_rans_lauferpipe_lowrekepsilon PUBLIC "LOWREKE
 
 dune_add_test(NAME test_ff_rans_lauferpipe_komega
               SOURCES main.cc
+              LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -48,6 +51,7 @@ target_compile_definitions(test_ff_rans_lauferpipe_komega PUBLIC "KOMEGA=1")
 
 dune_add_test(NAME test_ff_rans_lauferpipe_oneeq
               SOURCES main.cc
+              LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -59,6 +63,7 @@ target_compile_definitions(test_ff_rans_lauferpipe_oneeq PUBLIC "ONEEQ=1")
 
 dune_add_test(NAME test_ff_rans_lauferpipe_zeroeq
               SOURCES main.cc
+              LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -69,6 +74,7 @@ dune_add_test(NAME test_ff_rans_lauferpipe_zeroeq
 
 dune_add_test(NAME test_ff_ransni_zeroeq
               SOURCES main.cc
+              LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy

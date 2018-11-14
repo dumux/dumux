@@ -2,6 +2,7 @@ add_executable(test_ff_navierstokes_closedsystem EXCLUDE_FROM_ALL main.cc)
 
 dune_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1
               TARGET test_ff_navierstokes_closedsystem
+              LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -12,6 +13,7 @@ dune_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1
 
 dune_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1000
               TARGET test_ff_navierstokes_closedsystem
+              LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -22,6 +24,7 @@ dune_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1000
 
 dune_add_test(NAME test_ff_navierstokes_closedsystem_hydrostaticpressure
               TARGET test_ff_navierstokes_closedsystem
+              LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy

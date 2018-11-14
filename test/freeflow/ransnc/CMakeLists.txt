@@ -2,6 +2,7 @@ add_input_file_links()
 
 dune_add_test(NAME test_ff_rans2c_kepsilon
               SOURCES main.cc
+              LABELS freeflow rans
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
 target_compile_definitions(test_ff_rans2c_kepsilon PUBLIC "KEPSILON=1")
 
@@ -10,6 +11,7 @@ target_compile_definitions(test_ff_rans2cni_kepsilon PUBLIC "KEPSILON=1" "NONISO
 
 dune_add_test(NAME test_ff_rans2cni_kepsilon_twolayer
               TARGET test_ff_rans2cni_kepsilon
+              LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -20,6 +22,7 @@ dune_add_test(NAME test_ff_rans2cni_kepsilon_twolayer
 
 dune_add_test(NAME test_ff_rans2cni_kepsilon_wallfunction
               TARGET test_ff_rans2cni_kepsilon
+              LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -30,11 +33,13 @@ dune_add_test(NAME test_ff_rans2cni_kepsilon_wallfunction
 
 dune_add_test(NAME test_ff_rans2c_komega
               SOURCES main.cc
+              LABELS freeflow rans
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
 target_compile_definitions(test_ff_rans2c_komega PUBLIC "KOMEGA=1")
 
 dune_add_test(NAME test_ff_rans2cni_komega
               SOURCES main.cc
+              LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -47,11 +52,13 @@ target_compile_definitions(test_ff_rans2cni_komega PUBLIC "KOMEGA=1" "NONISOTHER
 
 dune_add_test(NAME test_ff_rans2c_lowrekepsilon
               SOURCES main.cc
+              LABELS freeflow rans
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
 target_compile_definitions(test_ff_rans2c_lowrekepsilon PUBLIC "LOWREKEPSILON=1")
 
 dune_add_test(NAME test_ff_rans2cni_lowrekepsilon
               SOURCES main.cc
+              LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -63,11 +70,13 @@ target_compile_definitions(test_ff_rans2cni_lowrekepsilon PUBLIC "LOWREKEPSILON=
 
 dune_add_test(NAME test_ff_rans2c_oneeq
               SOURCES main.cc
+              LABELS freeflow rans
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
 target_compile_definitions(test_ff_rans2c_oneeq PUBLIC "ONEEQ=1")
 
 dune_add_test(NAME test_ff_rans2cni_oneeq
               SOURCES main.cc
+              LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -79,6 +88,7 @@ target_compile_definitions(test_ff_rans2cni_oneeq PUBLIC "ONEEQ=1" "NONISOTHERMA
 
 dune_add_test(NAME test_ff_rans2c_zeroeq
               SOURCES main.cc
+              LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -89,6 +99,7 @@ dune_add_test(NAME test_ff_rans2c_zeroeq
 
 dune_add_test(NAME test_ff_rans2cni_zeroeq
               SOURCES main.cc
+              LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy

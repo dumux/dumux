@@ -1,5 +1,6 @@
 dune_add_test(NAME test_ff_stokes_channel_3d
               SOURCES main.cc
+              LABELS freeflow
               COMPILE_DEFINITIONS DIM_3D=1
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -12,6 +13,7 @@ dune_add_test(NAME test_ff_stokes_channel_3d
 
 dune_add_test(NAME test_ff_stokes_channel_pseudo3d
               SOURCES main.cc
+              LABELS freeflow
               COMPILE_DEFINITIONS DIM_3D=0
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
