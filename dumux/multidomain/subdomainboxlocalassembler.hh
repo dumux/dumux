@@ -229,35 +229,6 @@ public:
         }
     }
 
-private:
-    CouplingManager& couplingManager_; //!< the coupling manager
-};
-
-/*!
- * \ingroup Assembly
- * \ingroup BoxDiscretization
- * \ingroup MultiDomain
- * \brief A base class for all implicit box local assemblers
- * \tparam id the id of the sub domain
- * \tparam TypeTag the TypeTag
- * \tparam Assembler the assembler type
- * \tparam Implementation the actual implementation type
- */
-template<std::size_t id, class TypeTag, class Assembler, class Implementation>
-class SubDomainBoxLocalAssemblerImplicitBase
-: public SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, Implementation, true>
-{
-    using ParentType = SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, Implementation, true>;
-    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using Element = typename GridView::template Codim<0>::Entity;
-    static constexpr auto domainId = Dune::index_constant<id>();
-public:
-    using ParentType::ParentType;
-
     void bindLocalViews()
     {
         // get some references for convenience
@@ -269,17 +240,33 @@ public:
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // bind the caches
+        couplingManager_.bindCouplingContext(domainId, element, this->assembler());
+        fvGeometry.bind(element);
+
+        // bind the caches
         couplingManager.bindCouplingContext(domainId, element, this->assembler());
         fvGeometry.bind(element);
-        curElemVolVars.bind(element, fvGeometry, curSol);
-        elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
-        if (!this->assembler().isStationaryProblem())
-            this->prevElemVolVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
+
+        if (implicit)
+        {
+            curElemVolVars.bind(element, fvGeometry, curSol);
+            elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
+            if (!this->assembler().isStationaryProblem())
+                this->prevElemVolVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
+        }
+        else
+        {
+            auto& prevElemVolVars = this->prevElemVolVars();
+            const auto& prevSol = this->assembler().prevSol()[domainId];
+
+            curElemVolVars.bindElement(element, fvGeometry, curSol);
+            prevElemVolVars.bind(element, fvGeometry, prevSol);
+            elemFluxVarsCache.bind(element, fvGeometry, prevElemVolVars);
+        }
     }
 
-    using ParentType::evalLocalSourceResidual;
     ElementResidualVector evalLocalSourceResidual(const Element& neighbor) const
-    { return this->evalLocalSourceResidual(neighbor, this->curElemVolVars()); }
+    { return this->evalLocalSourceResidual(neighbor, implicit ? this->curElemVolVars() : this->prevElemVolVars()); }
 
     /*!
      * \brief Computes the residual
@@ -287,6 +274,9 @@ public:
      */
     ElementResidualVector assembleResidualImpl()
     { return this->evalLocalResidual(); }
+
+private:
+    CouplingManager& couplingManager_; //!< the coupling manager
 };
 
 /*!
@@ -311,11 +301,11 @@ class SubDomainBoxLocalAssembler;
  */
 template<std::size_t id, class TypeTag, class Assembler>
 class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
-: public SubDomainBoxLocalAssemblerImplicitBase<id, TypeTag, Assembler,
-            SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true> >
+: public SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler,
+             SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true>, true >
 {
     using ThisType = SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
-    using ParentType = SubDomainBoxLocalAssemblerImplicitBase<id, TypeTag, Assembler, ThisType>;
+    using ParentType = SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, ThisType, true>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
