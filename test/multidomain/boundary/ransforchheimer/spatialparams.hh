@@ -90,6 +90,10 @@ public:
             return 39.0*pow(x,4) - 79.0*pow(x,3) + 54.0*pow(x,2) - 15.0*x + 4.0;
         else if (fittedAlpha_ && !baseClosed_)
             return 44.4*pow(x,4) - 71.3*pow(x,3) + 20.5*pow(x,2) + 7.9*x + 3.0;
+        else if (!fittedAlpha_ && baseClosed_)
+            return 2.9;
+        else if (!fittedAlpha_ && !baseClosed_)
+            return 4.4;
         else
             return alphaBJ_;
     }
