@@ -1,0 +1,30 @@
+[TimeLoop]
+TEnd = 5e4
+Dt = 100
+
+[Problem]
+EnableGravity = false
+FractureAperture = 0.1
+BoundaryOverpressure = 1e4
+ContaminationMassFraction = 1e-2
+
+[Grid]
+File = ./grids/durlofsky.msh
+
+[Bulk]
+OneP.Problem.Name = onep_bulk
+Tracer.Problem.Name = tracer_bulk
+SpatialParams.Permeability = 1e-12
+SpatialParams.Porosity = 0.2
+
+[LowDim]
+OneP.Problem.Name = onep_lowdim
+Tracer.Problem.Name = tracer_lowdim
+SpatialParams.Permeability = 1e-9
+SpatialParams.Porosity = 0.9
+
+[Vtk]
+OutputName = test_md_facet_tracertracer
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e10
