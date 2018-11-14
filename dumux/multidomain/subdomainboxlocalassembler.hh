@@ -49,11 +49,12 @@ namespace Dumux {
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
  * \tparam Implementation the actual implementation type
+ * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<std::size_t id, class TypeTag, class Assembler, class Implementation>
-class SubDomainBoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler,Implementation, true>
+template<std::size_t id, class TypeTag, class Assembler, class Implementation, bool implicit>
+class SubDomainBoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
 {
-    using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, true>;
+    using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, implicit>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
@@ -243,9 +244,10 @@ private:
  * \tparam Implementation the actual implementation type
  */
 template<std::size_t id, class TypeTag, class Assembler, class Implementation>
-class SubDomainBoxLocalAssemblerImplicitBase : public SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, Implementation>
+class SubDomainBoxLocalAssemblerImplicitBase
+: public SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, Implementation, true>
 {
-    using ParentType = SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, Implementation>;
+    using ParentType = SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, Implementation, true>;
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
