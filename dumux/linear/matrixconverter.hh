@@ -78,13 +78,15 @@ private:
      */
     static void setOccupationPattern_(BCRSMatrix& M, const MultiTypeBlockMatrix& A)
     {
+        using std::abs;
+        Scalar eps = getParam<Scalar>("MatrixConverter.Eps", -1.0);
         // prepare the occupation pattern
         const auto numRows = M.N();
         Dune::MatrixIndexSet occupationPattern;
         occupationPattern.resize(numRows, numRows);
 
         // lambda function to fill the occupation pattern
-        auto addIndices = [&occupationPattern](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
+        auto addIndices = [&occupationPattern](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol, const auto eps)
         {
             using BlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
             const auto blockSizeI = BlockType::rows;
@@ -93,17 +95,18 @@ private:
                 for(auto col = row->begin(); col != row->end(); ++col)
                     for(std::size_t i = 0; i < blockSizeI; ++i)
                         for(std::size_t j = 0; j < blockSizeJ; ++j)
-                            occupationPattern.add(startRow + row.index()*blockSizeI + i, startCol + col.index()*blockSizeJ + j);
+                            if(abs(subMatrix[row.index()][col.index()][i][j]) > eps)
+                                occupationPattern.add(startRow + row.index()*blockSizeI + i, startCol + col.index()*blockSizeJ + j);
         };
 
         // fill the pattern
         std::size_t rowIndex = 0;
-        Dune::Hybrid::forEach(A, [&addIndices, &rowIndex, numRows](const auto& rowOfMultiTypeMatrix)
+        Dune::Hybrid::forEach(A, [&addIndices, &rowIndex, numRows, eps](const auto& rowOfMultiTypeMatrix)
         {
             std::size_t colIndex = 0;
-            Dune::Hybrid::forEach(rowOfMultiTypeMatrix, [&addIndices, &colIndex, &rowIndex, numRows](const auto& subMatrix)
+            Dune::Hybrid::forEach(rowOfMultiTypeMatrix, [&addIndices, &colIndex, &rowIndex, numRows, eps](const auto& subMatrix)
             {
-                addIndices(subMatrix, rowIndex, colIndex);
+                addIndices(subMatrix, rowIndex, colIndex, eps);
 
                 using SubBlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
 
@@ -126,11 +129,13 @@ private:
      */
     static void copyValues_(BCRSMatrix& M, const MultiTypeBlockMatrix& A)
     {
+        using std::abs;
+        Scalar eps = getParam<Scalar>("MatrixConverter.Eps", -1.0);
         // get number of rows
         const auto numRows = M.N();
 
         // lambda function to copy the values
-        auto copyValues = [&M](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
+        auto copyValues = [&M](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol, const auto eps)
         {
             using BlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
             const auto blockSizeI = BlockType::rows;
@@ -139,17 +144,18 @@ private:
                 for (auto col = row->begin(); col != row->end(); ++col)
                     for (std::size_t i = 0; i < blockSizeI; ++i)
                         for (std::size_t j = 0; j < blockSizeJ; ++j)
-                            M[startRow + row.index()*blockSizeI + i][startCol + col.index()*blockSizeJ + j] = subMatrix[row.index()][col.index()][i][j];
+                            if(abs(subMatrix[row.index()][col.index()][i][j]) > eps)
+                                M[startRow + row.index()*blockSizeI + i][startCol + col.index()*blockSizeJ + j] = subMatrix[row.index()][col.index()][i][j];
 
         };
 
         std::size_t rowIndex = 0;
-        Dune::Hybrid::forEach(A, [&copyValues, &rowIndex, numRows](const auto& rowOfMultiTypeMatrix)
+        Dune::Hybrid::forEach(A, [&copyValues, &rowIndex, numRows, eps](const auto& rowOfMultiTypeMatrix)
         {
             std::size_t colIndex = 0;
-            Dune::Hybrid::forEach(rowOfMultiTypeMatrix, [&copyValues, &colIndex, &rowIndex, numRows](const auto& subMatrix)
+            Dune::Hybrid::forEach(rowOfMultiTypeMatrix, [&copyValues, &colIndex, &rowIndex, numRows, eps](const auto& subMatrix)
             {
-                copyValues(subMatrix, rowIndex, colIndex);
+                copyValues(subMatrix, rowIndex, colIndex, eps);
 
                 using SubBlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
 
