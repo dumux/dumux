@@ -478,6 +478,7 @@ private:
                                                         LambdaFactory::getAdvectionLambda() );
                 else
                     localAssembler.assemble( handle.advectionT(),
+                                             handle.advectionN(),
                                              iv,
                                              LambdaFactory::getAdvectionLambda() );
             }

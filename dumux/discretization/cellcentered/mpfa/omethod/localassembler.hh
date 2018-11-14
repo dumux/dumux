@@ -67,10 +67,12 @@ public:
      * \param getT Lambda to evaluate the scv-wise tensors
      */
     template< class IV, class TensorFunc >
-    void assemble(typename IV::Traits::MatVecTraits::TMatrix& T, IV& iv, const TensorFunc& getT)
+    void assemble(typename IV::Traits::MatVecTraits::TMatrix& T,
+                  typename IV::Traits::MatVecTraits::FaceVector& N,
+                  IV& iv, const TensorFunc& getT)
     {
         // assemble D into T directly
-        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv.N(), iv, getT);
+        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, N, iv, getT);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
