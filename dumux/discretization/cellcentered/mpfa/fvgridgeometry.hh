@@ -188,6 +188,7 @@ public:
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
+        hasBoundaryScvf_.resize(numScvs, false);
 
         // Some methods require to use a second type of interaction volume, e.g.
         // around vertices on the boundary or branching points (surface grids)
@@ -235,6 +236,9 @@ public:
                 const auto indexInInside = is.indexInInside();
                 const bool boundary = is.boundary();
                 const bool neighbor = is.neighbor();
+
+                if (boundary)
+                    hasBoundaryScvf_[eIdx] = true;
 
                 // for surface grids, skip the rest if handled already
                 if (dim < dimWorld && neighbor && outsideIndices[indexInInside].empty())
@@ -395,6 +399,10 @@ public:
     const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
     { return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]]; }
 
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf(GridIndexType eIdx) const
+    { return hasBoundaryScvf_[eIdx]; }
+
 private:
     // connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
@@ -407,6 +415,7 @@ private:
     std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;
     std::vector<bool> secondaryInteractionVolumeVertices_;
     GridIndexType numBoundaryScvf_;
+    std::vector<bool> hasBoundaryScvf_;
 
     // needed for embedded surface and network grids (dim < dimWorld)
     FlipScvfIndexSet flipScvfIndices_;

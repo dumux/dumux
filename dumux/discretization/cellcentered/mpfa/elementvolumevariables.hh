@@ -163,28 +163,31 @@ public:
             volumeVariables_.reserve(numVolVars+maxNumBoundaryVolVars);
             volVarIndices_.reserve(numVolVars+maxNumBoundaryVolVars);
 
-            // treat the BCs inside the element
-            for (const auto& scvf : scvfs(fvGeometry))
+            if (fvGeometry.hasBoundaryScvf())
             {
-                // if we are not on a boundary, skip to the next scvf
-                if (!scvf.boundary())
-                    continue;
-
-                const auto bcTypes = problem.boundaryTypes(element, scvf);
-
-                // Only proceed on dirichlet boundaries. Fluxes across Neumann
-                // boundaries are never computed - the user-defined flux is taken.
-                if (bcTypes.hasOnlyDirichlet())
+                // treat the BCs inside the element
+                for (const auto& scvf : scvfs(fvGeometry))
                 {
-                    // boundary volume variables
-                    VolumeVariables dirichletVolVars;
-                    dirichletVolVars.update(elementSolution<FVElementGeometry>(problem.dirichlet(element, scvf)),
-                                            problem,
-                                            element,
-                                            scvI);
+                    // if we are not on a boundary, skip to the next scvf
+                    if (!scvf.boundary())
+                        continue;
 
-                    volumeVariables_.emplace_back(std::move(dirichletVolVars));
-                    volVarIndices_.push_back(scvf.outsideScvIdx());
+                    const auto bcTypes = problem.boundaryTypes(element, scvf);
+
+                    // Only proceed on dirichlet boundaries. Fluxes across Neumann
+                    // boundaries are never computed - the user-defined flux is taken.
+                    if (bcTypes.hasOnlyDirichlet())
+                    {
+                        // boundary volume variables
+                        VolumeVariables dirichletVolVars;
+                        dirichletVolVars.update(elementSolution<FVElementGeometry>(problem.dirichlet(element, scvf)),
+                                                problem,
+                                                element,
+                                                scvI);
+
+                        volumeVariables_.emplace_back(std::move(dirichletVolVars));
+                        volVarIndices_.push_back(scvf.outsideScvIdx());
+                    }
                 }
             }
 
