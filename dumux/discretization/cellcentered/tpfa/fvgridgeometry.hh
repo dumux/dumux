@@ -172,6 +172,7 @@ public:
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
+        hasBoundaryScvf_.resize(numScvs, false);
 
         // Build the scvs and scv faces
         IndexType scvfIdx = 0;
@@ -254,6 +255,8 @@ public:
                                         ScvfGridIndexStorage({eIdx, this->gridView().size(0) + numBoundaryScvf_++}),
                                         true);
                     scvfsIndexSet.push_back(scvfIdx++);
+
+                    hasBoundaryScvf_[eIdx] = true;
                 }
             }
 
@@ -314,6 +317,10 @@ public:
     const ConnectivityMap &connectivityMap() const
     { return connectivityMap_; }
 
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf(IndexType eIdx) const
+    { return hasBoundaryScvf_[eIdx]; }
+
 private:
     // find the scvf that has insideScvIdx in its outsideScvIdx list and outsideScvIdx as its insideScvIdx
     IndexType findFlippedScvfIndex_(IndexType insideScvIdx, IndexType outsideScvIdx)
@@ -338,6 +345,7 @@ private:
     std::vector<SubControlVolumeFace> scvfs_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     IndexType numBoundaryScvf_;
+    std::vector<bool> hasBoundaryScvf_;
 
     //! needed for embedded surface and network grids (dim < dimWorld)
     std::vector<std::vector<IndexType>> flipScvfIndices_;

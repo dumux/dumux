@@ -156,6 +156,10 @@ public:
     const FVGridGeometry& fvGridGeometry() const
     { return *fvGridGeometryPtr_; }
 
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf() const
+    { return fvGridGeometry().hasBoundaryScvf(scvIndices_[0]); }
+
 private:
 
     const Element* elementPtr_;
@@ -351,6 +355,10 @@ public:
     const FVGridGeometry& fvGridGeometry() const
     { return *fvGridGeometryPtr_; }
 
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf() const
+    { return hasBoundaryScvf_; }
+
 private:
 
     IndexType findFlippedScvfIndex_(IndexType insideScvIdx, IndexType globalOutsideScvIdx)
@@ -412,11 +420,15 @@ private:
                 scvIndices.resize(scvfNeighborVolVarIndices.size() + 1);
                 scvIndices[0] = eIdx;
                 std::copy(scvfNeighborVolVarIndices.begin(), scvfNeighborVolVarIndices.end(), scvIndices.begin()+1);
+
+                const bool onBoundary = intersection.boundary() && !intersection.neighbor();
+                hasBoundaryScvf_ = (hasBoundaryScvf_ || onBoundary);
+
                 scvfs_.emplace_back(intersection,
                                     intersection.geometry(),
                                     scvFaceIndices[scvfCounter],
                                     scvIndices,
-                                    intersection.boundary() && !intersection.neighbor());
+                                    onBoundary);
                 scvfIndices_.emplace_back(scvFaceIndices[scvfCounter]);
                 scvfCounter++;
 
@@ -536,6 +548,8 @@ private:
         neighborScvs_.clear();
         neighborScvfs_.clear();
         flippedNeighborScvfIndices_.clear();
+
+        hasBoundaryScvf_ = false;
     }
 
     const Element* elementPtr_; //!< the element to which this fvgeometry is bound
@@ -555,6 +569,8 @@ private:
     std::vector<IndexType> neighborScvfIndices_;
     std::vector<SubControlVolumeFace> neighborScvfs_;
     std::vector<std::vector<IndexType>> flippedNeighborScvfIndices_;
+
+    bool hasBoundaryScvf_ = false;
 };
 
 } // end namespace Dumux
