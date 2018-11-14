@@ -335,7 +335,6 @@ class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
     static constexpr bool enableGridVolVarsCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
-    static constexpr int maxNeighbors = 4*(2*dim);
     static constexpr auto domainI = Dune::index_constant<id>();
 
 public:
