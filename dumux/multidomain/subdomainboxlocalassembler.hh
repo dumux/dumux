@@ -118,9 +118,19 @@ public:
         // forward to the internal implementation
         const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jacRow[domainId], *std::get<domainId>(gridVariables));
 
+        // update the residual vector
         for (const auto& scv : scvs(this->fvGeometry()))
             res[scv.dofIndex()] += residual[scv.localDofIndex()];
 
+        // assemble the coupling blocks
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
+        {
+            if (i != id)
+                this->assembleJacobianCoupling(i, jacRow, residual, gridVariables);
+        });
+
+        // lambda for the incorporation of Dirichlet Bcs
         auto applyDirichlet = [&] (const auto& scvI,
                                    const auto& dirichletValues,
                                    const auto eqIdx,
@@ -134,23 +144,23 @@ public:
             jacRow[domainId][scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
         };
 
-        // for the coupling blocks
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
-        {
-            if (i != id)
-                this->assembleJacobianCoupling(i, jacRow, residual, gridVariables);
-        });
-
+        // incorporate Dirichlet BCs
         this->asImp_().evalDirichletBoundaries(applyDirichlet);
     }
 
+    /*!
+     * \brief Assemble the entries in a coupling block of the jacobian.
+     *        There is no coupling block between a domain and itself.
+     */
     template<std::size_t otherId, class JacRow, class GridVariables,
              typename std::enable_if_t<(otherId == id), int> = 0>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacRow& jacRow,
                                   const ElementResidualVector& res, GridVariables& gridVariables)
     {}
 
+    /*!
+     * \brief Assemble the entries in a coupling block of the jacobian.
+     */
     template<std::size_t otherId, class JacRow, class GridVariables,
              typename std::enable_if_t<(otherId != id), int> = 0>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacRow& jacRow,
@@ -160,7 +170,7 @@ public:
     }
 
     /*!
-     * \brief Assemble the residual only
+     * \brief Assemble the residual vector entries only
      */
     void assembleResidual(SubSolutionVector& res)
     {
@@ -168,11 +178,13 @@ public:
         this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
 
         const auto residual = this->asImp_().assembleResidualImpl();
-
         for (const auto& scv : scvs(this->fvGeometry()))
             res[scv.dofIndex()] += residual[scv.localDofIndex()];
     }
 
+    /*!
+     * \brief Evaluates the local source term for an element and given element volume variables
+     */
     ElementResidualVector evalLocalSourceResidual(const Element& element, const ElementVolumeVariables& elemVolVars) const
     {
         // initialize the residual vector for all scvs in this element
@@ -191,14 +203,15 @@ public:
         return residual;
     }
 
-    const Problem& problem() const
-    { return this->assembler().problem(domainId); }
-
-    CouplingManager& couplingManager()
-    { return couplingManager_; }
+    /*!
+     * \brief Evaluates the local source term depending on time discretization scheme
+     */
+    ElementResidualVector evalLocalSourceResidual(const Element& neighbor) const
+    { return this->evalLocalSourceResidual(neighbor, implicit ? this->curElemVolVars() : this->prevElemVolVars()); }
 
     /*!
-     * \brief Evaluates Dirichlet boundaries
+     * \brief Incorporate Dirichlet boundary conditions
+     * \param applyDirichlet Lambda function for the BC incorporation on an scv
      */
     template< typename ApplyDirichletFunctionType >
     void evalDirichletBoundaries(ApplyDirichletFunctionType applyDirichlet)
@@ -229,6 +242,9 @@ public:
         }
     }
 
+    /*!
+     * \brief Prepares all local views necessary for local assembly.
+     */
     void bindLocalViews()
     {
         // get some references for convenience
@@ -265,15 +281,20 @@ public:
         }
     }
 
-    ElementResidualVector evalLocalSourceResidual(const Element& neighbor) const
-    { return this->evalLocalSourceResidual(neighbor, implicit ? this->curElemVolVars() : this->prevElemVolVars()); }
-
     /*!
      * \brief Computes the residual
      * \return The element residual at the current solution.
      */
     ElementResidualVector assembleResidualImpl()
     { return this->evalLocalResidual(); }
+
+    //! return reference to the underlying problem
+    const Problem& problem() const
+    { return this->assembler().problem(domainId); }
+
+    //! return reference to the coupling manager
+    CouplingManager& couplingManager()
+    { return couplingManager_; }
 
 private:
     CouplingManager& couplingManager_; //!< the coupling manager
