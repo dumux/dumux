@@ -4,6 +4,7 @@ add_executable(test_ff_channel EXCLUDE_FROM_ALL main.cc)
 
 dune_add_test(NAME test_ff_stokes_channel
               TARGET test_ff_channel
+              LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -14,6 +15,7 @@ dune_add_test(NAME test_ff_stokes_channel
 
 dune_add_test(NAME test_ff_navierstokes_channel
               TARGET test_ff_channel
+              LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -28,6 +30,7 @@ target_compile_definitions(test_ff_stokesni_channel PUBLIC "NONISOTHERMAL=1")
 
 dune_add_test(NAME test_ff_stokesni_channel_convection
               TARGET test_ff_stokesni_channel
+              LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -38,6 +41,7 @@ dune_add_test(NAME test_ff_stokesni_channel_convection
 
 dune_add_test(NAME test_ff_stokesni_channel_conduction
               TARGET test_ff_stokesni_channel
+              LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
