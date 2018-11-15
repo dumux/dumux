@@ -156,8 +156,8 @@ int main(int argc, char** argv) try
     // add output fields to writers
     using OnePOutputFields = typename GET_PROP_TYPE(OnePTypeTag, IOFields);
     using PoroMechOutputFields = typename GET_PROP_TYPE(PoroMechTypeTag, IOFields);
-    OnePOutputFields::init(onePVtkWriter);
-    PoroMechOutputFields::init(poroMechVtkWriter);
+    OnePOutputFields::initOutputModule(onePVtkWriter);
+    PoroMechOutputFields::initOutputModule(poroMechVtkWriter);
 
     // write initial solution
     onePVtkWriter.write(0.0);
