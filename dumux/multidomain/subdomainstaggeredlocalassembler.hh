@@ -382,7 +382,7 @@ private:
             if (problem().isDirichletCell(this->element(), this->fvGeometry(), this->fvGeometry().scv(cellCenterGlobalI), eqIdx + offset))
             {
                 using namespace Dune::Hybrid;
-                forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
+                forEach(integralRange(Dune::Hybrid::size(jacRow)), [&, domainId = domainId](auto&& i)
                 {
                     auto& ccRowI = jacRow[i][cellCenterGlobalI];
                     for (auto col = ccRowI.begin(); col != ccRowI.end(); ++col)
