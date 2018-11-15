@@ -29,18 +29,12 @@
 #include <dune/common/dynvector.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/common/matrixvectorhelper.hh>
 
 namespace Dumux
 {
 
 //! Empty data handle class
-class EmptyDataHandle
-{
-public:
-    template< class InteractionVolume >
-    void resize(const InteractionVolume& iv) {}
-};
+class EmptyDataHandle {};
 
 //! Data handle for quantities related to advection
 template<class MatVecTraits, class PhysicsTraits, bool EnableAdvection>
@@ -58,47 +52,6 @@ class AdvectionDataHandle
     static constexpr int numPhases = PhysicsTraits::numPhases;
 
 public:
-
-    //! prepare data handle for subsequent fill
-    template< class IV >
-    void resize(const IV& iv)
-    {
-        using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
-
-        // resize matrices
-        resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
-        resizeMatrix(A_, iv.numUnknowns(), iv.numUnknowns());
-        resizeMatrix(CA_, iv.numFaces(), iv.numUnknowns());
-
-        // lambdas to resize a vector
-        auto resizeToNumFaces = [&iv] (auto& v) { resizeVector(v, iv.numFaces()); };
-        auto resizeToNumKnowns = [&iv] (auto& v) { resizeVector(v, iv.numKnowns()); };
-
-        // resize pressure/gravity vector
-        std::for_each(p_.begin(), p_.end(), resizeToNumKnowns);
-        std::for_each(g_.begin(), g_.end(), resizeToNumFaces);
-
-        // on surface grids, resize additional containers
-        static constexpr int dim = IV::Traits::GridView::dimension;
-        static constexpr int dimWorld = IV::Traits::GridView::dimensionworld;
-        if (dim < dimWorld)
-        {
-            outsideT_.resize(iv.numFaces());
-            std::for_each(outsideG_.begin(), outsideG_.end(), resizeToNumFaces);
-
-            // resize the entries for each face
-            for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
-            {
-                const auto& localScvf = iv.localScvf(i);
-                const auto numNeighbors = localScvf.neighboringLocalScvIndices().size()-1;
-                outsideT_[i].resize(numNeighbors);
-
-                std::for_each(outsideT_[i].begin(), outsideT_[i].end(), resizeToNumKnowns);
-                std::for_each(outsideG_.begin(), outsideG_.end(), [&] (auto& v) { resizeVector(v[i], numNeighbors); });
-            }
-        }
-    }
-
     //! Access to the iv-wide pressure of one phase
     const CellVector& pressures(unsigned int pIdx) const { return p_[pIdx]; }
     CellVector& pressures(unsigned int pIdx) { return p_[pIdx]; }
@@ -110,7 +63,6 @@ public:
     //! Access to the gravitational flux contributions for all phases
     const std::array< FaceVector, numPhases >& gravity() const { return g_; }
     std::array< FaceVector, numPhases >& gravity() { return g_; }
-
 
     //! Projection matrix for Neumann/gravity contribution computation
     const CMatrix& advectionCA() const { return CA_; }
@@ -162,37 +114,6 @@ public:
     void setPhaseIndex(unsigned int phaseIdx) { phaseIdx_ = phaseIdx; }
     void setComponentIndex(unsigned int compIdx) { compIdx_ = compIdx; }
 
-    //! prepare data handle for subsequent fill
-    template< class InteractionVolume >
-    void resize(const InteractionVolume& iv)
-    {
-        for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-        {
-            for (unsigned int cIdx = 0; cIdx < numComponents; ++cIdx)
-            {
-                // resize transmissibility matrix & mole fraction vector
-                resizeMatrix(T_[pIdx][cIdx], iv.numFaces(), iv.numKnowns());
-                resizeVector(xj_[pIdx][cIdx], iv.numKnowns());
-
-                // resize outsideTij on surface grids
-                using GridView = typename InteractionVolume::Traits::GridView;
-                if (int(GridView::dimension) < int(GridView::dimensionworld))
-                {
-                    outsideT_[pIdx][cIdx].resize(iv.numFaces());
-
-                    using LocalIndexType = typename InteractionVolume::Traits::IndexSet::LocalIndexType;
-                    for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
-                    {
-                        const auto numNeighbors = iv.localScvf(i).neighboringLocalScvIndices().size() - 1;
-                        outsideT_[pIdx][cIdx][i].resize(numNeighbors);
-                        for (LocalIndexType j = 0; j < numNeighbors; ++j)
-                            resizeVector(outsideT_[pIdx][cIdx][i][j], iv.numKnowns());
-                    }
-                }
-            }
-        }
-    }
-
     //! Access to the iv-wide mole fractions of a component in one phase
     const CellVector& moleFractions(unsigned int pIdx, unsigned int compIdx) const { return xj_[pIdx][compIdx]; }
     CellVector& moleFractions(unsigned int pIdx, unsigned int compIdx) { return xj_[pIdx][compIdx]; }
@@ -222,31 +143,6 @@ class HeatConductionDataHandle
     using CellVector = typename MatVecTraits::CellVector;
 
 public:
-    //! prepare data handle for subsequent fill
-    template< class InteractionVolume >
-    void resize(const InteractionVolume& iv)
-    {
-        //! resize transmissibility matrix & temperature vector
-        resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
-        resizeVector(Tj_, iv.numKnowns());
-
-        //! resize outsideTij on surface grids
-        using GridView = typename InteractionVolume::Traits::GridView;
-        if (int(GridView::dimension) < int(GridView::dimensionworld))
-        {
-            outsideT_.resize(iv.numFaces());
-
-            using LocalIndexType = typename InteractionVolume::Traits::IndexSet::LocalIndexType;
-            for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
-            {
-                const auto numNeighbors = iv.localScvf(i).neighboringLocalScvIndices().size() - 1;
-                outsideT_[i].resize(numNeighbors);
-                for (LocalIndexType j = 0; j < numNeighbors; ++j)
-                    resizeVector(outsideT_[i][j], iv.numKnowns());
-            }
-        }
-    }
-
     //! Access to the iv-wide temperatures
     const CellVector& temperatures() const { return Tj_; }
     CellVector& temperatures() { return Tj_; }
@@ -286,21 +182,7 @@ class InteractionVolumeDataHandle
 : public AdvectionDataHandle<MVT, PT, PT::enableAdvection>
 , public DiffusionDataHandle<MVT, PT, PT::enableMolecularDiffusion>
 , public HeatConductionDataHandle<MVT, PT, PT::enableHeatConduction>
-{
-    using AdvectionHandle = AdvectionDataHandle<MVT, PT, PT::enableAdvection>;
-    using DiffusionHandle = DiffusionDataHandle<MVT, PT, PT::enableMolecularDiffusion>;
-    using HeatConductionHandle = HeatConductionDataHandle<MVT, PT, PT::enableHeatConduction>;
-
-public:
-    //! prepare data handles for subsequent fills
-    template< class InteractionVolume >
-    void resize(const InteractionVolume& iv)
-    {
-        AdvectionHandle::resize(iv);
-        DiffusionHandle::resize(iv);
-        HeatConductionHandle::resize(iv);
-    }
-};
+{};
 
 } // end namespace Dumux
 

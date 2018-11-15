@@ -111,6 +111,23 @@ public:
             iv.B().leftmultiply(iv.A());
             T += multiplyMatrices(iv.C(), iv.B());
 
+            // bring outsideT vector to the right size
+            outsideTij.resize(iv.numFaces());
+            using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
+            for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
+            {
+                // gravitational acceleration on this face
+                const auto& curLocalScvf = iv.localScvf(faceIdx);
+                const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.gridScvfIndex());
+                const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
+
+                // resize each face entry to the right number of outside faces
+                outsideTij[faceIdx].resize(numOutsideFaces);
+                std::for_each(outsideTij[faceIdx].begin(),
+                              outsideTij[faceIdx].end(),
+                              [&iv](auto& v) { resizeVector(v, iv.numKnowns()); });
+            }
+
             // compute outside transmissibilities
             for (const auto& localFaceData : iv.localFaceData())
             {
@@ -240,6 +257,23 @@ public:
             A = iv.A();
             CA = iv.C().rightmultiply(A);
 
+            // bring outsideT vector to the right size
+            outsideTij.resize(iv.numFaces());
+            using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
+            for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
+            {
+                // gravitational acceleration on this face
+                const auto& curLocalScvf = iv.localScvf(faceIdx);
+                const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.gridScvfIndex());
+                const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
+
+                // resize each face entry to the right number of outside faces
+                outsideTij[faceIdx].resize(numOutsideFaces);
+                std::for_each(outsideTij[faceIdx].begin(),
+                              outsideTij[faceIdx].end(),
+                              [&iv](auto& v) { resizeVector(v, iv.numKnowns()); });
+            }
+
             // compute outside transmissibilities
             for (const auto& localFaceData : iv.localFaceData())
             {
@@ -298,6 +332,7 @@ public:
     void assemble(typename IV::Traits::MatVecTraits::CellVector& u, const IV& iv, const GetU& getU)
     {
         // put the cell pressures first
+        resizeVector(u, iv.numKnowns());
         using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
         for (LocalIndexType i = 0; i < iv.numScvs(); ++i)
             u[i] = getU( iv.localScv(i).gridScvIndex() );
@@ -337,8 +372,10 @@ public:
         //! - first index adresses the respective phases
         //! - second index adresses the face within the interaction volume
 
-        // make sure g vector and CA matrix have the correct sizes already
-        assert(std::all_of(g.begin(), g.end(), [&iv](const auto& v) { return v.size() == iv.numFaces(); }));
+        // resize the g vector
+        std::for_each(g.begin(), g.end(), [&iv] (auto& v) { resizeVector(v, iv.numFaces()); });
+
+        // make sure CA matrix has the correct size already
         assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns());
 
         //! For each face, we...
@@ -469,10 +506,13 @@ public:
         //! - second index adresses the face within the interaction volume
         //! - third index adresses the i-th "outside" face of the current face
 
-        // we require the CA matrix and the gravity containers to have the correct size already
+        // resize the g vector
+        auto resizeToNumFaces = [&iv] (auto& v) { resizeVector(v, iv.numFaces()); };
+        std::for_each(g.begin(), g.end(), resizeToNumFaces);
+        std::for_each(outsideG.begin(), outsideG.end(), resizeToNumFaces);
+
+        // we require the CA matrix to have the correct size already
         assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns());
-        assert(std::all_of(g.begin(), g.end(), [&iv](const auto& v) { return v.size() == iv.numFaces(); }));
-        assert(std::all_of(outsideG.begin(), outsideG.end(), [&iv](const auto& v) { return v.size() == iv.numFaces(); }));
 
         //! For each face, we...
         //! - arithmetically average the phase densities
@@ -490,7 +530,6 @@ public:
             resizeVector(sum_alphas[pIdx], iv.numUnknowns());
             sum_alphas[pIdx] = 0.0;
             g[pIdx] = 0.0;
-            std::for_each(outsideG[pIdx].begin(), outsideG[pIdx].end(), [] (auto& v) { v = 0.0; });
         }
 
         for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
@@ -512,6 +551,13 @@ public:
             const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
             std::vector< Scalar > alpha_outside(numOutsideFaces);
             std::vector< Scalar > rho(numPhases);
+
+            // resize & reset entries in outside gravity vector
+            for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
+            {
+                outsideG[pIdx][faceIdx].resize(numOutsideFaces);
+                outsideG[pIdx][faceIdx] = 0.0;
+            }
 
             if (!curLocalScvf.isDirichlet())
             {
@@ -641,15 +687,12 @@ private:
         static constexpr int dim = IV::Traits::GridView::dimension;
         static constexpr int dimWorld = IV::Traits::GridView::dimensionworld;
 
-        // Matrix D is assumed to have the right size already
-        assert(D.rows() == iv.numFaces() && D.cols() == iv.numKnowns());
-
         // if only Dirichlet faces are present in the iv,
         // the matrices A, B & C are undefined and D = T
         if (iv.numUnknowns() == 0)
         {
-            // reset matrix beforehand
-            D = 0.0;
+            // resize & reset D matrix
+            resizeMatrix(D, iv.numFaces(), iv.numKnowns()); D = 0.0;
 
             // Loop over all the faces, in this case these are all dirichlet boundaries
             for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
@@ -680,16 +723,11 @@ private:
         }
         else
         {
-            // we require the matrices A,B,C to have the correct size already
-            assert(A.rows() == iv.numUnknowns() && A.cols() == iv.numUnknowns());
-            assert(B.rows() == iv.numUnknowns() && B.cols() == iv.numKnowns());
-            assert(C.rows() == iv.numFaces() && C.cols() == iv.numUnknowns());
-
-            // reset matrices
-            A = 0.0;
-            B = 0.0;
-            C = 0.0;
-            D = 0.0;
+            // resize & reset matrices
+            resizeMatrix(A, iv.numUnknowns(), iv.numUnknowns()); A = 0.0;
+            resizeMatrix(B, iv.numUnknowns(), iv.numKnowns());   B = 0.0;
+            resizeMatrix(C, iv.numFaces(), iv.numUnknowns());    C = 0.0;
+            resizeMatrix(D, iv.numFaces(), iv.numKnowns());      D = 0.0;
 
             auto& wijk = iv.omegas();
             for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)

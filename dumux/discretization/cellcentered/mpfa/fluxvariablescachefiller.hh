@@ -125,7 +125,6 @@ public:
                 // prepare the corresponding data handle
                 fluxVarsCacheContainer.secondaryDataHandles().emplace_back();
                 secondaryIvDataHandle_ = &fluxVarsCacheContainer.secondaryDataHandles().back();
-                secondaryIvDataHandle_->resize(*secondaryIv_);
 
                 // fill the caches for all the scvfs in the interaction volume
                 fillCachesInInteractionVolume_(fluxVarsCacheContainer, *secondaryIv_, *secondaryIvDataHandle_, ivIndexInContainer, true);
@@ -156,7 +155,6 @@ public:
                 // prepare the corresponding data handle
                 fluxVarsCacheContainer.primaryDataHandles().emplace_back();
                 primaryIvDataHandle_ = &fluxVarsCacheContainer.primaryDataHandles().back();
-                primaryIvDataHandle_->resize(*primaryIv_);
 
                 // fill the caches for all the scvfs in the interaction volume
                 fillCachesInInteractionVolume_(fluxVarsCacheContainer, *primaryIv_, *primaryIvDataHandle_, ivIndexInContainer, true);
