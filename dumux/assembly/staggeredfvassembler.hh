@@ -60,12 +60,12 @@ class StaggeredFVAssembler: public MultiDomainFVAssembler<StaggeredMultiDomainTr
                                               StaggeredCouplingManager<StaggeredMultiDomainTraits<TypeTag, TypeTag>>,
                                               diffMethod>;
 
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using TimeLoop = TimeLoopBase<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
 
 public:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using CouplingManager = typename ParentType::CouplingManager;
 
     //! The constructor for stationary problems

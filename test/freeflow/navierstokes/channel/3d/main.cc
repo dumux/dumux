@@ -96,7 +96,7 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv, usage);
 
     // try to create a grid (from the given grid file or the input file)
-    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     ////////////////////////////////////////////////////////////
@@ -107,16 +107,16 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     // the problem (boundary conditions)
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
     static constexpr auto faceIdx = FVGridGeometry::faceIdx();
     const auto numDofsCellCenter = leafGridView.size(0);
@@ -126,12 +126,12 @@ int main(int argc, char** argv) try
     x[faceIdx].resize(numDofsFace);
 
     // the grid variables
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x);
 
     // intialize the vtk output module
-    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
@@ -150,8 +150,8 @@ int main(int argc, char** argv) try
 
     // set up two planes over which fluxes are calculated
     FluxOverSurface<TypeTag> flux(*problem, *gridVariables, x);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
     const Scalar xMin = fvGridGeometry->bBoxMin()[0];
@@ -219,7 +219,7 @@ flux.addSurface("middle", p0middle, p1middle);
 
     // calculate and print mass fluxes over the planes
     flux.calculateMassOrMoleFluxes();
-    if(GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance())
+    if(GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance())
     {
         std::cout << "mass / energy flux at inlet is: " << flux.netFlux("inlet") << std::endl;
         std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;

@@ -68,7 +68,7 @@ SET_PROP(TubesTestCCTpfa, FVGridGeometry)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     using ElementMapper = ReorderingDofMapper<GridView>;
     using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
@@ -82,8 +82,8 @@ SET_PROP(TubesTestBox, FVGridGeometry)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
     using VertexMapper = ReorderingDofMapper<GridView>;
@@ -98,15 +98,15 @@ SET_TYPE_PROP(TubesTest, Problem, TubesTestProblem<TypeTag>);
 // Set the spatial parameters
 SET_PROP(TubesTest, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TubesTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // the fluid system
 SET_PROP(TubesTest, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 } // end namespace Properties
@@ -120,32 +120,32 @@ template <class TypeTag>
 class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
     // Grid and world dimension
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum {
         // indices of the primary variables
         conti0EqIdx = Indices::conti0EqIdx,
         pressureIdx = Indices::pressureIdx
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum { isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box };
+    enum { isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box };
 
 public:
     TubesTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

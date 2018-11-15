@@ -50,15 +50,15 @@ class PointSourceData
     using BulkTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
     using LowDimTypeTag = typename MDTraits::template SubDomainTypeTag<1>;
 
-    using BulkPrimaryVariables = typename GET_PROP_TYPE(BulkTypeTag, PrimaryVariables);
-    using LowDimPrimaryVariables = typename GET_PROP_TYPE(LowDimTypeTag, PrimaryVariables);
+    using BulkPrimaryVariables = GetPropType<BulkTypeTag, Properties::PrimaryVariables>;
+    using LowDimPrimaryVariables = GetPropType<LowDimTypeTag, Properties::PrimaryVariables>;
 
-    using BulkSolutionVector = typename GET_PROP_TYPE(BulkTypeTag, SolutionVector);
-    using LowDimSolutionVector = typename GET_PROP_TYPE(LowDimTypeTag, SolutionVector);
+    using BulkSolutionVector = GetPropType<BulkTypeTag, Properties::SolutionVector>;
+    using LowDimSolutionVector = GetPropType<LowDimTypeTag, Properties::SolutionVector>;
 
     enum {
-        bulkIsBox = GET_PROP_TYPE(BulkTypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box,
-        lowDimIsBox = GET_PROP_TYPE(LowDimTypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box
+        bulkIsBox = GetPropType<BulkTypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box,
+        lowDimIsBox = GetPropType<LowDimTypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box
     };
 
 public:
@@ -158,15 +158,15 @@ class PointSourceDataCircleAverage : public PointSourceData<MDTraits>
     using BulkTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
     using LowDimTypeTag = typename MDTraits::template SubDomainTypeTag<1>;
 
-    using BulkPrimaryVariables = typename GET_PROP_TYPE(BulkTypeTag, PrimaryVariables);
-    using LowDimPrimaryVariables = typename GET_PROP_TYPE(LowDimTypeTag, PrimaryVariables);
+    using BulkPrimaryVariables = GetPropType<BulkTypeTag, Properties::PrimaryVariables>;
+    using LowDimPrimaryVariables = GetPropType<LowDimTypeTag, Properties::PrimaryVariables>;
 
-    using BulkSolutionVector = typename GET_PROP_TYPE(BulkTypeTag, SolutionVector);
-    using LowDimSolutionVector = typename GET_PROP_TYPE(LowDimTypeTag, SolutionVector);
+    using BulkSolutionVector = GetPropType<BulkTypeTag, Properties::SolutionVector>;
+    using LowDimSolutionVector = GetPropType<LowDimTypeTag, Properties::SolutionVector>;
 
     enum {
-        bulkIsBox = GET_PROP_TYPE(BulkTypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box,
-        lowDimIsBox = GET_PROP_TYPE(LowDimTypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box
+        bulkIsBox = GetPropType<BulkTypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box,
+        lowDimIsBox = GetPropType<LowDimTypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box
     };
 
 public:

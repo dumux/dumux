@@ -55,7 +55,7 @@ struct SoilBox { using InheritsFrom = std::tuple<Soil, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Soil, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
+SET_TYPE_PROP(Soil, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >);
 
 SET_BOOL_PROP(Soil, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(Soil, EnableGridVolumeVariablesCache, true);
@@ -68,8 +68,8 @@ SET_BOOL_PROP(Soil, SolutionDependentHeatConduction, false);
 SET_TYPE_PROP(Soil, Problem, SoilProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(Soil, SpatialParams, SoilSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                            typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(Soil, SpatialParams, SoilSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                                            GetPropType<TypeTag, Properties::Scalar>>);
 
 } // end namespace Properties
 
@@ -81,20 +81,20 @@ template <class TypeTag>
 class SoilProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
     using Element = typename GridView::template Codim<0>::Entity;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PointSource = GetPropType<TypeTag, Properties::PointSource>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     SoilProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,

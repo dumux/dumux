@@ -55,7 +55,7 @@ struct DarcyTwoPTwoC { using InheritsFrom = std::tuple<TwoPTwoCNI, CCTpfaModel>;
 SET_TYPE_PROP(DarcyTwoPTwoC, Problem, Dumux::DarcySubProblem<TypeTag>);
 
 // the fluid system
-SET_TYPE_PROP(DarcyTwoPTwoC, FluidSystem, FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(DarcyTwoPTwoC, FluidSystem, FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>);
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
 SET_PROP(DarcyTwoPTwoC, Formulation)
@@ -65,14 +65,14 @@ SET_PROP(DarcyTwoPTwoC, Formulation)
 SET_INT_PROP(DarcyTwoPTwoC, ReplaceCompEqIdx, 3);
 
 // Set the grid type
-SET_TYPE_PROP(DarcyTwoPTwoC, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(DarcyTwoPTwoC, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
 
 SET_BOOL_PROP(DarcyTwoPTwoC, UseMoles, true);
 
 SET_PROP(DarcyTwoPTwoC, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TwoPTwoCSpatialParams<FVGridGeometry, Scalar>;
 };
 
@@ -82,22 +82,22 @@ template <class TypeTag>
 class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum {
         // primary variable indices
         conti0EqIdx = Indices::conti0EqIdx,
@@ -110,7 +110,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 

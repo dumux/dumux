@@ -211,8 +211,8 @@ struct TwoPNCNI { using InheritsFrom = std::tuple<TwoPNC>; };
 SET_PROP(TwoPNC, PrimaryVariables)
 {
 private:
-    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
+    using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
+                                                     GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
@@ -223,13 +223,13 @@ SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag
 SET_PROP(TwoPNC, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -241,7 +241,7 @@ SET_PROP(TwoPNC, BaseModelTraits)
 {
 private:
     //! we use the number of components specified by the fluid system here
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
 public:
     using type = TwoPNCModelTraits<FluidSystem::numComponents,
@@ -249,14 +249,14 @@ public:
                                    GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
                                    GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
-SET_TYPE_PROP(TwoPNC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits)); //!< default the actually used traits to the base traits
+SET_TYPE_PROP(TwoPNC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>); //!< default the actually used traits to the base traits
 
 //! Set the vtk output fields specific to this model
 SET_TYPE_PROP(TwoPNC, IOFields, TwoPNCIOFields);
 
 SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
 
-SET_INT_PROP(TwoPNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents); //!< Per default, no component mass balance is replaced
+SET_INT_PROP(TwoPNC, ReplaceCompEqIdx, GetPropType<TypeTag, Properties::FluidSystem>::numComponents); //!< Per default, no component mass balance is replaced
 
 //! Default formulation is pw-Sn, overwrite if necessary
 SET_PROP(TwoPNC, Formulation)
@@ -266,14 +266,14 @@ SET_BOOL_PROP(TwoPNC, SetMoleFractionsForFirstPhase, true);  //!< Set the primar
 SET_BOOL_PROP(TwoPNC, UseMoles, true);                         //!< Use mole fractions in the balance equations by default
 
 //! Use the model after Millington (1961) for the effective diffusivity
-SET_TYPE_PROP(TwoPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(TwoPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
 
 //! This model uses the compositional fluid state
 SET_PROP(TwoPNC, FluidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
@@ -286,7 +286,7 @@ public:
 SET_PROP(TwoPNCNI, ModelTraits)
 {
 private:
-    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
@@ -298,7 +298,7 @@ SET_TYPE_PROP(TwoPNCNI, IOFields, EnergyIOFields<TwoPNCIOFields>);
 SET_PROP(TwoPNCNI, ThermalConductivityModel)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = ThermalConductivitySomerton<Scalar>;
 };

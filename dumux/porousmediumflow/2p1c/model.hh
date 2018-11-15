@@ -157,8 +157,8 @@ struct TwoPOneCNI { using InheritsFrom = std::tuple<PorousMediumFlow>; };
 SET_PROP(TwoPOneCNI, FluidState)
 {
 private:
-     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
      using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
@@ -180,13 +180,13 @@ SET_TYPE_PROP(TwoPOneCNI, AdvectionType, TwoPOneCDarcysLaw<TypeTag>);
 SET_PROP(TwoPOneCNI, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     static_assert(FSY::numComponents == 1, "Only fluid systems with 1 component are supported by the 2p1cni model!");
     static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p1cni model!");
@@ -203,14 +203,14 @@ SET_TYPE_PROP(TwoPOneCNI, PrimaryVariableSwitch, TwoPOneCPrimaryVariableSwitch);
 SET_PROP(TwoPOneCNI, PrimaryVariables)
 {
 private:
-    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
+    using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
+                                                     GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity.
-SET_TYPE_PROP(TwoPOneCNI, ThermalConductivityModel, ThermalConductivitySomerton<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(TwoPOneCNI, ThermalConductivityModel, ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>);
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model

@@ -38,13 +38,13 @@ template<class TypeTag>
 class MineralizationLocalResidual: public CompositionalLocalResidual<TypeTag>
 {
     using ParentType = CompositionalLocalResidual<TypeTag>;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr int numPhases = ModelTraits::numPhases();
     static constexpr int numSolidComps =  ModelTraits::numSolidComps();

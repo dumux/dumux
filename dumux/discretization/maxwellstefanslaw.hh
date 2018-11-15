@@ -39,7 +39,7 @@ class MaxwellStefansLawImplementation
  * \brief Evaluates the diffusive mass flux according to Maxwell Stafan's law
  */
 template <class TypeTag>
-using MaxwellStefansLaw = MaxwellStefansLawImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+using MaxwellStefansLaw = MaxwellStefansLawImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
 
 } // end namespace
 

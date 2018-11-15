@@ -70,8 +70,8 @@ SET_TYPE_PROP(FuelCell, Problem, FuelCellProblem<TypeTag>);
 // Set the spatial parameters
 SET_PROP(FuelCell, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FuelCellSpatialParams<FVGridGeometry, Scalar>;
 };
 
@@ -83,7 +83,7 @@ SET_PROP(FuelCell, Formulation)
 SET_PROP(FuelCell, FluidSystem)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = FluidSystems::H2ON2O2<Scalar>;
 };
@@ -102,20 +102,20 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     // Select the electrochemistry method
 #ifdef NONISOTHERMAL
     using ElectroChemistry = typename Dumux::ElectroChemistryNI<Scalar, Indices, FluidSystem, FVGridGeometry, ElectroChemistryModel::Ochs>;

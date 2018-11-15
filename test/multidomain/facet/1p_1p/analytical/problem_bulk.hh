@@ -56,14 +56,14 @@ SET_TYPE_PROP(OnePBulk, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconformin
 // Set the problem type
 SET_TYPE_PROP(OnePBulk, Problem, OnePBulkProblem<TypeTag>);
 // set the spatial params
-SET_TYPE_PROP(OnePBulk, SpatialParams, OnePSpatialParams< typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                          typename GET_PROP_TYPE(TypeTag, Scalar) >);
+SET_TYPE_PROP(OnePBulk, SpatialParams, OnePSpatialParams< GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                                          GetPropType<TypeTag, Properties::Scalar> >);
 
 // the fluid system
 SET_PROP(OnePBulk, FluidSystem)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = FluidSystems::OnePLiquid< Scalar, Components::Constant<1, Scalar> >;
 };
@@ -79,7 +79,7 @@ class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using PrimaryVariables = typename GridVariables::PrimaryVariables;
     using Scalar = typename GridVariables::Scalar;
 
@@ -91,9 +91,9 @@ class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
 public:
     OnePBulkProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,

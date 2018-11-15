@@ -150,11 +150,11 @@ struct RichardsNCNI { using InheritsFrom = std::tuple<RichardsNC>; };
 SET_PROP(RichardsNC, BaseModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = RichardsNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
-SET_TYPE_PROP(RichardsNC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits));
+SET_TYPE_PROP(RichardsNC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>);
 
 //! Define that per default mole fractions are used in the balance equations
 SET_BOOL_PROP(RichardsNC, UseMoles, true);
@@ -170,13 +170,13 @@ SET_INT_PROP(RichardsNC, ReplaceCompEqIdx, 0);
 SET_PROP(RichardsNC, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
@@ -199,7 +199,7 @@ SET_BOOL_PROP(RichardsNC, EnableWaterDiffusionInAir, false);
  */
 SET_PROP(RichardsNC, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::LiquidPhaseTwoC<Scalar, Components::SimpleH2O<Scalar>, Components::Constant<1, Scalar>>;
 };
 
@@ -211,8 +211,8 @@ SET_PROP(RichardsNC, FluidSystem)
  */
 SET_PROP(RichardsNC, FluidState)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
@@ -220,10 +220,10 @@ SET_PROP(RichardsNC, FluidState)
 SET_TYPE_PROP(RichardsNC, IOFields, RichardsNCIOFields);
 
 //! The model after Millington (1961) is used for the effective diffusivity
-SET_TYPE_PROP(RichardsNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(RichardsNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
 
 //! average is used as default model to compute the effective thermal heat conductivity
-SET_TYPE_PROP(RichardsNCNI, ThermalConductivityModel, ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(RichardsNCNI, ThermalConductivityModel, ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>);
 
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Richards n-components model
@@ -233,7 +233,7 @@ SET_TYPE_PROP(RichardsNCNI, ThermalConductivityModel, ThermalConductivityAverage
 SET_PROP(RichardsNCNI, ModelTraits)
 {
 private:
-    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };

@@ -52,9 +52,9 @@
 // obtain/define some types to be used below in the property definitions and in main
 class TestTraits
 {
-    using BulkFVG = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
-    using FacetFVG = typename GET_PROP_TYPE(TTAG(OnePFacetTpfa), FVGridGeometry);
-    using EdgeFVG = typename GET_PROP_TYPE(TTAG(OnePEdgeTpfa), FVGridGeometry);
+    using BulkFVG = Dumux::GetPropType<TTAG(OnePBulkTpfa), Dumux::Properties::FVGridGeometry>;
+    using FacetFVG = Dumux::GetPropType<TTAG(OnePFacetTpfa), Dumux::Properties::FVGridGeometry>;
+    using EdgeFVG = Dumux::GetPropType<TTAG(OnePEdgeTpfa), Dumux::Properties::FVGridGeometry>;
 public:
     using MDTraits = Dumux::MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePFacetTpfa), TTAG(OnePEdgeTpfa)>;
     using CouplingMapper = Dumux::FacetCouplingThreeDomainMapper<BulkFVG, FacetFVG, EdgeFVG>;
@@ -93,9 +93,9 @@ int main(int argc, char** argv) try
     using BulkProblemTypeTag = TTAG(OnePBulkTpfa);
     using FacetProblemTypeTag = TTAG(OnePFacetTpfa);
     using EdgeProblemTypeTag = TTAG(OnePEdgeTpfa);
-    using BulkGrid = typename GET_PROP_TYPE(BulkProblemTypeTag, Grid);
-    using FacetGrid = typename GET_PROP_TYPE(FacetProblemTypeTag, Grid);
-    using EdgeGrid = typename GET_PROP_TYPE(EdgeProblemTypeTag, Grid);
+    using BulkGrid = GetPropType<BulkProblemTypeTag, Properties::Grid>;
+    using FacetGrid = GetPropType<FacetProblemTypeTag, Properties::Grid>;
+    using EdgeGrid = GetPropType<EdgeProblemTypeTag, Properties::Grid>;
 
     using GridManager = FacetCouplingGridManager<BulkGrid, FacetGrid, EdgeGrid>;
     GridManager gridManager;
@@ -112,9 +112,9 @@ int main(int argc, char** argv) try
     const auto& edgeGridView = gridManager.template grid<2>().leafGridView();
 
     // create the finite volume grid geometries
-    using BulkFVGridGeometry = typename GET_PROP_TYPE(BulkProblemTypeTag, FVGridGeometry);
-    using FacetFVGridGeometry = typename GET_PROP_TYPE(FacetProblemTypeTag, FVGridGeometry);
-    using EdgeFVGridGeometry = typename GET_PROP_TYPE(EdgeProblemTypeTag, FVGridGeometry);
+    using BulkFVGridGeometry = GetPropType<BulkProblemTypeTag, Properties::FVGridGeometry>;
+    using FacetFVGridGeometry = GetPropType<FacetProblemTypeTag, Properties::FVGridGeometry>;
+    using EdgeFVGridGeometry = GetPropType<EdgeProblemTypeTag, Properties::FVGridGeometry>;
     auto bulkFvGridGeometry = std::make_shared<BulkFVGridGeometry>(bulkGridView);
     auto facetFvGridGeometry = std::make_shared<FacetFVGridGeometry>(facetGridView);
     auto edgeFvGridGeometry = std::make_shared<EdgeFVGridGeometry>(edgeGridView);
@@ -127,9 +127,9 @@ int main(int argc, char** argv) try
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // the problems (boundary conditions)
-    using BulkProblem = typename GET_PROP_TYPE(BulkProblemTypeTag, Problem);
-    using FacetProblem = typename GET_PROP_TYPE(FacetProblemTypeTag, Problem);
-    using EdgeProblem = typename GET_PROP_TYPE(EdgeProblemTypeTag, Problem);
+    using BulkProblem = GetPropType<BulkProblemTypeTag, Properties::Problem>;
+    using FacetProblem = GetPropType<FacetProblemTypeTag, Properties::Problem>;
+    using EdgeProblem = GetPropType<EdgeProblemTypeTag, Properties::Problem>;
     auto bulkSpatialParams = std::make_shared<typename BulkProblem::SpatialParams>(bulkFvGridGeometry, "Bulk");
     auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, bulkSpatialParams, couplingManager, "Bulk");
     auto facetSpatialParams = std::make_shared<typename FacetProblem::SpatialParams>(facetFvGridGeometry, "Facet");
@@ -161,9 +161,9 @@ int main(int argc, char** argv) try
     couplingManager->init(bulkProblem, facetProblem, edgeProblem, couplingMapper, x);
 
     // the grid variables
-    using BulkGridVariables = typename GET_PROP_TYPE(BulkProblemTypeTag, GridVariables);
-    using FacetGridVariables = typename GET_PROP_TYPE(FacetProblemTypeTag, GridVariables);
-    using EdgeGridVariables = typename GET_PROP_TYPE(EdgeProblemTypeTag, GridVariables);
+    using BulkGridVariables = GetPropType<BulkProblemTypeTag, Properties::GridVariables>;
+    using FacetGridVariables = GetPropType<FacetProblemTypeTag, Properties::GridVariables>;
+    using EdgeGridVariables = GetPropType<EdgeProblemTypeTag, Properties::GridVariables>;
     auto bulkGridVariables = std::make_shared<BulkGridVariables>(bulkProblem, bulkFvGridGeometry);
     auto facetGridVariables = std::make_shared<FacetGridVariables>(facetProblem, facetFvGridGeometry);
     auto edgeGridVariables = std::make_shared<EdgeGridVariables>(edgeProblem, edgeFvGridGeometry);
@@ -182,9 +182,9 @@ int main(int argc, char** argv) try
     VtkOutputModule<EdgeGridVariables, EdgeSolutionVector> edgeVtkWriter(*edgeGridVariables, x[edgeId], edgeProblem->name());
 
     // Add model specific output fields
-    using BulkIOFields = typename GET_PROP_TYPE(BulkProblemTypeTag, IOFields);
-    using FacetIOFields = typename GET_PROP_TYPE(FacetProblemTypeTag, IOFields);
-    using EdgeIOFields = typename GET_PROP_TYPE(EdgeProblemTypeTag, IOFields);
+    using BulkIOFields = GetPropType<BulkProblemTypeTag, Properties::IOFields>;
+    using FacetIOFields = GetPropType<FacetProblemTypeTag, Properties::IOFields>;
+    using EdgeIOFields = GetPropType<EdgeProblemTypeTag, Properties::IOFields>;
     BulkIOFields::initOutputModule(bulkVtkWriter);
     FacetIOFields::initOutputModule(facetVtkWriter);
     EdgeIOFields::initOutputModule(edgeVtkWriter);

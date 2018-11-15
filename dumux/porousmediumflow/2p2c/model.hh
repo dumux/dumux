@@ -147,7 +147,7 @@ struct TwoPTwoCNI { using InheritsFrom = std::tuple<TwoPTwoC>; };
 SET_PROP(TwoPTwoC, BaseModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
 
@@ -156,19 +156,19 @@ public:
                                       GET_PROP_VALUE(TypeTag, UseMoles),
                                       GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx) >;
 };
-SET_TYPE_PROP(TwoPTwoC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits));
+SET_TYPE_PROP(TwoPTwoC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>);
 
 //! Use the 2p2c VolumeVariables
 SET_PROP(TwoPTwoC, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     static_assert(FSY::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
     static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
@@ -191,7 +191,7 @@ SET_BOOL_PROP(TwoPTwoC, UseConstraintSolver, true);
 SET_PROP(TwoPTwoCNI, ModelTraits)
 {
 private:
-    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
@@ -200,7 +200,7 @@ public:
 SET_TYPE_PROP(TwoPTwoCNI, IOFields, EnergyIOFields<TwoPNCIOFields>);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_TYPE_PROP(TwoPTwoCNI, ThermalConductivityModel, ThermalConductivitySomerton<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(TwoPTwoCNI, ThermalConductivityModel, ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>);
 
 } // end namespace Properties
 } // end namespace Dumux

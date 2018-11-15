@@ -36,15 +36,15 @@ template<class TypeTag>
 class PorousMediumFlowProblem : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -53,7 +53,7 @@ class PorousMediumFlowProblem : public FVProblem<TypeTag>
 
 public:
     //! export spatial parameter type
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
 
     /*!
      * \brief Constructor, passing the spatial parameters

@@ -65,8 +65,8 @@ struct StaggeredModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
 SET_PROP(StaggeredModel, GridFaceVariables)
 {
 private:
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FaceVariables = GetPropType<TypeTag, Properties::FaceVariables>;
     static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache);
 public:
     using type = StaggeredGridFaceVariables<Problem, FaceVariables, enableCache>;
@@ -80,8 +80,8 @@ SET_PROP(StaggeredModel, GridFluxVariablesCache)
 {
 private:
     static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
     using FluxVariablesCacheFiller = FluxVariablesCaching::EmptyCacheFiller;
 public:
     using type = StaggeredGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
@@ -91,7 +91,7 @@ public:
 SET_PROP(StaggeredModel, StaggeredFaceSolution)
 {
 private:
-    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+    using FaceSolutionVector = GetPropType<TypeTag, Properties::FaceSolutionVector>;
 public:
     using type = Dumux::StaggeredFaceSolution<FaceSolutionVector>;
 };
@@ -100,10 +100,10 @@ public:
 SET_PROP(StaggeredModel, GridVariables)
 {
 private:
-    using GG = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GVV = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using GFVC = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
-    using GFV = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
+    using GG = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GVV = GetPropType<TypeTag, Properties::GridVolumeVariables>;
+    using GFVC = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using GFV = GetPropType<TypeTag, Properties::GridFaceVariables>;
 public:
     using type = StaggeredGridVariables<GG, GVV, GFVC, GFV>;
 };
@@ -117,17 +117,17 @@ SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, StaggeredLocalResidual<TypeTag>
 //! The cell center primary variables
 SET_TYPE_PROP(StaggeredModel,
               CellCenterPrimaryVariables,
-              Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+              Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
                                 GET_PROP_VALUE(TypeTag, NumEqCellCenter)>);
 
 //! The face primary variables
 SET_TYPE_PROP(StaggeredModel,
               FacePrimaryVariables,
-              Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+              Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
                                 GET_PROP_VALUE(TypeTag, NumEqFace)>);
 
 //! Boundary types at a single degree of freedom
-SET_TYPE_PROP(StaggeredModel, BoundaryTypes, Dumux::BoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
+SET_TYPE_PROP(StaggeredModel, BoundaryTypes, Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>);
 
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
@@ -135,19 +135,19 @@ SET_TYPE_PROP(StaggeredModel, BoundaryTypes, Dumux::BoundaryTypes<GET_PROP_TYPE(
 //! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
 SET_TYPE_PROP(StaggeredModel,
               CellCenterSolutionVector,
-              Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables)>);
+              Dune::BlockVector<GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>>);
 
 //! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
 SET_TYPE_PROP(StaggeredModel,
               FaceSolutionVector,
-              Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables)>);
+              Dune::BlockVector<GetPropType<TypeTag, Properties::FacePrimaryVariables>>);
 
 //! default property value for the solution vector only used for monolithic solver TODO: move to LinearAlgebra traits
 SET_PROP(StaggeredModel, SolutionVector)
 {
 private:
-    using CellCenterSolutionVector = typename GET_PROP_TYPE(TypeTag, CellCenterSolutionVector);
-    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+    using CellCenterSolutionVector = GetPropType<TypeTag, Properties::CellCenterSolutionVector>;
+    using FaceSolutionVector = GetPropType<TypeTag, Properties::FaceSolutionVector>;
 public:
     using type = Dune::MultiTypeBlockVector<CellCenterSolutionVector, FaceSolutionVector>;
 };
@@ -156,7 +156,7 @@ public:
 SET_PROP(StaggeredModel, JacobianMatrix)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
     static constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);

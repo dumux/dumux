@@ -76,7 +76,7 @@ SET_TYPE_PROP(CombustionOneComponent,
 
 SET_TYPE_PROP(CombustionOneComponent,
               FluidSystem,
-              FluidSystems::CombustionFluidsystem<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              FluidSystems::CombustionFluidsystem<GetPropType<TypeTag, Properties::Scalar>>);
 
 //! Set the default pressure formulation: either pw first or pn first
 SET_PROP(CombustionOneComponent, PressureFormulation)
@@ -93,7 +93,7 @@ SET_TYPE_PROP(CombustionOneComponent, Scalar, double );
 SET_PROP(CombustionOneComponent, EquilibriumModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = CombustionModelTraits< FluidSystem::numPhases,
                                         FluidSystem::numComponents,
@@ -104,8 +104,8 @@ public:
 SET_PROP(CombustionOneComponent, FluidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
@@ -121,7 +121,7 @@ SET_BOOL_PROP(CombustionOneComponent, EnableChemicalNonEquilibrium, false);
 
 SET_PROP(CombustionOneComponent, SolidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ComponentOne = Dumux::Components::Constant<1, Scalar>;
     using ComponentTwo = Dumux::Components::Constant<2, Scalar>;
     static constexpr int numInertComponents = 2;
@@ -131,8 +131,8 @@ SET_PROP(CombustionOneComponent, SolidSystem)
 SET_PROP(CombustionOneComponent, SolidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 public:
     using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
@@ -150,24 +150,24 @@ template<class TypeTag>
 class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     enum {dimWorld = GridView::dimensionworld};

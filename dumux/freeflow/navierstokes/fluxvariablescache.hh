@@ -40,7 +40,7 @@ class FreeFlowFluxVariablesCacheImplementation
  *        Store flux stencils and data required for flux calculation
  */
 template<class TypeTag>
-using FreeFlowFluxVariablesCache = FreeFlowFluxVariablesCacheImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+using FreeFlowFluxVariablesCache = FreeFlowFluxVariablesCacheImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
 
 /*!
  * \ingroup NavierStokesModel
@@ -51,10 +51,10 @@ using FreeFlowFluxVariablesCache = FreeFlowFluxVariablesCacheImplementation<Type
 template<class TypeTag>
 class FreeFlowFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::staggered>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
 

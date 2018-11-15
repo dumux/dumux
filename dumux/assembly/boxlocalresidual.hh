@@ -43,16 +43,16 @@ template<class TypeTag>
 class BoxLocalResidual : public FVLocalResidual<TypeTag>
 {
     using ParentType = FVLocalResidual<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;

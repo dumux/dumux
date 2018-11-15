@@ -72,8 +72,8 @@ SET_TYPE_PROP(TracerTest, Problem, TracerTest<TypeTag>);
 // Set the spatial parameters
 SET_PROP(TracerTest, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TracerTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
@@ -82,14 +82,14 @@ SET_BOOL_PROP(TracerTest, UseMoles, USEMOLES);
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
-class TracerFluidSystem : public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar),
+class TracerFluidSystem : public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>,
                                                                TracerFluidSystem<TypeTag>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:
@@ -167,14 +167,14 @@ class TracerTest : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);

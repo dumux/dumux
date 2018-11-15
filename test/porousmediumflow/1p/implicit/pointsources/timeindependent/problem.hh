@@ -53,13 +53,13 @@ struct OnePSingularityCCTpfa { using InheritsFrom = std::tuple<OnePSingularity, 
 // the fluid system
 SET_PROP(OnePSingularity, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Set the grid type
 SET_TYPE_PROP(OnePSingularity, Grid,
-    Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+    Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
 
 // Set the problem property
 SET_TYPE_PROP(OnePSingularity, Problem, OnePSingularityProblem<TypeTag> );
@@ -67,8 +67,8 @@ SET_TYPE_PROP(OnePSingularity, Problem, OnePSingularityProblem<TypeTag> );
 // Set the spatial parameters
 SET_PROP(OnePSingularity, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePSingularitySpatialParams<FVGridGeometry, Scalar>;
 };
 }
@@ -90,21 +90,21 @@ template <class TypeTag>
 class OnePSingularityProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum { dimWorld = GridView::dimensionworld };
     enum {
         // index of the primary variable
         pressureIdx = Indices::pressureIdx
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PointSource = GetPropType<TypeTag, Properties::PointSource>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

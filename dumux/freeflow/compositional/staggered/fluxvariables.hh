@@ -46,19 +46,19 @@ class FreeflowNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 : public NavierStokesFluxVariables<TypeTag>
 {
     using ParentType = NavierStokesFluxVariables<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
 public:
     static constexpr auto numComponents = ModelTraits::numComponents();
     static constexpr bool useMoles = ModelTraits::useMoles();
-    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
+    using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
 
     /*!
     * \brief Computes the flux for the cell center residual.

@@ -154,7 +154,7 @@ SET_BOOL_PROP(NavierStokes, NormalizePressure, true); //!< Normalize the pressur
 SET_PROP(NavierStokes, ModelTraits)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr auto dim = GridView::dimension;
 public:
     using type = NavierStokesModelTraits<dim>;
@@ -168,8 +168,8 @@ public:
  */
 SET_PROP(NavierStokes, FluidState){
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = Dumux::ImmiscibleFluidState<Scalar, FluidSystem>;
 };
@@ -181,10 +181,10 @@ SET_TYPE_PROP(NavierStokes, LocalResidual, NavierStokesResidual<TypeTag>);
 SET_PROP(NavierStokes, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
@@ -212,7 +212,7 @@ SET_TYPE_PROP(NavierStokes, IOFields, NavierStokesIOFields);
 SET_PROP(NavierStokesNI, ModelTraits)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr auto dim = GridView::dimension;
     using IsothermalTraits = NavierStokesModelTraits<dim>;
 public:

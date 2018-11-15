@@ -61,10 +61,10 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
 
     // further types specific to the sub-problems
-    template<std::size_t id> using Scalar = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Scalar);
-    template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
-    template<std::size_t id> using LocalResidual = typename GET_PROP_TYPE(SubDomainTypeTag<id>, LocalResidual);
-    template<std::size_t id> using GridVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVariables);
+    template<std::size_t id> using Scalar = GetPropType<SubDomainTypeTag<id>, Properties::Scalar>;
+    template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+    template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
+    template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using PrimaryVariables = typename GridVariables<id>::PrimaryVariables;
     template<std::size_t id> using GridVolumeVariables = typename GridVariables<id>::GridVolumeVariables;
     template<std::size_t id> using ElementVolumeVariables = typename GridVolumeVariables<id>::LocalView;

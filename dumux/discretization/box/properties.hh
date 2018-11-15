@@ -57,8 +57,8 @@ SET_PROP(BoxModel, FVGridGeometry)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = BoxFVGridGeometry<Scalar, GridView, enableCache>;
 };
@@ -68,8 +68,8 @@ SET_PROP(BoxModel, GridVolumeVariables)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 public:
     using type = BoxGridVolumeVariables<Problem, VolumeVariables, enableCache>;
 };
@@ -79,14 +79,14 @@ SET_PROP(BoxModel, GridFluxVariablesCache)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
 public:
     using type = BoxGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
 
 //! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<typename GET_PROP_TYPE(TypeTag, BoundaryTypes)>);
+SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<GetPropType<TypeTag, Properties::BoundaryTypes>>);
 
 //! Set the BaseLocalResidual to BoxLocalResidual
 SET_TYPE_PROP(BoxModel, BaseLocalResidual, BoxLocalResidual<TypeTag>);

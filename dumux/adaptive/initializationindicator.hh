@@ -42,16 +42,16 @@ namespace Dumux {
 template<class TypeTag>
 class GridAdaptInitializationIndicator
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box;
 
 public:
 

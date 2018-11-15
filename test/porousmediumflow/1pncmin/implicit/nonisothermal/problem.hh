@@ -62,7 +62,7 @@ SET_TYPE_PROP(ThermoChem, Problem, ThermoChemProblem<TypeTag>);
 // The fluid system
 SET_PROP(ThermoChem, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using H2ON2 = FluidSystems::H2ON2<Scalar>;
     static constexpr auto phaseIdx = H2ON2::gasPhaseIdx; // simulate the air phase
     using type = FluidSystems::OnePAdapter<H2ON2, phaseIdx>;
@@ -70,7 +70,7 @@ SET_PROP(ThermoChem, FluidSystem)
 
 SET_PROP(ThermoChem, SolidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ComponentOne = Components::ModifiedCaO<Scalar>;
     using ComponentTwo = Components::CaO2H2<Scalar>;
     using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo>;
@@ -82,8 +82,8 @@ SET_PROP(ThermoChem, SolidSystem)
 // Set the spatial parameters
 SET_PROP(ThermoChem, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = ThermoChemSpatialParams<FVGridGeometry, Scalar>;
 };
 
@@ -107,22 +107,22 @@ template <class TypeTag>
 class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ReactionRate = ThermoChemReaction;
 
     enum { dim = GridView::dimension };
@@ -171,7 +171,7 @@ public:
         boundaryVaporMoleFrac_ = getParam<Scalar>("Problem.BoundaryMoleFraction");
         boundaryTemperature_ = getParam<Scalar>("Problem.BoundaryTemperature");
 
-        unsigned int codim = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box ? dim : 0;
+        unsigned int codim = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
         permeability_.resize(fvGridGeometry->gridView().size(codim));
         porosity_.resize(fvGridGeometry->gridView().size(codim));
         reactionRate_.resize(fvGridGeometry->gridView().size(codim));

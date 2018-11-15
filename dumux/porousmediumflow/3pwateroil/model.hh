@@ -200,7 +200,7 @@ struct ThreePWaterOilNI { using InheritsFrom = std::tuple<PorousMediumFlow>; };
 SET_PROP(ThreePWaterOilNI, ModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 3p2cni model!");
     static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p2cni model!");
 public:
@@ -215,8 +215,8 @@ public:
  */
 SET_PROP(ThreePWaterOilNI, FluidState){
     private:
-        using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+        using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+        using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     public:
         using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
@@ -225,7 +225,7 @@ SET_PROP(ThreePWaterOilNI, FluidState){
 SET_TYPE_PROP(ThreePWaterOilNI, LocalResidual, ThreePWaterOilLocalResidual<TypeTag>);
 
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(ThreePWaterOilNI, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
+SET_INT_PROP(ThreePWaterOilNI, ReplaceCompEqIdx, GetPropType<TypeTag, Properties::ModelTraits>::numComponents());
 
 //! The primary variable switch for the 3p3c model
 SET_TYPE_PROP(ThreePWaterOilNI, PrimaryVariableSwitch, ThreePWaterOilPrimaryVariableSwitch<TypeTag>);
@@ -234,8 +234,8 @@ SET_TYPE_PROP(ThreePWaterOilNI, PrimaryVariableSwitch, ThreePWaterOilPrimaryVari
 SET_PROP(ThreePWaterOilNI, PrimaryVariables)
 {
 private:
-    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
+    using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
+                                                     GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
@@ -247,13 +247,13 @@ SET_BOOL_PROP(ThreePWaterOilNI, OnlyGasPhaseCanDisappear, true);
 SET_PROP(ThreePWaterOilNI, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = ThreePWaterOilVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -262,7 +262,7 @@ public:
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(ThreePWaterOilNI, EffectiveDiffusivityModel,
-             DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+             DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
 
 // Define that mole fractions are used in the balance equations per default
 SET_BOOL_PROP(ThreePWaterOilNI, UseMoles, true);
@@ -271,7 +271,7 @@ SET_BOOL_PROP(ThreePWaterOilNI, UseMoles, true);
 SET_PROP(ThreePWaterOilNI, ThermalConductivityModel)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = ThermalConductivitySomerton<Scalar>;
 };

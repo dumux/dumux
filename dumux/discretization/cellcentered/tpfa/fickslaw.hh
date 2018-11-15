@@ -44,22 +44,22 @@ template <class TypeTag>
 class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 {
     using Implementation = FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BalanceEqOpts = GetPropType<TypeTag, Properties::BalanceEqOpts>;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     static const int dim = GridView::dimension;
@@ -175,7 +175,7 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+        using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
         const auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
                                                                 insideVolVars.saturation(phaseIdx),
                                                                 insideVolVars.diffusionCoefficient(phaseIdx, compIdx));

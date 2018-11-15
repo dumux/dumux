@@ -73,7 +73,7 @@ int main(int argc, char** argv) try
     /////////////////////////////////////////////////////////////////////
 
     // only create the grid once using the 1p type tag
-    GridManager<typename GET_PROP_TYPE(OnePTypeTag, Grid)> gridManager;
+    GridManager<GetPropType<OnePTypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     //! we compute on the leaf grid view
@@ -84,17 +84,17 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
 
     //! create the finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(OnePTypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<OnePTypeTag, Properties::FVGridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     //! the problem (boundary conditions)
-    using OnePProblem = typename GET_PROP_TYPE(OnePTypeTag, Problem);
+    using OnePProblem = GetPropType<OnePTypeTag, Properties::Problem>;
     auto problemOneP = std::make_shared<OnePProblem>(fvGridGeometry);
 
     //! the solution vector
-    using JacobianMatrix = typename GET_PROP_TYPE(OnePTypeTag, JacobianMatrix);
-    using SolutionVector = typename GET_PROP_TYPE(OnePTypeTag, SolutionVector);
+    using JacobianMatrix = GetPropType<OnePTypeTag, Properties::JacobianMatrix>;
+    using SolutionVector = GetPropType<OnePTypeTag, Properties::SolutionVector>;
     SolutionVector p(leafGridView.size(0));
 
     //! the linear system
@@ -102,7 +102,7 @@ int main(int argc, char** argv) try
     auto r = std::make_shared<SolutionVector>();
 
     //! the grid variables
-    using OnePGridVariables = typename GET_PROP_TYPE(OnePTypeTag, GridVariables);
+    using OnePGridVariables = GetPropType<OnePTypeTag, Properties::GridVariables>;
     auto onePGridVariables = std::make_shared<OnePGridVariables>(problemOneP, fvGridGeometry);
     onePGridVariables->init(p);
 
@@ -133,7 +133,7 @@ int main(int argc, char** argv) try
     updateTimer.elapsed(); std::cout << " took " << updateTimer.elapsed() << std::endl;
 
     //! write output to vtk
-    using GridView = typename GET_PROP_TYPE(OnePTypeTag, GridView);
+    using GridView = GetPropType<OnePTypeTag, Properties::GridView>;
     Dune::VTKWriter<GridView> onepWriter(leafGridView);
     onepWriter.addCellData(p, "p");
     const auto& k = problemOneP->spatialParams().getKField();
@@ -150,10 +150,10 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
     // compute volume fluxes for the tracer model
     ////////////////////////////////////////////////////////////
-    using Scalar =  typename GET_PROP_TYPE(OnePTypeTag, Scalar);
+    using Scalar =  GetPropType<OnePTypeTag, Properties::Scalar>;
     std::vector<Scalar> volumeFlux(fvGridGeometry->numScvf(), 0.0);
 
-    using FluxVariables =  typename GET_PROP_TYPE(OnePTypeTag, FluxVariables);
+    using FluxVariables =  GetPropType<OnePTypeTag, Properties::FluxVariables>;
     auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
     for (const auto& element : elements(leafGridView))
     {
@@ -194,7 +194,7 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
 
     //! the problem (initial and boundary conditions)
-    using TracerProblem = typename GET_PROP_TYPE(TracerTypeTag, Problem);
+    using TracerProblem = GetPropType<TracerTypeTag, Properties::Problem>;
     auto tracerProblem = std::make_shared<TracerProblem>(fvGridGeometry);
 
     // set the flux from the 1p problem
@@ -206,7 +206,7 @@ int main(int argc, char** argv) try
     auto xOld = x;
 
     //! the grid variables
-    using GridVariables = typename GET_PROP_TYPE(TracerTypeTag, GridVariables);
+    using GridVariables = GetPropType<TracerTypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(tracerProblem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
@@ -226,9 +226,9 @@ int main(int argc, char** argv) try
 
     //! intialize the vtk output module
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, tracerProblem->name());
-    using IOFields = typename GET_PROP_TYPE(TracerTypeTag, IOFields);
+    using IOFields = GetPropType<TracerTypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
-    using VelocityOutput = typename GET_PROP_TYPE(TracerTypeTag, VelocityOutput);
+    using VelocityOutput = GetPropType<TracerTypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     vtkWriter.write(0.0);
 

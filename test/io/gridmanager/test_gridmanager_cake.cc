@@ -61,7 +61,7 @@ int main(int argc, char** argv) try
 
     // using declarations
     using TypeTag = TTAG(GridCreatorCakeTest);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using Grid = Dumux::GetPropType<TypeTag, Dumux::Properties::Grid>;
     using GridManager = typename Dumux::CakeGridCreator<Grid>;
     GridManager gridManager;
 

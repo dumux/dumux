@@ -68,7 +68,7 @@ SET_TYPE_PROP(Fracture, Problem, Dumux::FractureProblem<TypeTag>);
 // Set the fluid system
 SET_PROP(Fracture, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
@@ -77,8 +77,8 @@ SET_PROP(Fracture, FluidSystem)
 // Set the spatial parameters
 SET_PROP(Fracture, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FractureSpatialParams<FVGridGeometry, Scalar>;
 };
 
@@ -99,14 +99,14 @@ template <class TypeTag>
 class FractureProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
     enum
     {

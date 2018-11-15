@@ -70,14 +70,14 @@ SET_TYPE_PROP(Fracture, Problem, Dumux::FractureProblem<TypeTag>);
 // the fluid system
 SET_PROP(Fracture, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 // Set the spatial parameters
 SET_PROP(Fracture, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FractureSpatialParams<FVGridGeometry, Scalar>;
 };
 
@@ -94,8 +94,8 @@ template <class TypeTag>
 class FractureProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum { dimWorld = GridView::dimensionworld };
 
@@ -104,12 +104,12 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
         pressureIdx = Indices::pressureIdx
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
 public:
     /*!

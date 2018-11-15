@@ -45,24 +45,24 @@ class MaxwellStefansLawImplementation;
 template <class TypeTag>
 class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static const int numComponents = ModelTraits::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);

@@ -44,22 +44,22 @@ namespace Dumux {
 template<class TypeTag>
 class FVLocalResidual
 {
-    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using TimeLoop = TimeLoopBase<Scalar>;
 
 public:
@@ -495,7 +495,7 @@ public:
 
     //! Compute the derivative of the flux residual
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod != DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod != DiscretizationMethod::box, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                             const Problem& problem,
                             const Element& element,
@@ -509,7 +509,7 @@ public:
 
     //! Compute the derivative of the flux residual for the box method
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box, void>
     addFluxDerivatives(JacobianMatrix& A,
                             const Problem& problem,
                             const Element& element,

@@ -47,8 +47,8 @@ SET_TYPE_PROP(TestElastic, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(TestElastic, Problem, Dumux::ElasticProblem<TypeTag>);
 // The spatial parameters property
-SET_TYPE_PROP(TestElastic, SpatialParams, ElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                   typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
+SET_TYPE_PROP(TestElastic, SpatialParams, ElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
+                                                                   GetPropType<TypeTag, Properties::FVGridGeometry> >);
 }
 
 /*!
@@ -62,19 +62,19 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
 {
     using ParentType = GeomechanicsFVProblem<TypeTag>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

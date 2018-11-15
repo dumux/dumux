@@ -103,7 +103,7 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv, usage);
 
     // try to create a grid (from the given grid file or the input file)
-    using GridManager = Dumux::GridManager<typename GET_PROP_TYPE(TypeTag, Grid)>;
+    using GridManager = Dumux::GridManager<GetPropType<TypeTag, Properties::Grid>>;
     GridManager gridManager;
     gridManager.init();
 
@@ -115,16 +115,16 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     // the problem (boundary conditions)
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     const auto numDofsCellCenter = leafGridView.size(0);
     const auto numDofsFace = leafGridView.size(1);
     SolutionVector x;
@@ -132,12 +132,12 @@ int main(int argc, char** argv) try
     x[FVGridGeometry::faceIdx()].resize(numDofsFace);
 
     // the grid variables
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x);
 
     // intialize the vtk output module
-    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");

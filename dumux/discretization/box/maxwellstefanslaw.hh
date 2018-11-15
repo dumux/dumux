@@ -45,19 +45,19 @@ class MaxwellStefansLawImplementation;
 template <class TypeTag>
 class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box >
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -65,8 +65,8 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box >
     enum { dimWorld = GridView::dimensionworld} ;
     enum
     {
-        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
-        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()
+        numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases(),
+        numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents()
     };
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
@@ -159,7 +159,7 @@ private:
         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
         {
             // effective diffusion tensors
-            using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
             const auto xi = moleFrac[compIIdx];
 
@@ -209,7 +209,7 @@ private:
     }
 
 private:
-    template <class T = TypeTag, typename std::enable_if_t<GET_PROP_TYPE(T, FluidSystem)::isTracerFluidSystem(), int> =0 >
+    template <class T = TypeTag, typename std::enable_if_t<GetPropType<T, Properties::FluidSystem>::isTracerFluidSystem(), int> =0 >
     static Scalar getDiffusionCoefficient(const int phaseIdx,
                             const int compIIdx,
                             const int compJIdx,
@@ -225,7 +225,7 @@ private:
                                                        scv);
     }
 
-    template <class T = TypeTag, typename std::enable_if_t<!GET_PROP_TYPE(T, FluidSystem)::isTracerFluidSystem(), int> =0 >
+    template <class T = TypeTag, typename std::enable_if_t<!GetPropType<T, Properties::FluidSystem>::isTracerFluidSystem(), int> =0 >
     static Scalar getDiffusionCoefficient(const int phaseIdx,
                             const int compIIdx,
                             const int compJIdx,

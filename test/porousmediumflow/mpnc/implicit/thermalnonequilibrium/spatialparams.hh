@@ -41,12 +41,12 @@ namespace Dumux {
  */
 template<class TypeTag>
 class CombustionSpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
+: public FVSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                         GetPropType<TypeTag, Properties::Scalar>,
                          CombustionSpatialParams<TypeTag>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -58,7 +58,7 @@ class CombustionSpatialParams
 
     using EffectiveLaw = HeatPipeLaw<Scalar>;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
 
 public:

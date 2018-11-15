@@ -44,24 +44,24 @@ template <class TypeTag>
 class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 {
     using Implementation = FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVarsCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
+    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
 
     //! Class that fills the cache corresponding to tpfa Fick's Law
     class TpfaFouriersLawCacheFiller

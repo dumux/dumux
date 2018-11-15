@@ -46,18 +46,18 @@ struct Geomechanics { using InheritsFrom = std::tuple<ModelProperties>; };
 } // end namespace TTag
 
 //! The flux variables cache class for models involving flow in porous media
-SET_TYPE_PROP(Geomechanics, FluxVariablesCache, StressVariablesCache< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                      typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
+SET_TYPE_PROP(Geomechanics, FluxVariablesCache, StressVariablesCache< GetPropType<TypeTag, Properties::Scalar>,
+                                                                      GetPropType<TypeTag, Properties::FVGridGeometry> >);
 
 //! The (currently empty) velocity output
-SET_TYPE_PROP(Geomechanics, VelocityOutput, GeomechanicsVelocityOutput<typename GET_PROP_TYPE(TypeTag, GridVariables)>);
+SET_TYPE_PROP(Geomechanics, VelocityOutput, GeomechanicsVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>>);
 
 //! The solid state must be inert
 SET_PROP(Geomechanics, SolidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 public:
     using type = InertSolidState<Scalar, SolidSystem>;
 };
@@ -66,7 +66,7 @@ public:
 SET_PROP(Geomechanics, SolidSystem)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using InertComponent = Components::Constant<1, Scalar>;
 public:
     using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;

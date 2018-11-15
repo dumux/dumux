@@ -101,13 +101,13 @@ struct OnePNCMinNI { using InheritsFrom = std::tuple<OnePNCMin>; };
 SET_PROP(OnePNCMin, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
@@ -127,8 +127,8 @@ SET_TYPE_PROP(OnePNCMin, LocalResidual, MineralizationLocalResidual<TypeTag>);
 SET_PROP(OnePNCMin, ModelTraits)
 {
 private:
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using NonMinTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+    using NonMinTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = MineralizationModelTraits<NonMinTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 };
@@ -137,8 +137,8 @@ public:
 SET_PROP(OnePNCMin, SolidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 public:
     using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
@@ -161,8 +161,8 @@ SET_PROP(OnePNCMinNI, IOFields)
 SET_PROP(OnePNCMinNI, ModelTraits)
 {
 private:
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using OnePNCTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+    using OnePNCTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
     using IsothermalTraits = MineralizationModelTraits<OnePNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
@@ -171,7 +171,7 @@ public:
 //! Use the average for effective conductivities
 SET_TYPE_PROP(OnePNCMinNI,
               ThermalConductivityModel,
-              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>);
 
 } // end namespace Properties
 } // end namespace Dumux

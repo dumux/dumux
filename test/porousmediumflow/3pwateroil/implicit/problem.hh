@@ -63,15 +63,15 @@ SET_TYPE_PROP(Sagd, Problem, Dumux::SagdProblem<TypeTag>);
 // Set the spatial parameters
 SET_PROP(Sagd, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = SagdSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Set the fluid system
 SET_TYPE_PROP(Sagd,
               FluidSystem,
-              Dumux::FluidSystems::H2OHeavyOil<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              Dumux::FluidSystems::H2OHeavyOil<GetPropType<TypeTag, Properties::Scalar>>);
 
 SET_BOOL_PROP(Sagd, OnlyGasPhaseCanDisappear, true);
 
@@ -80,7 +80,7 @@ SET_BOOL_PROP(Sagd, UseMoles, true);
 // Set the fluid system
 SET_PROP(Sagd, SolidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using InertComponent = Components::Constant<1, Scalar>;
     using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
 };
@@ -99,11 +99,11 @@ template <class TypeTag >
 class SagdProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum {
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
@@ -124,12 +124,12 @@ class SagdProblem : public PorousMediumFlowProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 

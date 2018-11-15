@@ -56,7 +56,7 @@ SET_PROP(CCTpfaModel, FVGridGeometry)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 public:
     using type = CCTpfaFVGridGeometry<GridView, enableCache>;
 };
@@ -66,8 +66,8 @@ SET_PROP(CCTpfaModel, GridVolumeVariables)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 public:
     using type = CCTpfaGridVolumeVariables<Problem, VolumeVariables, enableCache>;
 };
@@ -77,8 +77,8 @@ SET_PROP(CCTpfaModel, GridFluxVariablesCache)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
     using FluxVariablesCacheFiller = CCTpfaFluxVariablesCacheFiller<TypeTag>;
 public:
     using type = CCTpfaGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;

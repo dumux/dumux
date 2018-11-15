@@ -47,7 +47,7 @@ class RichardsNewtonSolver : public RichardsPrivarSwitchNewtonSolver<TypeTag, As
     using SolutionVector = typename Assembler::ResidualType;
 
     using MaterialLaw = typename Assembler::Problem::SpatialParams::MaterialLaw;
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum { pressureIdx = Indices::pressureIdx };
 
 public:

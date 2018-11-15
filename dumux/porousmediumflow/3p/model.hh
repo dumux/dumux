@@ -144,7 +144,7 @@ struct ThreePNI { using InheritsFrom = std::tuple<ThreeP>; };
 SET_PROP(ThreeP, ModelTraits)
 {
  private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p model!");
     static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p model!");
  public:
@@ -158,13 +158,13 @@ SET_TYPE_PROP(ThreeP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
 SET_PROP(ThreeP, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = ThreePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -181,8 +181,8 @@ public:
 SET_PROP(ThreeP, FluidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
@@ -198,7 +198,7 @@ SET_TYPE_PROP(ThreeP, IOFields, ThreePIOFields);
 SET_PROP(ThreePNI, ThermalConductivityModel)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = ThermalConductivitySomerton<Scalar>;
 };
@@ -210,7 +210,7 @@ SET_TYPE_PROP(ThreePNI, IOFields, EnergyIOFields<ThreePIOFields>);
 SET_PROP(ThreePNI, ModelTraits)
 {
 private:
-   using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
    static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p model!");
    static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p model!");
 public:

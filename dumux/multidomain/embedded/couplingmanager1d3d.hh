@@ -55,8 +55,8 @@ struct CircleAveragePointSourceTraits
 {
 private:
     template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<i>;
-    template<std::size_t i> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<i>, FVGridGeometry);
-    template<std::size_t i> using NumEqVector = typename GET_PROP_TYPE(SubDomainTypeTag<i>, NumEqVector);
+    template<std::size_t i> using FVGridGeometry = GetPropType<SubDomainTypeTag<i>, Properties::FVGridGeometry>;
+    template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
 public:
     //! export the point source type for domain i
     template<std::size_t i>
@@ -103,8 +103,8 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::line>
 
     // the sub domain type aliases
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
-    template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
-    template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
@@ -203,8 +203,8 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::average>
 
     // the sub domain type aliases
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
-    template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
-    template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
@@ -581,8 +581,8 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::cylindersource
 
     // the sub domain type aliases
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
-    template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
-    template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
@@ -858,8 +858,8 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::kernel>
 
     // the sub domain type aliases
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
-    template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
-    template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 

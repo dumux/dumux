@@ -211,13 +211,13 @@ SET_TYPE_PROP(Richards, ModelTraits, RichardsModelTraits<GET_PROP_VALUE(TypeTag,
 SET_PROP(Richards, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = RichardsVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -230,14 +230,14 @@ SET_BOOL_PROP(Richards, EnableWaterDiffusionInAir, false);
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(Richards, EffectiveDiffusivityModel,
-              DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
 
 //! The primary variables vector for the richards model
 SET_PROP(Richards, PrimaryVariables)
 {
 private:
-    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
+    using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
+                                                     GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
@@ -255,7 +255,7 @@ SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSw
  */
 SET_PROP(Richards, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::H2OAir<Scalar,
                                       Components::SimpleH2O<Scalar>,
                                       FluidSystems::H2OAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;
@@ -270,8 +270,8 @@ SET_PROP(Richards, FluidSystem)
 SET_PROP(Richards, FluidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
@@ -280,7 +280,7 @@ public:
 SET_PROP(RichardsNI, ThermalConductivityModel)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = ThermalConductivitySomerton<Scalar>;
 };

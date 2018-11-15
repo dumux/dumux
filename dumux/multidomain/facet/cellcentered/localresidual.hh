@@ -48,7 +48,7 @@ class CCFacetCouplingLocalResidual : public CCLocalResidual<TypeTag>
 {
     using ParentType = CCLocalResidual<TypeTag>;
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
 
@@ -57,7 +57,7 @@ class CCFacetCouplingLocalResidual : public CCLocalResidual<TypeTag>
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
 
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
 public:
     //! pull up the parent's constructor

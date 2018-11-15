@@ -43,18 +43,18 @@ class FouriersLawImplementation;
 template <class TypeTag>
 class FouriersLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVarsCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
 
     //! Class that fills the cache corresponding to mpfa Darcy's Law
     class MpfaFouriersLawCacheFiller
@@ -88,19 +88,19 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     //! The cache used in conjunction with the mpfa Fourier's Law
     class MpfaFouriersLawCache
     {
-        using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+        using DualGridNodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
         using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
 
         using MpfaHelper = typename FVGridGeometry::MpfaHelper;
         static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
 
-        using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+        using PrimaryInteractionVolume = GetPropType<TypeTag, Properties::PrimaryInteractionVolume>;
         using PrimaryIvLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
         using PrimaryIvDataHandle = typename ElementFluxVarsCache::PrimaryIvDataHandle;
         using PrimaryIvCellVector = typename PrimaryInteractionVolume::Traits::MatVecTraits::CellVector;
         using PrimaryIvTij = typename PrimaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
 
-        using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+        using SecondaryInteractionVolume = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
         using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
         using SecondaryIvDataHandle = typename ElementFluxVarsCache::SecondaryIvDataHandle;
         using SecondaryIvCellVector = typename SecondaryInteractionVolume::Traits::MatVecTraits::CellVector;

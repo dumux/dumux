@@ -68,15 +68,15 @@ SET_TYPE_PROP(Kuevette, Problem, KuevetteProblem<TypeTag>);
 // Set the spatial parameters
 SET_PROP(Kuevette, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = KuevetteSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Set the fluid system
 SET_TYPE_PROP(Kuevette,
               FluidSystem,
-              FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>);
 } // end namespace Properties
 
 /*!
@@ -116,12 +116,12 @@ template <class TypeTag >
 class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     enum {
 
         pressureIdx = Indices::pressureIdx,
@@ -141,14 +141,14 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
 
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;

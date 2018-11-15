@@ -53,7 +53,7 @@ struct ChannelTest { using InheritsFrom = std::tuple<NavierStokesNI, StaggeredFr
 // the fluid system
 SET_PROP(ChannelTest, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 #if NONISOTHERMAL
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #else
@@ -83,14 +83,14 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
 
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

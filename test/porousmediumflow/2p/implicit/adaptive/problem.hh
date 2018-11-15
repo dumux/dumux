@@ -37,12 +37,12 @@ template <class TypeTag >
 class TwoPTestProblemAdaptive : public TwoPTestProblem<TypeTag>
 {
     using ParentType = TwoPTestProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimensionworld>::Entity;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
 

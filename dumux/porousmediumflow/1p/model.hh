@@ -126,19 +126,19 @@ struct OnePNI { using InheritsFrom = std::tuple<OneP>; };
 SET_TYPE_PROP(OneP, IOFields, OnePIOFields);                          //!< default I/O fields specific to this model
 SET_TYPE_PROP(OneP, LocalResidual, ImmiscibleLocalResidual<TypeTag>); //!< the local residual function
 SET_TYPE_PROP(OneP, BaseModelTraits, OnePModelTraits);                //!< states some specifics of the one-phase model
-SET_TYPE_PROP(OneP, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits)); //!< default the actually used traits to the base traits
+SET_TYPE_PROP(OneP, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>); //!< default the actually used traits to the base traits
 
 //! Set the volume variables property
 SET_PROP(OneP, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -154,8 +154,8 @@ public:
 SET_PROP(OneP, FluidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
@@ -173,7 +173,7 @@ SET_TYPE_PROP(OnePNI, ModelTraits, PorousMediumFlowNIModelTraits<OnePModelTraits
 //! Use the average for effective conductivities
 SET_TYPE_PROP(OnePNI,
               ThermalConductivityModel,
-              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>);
 
 } // end namespace Properties
 } // end namespace Dumux

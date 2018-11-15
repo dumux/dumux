@@ -171,7 +171,7 @@ SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //
 
 //! The base model traits class
 SET_TYPE_PROP(TwoP, BaseModelTraits, TwoPModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
-SET_TYPE_PROP(TwoP, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits)); //!< default the actually used traits to the base traits
+SET_TYPE_PROP(TwoP, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>); //!< default the actually used traits to the base traits
 
 //! Set the vtk output fields specific to the twop model
 SET_TYPE_PROP(TwoP, IOFields, TwoPIOFields);
@@ -180,15 +180,15 @@ SET_TYPE_PROP(TwoP, IOFields, TwoPIOFields);
 SET_PROP(TwoP, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
-    static constexpr auto DM = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod;
+    static constexpr auto DM = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod;
     static constexpr bool enableIS = GET_PROP_VALUE(TypeTag, EnableBoxInterfaceSolver);
     // class used for scv-wise reconstruction of non-wetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
@@ -202,8 +202,8 @@ public:
 SET_PROP(TwoP, FluidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
@@ -213,7 +213,7 @@ public:
 ////////////////////////////////////////////////////////
 
 //! The non-isothermal model traits class
-SET_TYPE_PROP(TwoPNI, ModelTraits, PorousMediumFlowNIModelTraits<typename GET_PROP_TYPE(TypeTag, BaseModelTraits)>);
+SET_TYPE_PROP(TwoPNI, ModelTraits, PorousMediumFlowNIModelTraits<GetPropType<TypeTag, Properties::BaseModelTraits>>);
 
 //! Set the vtk output fields specific to the non-isothermal twop model
 SET_TYPE_PROP(TwoPNI, IOFields, EnergyIOFields<TwoPIOFields>);
@@ -222,7 +222,7 @@ SET_TYPE_PROP(TwoPNI, IOFields, EnergyIOFields<TwoPIOFields>);
 SET_PROP(TwoPNI, ThermalConductivityModel)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = ThermalConductivitySomerton<Scalar>;
 };

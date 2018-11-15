@@ -43,19 +43,19 @@ class EnergyLocalResidualNonEquilibrium;
 template<class TypeTag>
 class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
@@ -314,20 +314,20 @@ template<class TypeTag>
 class EnergyLocalResidualNonEquilibrium<TypeTag, 2 /*numEnergyEqFluid*/>
 : public EnergyLocalResidualNonEquilibrium<TypeTag, 1 /*numEnergyEqFluid*/>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     enum { numPhases        = ModelTraits::numPhases() };

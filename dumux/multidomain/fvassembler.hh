@@ -65,7 +65,7 @@ public:
     using Scalar = typename MDTraits::Scalar;
 
     template<std::size_t id>
-    using LocalResidual = typename GET_PROP_TYPE(SubDomainTypeTag<id>, LocalResidual);
+    using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
 
     using JacobianMatrix = typename MDTraits::JacobianMatrix;
     using SolutionVector = typename MDTraits::SolutionVector;

@@ -78,8 +78,8 @@ SET_TYPE_PROP(PorousMediumFlow, EnergyLocalResidual, Dumux::EnergyLocalResidual<
 
 //! Velocity output
 SET_TYPE_PROP(PorousMediumFlow, VelocityOutput,
-    PorousMediumFlowVelocityOutput<typename GET_PROP_TYPE(TypeTag, GridVariables),
-                                   typename GET_PROP_TYPE(TypeTag, FluxVariables)>);
+    PorousMediumFlowVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>,
+                                   GetPropType<TypeTag, Properties::FluxVariables>>);
 
 //! By default, we set an empty primary variables switch
 SET_TYPE_PROP(PorousMediumFlow, PrimaryVariableSwitch, NoPrimaryVariableSwitch);
@@ -93,8 +93,8 @@ SET_BOOL_PROP(PorousMediumFlow, EnableBoxInterfaceSolver, false);
 SET_PROP(PorousMediumFlow, SolidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 public:
     using type = InertSolidState<Scalar, SolidSystem>;
 };
@@ -102,7 +102,7 @@ public:
 // per default the solid system is inert with one constant component
 SET_PROP(PorousMediumFlow, SolidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using InertComponent = Components::Constant<1, Scalar>;
     using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
 };

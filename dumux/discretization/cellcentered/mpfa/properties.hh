@@ -61,7 +61,7 @@ struct CCMpfaModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
 SET_PROP(CCMpfaModel, DualGridNodalIndexSet)
 {
 private:
-    using GV = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GV = GetPropType<TypeTag, Properties::GridView>;
     using Traits = NodalIndexSetDefaultTraits< GV >;
 
 public:
@@ -72,15 +72,15 @@ public:
 SET_PROP(CCMpfaModel, PrimaryInteractionVolume)
 {
 public:
-    using type = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+    using type = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
 };
 
 //! Per default, we use the dynamic mpfa-o interaction volume on boundaries
 SET_PROP(CCMpfaModel, SecondaryInteractionVolume)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using NodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
 
     // use the default traits
     using Traits = CCMpfaODefaultInteractionVolumeTraits< NodalIndexSet, Scalar >;
@@ -92,10 +92,10 @@ public:
 SET_PROP(CCMpfaModel, FVGridGeometry)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using PrimaryIV = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using SecondaryIV = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
-    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using PrimaryIV = GetPropType<TypeTag, Properties::PrimaryInteractionVolume>;
+    using SecondaryIV = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
+    using NodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
     using Traits = CCMpfaFVGridGeometryTraits<GridView, NodalIndexSet, PrimaryIV, SecondaryIV>;
 public:
     using type = CCMpfaFVGridGeometry<GridView, Traits, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>;
@@ -106,8 +106,8 @@ SET_PROP(CCMpfaModel, GridVolumeVariables)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 public:
     using type = CCMpfaGridVolumeVariables<Problem, VolumeVariables, enableCache>;
 };
@@ -117,14 +117,14 @@ SET_PROP(CCMpfaModel, GridFluxVariablesCache)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
     using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
 
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+    using PrimaryInteractionVolume = GetPropType<TypeTag, Properties::PrimaryInteractionVolume>;
+    using SecondaryInteractionVolume = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
 
-    using PhysicsTraits = IvDataHandlePhysicsTraits<typename GET_PROP_TYPE(TypeTag, ModelTraits)>;
+    using PhysicsTraits = IvDataHandlePhysicsTraits<GetPropType<TypeTag, Properties::ModelTraits>>;
     using PrimaryMatVecTraits = typename PrimaryInteractionVolume::Traits::MatVecTraits;
     using SecondaryMatVecTraits = typename SecondaryInteractionVolume::Traits::MatVecTraits;
 

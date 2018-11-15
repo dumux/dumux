@@ -56,9 +56,9 @@ public:
  * \brief the case with switchable primary variables
   */
 template <class TypeTag, class Assembler, class LinearSolver>
-class RichardsPrivarSwitchNewtonSolverImplementation<TypeTag, Assembler, LinearSolver, true> : public PriVarSwitchNewtonSolver<Assembler, LinearSolver, typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch)>
+class RichardsPrivarSwitchNewtonSolverImplementation<TypeTag, Assembler, LinearSolver, true> : public PriVarSwitchNewtonSolver<Assembler, LinearSolver, GetPropType<TypeTag, Properties::PrimaryVariableSwitch>>
 {
-    using PrimaryVariableSwitch = typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
+    using PrimaryVariableSwitch = GetPropType<TypeTag, Properties::PrimaryVariableSwitch>;
     using ParentType = PriVarSwitchNewtonSolver<Assembler, LinearSolver, PrimaryVariableSwitch>;
 public:
     using ParentType::ParentType;

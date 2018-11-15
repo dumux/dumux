@@ -54,8 +54,8 @@ struct OnePSub { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 // The fluid phase consists of one constant component
 SET_TYPE_PROP(OnePSub,
               FluidSystem,
-              Dumux::FluidSystems::OnePLiquid< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                               Dumux::Components::Constant<0, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+              Dumux::FluidSystems::OnePLiquid< GetPropType<TypeTag, Properties::Scalar>,
+                                               Dumux::Components::Constant<0, GetPropType<TypeTag, Properties::Scalar>> >);
 
 // Set the grid type
 SET_TYPE_PROP(OnePSub, Grid, Dune::YaspGrid<2>);
@@ -64,9 +64,9 @@ SET_TYPE_PROP(OnePSub, Problem, OnePSubProblem<TypeTag> );
 // Set the spatial parameters
 SET_PROP(OnePSub, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using type = OnePSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
 };
 } // end namespace Properties
@@ -83,22 +83,22 @@ class OnePSubProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     // copy pressure index for convenience
-    enum { pressureIdx = GET_PROP_TYPE(TypeTag, ModelTraits)::Indices::pressureIdx };
+    enum { pressureIdx = GetPropType<TypeTag, Properties::ModelTraits>::Indices::pressureIdx };
 
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
 public:
     OnePSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                   std::shared_ptr<typename GET_PROP_TYPE(TypeTag, SpatialParams)> spatialParams,
+                   std::shared_ptr<GetPropType<TypeTag, Properties::SpatialParams>> spatialParams,
                    const std::string& paramGroup = "OneP")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
     {

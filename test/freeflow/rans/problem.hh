@@ -80,13 +80,13 @@ struct PipeLauferProblem { using InheritsFrom = std::tuple<ZeroEq, StaggeredFree
 // the fluid system
 SET_PROP(PipeLauferProblem, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePGas<Scalar, Components::Air<Scalar> >;
 };
 
 // Set the grid type
 SET_TYPE_PROP(PipeLauferProblem, Grid,
-              Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+              Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
 
 // Set the problem property
 SET_TYPE_PROP(PipeLauferProblem, Problem, Dumux::PipeLauferProblem<TypeTag> );
@@ -127,18 +127,18 @@ class PipeLauferProblem : public ZeroEqProblem<TypeTag>
     using ParentType = ZeroEqProblem<TypeTag>;
 #endif
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 

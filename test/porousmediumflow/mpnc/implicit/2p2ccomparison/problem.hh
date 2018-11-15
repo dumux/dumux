@@ -66,16 +66,16 @@ SET_TYPE_PROP(MPNCComparison, Problem, MPNCComparisonProblem<TypeTag>);
 // Set the spatial parameters
 SET_PROP(MPNCComparison, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using type = MPNCComparisonSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
 };
 
 // Set fluid configuration
 SET_TYPE_PROP(MPNCComparison,
               FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+              FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(MPNCComparison, Scalar, double);
@@ -93,25 +93,25 @@ class MPNCComparisonProblem
     : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
 
     // world dimension
     enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
-    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
+    enum {numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases()};
+    enum {numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents()};
     enum {gasPhaseIdx = FluidSystem::gasPhaseIdx};
     enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
     enum {wCompIdx = FluidSystem::H2OIdx};
@@ -123,7 +123,7 @@ class MPNCComparisonProblem
 
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
-    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box;
 
 public:
     /*!

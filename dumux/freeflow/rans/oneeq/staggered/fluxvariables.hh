@@ -49,7 +49,7 @@ class OneEqFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::s
 {
     using ParentType = BaseFluxVariables;
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
@@ -62,15 +62,15 @@ class OneEqFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::s
     using ElementFaceVariables = typename GridFaceVariables::LocalView;
     using FaceVariables = typename GridFaceVariables::FaceVariables;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
 
     static constexpr int viscosityTildeEqIdx = Indices::viscosityTildeEqIdx - ModelTraits::dim();
 

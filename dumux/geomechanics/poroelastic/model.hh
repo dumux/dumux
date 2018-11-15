@@ -82,10 +82,10 @@ SET_TYPE_PROP(PoroElastic, IOFields, PoroElasticIOFields);
 SET_PROP(PoroElastic, ModelTraits)
 {
 private:
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    static constexpr int numSC = GET_PROP_TYPE(TypeTag, SolidSystem)::numComponents;
-    static constexpr int numFP = GET_PROP_TYPE(TypeTag, FluidSystem)::numPhases;
-    static constexpr int numFC = GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents;
+    static constexpr int dim = GetPropType<TypeTag, Properties::GridView>::dimension;
+    static constexpr int numSC = GetPropType<TypeTag, Properties::SolidSystem>::numComponents;
+    static constexpr int numFP = GetPropType<TypeTag, Properties::FluidSystem>::numPhases;
+    static constexpr int numFC = GetPropType<TypeTag, Properties::FluidSystem>::numComponents;
 
 public:
     using type = PoroElasticModelTraits<dim, numSC, numFP, numFC>;
@@ -95,12 +95,12 @@ public:
 SET_PROP(PoroElastic, VolumeVariables)
 {
 private:
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    static constexpr int dim = GetPropType<TypeTag, Properties::GridView>::dimension;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using DV = Dune::FieldVector<typename PV::value_type, dim>;
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
 
     // we reuse the elastic volume variable traits here
     using Traits = ElasticVolumeVariablesTraits<PV, DV, MT, SST, SSY>;
@@ -112,8 +112,8 @@ public:
 SET_PROP(PoroElastic, StressType)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using ElasticStressType = HookesLaw< Scalar, FVGridGeometry >;
 public:
     using type = EffectiveStressLaw< ElasticStressType, FVGridGeometry >;

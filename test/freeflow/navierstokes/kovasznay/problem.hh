@@ -49,12 +49,12 @@ struct KovasznayTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFr
 // the fluid system
 SET_PROP(KovasznayTest, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
-SET_TYPE_PROP(KovasznayTest, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(KovasznayTest, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
 
 // Set the problem property
 SET_TYPE_PROP(KovasznayTest, Problem, Dumux::KovasznayTestProblem<TypeTag> );
@@ -75,16 +75,16 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;

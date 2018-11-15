@@ -96,7 +96,7 @@ struct ZeroEqNCNINameTestTypeTag { using InheritsFrom = std::tuple<ZeroEqNCNI, S
 // The fluid system
 SET_PROP(StaggeredPVNamesTestTypeTag, FluidSystem)
 {
-  using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+  using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
   static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the air phase
   using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
@@ -112,7 +112,7 @@ private:
     // use the ZeroEqProblem as base class for non-RANS models and for the ZeroEq model
     // use the the KEpsilonProblem as base class for all RANS models except the ZeroEq model
     // NOTE: this rather unpleasant hack will be removed once the RANS models have been unified
-    using MTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using MTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr auto dim = MTraits::dim();
     static constexpr auto nComp = MTraits::numComponents();
@@ -139,9 +139,9 @@ private:
     class MockProblem : public BaseProblem
     {
         using ParentType = BaseProblem;
-        using BoundaryTypes = typename GET_PROP_TYPE(TTag, BoundaryTypes);
-        using Scalar = typename GET_PROP_TYPE(TTag, Scalar);
-        using Traits = typename GET_PROP_TYPE(TTag, ModelTraits);
+        using BoundaryTypes = GetPropType<TTag, Properties::BoundaryTypes>;
+        using Scalar = GetPropType<TTag, Properties::Scalar>;
+        using Traits = GetPropType<TTag, Properties::ModelTraits>;
     public:
         using ParentType::ParentType;
 
@@ -155,14 +155,14 @@ private:
         Scalar temperature() const
         { return 300; }
 
-        template<class T = TTag, bool enable = GET_PROP_TYPE(T, ModelTraits)::usesTurbulenceModel(), std::enable_if_t<!enable, int> = 0>
+        template<class T = TTag, bool enable = GetPropType<T, Properties::ModelTraits>::usesTurbulenceModel(), std::enable_if_t<!enable, int> = 0>
         void updateStaticWallProperties() {}
 
         template<class U, bool enable = Traits::usesTurbulenceModel(), std::enable_if_t<!enable, int> = 0>
         void updateDynamicWallProperties(const U&) {}
 
         // for ZeroEq model
-        template<class T = TTag, bool enable = GET_PROP_TYPE(T, ModelTraits)::usesTurbulenceModel(), std::enable_if_t<enable, int> = 0>
+        template<class T = TTag, bool enable = GetPropType<T, Properties::ModelTraits>::usesTurbulenceModel(), std::enable_if_t<enable, int> = 0>
         void updateStaticWallProperties()
         { ParentType::updateStaticWallProperties(); }
 
@@ -204,7 +204,7 @@ void assignValues(SolutionVector& sol, Values values)
 
 template<class TypeTag, class FVGridGeometry, std::size_t numValues>
 void testWriteAndReadVtk(std::shared_ptr<FVGridGeometry> fvGridGeometry,
-                         const std::array<typename GET_PROP_TYPE(TypeTag, Scalar), numValues>& values,
+                         const std::array<Dumux::GetPropType<TypeTag, Dumux::Properties::Scalar>, numValues>& values,
                          const std::string& fileName,
                          bool verbose = false,
                          bool deleteFiles = true)
@@ -212,7 +212,7 @@ void testWriteAndReadVtk(std::shared_ptr<FVGridGeometry> fvGridGeometry,
     using namespace Dumux;
 
     // the solution vector
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector writeFrom;
 
     writeFrom[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
@@ -221,32 +221,32 @@ void testWriteAndReadVtk(std::shared_ptr<FVGridGeometry> fvGridGeometry,
     SolutionVector readTo = writeFrom;
 
     // the problem (initial and boundary conditions)
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     assignValues(writeFrom[FVGridGeometry::cellCenterIdx()], values);
-    assignValues(writeFrom[FVGridGeometry::faceIdx()], std::array<typename GET_PROP_TYPE(TypeTag, Scalar), 1>{1.0});
+    assignValues(writeFrom[FVGridGeometry::faceIdx()], std::array<GetPropType<TypeTag, Properties::Scalar>, 1>{1.0});
 
     problem->updateStaticWallProperties();
     problem->updateDynamicWallProperties(writeFrom);
 
     // the grid variables
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(writeFrom);
 
     // initialize the vtk output module
-    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, writeFrom, fileName);
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0);
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
+    using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
 
     // cc dofs
     loadSolution(readTo[FVGridGeometry::cellCenterIdx()], fileName + "-00000.vtu",
@@ -322,9 +322,9 @@ int main(int argc, char** argv) try
     Parameters::init(parameters);
 
     using CommonTypeTag = TTAG(StaggeredPVNamesTestTypeTag);
-    using Grid = typename GET_PROP_TYPE(CommonTypeTag, Grid);
-    using FVGridGeometry = typename GET_PROP_TYPE(CommonTypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(CommonTypeTag, Scalar);
+    using Grid = GetPropType<CommonTypeTag, Properties::Grid>;
+    using FVGridGeometry = GetPropType<CommonTypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<CommonTypeTag, Properties::Scalar>;
     using GlobalPosition = Dune::FieldVector<Scalar, Grid::dimension>;
 
     const GlobalPosition lowerLeft(0.0);
@@ -337,7 +337,7 @@ int main(int argc, char** argv) try
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(gridView);
     fvGridGeometry->update();
 
-    using FluidSystem = typename GET_PROP_TYPE(CommonTypeTag, FluidSystem);
+    using FluidSystem = GetPropType<CommonTypeTag, Properties::FluidSystem>;
     FluidSystem::init();
 
     testWriteAndReadVtk<TTAG(NavierStokesPVNameTypeTag)>(fvGridGeometry, std::array<Scalar, 1>{1e5}, "navierstokes");

@@ -53,12 +53,12 @@ template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class BoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
-    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
 
 public:
 
@@ -256,15 +256,15 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tr
 {
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
-    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
-    enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+    enum { dim = GetPropType<TypeTag, Properties::GridView>::dimension };
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
 
@@ -375,15 +375,15 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fa
 {
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
-    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
-    enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+    enum { dim = GetPropType<TypeTag, Properties::GridView>::dimension };
 
 public:
 
@@ -486,9 +486,9 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/t
 {
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
 public:
@@ -605,9 +605,9 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/f
 {
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
 public:

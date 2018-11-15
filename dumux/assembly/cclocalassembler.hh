@@ -56,12 +56,12 @@ template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
 public:
 
@@ -132,16 +132,16 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using Element = typename GetPropType<TypeTag, Properties::GridView>::template Codim<0>::Entity;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
 
-    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
-    enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+    enum { dim = GetPropType<TypeTag, Properties::GridView>::dimension };
 
     using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
     static constexpr int maxElementStencilSize = FVGridGeometry::maxElementStencilSize;
@@ -313,13 +313,13 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fal
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using Element = typename GetPropType<TypeTag, Properties::GridView>::template Codim<0>::Entity;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
 
-    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
 
 public:
     using ParentType::ParentType;
@@ -424,9 +424,9 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/tr
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
 public:
     using ParentType::ParentType;
@@ -503,9 +503,9 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/fa
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
 public:
     using ParentType::ParentType;

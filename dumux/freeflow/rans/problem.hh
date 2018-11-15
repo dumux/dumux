@@ -48,21 +48,21 @@ template<class TypeTag>
 class RANSProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
+    using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 

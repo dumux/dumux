@@ -36,29 +36,29 @@ namespace Dumux {
  * This class is used to fill the gaps in the CompositionalLocalResidual for the 3PWaterOil flow.
  */
 template<class TypeTag>
-class ThreePWaterOilLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
+class ThreePWaterOilLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalResidual>
 {
 protected:
-    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     enum {
-        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
-        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
+        numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases(),
+        numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(),
 
         conti0EqIdx = Indices::conti0EqIdx,//!< Index of the mass conservation equation for the water component
         conti1EqIdx = conti0EqIdx + 1,//!< Index of the mass conservation equation for the contaminant component

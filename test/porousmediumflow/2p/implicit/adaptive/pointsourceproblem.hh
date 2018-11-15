@@ -35,7 +35,7 @@ template <class TypeTag >
 class PointSourceTestProblem : public TwoPTestProblemAdaptive<TypeTag>
 {
     using ParentType = TwoPTestProblemAdaptive<TypeTag>;
-    using PointSource =  typename GET_PROP_TYPE(TypeTag, PointSource);
+    using PointSource =  GetPropType<TypeTag, Properties::PointSource>;
 
 public:
     //! Use parent's constructor

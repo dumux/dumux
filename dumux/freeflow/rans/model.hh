@@ -80,7 +80,7 @@ struct RANSModelTraits : NavierStokesModelTraits<dimension>
 SET_PROP(RANS, ModelTraits)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 public:
     using type = RANSModelTraits<dim>;
@@ -103,7 +103,7 @@ struct RANSNI { using InheritsFrom = std::tuple<RANS>; };
 SET_PROP(RANSNI, ModelTraits)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 
     using IsothermalTraits = RANSModelTraits<dim>;

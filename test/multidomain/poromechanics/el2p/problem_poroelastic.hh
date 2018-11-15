@@ -57,13 +57,13 @@ SET_TYPE_PROP(PoroElasticSub, Problem, Dumux::PoroElasticSubProblem<TypeTag>);
 // Set the fluid system for TwoPSubProblem
 SET_PROP(PoroElasticSub, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
 };
 
 // The spatial parameters property
-SET_TYPE_PROP(PoroElasticSub, SpatialParams, PoroElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                              typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
+SET_TYPE_PROP(PoroElasticSub, SpatialParams, PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
+                                                                              GetPropType<TypeTag, Properties::FVGridGeometry> >);
 
 } // end namespace Properties
 
@@ -79,19 +79,19 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
 {
     using ParentType = GeomechanicsFVProblem<TypeTag>;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

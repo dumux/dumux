@@ -45,12 +45,12 @@ template<class TypeTag>
 class MPNCLocalResidual : public CompositionalLocalResidual<TypeTag>
 {
     using ParentType = CompositionalLocalResidual<TypeTag>;
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Element = typename GetPropType<TypeTag, Properties::GridView>::template Codim<0>::Entity;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     enum {numPhases = ModelTraits::numPhases()};

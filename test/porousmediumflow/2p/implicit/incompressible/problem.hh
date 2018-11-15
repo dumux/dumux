@@ -69,7 +69,7 @@ SET_TYPE_PROP(TwoPIncompressible, LocalResidual, TwoPIncompressibleLocalResidual
 // Set the fluid system
 SET_PROP(TwoPIncompressible, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
@@ -79,8 +79,8 @@ SET_PROP(TwoPIncompressible, FluidSystem)
 SET_PROP(TwoPIncompressible, SpatialParams)
 {
 private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -102,16 +102,16 @@ template<class TypeTag>
 class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum {
         pressureH2OIdx = Indices::pressureIdx,
         saturationDNAPLIdx = Indices::saturationIdx,
@@ -152,7 +152,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
+        GetPropType<TypeTag, Properties::FluidState> fluidState;
         fluidState.setTemperature(temperature());
         fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);
@@ -206,7 +206,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
+        GetPropType<TypeTag, Properties::FluidState> fluidState;
         fluidState.setTemperature(temperature());
         fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);

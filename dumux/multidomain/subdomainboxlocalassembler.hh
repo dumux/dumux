@@ -56,15 +56,15 @@ class SubDomainBoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Asse
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, implicit>;
 
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using SolutionVector = typename Assembler::SolutionVector;
-    using SubSolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using SubSolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
@@ -74,12 +74,12 @@ class SubDomainBoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Asse
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using CouplingManager = typename Assembler::CouplingManager;
 
-    static constexpr auto numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+    static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
 
 public:
     //! export the domain id of this sub-domain
@@ -324,19 +324,19 @@ class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*
              SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true>, true >
 {
     using ThisType = SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
-    using ParentType = SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, ThisType, true>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ParentType = SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/true>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
 
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
-    enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+    enum { dim = GetPropType<TypeTag, Properties::GridView>::dimension };
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
     static constexpr bool enableGridVolVarsCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);

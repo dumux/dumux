@@ -45,8 +45,8 @@ SET_PROP(BoxDfmModel, FVGridGeometry)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = BoxDfmFVGridGeometry<Scalar, GridView, enableCache>;
 };

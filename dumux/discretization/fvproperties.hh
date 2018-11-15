@@ -47,9 +47,9 @@ struct FiniteVolumeModel { using InheritsFrom = std::tuple<GridProperties>; };
 SET_PROP(FiniteVolumeModel, GridVariables)
 {
 private:
-    using GG = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GVV = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using GFVC = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
+    using GG = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GVV = GetPropType<TypeTag, Properties::GridVolumeVariables>;
+    using GFVC = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
 public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
@@ -64,20 +64,20 @@ SET_BOOL_PROP(FiniteVolumeModel, EnableGridVolumeVariablesCache, false);
 SET_BOOL_PROP(FiniteVolumeModel, EnableGridFluxVariablesCache, false);
 
 //! Boundary types at a single degree of freedom
-SET_TYPE_PROP(FiniteVolumeModel, BoundaryTypes, Dumux::BoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
+SET_TYPE_PROP(FiniteVolumeModel, BoundaryTypes, Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>);
 
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
 
 //! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
-SET_TYPE_PROP(FiniteVolumeModel, SolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
+SET_TYPE_PROP(FiniteVolumeModel, SolutionVector, Dune::BlockVector<GetPropType<TypeTag, Properties::PrimaryVariables>>);
 
 //! Set the type of a global jacobian matrix from the solution types TODO: move to LinearAlgebra traits
 SET_PROP(FiniteVolumeModel, JacobianMatrix)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
     using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
 public:
     using type = typename Dune::BCRSMatrix<MatrixBlock>;

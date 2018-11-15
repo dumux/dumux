@@ -70,14 +70,14 @@ SET_TYPE_PROP(Heterogeneous, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconf
 SET_TYPE_PROP(Heterogeneous, Problem, HeterogeneousProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(Heterogeneous, SpatialParams, HeterogeneousSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                              typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(Heterogeneous, SpatialParams, HeterogeneousSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                                                              GetPropType<TypeTag, Properties::Scalar>>);
 
 // Set fluid configuration
 SET_TYPE_PROP(Heterogeneous, FluidSystem,
-    FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
+    FluidSystems::BrineCO2<GetPropType<TypeTag, Properties::Scalar>,
                            HeterogeneousCO2Tables::CO2Tables,
-                           Components::TabulatedComponent<Components::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>>,
+                           Components::TabulatedComponent<Components::H2O<GetPropType<TypeTag, Properties::Scalar>>>,
                            FluidSystems::BrineCO2DefaultPolicy</*constantSalinity=*/true, /*simpleButFast=*/true>>);
 
 // Use Moles
@@ -98,11 +98,11 @@ SET_TYPE_PROP(HeterogeneousNI, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonco
 SET_TYPE_PROP(HeterogeneousNI, Problem, HeterogeneousProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(HeterogeneousNI, SpatialParams,HeterogeneousSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                               typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(HeterogeneousNI, SpatialParams,HeterogeneousSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                                                               GetPropType<TypeTag, Properties::Scalar>>);
 
 // Set fluid configuration
-SET_TYPE_PROP(HeterogeneousNI, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
+SET_TYPE_PROP(HeterogeneousNI, FluidSystem, FluidSystems::BrineCO2<GetPropType<TypeTag, Properties::Scalar>,
                                                                         HeterogeneousCO2Tables::CO2Tables>);
 
 // Use Moles
@@ -137,13 +137,13 @@ template <class TypeTag >
 class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     // copy some indices for convenience
@@ -172,13 +172,13 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     };
 #endif
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
@@ -188,7 +188,7 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr bool useMoles = ModelTraits::useMoles();
 
     // the discretization method we are using
-    static constexpr auto discMethod = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod;
+    static constexpr auto discMethod = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod;
 
     // world dimension to access gravity vector
     static constexpr int dimWorld = GridView::dimensionworld;

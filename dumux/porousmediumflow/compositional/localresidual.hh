@@ -36,25 +36,25 @@ namespace Dumux {
  *        using compositional fully implicit model.
  */
 template<class TypeTag>
-class CompositionalLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
+class CompositionalLocalResidual: public GetPropType<TypeTag, Properties::BaseLocalResidual>
 {
-    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     static constexpr int numPhases = ModelTraits::numPhases();

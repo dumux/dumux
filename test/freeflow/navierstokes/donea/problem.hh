@@ -54,7 +54,7 @@ struct DoneaTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFl
 // the fluid system
 SET_PROP(DoneaTest, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
@@ -80,16 +80,16 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;

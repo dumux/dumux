@@ -58,7 +58,7 @@ struct ChannelNCTest { using InheritsFrom = std::tuple<NavierStokesNCNI, Stagger
 // Select the fluid system
 SET_PROP(ChannelNCTest, FluidSystem)
 {
-    using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+    using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
     static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
     using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
@@ -95,15 +95,15 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;

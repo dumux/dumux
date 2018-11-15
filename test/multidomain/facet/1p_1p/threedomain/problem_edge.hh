@@ -57,8 +57,8 @@ SET_TYPE_PROP(OnePEdge, Problem, OnePEdgeProblem<TypeTag>);
 // set the spatial params
 SET_PROP(OnePEdge, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePSpatialParams<FVGridGeometry, Scalar>;
 };
 
@@ -66,7 +66,7 @@ SET_PROP(OnePEdge, SpatialParams)
 SET_PROP(OnePEdge, FluidSystem)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = FluidSystems::OnePLiquid< Scalar, Components::Constant<1, Scalar> >;
 };
@@ -82,8 +82,8 @@ class OnePEdgeProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using PrimaryVariables = typename GridVariables::PrimaryVariables;
     using Scalar = typename GridVariables::Scalar;
@@ -96,8 +96,8 @@ class OnePEdgeProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     //! The constructor

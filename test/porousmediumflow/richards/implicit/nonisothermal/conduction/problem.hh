@@ -64,13 +64,13 @@ SET_TYPE_PROP(RichardsNIConduction, Problem,
               RichardsNIConductionProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(RichardsNIConduction, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+SET_TYPE_PROP(RichardsNIConduction, FluidSystem, FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
 SET_PROP(RichardsNIConduction, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = RichardsNISpatialParams<FVGridGeometry, Scalar>;
 };
 } // end namespace Properties
@@ -102,19 +102,19 @@ class RichardsNIConductionProblem :public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using IapwsH2O = Components::H2O<Scalar>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum { dimWorld = GridView::dimensionworld };
 
     enum {

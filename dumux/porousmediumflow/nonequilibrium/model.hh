@@ -98,7 +98,7 @@ struct NonEquilibrium {};
 SET_PROP(NonEquilibrium, ModelTraits)
 {
 private:
-    using EquiTraits = typename GET_PROP_TYPE(TypeTag, EquilibriumModelTraits);
+    using EquiTraits = GetPropType<TypeTag, Properties::EquilibriumModelTraits>;
     static constexpr bool enableTNE = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
     static constexpr bool enableCNE = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
     static constexpr int numEF = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
@@ -115,7 +115,7 @@ SET_BOOL_PROP(NonEquilibrium, EnableChemicalNonEquilibrium, true);
 
 //! Default values for the number of energy balance equations
 SET_INT_PROP(NonEquilibrium, NumEnergyEqSolid, 1);
-SET_INT_PROP(NonEquilibrium, NumEnergyEqFluid, GET_PROP_TYPE(TypeTag, EquilibriumModelTraits)::numPhases());
+SET_INT_PROP(NonEquilibrium, NumEnergyEqFluid, GetPropType<TypeTag, Properties::EquilibriumModelTraits>::numPhases());
 
 SET_TYPE_PROP(NonEquilibrium, EnergyLocalResidual, EnergyLocalResidualNonEquilibrium<TypeTag, GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)>);
 SET_TYPE_PROP(NonEquilibrium, LocalResidual, NonEquilibriumLocalResidual<TypeTag>);
@@ -124,8 +124,8 @@ SET_TYPE_PROP(NonEquilibrium, HeatConductionType, FouriersLawNonEquilibrium<Type
 SET_PROP(NonEquilibrium, FluidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
      using type = NonEquilibriumFluidState<Scalar, FluidSystem>;
 };
@@ -137,8 +137,8 @@ SET_TYPE_PROP(NonEquilibrium, GridVariables, NonEquilibriumGridVariables<TypeTag
 SET_PROP(NonEquilibrium, IOFields)
 {
 private:
-    using EquilibriumIOFields = typename GET_PROP_TYPE(TypeTag, EquilibriumIOFields);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using EquilibriumIOFields = GetPropType<TypeTag, Properties::EquilibriumIOFields>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 public:
      using type = NonEquilibriumIOFields<ModelTraits, EquilibriumIOFields>;
 };

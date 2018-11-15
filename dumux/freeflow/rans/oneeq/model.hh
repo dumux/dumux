@@ -129,7 +129,7 @@ struct OneEq { using InheritsFrom = std::tuple<RANS>; };
 SET_PROP(OneEq, ModelTraits)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 public:
     using type = OneEqModelTraits<dim>;
@@ -157,10 +157,10 @@ public:
 SET_PROP(OneEq, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
@@ -189,7 +189,7 @@ struct OneEqNI { using InheritsFrom = std::tuple<RANSNI>; };
 SET_PROP(OneEqNI, ModelTraits)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
     using IsothermalTraits = OneEqModelTraits<dim>;
 public:
@@ -200,10 +200,10 @@ public:
 SET_PROP(OneEqNI, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");

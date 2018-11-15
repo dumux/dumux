@@ -69,8 +69,8 @@ SET_INT_PROP(StaggeredFreeFlowModel, NumEqFace, 1);
 SET_PROP(StaggeredFreeFlowModel, NumEqCellCenter)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     static constexpr auto dim = GridView::dimension;
     static constexpr auto numEq = ModelTraits::numEq();
 public:
@@ -81,7 +81,7 @@ public:
 SET_PROP(StaggeredFreeFlowModel, FVGridGeometry)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Traits = StaggeredFreeFlowDefaultFVGridGeometryTraits<GridView>;
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
 public:
@@ -92,8 +92,8 @@ public:
 SET_PROP(StaggeredFreeFlowModel, FaceVariables)
 {
 private:
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 public:
     using type = StaggeredFaceVariables<FacePrimaryVariables, GridView::dimension>;
 };
@@ -102,8 +102,8 @@ public:
 SET_PROP(StaggeredFreeFlowModel, GridVolumeVariables)
 {
 private:
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
     using Traits = StaggeredGridDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
 public:
@@ -114,13 +114,13 @@ public:
 //! Boundary types at a single degree of freedom
 SET_PROP(StaggeredFreeFlowModel, BoundaryTypes)
 {
-    using type = StaggeredFreeFlowBoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
+    using type = StaggeredFreeFlowBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 };
 
 //! The velocity output
 SET_TYPE_PROP(StaggeredFreeFlowModel, VelocityOutput,
-    StaggeredFreeFlowVelocityOutput<typename GET_PROP_TYPE(TypeTag, GridVariables),
-                                    typename GET_PROP_TYPE(TypeTag, SolutionVector)>);
+    StaggeredFreeFlowVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>,
+                                    GetPropType<TypeTag, Properties::SolutionVector>>);
 
 } // namespace Properties
 } // namespace Dumux

@@ -39,24 +39,24 @@ namespace Dumux
  *
  */
 template<class TypeTag>
-class TracerLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
+class TracerLocalResidual: public GetPropType<TypeTag, Properties::BaseLocalResidual>
 {
-    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-    static constexpr int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
+    static constexpr int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static constexpr int phaseIdx = 0;
 
@@ -206,7 +206,7 @@ public:
     }
 
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod != DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod != DiscretizationMethod::box, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -250,7 +250,7 @@ public:
     }
 
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box, void>
     addFluxDerivatives(JacobianMatrix& A,
                        const Problem& problem,
                        const Element& element,
@@ -280,7 +280,7 @@ public:
         const auto advDerivIJ = volFlux*rho(outsideVolVars)*outsideWeight;
 
         // diffusive term
-        using DiffusionType = typename GET_PROP_TYPE(T, MolecularDiffusionType);
+        using DiffusionType = GetPropType<T, Properties::MolecularDiffusionType>;
         const auto ti = DiffusionType::calculateTransmissibilities(problem,
                                                                    element,
                                                                    fvGeometry,

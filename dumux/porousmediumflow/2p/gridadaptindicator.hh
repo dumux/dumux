@@ -42,12 +42,12 @@ namespace Dumux {
 template<class TypeTag>
 class TwoPGridAdaptIndicator
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     enum { saturationIdx = Indices::saturationIdx };
 

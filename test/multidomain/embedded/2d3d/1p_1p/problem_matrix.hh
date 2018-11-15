@@ -56,7 +56,7 @@ struct Matrix { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Matrix, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
+SET_TYPE_PROP(Matrix, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >);
 
 SET_BOOL_PROP(Matrix, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(Matrix, EnableGridVolumeVariablesCache, true);
@@ -74,13 +74,13 @@ SET_TYPE_PROP(Matrix, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 // the fluid system
 SET_PROP(Matrix, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(Matrix, SpatialParams, MatrixFractureSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                        typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(Matrix, SpatialParams, MatrixFractureSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                                                        GetPropType<TypeTag, Properties::Scalar>>);
 } // end namespace Properties
 
 
@@ -91,18 +91,18 @@ template <class TypeTag>
 class MatrixProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PointSource = GetPropType<TypeTag, Properties::PointSource>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum {
         // world dimension
@@ -113,7 +113,7 @@ class MatrixProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     MatrixProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,

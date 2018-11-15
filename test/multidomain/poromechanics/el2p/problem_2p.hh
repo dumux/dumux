@@ -54,7 +54,7 @@ struct TwoPSub { using InheritsFrom = std::tuple<TwoP, CCTpfaModel>; };
 // Set the fluid system for TwoPSubProblem
 SET_PROP(TwoPSub, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
 };
 
@@ -65,9 +65,9 @@ SET_TYPE_PROP(TwoPSub, Problem, TwoPSubProblem<TypeTag> );
 // Set the spatial parameters
 SET_PROP(TwoPSub, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using type = TwoPSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
 };
 } // end namespace Properties
@@ -84,29 +84,29 @@ class TwoPSubProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     // copy pressure index for convenience
     enum {
-          pressureIdx = GET_PROP_TYPE(TypeTag, ModelTraits)::Indices::pressureIdx,
-          saturationNIdx = GET_PROP_TYPE(TypeTag, ModelTraits)::Indices::saturationIdx,
+          pressureIdx = GetPropType<TypeTag, Properties::ModelTraits>::Indices::pressureIdx,
+          saturationNIdx = GetPropType<TypeTag, Properties::ModelTraits>::Indices::saturationIdx,
           waterPhaseIdx = FluidSystem::phase0Idx,
           gasPhaseIdx = FluidSystem::phase1Idx,
           dimWorld = GridView::dimensionworld
     };
 
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
 public:
     TwoPSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                   std::shared_ptr<typename GET_PROP_TYPE(TypeTag, SpatialParams)> spatialParams,
+                   std::shared_ptr<GetPropType<TypeTag, Properties::SpatialParams>> spatialParams,
                    const std::string& paramGroup = "TwoP")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
     {

@@ -192,8 +192,8 @@ class StokesDarcyCouplingDataImplementation;
 */
 template<class MDTraits, class CouplingManager>
 using StokesDarcyCouplingData = StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager,
-                                                                      GET_PROP_TYPE(typename MDTraits::template SubDomainTypeTag<0>, ModelTraits)::enableEnergyBalance(),
-                                                                      (GET_PROP_TYPE(typename MDTraits::template SubDomainTypeTag<0>, ModelTraits)::numComponents() > 1)>;
+                                                                      GetPropType<typename MDTraits::template SubDomainTypeTag<0>, Properties::ModelTraits>::enableEnergyBalance(),
+                                                                      (GetPropType<typename MDTraits::template SubDomainTypeTag<0>, Properties::ModelTraits>::numComponents() > 1)>;
 
 /*!
  * \ingroup MultiDomain
@@ -207,16 +207,16 @@ class StokesDarcyCouplingDataImplementationBase
     using Scalar = typename MDTraits::Scalar;
 
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
-    template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::LocalView::SubControlVolumeFace;
     template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::LocalView::SubControlVolume;
-    template<std::size_t id> using Indices = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ModelTraits)::Indices;
-    template<std::size_t id> using ElementVolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVolumeVariables)::LocalView;
-    template<std::size_t id> using VolumeVariables  = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVolumeVariables)::VolumeVariables;
-    template<std::size_t id> using Problem  = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
-    template<std::size_t id> using FluidSystem  = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FluidSystem);
-    template<std::size_t id> using ModelTraits  = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ModelTraits);
+    template<std::size_t id> using Indices = typename GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>::Indices;
+    template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
+    template<std::size_t id> using VolumeVariables  = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
+    template<std::size_t id> using Problem  = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+    template<std::size_t id> using FluidSystem  = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
+    template<std::size_t id> using ModelTraits  = GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>;
 
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
@@ -224,8 +224,8 @@ class StokesDarcyCouplingDataImplementationBase
     static constexpr bool adapterUsed = ModelTraits<darcyIdx>::numPhases() > 1;
     using IndexHelper = Dumux::IndexHelper<stokesIdx, darcyIdx, FluidSystem<stokesIdx>, adapterUsed>;
 
-    static constexpr int enableEnergyBalance = GET_PROP_TYPE(SubDomainTypeTag<stokesIdx>, ModelTraits)::enableEnergyBalance();
-    static_assert(GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, ModelTraits)::enableEnergyBalance() == enableEnergyBalance,
+    static constexpr int enableEnergyBalance = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::ModelTraits>::enableEnergyBalance();
+    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::enableEnergyBalance() == enableEnergyBalance,
                   "All submodels must both be either isothermal or non-isothermal");
 
     static_assert(IsSameFluidSystem<FluidSystem<stokesIdx>,
@@ -279,7 +279,7 @@ public:
                                      const ElementFaceVariables& stokesElemFaceVars,
                                      const SubControlVolumeFace<stokesIdx>& scvf) const
     {
-        static constexpr auto numPhasesDarcy = GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, ModelTraits)::numPhases();
+        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numPhases();
 
         Scalar momentumFlux(0.0);
         const auto& stokesContext = couplingManager_.stokesCouplingContext(scvf);
@@ -408,7 +408,7 @@ protected:
                                 const FVElementGeometry<darcyIdx>& fvGeometry,
                                 const SubControlVolume<darcyIdx>& scv) const
     {
-        using ThermalConductivityModel = typename GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, ThermalConductivityModel);
+        using ThermalConductivityModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ThermalConductivityModel>;
         const auto& problem = this->couplingManager().problem(darcyIdx);
         return ThermalConductivityModel::effectiveThermalConductivity(volVars, problem.spatialParams(), fvGeometry.fvGridGeometry().element(scv), fvGeometry, scv);
     }
@@ -450,16 +450,16 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
 
-    template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::LocalView::SubControlVolumeFace;
     template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::LocalView::SubControlVolume;
-    template<std::size_t id> using Indices = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ModelTraits)::Indices;
-    template<std::size_t id> using ElementVolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVolumeVariables)::LocalView;
-    template<std::size_t id> using ElementFaceVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridFaceVariables)::LocalView;
-    template<std::size_t id> using VolumeVariables  = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVolumeVariables)::VolumeVariables;
+    template<std::size_t id> using Indices = typename GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>::Indices;
+    template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
+    template<std::size_t id> using ElementFaceVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFaceVariables>::LocalView;
+    template<std::size_t id> using VolumeVariables  = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
 
-    static_assert(GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, ModelTraits)::numComponents() == GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, ModelTraits)::numPhases(),
+    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numComponents() == GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numPhases(),
                   "Darcy Model must not be compositional");
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
@@ -609,21 +609,21 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
 
-    template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using SubControlVolumeFace = typename FVElementGeometry<id>::SubControlVolumeFace;
     template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::LocalView::SubControlVolume;
-    template<std::size_t id> using Indices = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ModelTraits)::Indices;
-    template<std::size_t id> using ElementVolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVolumeVariables)::LocalView;
-    template<std::size_t id> using ElementFaceVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridFaceVariables)::LocalView;
-    template<std::size_t id> using VolumeVariables  = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVolumeVariables)::VolumeVariables;
-    template<std::size_t id> using FluidSystem  = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FluidSystem);
+    template<std::size_t id> using Indices = typename GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>::Indices;
+    template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
+    template<std::size_t id> using ElementFaceVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFaceVariables>::LocalView;
+    template<std::size_t id> using VolumeVariables  = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
+    template<std::size_t id> using FluidSystem  = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
 
-    static constexpr auto numComponents = GET_PROP_TYPE(SubDomainTypeTag<stokesIdx>, ModelTraits)::numComponents();
-    static constexpr auto replaceCompEqIdx = GET_PROP_TYPE(SubDomainTypeTag<stokesIdx>, ModelTraits)::replaceCompEqIdx();
-    static constexpr bool useMoles = GET_PROP_TYPE(SubDomainTypeTag<stokesIdx>, ModelTraits)::useMoles();
+    static constexpr auto numComponents = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::ModelTraits>::numComponents();
+    static constexpr auto replaceCompEqIdx = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::ModelTraits>::replaceCompEqIdx();
+    static constexpr bool useMoles = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::ModelTraits>::useMoles();
 
-    static_assert(GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, ModelTraits)::numComponents() == numComponents, "Submodels must use same number of components");
+    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numComponents() == numComponents, "Submodels must use same number of components");
     static_assert(GET_PROP_VALUE(SubDomainTypeTag<darcyIdx>, UseMoles) == useMoles, "Both models must either use moles or not");
     static_assert(GET_PROP_VALUE(SubDomainTypeTag<darcyIdx>, ReplaceCompEqIdx) == replaceCompEqIdx, "Both models must use the same replaceCompEqIdx");
     using NumEqVector = Dune::FieldVector<Scalar, numComponents>;
@@ -796,7 +796,7 @@ protected:
      */
     Scalar diffusionCoefficient_(const VolumeVariables<darcyIdx>& volVars, int phaseIdx, int compIdx) const
     {
-        using EffDiffModel = typename GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, EffectiveDiffusivityModel);
+        using EffDiffModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::EffectiveDiffusivityModel>;
         return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
                                                   volVars.saturation(phaseIdx),
                                                   volVars.diffusionCoefficient(phaseIdx, compIdx));

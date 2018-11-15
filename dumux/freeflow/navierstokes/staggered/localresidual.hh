@@ -48,7 +48,7 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using ParentType = StaggeredLocalResidual<TypeTag>;
     friend class StaggeredLocalResidual<TypeTag>;
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
@@ -60,24 +60,24 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using GridFaceVariables = typename GridVariables::GridFaceVariables;
     using ElementFaceVariables = typename GridFaceVariables::LocalView;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
+    using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     using CellCenterResidual = CellCenterPrimaryVariables;
     using FaceResidual = FacePrimaryVariables;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
     static constexpr bool isCompositional = ModelTraits::numComponents() > 1;

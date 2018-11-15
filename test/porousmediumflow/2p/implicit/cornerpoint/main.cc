@@ -119,37 +119,37 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     // the problem (initial and boundary conditions)
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto spatialParams = std::make_shared<typename Problem::SpatialParams>(fvGridGeometry, gridManager.getDeck());
     auto problem = std::make_shared<Problem>(fvGridGeometry, spatialParams);
 
     // the solution vector
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
     // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
-    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name(),
                                                              "", Dune::VTK::conforming);
-    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+    using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     problem->addFieldsToWriter(vtkWriter); //!< Add some more problem dependent fields

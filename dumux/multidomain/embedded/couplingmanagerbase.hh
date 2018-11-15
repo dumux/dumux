@@ -52,8 +52,8 @@ struct DefaultPointSourceTraits
 {
 private:
     template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<i>;
-    template<std::size_t i> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<i>, FVGridGeometry);
-    template<std::size_t i> using NumEqVector = typename GET_PROP_TYPE(SubDomainTypeTag<i>, NumEqVector);
+    template<std::size_t i> using FVGridGeometry = GetPropType<SubDomainTypeTag<i>, Properties::FVGridGeometry>;
+    template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
 public:
     //! export the point source type for domain i
     template<std::size_t i>
@@ -87,9 +87,9 @@ class EmbeddedCouplingManagerBase
     // the sub domain type tags
     template<std::size_t id> using PointSource = typename PSTraits::template PointSource<id>;
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
-    template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
-    template<std::size_t id> using PrimaryVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, PrimaryVariables);
-    template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+    template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using ElementMapper = typename FVGridGeometry<id>::ElementMapper;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;

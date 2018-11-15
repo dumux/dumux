@@ -52,11 +52,11 @@ SET_TYPE_PROP(TestPoroElastic, Problem, Dumux::PoroElasticProblem<TypeTag>);
 // The fluid phase consists of one constant component
 SET_TYPE_PROP(TestPoroElastic,
               FluidSystem,
-              Dumux::FluidSystems::OnePLiquid< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                               Dumux::Components::Constant<0, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+              Dumux::FluidSystems::OnePLiquid< GetPropType<TypeTag, Properties::Scalar>,
+                                               Dumux::Components::Constant<0, GetPropType<TypeTag, Properties::Scalar>> >);
 // The spatial parameters property
-SET_TYPE_PROP(TestPoroElastic, SpatialParams, PoroElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                           typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
+SET_TYPE_PROP(TestPoroElastic, SpatialParams, PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
+                                                                           GetPropType<TypeTag, Properties::FVGridGeometry> >);
 }
 
 /*!
@@ -70,19 +70,19 @@ class PoroElasticProblem : public GeomechanicsFVProblem<TypeTag>
 {
     using ParentType = GeomechanicsFVProblem<TypeTag>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -116,7 +116,7 @@ public:
     Scalar effectiveFluidDensityAtPos(const GlobalPosition& globalPos) const
     {
         // This test uses the constant component, obtain density only once
-        using FS = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+        using FS = GetPropType<TypeTag, Properties::FluidSystem>;
         static const Scalar rho = FS::density( effectivePorePressureAtPos(globalPos), temperature() );
         return rho;
     }

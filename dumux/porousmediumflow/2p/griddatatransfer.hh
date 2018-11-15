@@ -45,22 +45,22 @@ namespace Dumux {
 template<class TypeTag>
 class TwoPGridDataTransfer : public GridDataTransfer
 {
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using Element = typename Grid::template Codim<0>::Entity;
     using ElementSolution = std::decay_t<decltype(elementSolution(std::declval<Element>(),
                                                                   std::declval<SolutionVector>(),
                                                                   std::declval<FVGridGeometry>()))>;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     struct AdaptedValues
@@ -76,7 +76,7 @@ class TwoPGridDataTransfer : public GridDataTransfer
 
     static constexpr int dim = Grid::dimension;
     static constexpr int dimWorld = Grid::dimensionworld;
-    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box;
 
     // saturation primary variable index
     enum { saturationIdx = Indices::saturationIdx };

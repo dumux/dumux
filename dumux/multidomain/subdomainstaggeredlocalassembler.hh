@@ -55,28 +55,28 @@ class SubDomainStaggeredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, isImplicit>;
 
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using SolutionVector = typename Assembler::SolutionVector;
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using Scalar = typename GridVariables::Scalar;
 
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables)::LocalView;
+    using ElementFaceVariables = typename GetPropType<TypeTag, Properties::GridFaceVariables>::LocalView;
     using CellCenterResidualValue = typename LocalResidual::CellCenterResidualValue;
     using FaceResidualValue = typename LocalResidual::FaceResidualValue;
 
     using FVGridGeometry = typename GridVariables::GridGeometry;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using CouplingManager = typename Assembler::CouplingManager;
 
-    static constexpr auto numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+    static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
 
 public:
     static constexpr auto domainId = typename Dune::index_constant<id>();
@@ -472,21 +472,21 @@ class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numer
 {
     using ThisType = SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainStaggeredLocalAssemblerImplicitBase<id, TypeTag, Assembler, ThisType>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using CellCenterResidualValue = typename LocalResidual::CellCenterResidualValue;
     using FaceResidualValue = typename LocalResidual::FaceResidualValue;
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables)::LocalView;
+    using Element = typename GetPropType<TypeTag, Properties::GridView>::template Codim<0>::Entity;
+    using GridFaceVariables = GetPropType<TypeTag, Properties::GridFaceVariables>;
+    using ElementFaceVariables = typename GetPropType<TypeTag, Properties::GridFaceVariables>::LocalView;
     using FaceVariables = typename ElementFaceVariables::FaceVariables;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
+    using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
     static constexpr int maxNeighbors = 4*(2*ModelTraits::dim());
@@ -626,7 +626,7 @@ public:
         const auto& fvGridGeometry = this->problem().fvGridGeometry();
         const auto& curSol = this->curSol()[domainI];
 
-        using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector); // TODO: use reserved vector
+        using FaceSolutionVector = GetPropType<TypeTag, Properties::FaceSolutionVector>; // TODO: use reserved vector
         FaceSolutionVector origResiduals;
         origResiduals.resize(fvGeometry.numScvf());
         origResiduals = 0.0;
@@ -651,7 +651,7 @@ public:
             // set the actual dof index
             const auto faceGlobalI = scvf.dofIndex();
 
-            using FaceSolution = typename GET_PROP_TYPE(TypeTag, StaggeredFaceSolution);
+            using FaceSolution = GetPropType<TypeTag, Properties::StaggeredFaceSolution>;
             const auto origFaceSolution = FaceSolution(scvf, curSol, fvGridGeometry);
 
             // build derivatives with for face dofs w.r.t. cell center dofs

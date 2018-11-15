@@ -125,28 +125,28 @@ struct MultiDomainTraits
 
     //! the sub domain geometry
     template<std::size_t id>
-    using SubDomainFVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    using SubDomainFVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
 
 private:
     using Indices = std::make_index_sequence<numSubDomains>;
 
     template<std::size_t id>
-    using SolutionSubVector = typename GET_PROP_TYPE(SubDomainTypeTag<id>, SolutionVector);
+    using SolutionSubVector = GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>;
 
     template<std::size_t id>
-    using SubDomainScalar = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Scalar);
+    using SubDomainScalar = GetPropType<SubDomainTypeTag<id>, Properties::Scalar>;
 
     template<std::size_t id>
-    using SubDomainProblem = std::shared_ptr<const typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem)>;
+    using SubDomainProblem = std::shared_ptr<const GetPropType<SubDomainTypeTag<id>, Properties::Problem>>;
 
     template<std::size_t id>
-    using SubDomainFVGridGeometryPtr = std::shared_ptr<const typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry)>;
+    using SubDomainFVGridGeometryPtr = std::shared_ptr<const GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>>;
 
     template<std::size_t id>
-    using SubDomainGridVariables = std::shared_ptr<typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVariables)>;
+    using SubDomainGridVariables = std::shared_ptr<GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>>;
 
     template<std::size_t id>
-    using JacobianDiagBlock = typename GET_PROP_TYPE(SubDomainTypeTag<id>, JacobianMatrix);
+    using JacobianDiagBlock = GetPropType<SubDomainTypeTag<id>, Properties::JacobianMatrix>;
 
 public:
 

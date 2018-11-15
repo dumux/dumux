@@ -58,26 +58,26 @@ SET_TYPE_PROP(BoxFacetCouplingModel, BaseLocalResidual, BoxFacetCouplingLocalRes
 //! Use the box facet coupling-specific Darcy's law
 SET_TYPE_PROP(BoxFacetCouplingModel,
               AdvectionType,
-              BoxFacetCouplingDarcysLaw< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                         typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
+              BoxFacetCouplingDarcysLaw< GetPropType<TypeTag, Properties::Scalar>,
+                                         GetPropType<TypeTag, Properties::FVGridGeometry> >);
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
 SET_TYPE_PROP(BoxFacetCouplingModel,
               FluxVariables,
-              PorousMediumFluxVariables<TypeTag, BoxFacetCouplingUpwindScheme<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>>);
+              PorousMediumFluxVariables<TypeTag, BoxFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::FVGridGeometry>>>);
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
 SET_TYPE_PROP(BoxFacetCouplingModel,
               ElementBoundaryTypes,
-              BoxFacetCouplingElementBoundaryTypes<typename GET_PROP_TYPE(TypeTag, BoundaryTypes)>);
+              BoxFacetCouplingElementBoundaryTypes<GetPropType<TypeTag, Properties::BoundaryTypes>>);
 
 //! Set the default for the grid finite volume geometry
 SET_PROP(BoxFacetCouplingModel, FVGridGeometry)
 {
 private:
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = BoxFacetCouplingFVGridGeometry<Scalar, GridView, enableCache>;
 };

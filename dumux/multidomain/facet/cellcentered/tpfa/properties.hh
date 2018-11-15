@@ -52,8 +52,8 @@ struct CCTpfaFacetCouplingModel { using InheritsFrom = std::tuple<CCTpfaModel>; 
 //! Use the tpfa facet coupling-specific Darcy's law
 SET_TYPE_PROP(CCTpfaFacetCouplingModel,
               AdvectionType,
-              CCTpfaFacetCouplingDarcysLaw< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                            typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
+              CCTpfaFacetCouplingDarcysLaw< GetPropType<TypeTag, Properties::Scalar>,
+                                            GetPropType<TypeTag, Properties::FVGridGeometry> >);
 
 //! Use the cc local residual for models with facet coupling
 SET_TYPE_PROP(CCTpfaFacetCouplingModel, BaseLocalResidual, CCFacetCouplingLocalResidual<TypeTag>);
@@ -61,7 +61,7 @@ SET_TYPE_PROP(CCTpfaFacetCouplingModel, BaseLocalResidual, CCFacetCouplingLocalR
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
 SET_TYPE_PROP(CCTpfaFacetCouplingModel,
               FluxVariables,
-              PorousMediumFluxVariables<TypeTag, CCFacetCouplingUpwindScheme<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>>);
+              PorousMediumFluxVariables<TypeTag, CCFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::FVGridGeometry>>>);
 
 } // namespace Properties
 } // namespace Dumux

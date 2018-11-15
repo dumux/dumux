@@ -65,13 +65,13 @@ SET_TYPE_PROP(Dissolution, Problem, DissolutionProblem<TypeTag>);
 // Set fluid configuration
 SET_PROP(Dissolution, FluidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::BrineAir<Scalar, Components::H2O<Scalar>>;
 };
 
 SET_PROP(Dissolution, SolidSystem)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ComponentOne = Components::NaCl<Scalar>;
     using ComponentTwo = Components::Granite<Scalar>;
     static constexpr int numInertComponents = 1;
@@ -81,8 +81,8 @@ SET_PROP(Dissolution, SolidSystem)
 // Set the spatial parameters
 SET_PROP(Dissolution, SpatialParams)
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = DissolutionSpatialParams<FVGridGeometry, Scalar>;
 };
 
@@ -115,12 +115,12 @@ template <class TypeTag>
 class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 
     enum
     {
@@ -158,14 +158,14 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
         dimWorld = GridView::dimensionworld,
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
@@ -194,7 +194,7 @@ public:
         temperatureHigh_        = getParam<Scalar>("FluidSystem.TemperatureHigh");
         name_                   = getParam<std::string>("Problem.Name");
 
-        unsigned int codim = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box ? dim : 0;
+        unsigned int codim = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
         permeability_.resize(fvGridGeometry->gridView().size(codim));
 
         FluidSystem::init(/*Tmin=*/temperatureLow_,

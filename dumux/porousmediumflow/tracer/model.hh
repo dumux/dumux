@@ -136,7 +136,7 @@ SET_BOOL_PROP(Tracer, UseMoles, true);
 SET_PROP(Tracer, ModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = TracerModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles)>;
 };
@@ -151,11 +151,11 @@ SET_TYPE_PROP(Tracer, IOFields, TracerIOFields);
 SET_PROP(Tracer, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     using Traits = TracerVolumeVariablesTraits<PV, FSY, SSY, SST, MT>;
 public:
@@ -163,10 +163,10 @@ public:
 };
 
 //! We use darcy's law as the default for the advective fluxes
-SET_TYPE_PROP(Tracer, AdvectionType, StationaryVelocityField<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(Tracer, AdvectionType, StationaryVelocityField<GetPropType<TypeTag, Properties::Scalar>>);
 
 //! Use simple model with constant tortuosity as pm diffusivity model
-SET_TYPE_PROP(Tracer, EffectiveDiffusivityModel, DiffusivityConstantTortuosity<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(Tracer, EffectiveDiffusivityModel, DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>);
 } // end namespace Properties
 // \}
 } // end namespace Dumux

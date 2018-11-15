@@ -150,17 +150,17 @@ struct OnePNCNI { using InheritsFrom = std::tuple<OnePNC>; };
 ///////////////////////////////////////////////////////////////////////////
 
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(OnePNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);
+SET_INT_PROP(OnePNC, ReplaceCompEqIdx, GetPropType<TypeTag, Properties::FluidSystem>::numComponents);
 
 //! The base model traits. Per default, we use the number of components of the fluid system.
 SET_PROP(OnePNC, BaseModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
-SET_TYPE_PROP(OnePNC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits)); //!< default the actually used traits to the base traits
+SET_TYPE_PROP(OnePNC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>); //!< default the actually used traits to the base traits
 
 
 /*!
@@ -172,16 +172,16 @@ SET_TYPE_PROP(OnePNC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTrai
 SET_PROP(OnePNC, FluidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(OnePNC, EffectiveDiffusivityModel,
-              DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
 
 //! Use mole fractions in the balance equations by default
 SET_BOOL_PROP(OnePNC, UseMoles, true);
@@ -193,13 +193,13 @@ SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
 SET_PROP(OnePNC, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
     static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
@@ -223,13 +223,13 @@ SET_TYPE_PROP(OnePNCNI, IOFields, EnergyIOFields<OnePNCIOFields>);
 //! Use the average for effective conductivities
 SET_TYPE_PROP(OnePNCNI,
               ThermalConductivityModel,
-              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>);
 
 //! model traits of the non-isothermal model.
 SET_PROP(OnePNCNI, ModelTraits)
 {
 private:
-    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };

@@ -127,13 +127,13 @@ SET_TYPE_PROP(TwoPNCMin, LocalResidual, MineralizationLocalResidual<TypeTag>);
 SET_PROP(TwoPNCMin, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
     using NonMinVolVars = TwoPNCVolumeVariables<Traits>;
@@ -148,8 +148,8 @@ SET_TYPE_PROP(TwoPNCMin, IOFields, MineralizationIOFields<TwoPNCIOFields>);
 SET_PROP(TwoPNCMin, ModelTraits)
 {
 private:
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using NonMineralizationTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+    using NonMineralizationTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = MineralizationModelTraits<NonMineralizationTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 };
@@ -158,8 +158,8 @@ public:
 SET_PROP(TwoPNCMin, SolidState)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 public:
     using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
@@ -172,8 +172,8 @@ public:
 SET_PROP(TwoPNCMinNI, ModelTraits)
 {
 private:
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using TwoPNCTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+    using TwoPNCTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
     using IsothermalTraits = MineralizationModelTraits<TwoPNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
     // the mineralization traits, based on 2pnc traits, are the isothermal traits

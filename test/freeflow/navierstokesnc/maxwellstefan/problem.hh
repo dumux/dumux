@@ -76,10 +76,10 @@ SET_TYPE_PROP(MaxwellStefanNCTest, MolecularDiffusionType, MaxwellStefansLaw<Typ
  */
 template<class TypeTag>
 class MaxwellStefanFluidSystem
-: public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar), MaxwellStefanFluidSystem<TypeTag>>
+: public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>, MaxwellStefanFluidSystem<TypeTag>>
 
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ThisType = MaxwellStefanFluidSystem<TypeTag>;
     using Base = FluidSystems::Base<Scalar, ThisType>;
 
@@ -196,13 +196,13 @@ class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

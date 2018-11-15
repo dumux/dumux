@@ -46,24 +46,24 @@ namespace Dumux {
 template<class TypeTag, class Assembler, class Implementation, bool useImplicitAssembly>
 class FVLocalAssemblerBase
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = typename Assembler::ResidualType;
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
+    using GridVolumeVariables = GetPropType<TypeTag, Properties::GridVolumeVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     /*!

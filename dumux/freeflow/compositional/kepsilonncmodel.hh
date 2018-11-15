@@ -78,9 +78,9 @@ struct KEpsilonNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useMo
 SET_PROP(KEpsilonNC, ModelTraits)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dimension = GridView::dimension;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static constexpr int numComponents = FluidSystem::numComponents;
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
@@ -92,10 +92,10 @@ public:
 SET_PROP(KEpsilonNC, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
@@ -143,9 +143,9 @@ struct KEpsilonNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
 SET_PROP(KEpsilonNCNI, ModelTraits)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static constexpr int numComponents = FluidSystem::numComponents;
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
@@ -158,10 +158,10 @@ public:
 SET_PROP(KEpsilonNCNI, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");

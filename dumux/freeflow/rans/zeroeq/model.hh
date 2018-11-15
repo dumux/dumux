@@ -60,10 +60,10 @@ struct ZeroEq { using InheritsFrom = std::tuple<RANS>; };
 SET_PROP(ZeroEq, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
@@ -89,10 +89,10 @@ struct ZeroEqNI { using InheritsFrom = std::tuple<RANSNI>; };
 SET_PROP(ZeroEqNI, VolumeVariables)
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
