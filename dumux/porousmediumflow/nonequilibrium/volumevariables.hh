@@ -252,7 +252,7 @@ public:
         characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
 
         // set the dimensionless numbers and obtain respective quantities.
-        const auto globalVertexIdx = problem.fvGridGeometry().vertexMapper().subIndex(element, scv, Element::Geometry::myDimension);
+        const auto globalVertexIdx = problem.fvGridGeometry().vertexMapper().subIndex(element, scv, Element::Geometry::mydimension);
         for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
         {
             const auto darcyMagVelocity     = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
