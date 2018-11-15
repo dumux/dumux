@@ -446,18 +446,18 @@ private:
             if (dim < dimWorld)
             {
                 if (enableGravity)
-                    localAssembler.assembleWithGravity( handle.advectionHandle().advectionTout(),
-                                                        handle.advectionHandle().advectionT(),
+                    localAssembler.assembleWithGravity( handle.advectionHandle().tijOutside(),
+                                                        handle.advectionHandle().T(),
                                                         handle.advectionHandle().gravityOutside(),
                                                         handle.advectionHandle().gravity(),
-                                                        handle.advectionHandle().advectionCA(),
-                                                        handle.advectionHandle().advectionA(),
+                                                        handle.advectionHandle().CA(),
+                                                        handle.advectionHandle().A(),
                                                         iv,
                                                         LambdaFactory::getAdvectionLambda() );
 
                 else
-                    localAssembler.assemble( handle.advectionHandle().advectionTout(),
-                                             handle.advectionHandle().advectionT(),
+                    localAssembler.assemble( handle.advectionHandle().tijOutside(),
+                                             handle.advectionHandle().T(),
                                              iv,
                                              LambdaFactory::getAdvectionLambda() );
             }
@@ -466,13 +466,13 @@ private:
             else
             {
                 if (enableGravity)
-                    localAssembler.assembleWithGravity( handle.advectionHandle().advectionT(),
+                    localAssembler.assembleWithGravity( handle.advectionHandle().T(),
                                                         handle.advectionHandle().gravity(),
-                                                        handle.advectionHandle().advectionCA(),
+                                                        handle.advectionHandle().CA(),
                                                         iv,
                                                         LambdaFactory::getAdvectionLambda() );
                 else
-                    localAssembler.assemble( handle.advectionHandle().advectionT(),
+                    localAssembler.assemble( handle.advectionHandle().T(),
                                              iv,
                                              LambdaFactory::getAdvectionLambda() );
             }
@@ -484,14 +484,14 @@ private:
             if (dim == dimWorld)
                 localAssembler.assembleGravity( handle.advectionHandle().gravity(),
                                                 iv,
-                                                handle.advectionHandle().advectionCA(),
+                                                handle.advectionHandle().CA(),
                                                 LambdaFactory::getAdvectionLambda() );
             else
                 localAssembler.assembleGravity( handle.advectionHandle().gravity(),
                                                 handle.advectionHandle().gravityOutside(),
                                                 iv,
-                                                handle.advectionHandle().advectionCA(),
-                                                handle.advectionHandle().advectionA(),
+                                                handle.advectionHandle().CA(),
+                                                handle.advectionHandle().A(),
                                                 LambdaFactory::getAdvectionLambda() );
         }
 
@@ -500,7 +500,7 @@ private:
         {
             const auto& evv = &elemVolVars();
             auto getPressure = [&evv, pIdx] (auto volVarIdx) { return (evv->operator[](volVarIdx)).pressure(pIdx); };
-            localAssembler.assemble(handle.advectionHandle().pressures(pIdx), iv, getPressure);
+            localAssembler.assemble(handle.advectionHandle().uj(pIdx), iv, getPressure);
         }
     }
 
@@ -529,12 +529,12 @@ private:
         if (forceUpdateAll || soldependentDiffusion)
         {
             if (dim < dimWorld)
-                localAssembler.assemble( handle.diffusionHandle().diffusionTout(),
-                                         handle.diffusionHandle().diffusionT(),
+                localAssembler.assemble( handle.diffusionHandle().tijOutside(),
+                                         handle.diffusionHandle().T(),
                                          iv,
                                          LambdaFactory::getDiffusionLambda(phaseIdx, compIdx) );
             else
-                localAssembler. assemble( handle.diffusionHandle().diffusionT(),
+                localAssembler. assemble( handle.diffusionHandle().T(),
                                           iv,
                                           LambdaFactory::getDiffusionLambda(phaseIdx, compIdx) );
         }
@@ -543,7 +543,7 @@ private:
         const auto& evv = &elemVolVars();
         auto getMoleFraction = [&evv, phaseIdx, compIdx] (auto volVarIdx)
                                { return (evv->operator[](volVarIdx)).moleFraction(phaseIdx, compIdx); };
-        localAssembler.assemble(handle.diffusionHandle().moleFractions(phaseIdx, compIdx), iv, getMoleFraction);
+        localAssembler.assemble(handle.diffusionHandle().uj(phaseIdx, compIdx), iv, getMoleFraction);
     }
 
     //! prepares the quantities necessary for conductive fluxes in the handle
@@ -563,12 +563,12 @@ private:
         if (forceUpdateAll || soldependentAdvection)
         {
             if (dim < dimWorld)
-                localAssembler.assemble( handle.heatConductionHandle().heatConductionTout(),
-                                         handle.heatConductionHandle().heatConductionT(),
+                localAssembler.assemble( handle.heatConductionHandle().tijOutside(),
+                                         handle.heatConductionHandle().T(),
                                          iv,
                                          LambdaFactory::template getHeatConductionLambda<GetPropType<TypeTag, Properties::ThermalConductivityModel>>() );
             else
-                localAssembler.assemble( handle.heatConductionHandle().heatConductionT(),
+                localAssembler.assemble( handle.heatConductionHandle().T(),
                                          iv,
                                          LambdaFactory::template getHeatConductionLambda<GetPropType<TypeTag, Properties::ThermalConductivityModel>>() );
         }
@@ -576,7 +576,7 @@ private:
         // assemble vector of temperatures
         const auto& evv = &elemVolVars();
         auto getMoleFraction = [&evv] (auto volVarIdx) { return (evv->operator[](volVarIdx)).temperature(); };
-        localAssembler.assemble(handle.heatConductionHandle().temperatures(), iv, getMoleFraction);
+        localAssembler.assemble(handle.heatConductionHandle().uj(), iv, getMoleFraction);
     }
 
     //! fill handle only when advection uses mpfa

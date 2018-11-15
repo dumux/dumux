@@ -53,8 +53,8 @@ class AdvectionDataHandle
 
 public:
     //! Access to the iv-wide pressure of one phase
-    const CellVector& pressures(unsigned int pIdx) const { return p_[pIdx]; }
-    CellVector& pressures(unsigned int pIdx) { return p_[pIdx]; }
+    const CellVector& uj(unsigned int pIdx) const { return p_[pIdx]; }
+    CellVector& uj(unsigned int pIdx) { return p_[pIdx]; }
 
     //! The gravitational flux contributions for a phase on all faces
     const FaceVector& gravity(unsigned int pIdx) const { return g_[pIdx]; }
@@ -65,20 +65,20 @@ public:
     std::array< FaceVector, numPhases >& gravity() { return g_; }
 
     //! Projection matrix for Neumann/gravity contribution computation
-    const CMatrix& advectionCA() const { return CA_; }
-    CMatrix& advectionCA() { return CA_; }
+    const CMatrix& CA() const { return CA_; }
+    CMatrix& CA() { return CA_; }
 
     //! Inverse of the iv-local system matrix
-    const AMatrix& advectionA() const { return A_; }
-    AMatrix& advectionA() { return A_; }
+    const AMatrix& A() const { return A_; }
+    AMatrix& A() { return A_; }
 
     //! The transmissibility matrix (i.e. C*(A^-1)*B + D)
-    const TMatrix& advectionT() const { return T_; }
-    TMatrix& advectionT() { return T_; }
+    const TMatrix& T() const { return T_; }
+    TMatrix& T() { return T_; }
 
     //! The transmissibilities for "outside" faces (used on surface grids)
-    const std::vector< std::vector<CellVector> >& advectionTout() const { return outsideT_; }
-    std::vector< std::vector<CellVector> >& advectionTout() { return outsideT_; }
+    const std::vector< std::vector<CellVector> >& tijOutside() const { return outsideT_; }
+    std::vector< std::vector<CellVector> >& tijOutside() { return outsideT_; }
 
     //! The gravitational acceleration for "outside" faces (used on surface grids)
     const std::array< OutsideGravityStorage, numPhases >& gravityOutside() const { return outsideG_; }
@@ -115,16 +115,16 @@ public:
     void setComponentIndex(unsigned int compIdx) { compIdx_ = compIdx; }
 
     //! Access to the iv-wide mole fractions of a component in one phase
-    const CellVector& moleFractions(unsigned int pIdx, unsigned int compIdx) const { return xj_[pIdx][compIdx]; }
-    CellVector& moleFractions(unsigned int pIdx, unsigned int compIdx) { return xj_[pIdx][compIdx]; }
+    const CellVector& uj(unsigned int pIdx, unsigned int compIdx) const { return xj_[phaseIdx_][compIdx_]; }
+    CellVector& uj(unsigned int pIdx, unsigned int compIdx) { return xj_[phaseIdx_][compIdx_]; }
 
     //! The transmissibilities associated with diffusive fluxes
-    const TMatrix& diffusionT() const { return T_[phaseIdx_][compIdx_]; }
-    TMatrix& diffusionT() { return T_[phaseIdx_][compIdx_]; }
+    const TMatrix& T() const { return T_[phaseIdx_][compIdx_]; }
+    TMatrix& T() { return T_[phaseIdx_][compIdx_]; }
 
     //! The transmissibilities for "outside" faces (used on surface grids)
-    const OutsideTContainer& diffusionTout() const { return outsideT_[phaseIdx_][compIdx_]; }
-    OutsideTContainer& diffusionTout() { return outsideT_[phaseIdx_][compIdx_]; }
+    const OutsideTContainer& tijOutside() const { return outsideT_[phaseIdx_][compIdx_]; }
+    OutsideTContainer& tijOutside() { return outsideT_[phaseIdx_][compIdx_]; }
 
 private:
     //! diffusion-related variables
@@ -144,16 +144,16 @@ class HeatConductionDataHandle
 
 public:
     //! Access to the iv-wide temperatures
-    const CellVector& temperatures() const { return Tj_; }
-    CellVector& temperatures() { return Tj_; }
+    const CellVector& uj() const { return Tj_; }
+    CellVector& uj() { return Tj_; }
 
     //! The transmissibilities associated with conductive fluxes
-    const TMatrix& heatConductionT() const { return T_; }
-    TMatrix& heatConductionT() { return T_; }
+    const TMatrix& T() const { return T_; }
+    TMatrix& T() { return T_; }
 
     //! The transmissibilities for "outside" faces (used on surface grids)
-    const std::vector< std::vector<CellVector> >& heatConductionTout() const { return outsideT_; }
-    std::vector< std::vector<CellVector> >& heatConductionTout() { return outsideT_; }
+    const std::vector< std::vector<CellVector> >& tijOutside() const { return outsideT_; }
+    std::vector< std::vector<CellVector> >& tijOutside() { return outsideT_; }
 
 private:
     // heat conduction-related variables
