@@ -85,14 +85,10 @@ class CCMpfaFVGridGeometry<GV, Traits, true>
     using ScvfOutsideGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
     // check if two types of interaction volumes are considered in this problem
-    using Helper = typename Traits::template MpfaHelper<ThisType>;
-    static constexpr bool considerSecondaryIVs = Helper::considerSecondaryIVs();
 
 public:
     //! export the flip scvf index set type
     using FlipScvfIndexSet = std::vector<ScvfOutsideGridIndexStorage>;
-    //! export the mpfa helper type
-    using MpfaHelper = Helper;
     //! export the grid interaction volume index set type
     using GridIVIndexSets = typename Traits::template GridIvIndexSets<ThisType>;
     //! export the type to be used for indicators where to use the secondary ivs
@@ -110,12 +106,17 @@ public:
     using DofMapper = typename Traits::ElementMapper;
     //! export the grid view type
     using GridView = GV;
+    //! export the mpfa helper type
+    using MpfaHelper = typename Traits::template MpfaHelper<ThisType>;
 
     //! export the discretization method this geometry belongs to
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = Traits::maxElementStencilSize;
+
+    //! State if only a single type is used for interaction volumes
+    static constexpr bool hasSingleInteractionVolumeType = !MpfaHelper::considerSecondaryIVs();
 
     //! Constructor without indicator function for secondary interaction volumes
     //! Per default, we use the secondary IVs at branching points & boundaries
@@ -158,13 +159,13 @@ public:
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! This specialization is enabled if the use of secondary interaction volumes is active.
-    template<bool useSecondary = considerSecondaryIVs, std::enable_if_t<useSecondary, bool> = 0>
+    template<bool useSecondary = !hasSingleInteractionVolumeType, std::enable_if_t<useSecondary, bool> = 0>
     bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! If the use of secondary interaction volumes is disabled, this can be evaluated at compile time.
-    template<bool useSecondary = considerSecondaryIVs, std::enable_if_t<!useSecondary, bool> = 0>
+    template<bool useSecondary = !hasSingleInteractionVolumeType, std::enable_if_t<!useSecondary, bool> = 0>
     constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const { return false; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
@@ -443,15 +444,9 @@ class CCMpfaFVGridGeometry<GV, Traits, false>
 
     using ScvfOutsideGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
-    // check if two types of interaction volumes are considered in this problem
-    using Helper = typename Traits::template MpfaHelper<ThisType>;
-    static constexpr bool considerSecondaryIVs = Helper::considerSecondaryIVs();
-
 public:
     //! export the flip scvf index set type
     using FlipScvfIndexSet = std::vector<ScvfOutsideGridIndexStorage>;
-    //! export the mpfa helper type
-    using MpfaHelper = Helper;
     //! export the grid interaction volume index set type
     using GridIVIndexSets = typename Traits::template GridIvIndexSets<ThisType>;
     //! export the type to be used for indicators where to use the secondary ivs
@@ -469,12 +464,17 @@ public:
     using DofMapper = typename Traits::ElementMapper;
     //! export the grid view type
     using GridView = GV;
+    //! export the mpfa helper type
+    using MpfaHelper = typename Traits::template MpfaHelper<ThisType>;
 
     //! export the discretization method this geometry belongs to
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = Traits::maxElementStencilSize;
+
+    //! State if only a single type is used for interaction volumes
+    static constexpr bool hasSingleInteractionVolumeType = !MpfaHelper::considerSecondaryIVs();
 
     //! Constructor without indicator function for secondary interaction volumes
     //! Per default, we use the secondary IVs at branching points & boundaries
@@ -517,13 +517,13 @@ public:
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! This specialization is enabled if the use of secondary interaction volumes is active.
-    template<bool useSecondary = considerSecondaryIVs, std::enable_if_t<useSecondary, bool> = 0>
+    template<bool useSecondary = !hasSingleInteractionVolumeType, std::enable_if_t<useSecondary, bool> = 0>
     bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! If the use of secondary interaction volumes is disabled, this can be evaluated at compile time.
-    template<bool useSecondary = considerSecondaryIVs, std::enable_if_t<!useSecondary, bool> = 0>
+    template<bool useSecondary = !hasSingleInteractionVolumeType, std::enable_if_t<!useSecondary, bool> = 0>
     constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const { return false; }
 
     //! Returns true if a given vertex lies on a processor boundary inside a ghost element.
