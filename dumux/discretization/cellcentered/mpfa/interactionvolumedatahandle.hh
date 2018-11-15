@@ -46,7 +46,7 @@ public:
 template<class MatVecTraits, class PhysicsTraits, bool EnableAdvection>
 class AdvectionDataHandle
 {
-    // export matrix & vector types from interaction volume
+    // obtain matrix & vector types from interaction volume
     using AMatrix = typename MatVecTraits::AMatrix;
     using CMatrix = typename MatVecTraits::CMatrix;
     using TMatrix = typename MatVecTraits::TMatrix;
@@ -59,74 +59,42 @@ class AdvectionDataHandle
 
 public:
 
-    //! prepare data handle for subsequent fill (normal grids)
-    template< class IV,
-              std::enable_if_t<(IV::Traits::GridView::dimension==IV::Traits::GridView::dimensionworld), int> = 0>
-    void resize(const IV& iv)
-    {
-        // resize transmissibility matrix & pressure vectors
-        resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
-        for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-            resizeVector(p_[pIdx], iv.numKnowns());
-
-        // maybe resize gravity container
-        static const bool enableGravity = getParam<bool>("Problem.EnableGravity");
-        if (enableGravity)
-        {
-            resizeMatrix(CA_, iv.numFaces(), iv.numUnknowns());
-            for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                resizeVector(g_[pIdx], iv.numFaces());
-        }
-    }
-
-
-    //! prepare data handle for subsequent fill (surface grids)
-    template< class IV,
-              std::enable_if_t<(IV::Traits::GridView::dimension<IV::Traits::GridView::dimensionworld), int> = 0>
+    //! prepare data handle for subsequent fill
+    template< class IV >
     void resize(const IV& iv)
     {
         using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
 
-        static const bool enableGravity = getParam<bool>("Problem.EnableGravity");
-        if (!enableGravity)
-        {
-            resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
-            outsideT_.resize(iv.numFaces());
+        // resize matrices
+        resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
+        resizeMatrix(A_, iv.numUnknowns(), iv.numUnknowns());
+        resizeMatrix(CA_, iv.numFaces(), iv.numUnknowns());
 
-            for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                resizeVector(p_[pIdx], iv.numKnowns());
+        // lambdas to resize a vector
+        auto resizeToNumFaces = [&iv] (auto& v) { resizeVector(v, iv.numFaces()); };
+        auto resizeToNumKnowns = [&iv] (auto& v) { resizeVector(v, iv.numKnowns()); };
+
+        // resize pressure/gravity vector
+        std::for_each(p_.begin(), p_.end(), resizeToNumKnowns);
+        std::for_each(g_.begin(), g_.end(), resizeToNumFaces);
+
+        // on surface grids, resize additional containers
+        static constexpr int dim = IV::Traits::GridView::dimension;
+        static constexpr int dimWorld = IV::Traits::GridView::dimensionworld;
+        if (dim < dimWorld)
+        {
+            outsideT_.resize(iv.numFaces());
+            std::for_each(outsideG_.begin(), outsideG_.end(), resizeToNumFaces);
+
+            // resize the entries for each face
             for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
             {
-                const auto numNeighbors = iv.localScvf(i).neighboringLocalScvIndices().size() - 1;
-                outsideT_[i].resize(numNeighbors);
-                for (LocalIndexType j = 0; j < numNeighbors; ++j)
-                    resizeVector(outsideT_[i][j], iv.numKnowns());
-            }
-        }
-
-        else
-        {
-            resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
-            resizeMatrix(CA_, iv.numFaces(), iv.numUnknowns());
-            resizeMatrix(A_, iv.numUnknowns(), iv.numUnknowns());
-            outsideT_.resize(iv.numFaces());
-
-            for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-            {
-                resizeVector(p_[pIdx], iv.numKnowns());
-                resizeVector(g_[pIdx], iv.numFaces());
-                outsideG_[pIdx].resize(iv.numFaces());
-            }
-
-            for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
-            {
-                const auto numNeighbors = iv.localScvf(i).neighboringLocalScvIndices().size() - 1;
+                const auto& localScvf = iv.localScvf(i);
+                const auto numNeighbors = localScvf.neighboringLocalScvIndices().size()-1;
                 outsideT_[i].resize(numNeighbors);
 
-                for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                    resizeVector(outsideG_[pIdx][i], numNeighbors);
-                for (LocalIndexType j = 0; j < numNeighbors; ++j)
-                    resizeVector(outsideT_[i][j], iv.numKnowns());
+                std::for_each(outsideT_[i].begin(), outsideT_[i].end(), resizeToNumKnowns);
+                std::for_each(outsideG_.begin(), outsideG_.end(), [&] (auto& v) { resizeVector(v[i], numNeighbors); });
             }
         }
     }
@@ -135,7 +103,7 @@ public:
     const CellVector& pressures(unsigned int pIdx) const { return p_[pIdx]; }
     CellVector& pressures(unsigned int pIdx) { return p_[pIdx]; }
 
-    //! Access to the gravitational flux contributions for one phase
+    //! The gravitational flux contributions for a phase on all faces
     const FaceVector& gravity(unsigned int pIdx) const { return g_[pIdx]; }
     FaceVector& gravity(unsigned int pIdx) { return g_[pIdx]; }
 
@@ -143,15 +111,16 @@ public:
     const std::array< FaceVector, numPhases >& gravity() const { return g_; }
     std::array< FaceVector, numPhases >& gravity() { return g_; }
 
-    //! Projection matrix for gravitational acceleration
+
+    //! Projection matrix for Neumann/gravity contribution computation
     const CMatrix& advectionCA() const { return CA_; }
     CMatrix& advectionCA() { return CA_; }
 
-    //! Additional projection matrix needed on surface grids
+    //! Inverse of the iv-local system matrix
     const AMatrix& advectionA() const { return A_; }
     AMatrix& advectionA() { return A_; }
 
-    //! The transmissibilities associated with advective fluxes
+    //! The transmissibility matrix (i.e. C*(A^-1)*B + D)
     const TMatrix& advectionT() const { return T_; }
     TMatrix& advectionT() { return T_; }
 
@@ -168,9 +137,9 @@ public:
     OutsideGravityStorage& gravityOutside(unsigned int pIdx) { return outsideG_[pIdx]; }
 
 private:
-    TMatrix T_;                                       //!< The transmissibilities such that f_i = T_ij*p_j
-    CMatrix CA_;                                      //!< Matrix to project gravitational acceleration to all scvfs
-    AMatrix A_;                                       //!< Matrix additionally needed for the projection on surface grids
+    TMatrix T_;  //!< The transmissibilities such that f_i = T_ij*p_j (... + Neumann/gravity contributions)
+    AMatrix A_;  //!< Inverse of the iv-local system matrix (needed e.g. for face pressure reconstruction)
+    CMatrix CA_; //!< A_ right multiplied to C (needed e.g. for Neumann/gravity contribution computation)
     std::array< CellVector, numPhases > p_;           //!< The interaction volume-wide phase pressures
     std::array< FaceVector, numPhases > g_;           //!< The gravitational acceleration at each scvf (only for enabled gravity)
     std::vector< std::vector<CellVector> > outsideT_; //!< The transmissibilities for "outside" faces (only on surface grids)
@@ -313,9 +282,10 @@ class HeatConductionDataHandle<MatVecTraits, PhysicsTraits, false> : public Empt
  * \tparam PT The physics traits collecting data on the physical processes to be considered
  */
 template<class MVT, class PT>
-class InteractionVolumeDataHandle : public AdvectionDataHandle<MVT, PT, PT::enableAdvection>,
-                                    public DiffusionDataHandle<MVT, PT, PT::enableMolecularDiffusion>,
-                                    public HeatConductionDataHandle<MVT, PT, PT::enableHeatConduction>
+class InteractionVolumeDataHandle
+: public AdvectionDataHandle<MVT, PT, PT::enableAdvection>
+, public DiffusionDataHandle<MVT, PT, PT::enableMolecularDiffusion>
+, public HeatConductionDataHandle<MVT, PT, PT::enableHeatConduction>
 {
     using AdvectionHandle = AdvectionDataHandle<MVT, PT, PT::enableAdvection>;
     using DiffusionHandle = DiffusionDataHandle<MVT, PT, PT::enableMolecularDiffusion>;
