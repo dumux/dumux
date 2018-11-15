@@ -317,7 +317,7 @@ private:
     void addBoundaryVolVars_(const Problem& problem, const FVElementGeometry& fvGeometry, const NodalIndexSet& nodalIndexSet)
     {
         // check each scvf in the index set for boundary presence
-        for (auto scvfIdx : nodalIndexSet.globalScvfIndices())
+        for (auto scvfIdx : nodalIndexSet.gridScvfIndices())
         {
             const auto& ivScvf = fvGeometry.scvf(scvfIdx);
 

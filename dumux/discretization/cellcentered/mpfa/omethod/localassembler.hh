@@ -133,7 +133,7 @@ public:
                 for (LocalIndexType localDir = 0; localDir < IV::Traits::GridView::dimension; localDir++)
                 {
                     // the scvf corresponding to this local direction in the scv
-                    const auto& curLocalScvf = iv.localScvf(posLocalScv.scvfIdxLocal(localDir));
+                    const auto& curLocalScvf = iv.localScvf(posLocalScv.localScvfIndex(localDir));
 
                     // on interior faces the coefficients of the AB matrix come into play
                     if (!curLocalScvf.isDirichlet())
@@ -262,7 +262,7 @@ public:
                 for (LocalIndexType localDir = 0; localDir < IV::Traits::GridView::dimension; localDir++)
                 {
                     // the scvf corresponding to this local direction in the scv
-                    const auto& curLocalScvf = iv.localScvf(posLocalScv.scvfIdxLocal(localDir));
+                    const auto& curLocalScvf = iv.localScvf(posLocalScv.localScvfIndex(localDir));
 
                     // on interior faces the coefficients of the AB matrix come into play
                     if (!curLocalScvf.isDirichlet())
@@ -300,7 +300,7 @@ public:
         // put the cell pressures first
         using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
         for (LocalIndexType i = 0; i < iv.numScvs(); ++i)
-            u[i] = getU( iv.localScv(i).globalScvIndex() );
+            u[i] = getU( iv.localScv(i).gridScvIndex() );
 
         // Dirichlet BCs come afterwards
         LocalIndexType i = iv.numScvs();
@@ -363,13 +363,13 @@ public:
         {
             // gravitational acceleration on this face
             const auto& curLocalScvf = iv.localScvf(faceIdx);
-            const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.globalScvfIndex());
+            const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.gridScvfIndex());
             const auto gravity = this->problem().gravityAtPos(curGlobalScvf.ipGlobal());
 
             // get permeability tensor in "positive" sub volume
             const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
             const auto& posLocalScv = iv.localScv(neighborScvIndices[0]);
-            const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.globalScvIndex());
+            const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.gridScvIndex());
             const auto& posVolVars = this->elemVolVars()[posGlobalScv];
             const auto& posElement = iv.element(neighborScvIndices[0]);
             const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
@@ -388,7 +388,7 @@ public:
                 {
                     // obtain outside tensor
                     const auto& negLocalScv = iv.localScv( neighborScvIndices[1] );
-                    const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.globalScvIndex());
+                    const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.gridScvIndex());
                     const auto& negVolVars = this->elemVolVars()[negGlobalScv];
                     const auto& negElement = iv.element( neighborScvIndices[1] );
                     const auto negTensor = getT(this->problem(), negElement, negVolVars, this->fvGeometry(), negGlobalScv);
@@ -497,13 +497,13 @@ public:
         {
             // gravitational acceleration on this face
             const auto& curLocalScvf = iv.localScvf(faceIdx);
-            const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.globalScvfIndex());
+            const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.gridScvfIndex());
             const auto gravity = this->problem().gravityAtPos(curGlobalScvf.ipGlobal());
 
             // get permeability tensor in "positive" sub volume
             const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
             const auto& posLocalScv = iv.localScv(neighborScvIndices[0]);
-            const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.globalScvIndex());
+            const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.gridScvIndex());
             const auto& posVolVars = this->elemVolVars()[posGlobalScv];
             const auto& posElement = iv.element(neighborScvIndices[0]);
             const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
@@ -526,7 +526,7 @@ public:
                     {
                         // obtain outside tensor
                         const auto& negLocalScv = iv.localScv( neighborScvIndices[idxInOutside] );
-                        const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.globalScvIndex());
+                        const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.gridScvIndex());
                         const auto& negVolVars = this->elemVolVars()[negGlobalScv];
                         const auto& negElement = iv.element( neighborScvIndices[idxInOutside] );
                         const auto negTensor = getT(this->problem(), negElement, negVolVars, this->fvGeometry(), negGlobalScv);
@@ -596,7 +596,7 @@ public:
                 for (LocalIndexType localDir = 0; localDir < IV::Traits::GridView::dimension; localDir++)
                 {
                     // the scvf corresponding to this local direction in the scv
-                    const auto& curLocalScvf = iv.localScvf(posLocalScv.scvfIdxLocal(localDir));
+                    const auto& curLocalScvf = iv.localScvf(posLocalScv.localScvfIndex(localDir));
 
                     // on interior faces the coefficients of the AB matrix come into play
                     if (!curLocalScvf.isDirichlet())
@@ -655,12 +655,12 @@ private:
             for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
             {
                 const auto& curLocalScvf = iv.localScvf(faceIdx);
-                const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.globalScvfIndex());
+                const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.gridScvfIndex());
                 const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
 
                 // get tensor in "positive" sub volume
                 const auto& posLocalScv = iv.localScv(neighborScvIndices[0]);
-                const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.globalScvIndex());
+                const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.gridScvIndex());
                 const auto& posVolVars = this->elemVolVars()[posGlobalScv];
                 const auto& posElement = iv.element(neighborScvIndices[0]);
                 const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
@@ -671,7 +671,7 @@ private:
                 const auto posScvLocalDofIdx = posLocalScv.localDofIndex();
                 for (LocalIndexType localDir = 0; localDir < dim; localDir++)
                 {
-                    const auto& otherLocalScvf = iv.localScvf( posLocalScv.scvfIdxLocal(localDir) );
+                    const auto& otherLocalScvf = iv.localScvf( posLocalScv.localScvfIndex(localDir) );
                     const auto otherLocalDofIdx = otherLocalScvf.localDofIndex();
                     D[faceIdx][otherLocalDofIdx] -= wijk[localDir];
                     D[faceIdx][posScvLocalDofIdx] += wijk[localDir];
@@ -695,14 +695,14 @@ private:
             for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
             {
                 const auto& curLocalScvf = iv.localScvf(faceIdx);
-                const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.globalScvfIndex());
+                const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.gridScvfIndex());
                 const auto curIsDirichlet = curLocalScvf.isDirichlet();
                 const auto curLocalDofIdx = curLocalScvf.localDofIndex();
 
                 // get tensor in "positive" sub volume
                 const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
                 const auto& posLocalScv = iv.localScv(neighborScvIndices[0]);
-                const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.globalScvIndex());
+                const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.gridScvIndex());
                 const auto& posVolVars = this->elemVolVars()[posGlobalScv];
                 const auto& posElement = iv.element(neighborScvIndices[0]);
                 const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
@@ -713,7 +713,7 @@ private:
                 // go over the coordinate directions in the positive sub volume
                 for (unsigned int localDir = 0; localDir < dim; localDir++)
                 {
-                    const auto& otherLocalScvf = iv.localScvf( posLocalScv.scvfIdxLocal(localDir) );
+                    const auto& otherLocalScvf = iv.localScvf( posLocalScv.localScvfIndex(localDir) );
                     const auto otherLocalDofIdx = otherLocalScvf.localDofIndex();
 
                     // if we are not on a Dirichlet face, add entries associated with unknown face pressures
@@ -748,7 +748,7 @@ private:
                     {
                         const auto idxOnScvf = idxInOutside+1;
                         const auto& negLocalScv = iv.localScv( neighborScvIndices[idxOnScvf] );
-                        const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.globalScvIndex());
+                        const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.gridScvIndex());
                         const auto& negVolVars = this->elemVolVars()[negGlobalScv];
                         const auto& negElement = iv.element( neighborScvIndices[idxOnScvf] );
                         const auto negTensor = getT(this->problem(), negElement, negVolVars, this->fvGeometry(), negGlobalScv);
@@ -762,10 +762,10 @@ private:
                         if (dim < dimWorld)
                             wijk[faceIdx][idxOnScvf] *= -1.0;
 
-                        // go over the coordinate directions in the positive sub volume
+                        // go over the coordinate directions in the negative sub volume
                         for (int localDir = 0; localDir < dim; localDir++)
                         {
-                            const auto otherLocalScvfIdx = negLocalScv.scvfIdxLocal(localDir);
+                            const auto otherLocalScvfIdx = negLocalScv.localScvfIndex(localDir);
                             const auto& otherLocalScvf = iv.localScvf(otherLocalScvfIdx);
                             const auto otherLocalDofIdx = otherLocalScvf.localDofIndex();
 

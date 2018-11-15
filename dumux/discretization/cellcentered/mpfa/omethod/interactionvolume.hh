@@ -158,7 +158,7 @@ public:
     {
         // for the o-scheme, the stencil is equal to the scv
         // index set of the dual grid's nodal index set
-        stencil_ = &indexSet.nodalIndexSet().globalScvIndices();
+        stencil_ = &indexSet.nodalIndexSet().gridScvIndices();
 
         // number of interaction-volume-local scvs(=node-local for o-scheme) and scvfs
         numFaces_ = indexSet.numFaces();
@@ -178,13 +178,12 @@ public:
         localFaceData_.reserve(numGlobalScvfs);
 
         // set up stuff related to sub-control volumes
-        const auto& scvIndices = indexSet.globalScvIndices();
         for (LocalIndexType scvIdxLocal = 0; scvIdxLocal < numLocalScvs; scvIdxLocal++)
         {
-            elements_.emplace_back(fvGeometry.fvGridGeometry().element( scvIndices[scvIdxLocal] ));
+            elements_.emplace_back(fvGeometry.fvGridGeometry().element( stencil()[scvIdxLocal] ));
             scvs_.emplace_back(fvGeometry.fvGridGeometry().mpfaHelper(),
                                fvGeometry,
-                               fvGeometry.scv( scvIndices[scvIdxLocal] ),
+                               fvGeometry.scv( stencil()[scvIdxLocal] ),
                                scvIdxLocal,
                                indexSet);
         }
@@ -197,7 +196,7 @@ public:
         wijk_.resize(numFaces_);
         for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < numFaces_; ++faceIdxLocal)
         {
-            const auto& scvf = fvGeometry.scvf(indexSet.scvfIdxGlobal(faceIdxLocal));
+            const auto& scvf = fvGeometry.scvf(indexSet.gridScvfIndex(faceIdxLocal));
 
             // the neighboring scvs in local indices (order: 0 - inside scv, 1..n - outside scvs)
             const auto& neighborScvIndicesLocal = indexSet.neighboringLocalScvIndices(faceIdxLocal);
@@ -233,9 +232,9 @@ public:
                     const auto outsideLocalScvIdx = neighborScvIndicesLocal[i];
                     for (int coord = 0; coord < dim; ++coord)
                     {
-                        if (indexSet.scvfIdxLocal(outsideLocalScvIdx, coord) == faceIdxLocal)
+                        if (indexSet.localScvfIndex(outsideLocalScvIdx, coord) == faceIdxLocal)
                         {
-                            const auto globalScvfIdx = indexSet.nodalIndexSet().scvfIdxGlobal(outsideLocalScvIdx, coord);
+                            const auto globalScvfIdx = indexSet.nodalIndexSet().gridScvfIndex(outsideLocalScvIdx, coord);
                             const auto& flipScvf = fvGeometry.scvf(globalScvfIdx);
                             localFaceData_.emplace_back(faceIdxLocal,       // iv-local scvf idx
                                                         outsideLocalScvIdx, // iv-local scv index
@@ -335,7 +334,7 @@ public:
         ivIndexSetContainer.emplace_back(nodalIndexSet, flipScvfIndexSet);
 
         // store the index mapping
-        for (const auto scvfIdx : nodalIndexSet.globalScvfIndices())
+        for (const auto scvfIdx : nodalIndexSet.gridScvfIndices())
             scvfIndexMap[scvfIdx] = curGlobalIndex;
     }
 

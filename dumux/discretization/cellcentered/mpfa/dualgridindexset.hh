@@ -146,11 +146,11 @@ public:
     { return numBoundaryScvfs_; }
 
     //! returns the grid scv indices connected to this dual grid node
-    const NodalGridStencilType& globalScvIndices() const
+    const NodalGridStencilType& gridScvIndices() const
     { return scvIndices_; }
 
     //! returns the grid scvf indices connected to this dual grid node
-    const NodalGridScvfStencilType& globalScvfIndices() const
+    const NodalGridScvfStencilType& gridScvfIndices() const
     { return scvfIndices_; }
 
     //! returns whether or not the i-th scvf is on a domain boundary
@@ -161,21 +161,21 @@ public:
     }
 
     //! returns the grid scv idx of the i-th scv
-    GridIndexType scvIdxGlobal(unsigned int i) const
+    GridIndexType gridScvIndex(unsigned int i) const
     {
         assert(i < numScvs());
         return scvIndices_[i];
     }
 
     //! returns the index of the i-th scvf
-    GridIndexType scvfIdxGlobal(unsigned int i) const
+    GridIndexType gridScvfIndex(unsigned int i) const
     {
         assert(i < numScvfs());
         return scvfIndices_[i];
     }
 
     //! returns the grid index of the j-th scvf embedded in the i-th scv
-    GridIndexType scvfIdxGlobal(unsigned int i, unsigned int j) const
+    GridIndexType gridScvfIndex(unsigned int i, unsigned int j) const
     {
         assert(i < numScvs());
         assert(j < localScvfIndicesInScv_[i].size());
@@ -183,7 +183,7 @@ public:
     }
 
     //! returns the node-local index of the j-th scvf embedded in the i-th scv
-    LocalIndexType scvfIdxLocal(unsigned int i, unsigned int j) const
+    LocalIndexType localScvfIndex(unsigned int i, unsigned int j) const
     {
         assert(i < numScvs());
         assert(j < localScvfIndicesInScv_[i].size());
@@ -191,7 +191,7 @@ public:
     }
 
     //! returns the node-local index of the inside scv of the i-th scvf
-    LocalIndexType insideScvIdxLocal(unsigned int i) const
+    LocalIndexType insideScvLocalIndex(unsigned int i) const
     {
         assert(i < numScvfs());
         return scvfInsideScvIndices_[i];

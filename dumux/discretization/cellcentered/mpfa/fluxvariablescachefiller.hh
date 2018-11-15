@@ -227,7 +227,7 @@ private:
         for (const auto& d : iv.localFaceData())
         {
             // obtain the scvf
-            const auto& scvfJ = fvGeometry().scvf(d.globalScvfIndex());
+            const auto& scvfJ = fvGeometry().scvf(d.gridScvfIndex());
             ivScvfs[i] = &scvfJ;
             ivFluxVarCaches[i] = &fluxVarsCacheContainer[scvfJ];
             ivFluxVarCaches[i]->setIvIndexInContainer(ivIndexInContainer);

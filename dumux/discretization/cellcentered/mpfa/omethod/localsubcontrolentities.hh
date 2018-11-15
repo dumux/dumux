@@ -82,7 +82,7 @@ public:
         LocalBasis localBasis;
         for (unsigned int coordIdx = 0; coordIdx < myDimension; ++coordIdx)
         {
-            const auto scvfIdx = indexSet.nodalIndexSet().scvfIdxGlobal(localDofIndex_, coordIdx);
+            const auto scvfIdx = indexSet.nodalIndexSet().gridScvfIndex(localDofIndex_, coordIdx);
             const auto& scvf = fvGeometry.scvf(scvfIdx);
             localBasis[coordIdx] = scvf.ipGlobal();
             localBasis[coordIdx] -= center;
@@ -96,8 +96,8 @@ public:
     ctype detX() const
     { return detX_; }
 
-    //! grid view-global index related to this scv
-    GridIndexType globalScvIndex() const
+    //! grid index related to this scv
+    GridIndexType gridScvIndex() const
     { return globalScvIndex_; }
 
     //! returns the index in the set of cell unknowns of the iv
@@ -105,10 +105,10 @@ public:
     { return localDofIndex_; }
 
     //! iv-local index of the coordir's scvf in this scv
-    LocalIndexType scvfIdxLocal(unsigned int coordDir) const
+    LocalIndexType localScvfIndex(unsigned int coordDir) const
     {
         assert(coordDir < myDimension);
-        return indexSet_->scvfIdxLocal(localDofIndex_, coordDir);
+        return indexSet_->localScvfIndex(localDofIndex_, coordDir);
     }
 
     //! the nu vectors are needed for setting up the omegas of the iv
@@ -170,7 +170,7 @@ public:
     LocalIndexType localDofIndex() const { return localDofIndex_; }
 
     //! returns the grid view-global index of this scvf
-    GridIndexType globalScvfIndex() const { return scvfIdxGlobal_; }
+    GridIndexType gridScvfIndex() const { return scvfIdxGlobal_; }
 
     //! Returns the local indices of the scvs neighboring this scvf
     const ScvfNeighborLocalIndexSet& neighboringLocalScvIndices() const { return *neighborScvIndicesLocal_; }

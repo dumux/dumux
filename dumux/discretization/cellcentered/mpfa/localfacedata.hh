@@ -43,7 +43,7 @@ class InteractionVolumeLocalFaceData
     LocalIndexType ivLocalScvfIndex_;          //!< the iv-local scvf index this scvf maps to
     LocalIndexType ivLocalInsideScvIndex_;     //!< the iv-local index of the scvfs' inside scv
     LocalIndexType scvfLocalOutsideScvfIndex_; //!< the index of this scvf in the scvf-local outside faces
-    GridIndexType globalScvfIndex_;            //!< the index of the corresponding global scvf
+    GridIndexType gridScvfIndex_;              //!< the index of the corresponding global scvf
     bool isOutside_;                           //!< indicates if this face is an "outside" face in the iv-local system
 
 public:
@@ -53,10 +53,10 @@ public:
     //! Constructor
     InteractionVolumeLocalFaceData(LocalIndexType faceIndex,
                                    LocalIndexType scvIndex,
-                                   GridIndexType globalScvfIndex)
+                                   GridIndexType gridScvfIndex)
     : ivLocalScvfIndex_(faceIndex)
     , ivLocalInsideScvIndex_(scvIndex)
-    , globalScvfIndex_(globalScvfIndex)
+    , gridScvfIndex_(gridScvfIndex)
     , isOutside_(false)
     {}
 
@@ -64,11 +64,11 @@ public:
     InteractionVolumeLocalFaceData(LocalIndexType faceIndex,
                                    LocalIndexType scvIndex,
                                    LocalIndexType indexInScvfOutsideFaces,
-                                   GridIndexType globalScvfIndex)
+                                   GridIndexType gridScvfIndex)
     : ivLocalScvfIndex_(faceIndex)
     , ivLocalInsideScvIndex_(scvIndex)
     , scvfLocalOutsideScvfIndex_(indexInScvfOutsideFaces)
-    , globalScvfIndex_(globalScvfIndex)
+    , gridScvfIndex_(gridScvfIndex)
     , isOutside_(true)
     {}
 
@@ -76,7 +76,7 @@ public:
     LocalIndexType ivLocalScvfIndex() const { return ivLocalScvfIndex_; }
     LocalIndexType ivLocalInsideScvIndex() const { return ivLocalInsideScvIndex_; }
     LocalIndexType scvfLocalOutsideScvfIndex() const { assert(isOutside_); return scvfLocalOutsideScvfIndex_; }
-    GridIndexType globalScvfIndex() const { return globalScvfIndex_; }
+    GridIndexType gridScvfIndex() const { return gridScvfIndex_; }
     bool isOutsideFace() const { return isOutside_; }
 };
 
