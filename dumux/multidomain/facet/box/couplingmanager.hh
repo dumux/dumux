@@ -468,11 +468,12 @@ public:
             {
                 const auto& ldGridGeometry = this->problem(lowDimId).fvGridGeometry();
 
+                const auto& ldSol = Assembler::isImplicit() ? this->curSol()[lowDimId] : assembler.prevSol()[lowDimId];
                 const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
                 auto fvGeom = localView(ldGridGeometry);
                 auto elemVolVars = localView(assembler.gridVariables(lowDimId).curGridVolVars());
                 fvGeom.bindElement(elemJ);
-                elemVolVars.bindElement(elemJ, fvGeom, this->curSol()[lowDimId]);
+                elemVolVars.bindElement(elemJ, fvGeom, ldSol);
 
                 // TODO interpolated volvars
                 bulkContext_.isSet = true;
@@ -525,9 +526,10 @@ public:
                 auto bulkElemVolVars = localView(assembler.gridVariables(bulkId).curGridVolVars());
                 auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache());
 
+                const auto& bulkSol = Assembler::isImplicit() ? this->curSol()[bulkId] : assembler.prevSol()[bulkId];
                 const auto curBulkElem = bulkGridGeom.element(embedments[i].first);
                 bulkFvGeom.bind(curBulkElem);
-                bulkElemVolVars.bind(curBulkElem, bulkFvGeom, this->curSol()[bulkId]);
+                bulkElemVolVars.bind(curBulkElem, bulkFvGeom, bulkSol);
                 bulkElemFluxVarsCache.bind(curBulkElem, bulkFvGeom, bulkElemVolVars);
 
                 lowDimContext_.isSet = true;
@@ -556,6 +558,12 @@ public:
     {
         // communicate deflected solution
         ParentType::updateCouplingContext(domainI, bulkLocalAssembler, domainJ, dofIdxGlobalJ, priVarsJ, pvIdxJ);
+
+        // Since coupling only occurs via the fluxes, the context does not
+        // have to be updated in explicit time discretization schemes, where
+        // they are strictly evaluated on the old time level
+        if (!BulkLocalAssembler::isImplicit())
+            return;
 
         // skip the rest if context is empty
         if (bulkContext_.isSet)
@@ -637,6 +645,12 @@ public:
         // communicate deflected solution
         ParentType::updateCouplingContext(domainI, lowDimLocalAssembler, domainJ, dofIdxGlobalJ, priVarsJ, pvIdxJ);
 
+        // Since coupling only occurs via the fluxes, the context does not
+        // have to be updated in explicit time discretization schemes, where
+        // they are strictly evaluated on the old time level
+        if (!LowDimLocalAssembler::isImplicit())
+            return;
+
         // skip the rest if context is empty
         if (lowDimContext_.isSet)
         {
@@ -689,6 +703,12 @@ public:
     {
         // communicate deflected solution
         ParentType::updateCouplingContext(domainI, lowDimLocalAssembler, domainJ, dofIdxGlobalJ, priVarsJ, pvIdxJ);
+
+        // Since coupling only occurs via the fluxes, the context does not
+        // have to be updated in explicit time discretization schemes, where
+        // they are strictly evaluated on the old time level
+        if (!LowDimLocalAssembler::isImplicit())
+            return;
 
         // skip the rest if context is empty
         if (lowDimContext_.isSet)

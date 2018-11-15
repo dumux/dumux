@@ -130,7 +130,7 @@ public:
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 // the physical quantities for which we perform upwinding
-                auto upwindTerm = [compIdx](const VolumeVariables& volVars)
+                auto upwindTerm = [compIdx](const auto& volVars)
                 { return volVars.molarDensity()*volVars.moleFraction(phaseIdx, compIdx); };
 
                 // advective fluxes
@@ -145,7 +145,7 @@ public:
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 // the physical quantities for which we perform upwinding
-                auto upwindTerm = [compIdx](const VolumeVariables& volVars)
+                auto upwindTerm = [compIdx](const auto& volVars)
                 { return volVars.density()*volVars.massFraction(phaseIdx, compIdx); };
 
                 // advective fluxes

@@ -40,9 +40,10 @@ namespace Dumux {
  * \brief A base class for all local assemblers
  * \tparam TypeTag The TypeTag
  * \tparam Assembler The assembler type
- * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ * \tparam Implementation The assembler implementation
+ * \tparam useImplicitAssembly Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<class TypeTag, class Assembler, class Implementation, bool isImplicit>
+template<class TypeTag, class Assembler, class Implementation, bool useImplicitAssembly>
 class FVLocalAssemblerBase
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -106,20 +107,26 @@ public:
     {}
 
     /*!
+     * \brief Returns true if the assembler considers implicit assembly.
+     */
+    static constexpr bool isImplicit()
+    { return useImplicitAssembly; }
+
+    /*!
      * \brief Convenience function to evaluate the complete local residual for the current element. Automatically chooses the the appropriate
      *        element volume variables.
      */
     ElementResidualVector evalLocalResidual() const
     {
-        if (!isImplicit)
+        if (!isImplicit())
             if (this->assembler().isStationaryProblem())
                 DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
 
         if (elementIsGhost())
             return ElementResidualVector(0.0);
 
-        return isImplicit ? evalLocalResidual(curElemVolVars())
-                          : evalLocalResidual(prevElemVolVars());
+        return isImplicit() ? evalLocalResidual(curElemVolVars())
+                            : evalLocalResidual(prevElemVolVars());
     }
 
     /*!
@@ -145,8 +152,8 @@ public:
      */
     ElementResidualVector evalLocalFluxAndSourceResidual() const
     {
-        return isImplicit ? evalLocalFluxAndSourceResidual(curElemVolVars())
-                          : evalLocalFluxAndSourceResidual(prevElemVolVars());
+        return isImplicit() ? evalLocalFluxAndSourceResidual(curElemVolVars())
+                            : evalLocalFluxAndSourceResidual(prevElemVolVars());
      }
 
     /*!
@@ -188,7 +195,7 @@ public:
         // bind the caches
         fvGeometry.bind(element);
 
-        if (isImplicit)
+        if (isImplicit())
         {
             curElemVolVars.bind(element, fvGeometry, curSol);
             elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);

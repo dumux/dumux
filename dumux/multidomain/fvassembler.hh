@@ -51,9 +51,9 @@ namespace Dumux {
  *        with multiple domains
  * \tparam MDTraits the multidimension traits
  * \tparam diffMethod the differentiation method to residual compute derivatives
- * \tparam isImplicit if to use an implicit or explicit time discretization
+ * \tparam useImplicitAssembly if to use an implicit or explicit time discretization
  */
-template<class MDTraits, class CMType, DiffMethod diffMethod, bool isImplicit = true>
+template<class MDTraits, class CMType, DiffMethod diffMethod, bool useImplicitAssembly = true>
 class MultiDomainFVAssembler
 {
     template<std::size_t id>
@@ -73,6 +73,12 @@ public:
 
     using CouplingManager = CMType;
 
+    /*!
+     * \brief Returns true if the assembler considers implicit assembly.
+     */
+    static constexpr bool isImplicit()
+    { return useImplicitAssembly; }
+
 private:
 
     using ProblemTuple = typename MDTraits::ProblemTuple;
@@ -80,7 +86,7 @@ private:
     using GridVariablesTuple = typename MDTraits::GridVariablesTuple;
 
     using TimeLoop = TimeLoopBase<Scalar>;
-    using ThisType = MultiDomainFVAssembler<MDTraits, CouplingManager, diffMethod, isImplicit>;
+    using ThisType = MultiDomainFVAssembler<MDTraits, CouplingManager, diffMethod, isImplicit()>;
 
     template<DiscretizationMethod discMethod, std::size_t id>
     struct SubDomainAssemblerType;
@@ -88,25 +94,25 @@ private:
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethod::cctpfa, id>
     {
-        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
+        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethod::ccmpfa, id>
     {
-        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
+        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethod::box, id>
     {
-        using type = SubDomainBoxLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
+        using type = SubDomainBoxLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethod::staggered, id>
     {
-        using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
+        using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
@@ -134,7 +140,7 @@ public:
     , timeLoop_()
     , isStationaryProblem_(true)
     {
-        static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
+        static_assert(isImplicit(), "Explicit assembler for stationary problem doesn't make sense!");
         std::cout << "Instantiated assembler for a stationary problem." << std::endl;
     }
 
@@ -465,7 +471,7 @@ private:
                                              Dune::index_constant<j> domainJ) const
     {
         const auto& gg = fvGridGeometry(domainI);
-        auto pattern = getJacobianPattern<isImplicit>(gg);
+        auto pattern = getJacobianPattern<isImplicit()>(gg);
         couplingManager_->extendJacobianPattern(domainI, pattern);
         return pattern;
     }
@@ -475,9 +481,9 @@ private:
     Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainI,
                                              Dune::index_constant<j> domainJ) const
     {
-        return getCouplingJacobianPattern<isImplicit>(*couplingManager_,
-                                                      domainI, fvGridGeometry(domainI),
-                                                      domainJ, fvGridGeometry(domainJ));
+        return getCouplingJacobianPattern<isImplicit()>(*couplingManager_,
+                                                        domainI, fvGridGeometry(domainI),
+                                                        domainJ, fvGridGeometry(domainJ));
     }
 
     //! pointer to the problem to be solved

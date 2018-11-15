@@ -1,4 +1,5 @@
 add_subdirectory(1p_1p)
+add_subdirectory(tracer_tracer)
 
 dune_symlink_to_source_files(FILES "grid.msh" "grid2.msh" "test_gridmanager.input" "test_vertexmapper.input" "test_couplingmapper_boundary.input" "2d_grid.msh" "3d_grid.msh")
 
