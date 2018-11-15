@@ -166,7 +166,8 @@ public:
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! If the use of secondary interaction volumes is disabled, this can be evaluated at compile time.
     template<bool useSecondary = !hasSingleInteractionVolumeType, std::enable_if_t<!useSecondary, bool> = 0>
-    constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const { return false; }
+    constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
+    { return false; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
@@ -354,7 +355,7 @@ public:
         // building the geometries has finished
         std::cout << "Initializing of the grid finite volume geometry took " << timer.elapsed() << " seconds." << std::endl;
 
-        // Initialize the grid interaction volume seeds
+        // Initialize the grid interaction volume index sets
         timer.reset();
         ivIndexSets_.update(*this, std::move(dualIdSet));
         std::cout << "Initializing of the grid interaction volume index sets took " << timer.elapsed() << " seconds." << std::endl;
@@ -533,7 +534,8 @@ public:
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! If the use of secondary interaction volumes is disabled, this can be evaluated at compile time.
     template<bool useSecondary = !hasSingleInteractionVolumeType, std::enable_if_t<!useSecondary, bool> = 0>
-    constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const { return false; }
+    constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
+    { return false; }
 
     //! Returns true if a given vertex lies on a processor boundary inside a ghost element.
     bool isGhostVertex(const Vertex& v) const
@@ -715,12 +717,12 @@ public:
         // building the geometries has finished
         std::cout << "Initializing of the grid finite volume geometry took " << timer.elapsed() << " seconds." << std::endl;
 
-        // Initialize the grid interaction volume seeds
+        // Initialize the grid interaction volume index sets
         timer.reset();
         ivIndexSets_.update(*this, std::move(dualIdSet));
         std::cout << "Initializing of the grid interaction volume index sets took " << timer.elapsed() << " seconds." << std::endl;
 
-        // build the connectivity map for an effecient assembly
+        // build the connectivity map for an efficient assembly
         timer.reset();
         connectivityMap_.update(*this);
         std::cout << "Initializing of the connectivity map took " << timer.elapsed() << " seconds." << std::endl;

@@ -70,8 +70,8 @@ class CCMpfaDualGridNodalIndexSet
     using LI = typename T::LocalIndexType;
     using GI = typename T::GridIndexType;
 
-    using DimLocalIndexVector = Dune::ReservedVector<LI, T::GridView::dimension>;
-    using ScvfIndicesInScvStorage = typename T::template NodalScvDataStorage< DimLocalIndexVector >;
+    using DimIndexVector = Dune::ReservedVector<LI, T::GridView::dimension>;
+    using ScvfIndicesInScvStorage = typename T::template NodalScvDataStorage< DimIndexVector >;
 
 public:
     //! Export the traits type
@@ -96,9 +96,7 @@ public:
     template<typename SubControlVolumeFace>
     void insert(const SubControlVolumeFace& scvf)
     {
-        insert(scvf.index(),
-               scvf.insideScvIdx(),
-               scvf.boundary());
+        insert(scvf.index(), scvf.insideScvIdx(), scvf.boundary());
     }
 
     //! Inserts scvf data
