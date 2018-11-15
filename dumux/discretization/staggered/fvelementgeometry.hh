@@ -208,6 +208,10 @@ public:
     const FVGridGeometry& fvGridGeometry() const
     { return *fvGridGeometryPtr_; }
 
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf() const
+    { return hasBoundaryScvf_; }
+
 private:
 
     //! create scvs and scvfs of the bound element
@@ -238,6 +242,9 @@ private:
                                     geometryHelper);
                 scvfIndices_.emplace_back(scvFaceIndices[scvfCounter]);
                 scvfCounter++;
+
+                if (intersection.boundary())
+                    hasBoundaryScvf_ = true;
             }
         }
     }
@@ -301,6 +308,8 @@ private:
         neighborScvfIndices_.clear();
         neighborScvs_.clear();
         neighborScvfs_.clear();
+
+        hasBoundaryScvf_ = false;
     }
 
     const Element* elementPtr_; //!< the element to which this fvgeometry is bound
@@ -318,6 +327,8 @@ private:
 
     std::vector<IndexType> neighborScvfIndices_;
     std::vector<SubControlVolumeFace> neighborScvfs_;
+
+    bool hasBoundaryScvf_ = false;
 };
 
 
