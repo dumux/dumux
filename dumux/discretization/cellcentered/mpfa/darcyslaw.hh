@@ -138,7 +138,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             stencil_ = &iv.stencil();
 
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                primaryPj_[pIdx] = &dataHandle.pressures(pIdx);
+                primaryPj_[pIdx] = &dataHandle.advectionHandle().pressures(pIdx);
 
             static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
             const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
@@ -146,28 +146,28 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             // standard grids
             if (dim == dimWorld)
             {
-                primaryTij_ = &dataHandle.advectionT()[ivLocalIdx];
+                primaryTij_ = &dataHandle.advectionHandle().advectionT()[ivLocalIdx];
                 if (enableGravity)
                     for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                        g_[phaseIdx] = dataHandle.gravity(phaseIdx)[ivLocalIdx];
+                        g_[phaseIdx] = dataHandle.advectionHandle().gravity(phaseIdx)[ivLocalIdx];
             }
             // surface grids
             else
             {
                 if (!localFaceData.isOutsideFace())
                 {
-                    primaryTij_ = &dataHandle.advectionT()[ivLocalIdx];
+                    primaryTij_ = &dataHandle.advectionHandle().advectionT()[ivLocalIdx];
                     if (enableGravity)
                         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                            g_[phaseIdx] = dataHandle.gravity(phaseIdx)[ivLocalIdx];
+                            g_[phaseIdx] = dataHandle.advectionHandle().gravity(phaseIdx)[ivLocalIdx];
                 }
                 else
                 {
                     const auto idxInOutsideFaces = localFaceData.scvfLocalOutsideScvfIndex();
-                    primaryTij_ = &dataHandle.advectionTout()[ivLocalIdx][idxInOutsideFaces];
+                    primaryTij_ = &dataHandle.advectionHandle().advectionTout()[ivLocalIdx][idxInOutsideFaces];
                     if (enableGravity)
                         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                            g_[phaseIdx] = dataHandle.gravityOutside(phaseIdx)[ivLocalIdx][idxInOutsideFaces];
+                            g_[phaseIdx] = dataHandle.advectionHandle().gravityOutside(phaseIdx)[ivLocalIdx][idxInOutsideFaces];
                 }
             }
         }
@@ -193,7 +193,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             stencil_ = &iv.stencil();
 
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                secondaryPj_[pIdx] = &dataHandle.pressures(pIdx);
+                secondaryPj_[pIdx] = &dataHandle.advectionHandle().pressures(pIdx);
 
             static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
             const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
@@ -201,28 +201,28 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             // standard grids
             if (dim == dimWorld)
             {
-                secondaryTij_ = &dataHandle.advectionT()[ivLocalIdx];
+                secondaryTij_ = &dataHandle.advectionHandle().advectionT()[ivLocalIdx];
                 if (enableGravity)
                     for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                        g_[phaseIdx] = dataHandle.gravity(phaseIdx)[ivLocalIdx];
+                        g_[phaseIdx] = dataHandle.advectionHandle().gravity(phaseIdx)[ivLocalIdx];
             }
             // surface grids
             else
             {
                 if (!localFaceData.isOutsideFace())
                 {
-                    secondaryTij_ = &dataHandle.advectionT()[ivLocalIdx];
+                    secondaryTij_ = &dataHandle.advectionHandle().advectionT()[ivLocalIdx];
                     if (enableGravity)
                         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                            g_[phaseIdx] = dataHandle.gravity(phaseIdx)[ivLocalIdx];
+                            g_[phaseIdx] = dataHandle.advectionHandle().gravity(phaseIdx)[ivLocalIdx];
                 }
                 else
                 {
                     const auto idxInOutsideFaces = localFaceData.scvfLocalOutsideScvfIndex();
-                    secondaryTij_ = &dataHandle.advectionTout()[ivLocalIdx][idxInOutsideFaces];
+                    secondaryTij_ = &dataHandle.advectionHandle().advectionTout()[ivLocalIdx][idxInOutsideFaces];
                     if (enableGravity)
                         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                            g_[phaseIdx] = dataHandle.gravityOutside(phaseIdx)[ivLocalIdx][idxInOutsideFaces];
+                            g_[phaseIdx] = dataHandle.advectionHandle().gravityOutside(phaseIdx)[ivLocalIdx][idxInOutsideFaces];
                 }
             }
         }

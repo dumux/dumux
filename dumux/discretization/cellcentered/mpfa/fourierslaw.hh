@@ -131,15 +131,15 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             switchFluxSign_ = localFaceData.isOutsideFace();
 
             // store pointer to the temperature vector of this iv
-            primaryTj_ = &dataHandle.temperatures();
+            primaryTj_ = &dataHandle.heatConductionHandle().temperatures();
 
             const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
             if (dim == dimWorld)
-                primaryTij_ = &dataHandle.heatConductionT()[ivLocalIdx];
+                primaryTij_ = &dataHandle.heatConductionHandle().heatConductionT()[ivLocalIdx];
             else
                 primaryTij_ = localFaceData.isOutsideFace()
-                              ? &dataHandle.heatConductionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
-                              : &dataHandle.heatConductionT()[ivLocalIdx];
+                              ? &dataHandle.heatConductionHandle().heatConductionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
+                              : &dataHandle.heatConductionHandle().heatConductionT()[ivLocalIdx];
         }
 
         /*!
@@ -161,15 +161,15 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             switchFluxSign_ = localFaceData.isOutsideFace();
 
             // store pointer to the temperature vector of this iv
-            secondaryTj_ = &dataHandle.temperatures();
+            secondaryTj_ = &dataHandle.heatConductionHandle().temperatures();
 
             const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
             if (dim == dimWorld)
                 secondaryTij_ = &dataHandle.heatConductionT()[ivLocalIdx];
             else
                 secondaryTij_ = localFaceData.isOutsideFace()
-                                ? &dataHandle.heatConductionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
-                                : &dataHandle.heatConductionT()[ivLocalIdx];
+                                ? &dataHandle.heatConductionHandle().heatConductionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
+                                : &dataHandle.heatConductionHandle().heatConductionT()[ivLocalIdx];
         }
 
         //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions (primary type)

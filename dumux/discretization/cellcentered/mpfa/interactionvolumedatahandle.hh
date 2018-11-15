@@ -179,10 +179,29 @@ class HeatConductionDataHandle<MatVecTraits, PhysicsTraits, false> : public Empt
  */
 template<class MVT, class PT>
 class InteractionVolumeDataHandle
-: public AdvectionDataHandle<MVT, PT, PT::enableAdvection>
-, public DiffusionDataHandle<MVT, PT, PT::enableMolecularDiffusion>
-, public HeatConductionDataHandle<MVT, PT, PT::enableHeatConduction>
-{};
+{
+    using AdvectionHandle = AdvectionDataHandle<MVT, PT, PT::enableAdvection>;
+    using DiffusionHandle = DiffusionDataHandle<MVT, PT, PT::enableMolecularDiffusion>;
+    using HeatConductionHandle = HeatConductionDataHandle<MVT, PT, PT::enableHeatConduction>;
+public:
+
+    //! return references to the handle containing data related to advection
+    const AdvectionHandle& advectionHandle() const { return advectionHandle_; }
+    AdvectionHandle& advectionHandle() { return advectionHandle_; }
+
+    //! return references to the handle containing data related to diffusion
+    const DiffusionHandle& diffusionHandle() const { return diffusionHandle_; }
+    DiffusionHandle& diffusionHandle() { return diffusionHandle_; }
+
+    //! return references to the handle containing data related to heat conduction
+    const HeatConductionHandle& heatConductionHandle() const { return heatConductionHandle_; }
+    HeatConductionHandle& heatConductionHandle() { return heatConductionHandle_; }
+
+private:
+    AdvectionHandle advectionHandle_;
+    DiffusionHandle diffusionHandle_;
+    HeatConductionHandle heatConductionHandle_;
+};
 
 } // end namespace Dumux
 

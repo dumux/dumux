@@ -136,15 +136,15 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             switchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutsideFace();
 
             // store pointer to the mole fraction vector of this iv
-            primaryXj_[phaseIdx][compIdx] = &dataHandle.moleFractions(phaseIdx, compIdx);
+            primaryXj_[phaseIdx][compIdx] = &dataHandle.diffusionHandle().moleFractions(phaseIdx, compIdx);
 
             const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
             if (dim == dimWorld)
-                primaryTij_[phaseIdx][compIdx] = &dataHandle.diffusionT()[ivLocalIdx];
+                primaryTij_[phaseIdx][compIdx] = &dataHandle.diffusionHandle().diffusionT()[ivLocalIdx];
             else
                 primaryTij_[phaseIdx][compIdx] = localFaceData.isOutsideFace()
-                                                 ? &dataHandle.diffusionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
-                                                 : &dataHandle.diffusionT()[ivLocalIdx];
+                                                 ? &dataHandle.diffusionHandle().diffusionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
+                                                 : &dataHandle.diffusionHandle().diffusionT()[ivLocalIdx];
         }
 
         /*!
@@ -167,15 +167,15 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             switchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutsideFace();
 
             // store pointer to the mole fraction vector of this iv
-            secondaryXj_[phaseIdx][compIdx] = &dataHandle.moleFractions(phaseIdx, compIdx);
+            secondaryXj_[phaseIdx][compIdx] = &dataHandle.diffusionHandle().moleFractions(phaseIdx, compIdx);
 
             const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
             if (dim == dimWorld)
-                secondaryTij_[phaseIdx][compIdx] = &dataHandle.diffusionT()[ivLocalIdx];
+                secondaryTij_[phaseIdx][compIdx] = &dataHandle.diffusionHandle().diffusionT()[ivLocalIdx];
             else
                 secondaryTij_[phaseIdx][compIdx] = localFaceData.isOutsideFace()
-                                                   ? &dataHandle.diffusionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
-                                                   : &dataHandle.diffusionT()[ivLocalIdx];
+                                                   ? &dataHandle.diffusionHandle().diffusionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
+                                                   : &dataHandle.diffusionHandle().diffusionT()[ivLocalIdx];
         }
 
         //! In the interaction volume-local system of eq we have one unknown per face.
