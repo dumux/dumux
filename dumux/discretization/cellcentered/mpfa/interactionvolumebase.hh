@@ -59,16 +59,11 @@ namespace Dumux
  * \brief Base class for the interaction volumes of mpfa methods. It defines
  *        the interface and actual implementations should derive from this class.
  *
- * \tparam Impl The actual implementation of the interaction volume
  * \tparam T The traits class to be used
  */
-template< class Impl, class T >
+template< class T >
 class CCMpfaInteractionVolumeBase
 {
-    // Curiously recurring template pattern
-    Impl& asImp() { return static_cast<Impl&>(*this); }
-    const Impl& asImp() const { return static_cast<const Impl&>(*this); }
-
     using GridView = typename T::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -86,50 +81,50 @@ public:
     void setUpLocalScope(const typename Traits::IndexSet& indexSet,
                          const Problem& problem,
                          const FVElementGeometry& fvGeometry)
-    { asImp().setUpLocalScope(); }
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a setUpLocalScope() function"); }
 
     //! returns the number of "primary" scvfs of this interaction volume
     std::size_t numFaces() const
-    { return asImp().numFaces(); }
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a numFaces() function"); }
 
     //! returns the number of intermediate unknowns within this interaction volume
     std::size_t numUnknowns() const
-    { return asImp().numUnknowns(); }
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a numUnknowns() function"); }
 
     //! returns the number of (in this context) known solution values within this interaction volume
     std::size_t numKnowns() const
-    { return asImp().numKnowns(); }
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a numKnowns() function"); }
 
     //! returns the number of scvs embedded in this interaction volume
     std::size_t numScvs() const
-    { return asImp().numScvs(); }
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a numScvs() function"); }
 
     //! Returns a reference to the container with the local face data. The actual type of
     //! the container depends on the interaction volume implementation. At this point we throw
     //! an exception and force the implementation to overload this function.
     const std::vector<typename Traits::LocalFaceData>& localFaceData() const
-    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a localFaceData() funtion"); }
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a localFaceData() function"); }
 
     //! returns the cell-stencil of this interaction volume
     const NodalStencilType& stencil() const
-    { return asImp().stencil(); }
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a stencil() function"); }
 
     //! returns the local scvf entity corresponding to a given iv-local scvf idx
     const LocalScvfType& localScvf(LocalIndexType ivLocalScvfIdx) const
-    { return asImp().localScvf(ivLocalScvfIdx); }
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a localScvf() function"); }
 
     //! returns the local scv entity corresponding to a given iv-local scv idx
     const LocalScvType& localScv(LocalIndexType ivLocalScvIdx) const
-    { return asImp().localScv(ivLocalScvIdx); }
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a localScv() function"); }
 
     //! returns the element in which the scv with the given local idx is embedded in
     const Element& element(LocalIndexType ivLocalScvIdx) const
-    { return asImp().element(); }
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide an element() function"); }
 
     //! returns the number of interaction volumes living around a vertex
     template< class NodalIndexSet >
     static std::size_t numIVAtVertex(const NodalIndexSet& nodalIndexSet)
-    { return Impl::numIVAtVertex(nodalIndexSet); }
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a numIVAtVertex() function"); }
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf
@@ -141,7 +136,7 @@ public:
                                ScvfIndexMap& scvfIndexMap,
                                const NodalIndexSet& nodalIndexSet,
                                const FlipScvfIndexSet& flipScvfIndexSet)
-    { Impl::addIVIndexSets(ivIndexSetContainer, scvfIndexMap, nodalIndexSet, flipScvfIndexSet); }
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide an addIVIndexSets() function"); }
 };
 
 } // end namespace Dumux

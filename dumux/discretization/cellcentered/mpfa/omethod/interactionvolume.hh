@@ -102,7 +102,7 @@ public:
  */
 template< class Traits >
 class CCMpfaOInteractionVolume
-      : public CCMpfaInteractionVolumeBase< CCMpfaOInteractionVolume<Traits>, Traits >
+: public CCMpfaInteractionVolumeBase< Traits >
 {
     using GridView = typename Traits::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
