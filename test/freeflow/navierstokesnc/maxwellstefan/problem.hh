@@ -44,7 +44,10 @@ class MaxwellStefanNCTestProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(MaxwellStefanNCTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+// Create new type tags
+namespace TTag {
+struct MaxwellStefanNCTest { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
+} // end namespace TTag
 
 SET_INT_PROP(MaxwellStefanNCTest, ReplaceCompEqIdx, 0);
 

@@ -139,8 +139,11 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the implicit the isothermal & non-isothermal one phase n component problems
-NEW_TYPE_TAG(OnePNC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(OnePNCNI, INHERITS_FROM(OnePNC));
+// Create new type tags
+namespace TTag {
+struct OnePNC { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+struct OnePNCNI { using InheritsFrom = std::tuple<OnePNC>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal single phase model

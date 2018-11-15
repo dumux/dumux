@@ -111,10 +111,14 @@ struct OnePVolumeVariablesTraits
 };
 
 namespace Properties {
+// Create new type tags
+namespace TTag {
 //! The type tags for the isothermal single phase model
-NEW_TYPE_TAG(OneP, INHERITS_FROM(PorousMediumFlow));
+struct OneP { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+
 //! The type tags for the non-isothermal single phase model
-NEW_TYPE_TAG(OnePNI, INHERITS_FROM(OneP));
+struct OnePNI { using InheritsFrom = std::tuple<OneP>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal single phase model

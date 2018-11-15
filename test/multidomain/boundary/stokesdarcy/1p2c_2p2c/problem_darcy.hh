@@ -42,11 +42,14 @@ class DarcySubProblem;
 
 namespace Properties
 {
+// Create new type tags
+namespace TTag {
 #if !NONISOTHERMAL
-NEW_TYPE_TAG(DarcyTwoPTwoC, INHERITS_FROM(CCTpfaModel, TwoPTwoC));
+struct DarcyTwoPTwoC { using InheritsFrom = std::tuple<TwoPTwoC, CCTpfaModel>; };
 #else
-NEW_TYPE_TAG(DarcyTwoPTwoC, INHERITS_FROM(CCTpfaModel, TwoPTwoCNI));
+struct DarcyTwoPTwoC { using InheritsFrom = std::tuple<TwoPTwoCNI, CCTpfaModel>; };
 #endif
+} // end namespace TTag
 
 // Set the problem property
 SET_TYPE_PROP(DarcyTwoPTwoC, Problem, Dumux::DarcySubProblem<TypeTag>);

@@ -46,7 +46,10 @@ class TwoPSubProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(TwoPSub, INHERITS_FROM(CCTpfaModel, TwoP));
+// Create new type tags
+namespace TTag {
+struct TwoPSub { using InheritsFrom = std::tuple<TwoP, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the fluid system for TwoPSubProblem
 SET_PROP(TwoPSub, FluidSystem)

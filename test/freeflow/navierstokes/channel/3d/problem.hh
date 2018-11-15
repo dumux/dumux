@@ -51,7 +51,10 @@ class ThreeDChannelTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(ThreeDChannelTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+// Create new type tags
+namespace TTag {
+struct ThreeDChannelTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+} // end namespace TTag
 
 // the fluid system
 SET_PROP(ThreeDChannelTest, FluidSystem)

@@ -51,7 +51,10 @@ class SoilProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(Soil, INHERITS_FROM(CCTpfaModel, RichardsNC));
+// Create new type tags
+namespace TTag {
+struct Soil { using InheritsFrom = std::tuple<RichardsNC, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(Soil, Grid, Dune::UGGrid<3>);

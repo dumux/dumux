@@ -131,8 +131,11 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(TwoPTwoC, INHERITS_FROM(TwoPNC));
-NEW_TYPE_TAG(TwoPTwoCNI, INHERITS_FROM(TwoPTwoC));
+// Create new type tags
+namespace TTag {
+struct TwoPTwoC { using InheritsFrom = std::tuple<TwoPNC>; };
+struct TwoPTwoCNI { using InheritsFrom = std::tuple<TwoPTwoC>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property values

@@ -45,7 +45,10 @@ template <class TypeTag> class RootProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(Root, INHERITS_FROM(CCTpfaModel, OnePNC));
+// Create new type tags
+namespace TTag {
+struct Root { using InheritsFrom = std::tuple<OnePNC, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(Root, Grid, Dune::FoamGrid<1, 3>);

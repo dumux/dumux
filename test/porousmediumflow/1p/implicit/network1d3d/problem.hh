@@ -51,9 +51,12 @@ class TubesTestProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(TubesTest, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(TubesTestCCTpfa, INHERITS_FROM(CCTpfaModel, TubesTest));
-NEW_TYPE_TAG(TubesTestBox, INHERITS_FROM(BoxModel, TubesTest));
+// Create new type tags
+namespace TTag {
+struct TubesTest { using InheritsFrom = std::tuple<OneP>; };
+struct TubesTestCCTpfa { using InheritsFrom = std::tuple<TubesTest, CCTpfaModel>; };
+struct TubesTestBox { using InheritsFrom = std::tuple<TubesTest, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 #if HAVE_DUNE_FOAMGRID

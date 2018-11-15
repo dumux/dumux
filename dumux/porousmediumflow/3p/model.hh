@@ -129,10 +129,12 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
+namespace TTag {
 //! The type tags for the isothermal three-phase model
-NEW_TYPE_TAG(ThreeP, INHERITS_FROM(PorousMediumFlow));
+struct ThreeP { using InheritsFrom = std::tuple<PorousMediumFlow>; };
 //! The type tags for the non-isothermal three-phase model
-NEW_TYPE_TAG(ThreePNI, INHERITS_FROM(ThreeP));
+struct ThreePNI { using InheritsFrom = std::tuple<ThreeP>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Properties for the isothermal 3p model

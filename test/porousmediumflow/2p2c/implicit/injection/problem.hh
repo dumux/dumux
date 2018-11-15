@@ -46,10 +46,13 @@ template <class TypeTag>
 class InjectionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Injection, INHERITS_FROM(TwoPTwoC));
-NEW_TYPE_TAG(InjectionBox, INHERITS_FROM(BoxModel, Injection));
-NEW_TYPE_TAG(InjectionCCTpfa, INHERITS_FROM(CCTpfaModel, Injection));
-NEW_TYPE_TAG(InjectionCCMpfa, INHERITS_FROM(CCMpfaModel, Injection));
+// Create new type tags
+namespace TTag {
+struct Injection { using InheritsFrom = std::tuple<TwoPTwoC>; };
+struct InjectionBox { using InheritsFrom = std::tuple<Injection, BoxModel>; };
+struct InjectionCCTpfa { using InheritsFrom = std::tuple<Injection, CCTpfaModel>; };
+struct InjectionCCMpfa { using InheritsFrom = std::tuple<Injection, CCMpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(Injection, Grid, Dune::YaspGrid<2>);

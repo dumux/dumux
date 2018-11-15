@@ -119,8 +119,11 @@ struct OneEqModelTraits : RANSModelTraits<dimension>
 // default property values for the isothermal Spalart-Allmaras model
 ///////////////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal Spalart-Allmaras model
-NEW_TYPE_TAG(OneEq, INHERITS_FROM(RANS));
+struct OneEq { using InheritsFrom = std::tuple<RANS>; };
+} // end namespace TTag
 
 //!< states some specifics of the isothermal Spalart-Allmaras model
 SET_PROP(OneEq, ModelTraits)
@@ -176,8 +179,11 @@ SET_TYPE_PROP(OneEq, IOFields, OneEqIOFields);
 // default property values for the non-isothermal Spalart-Allmaras model
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal Spalart-Allmaras model
-NEW_TYPE_TAG(OneEqNI, INHERITS_FROM(RANSNI));
+struct OneEqNI { using InheritsFrom = std::tuple<RANSNI>; };
+} // end namespace TTag
 
 //! The model traits of the non-isothermal model
 SET_PROP(OneEqNI, ModelTraits)

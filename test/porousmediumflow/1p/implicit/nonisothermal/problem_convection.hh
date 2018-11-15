@@ -49,10 +49,13 @@ class OnePNIConvectionProblem;
 namespace Properties
 {
 
-NEW_TYPE_TAG(OnePNIConvection, INHERITS_FROM(OnePNI));
-NEW_TYPE_TAG(OnePNIConvectionBox, INHERITS_FROM(BoxModel, OnePNIConvection));
-NEW_TYPE_TAG(OnePNIConvectionCCTpfa, INHERITS_FROM(CCTpfaModel, OnePNIConvection));
-NEW_TYPE_TAG(OnePNIConvectionCCMpfa, INHERITS_FROM(CCMpfaModel, OnePNIConvection));
+// Create new type tags
+namespace TTag {
+struct OnePNIConvection { using InheritsFrom = std::tuple<OnePNI>; };
+struct OnePNIConvectionBox { using InheritsFrom = std::tuple<OnePNIConvection, BoxModel>; };
+struct OnePNIConvectionCCTpfa { using InheritsFrom = std::tuple<OnePNIConvection, CCTpfaModel>; };
+struct OnePNIConvectionCCMpfa { using InheritsFrom = std::tuple<OnePNIConvection, CCMpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(OnePNIConvection, Grid, Dune::YaspGrid<1>);

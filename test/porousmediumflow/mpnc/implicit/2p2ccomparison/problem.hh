@@ -50,9 +50,12 @@ template <class TypeTag>
 class MPNCComparisonProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(MPNCComparison, INHERITS_FROM(MPNC));
-NEW_TYPE_TAG(MPNCComparisonBox, INHERITS_FROM(BoxModel, MPNCComparison));
-NEW_TYPE_TAG(MPNCComparisonCC, INHERITS_FROM(CCTpfaModel, MPNCComparison));
+// Create new type tags
+namespace TTag {
+struct MPNCComparison { using InheritsFrom = std::tuple<MPNC>; };
+struct MPNCComparisonBox { using InheritsFrom = std::tuple<MPNCComparison, BoxModel>; };
+struct MPNCComparisonCC { using InheritsFrom = std::tuple<MPNCComparison, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(MPNCComparison, Grid, Dune::YaspGrid<2>);

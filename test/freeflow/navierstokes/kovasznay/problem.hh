@@ -41,7 +41,10 @@ class KovasznayTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(KovasznayTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+// Create new type tags
+namespace TTag {
+struct KovasznayTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+} // end namespace TTag
 
 // the fluid system
 SET_PROP(KovasznayTest, FluidSystem)

@@ -49,9 +49,12 @@ template <class TypeTag>
 class DissolutionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Dissolution, INHERITS_FROM(TwoPNCMin));
-NEW_TYPE_TAG(DissolutionBox, INHERITS_FROM(BoxModel, Dissolution));
-NEW_TYPE_TAG(DissolutionCCTpfa, INHERITS_FROM(CCTpfaModel, Dissolution));
+// Create new type tags
+namespace TTag {
+struct Dissolution { using InheritsFrom = std::tuple<TwoPNCMin>; };
+struct DissolutionBox { using InheritsFrom = std::tuple<Dissolution, BoxModel>; };
+struct DissolutionCCTpfa { using InheritsFrom = std::tuple<Dissolution, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(Dissolution, Grid, Dune::YaspGrid<2>);

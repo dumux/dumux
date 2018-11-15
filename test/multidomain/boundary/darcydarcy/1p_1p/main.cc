@@ -60,10 +60,13 @@
 namespace Dumux {
 namespace Properties {
 
-NEW_TYPE_TAG(OnePSub, INHERITS_FROM(CCTpfaModel, OneP));
+// Create new type tags
+namespace TTag {
+struct OnePSub { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 // differentiate between the two subproblems
-NEW_TYPE_TAG(OnePSub0, INHERITS_FROM(OnePSub));
-NEW_TYPE_TAG(OnePSub1, INHERITS_FROM(OnePSub));
+struct OnePSub0 { using InheritsFrom = std::tuple<OnePSub>; };
+struct OnePSub1 { using InheritsFrom = std::tuple<OnePSub>; };
+} // end namespace TTag
 
 // the coupling manager
 SET_TYPE_PROP(OnePSub, CouplingManager,

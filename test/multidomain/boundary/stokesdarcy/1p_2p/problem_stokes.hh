@@ -37,7 +37,10 @@ class StokesSubProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(StokesOneP, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+// Create new type tags
+namespace TTag {
+struct StokesOneP { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(StokesOneP, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);

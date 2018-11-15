@@ -56,7 +56,10 @@ namespace Properties {
 
 // we need to derive first from twop and then from the box-dfm Model
 // because the flux variables cache type of TwoP is overwritten in BoxDfmModel
-NEW_TYPE_TAG(TwoPIncompressibleBoxDfm, INHERITS_FROM(TwoP, BoxDfmModel));
+// Create new type tags
+namespace TTag {
+struct TwoPIncompressibleBoxDfm { using InheritsFrom = std::tuple<BoxDfmModel, TwoP>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(TwoPIncompressibleBoxDfm, Grid, GRIDTYPE);

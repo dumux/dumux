@@ -47,7 +47,10 @@ namespace Properties {
 
 //! Type tag for the box scheme with coupling to
 //! another sub-domain living on the grid facets.
-NEW_TYPE_TAG(BoxFacetCouplingModel, INHERITS_FROM(BoxModel));
+// Create new type tags
+namespace TTag {
+struct BoxFacetCouplingModel { using InheritsFrom = std::tuple<BoxModel>; };
+} // end namespace TTag
 
 //! Use the box local residual for models with facet coupling
 SET_TYPE_PROP(BoxFacetCouplingModel, BaseLocalResidual, BoxFacetCouplingLocalResidual<TypeTag>);

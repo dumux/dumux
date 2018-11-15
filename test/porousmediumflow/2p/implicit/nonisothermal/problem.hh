@@ -58,9 +58,12 @@ namespace Dumux {
 template <class TypeTag> class InjectionProblem2PNI;
 
 namespace Properties {
-NEW_TYPE_TAG(Injection2PNITypeTag, INHERITS_FROM(TwoPNI));
-NEW_TYPE_TAG(InjectionBox2PNITypeTag, INHERITS_FROM(BoxModel, Injection2PNITypeTag));
-NEW_TYPE_TAG(InjectionCC2PNITypeTag, INHERITS_FROM(CCTpfaModel, Injection2PNITypeTag));
+// Create new type tags
+namespace TTag {
+struct Injection2PNITypeTag { using InheritsFrom = std::tuple<TwoPNI>; };
+struct InjectionBox2PNITypeTag { using InheritsFrom = std::tuple<Injection2PNITypeTag, BoxModel>; };
+struct InjectionCC2PNITypeTag { using InheritsFrom = std::tuple<Injection2PNITypeTag, CCTpfaModel>; };
+} // end namespace TTag
 
 // Obtain grid type from COMPILE_DEFINITIONS
 SET_TYPE_PROP(Injection2PNITypeTag, Grid, GRIDTYPE);

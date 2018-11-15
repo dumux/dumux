@@ -46,7 +46,10 @@ class OnePSubProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(OnePSub, INHERITS_FROM(CCTpfaModel, OneP));
+// Create new type tags
+namespace TTag {
+struct OnePSub { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
+} // end namespace TTag
 
 // The fluid phase consists of one constant component
 SET_TYPE_PROP(OnePSub,

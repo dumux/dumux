@@ -51,9 +51,12 @@ template <class TypeTag>
 class ColumnProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Column, INHERITS_FROM(ThreePThreeCNI));
-NEW_TYPE_TAG(ColumnBox, INHERITS_FROM(BoxModel, Column));
-NEW_TYPE_TAG(ColumnCCTpfa, INHERITS_FROM(CCTpfaModel, Column));
+// Create new type tags
+namespace TTag {
+struct Column { using InheritsFrom = std::tuple<ThreePThreeCNI>; };
+struct ColumnBox { using InheritsFrom = std::tuple<Column, BoxModel>; };
+struct ColumnCCTpfa { using InheritsFrom = std::tuple<Column, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(Column, Grid, Dune::YaspGrid<2>);

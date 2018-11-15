@@ -53,9 +53,12 @@ class TissueProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(Tissue, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(TissueCC, INHERITS_FROM(CCTpfaModel, Tissue));
-NEW_TYPE_TAG(TissueBox, INHERITS_FROM(BoxModel, Tissue));
+// Create new type tags
+namespace TTag {
+struct Tissue { using InheritsFrom = std::tuple<OneP>; };
+struct TissueCC { using InheritsFrom = std::tuple<Tissue, CCTpfaModel>; };
+struct TissueBox { using InheritsFrom = std::tuple<Tissue, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(Tissue, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);

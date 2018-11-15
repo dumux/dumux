@@ -53,9 +53,12 @@ template <class TypeTag>
 class ObstacleProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Obstacle, INHERITS_FROM(MPNC));
-NEW_TYPE_TAG(ObstacleBox, INHERITS_FROM(BoxModel, Obstacle));
-NEW_TYPE_TAG(ObstacleCC, INHERITS_FROM(CCTpfaModel, Obstacle));
+// Create new type tags
+namespace TTag {
+struct Obstacle { using InheritsFrom = std::tuple<MPNC>; };
+struct ObstacleBox { using InheritsFrom = std::tuple<Obstacle, BoxModel>; };
+struct ObstacleCC { using InheritsFrom = std::tuple<Obstacle, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(Obstacle, Grid, Dune::YaspGrid<2>);

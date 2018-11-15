@@ -42,8 +42,11 @@ template<class TypeTag> class OnePBulkProblem;
 
 namespace Properties {
 // create the type tag nodes
-NEW_TYPE_TAG(OnePBulk, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePBulkTpfa, INHERITS_FROM(OnePBulk, CCTpfaFacetCouplingModel));
+// Create new type tags
+namespace TTag {
+struct OnePBulk { using InheritsFrom = std::tuple<OneP>; };
+struct OnePBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePBulk>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(OnePBulk, Grid, Dune::ALUGrid<3, 3, Dune::simplex, Dune::nonconforming>);

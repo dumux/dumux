@@ -180,8 +180,11 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the implicit isothermal one-phase two-component problems
-NEW_TYPE_TAG(Richards, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(RichardsNI, INHERITS_FROM(Richards));
+// Create new type tags
+namespace TTag {
+struct Richards { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+struct RichardsNI { using InheritsFrom = std::tuple<Richards>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Properties values

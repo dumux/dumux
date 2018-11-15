@@ -32,8 +32,10 @@
 namespace Dumux {
 namespace Properties {
 
+namespace TTag {
 //! Type tag for numeric models.
-NEW_TYPE_TAG(GridProperties);
+struct GridProperties {};
+}
 
 //! Use the leaf grid view if not defined otherwise
 SET_TYPE_PROP(GridProperties, GridView, typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);

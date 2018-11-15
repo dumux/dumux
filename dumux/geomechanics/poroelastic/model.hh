@@ -67,7 +67,10 @@ struct PoroElasticModelTraits
 namespace Properties {
 
 //! Type tag for the poro-elastic geomechanical model
-NEW_TYPE_TAG(PoroElastic, INHERITS_FROM(Elastic));
+// Create new type tags
+namespace TTag {
+struct PoroElastic { using InheritsFrom = std::tuple<Elastic>; };
+} // end namespace TTag
 
 //! Use the local residual of the poro-elastic model
 SET_TYPE_PROP(PoroElastic, LocalResidual, PoroElasticLocalResidual<TypeTag>);

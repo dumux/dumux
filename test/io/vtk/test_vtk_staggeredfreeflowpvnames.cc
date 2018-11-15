@@ -58,37 +58,40 @@
 namespace Dumux {
 namespace Properties {
 
-NEW_TYPE_TAG(StaggeredPVNamesTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel));
+// Create new type tags
+namespace TTag {
+struct StaggeredPVNamesTestTypeTag { using InheritsFrom = std::tuple<StaggeredFreeFlowModel>; };
 
-NEW_TYPE_TAG(NavierStokesPVNameTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, NavierStokes));
-NEW_TYPE_TAG(NavierStokesNIPVNameTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, NavierStokesNI));
-NEW_TYPE_TAG(NavierStokesNCPVNameTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, NavierStokesNC));
-NEW_TYPE_TAG(NavierStokesNCNIPVNameTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, NavierStokesNCNI));
+struct NavierStokesPVNameTypeTag { using InheritsFrom = std::tuple<NavierStokes, StaggeredPVNamesTestTypeTag>; };
+struct NavierStokesNIPVNameTypeTag { using InheritsFrom = std::tuple<NavierStokesNI, StaggeredPVNamesTestTypeTag>; };
+struct NavierStokesNCPVNameTypeTag { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredPVNamesTestTypeTag>; };
+struct NavierStokesNCNIPVNameTypeTag { using InheritsFrom = std::tuple<NavierStokesNCNI, StaggeredPVNamesTestTypeTag>; };
 
-NEW_TYPE_TAG(KEpsilonNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KEpsilon));
-NEW_TYPE_TAG(KEpsilonNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KEpsilonNI));
-NEW_TYPE_TAG(KEpsilonNCNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KEpsilonNC));
-NEW_TYPE_TAG(KEpsilonNCNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KEpsilonNCNI));
+struct KEpsilonNameTestTypeTag { using InheritsFrom = std::tuple<KEpsilon, StaggeredPVNamesTestTypeTag>; };
+struct KEpsilonNINameTestTypeTag { using InheritsFrom = std::tuple<KEpsilonNI, StaggeredPVNamesTestTypeTag>; };
+struct KEpsilonNCNameTestTypeTag { using InheritsFrom = std::tuple<KEpsilonNC, StaggeredPVNamesTestTypeTag>; };
+struct KEpsilonNCNINameTestTypeTag { using InheritsFrom = std::tuple<KEpsilonNCNI, StaggeredPVNamesTestTypeTag>; };
 
-NEW_TYPE_TAG(LowReKEpsilonNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, LowReKEpsilon));
-NEW_TYPE_TAG(LowReKEpsilonNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, LowReKEpsilonNI));
-NEW_TYPE_TAG(LowReKEpsilonNCNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, LowReKEpsilonNC));
-NEW_TYPE_TAG(LowReKEpsilonNCNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, LowReKEpsilonNCNI));
+struct LowReKEpsilonNameTestTypeTag { using InheritsFrom = std::tuple<LowReKEpsilon, StaggeredPVNamesTestTypeTag>; };
+struct LowReKEpsilonNINameTestTypeTag { using InheritsFrom = std::tuple<LowReKEpsilonNI, StaggeredPVNamesTestTypeTag>; };
+struct LowReKEpsilonNCNameTestTypeTag { using InheritsFrom = std::tuple<LowReKEpsilonNC, StaggeredPVNamesTestTypeTag>; };
+struct LowReKEpsilonNCNINameTestTypeTag { using InheritsFrom = std::tuple<LowReKEpsilonNCNI, StaggeredPVNamesTestTypeTag>; };
 
-NEW_TYPE_TAG(KOmegaNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KOmega));
-NEW_TYPE_TAG(KOmegaNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KOmegaNI));
-NEW_TYPE_TAG(KOmegaNCNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KOmegaNC));
-NEW_TYPE_TAG(KOmegaNCNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KOmegaNCNI));
+struct KOmegaNameTestTypeTag { using InheritsFrom = std::tuple<KOmega, StaggeredPVNamesTestTypeTag>; };
+struct KOmegaNINameTestTypeTag { using InheritsFrom = std::tuple<KOmegaNI, StaggeredPVNamesTestTypeTag>; };
+struct KOmegaNCNameTestTypeTag { using InheritsFrom = std::tuple<KOmegaNC, StaggeredPVNamesTestTypeTag>; };
+struct KOmegaNCNINameTestTypeTag { using InheritsFrom = std::tuple<KOmegaNCNI, StaggeredPVNamesTestTypeTag>; };
 
-NEW_TYPE_TAG(OneEqNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, OneEq));
-NEW_TYPE_TAG(OneEqNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, OneEqNI));
-NEW_TYPE_TAG(OneEqNCNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, OneEqNC));
-NEW_TYPE_TAG(OneEqNCNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, OneEqNCNI));
+struct OneEqNameTestTypeTag { using InheritsFrom = std::tuple<OneEq, StaggeredPVNamesTestTypeTag>; };
+struct OneEqNINameTestTypeTag { using InheritsFrom = std::tuple<OneEqNI, StaggeredPVNamesTestTypeTag>; };
+struct OneEqNCNameTestTypeTag { using InheritsFrom = std::tuple<OneEqNC, StaggeredPVNamesTestTypeTag>; };
+struct OneEqNCNINameTestTypeTag { using InheritsFrom = std::tuple<OneEqNCNI, StaggeredPVNamesTestTypeTag>; };
 
-NEW_TYPE_TAG(ZeroEqNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, ZeroEq));
-NEW_TYPE_TAG(ZeroEqNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, ZeroEqNI));
-NEW_TYPE_TAG(ZeroEqNCNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, ZeroEqNC));
-NEW_TYPE_TAG(ZeroEqNCNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, ZeroEqNCNI));
+struct ZeroEqNameTestTypeTag { using InheritsFrom = std::tuple<ZeroEq, StaggeredPVNamesTestTypeTag>; };
+struct ZeroEqNINameTestTypeTag { using InheritsFrom = std::tuple<ZeroEqNI, StaggeredPVNamesTestTypeTag>; };
+struct ZeroEqNCNameTestTypeTag { using InheritsFrom = std::tuple<ZeroEqNC, StaggeredPVNamesTestTypeTag>; };
+struct ZeroEqNCNINameTestTypeTag { using InheritsFrom = std::tuple<ZeroEqNCNI, StaggeredPVNamesTestTypeTag>; };
+} // end namespace TTag
 
 // The fluid system
 SET_PROP(StaggeredPVNamesTestTypeTag, FluidSystem)

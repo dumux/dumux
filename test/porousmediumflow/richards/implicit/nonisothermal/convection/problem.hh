@@ -50,9 +50,12 @@ template <class TypeTag>
 class RichardsNIConvectionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(RichardsNIConvection, INHERITS_FROM(RichardsNI));
-NEW_TYPE_TAG(RichardsNIConvectionBox, INHERITS_FROM(BoxModel, RichardsNIConvection));
-NEW_TYPE_TAG(RichardsNIConvectionCC, INHERITS_FROM(CCTpfaModel, RichardsNIConvection));
+// Create new type tags
+namespace TTag {
+struct RichardsNIConvection { using InheritsFrom = std::tuple<RichardsNI>; };
+struct RichardsNIConvectionBox { using InheritsFrom = std::tuple<RichardsNIConvection, BoxModel>; };
+struct RichardsNIConvectionCC { using InheritsFrom = std::tuple<RichardsNIConvection, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(RichardsNIConvection, Grid, Dune::YaspGrid<2>);

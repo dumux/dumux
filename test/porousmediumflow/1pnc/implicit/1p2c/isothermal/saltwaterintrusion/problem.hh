@@ -38,7 +38,10 @@ template <class TypeTag>
 class SaltWaterIntrusionTestProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(SaltWaterIntrusionTest, INHERITS_FROM(BoxModel, OnePNC));
+// Create new type tags
+namespace TTag {
+struct SaltWaterIntrusionTest { using InheritsFrom = std::tuple<OnePNC, BoxModel>; };
+} // end namespace TTag
 
 // Use a structured yasp grid
 SET_TYPE_PROP(SaltWaterIntrusionTest, Grid, Dune::YaspGrid<2>);

@@ -59,9 +59,12 @@ class RichardsAnalyticalProblem;
 // Specify the properties for the analytical problem
 //////////
 namespace Properties {
-NEW_TYPE_TAG(RichardsAnalytical, INHERITS_FROM(Richards));
-NEW_TYPE_TAG(RichardsAnalyticalBox, INHERITS_FROM(BoxModel, RichardsAnalytical));
-NEW_TYPE_TAG(RichardsAnalyticalCC, INHERITS_FROM(CCTpfaModel, RichardsAnalytical));
+// Create new type tags
+namespace TTag {
+struct RichardsAnalytical { using InheritsFrom = std::tuple<Richards>; };
+struct RichardsAnalyticalBox { using InheritsFrom = std::tuple<RichardsAnalytical, BoxModel>; };
+struct RichardsAnalyticalCC { using InheritsFrom = std::tuple<RichardsAnalytical, CCTpfaModel>; };
+} // end namespace TTag
 
 // Use 2d YaspGrid
 SET_TYPE_PROP(RichardsAnalytical, Grid, Dune::YaspGrid<2>);

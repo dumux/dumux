@@ -56,9 +56,12 @@ template <class TypeTag>
 class HeterogeneousProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Heterogeneous, INHERITS_FROM(TwoPTwoCCO2));
-NEW_TYPE_TAG(HeterogeneousBox, INHERITS_FROM(BoxModel, Heterogeneous));
-NEW_TYPE_TAG(HeterogeneousCCTpfa, INHERITS_FROM(CCTpfaModel, Heterogeneous));
+// Create new type tags
+namespace TTag {
+struct Heterogeneous { using InheritsFrom = std::tuple<TwoPTwoCCO2>; };
+struct HeterogeneousBox { using InheritsFrom = std::tuple<Heterogeneous, BoxModel>; };
+struct HeterogeneousCCTpfa { using InheritsFrom = std::tuple<Heterogeneous, CCTpfaModel>; };
+} // end namespace TTag
 
 //Set the grid type
 SET_TYPE_PROP(Heterogeneous, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
@@ -81,9 +84,12 @@ SET_TYPE_PROP(Heterogeneous, FluidSystem,
 SET_BOOL_PROP(Heterogeneous, UseMoles, false);
 
 #if !ISOTHERMAL
-NEW_TYPE_TAG(HeterogeneousNI, INHERITS_FROM(TwoPTwoCCO2NI));
-NEW_TYPE_TAG(HeterogeneousNIBox, INHERITS_FROM(BoxModel, HeterogeneousNI));
-NEW_TYPE_TAG(HeterogeneousNICCTpfa, INHERITS_FROM(CCTpfaModel, HeterogeneousNI));
+// Create new type tags
+namespace TTag {
+struct HeterogeneousNI { using InheritsFrom = std::tuple<TwoPTwoCCO2NI>; };
+struct HeterogeneousNIBox { using InheritsFrom = std::tuple<HeterogeneousNI, BoxModel>; };
+struct HeterogeneousNICCTpfa { using InheritsFrom = std::tuple<HeterogeneousNI, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(HeterogeneousNI, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);

@@ -73,8 +73,11 @@ template <class TypeTag>
 class EvaporationAtmosphereProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(EvaporationAtmosphere, INHERITS_FROM(MPNCNonequil));
-NEW_TYPE_TAG(EvaporationAtmosphereBox, INHERITS_FROM(BoxModel, EvaporationAtmosphere));
+// Create new type tags
+namespace TTag {
+struct EvaporationAtmosphere { using InheritsFrom = std::tuple<MPNCNonequil>; };
+struct EvaporationAtmosphereBox { using InheritsFrom = std::tuple<EvaporationAtmosphere, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(EvaporationAtmosphere, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);

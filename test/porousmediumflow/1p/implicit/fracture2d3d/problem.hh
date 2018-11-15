@@ -46,10 +46,13 @@ template <class TypeTag>
 class FractureProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Fracture, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(FractureBox, INHERITS_FROM(BoxModel, Fracture));
-NEW_TYPE_TAG(FractureCCTpfa, INHERITS_FROM(CCTpfaModel, Fracture));
-NEW_TYPE_TAG(FractureCCMpfa, INHERITS_FROM(CCMpfaModel, Fracture));
+// Create new type tags
+namespace TTag {
+struct Fracture { using InheritsFrom = std::tuple<OneP>; };
+struct FractureBox { using InheritsFrom = std::tuple<Fracture, BoxModel>; };
+struct FractureCCTpfa { using InheritsFrom = std::tuple<Fracture, CCTpfaModel>; };
+struct FractureCCMpfa { using InheritsFrom = std::tuple<Fracture, CCMpfaModel>; };
+} // end namespace TTag
 
 //! Enable caching (more memory, but faster runtime)
 SET_BOOL_PROP(Fracture, EnableFVGridGeometryCache, true);

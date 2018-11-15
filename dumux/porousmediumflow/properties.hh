@@ -48,7 +48,10 @@ namespace Dumux {
 namespace Properties {
 
 //! Type tag for models involving flow in porous media
-NEW_TYPE_TAG(PorousMediumFlow, INHERITS_FROM(ModelProperties));
+// Create new type tags
+namespace TTag {
+struct PorousMediumFlow { using InheritsFrom = std::tuple<ModelProperties>; };
+} // end namespace TTag
 
 //! The flux variables for models involving flow in porous media
 SET_TYPE_PROP(PorousMediumFlow, FluxVariables, PorousMediumFluxVariables<TypeTag>);

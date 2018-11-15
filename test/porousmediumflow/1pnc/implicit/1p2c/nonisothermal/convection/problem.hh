@@ -50,10 +50,13 @@ class OnePTwoCNIConvectionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTwoCNIConvection, INHERITS_FROM(OnePNCNI));
-NEW_TYPE_TAG(OnePTwoCNIConvectionCCTpfa, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConvection));
-NEW_TYPE_TAG(OnePTwoCNIConvectionCCMpfa, INHERITS_FROM(CCMpfaModel, OnePTwoCNIConvection));
-NEW_TYPE_TAG(OnePTwoCNIConvectionBox, INHERITS_FROM(BoxModel, OnePTwoCNIConvection));
+// Create new type tags
+namespace TTag {
+struct OnePTwoCNIConvection { using InheritsFrom = std::tuple<OnePNCNI>; };
+struct OnePTwoCNIConvectionCCTpfa { using InheritsFrom = std::tuple<OnePTwoCNIConvection, CCTpfaModel>; };
+struct OnePTwoCNIConvectionCCMpfa { using InheritsFrom = std::tuple<OnePTwoCNIConvection, CCMpfaModel>; };
+struct OnePTwoCNIConvectionBox { using InheritsFrom = std::tuple<OnePTwoCNIConvection, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 #if HAVE_UG

@@ -74,8 +74,11 @@ struct TwoPTwoCCO2VolumeVariablesTraits
 
 namespace Properties {
 
-NEW_TYPE_TAG(TwoPTwoCCO2, INHERITS_FROM(TwoPTwoC));
-NEW_TYPE_TAG(TwoPTwoCCO2NI, INHERITS_FROM(TwoPTwoCNI));
+// Create new type tags
+namespace TTag {
+struct TwoPTwoCCO2 { using InheritsFrom = std::tuple<TwoPTwoC>; };
+struct TwoPTwoCCO2NI { using InheritsFrom = std::tuple<TwoPTwoCNI>; };
+} // end namespace TTag
 
 //! the CO2 privarswitch and VolumeVariables properties
 SET_TYPE_PROP(TwoPTwoCCO2, PrimaryVariableSwitch, TwoPTwoCCO2PrimaryVariableSwitch);

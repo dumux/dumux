@@ -42,7 +42,10 @@ class DensityDrivenFlowProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(DensityDrivenFlow, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+// Create new type tags
+namespace TTag {
+struct DensityDrivenFlow { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
+} // end namespace TTag
 
 // Select the fluid system
 SET_PROP(DensityDrivenFlow, FluidSystem)

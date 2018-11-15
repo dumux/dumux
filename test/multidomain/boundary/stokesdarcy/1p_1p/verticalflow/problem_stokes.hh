@@ -40,7 +40,10 @@ class StokesSubProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(StokesOneP, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+// Create new type tags
+namespace TTag {
+struct StokesOneP { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+} // end namespace TTag
 
 // the fluid system
 SET_PROP(StokesOneP, FluidSystem)

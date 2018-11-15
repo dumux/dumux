@@ -49,14 +49,17 @@ template <class TypeTag>
 class FuelCellProblem;
 
 namespace Properties {
+// Create new type tags
+namespace TTag {
 #ifdef NONISOTHERMAL
-NEW_TYPE_TAG(FuelCell, INHERITS_FROM(TwoPNCNI));
-NEW_TYPE_TAG(FuelCellNIBox, INHERITS_FROM(BoxModel, FuelCell));
+struct FuelCell { using InheritsFrom = std::tuple<TwoPNCNI>; };
+struct FuelCellNIBox { using InheritsFrom = std::tuple<FuelCell, BoxModel>; };
 #else
-NEW_TYPE_TAG(FuelCell, INHERITS_FROM(TwoPNC));
-NEW_TYPE_TAG(FuelCellBox, INHERITS_FROM(BoxModel, FuelCell));
-NEW_TYPE_TAG(FuelCellCCTpfa, INHERITS_FROM(CCTpfaModel, FuelCell));
+struct FuelCell { using InheritsFrom = std::tuple<TwoPNC>; };
+struct FuelCellBox { using InheritsFrom = std::tuple<FuelCell, BoxModel>; };
+struct FuelCellCCTpfa { using InheritsFrom = std::tuple<FuelCell, CCTpfaModel>; };
 #endif
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(FuelCell, Grid, Dune::YaspGrid<2>);

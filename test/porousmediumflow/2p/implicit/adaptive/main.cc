@@ -63,10 +63,13 @@
 namespace Dumux {
 namespace Properties {
 //! Type Tags for the adaptive tests
-NEW_TYPE_TAG(TwoPIncompressibleAdaptiveTpfa, INHERITS_FROM(TwoPIncompressibleTpfa));
-NEW_TYPE_TAG(TwoPIncompressibleAdaptiveMpfa, INHERITS_FROM(TwoPIncompressibleMpfa));
-NEW_TYPE_TAG(TwoPIncompressibleAdaptiveBox, INHERITS_FROM(TwoPIncompressibleBox));
-NEW_TYPE_TAG(TwoPAdaptivePointSource, INHERITS_FROM(TwoPIncompressibleAdaptiveTpfa));
+// Create new type tags
+namespace TTag {
+struct TwoPIncompressibleAdaptiveTpfa { using InheritsFrom = std::tuple<TwoPIncompressibleTpfa>; };
+struct TwoPIncompressibleAdaptiveMpfa { using InheritsFrom = std::tuple<TwoPIncompressibleMpfa>; };
+struct TwoPIncompressibleAdaptiveBox { using InheritsFrom = std::tuple<TwoPIncompressibleBox>; };
+struct TwoPAdaptivePointSource { using InheritsFrom = std::tuple<TwoPIncompressibleAdaptiveTpfa>; };
+} // end namespace TTag
 
 //! Use non-conforming refinement in the cell-centered tests, conforming for box
 #if HAVE_DUNE_ALUGRID

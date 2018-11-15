@@ -86,7 +86,10 @@ struct ElasticVolumeVariablesTraits
 namespace Properties {
 
 //! Type tag for the elastic geomechanical model
-NEW_TYPE_TAG(Elastic, INHERITS_FROM(Geomechanics));
+// Create new type tags
+namespace TTag {
+struct Elastic { using InheritsFrom = std::tuple<Geomechanics>; };
+} // end namespace TTag
 
 //! Use the local residual of the elastic model
 SET_TYPE_PROP(Elastic, LocalResidual, ElasticLocalResidual<TypeTag>);

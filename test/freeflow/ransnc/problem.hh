@@ -56,31 +56,34 @@ class FlatPlateNCTestProblem;
 namespace Properties
 {
 
+// Create new type tags
+namespace TTag {
 #if NONISOTHERMAL
   #if LOWREKEPSILON
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNCNI));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<LowReKEpsilonNCNI, StaggeredFreeFlowModel>; };
   #elif KEPSILON
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNCNI));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<KEpsilonNCNI, StaggeredFreeFlowModel>; };
   #elif KOMEGA
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNCNI));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<KOmegaNCNI, StaggeredFreeFlowModel>; };
   #elif ONEEQ
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNCNI));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<OneEqNCNI, StaggeredFreeFlowModel>; };
   #else
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<ZeroEqNCNI, StaggeredFreeFlowModel>; };
   #endif
 #else
   #if LOWREKEPSILON
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNC));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<LowReKEpsilonNC, StaggeredFreeFlowModel>; };
   #elif KEPSILON
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNC));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<KEpsilonNC, StaggeredFreeFlowModel>; };
   #elif KOMEGA
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNC));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<KOmegaNC, StaggeredFreeFlowModel>; };
   #elif ONEEQ
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNC));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<OneEqNC, StaggeredFreeFlowModel>; };
   #else
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<ZeroEqNC, StaggeredFreeFlowModel>; };
   #endif
 #endif
+} // end namespace TTag
 
 // The fluid system
 SET_PROP(FlatPlateNCTest, FluidSystem)

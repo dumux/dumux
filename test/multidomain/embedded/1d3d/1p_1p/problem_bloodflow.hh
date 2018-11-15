@@ -47,9 +47,12 @@ template <class TypeTag> class BloodFlowProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(BloodFlow, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(BloodFlowCC, INHERITS_FROM(CCTpfaModel, BloodFlow));
-NEW_TYPE_TAG(BloodFlowBox, INHERITS_FROM(BoxModel, BloodFlow));
+// Create new type tags
+namespace TTag {
+struct BloodFlow { using InheritsFrom = std::tuple<OneP>; };
+struct BloodFlowCC { using InheritsFrom = std::tuple<BloodFlow, CCTpfaModel>; };
+struct BloodFlowBox { using InheritsFrom = std::tuple<BloodFlow, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(BloodFlow, Grid, Dune::FoamGrid<1, 3>);

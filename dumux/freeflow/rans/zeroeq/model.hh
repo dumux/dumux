@@ -50,8 +50,11 @@ namespace Properties {
 // default property values for the isothermal RANS 0-Eq. model
 ///////////////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes 0-Eq. model
-NEW_TYPE_TAG(ZeroEq, INHERITS_FROM(RANS));
+struct ZeroEq { using InheritsFrom = std::tuple<RANS>; };
+} // end namespace TTag
 
 //! Set the volume variables property
 SET_PROP(ZeroEq, VolumeVariables)
@@ -76,8 +79,11 @@ public:
 // default property values for the non-isothermal RANS 0-Eq. model
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes model
-NEW_TYPE_TAG(ZeroEqNI, INHERITS_FROM(RANSNI));
+struct ZeroEqNI { using InheritsFrom = std::tuple<RANSNI>; };
+} // end namespace TTag
 
 //! Set the volume variables property
 SET_PROP(ZeroEqNI, VolumeVariables)

@@ -113,11 +113,14 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, multi-component isothermal free-flow model
-NEW_TYPE_TAG(NavierStokesNC, INHERITS_FROM(FreeFlow));
+struct NavierStokesNC { using InheritsFrom = std::tuple<FreeFlow>; };
 
 //! The type tag for the single-phase, multi-component non-isothermal free-flow model
-NEW_TYPE_TAG(NavierStokesNCNI, INHERITS_FROM(NavierStokesNC));
+struct NavierStokesNCNI { using InheritsFrom = std::tuple<NavierStokesNC>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values

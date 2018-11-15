@@ -54,9 +54,12 @@ class InfiltrationThreePProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(InfiltrationThreeP, INHERITS_FROM(ThreeP));
-NEW_TYPE_TAG(InfiltrationThreePBox, INHERITS_FROM(BoxModel, InfiltrationThreeP));
-NEW_TYPE_TAG(InfiltrationThreePCCTpfa, INHERITS_FROM(CCTpfaModel, InfiltrationThreeP));
+// Create new type tags
+namespace TTag {
+struct InfiltrationThreeP { using InheritsFrom = std::tuple<ThreeP>; };
+struct InfiltrationThreePBox { using InheritsFrom = std::tuple<InfiltrationThreeP, BoxModel>; };
+struct InfiltrationThreePCCTpfa { using InheritsFrom = std::tuple<InfiltrationThreeP, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(InfiltrationThreeP, Grid, Dune::YaspGrid<2>);

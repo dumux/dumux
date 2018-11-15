@@ -44,7 +44,10 @@ class DarcySubProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DarcyOnePTwoC, INHERITS_FROM(CCTpfaModel, OnePNC));
+// Create new type tags
+namespace TTag {
+struct DarcyOnePTwoC { using InheritsFrom = std::tuple<OnePNC, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the problem property
 SET_TYPE_PROP(DarcyOnePTwoC, Problem, Dumux::DarcySubProblem<TypeTag>);

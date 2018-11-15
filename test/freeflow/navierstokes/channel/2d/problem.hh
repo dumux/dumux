@@ -41,11 +41,14 @@ class ChannelTestProblem;
 
 namespace Properties
 {
+// Create new type tags
+namespace TTag {
 #if !NONISOTHERMAL
-NEW_TYPE_TAG(ChannelTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+struct ChannelTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
 #else
-NEW_TYPE_TAG(ChannelTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNI));
+struct ChannelTest { using InheritsFrom = std::tuple<NavierStokesNI, StaggeredFreeFlowModel>; };
 #endif
+} // end namespace TTag
 
 // the fluid system
 SET_PROP(ChannelTest, FluidSystem)

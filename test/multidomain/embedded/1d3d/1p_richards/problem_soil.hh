@@ -47,9 +47,12 @@ class SoilProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(Soil, INHERITS_FROM(Richards));
-NEW_TYPE_TAG(SoilCC, INHERITS_FROM(CCTpfaModel, Soil));
-NEW_TYPE_TAG(SoilBox, INHERITS_FROM(BoxModel, Soil));
+// Create new type tags
+namespace TTag {
+struct Soil { using InheritsFrom = std::tuple<Richards>; };
+struct SoilCC { using InheritsFrom = std::tuple<Soil, CCTpfaModel>; };
+struct SoilBox { using InheritsFrom = std::tuple<Soil, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(Soil, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);

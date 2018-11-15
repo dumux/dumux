@@ -43,8 +43,11 @@ template<class TypeTag> class OnePFacetProblem;
 
 namespace Properties {
 // create the type tag nodes
-NEW_TYPE_TAG(OnePFacet, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePFacetTpfa, INHERITS_FROM(OnePFacet, CCTpfaFacetCouplingModel));
+// Create new type tags
+namespace TTag {
+struct OnePFacet { using InheritsFrom = std::tuple<OneP>; };
+struct OnePFacetTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePFacet>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(OnePFacet, Grid, Dune::FoamGrid<2, 3>);

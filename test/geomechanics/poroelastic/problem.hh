@@ -41,7 +41,10 @@ template <class TypeTag>
 class PoroElasticProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TestPoroElastic, INHERITS_FROM(BoxModel, PoroElastic));
+// Create new type tags
+namespace TTag {
+struct TestPoroElastic { using InheritsFrom = std::tuple<PoroElastic, BoxModel>; };
+} // end namespace TTag
 // Set the grid type
 SET_TYPE_PROP(TestPoroElastic, Grid, Dune::YaspGrid<2>);
 // Set the problem property

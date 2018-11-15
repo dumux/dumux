@@ -56,7 +56,10 @@ class CCElementBoundaryTypes;
 namespace Properties
 {
 //! Type tag for the staggered scheme.
-NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel));
+// Create new type tags
+namespace TTag {
+struct StaggeredModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
+} // end namespace TTag
 
 //! Set the default global face variables cache vector class
 SET_PROP(StaggeredModel, GridFaceVariables)

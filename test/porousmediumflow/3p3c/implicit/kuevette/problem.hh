@@ -52,9 +52,12 @@ template <class TypeTag>
 class KuevetteProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Kuevette, INHERITS_FROM(ThreePThreeCNI));
-NEW_TYPE_TAG(KuevetteBox, INHERITS_FROM(BoxModel, Kuevette));
-NEW_TYPE_TAG(KuevetteCCTpfa, INHERITS_FROM(CCTpfaModel, Kuevette));
+// Create new type tags
+namespace TTag {
+struct Kuevette { using InheritsFrom = std::tuple<ThreePThreeCNI>; };
+struct KuevetteBox { using InheritsFrom = std::tuple<Kuevette, BoxModel>; };
+struct KuevetteCCTpfa { using InheritsFrom = std::tuple<Kuevette, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(Kuevette, Grid, Dune::YaspGrid<2>);

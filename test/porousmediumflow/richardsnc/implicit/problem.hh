@@ -49,9 +49,12 @@ class RichardsWellTracerProblem;
 
 // Specify the properties for the lens problem
 namespace Properties {
-NEW_TYPE_TAG(RichardsWellTracer, INHERITS_FROM(RichardsNC));
-NEW_TYPE_TAG(RichardsWellTracerBox, INHERITS_FROM(BoxModel, RichardsWellTracer));
-NEW_TYPE_TAG(RichardsWellTracerCC, INHERITS_FROM(CCTpfaModel, RichardsWellTracer));
+// Create new type tags
+namespace TTag {
+struct RichardsWellTracer { using InheritsFrom = std::tuple<RichardsNC>; };
+struct RichardsWellTracerBox { using InheritsFrom = std::tuple<RichardsWellTracer, BoxModel>; };
+struct RichardsWellTracerCC { using InheritsFrom = std::tuple<RichardsWellTracer, CCTpfaModel>; };
+} // end namespace TTag
 
 // Use 2d YaspGrid
 SET_TYPE_PROP(RichardsWellTracer, Grid, Dune::YaspGrid<2>);

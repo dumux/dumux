@@ -54,8 +54,11 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes model
-NEW_TYPE_TAG(RANS, INHERITS_FROM(NavierStokes));
+struct RANS { using InheritsFrom = std::tuple<NavierStokes>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
@@ -90,8 +93,11 @@ SET_TYPE_PROP(RANS, IOFields, RANSIOFields);
 // Property values for non-isothermal Reynolds-averaged Navier-Stokes model
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes model
-NEW_TYPE_TAG(RANSNI, INHERITS_FROM(RANS));
+struct RANSNI { using InheritsFrom = std::tuple<RANS>; };
+} // end namespace TTag
 
 //! The model traits of the non-isothermal model
 SET_PROP(RANSNI, ModelTraits)

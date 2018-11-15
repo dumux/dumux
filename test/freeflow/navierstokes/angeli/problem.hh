@@ -41,7 +41,10 @@ class AngeliTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(AngeliTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+// Create new type tags
+namespace TTag {
+struct AngeliTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+} // end namespace TTag
 
 // the fluid system
 SET_PROP(AngeliTest, FluidSystem)

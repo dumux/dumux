@@ -50,10 +50,13 @@ class OnePTwoCTestProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(OnePTwoCTest, INHERITS_FROM(OnePNC));
-NEW_TYPE_TAG(OnePTwoCTestBox, INHERITS_FROM(BoxModel, OnePTwoCTest));
-NEW_TYPE_TAG(OnePTwoCTestCCTpfa, INHERITS_FROM(CCTpfaModel, OnePTwoCTest));
-NEW_TYPE_TAG(OnePTwoCTestCCMpfa, INHERITS_FROM(CCMpfaModel, OnePTwoCTest));
+// Create new type tags
+namespace TTag {
+struct OnePTwoCTest { using InheritsFrom = std::tuple<OnePNC>; };
+struct OnePTwoCTestBox { using InheritsFrom = std::tuple<OnePTwoCTest, BoxModel>; };
+struct OnePTwoCTestCCTpfa { using InheritsFrom = std::tuple<OnePTwoCTest, CCTpfaModel>; };
+struct OnePTwoCTestCCMpfa { using InheritsFrom = std::tuple<OnePTwoCTest, CCMpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 #if HAVE_UG

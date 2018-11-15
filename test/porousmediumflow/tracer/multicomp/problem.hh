@@ -45,9 +45,12 @@ template <class TypeTag>
 class MaxwellStefanTestProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(MaxwellStefanTest, INHERITS_FROM(Tracer));
-NEW_TYPE_TAG(MaxwellStefanTestCC, INHERITS_FROM(CCTpfaModel, MaxwellStefanTest));
-NEW_TYPE_TAG(MaxwellStefanTestBox, INHERITS_FROM(BoxModel, MaxwellStefanTest));
+// Create new type tags
+namespace TTag {
+struct MaxwellStefanTest { using InheritsFrom = std::tuple<Tracer>; };
+struct MaxwellStefanTestCC { using InheritsFrom = std::tuple<MaxwellStefanTest, CCTpfaModel>; };
+struct MaxwellStefanTestBox { using InheritsFrom = std::tuple<MaxwellStefanTest, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(MaxwellStefanTest, Grid, Dune::YaspGrid<2>);

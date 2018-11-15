@@ -46,7 +46,10 @@ template<class TypeTag>
 class OnePTestProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(IncompressibleTest, INHERITS_FROM(CCTpfaModel, OneP));
+// Create new type tags
+namespace TTag {
+struct IncompressibleTest { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(IncompressibleTest, Grid, Dune::YaspGrid<2>);

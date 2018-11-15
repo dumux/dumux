@@ -139,7 +139,10 @@ struct TwoPOneCNIVolumeVariablesTraits
 
 namespace Properties {
 //! The type tag for the non-isothermal two-phase one-component model.
-NEW_TYPE_TAG(TwoPOneCNI, INHERITS_FROM(PorousMediumFlow));
+// Create new type tags
+namespace TTag {
+struct TwoPOneCNI { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Properties

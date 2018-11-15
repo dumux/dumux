@@ -38,7 +38,9 @@ namespace Dumux {
 namespace Properties {
 
 //! Type tag for numeric models.
-NEW_TYPE_TAG(ModelProperties);
+namespace TTag {
+struct ModelProperties {};
+}
 
 //! Set the default type of scalar values to double
 SET_TYPE_PROP(ModelProperties, Scalar, double);

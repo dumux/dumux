@@ -52,7 +52,10 @@ namespace Dumux {
 namespace Properties {
 
 //! Type tag for the cell-centered mpfa scheme.
-NEW_TYPE_TAG(CCMpfaModel, INHERITS_FROM(FiniteVolumeModel));
+// Create new type tags
+namespace TTag {
+struct CCMpfaModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
+} // end namespace TTag
 
 //! Set the index set type used on the dual grid nodes
 SET_PROP(CCMpfaModel, DualGridNodalIndexSet)

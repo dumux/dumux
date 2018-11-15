@@ -34,7 +34,10 @@ class OnePSingularityProblemTimeDependent;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePSingularityTimeDependentCCTpfa, INHERITS_FROM(OnePSingularityCCTpfa));
+// Create new type tags
+namespace TTag {
+struct OnePSingularityTimeDependentCCTpfa { using InheritsFrom = std::tuple<OnePSingularityCCTpfa>; };
+} // end namespace TTag
 
 // Set the problem property
 SET_TYPE_PROP(OnePSingularityTimeDependentCCTpfa, Problem, OnePSingularityProblemTimeDependent<TypeTag>);

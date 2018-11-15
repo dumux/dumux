@@ -43,7 +43,10 @@ namespace Dumux {
 template<class TypeTag> class TwoPCornerPointTestProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TwoPCornerPoint, INHERITS_FROM(TwoP, CCTpfaModel));
+// Create new type tags
+namespace TTag {
+struct TwoPCornerPoint { using InheritsFrom = std::tuple<CCTpfaModel, TwoP>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(TwoPCornerPoint, Grid, Dune::CpGrid);

@@ -187,7 +187,10 @@ struct ThreePWaterOilVolumeVariablesTraits
 
 namespace Properties {
 
-NEW_TYPE_TAG(ThreePWaterOilNI, INHERITS_FROM(PorousMediumFlow));
+// Create new type tags
+namespace TTag {
+struct ThreePWaterOilNI { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property values

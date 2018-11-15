@@ -57,9 +57,12 @@ class RichardsLensProblem;
 
 // Specify the properties for the lens problem
 namespace Properties {
-NEW_TYPE_TAG(RichardsLens, INHERITS_FROM(Richards));
-NEW_TYPE_TAG(RichardsLensBox, INHERITS_FROM(BoxModel, RichardsLens));
-NEW_TYPE_TAG(RichardsLensCC, INHERITS_FROM(CCTpfaModel, RichardsLens));
+// Create new type tags
+namespace TTag {
+struct RichardsLens { using InheritsFrom = std::tuple<Richards>; };
+struct RichardsLensBox { using InheritsFrom = std::tuple<RichardsLens, BoxModel>; };
+struct RichardsLensCC { using InheritsFrom = std::tuple<RichardsLens, CCTpfaModel>; };
+} // end namespace TTag
 
 #ifndef GRIDTYPE
 // Use 2d YaspGrid

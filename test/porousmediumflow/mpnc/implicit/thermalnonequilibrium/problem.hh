@@ -58,8 +58,11 @@ struct CombustionModelTraits : public MPNCModelTraits<numP, numC, formulation, u
 };
 
 namespace Properties {
-NEW_TYPE_TAG(CombustionOneComponent, INHERITS_FROM(MPNCNonequil));
-NEW_TYPE_TAG(CombustionOneComponentBox, INHERITS_FROM(BoxModel, CombustionOneComponent));
+// Create new type tags
+namespace TTag {
+struct CombustionOneComponent { using InheritsFrom = std::tuple<MPNCNonequil>; };
+struct CombustionOneComponentBox { using InheritsFrom = std::tuple<CombustionOneComponent, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(CombustionOneComponent, Grid, Dune::OneDGrid);

@@ -51,9 +51,9 @@ namespace Properties {
 // Create new type tags
 namespace TTag {
 struct OnePTest { using InheritsFrom = std::tuple<OneP>; };
-struct OnePTestBox { using InheritsFrom = std::tuple<OnePTest, BoxModel>; };
-struct OnePTestCCTpfa { using InheritsFrom = std::tuple<OnePTest, CCTpfaModel>; };
-struct OnePTestCCMpfa { using InheritsFrom = std::tuple<OnePTest, CCMpfaModel>; };
+struct OnePTestBox { using InheritsFrom = std::tuple<BoxModel, OnePTest>; };
+struct OnePTestCCTpfa { using InheritsFrom = std::tuple<CCTpfaModel, OnePTest>; };
+struct OnePTestCCMpfa { using InheritsFrom = std::tuple<CCMpfaModel, OnePTest>; };
 } // end namespace TTag
 
 // Specialize the fluid system type for this type tag

@@ -87,8 +87,11 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(OnePNCMin, INHERITS_FROM(OnePNC));
-NEW_TYPE_TAG(OnePNCMinNI, INHERITS_FROM(OnePNCMin));
+// Create new type tags
+namespace TTag {
+struct OnePNCMin { using InheritsFrom = std::tuple<OnePNC>; };
+struct OnePNCMinNI { using InheritsFrom = std::tuple<OnePNCMin>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags for the isothermal 2pncmin model

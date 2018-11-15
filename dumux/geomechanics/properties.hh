@@ -40,7 +40,10 @@ namespace Dumux {
 namespace Properties {
 
 //! Type tag for geomechanical models
-NEW_TYPE_TAG(Geomechanics, INHERITS_FROM(ModelProperties));
+// Create new type tags
+namespace TTag {
+struct Geomechanics { using InheritsFrom = std::tuple<ModelProperties>; };
+} // end namespace TTag
 
 //! The flux variables cache class for models involving flow in porous media
 SET_TYPE_PROP(Geomechanics, FluxVariablesCache, StressVariablesCache< typename GET_PROP_TYPE(TypeTag, Scalar),

@@ -48,9 +48,12 @@ template <class TypeTag>
 class WaterAirProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(WaterAir, INHERITS_FROM(TwoPTwoCNI));
-NEW_TYPE_TAG(WaterAirBox, INHERITS_FROM(BoxModel, WaterAir));
-NEW_TYPE_TAG(WaterAirCCTpfa, INHERITS_FROM(CCTpfaModel, WaterAir));
+// Create new type tags
+namespace TTag {
+struct WaterAir { using InheritsFrom = std::tuple<TwoPTwoCNI>; };
+struct WaterAirBox { using InheritsFrom = std::tuple<WaterAir, BoxModel>; };
+struct WaterAirCCTpfa { using InheritsFrom = std::tuple<WaterAir, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(WaterAir, Grid, Dune::YaspGrid<2>);

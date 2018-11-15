@@ -151,10 +151,14 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the isothermal two-phase model
-NEW_TYPE_TAG(TwoP, INHERITS_FROM(PorousMediumFlow));
+struct TwoP { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+
 //! The type tag for the non-isothermal two-phase model
-NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP));
+struct TwoPNI { using InheritsFrom = std::tuple<TwoP>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal two-phase model

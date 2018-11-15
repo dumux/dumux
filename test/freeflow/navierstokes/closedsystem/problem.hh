@@ -40,7 +40,10 @@ class ClosedSystemTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(ClosedSystemTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+// Create new type tags
+namespace TTag {
+struct ClosedSystemTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+} // end namespace TTag
 
 // the fluid system
 SET_PROP(ClosedSystemTest, FluidSystem)

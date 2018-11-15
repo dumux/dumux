@@ -43,9 +43,12 @@ class OnePSingularityProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePSingularity, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePSingularityBox, INHERITS_FROM(BoxModel, OnePSingularity));
-NEW_TYPE_TAG(OnePSingularityCCTpfa, INHERITS_FROM(CCTpfaModel, OnePSingularity));
+// Create new type tags
+namespace TTag {
+struct OnePSingularity { using InheritsFrom = std::tuple<OneP>; };
+struct OnePSingularityBox { using InheritsFrom = std::tuple<OnePSingularity, BoxModel>; };
+struct OnePSingularityCCTpfa { using InheritsFrom = std::tuple<OnePSingularity, CCTpfaModel>; };
+} // end namespace TTag
 
 // the fluid system
 SET_PROP(OnePSingularity, FluidSystem)

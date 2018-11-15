@@ -34,7 +34,10 @@ namespace Dumux {
 namespace Properties {
 
 //! Type tag for free-flow models
-NEW_TYPE_TAG(FreeFlow, INHERITS_FROM(ModelProperties));
+// Create new type tags
+namespace TTag {
+struct FreeFlow { using InheritsFrom = std::tuple<ModelProperties>; };
+} // end namespace TTag
 
 //! Use Fourier's Law as default heat conduction type
 SET_TYPE_PROP(FreeFlow, HeatConductionType, FouriersLaw<TypeTag>);

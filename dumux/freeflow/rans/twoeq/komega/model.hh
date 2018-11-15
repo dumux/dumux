@@ -112,8 +112,11 @@ struct KOmegaModelTraits : RANSModelTraits<dimension>
 // default property values for the isothermal k-omega single phase model
 ///////////////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal k-omega model
-NEW_TYPE_TAG(KOmega, INHERITS_FROM(RANS));
+struct KOmega { using InheritsFrom = std::tuple<RANS>; };
+} // end namespace TTag
 
 //! states some specifics of the isothermal k-omega model
 SET_PROP(KOmega, ModelTraits)
@@ -170,8 +173,11 @@ SET_TYPE_PROP(KOmega, IOFields, KOmegaIOFields);
 ///////////////////////////////////////////////////////////////////////////
 
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, non-isothermal k-omega 2-Eq. model
-NEW_TYPE_TAG(KOmegaNI, INHERITS_FROM(RANSNI));
+struct KOmegaNI { using InheritsFrom = std::tuple<RANSNI>; };
+} // end namespace TTag
 
 //! The model traits of the non-isothermal model
 SET_PROP(KOmegaNI, ModelTraits)

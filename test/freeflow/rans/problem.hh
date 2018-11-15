@@ -58,21 +58,24 @@ class PipeLauferProblem;
 
 namespace Properties
 {
+// Create new type tags
+namespace TTag {
 #if NONISOTHERMAL
-NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNI));
+struct PipeLauferProblem { using InheritsFrom = std::tuple<ZeroEqNI, StaggeredFreeFlowModel>; };
 #else
 #if LOWREKEPSILON
-NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilon));
+struct PipeLauferProblem { using InheritsFrom = std::tuple<LowReKEpsilon, StaggeredFreeFlowModel>; };
 #elif KEPSILON
-NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilon));
+struct PipeLauferProblem { using InheritsFrom = std::tuple<KEpsilon, StaggeredFreeFlowModel>; };
 #elif KOMEGA
-NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, KOmega));
+struct PipeLauferProblem { using InheritsFrom = std::tuple<KOmega, StaggeredFreeFlowModel>; };
 #elif ONEEQ
-NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, OneEq));
+struct PipeLauferProblem { using InheritsFrom = std::tuple<OneEq, StaggeredFreeFlowModel>; };
 #else
-NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEq));
+struct PipeLauferProblem { using InheritsFrom = std::tuple<ZeroEq, StaggeredFreeFlowModel>; };
 #endif
 #endif
+} // end namespace TTag
 
 // the fluid system
 SET_PROP(PipeLauferProblem, FluidSystem)

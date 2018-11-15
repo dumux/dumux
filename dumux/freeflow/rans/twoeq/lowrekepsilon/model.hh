@@ -121,8 +121,11 @@ struct LowReKEpsilonModelTraits : RANSModelTraits<dimension>
 // default property values for the isothermal low-Reynolds k-epsilon model
 ///////////////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal low-Reynolds k-epsilon model
-NEW_TYPE_TAG(LowReKEpsilon, INHERITS_FROM(RANS));
+struct LowReKEpsilon { using InheritsFrom = std::tuple<RANS>; };
+} // end namespace TTag
 
 //!< states some specifics of the isothermal low-Reynolds k-epsilon model
 SET_PROP(LowReKEpsilon, ModelTraits)
@@ -178,8 +181,11 @@ SET_TYPE_PROP(LowReKEpsilon, IOFields, LowReKEpsilonIOFields);
 // default property values for the non-isothermal low-Reynolds k-epsilon model
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal low-Reynolds k-epsilon model
-NEW_TYPE_TAG(LowReKEpsilonNI, INHERITS_FROM(RANSNI));
+struct LowReKEpsilonNI { using InheritsFrom = std::tuple<RANSNI>; };
+} // end namespace TTag
 
 //! The model traits of the non-isothermal model
 SET_PROP(LowReKEpsilonNI, ModelTraits)

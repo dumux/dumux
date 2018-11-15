@@ -46,8 +46,11 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tags for the single-phase, multi-component isothermal k-epsilon model
-NEW_TYPE_TAG(KEpsilonNC, INHERITS_FROM(NavierStokesNC));
+struct KEpsilonNC { using InheritsFrom = std::tuple<NavierStokesNC>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values
@@ -130,8 +133,11 @@ SET_TYPE_PROP(KEpsilonNC, IOFields, FreeflowNCIOFields<KEpsilonIOFields, true/*t
 // Property values for non-isothermal multi-component k-epsilon model
 //////////////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tags for the single-phase, multi-component non-isothermal k-epsilon models
-NEW_TYPE_TAG(KEpsilonNCNI, INHERITS_FROM(NavierStokesNCNI));
+struct KEpsilonNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
+} // end namespace TTag
 
 //! The model traits of the non-isothermal model
 SET_PROP(KEpsilonNCNI, ModelTraits)

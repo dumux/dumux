@@ -44,8 +44,11 @@ template<class TypeTag> class OnePEdgeProblem;
 
 namespace Properties {
 // create the type tag nodes
-NEW_TYPE_TAG(OnePEdge, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePEdgeTpfa, INHERITS_FROM(CCTpfaModel, OnePEdge));
+// Create new type tags
+namespace TTag {
+struct OnePEdge { using InheritsFrom = std::tuple<OneP>; };
+struct OnePEdgeTpfa { using InheritsFrom = std::tuple<OnePEdge, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(OnePEdge, Grid, Dune::FoamGrid<1, 3>);

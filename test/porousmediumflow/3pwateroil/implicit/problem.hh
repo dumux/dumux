@@ -48,8 +48,11 @@ template <class TypeTag>
 class SagdProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Sagd, INHERITS_FROM(ThreePWaterOilNI));
-NEW_TYPE_TAG(ThreePWaterOilSagdBox, INHERITS_FROM(BoxModel, Sagd));
+// Create new type tags
+namespace TTag {
+struct Sagd { using InheritsFrom = std::tuple<ThreePWaterOilNI>; };
+struct ThreePWaterOilSagdBox { using InheritsFrom = std::tuple<Sagd, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(Sagd, Grid, Dune::YaspGrid<2>);

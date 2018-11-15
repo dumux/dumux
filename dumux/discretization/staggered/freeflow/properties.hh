@@ -49,7 +49,10 @@ namespace Properties
 {
 
 //! Type tag for the staggered scheme specialized for free flow.
-NEW_TYPE_TAG(StaggeredFreeFlowModel, INHERITS_FROM(StaggeredModel));
+// Create new type tags
+namespace TTag {
+struct StaggeredFreeFlowModel { using InheritsFrom = std::tuple<StaggeredModel>; };
+} // end namespace TTag
 
 /*!
  * \brief  Set the number of equations on the faces to 1. We only consider scalar values because the velocity vector

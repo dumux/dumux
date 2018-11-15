@@ -196,10 +196,13 @@ struct ThreePThreeCVolumeVariablesTraits
 };
 
 namespace Properties {
+// Create new type tags
+namespace TTag {
 //! The type tags for the isothermal three-phase three-component model
-NEW_TYPE_TAG(ThreePThreeC, INHERITS_FROM(PorousMediumFlow));
+struct ThreePThreeC { using InheritsFrom = std::tuple<PorousMediumFlow>; };
 //! The type tags for the non-isothermal three-phase three-component model
-NEW_TYPE_TAG(ThreePThreeCNI, INHERITS_FROM(ThreePThreeC));
+struct ThreePThreeCNI { using InheritsFrom = std::tuple<ThreePThreeC>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property values

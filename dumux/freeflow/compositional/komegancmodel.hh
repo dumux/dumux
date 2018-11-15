@@ -46,8 +46,11 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tags for the single-phase, multi-component isothermal k-omega model
-NEW_TYPE_TAG(KOmegaNC, INHERITS_FROM(NavierStokesNC));
+struct KOmegaNC { using InheritsFrom = std::tuple<NavierStokesNC>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values
@@ -148,8 +151,11 @@ SET_TYPE_PROP(KOmegaNC, IOFields, FreeflowNCIOFields<KOmegaIOFields, true/*turbu
 // Property values for non-isothermal multi-component k-omega model
 //////////////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tags for the single-phase, multi-component non-isothermal k-omega models
-NEW_TYPE_TAG(KOmegaNCNI, INHERITS_FROM(NavierStokesNCNI));
+struct KOmegaNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
+} // end namespace TTag
 
 //! The model traits of the non-isothermal model
 SET_PROP(KOmegaNCNI, ModelTraits)

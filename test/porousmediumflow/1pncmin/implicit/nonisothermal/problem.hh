@@ -48,8 +48,11 @@ template <class TypeTag>
 class ThermoChemProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(ThermoChem, INHERITS_FROM(OnePNCMinNI));
-NEW_TYPE_TAG(ThermoChemBox, INHERITS_FROM(BoxModel, ThermoChem));
+// Create new type tags
+namespace TTag {
+struct ThermoChem { using InheritsFrom = std::tuple<OnePNCMinNI>; };
+struct ThermoChemBox { using InheritsFrom = std::tuple<ThermoChem, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(ThermoChem, Grid, Dune::YaspGrid<2>);

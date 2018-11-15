@@ -38,7 +38,10 @@ namespace Dumux {
 namespace Properties {
 
 //! Type tag for finite-volume schemes.
-NEW_TYPE_TAG(FiniteVolumeModel, INHERITS_FROM(GridProperties));
+// Create new type tags
+namespace TTag {
+struct FiniteVolumeModel { using InheritsFrom = std::tuple<GridProperties>; };
+} // end namespace TTag
 
 //! The grid variables
 SET_PROP(FiniteVolumeModel, GridVariables)

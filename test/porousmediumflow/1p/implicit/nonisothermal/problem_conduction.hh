@@ -49,10 +49,13 @@ class OnePNIConductionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePNIConduction, INHERITS_FROM(OnePNI));
-NEW_TYPE_TAG(OnePNIConductionBox, INHERITS_FROM(BoxModel, OnePNIConduction));
-NEW_TYPE_TAG(OnePNIConductionCCTpfa, INHERITS_FROM(CCTpfaModel, OnePNIConduction));
-NEW_TYPE_TAG(OnePNIConductionCCMpfa, INHERITS_FROM(CCMpfaModel, OnePNIConduction));
+// Create new type tags
+namespace TTag {
+struct OnePNIConduction { using InheritsFrom = std::tuple<OnePNI>; };
+struct OnePNIConductionBox { using InheritsFrom = std::tuple<OnePNIConduction, BoxModel>; };
+struct OnePNIConductionCCTpfa { using InheritsFrom = std::tuple<OnePNIConduction, CCTpfaModel>; };
+struct OnePNIConductionCCMpfa { using InheritsFrom = std::tuple<OnePNIConduction, CCMpfaModel>; };
+} // end namespace TTag
 
 
 // Set the grid type

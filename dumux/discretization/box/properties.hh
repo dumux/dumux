@@ -47,7 +47,10 @@ namespace Dumux {
 namespace Properties {
 
 //! Type tag for the box scheme.
-NEW_TYPE_TAG(BoxModel, INHERITS_FROM(FiniteVolumeModel));
+// Create new type tags
+namespace TTag {
+struct BoxModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
+} // end namespace TTag
 
 //! Set the default for the global finite volume geometry
 SET_PROP(BoxModel, FVGridGeometry)

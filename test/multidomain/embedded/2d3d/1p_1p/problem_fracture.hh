@@ -45,7 +45,10 @@ template <class TypeTag> class FractureProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(Fracture, INHERITS_FROM(CCTpfaModel, OneP));
+// Create new type tags
+namespace TTag {
+struct Fracture { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(Fracture, Grid, Dune::FoamGrid<2, 3>);

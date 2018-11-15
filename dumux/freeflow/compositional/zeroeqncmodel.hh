@@ -46,8 +46,11 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tags for the single-phase, multi-component isothermal ZeroEq model
-NEW_TYPE_TAG(ZeroEqNC, INHERITS_FROM(NavierStokesNC));
+struct ZeroEqNC { using InheritsFrom = std::tuple<NavierStokesNC>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values
@@ -105,8 +108,11 @@ SET_TYPE_PROP(ZeroEqNC, IOFields, FreeflowNCIOFields<RANSIOFields, true/*turbule
 // Property values for non-isothermal multi-component ZeroEq model
 //////////////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tags for the single-phase, multi-component non-isothermal ZeroEq models
-NEW_TYPE_TAG(ZeroEqNCNI, INHERITS_FROM(NavierStokesNCNI));
+struct ZeroEqNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
+} // end namespace TTag
 
 //! The model traits of the non-isothermal model
 SET_PROP(ZeroEqNCNI, ModelTraits)

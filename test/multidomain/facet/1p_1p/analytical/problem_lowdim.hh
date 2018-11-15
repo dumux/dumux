@@ -44,9 +44,12 @@ template<class TypeTag> class OnePLowDimProblem;
 
 namespace Properties {
 // create the type tag nodes
-NEW_TYPE_TAG(OnePLowDim, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePLowDimTpfa, INHERITS_FROM(CCTpfaModel, OnePLowDim));
-NEW_TYPE_TAG(OnePLowDimBox, INHERITS_FROM(BoxModel, OnePLowDim));
+// Create new type tags
+namespace TTag {
+struct OnePLowDim { using InheritsFrom = std::tuple<OneP>; };
+struct OnePLowDimTpfa { using InheritsFrom = std::tuple<OnePLowDim, CCTpfaModel>; };
+struct OnePLowDimBox { using InheritsFrom = std::tuple<OnePLowDim, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(OnePLowDim, Grid, Dune::FoamGrid<1, 2>);

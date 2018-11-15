@@ -50,7 +50,10 @@ class MatrixProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(Matrix, INHERITS_FROM(CCTpfaModel, OneP));
+// Create new type tags
+namespace TTag {
+struct Matrix { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(Matrix, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);

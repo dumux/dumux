@@ -42,7 +42,9 @@ namespace Dumux
 
 namespace Properties
 {
-NEW_TYPE_TAG(GridCreatorCakeTest);
+namespace TTag {
+struct GridCreatorCakeTest {};
+}
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);

@@ -105,8 +105,11 @@ struct KEpsilonModelTraits : RANSModelTraits<dimension>
 // default property values for the isothermal k-epsilon model
 ///////////////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal k-epsilon model
-NEW_TYPE_TAG(KEpsilon, INHERITS_FROM(RANS));
+struct KEpsilon { using InheritsFrom = std::tuple<RANS>; };
+} // end namespace TTag
 
 //!< states some specifics of the isothermal k-epsilon model
 SET_PROP(KEpsilon, ModelTraits)
@@ -162,8 +165,11 @@ SET_TYPE_PROP(KEpsilon, IOFields, KEpsilonIOFields);
 // default property values for the non-isothermal k-epsilon model
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal k-epsilon model
-NEW_TYPE_TAG(KEpsilonNI, INHERITS_FROM(RANSNI));
+struct KEpsilonNI { using InheritsFrom = std::tuple<RANSNI>; };
+} // end namespace TTag
 
 //! The model traits of the non-isothermal model
 SET_PROP(KEpsilonNI, ModelTraits)

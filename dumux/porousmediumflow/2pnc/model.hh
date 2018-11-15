@@ -198,8 +198,11 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(TwoPNC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(TwoPNCNI, INHERITS_FROM(TwoPNC));
+// Create new type tags
+namespace TTag {
+struct TwoPNC { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+struct TwoPNCNI { using InheritsFrom = std::tuple<TwoPNC>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Properties for the isothermal 2pnc model

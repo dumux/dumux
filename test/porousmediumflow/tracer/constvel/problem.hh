@@ -50,10 +50,13 @@ template <class TypeTag>
 class TracerTest;
 
 namespace Properties {
-NEW_TYPE_TAG(TracerTest, INHERITS_FROM(Tracer));
-NEW_TYPE_TAG(TracerTestTpfa, INHERITS_FROM(CCTpfaModel, TracerTest));
-NEW_TYPE_TAG(TracerTestMpfa, INHERITS_FROM(CCMpfaModel, TracerTest));
-NEW_TYPE_TAG(TracerTestBox, INHERITS_FROM(BoxModel, TracerTest));
+// Create new type tags
+namespace TTag {
+struct TracerTest { using InheritsFrom = std::tuple<Tracer>; };
+struct TracerTestTpfa { using InheritsFrom = std::tuple<TracerTest, CCTpfaModel>; };
+struct TracerTestMpfa { using InheritsFrom = std::tuple<TracerTest, CCMpfaModel>; };
+struct TracerTestBox { using InheritsFrom = std::tuple<TracerTest, BoxModel>; };
+} // end namespace TTag
 
 // enable caching
 SET_BOOL_PROP(TracerTest, EnableGridVolumeVariablesCache, true);

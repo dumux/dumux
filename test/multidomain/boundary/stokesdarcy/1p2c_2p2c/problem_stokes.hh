@@ -40,11 +40,14 @@ class StokesSubProblem;
 
 namespace Properties
 {
+// Create new type tags
+namespace TTag {
 #if !NONISOTHERMAL
-NEW_TYPE_TAG(StokesOnePTwoC, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+struct StokesOnePTwoC { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
 #else
-NEW_TYPE_TAG(StokesOnePTwoC, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI));
+struct StokesOnePTwoC { using InheritsFrom = std::tuple<NavierStokesNCNI, StaggeredFreeFlowModel>; };
 #endif
+} // end namespace TTag
 
 
 // Set the grid type

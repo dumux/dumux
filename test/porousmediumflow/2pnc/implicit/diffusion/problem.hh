@@ -45,8 +45,11 @@ template <class TypeTag>
 class TwoPNCDiffusionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TwoPNCDiffusion, INHERITS_FROM(TwoPNC));
-NEW_TYPE_TAG(TwoPNCDiffusionCC, INHERITS_FROM(CCTpfaModel, TwoPNCDiffusion));
+// Create new type tags
+namespace TTag {
+struct TwoPNCDiffusion { using InheritsFrom = std::tuple<TwoPNC>; };
+struct TwoPNCDiffusionCC { using InheritsFrom = std::tuple<TwoPNCDiffusion, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(TwoPNCDiffusion, Grid, Dune::YaspGrid<2>);

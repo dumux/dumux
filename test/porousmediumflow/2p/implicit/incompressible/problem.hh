@@ -49,10 +49,13 @@ namespace Dumux {
 template<class TypeTag> class TwoPTestProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TwoPIncompressible, INHERITS_FROM(TwoP));
-NEW_TYPE_TAG(TwoPIncompressibleTpfa, INHERITS_FROM(CCTpfaModel, TwoPIncompressible));
-NEW_TYPE_TAG(TwoPIncompressibleMpfa, INHERITS_FROM(CCMpfaModel, TwoPIncompressible));
-NEW_TYPE_TAG(TwoPIncompressibleBox, INHERITS_FROM(BoxModel, TwoPIncompressible));
+// Create new type tags
+namespace TTag {
+struct TwoPIncompressible { using InheritsFrom = std::tuple<TwoP>; };
+struct TwoPIncompressibleTpfa { using InheritsFrom = std::tuple<TwoPIncompressible, CCTpfaModel>; };
+struct TwoPIncompressibleMpfa { using InheritsFrom = std::tuple<TwoPIncompressible, CCMpfaModel>; };
+struct TwoPIncompressibleBox { using InheritsFrom = std::tuple<TwoPIncompressible, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(TwoPIncompressible, Grid, Dune::YaspGrid<2>);

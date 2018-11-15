@@ -234,9 +234,12 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 //! The type tags for the isothermal & non-isothermal two-phase model
-NEW_TYPE_TAG(MPNC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(MPNCNI, INHERITS_FROM(MPNC));
-NEW_TYPE_TAG(MPNCNonequil, INHERITS_FROM(MPNC, NonEquilibrium));
+// Create new type tags
+namespace TTag {
+struct MPNC { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+struct MPNCNI { using InheritsFrom = std::tuple<MPNC>; };
+struct MPNCNonequil { using InheritsFrom = std::tuple<NonEquilibrium, MPNC>; };
+} // end namespace TTag
 
 /////////////////////////////////////////////////////////////////
 // Properties for the isothermal mpnc model

@@ -47,10 +47,13 @@ template<class TypeTag> class OnePTestProblem;
 namespace Properties
 {
 // create the type tag nodes
-NEW_TYPE_TAG(OnePIncompressible, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePIncompressibleTpfa, INHERITS_FROM(CCTpfaModel, OnePIncompressible));
-NEW_TYPE_TAG(OnePIncompressibleMpfa, INHERITS_FROM(CCMpfaModel, OnePIncompressible));
-NEW_TYPE_TAG(OnePIncompressibleBox, INHERITS_FROM(BoxModel, OnePIncompressible));
+// Create new type tags
+namespace TTag {
+struct OnePIncompressible { using InheritsFrom = std::tuple<OneP>; };
+struct OnePIncompressibleTpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCTpfaModel>; };
+struct OnePIncompressibleMpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCMpfaModel>; };
+struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressible, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(OnePIncompressible, Grid, Dune::YaspGrid<2>);
@@ -83,7 +86,8 @@ SET_BOOL_PROP(OnePIncompressible, EnableFVGridGeometryCache, false);
 
 // define a TypeTag for a quad precision test
 #if HAVE_QUAD
-NEW_TYPE_TAG(OnePIncompressibleTpfaQuad, INHERITS_FROM(OnePIncompressibleTpfa));
+struct OnePIncompressibleTpfaQuad { using InheritsFrom = std::tuple<OnePIncompressibleTpfa>; };
+} // end namespace TTag
 SET_TYPE_PROP(OnePIncompressibleTpfaQuad, Scalar, Quad);
 #endif
 } // end namespace Properties

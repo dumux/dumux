@@ -44,8 +44,11 @@ template <class TypeTag>
 class TracerTestProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TracerTest, INHERITS_FROM(Tracer));
-NEW_TYPE_TAG(TracerTestCC, INHERITS_FROM(CCTpfaModel, TracerTest));
+// Create new type tags
+namespace TTag {
+struct TracerTest { using InheritsFrom = std::tuple<Tracer>; };
+struct TracerTestCC { using InheritsFrom = std::tuple<TracerTest, CCTpfaModel>; };
+} // end namespace TTag
 
 // enable caching
 SET_BOOL_PROP(TracerTest, EnableGridVolumeVariablesCache, true);

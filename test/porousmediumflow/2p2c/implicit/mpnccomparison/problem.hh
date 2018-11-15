@@ -47,9 +47,12 @@ template <class TypeTag>
 class TwoPTwoCComparisonProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TwoPTwoCComparison, INHERITS_FROM(TwoPTwoC));
-NEW_TYPE_TAG(TwoPTwoCComparisonBox, INHERITS_FROM(BoxModel, TwoPTwoCComparison));
-NEW_TYPE_TAG(TwoPTwoCComparisonCC, INHERITS_FROM(CCTpfaModel, TwoPTwoCComparison));
+// Create new type tags
+namespace TTag {
+struct TwoPTwoCComparison { using InheritsFrom = std::tuple<TwoPTwoC>; };
+struct TwoPTwoCComparisonBox { using InheritsFrom = std::tuple<TwoPTwoCComparison, BoxModel>; };
+struct TwoPTwoCComparisonCC { using InheritsFrom = std::tuple<TwoPTwoCComparison, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(TwoPTwoCComparison, Grid, Dune::YaspGrid<2>);

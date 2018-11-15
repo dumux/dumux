@@ -47,10 +47,13 @@ template<class TypeTag> class OnePTestProblem;
 namespace Properties
 {
 // create the type tag nodes
-NEW_TYPE_TAG(OnePCompressible, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePCompressibleTpfa, INHERITS_FROM(CCTpfaModel, OnePCompressible));
-NEW_TYPE_TAG(OnePCompressibleMpfa, INHERITS_FROM(CCMpfaModel, OnePCompressible));
-NEW_TYPE_TAG(OnePCompressibleBox, INHERITS_FROM(BoxModel, OnePCompressible));
+// Create new type tags
+namespace TTag {
+struct OnePCompressible { using InheritsFrom = std::tuple<OneP>; };
+struct OnePCompressibleTpfa { using InheritsFrom = std::tuple<OnePCompressible, CCTpfaModel>; };
+struct OnePCompressibleMpfa { using InheritsFrom = std::tuple<OnePCompressible, CCMpfaModel>; };
+struct OnePCompressibleBox { using InheritsFrom = std::tuple<OnePCompressible, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 SET_TYPE_PROP(OnePCompressible, Grid, Dune::YaspGrid<2>);

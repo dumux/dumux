@@ -120,7 +120,10 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the fully implicit tracer model.
-NEW_TYPE_TAG(Tracer, INHERITS_FROM(PorousMediumFlow));
+// Create new type tags
+namespace TTag {
+struct Tracer { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the tracer model
