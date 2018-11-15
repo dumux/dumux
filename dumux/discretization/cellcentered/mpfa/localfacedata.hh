@@ -32,7 +32,7 @@ namespace Dumux
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief General implementation of a data structure holding interaction
- *        volume-local information for a grid subb-control volume face embedded in it.
+ *        volume-local information for a grid sub-control volume face embedded in it.
  *
  * \tparam GridIndexType The type used for indices on the grid
  * \tparam LocalIndexType The type used for indices inside interaction volumes
@@ -44,7 +44,7 @@ class InteractionVolumeLocalFaceData
     LocalIndexType ivLocalInsideScvIndex_;     //!< the iv-local index of the scvfs' inside scv
     LocalIndexType scvfLocalOutsideScvfIndex_; //!< the index of this scvf in the scvf-local outside faces
     GridIndexType globalScvfIndex_;            //!< the index of the corresponding global scvf
-    bool isOutside_;                           //!< indicates if this face maps to the iv-local index from "outside"
+    bool isOutside_;                           //!< indicates if this face is an "outside" face in the iv-local system
 
 public:
     //! Default constructor
@@ -77,7 +77,7 @@ public:
     LocalIndexType ivLocalInsideScvIndex() const { return ivLocalInsideScvIndex_; }
     LocalIndexType scvfLocalOutsideScvfIndex() const { assert(isOutside_); return scvfLocalOutsideScvfIndex_; }
     GridIndexType globalScvfIndex() const { return globalScvfIndex_; }
-    bool isOutside() const { return isOutside_; }
+    bool isOutsideFace() const { return isOutside_; }
 };
 
 } // end namespace

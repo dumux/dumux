@@ -134,7 +134,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
                              const PrimaryIvDataHandle& dataHandle,
                              const SubControlVolumeFace &scvf)
         {
-            switchFluxSign_ = localFaceData.isOutside();
+            switchFluxSign_ = localFaceData.isOutsideFace();
             stencil_ = &iv.stencil();
 
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
@@ -154,7 +154,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             // surface grids
             else
             {
-                if (!localFaceData.isOutside())
+                if (!localFaceData.isOutsideFace())
                 {
                     primaryTij_ = &dataHandle.advectionT()[ivLocalIdx];
                     if (enableGravity)
@@ -189,7 +189,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
                              const SecondaryIvDataHandle& dataHandle,
                              const SubControlVolumeFace &scvf)
         {
-            switchFluxSign_ = localFaceData.isOutside();
+            switchFluxSign_ = localFaceData.isOutsideFace();
             stencil_ = &iv.stencil();
 
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
@@ -209,7 +209,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             // surface grids
             else
             {
-                if (!localFaceData.isOutside())
+                if (!localFaceData.isOutsideFace())
                 {
                     secondaryTij_ = &dataHandle.advectionT()[ivLocalIdx];
                     if (enableGravity)

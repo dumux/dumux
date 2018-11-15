@@ -115,7 +115,7 @@ public:
             for (const auto& localFaceData : iv.localFaceData())
             {
                 // continue only for "outside" faces
-                if (!localFaceData.isOutside())
+                if (!localFaceData.isOutsideFace())
                     continue;
 
                 const auto localScvIdx = localFaceData.ivLocalInsideScvIndex();
@@ -244,7 +244,7 @@ public:
             for (const auto& localFaceData : iv.localFaceData())
             {
                 // continue only for "outside" faces
-                if (!localFaceData.isOutside())
+                if (!localFaceData.isOutsideFace())
                     continue;
 
                 const auto localScvIdx = localFaceData.ivLocalInsideScvIndex();
@@ -580,7 +580,7 @@ public:
             for (const auto& localFaceData : iv.localFaceData())
             {
                 // continue only for "outside" faces
-                if (!localFaceData.isOutside())
+                if (!localFaceData.isOutsideFace())
                     continue;
 
                 const auto localScvIdx = localFaceData.ivLocalInsideScvIndex();
