@@ -24,14 +24,97 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEDATAHANDLE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEDATAHANDLE_HH
 
+#include <cassert>
 #include <vector>
 
 #include <dune/common/dynvector.hh>
 
 #include <dumux/common/parameters.hh>
 
-namespace Dumux
+namespace Dumux {
+namespace Detail {
+
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Common base class to all handles. Stores arrays of the
+ *        matrices involved in the interaction volume-local systems
+ *        of equations.
+ *
+ * \tparam MVT The matrix/vector traits collecting type information used by the iv
+ * \tparam size1 first size specifier for the arrays
+ * \tparam size2 second size specifier for the arrays
+ */
+template<class MVT, int size1, int size2>
+class MatrixDataHandleBase
 {
+    using AMatrix = typename MVT::AMatrix;
+    using CMatrix = typename MVT::CMatrix;
+    using TMatrix = typename MVT::TMatrix;
+    using CellVector = typename MVT::CellVector;
+    using OutsideTij = std::vector< std::vector<CellVector> >;
+
+public:
+    //! Access functions to context-dependent data
+    const CMatrix& CA() const { return CA_[contextIdx1_][contextIdx2_]; }
+    CMatrix& CA() { return CA_[contextIdx1_][contextIdx2_]; }
+
+    const AMatrix& A() const { return A_[contextIdx1_][contextIdx2_]; }
+    AMatrix& A() { return A_[contextIdx1_][contextIdx2_]; }
+
+    const TMatrix& T() const { return T_[contextIdx1_][contextIdx2_]; }
+    TMatrix& T() { return T_[contextIdx1_][contextIdx2_]; }
+
+    const OutsideTij& tijOutside() const { return tijOutside_[contextIdx1_][contextIdx2_]; }
+    OutsideTij& tijOutside() { return tijOutside_[contextIdx1_][contextIdx2_]; }
+
+    //! functionality to set the context indices
+    void setContextIndex1(unsigned int idx) const { assert(idx < size1); contextIdx1_ = idx; }
+    void setContextIndex2(unsigned int idx) const { assert(idx < size2); contextIdx2_ = idx; }
+
+protected:
+    //! indices to be set before accessing data
+    mutable unsigned int contextIdx1_{0};
+    mutable unsigned int contextIdx2_{0};
+
+    std::array< std::array<TMatrix, size2>, size1 > T_;             //!< The transmissibility matrix
+    std::array< std::array<AMatrix, size2>, size1 > A_;             //!< Inverse of the iv-local system matrix
+    std::array< std::array<CMatrix, size2>, size1 > CA_;            //!< A_ right multiplied to C
+    std::array< std::array<OutsideTij, size2>, size1 > tijOutside_; //!< The transmissibilities for "outside" faces (on surface grids)
+};
+
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Common base class to all handles. Stores arrays of the
+ *        vectors of known cell/Dirichlet values within the interaction volume.
+ *
+ * \tparam MVT The matrix/vector traits collecting type information used by the iv
+ * \tparam size1 first size specifier for the arrays
+ * \tparam size2 second size specifier for the arrays
+ */
+template<class MVT, int size1, int size2>
+class VectorDataHandleBase
+{
+    using CellVector = typename MVT::CellVector;
+
+public:
+    //! Access to the iv-wide known cell/Dirichlet values
+    const CellVector& uj() const { return u_[contextIdx1_][contextIdx2_]; }
+    CellVector& uj() { return u_[contextIdx1_][contextIdx2_]; }
+
+protected:
+    //! functionality to set the context indices
+    void setContextIndex1(unsigned int idx) const { assert(idx < size1); contextIdx1_ = idx; }
+    void setContextIndex2(unsigned int idx) const { assert(idx < size2); contextIdx2_ = idx; }
+
+    //! indices to be set before accessing data
+    mutable unsigned int contextIdx1_{0};
+    mutable unsigned int contextIdx2_{0};
+
+    //! The interaction volume-local known values
+    std::array< std::array<CellVector, size2>, size1 > u_;
+};
+
+} // end namespace Detail
 
 //! Empty data handle class
 class EmptyDataHandle {};
@@ -39,128 +122,71 @@ class EmptyDataHandle {};
 //! Data handle for quantities related to advection
 template<class MatVecTraits, class PhysicsTraits, bool EnableAdvection>
 class AdvectionDataHandle
+: public Detail::MatrixDataHandleBase<MatVecTraits, 1, 1>
+, public Detail::VectorDataHandleBase<MatVecTraits, PhysicsTraits::numPhases, 1>
 {
-    // obtain matrix & vector types from interaction volume
-    using AMatrix = typename MatVecTraits::AMatrix;
-    using CMatrix = typename MatVecTraits::CMatrix;
-    using TMatrix = typename MatVecTraits::TMatrix;
-    using CellVector = typename MatVecTraits::CellVector;
+    // we only have one local system for all phases since we
+    // solve them w.r.t. permeability tensor (unique for all phases)
+    using Base1 = Detail::MatrixDataHandleBase<MatVecTraits, 1, 1>;
+
+    // we do have cell/Dirichlet values for all phases though!
+    static constexpr int numPhases = PhysicsTraits::numPhases;
+    using Base2 = Detail::VectorDataHandleBase<MatVecTraits, numPhases, 1>;
+
     using FaceVector = typename MatVecTraits::FaceVector;
     using FaceScalar = typename FaceVector::value_type;
     using OutsideGravityStorage = std::vector< Dune::DynamicVector<FaceScalar> >;
 
-    static constexpr int numPhases = PhysicsTraits::numPhases;
-
 public:
-    //! Access to the iv-wide pressure of one phase
-    const CellVector& uj(unsigned int pIdx) const { return p_[pIdx]; }
-    CellVector& uj(unsigned int pIdx) { return p_[pIdx]; }
+    //! Set the phase index of the context
+    void setPhaseIndex(unsigned int phaseIdx) const { Base2::setContextIndex1(phaseIdx); }
 
     //! The gravitational flux contributions for a phase on all faces
-    const FaceVector& gravity(unsigned int pIdx) const { return g_[pIdx]; }
-    FaceVector& gravity(unsigned int pIdx) { return g_[pIdx]; }
+    const FaceVector& g() const { return g_[Base2::contextIdx1_]; }
+    FaceVector& g() { return g_[Base2::contextIdx1_]; }
 
     //! Access to the gravitational flux contributions for all phases
     const std::array< FaceVector, numPhases >& gravity() const { return g_; }
     std::array< FaceVector, numPhases >& gravity() { return g_; }
-
-    //! Projection matrix for Neumann/gravity contribution computation
-    const CMatrix& CA() const { return CA_; }
-    CMatrix& CA() { return CA_; }
-
-    //! Inverse of the iv-local system matrix
-    const AMatrix& A() const { return A_; }
-    AMatrix& A() { return A_; }
-
-    //! The transmissibility matrix (i.e. C*(A^-1)*B + D)
-    const TMatrix& T() const { return T_; }
-    TMatrix& T() { return T_; }
-
-    //! The transmissibilities for "outside" faces (used on surface grids)
-    const std::vector< std::vector<CellVector> >& tijOutside() const { return outsideT_; }
-    std::vector< std::vector<CellVector> >& tijOutside() { return outsideT_; }
 
     //! The gravitational acceleration for "outside" faces (used on surface grids)
     const std::array< OutsideGravityStorage, numPhases >& gravityOutside() const { return outsideG_; }
     std::array< OutsideGravityStorage, numPhases >& gravityOutside() { return outsideG_; }
 
     //! The gravitational acceleration for one phase on "outside" faces (used on surface grids)
-    const OutsideGravityStorage& gravityOutside(unsigned int pIdx) const { return outsideG_[pIdx]; }
-    OutsideGravityStorage& gravityOutside(unsigned int pIdx) { return outsideG_[pIdx]; }
+    const OutsideGravityStorage& gOutside() const { return outsideG_[Base2::contextIdx1_]; }
+    OutsideGravityStorage& gOutside() { return outsideG_[Base2::contextIdx1_]; }
 
 private:
-    TMatrix T_;  //!< The transmissibilities such that f_i = T_ij*p_j (... + Neumann/gravity contributions)
-    AMatrix A_;  //!< Inverse of the iv-local system matrix (needed e.g. for face pressure reconstruction)
-    CMatrix CA_; //!< A_ right multiplied to C (needed e.g. for Neumann/gravity contribution computation)
-    std::array< CellVector, numPhases > p_;           //!< The interaction volume-wide phase pressures
     std::array< FaceVector, numPhases > g_;           //!< The gravitational acceleration at each scvf (only for enabled gravity)
-    std::vector< std::vector<CellVector> > outsideT_; //!< The transmissibilities for "outside" faces (only on surface grids)
     std::array< OutsideGravityStorage, numPhases > outsideG_;  //!< The gravitational acceleration on "outside" faces (only on surface grids)
 };
 
 //! Data handle for quantities related to diffusion
 template<class MatVecTraits, class PhysicsTraits, bool EnableDiffusion>
 class DiffusionDataHandle
+: public Detail::MatrixDataHandleBase<MatVecTraits, PhysicsTraits::numPhases, PhysicsTraits::numComponents>
+, public Detail::VectorDataHandleBase<MatVecTraits, PhysicsTraits::numPhases, PhysicsTraits::numComponents>
 {
-    using TMatrix = typename MatVecTraits::TMatrix;
-    using CellVector = typename MatVecTraits::CellVector;
-    using OutsideTContainer = std::vector< std::vector<CellVector> >;
-
     static constexpr int numPhases = PhysicsTraits::numPhases;
     static constexpr int numComponents = PhysicsTraits::numComponents;
+    using Base1 = Detail::MatrixDataHandleBase<MatVecTraits, numPhases, numComponents>;
+    using Base2 = Detail::VectorDataHandleBase<MatVecTraits, numPhases, numComponents>;
 
 public:
     //! diffusion caches need to set phase and component index
-    void setPhaseIndex(unsigned int phaseIdx) { phaseIdx_ = phaseIdx; }
-    void setComponentIndex(unsigned int compIdx) { compIdx_ = compIdx; }
-
-    //! Access to the iv-wide mole fractions of a component in one phase
-    const CellVector& uj(unsigned int pIdx, unsigned int compIdx) const { return xj_[phaseIdx_][compIdx_]; }
-    CellVector& uj(unsigned int pIdx, unsigned int compIdx) { return xj_[phaseIdx_][compIdx_]; }
-
-    //! The transmissibilities associated with diffusive fluxes
-    const TMatrix& T() const { return T_[phaseIdx_][compIdx_]; }
-    TMatrix& T() { return T_[phaseIdx_][compIdx_]; }
-
-    //! The transmissibilities for "outside" faces (used on surface grids)
-    const OutsideTContainer& tijOutside() const { return outsideT_[phaseIdx_][compIdx_]; }
-    OutsideTContainer& tijOutside() { return outsideT_[phaseIdx_][compIdx_]; }
-
-private:
-    //! diffusion-related variables
-    unsigned int phaseIdx_;                                             //!< The phase index set for the context
-    unsigned int compIdx_;                                              //!< The component index set for the context
-    std::array< std::array<TMatrix, numComponents>, numPhases > T_;     //!< The transmissibilities such that f_i = T_ij*x_j
-    std::array< std::array<CellVector, numComponents>, numPhases > xj_; //!< The interaction volume-wide mole fractions
-    std::array< std::array<OutsideTContainer, numComponents>, numPhases> outsideT_;
+    void setPhaseIndex(unsigned int phaseIdx) const
+    { Base1::setContextIndex1(phaseIdx); Base2::setContextIndex1(phaseIdx); }
+    void setComponentIndex(unsigned int compIdx) const
+    { Base1::setContextIndex2(compIdx); Base2::setContextIndex2(compIdx); }
 };
 
 //! Data handle for quantities related to heat conduction
 template<class MatVecTraits, class PhysicsTraits, bool enableHeatConduction>
 class HeatConductionDataHandle
-{
-    using TMatrix = typename MatVecTraits::TMatrix;
-    using CellVector = typename MatVecTraits::CellVector;
-
-public:
-    //! Access to the iv-wide temperatures
-    const CellVector& uj() const { return Tj_; }
-    CellVector& uj() { return Tj_; }
-
-    //! The transmissibilities associated with conductive fluxes
-    const TMatrix& T() const { return T_; }
-    TMatrix& T() { return T_; }
-
-    //! The transmissibilities for "outside" faces (used on surface grids)
-    const std::vector< std::vector<CellVector> >& tijOutside() const { return outsideT_; }
-    std::vector< std::vector<CellVector> >& tijOutside() { return outsideT_; }
-
-private:
-    // heat conduction-related variables
-    TMatrix T_;                                       //!< The transmissibilities such that f_i = T_ij*T_j
-    CellVector Tj_;                                   //!< The interaction volume-wide temperatures
-    std::vector< std::vector<CellVector> > outsideT_; //!< The transmissibilities for "outside" faces (only necessary on surface grids)
-};
+: public Detail::MatrixDataHandleBase<MatVecTraits, 1, 1>
+, public Detail::VectorDataHandleBase<MatVecTraits, 1, 1>
+{};
 
 //! Process-dependent data handles when related process is disabled
 template<class MatVecTraits, class PhysicsTraits>

@@ -314,6 +314,7 @@ private:
 
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
+            handle.diffusionHandle().setPhaseIndex(phaseIdx);
             for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -321,6 +322,7 @@ private:
                     continue;
 
                 // fill data in the handle
+                handle.diffusionHandle().setComponentIndex(compIdx);
                 fillDiffusionHandle(iv, handle, forceUpdateAll, phaseIdx, compIdx);
 
                 // fill diffusion caches
@@ -498,9 +500,10 @@ private:
         // assemble pressure vectors
         for (unsigned int pIdx = 0; pIdx < ModelTraits::numPhases(); ++pIdx)
         {
+            handle.advectionHandle().setPhaseIndex(pIdx);
             const auto& evv = &elemVolVars();
             auto getPressure = [&evv, pIdx] (auto volVarIdx) { return (evv->operator[](volVarIdx)).pressure(pIdx); };
-            localAssembler.assemble(handle.advectionHandle().uj(pIdx), iv, getPressure);
+            localAssembler.assemble(handle.advectionHandle().uj(), iv, getPressure);
         }
     }
 
@@ -521,10 +524,6 @@ private:
         using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
-        // solve the local system subject to the tensor and update the handle
-        handle.diffusionHandle().setPhaseIndex(phaseIdx);
-        handle.diffusionHandle().setComponentIndex(compIdx);
-
         // assemble T
         if (forceUpdateAll || soldependentDiffusion)
         {
@@ -543,7 +542,7 @@ private:
         const auto& evv = &elemVolVars();
         auto getMoleFraction = [&evv, phaseIdx, compIdx] (auto volVarIdx)
                                { return (evv->operator[](volVarIdx)).moleFraction(phaseIdx, compIdx); };
-        localAssembler.assemble(handle.diffusionHandle().uj(phaseIdx, compIdx), iv, getMoleFraction);
+        localAssembler.assemble(handle.diffusionHandle().uj(), iv, getMoleFraction);
     }
 
     //! prepares the quantities necessary for conductive fluxes in the handle
