@@ -21,10 +21,11 @@ InitialConditionType = 0
 
 [LinearSolver2]
 schurGMResRestart = 100
-schurResidualReduction = 1e-20
+schurResidualReduction = 1e-10
 schurVerbosity = 0
 schurMaxIter = 2000
-precVerbosity = 0
+precVerbosityA = 0
+precVerbositySchurAppr = 0
 precMaxIter = 2000
 precResidReduction = 1e-13
 
