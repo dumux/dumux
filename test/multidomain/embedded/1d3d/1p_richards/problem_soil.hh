@@ -57,12 +57,18 @@ struct SoilBox { using InheritsFrom = std::tuple<Soil, BoxModel>; };
 // Set the grid type
 SET_TYPE_PROP(Soil, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >);
 
-SET_BOOL_PROP(Soil, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Soil, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Soil, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(Soil, SolutionDependentAdvection, false);
-SET_BOOL_PROP(Soil, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(Soil, SolutionDependentHeatConduction, false);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::Soil> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::Soil> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::Soil> { static constexpr bool value = false; };
 
 // Set the problem property
 SET_TYPE_PROP(Soil, Problem, SoilProblem<TypeTag>);

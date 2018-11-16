@@ -73,7 +73,8 @@ SET_PROP(RichardsNIEvaporation, SpatialParams)
     using type = RichardsNISpatialParams<FVGridGeometry, Scalar>;
 };
 
-SET_BOOL_PROP(RichardsNIEvaporation, EnableWaterDiffusionInAir, true);
+template<class TypeTag>
+struct EnableWaterDiffusionInAir<TypeTag, TTag::RichardsNIEvaporation> { static constexpr bool value = true; };
 } // end namespace Properties
 
 /*!

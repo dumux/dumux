@@ -67,10 +67,13 @@ SET_TYPE_PROP(ChannelTest, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ChannelTest, Problem, Dumux::ChannelTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelTest, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::ChannelTest> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(ChannelTest, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(ChannelTest, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::ChannelTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::ChannelTest> { static constexpr bool value = true; };
 }
 
 /*!

@@ -85,7 +85,8 @@ SET_PROP(OnePTwoCTest, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCTest, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::OnePTwoCTest> { static constexpr bool value = true; };
 }
 
 

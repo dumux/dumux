@@ -91,10 +91,13 @@ SET_TYPE_PROP(PipeLauferProblem, Grid,
 // Set the problem property
 SET_TYPE_PROP(PipeLauferProblem, Problem, Dumux::PipeLauferProblem<TypeTag> );
 
-SET_BOOL_PROP(PipeLauferProblem, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::PipeLauferProblem> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(PipeLauferProblem, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(PipeLauferProblem, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::PipeLauferProblem> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::PipeLauferProblem> { static constexpr bool value = true; };
 }
 
 /*!

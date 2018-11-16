@@ -262,8 +262,10 @@ SET_INT_PROP(TwoPNC, ReplaceCompEqIdx, GetPropType<TypeTag, Properties::FluidSys
 SET_PROP(TwoPNC, Formulation)
 { static constexpr auto value = TwoPFormulation::p0s1; };
 
-SET_BOOL_PROP(TwoPNC, SetMoleFractionsForFirstPhase, true);  //!< Set the primary variables mole fractions for the wetting or non-wetting phase
-SET_BOOL_PROP(TwoPNC, UseMoles, true);                         //!< Use mole fractions in the balance equations by default
+template<class TypeTag>
+struct SetMoleFractionsForFirstPhase<TypeTag, TTag::TwoPNC> { static constexpr bool value = true; };  //!< Set the primary variables mole fractions for the wetting or non-wetting phase
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::TwoPNC> { static constexpr bool value = true; };                         //!< Use mole fractions in the balance equations by default
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(TwoPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);

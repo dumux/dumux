@@ -110,8 +110,10 @@ public:
 };
 
 //! Per default, we consider both thermal and chemical non-equilibrium
-SET_BOOL_PROP(NonEquilibrium, EnableThermalNonEquilibrium, true);
-SET_BOOL_PROP(NonEquilibrium, EnableChemicalNonEquilibrium, true);
+template<class TypeTag>
+struct EnableThermalNonEquilibrium<TypeTag, TTag::NonEquilibrium> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableChemicalNonEquilibrium<TypeTag, TTag::NonEquilibrium> { static constexpr bool value = true; };
 
 //! Default values for the number of energy balance equations
 SET_INT_PROP(NonEquilibrium, NumEnergyEqSolid, 1);

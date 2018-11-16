@@ -59,9 +59,12 @@ struct TracerTestBox { using InheritsFrom = std::tuple<TracerTest, BoxModel>; };
 } // end namespace TTag
 
 // enable caching
-SET_BOOL_PROP(TracerTest, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(TracerTest, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(TracerTest, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
 
 // Set the grid type
 SET_TYPE_PROP(TracerTest, Grid, Dune::YaspGrid<2>);
@@ -78,7 +81,8 @@ SET_PROP(TracerTest, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(TracerTest, UseMoles, USEMOLES);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::TracerTest> { static constexpr bool value = USEMOLES; };
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>

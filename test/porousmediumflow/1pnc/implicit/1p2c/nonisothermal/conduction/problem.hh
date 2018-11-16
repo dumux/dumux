@@ -85,7 +85,8 @@ SET_PROP(OnePTwoCNIConduction, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCNIConduction, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::OnePTwoCNIConduction> { static constexpr bool value = true; };
 }
 
 

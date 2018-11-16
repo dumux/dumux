@@ -69,9 +69,12 @@ SET_TYPE_PROP(PorousMediumFlow, MolecularDiffusionType, FicksLaw<TypeTag>);
 SET_TYPE_PROP(PorousMediumFlow, HeatConductionType, FouriersLaw<TypeTag>);
 
 //! By default, parameters are solution-dependent
-SET_BOOL_PROP(PorousMediumFlow, SolutionDependentAdvection, true);
-SET_BOOL_PROP(PorousMediumFlow, SolutionDependentMolecularDiffusion, true);
-SET_BOOL_PROP(PorousMediumFlow, SolutionDependentHeatConduction, true);
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = true; };
+template<class TypeTag>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = true; };
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = true; };
 
 //! The default implementation of the energy balance equation for flow problems in porous media.
 SET_TYPE_PROP(PorousMediumFlow, EnergyLocalResidual, Dumux::EnergyLocalResidual<TypeTag> );
@@ -84,10 +87,12 @@ SET_TYPE_PROP(PorousMediumFlow, VelocityOutput,
 //! By default, we set an empty primary variables switch
 SET_TYPE_PROP(PorousMediumFlow, PrimaryVariableSwitch, NoPrimaryVariableSwitch);
 
-SET_BOOL_PROP(PorousMediumFlow, EnableThermalNonEquilibrium, false);
+template<class TypeTag>
+struct EnableThermalNonEquilibrium<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = false; };
 
 //! Per default, we disable the box interface solver
-SET_BOOL_PROP(PorousMediumFlow, EnableBoxInterfaceSolver, false);
+template<class TypeTag>
+struct EnableBoxInterfaceSolver<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = false; };
 
 //! per default solid state is inert
 SET_PROP(PorousMediumFlow, SolidState)

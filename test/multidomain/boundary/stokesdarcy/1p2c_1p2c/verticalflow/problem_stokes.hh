@@ -60,12 +60,16 @@ SET_TYPE_PROP(StokesOnePTwoC, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoo
 SET_TYPE_PROP(StokesOnePTwoC, Problem, Dumux::StokesSubProblem<TypeTag> );
 
 // Enable all caches
-SET_BOOL_PROP(StokesOnePTwoC, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(StokesOnePTwoC, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(StokesOnePTwoC, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 
 // Use moles
-SET_BOOL_PROP(StokesOnePTwoC, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 
 // Do not replace one equation with a total mass balance
 SET_INT_PROP(StokesOnePTwoC, ReplaceCompEqIdx, 3);

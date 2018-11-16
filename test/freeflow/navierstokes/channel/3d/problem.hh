@@ -73,9 +73,12 @@ SET_TYPE_PROP(ThreeDChannelTest, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ThreeDChannelTest, Problem, ThreeDChannelTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ThreeDChannelTest, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(ThreeDChannelTest, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(ThreeDChannelTest, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };
 }
 
 /*!

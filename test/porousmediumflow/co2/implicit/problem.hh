@@ -81,7 +81,8 @@ SET_TYPE_PROP(Heterogeneous, FluidSystem,
                            FluidSystems::BrineCO2DefaultPolicy</*constantSalinity=*/true, /*simpleButFast=*/true>>);
 
 // Use Moles
-SET_BOOL_PROP(Heterogeneous, UseMoles, false);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::Heterogeneous> { static constexpr bool value = false; };
 
 #if !ISOTHERMAL
 // Create new type tags
@@ -106,7 +107,8 @@ SET_TYPE_PROP(HeterogeneousNI, FluidSystem, FluidSystems::BrineCO2<GetPropType<T
                                                                         HeterogeneousCO2Tables::CO2Tables>);
 
 // Use Moles
-SET_BOOL_PROP(HeterogeneousNI, UseMoles, false);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::HeterogeneousNI> { static constexpr bool value = false; };
 #endif
 } // end namespace Properties
 

@@ -73,9 +73,11 @@ SET_TYPE_PROP(Sagd,
               FluidSystem,
               Dumux::FluidSystems::H2OHeavyOil<GetPropType<TypeTag, Properties::Scalar>>);
 
-SET_BOOL_PROP(Sagd, OnlyGasPhaseCanDisappear, true);
+template<class TypeTag>
+struct OnlyGasPhaseCanDisappear<TypeTag, TTag::Sagd> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(Sagd, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::Sagd> { static constexpr bool value = true; };
 
 // Set the fluid system
 SET_PROP(Sagd, SolidSystem)

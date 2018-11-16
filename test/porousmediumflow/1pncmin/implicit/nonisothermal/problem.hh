@@ -77,7 +77,8 @@ SET_PROP(ThermoChem, SolidSystem)
 };
 
 // // Enable velocity output
-// SET_BOOL_PROP(ThermoChem, VtkAddVelocity, false);
+// template<class TypeTag>
+struct VtkAddVelocity<TypeTag, TTag::ThermoChem> { static constexpr bool value = false; };
 
 // Set the spatial parameters
 SET_PROP(ThermoChem, SpatialParams)
@@ -88,7 +89,8 @@ SET_PROP(ThermoChem, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(ThermoChem, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::ThermoChem> { static constexpr bool value = true; };
 }
 
 /*!

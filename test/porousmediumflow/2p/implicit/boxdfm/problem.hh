@@ -90,12 +90,16 @@ SET_PROP(TwoPIncompressibleBoxDfm, FluidSystem)
 };
 
 // Enable caching
-SET_BOOL_PROP(TwoPIncompressibleBoxDfm, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(TwoPIncompressibleBoxDfm, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(TwoPIncompressibleBoxDfm, EnableFVGridGeometryCache, false);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPIncompressibleBoxDfm> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPIncompressibleBoxDfm> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::TwoPIncompressibleBoxDfm> { static constexpr bool value = false; };
 
 // Enable the box-interface solver
-SET_BOOL_PROP(TwoPIncompressibleBoxDfm, EnableBoxInterfaceSolver, true);
+template<class TypeTag>
+struct EnableBoxInterfaceSolver<TypeTag, TTag::TwoPIncompressibleBoxDfm> { static constexpr bool value = true; };
 } // end namespace Properties
 
 /*!

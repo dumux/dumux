@@ -63,12 +63,16 @@ SET_TYPE_PROP(DensityDrivenFlow, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(DensityDrivenFlow, Problem, Dumux::DensityDrivenFlowProblem<TypeTag> );
 
-SET_BOOL_PROP(DensityDrivenFlow, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(DensityDrivenFlow, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(DensityDrivenFlow, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(DensityDrivenFlow, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value = true; };
 }
 
 /*!

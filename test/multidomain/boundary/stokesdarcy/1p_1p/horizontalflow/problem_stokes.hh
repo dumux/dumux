@@ -58,9 +58,12 @@ SET_TYPE_PROP(StokesOneP, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordin
 // Set the problem property
 SET_TYPE_PROP(StokesOneP, Problem, Dumux::StokesSubProblem<TypeTag> );
 
-SET_BOOL_PROP(StokesOneP, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(StokesOneP, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(StokesOneP, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::StokesOneP> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::StokesOneP> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOneP> { static constexpr bool value = true; };
 }
 
 /*!

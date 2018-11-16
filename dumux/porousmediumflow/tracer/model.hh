@@ -130,7 +130,8 @@ struct Tracer { using InheritsFrom = std::tuple<PorousMediumFlow>; };
 ///////////////////////////////////////////////////////////////////////////
 
 //! Define that mole fractions are used in the balance equations
-SET_BOOL_PROP(Tracer, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::Tracer> { static constexpr bool value = true; };
 
 //! set the model traits
 SET_PROP(Tracer, ModelTraits)

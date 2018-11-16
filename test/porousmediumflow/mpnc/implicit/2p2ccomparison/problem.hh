@@ -79,7 +79,8 @@ SET_TYPE_PROP(MPNCComparison,
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(MPNCComparison, Scalar, double);
-SET_BOOL_PROP(MPNCComparison, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::MPNCComparison> { static constexpr bool value = true; };
 SET_TYPE_PROP(MPNCComparison, IOFields, TwoPTwoCMPNCIOFields);
 } // end namespace Dumux
 

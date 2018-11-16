@@ -73,7 +73,8 @@ public:
 };
 
 //! Cache the face variables per default
-SET_BOOL_PROP(StaggeredModel, EnableGridFaceVariablesCache, true);
+template<class TypeTag>
+struct EnableGridFaceVariablesCache<TypeTag, TTag::StaggeredModel> { static constexpr bool value = true; };
 
 //! Set the global flux variables cache vector class
 SET_PROP(StaggeredModel, GridFluxVariablesCache)

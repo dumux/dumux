@@ -241,7 +241,8 @@ public:
 };
 
 //! Determines whether a constraint solver should be used explicitly
-SET_BOOL_PROP(ThreePWaterOilNI, OnlyGasPhaseCanDisappear, true);
+template<class TypeTag>
+struct OnlyGasPhaseCanDisappear<TypeTag, TTag::ThreePWaterOilNI> { static constexpr bool value = true; };
 
 //! Set the volume variables property
 SET_PROP(ThreePWaterOilNI, VolumeVariables)
@@ -265,7 +266,8 @@ SET_TYPE_PROP(ThreePWaterOilNI, EffectiveDiffusivityModel,
              DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
 
 // Define that mole fractions are used in the balance equations per default
-SET_BOOL_PROP(ThreePWaterOilNI, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::ThreePWaterOilNI> { static constexpr bool value = true; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(ThreePWaterOilNI, ThermalConductivityModel)

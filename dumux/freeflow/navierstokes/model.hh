@@ -148,7 +148,8 @@ struct NavierStokesNI { using InheritsFrom = std::tuple<NavierStokes>; };
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_BOOL_PROP(NavierStokes, NormalizePressure, true); //!< Normalize the pressure term in the momentum balance by default
+template<class TypeTag>
+struct NormalizePressure<TypeTag, TTag::NavierStokes> { static constexpr bool value = true; }; //!< Normalize the pressure term in the momentum balance by default
 
 //!< states some specifics of the Navier-Stokes model
 SET_PROP(NavierStokes, ModelTraits)

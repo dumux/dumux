@@ -57,12 +57,18 @@ struct BloodFlowBox { using InheritsFrom = std::tuple<BloodFlow, BoxModel>; };
 // Set the grid type
 SET_TYPE_PROP(BloodFlow, Grid, Dune::FoamGrid<1, 3>);
 
-SET_BOOL_PROP(BloodFlow, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(BloodFlow, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(BloodFlow, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(BloodFlow, SolutionDependentAdvection, false);
-SET_BOOL_PROP(BloodFlow, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(BloodFlow, SolutionDependentHeatConduction, false);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::BloodFlow> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::BloodFlow> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::BloodFlow> { static constexpr bool value = false; };
 
 // Set the problem property
 SET_TYPE_PROP(BloodFlow, Problem, BloodFlowProblem<TypeTag>);

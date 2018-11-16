@@ -64,10 +64,14 @@ SET_TYPE_PROP(DoneaTest, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(DoneaTest, Problem, Dumux::DoneaTestProblem<TypeTag> );
 
-SET_BOOL_PROP(DoneaTest, EnableFVGridGeometryCache, ENABLECACHING);
-SET_BOOL_PROP(DoneaTest, EnableGridFluxVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(DoneaTest, EnableGridVolumeVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(DoneaTest, EnableGridFaceVariablesCache, ENABLECACHING);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridFaceVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
 }
 
 /*!

@@ -71,16 +71,22 @@ SET_TYPE_PROP(ChannelNCTest, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ChannelNCTest, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelNCTest, EnableFVGridGeometryCache, ENABLECACHING);
-SET_BOOL_PROP(ChannelNCTest, EnableGridFluxVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(ChannelNCTest, EnableGridVolumeVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(ChannelNCTest, EnableGridFaceVariablesCache, ENABLECACHING);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridFaceVariablesCache<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = ENABLECACHING; };
 
 // Use mole fraction formulation
 #if USE_MASS
-SET_BOOL_PROP(ChannelNCTest, UseMoles, false);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = false; };
 #else
-SET_BOOL_PROP(ChannelNCTest, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = true; };
 #endif
 
 }

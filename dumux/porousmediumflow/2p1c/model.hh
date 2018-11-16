@@ -168,7 +168,8 @@ SET_PROP(TwoPOneCNI, Formulation)
 { static constexpr TwoPFormulation value = TwoPFormulation::p1s0; };
 
 //! Do not block spurious flows by default.
-SET_BOOL_PROP(TwoPOneCNI, UseBlockingOfSpuriousFlow, false);
+template<class TypeTag>
+struct UseBlockingOfSpuriousFlow<TypeTag, TTag::TwoPOneCNI> { static constexpr bool value = false; };
 
 //! The specific local residual (i.e. balance equations).
 SET_TYPE_PROP(TwoPOneCNI, LocalResidual, TwoPOneCLocalResidual<TypeTag>);

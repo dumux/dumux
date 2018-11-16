@@ -63,7 +63,8 @@ SET_PROP(SaltWaterIntrusionTest, SpatialParams)
 };
 
 // Use mass fractions to set salinity conveniently
-SET_BOOL_PROP(SaltWaterIntrusionTest, UseMoles, false);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::SaltWaterIntrusionTest> { static constexpr bool value = false; };
 
 } // end namespace Properties
 

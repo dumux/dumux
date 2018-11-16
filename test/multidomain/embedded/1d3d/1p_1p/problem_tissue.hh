@@ -63,12 +63,18 @@ struct TissueBox { using InheritsFrom = std::tuple<Tissue, BoxModel>; };
 // Set the grid type
 SET_TYPE_PROP(Tissue, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >);
 
-SET_BOOL_PROP(Tissue, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Tissue, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Tissue, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(Tissue, SolutionDependentAdvection, false);
-SET_BOOL_PROP(Tissue, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(Tissue, SolutionDependentHeatConduction, false);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Tissue> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Tissue> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Tissue> { static constexpr bool value = true; };
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::Tissue> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::Tissue> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::Tissue> { static constexpr bool value = false; };
 
 // Set the problem property
 SET_TYPE_PROP(Tissue, Problem, TissueProblem<TypeTag>);

@@ -116,7 +116,8 @@ SET_INT_PROP(CombustionOneComponent, NumEnergyEqFluid, 1);
 SET_INT_PROP(CombustionOneComponent, NumEnergyEqSolid, 1);
 
 // by default chemical non equilibrium is enabled in the nonequil model, switch that off here
-SET_BOOL_PROP(CombustionOneComponent, EnableChemicalNonEquilibrium, false);
+template<class TypeTag>
+struct EnableChemicalNonEquilibrium<TypeTag, TTag::CombustionOneComponent> { static constexpr bool value = false; };
 //#################
 
 SET_PROP(CombustionOneComponent, SolidSystem)

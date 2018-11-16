@@ -55,7 +55,8 @@ SET_TYPE_PROP(DarcyTwoP, Grid, Dune::YaspGrid<3>);
 SET_TYPE_PROP(DarcyTwoP, Grid, Dune::YaspGrid<2>);
 #endif
 
-SET_BOOL_PROP(DarcyTwoP, UseMoles, false);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::DarcyTwoP> { static constexpr bool value = false; };
 
 SET_PROP(DarcyTwoP, SpatialParams)
 {

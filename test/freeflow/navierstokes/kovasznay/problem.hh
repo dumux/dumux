@@ -59,10 +59,13 @@ SET_TYPE_PROP(KovasznayTest, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoor
 // Set the problem property
 SET_TYPE_PROP(KovasznayTest, Problem, Dumux::KovasznayTestProblem<TypeTag> );
 
-SET_BOOL_PROP(KovasznayTest, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(KovasznayTest, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(KovasznayTest, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
 }
 
 /*!

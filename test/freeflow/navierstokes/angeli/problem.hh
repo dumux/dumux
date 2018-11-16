@@ -61,10 +61,13 @@ SET_TYPE_PROP(AngeliTest, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordin
 // Set the problem property
 SET_TYPE_PROP(AngeliTest, Problem, Dumux::AngeliTestProblem<TypeTag> );
 
-SET_BOOL_PROP(AngeliTest, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::AngeliTest> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(AngeliTest, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(AngeliTest, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::AngeliTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::AngeliTest> { static constexpr bool value = true; };
 
 }
 

@@ -291,7 +291,8 @@ public:
 //! Per default, no component mass balance is replaced
 SET_INT_PROP(MPNC, ReplaceCompEqIdx, GetPropType<TypeTag, Properties::FluidSystem>::numComponents);
 //! Use mole fractions in the balance equations by default
-SET_BOOL_PROP(MPNC, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::MPNC> { static constexpr bool value = true; };
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(MPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
 //! Set the default pressure formulation to the pressure of the (most) wetting phase

@@ -226,7 +226,8 @@ public:
 
 //! The default richards model computes no diffusion in the air phase
 //! Turning this on leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
-SET_BOOL_PROP(Richards, EnableWaterDiffusionInAir, false);
+template<class TypeTag>
+struct EnableWaterDiffusionInAir<TypeTag, TTag::Richards> { static constexpr bool value = false; };
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(Richards, EffectiveDiffusivityModel,

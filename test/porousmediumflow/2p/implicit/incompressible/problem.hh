@@ -86,12 +86,16 @@ public:
 };
 
 // Enable caching
-SET_BOOL_PROP(TwoPIncompressible, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(TwoPIncompressible, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(TwoPIncompressible, EnableFVGridGeometryCache, false);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = false; };
 
 // Maybe enable the box-interface solver
-SET_BOOL_PROP(TwoPIncompressible, EnableBoxInterfaceSolver, ENABLEINTERFACESOLVER);
+template<class TypeTag>
+struct EnableBoxInterfaceSolver<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = ENABLEINTERFACESOLVER; };
 } // end namespace Properties
 
 /*!

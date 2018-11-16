@@ -74,9 +74,12 @@ SET_PROP(IncompressibleTest, FluidSystem)
 };
 
 // Enable caching
-SET_BOOL_PROP(IncompressibleTest, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(IncompressibleTest, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(IncompressibleTest, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
 } // end namespace Properties
 
 template<class TypeTag>

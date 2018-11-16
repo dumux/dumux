@@ -85,7 +85,8 @@ SET_PROP(OnePTwoCNIConvection, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCNIConvection, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::OnePTwoCNIConvection> { static constexpr bool value = true; };
 }
 
 

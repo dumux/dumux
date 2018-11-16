@@ -59,12 +59,18 @@ struct Soil { using InheritsFrom = std::tuple<RichardsNC, CCTpfaModel>; };
 // Set the grid type
 SET_TYPE_PROP(Soil, Grid, Dune::UGGrid<3>);
 
-SET_BOOL_PROP(Soil, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Soil, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Soil, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(Soil, SolutionDependentAdvection, false);
-SET_BOOL_PROP(Soil, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(Soil, SolutionDependentHeatConduction, false);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::Soil> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::Soil> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::Soil> { static constexpr bool value = false; };
 
 // Set the problem property
 SET_TYPE_PROP(Soil, Problem, SoilProblem<TypeTag>);
@@ -81,7 +87,8 @@ SET_PROP(Soil, FluidSystem)
                                                        Components::Constant<1, Scalar>>;
 };
 
-SET_BOOL_PROP(Soil, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::Soil> { static constexpr bool value = true; };
 
 } // end namespace Properties
 

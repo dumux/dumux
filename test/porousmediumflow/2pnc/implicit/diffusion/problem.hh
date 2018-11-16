@@ -71,7 +71,8 @@ SET_PROP(TwoPNCDiffusion, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(TwoPNCDiffusion, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::TwoPNCDiffusion> { static constexpr bool value = true; };
 
 //! Here we set FicksLaw or TwoPNCDiffusionsLaw
 SET_TYPE_PROP(TwoPNCDiffusion, MolecularDiffusionType, DIFFUSIONTYPE);

@@ -83,7 +83,8 @@ public:
     static const TwoPFormulation value = TwoPFormulation::p1s0;
 };
 
-SET_BOOL_PROP(TwoPTwoCComparison, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::TwoPTwoCComparison> { static constexpr bool value = true; };
 
 SET_TYPE_PROP(TwoPTwoCComparison, IOFields, TwoPTwoCMPNCIOFields);
 } // end namespace Properties

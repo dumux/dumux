@@ -181,7 +181,8 @@ public:
 };
 
 //! Determines whether the constraint solver is used
-SET_BOOL_PROP(TwoPTwoC, UseConstraintSolver, true);
+template<class TypeTag>
+struct UseConstraintSolver<TypeTag, TTag::TwoPTwoC> { static constexpr bool value = true; };
 
 //////////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2p2c model (inherited from 2pnc)

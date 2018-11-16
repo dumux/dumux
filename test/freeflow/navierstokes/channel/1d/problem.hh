@@ -63,12 +63,16 @@ SET_TYPE_PROP(NavierStokesAnalytic, Grid, Dune::YaspGrid<1>);
 // Set the problem property
 SET_TYPE_PROP(NavierStokesAnalytic, Problem, Dumux::NavierStokesAnalyticProblem<TypeTag> );
 
-SET_BOOL_PROP(NavierStokesAnalytic, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(NavierStokesAnalytic, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(NavierStokesAnalytic, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(NavierStokesAnalytic, NormalizePressure, false);
+template<class TypeTag>
+struct NormalizePressure<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = false; };
 }
 
 /*!

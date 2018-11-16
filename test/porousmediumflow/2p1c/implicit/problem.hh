@@ -76,7 +76,8 @@ SET_PROP(InjectionProblem, SpatialParams)
 };
 
 //Define whether spurious cold-water flow into the steam is blocked
-SET_BOOL_PROP(InjectionProblem, UseBlockingOfSpuriousFlow, true);
+template<class TypeTag>
+struct UseBlockingOfSpuriousFlow<TypeTag, TTag::InjectionProblem> { static constexpr bool value = true; };
 } // end namespace Properties
 
 /*!

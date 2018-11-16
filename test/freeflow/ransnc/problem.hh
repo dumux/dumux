@@ -103,13 +103,17 @@ SET_TYPE_PROP(FlatPlateNCTest, Grid,
 // Set the problem property
 SET_TYPE_PROP(FlatPlateNCTest, Problem, Dumux::FlatPlateNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(FlatPlateNCTest, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::FlatPlateNCTest> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(FlatPlateNCTest, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(FlatPlateNCTest, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::FlatPlateNCTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::FlatPlateNCTest> { static constexpr bool value = true; };
 
 // Enable gravity
-SET_BOOL_PROP(FlatPlateNCTest, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::FlatPlateNCTest> { static constexpr bool value = true; };
 } // end namespace Properties
 
 /*!

@@ -57,12 +57,16 @@ SET_TYPE_PROP(MaxwellStefanNCTest, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(MaxwellStefanNCTest, Problem, Dumux::MaxwellStefanNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(MaxwellStefanNCTest, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(MaxwellStefanNCTest, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(MaxwellStefanNCTest, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(MaxwellStefanNCTest, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr bool value = true; };
 
 
 //! Here we set FicksLaw or MaxwellStefansLaw

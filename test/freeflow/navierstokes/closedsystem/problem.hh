@@ -58,10 +58,13 @@ SET_TYPE_PROP(ClosedSystemTest, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ClosedSystemTest, Problem, Dumux::ClosedSystemTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ClosedSystemTest, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::ClosedSystemTest> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(ClosedSystemTest, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(ClosedSystemTest, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::ClosedSystemTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::ClosedSystemTest> { static constexpr bool value = true; };
 
 }
 

@@ -61,7 +61,8 @@ SET_PROP(DarcyOnePTwoC, FluidSystem)
 };
 
 // Use moles
-SET_BOOL_PROP(DarcyOnePTwoC, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::DarcyOnePTwoC> { static constexpr bool value = true; };
 
 // Do not replace one equation with a total mass balance
 SET_INT_PROP(DarcyOnePTwoC, ReplaceCompEqIdx, 3);

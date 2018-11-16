@@ -83,12 +83,16 @@ SET_PROP(Fracture, SpatialParams)
 };
 
 // Use global caching
-SET_BOOL_PROP(Fracture, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Fracture, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Fracture, EnableGridFluxVariablesCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
 
 // permeablility is solution-independent
-SET_BOOL_PROP(Fracture, SolutionDependentAdvection, false);
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::Fracture> { static constexpr bool value = false; };
 } // end namespace Properties
 
 /*!

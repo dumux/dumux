@@ -221,7 +221,8 @@ public:
 SET_TYPE_PROP(ThreePThreeC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>);
 
 //! Determines whether a constraint solver should be used explicitly
-SET_BOOL_PROP(ThreePThreeC, UseConstraintSolver, false);
+template<class TypeTag>
+struct UseConstraintSolver<TypeTag, TTag::ThreePThreeC> { static constexpr bool value = false; };
 
 //! Set as default that _no_ component mass balance is replaced by the total mass balance
 SET_INT_PROP(ThreePThreeC, ReplaceCompEqIdx, GetPropType<TypeTag, Properties::ModelTraits>::numComponents());
@@ -279,7 +280,8 @@ SET_TYPE_PROP(ThreePThreeC, EffectiveDiffusivityModel, DiffusivityMillingtonQuir
 SET_TYPE_PROP(ThreePThreeC, IOFields, ThreePThreeCIOFields);
 
 //! Use mole fractions in the balance equations by default
-SET_BOOL_PROP(ThreePThreeC, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::ThreePThreeC> { static constexpr bool value = true; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_TYPE_PROP(ThreePThreeCNI, ThermalConductivityModel, ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>);

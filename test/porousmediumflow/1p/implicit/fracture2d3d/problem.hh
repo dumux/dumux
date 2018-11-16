@@ -55,9 +55,12 @@ struct FractureCCMpfa { using InheritsFrom = std::tuple<Fracture, CCMpfaModel>; 
 } // end namespace TTag
 
 //! Enable caching (more memory, but faster runtime)
-SET_BOOL_PROP(Fracture, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Fracture, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Fracture, EnableGridFluxVariablesCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
 
 //! The grid type
 #if HAVE_DUNE_FOAMGRID

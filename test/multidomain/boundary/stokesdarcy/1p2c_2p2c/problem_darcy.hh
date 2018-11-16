@@ -67,7 +67,8 @@ SET_INT_PROP(DarcyTwoPTwoC, ReplaceCompEqIdx, 3);
 // Set the grid type
 SET_TYPE_PROP(DarcyTwoPTwoC, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
 
-SET_BOOL_PROP(DarcyTwoPTwoC, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::DarcyTwoPTwoC> { static constexpr bool value = true; };
 
 SET_PROP(DarcyTwoPTwoC, SpatialParams)
 {

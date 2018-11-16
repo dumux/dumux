@@ -77,9 +77,12 @@ public:
 };
 
 // Enable caching
-SET_BOOL_PROP(TwoPCornerPoint, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(TwoPCornerPoint, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(TwoPCornerPoint, EnableFVGridGeometryCache, false);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPCornerPoint> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPCornerPoint> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::TwoPCornerPoint> { static constexpr bool value = false; };
 } // end namespace Properties
 
 /*!

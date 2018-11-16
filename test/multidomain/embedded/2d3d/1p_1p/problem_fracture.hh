@@ -53,12 +53,18 @@ struct Fracture { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 // Set the grid type
 SET_TYPE_PROP(Fracture, Grid, Dune::FoamGrid<2, 3>);
 
-SET_BOOL_PROP(Fracture, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Fracture, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Fracture, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(Fracture, SolutionDependentAdvection, false);
-SET_BOOL_PROP(Fracture, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(Fracture, SolutionDependentHeatConduction, false);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::Fracture> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::Fracture> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::Fracture> { static constexpr bool value = false; };
 
 // Set the problem property
 SET_TYPE_PROP(Fracture, Problem, FractureProblem<TypeTag>);

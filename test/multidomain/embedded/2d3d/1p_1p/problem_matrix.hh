@@ -58,12 +58,18 @@ struct Matrix { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 // Set the grid type
 SET_TYPE_PROP(Matrix, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >);
 
-SET_BOOL_PROP(Matrix, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Matrix, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Matrix, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(Matrix, SolutionDependentAdvection, false);
-SET_BOOL_PROP(Matrix, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(Matrix, SolutionDependentHeatConduction, false);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Matrix> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Matrix> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Matrix> { static constexpr bool value = true; };
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::Matrix> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::Matrix> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::Matrix> { static constexpr bool value = false; };
 
 // Set the problem property
 SET_TYPE_PROP(Matrix, Problem, MatrixProblem<TypeTag>);

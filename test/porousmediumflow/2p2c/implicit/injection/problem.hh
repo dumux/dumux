@@ -74,12 +74,16 @@ SET_PROP(Injection, SpatialParams)
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(Injection, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::Injection> { static constexpr bool value = true; };
 
 // Enable caching or not (reference solutions created without caching)
-SET_BOOL_PROP(Injection, EnableFVGridGeometryCache, ENABLECACHING);
-SET_BOOL_PROP(Injection, EnableGridVolumeVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(Injection, EnableGridFluxVariablesCache, ENABLECACHING);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Injection> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Injection> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Injection> { static constexpr bool value = ENABLECACHING; };
 } // end namespace Properties
 
 /*!

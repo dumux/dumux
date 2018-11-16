@@ -83,9 +83,12 @@ SET_PROP(OnePIncompressible, FluidSystem)
 };
 
 // Enable caching
-SET_BOOL_PROP(OnePIncompressible, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(OnePIncompressible, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(OnePIncompressible, EnableFVGridGeometryCache, FVGEOMCACHING);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = FVGEOMCACHING; };
 } // end namespace Properties
 
 /*!

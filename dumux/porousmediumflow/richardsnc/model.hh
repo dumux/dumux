@@ -157,7 +157,8 @@ public:
 SET_TYPE_PROP(RichardsNC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>);
 
 //! Define that per default mole fractions are used in the balance equations
-SET_BOOL_PROP(RichardsNC, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::RichardsNC> { static constexpr bool value = true; };
 
 //! Use the dedicated local residual
 SET_TYPE_PROP(RichardsNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
@@ -190,7 +191,8 @@ public:
 
 //! The default richardsnc model computes no diffusion in the air phase
 //! Turning this on leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
-SET_BOOL_PROP(RichardsNC, EnableWaterDiffusionInAir, false);
+template<class TypeTag>
+struct EnableWaterDiffusionInAir<TypeTag, TTag::RichardsNC> { static constexpr bool value = false; };
 
 /*!
  *\brief The fluid system used by the model.

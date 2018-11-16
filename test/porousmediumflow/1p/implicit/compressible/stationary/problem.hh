@@ -79,9 +79,12 @@ public:
 };
 
 // Disable caching (for testing purposes)
-SET_BOOL_PROP(OnePCompressible, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(OnePCompressible, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(OnePCompressible, EnableFVGridGeometryCache, false);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
 
 } // end namespace Properties
 /*!

@@ -184,7 +184,8 @@ SET_TYPE_PROP(OnePNC, EffectiveDiffusivityModel,
               DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
 
 //! Use mole fractions in the balance equations by default
-SET_BOOL_PROP(OnePNC, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::OnePNC> { static constexpr bool value = true; };
 
 //! The local residual function
 SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
