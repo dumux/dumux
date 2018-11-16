@@ -91,7 +91,7 @@ public:
         const Scalar flux = ParentType::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarCache);
 
         // only block wetting-phase (i.e. liquid water) fluxes
-        if((!GET_PROP_VALUE(TypeTag, UseBlockingOfSpuriousFlow)) || phaseIdx != liquidPhaseIdx)
+        if((!getPropValue<TypeTag, Properties::UseBlockingOfSpuriousFlow>()) || phaseIdx != liquidPhaseIdx)
             return flux;
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];

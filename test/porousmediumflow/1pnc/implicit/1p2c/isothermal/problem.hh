@@ -147,7 +147,7 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
     //! property that defines whether mole or mass fractions are used
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     static const bool isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box;
 
     static const int dimWorld = GridView::dimensionworld;

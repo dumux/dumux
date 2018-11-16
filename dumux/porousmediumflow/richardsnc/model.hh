@@ -152,7 +152,7 @@ SET_PROP(RichardsNC, BaseModelTraits)
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
-    using type = RichardsNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using type = RichardsNCModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>(), getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
 SET_TYPE_PROP(RichardsNC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>);
 

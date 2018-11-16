@@ -74,7 +74,7 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    static constexpr bool normalizePressure = GET_PROP_VALUE(TypeTag, NormalizePressure);
+    static constexpr bool normalizePressure = getPropValue<TypeTag, Properties::NormalizePressure>();
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

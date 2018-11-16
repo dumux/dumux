@@ -59,7 +59,7 @@ class FreeflowNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
 
 
     static constexpr int numComponents =ModelTraits::numComponents();
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     static constexpr auto cellCenterOffset = ParentType::cellCenterOffset;
 
     using EnergyLocalResidual = typename ParentType::EnergyLocalResidual;

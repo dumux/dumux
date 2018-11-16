@@ -50,7 +50,7 @@ class MineralizationLocalResidual: public CompositionalLocalResidual<TypeTag>
     static constexpr int numSolidComps =  ModelTraits::numSolidComps();
     static constexpr int numInertSolidComps =  ModelTraits::numInertSolidComps();
     static constexpr int numComponents = ModelTraits::numComponents();
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
     enum { conti0EqIdx = Indices::conti0EqIdx };
 

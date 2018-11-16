@@ -366,7 +366,7 @@ private:
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-            constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+            constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
             const auto density = [useMoles](const auto& volVars)
             {
                 return useMoles ? volVars.molarDensity() : volVars.density() ;
@@ -374,7 +374,7 @@ private:
 
             const auto avgDensity = 0.5*density(insideVolVars) + 0.5*density(outsideVolVars);
 
-            constexpr auto replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+            constexpr auto replaceCompEqIdx = getPropValue<TypeTag, Properties::ReplaceCompEqIdx>();
             constexpr auto numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents();
 
             const Scalar cumulativeFlux = [replaceCompEqIdx, numComponents, &massOrMoleFlux]()

@@ -67,7 +67,7 @@ SET_TYPE_PROP(TubesTest, Grid, Dune::FoamGrid<1, 3>);
 SET_PROP(TubesTestCCTpfa, FVGridGeometry)
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
     using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     using ElementMapper = ReorderingDofMapper<GridView>;
@@ -81,7 +81,7 @@ public:
 SET_PROP(TubesTestBox, FVGridGeometry)
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 

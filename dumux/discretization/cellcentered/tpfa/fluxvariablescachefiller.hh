@@ -51,9 +51,9 @@ class CCTpfaFluxVariablesCacheFiller
     static constexpr bool doDiffusion = ModelTraits::enableMolecularDiffusion();
     static constexpr bool doHeatConduction = ModelTraits::enableEnergyBalance();
 
-    static constexpr bool soldependentAdvection = GET_PROP_VALUE(TypeTag, SolutionDependentAdvection);
-    static constexpr bool soldependentDiffusion = GET_PROP_VALUE(TypeTag, SolutionDependentMolecularDiffusion);
-    static constexpr bool soldependentHeatConduction = GET_PROP_VALUE(TypeTag, SolutionDependentHeatConduction);
+    static constexpr bool soldependentAdvection = getPropValue<TypeTag, Properties::SolutionDependentAdvection>();
+    static constexpr bool soldependentDiffusion = getPropValue<TypeTag, Properties::SolutionDependentMolecularDiffusion>();
+    static constexpr bool soldependentHeatConduction = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
 
 public:
     static constexpr bool isSolDependent = (doAdvection && soldependentAdvection) ||

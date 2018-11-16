@@ -75,7 +75,7 @@ SET_TYPE_PROP(BoxFacetCouplingModel,
 SET_PROP(BoxFacetCouplingModel, FVGridGeometry)
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:

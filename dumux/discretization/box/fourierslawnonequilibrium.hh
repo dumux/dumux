@@ -64,7 +64,7 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
     enum { numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases()} ;
-    enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
+    enum { numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>() };
     enum {sPhaseIdx = FluidSystem::numPhases};
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;

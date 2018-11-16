@@ -98,14 +98,14 @@ private:
     using NodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
     using Traits = CCMpfaFVGridGeometryTraits<GridView, NodalIndexSet, PrimaryIV, SecondaryIV>;
 public:
-    using type = CCMpfaFVGridGeometry<GridView, Traits, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>;
+    using type = CCMpfaFVGridGeometry<GridView, Traits, getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>()>;
 };
 
 //! The grid volume variables vector class
 SET_PROP(CCMpfaModel, GridVolumeVariables)
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 public:
@@ -116,7 +116,7 @@ public:
 SET_PROP(CCMpfaModel, GridFluxVariablesCache)
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
     using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;

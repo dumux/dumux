@@ -97,8 +97,8 @@ private:
 public:
     using type = CombustionModelTraits< FluidSystem::numPhases,
                                         FluidSystem::numComponents,
-                                        GET_PROP_VALUE(TypeTag, PressureFormulation),
-                                        GET_PROP_VALUE(TypeTag, UseMoles) >;
+                                        getPropValue<TypeTag, Properties::PressureFormulation>(),
+                                        getPropValue<TypeTag, Properties::UseMoles>() >;
 };
 
 SET_PROP(CombustionOneComponent, FluidState)

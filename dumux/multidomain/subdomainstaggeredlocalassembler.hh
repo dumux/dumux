@@ -488,7 +488,7 @@ class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numer
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
-    static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
+    static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     static constexpr int maxNeighbors = 4*(2*ModelTraits::dim());
     static constexpr auto domainI = Dune::index_constant<id>();
     static constexpr auto cellCenterId = typename Dune::index_constant<0>();
@@ -996,12 +996,12 @@ public:
 private:
 
     template<class T = TypeTag>
-    static typename std::enable_if<!GET_PROP_VALUE(T, EnableGridFaceVariablesCache), FaceVariables&>::type
+    static typename std::enable_if<!getPropValue<T, Properties::EnableGridFaceVariablesCache>(), FaceVariables&>::type
     getFaceVarAccess(GridFaceVariables& gridFaceVariables, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
     { return elemFaceVars[scvf]; }
 
     template<class T = TypeTag>
-    static typename std::enable_if<GET_PROP_VALUE(T, EnableGridFaceVariablesCache), FaceVariables&>::type
+    static typename std::enable_if<getPropValue<T, Properties::EnableGridFaceVariablesCache>(), FaceVariables&>::type
     getFaceVarAccess(GridFaceVariables& gridFaceVariables, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
     { return gridFaceVariables.faceVars(scvf.index()); }
 };

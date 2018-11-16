@@ -217,7 +217,7 @@ SET_TYPE_PROP(TwoPOneCNI, ThermalConductivityModel, ThermalConductivitySomerton<
 //////////////////////////////////////////////////////////////////
 
 //! Set the non-isothermal model traits
-SET_TYPE_PROP(TwoPOneCNI, ModelTraits, TwoPOneCNIModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
+SET_TYPE_PROP(TwoPOneCNI, ModelTraits, TwoPOneCNIModelTraits<getPropValue<TypeTag, Properties::Formulation>()>);
 
 //! The non-isothermal vtk output fields.
 SET_TYPE_PROP(TwoPOneCNI, IOFields, EnergyIOFields<TwoPOneCIOFields>);

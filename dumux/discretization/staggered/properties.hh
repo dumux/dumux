@@ -67,7 +67,7 @@ SET_PROP(StaggeredModel, GridFaceVariables)
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FaceVariables = GetPropType<TypeTag, Properties::FaceVariables>;
-    static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache);
+    static constexpr auto enableCache = getPropValue<TypeTag, Properties::EnableGridFaceVariablesCache>();
 public:
     using type = StaggeredGridFaceVariables<Problem, FaceVariables, enableCache>;
 };
@@ -79,7 +79,7 @@ SET_BOOL_PROP(StaggeredModel, EnableGridFaceVariablesCache, true);
 SET_PROP(StaggeredModel, GridFluxVariablesCache)
 {
 private:
-    static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
+    static constexpr auto enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
     using FluxVariablesCacheFiller = FluxVariablesCaching::EmptyCacheFiller;
@@ -118,13 +118,13 @@ SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, StaggeredLocalResidual<TypeTag>
 SET_TYPE_PROP(StaggeredModel,
               CellCenterPrimaryVariables,
               Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
-                                GET_PROP_VALUE(TypeTag, NumEqCellCenter)>);
+                                getPropValue<TypeTag, Properties::NumEqCellCenter>()>);
 
 //! The face primary variables
 SET_TYPE_PROP(StaggeredModel,
               FacePrimaryVariables,
               Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
-                                GET_PROP_VALUE(TypeTag, NumEqFace)>);
+                                getPropValue<TypeTag, Properties::NumEqFace>()>);
 
 //! Boundary types at a single degree of freedom
 SET_TYPE_PROP(StaggeredModel, BoundaryTypes, Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>);
@@ -158,8 +158,8 @@ SET_PROP(StaggeredModel, JacobianMatrix)
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-    static constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
+    static constexpr auto numEqCellCenter = getPropValue<TypeTag, Properties::NumEqCellCenter>();
+    static constexpr auto numEqFace = getPropValue<TypeTag, Properties::NumEqFace>();
 
 public:
     // the sub-blocks

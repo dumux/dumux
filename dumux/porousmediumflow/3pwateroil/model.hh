@@ -204,7 +204,7 @@ private:
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 3p2cni model!");
     static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p2cni model!");
 public:
-    using type = PorousMediumFlowNIModelTraits<ThreePWaterOilModelTraits<GET_PROP_VALUE(TypeTag, OnlyGasPhaseCanDisappear)>>;
+    using type = PorousMediumFlowNIModelTraits<ThreePWaterOilModelTraits<getPropValue<TypeTag, Properties::OnlyGasPhaseCanDisappear>()>>;
 };
 
 /*!

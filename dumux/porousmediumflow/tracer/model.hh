@@ -138,7 +138,7 @@ SET_PROP(Tracer, ModelTraits)
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
-    using type = TracerModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles)>;
+    using type = TracerModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>()>;
 };
 
 //! Use the tracer local residual function for the tracer model

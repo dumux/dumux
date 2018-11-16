@@ -170,7 +170,7 @@ SET_PROP(TwoP, Formulation)
 SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
 
 //! The base model traits class
-SET_TYPE_PROP(TwoP, BaseModelTraits, TwoPModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
+SET_TYPE_PROP(TwoP, BaseModelTraits, TwoPModelTraits<getPropValue<TypeTag, Properties::Formulation>()>);
 SET_TYPE_PROP(TwoP, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>); //!< default the actually used traits to the base traits
 
 //! Set the vtk output fields specific to the twop model
@@ -189,7 +189,7 @@ private:
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     static constexpr auto DM = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod;
-    static constexpr bool enableIS = GET_PROP_VALUE(TypeTag, EnableBoxInterfaceSolver);
+    static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
     // class used for scv-wise reconstruction of non-wetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
 

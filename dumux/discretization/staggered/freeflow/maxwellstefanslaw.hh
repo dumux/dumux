@@ -65,7 +65,7 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static const int numComponents = ModelTraits::numComponents();
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;

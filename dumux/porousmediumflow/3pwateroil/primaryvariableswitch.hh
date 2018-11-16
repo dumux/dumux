@@ -86,7 +86,7 @@ protected:
         auto phasePresence = priVars.state();
         int newPhasePresence = phasePresence;
 
-        bool onlyGasPhaseCanDisappear = GET_PROP_VALUE(TypeTag, OnlyGasPhaseCanDisappear);
+        bool onlyGasPhaseCanDisappear = getPropValue<TypeTag, Properties::OnlyGasPhaseCanDisappear>();
 
         if(onlyGasPhaseCanDisappear)
         {

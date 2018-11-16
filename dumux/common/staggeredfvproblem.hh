@@ -69,8 +69,8 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
     static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
-    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-    static constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
+    static constexpr auto numEqCellCenter = getPropValue<TypeTag, Properties::NumEqCellCenter>();
+    static constexpr auto numEqFace = getPropValue<TypeTag, Properties::NumEqFace>();
 
 public:
     /*!

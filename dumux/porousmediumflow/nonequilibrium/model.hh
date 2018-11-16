@@ -99,12 +99,12 @@ SET_PROP(NonEquilibrium, ModelTraits)
 {
 private:
     using EquiTraits = GetPropType<TypeTag, Properties::EquilibriumModelTraits>;
-    static constexpr bool enableTNE = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
-    static constexpr bool enableCNE = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
-    static constexpr int numEF = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
-    static constexpr int numES = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
-    static constexpr auto nf = GET_PROP_VALUE(TypeTag, NusseltFormulation);
-    static constexpr auto ns = GET_PROP_VALUE(TypeTag, SherwoodFormulation);
+    static constexpr bool enableTNE = getPropValue<TypeTag, Properties::EnableThermalNonEquilibrium>();
+    static constexpr bool enableCNE = getPropValue<TypeTag, Properties::EnableChemicalNonEquilibrium>();
+    static constexpr int numEF = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr int numES = getPropValue<TypeTag, Properties::NumEnergyEqSolid>();
+    static constexpr auto nf = getPropValue<TypeTag, Properties::NusseltFormulation>();
+    static constexpr auto ns = getPropValue<TypeTag, Properties::SherwoodFormulation>();
 public:
     using type = NonEquilibriumModelTraits<EquiTraits, enableCNE, enableTNE, numEF, numES, nf, ns>;
 };
@@ -117,7 +117,7 @@ SET_BOOL_PROP(NonEquilibrium, EnableChemicalNonEquilibrium, true);
 SET_INT_PROP(NonEquilibrium, NumEnergyEqSolid, 1);
 SET_INT_PROP(NonEquilibrium, NumEnergyEqFluid, GetPropType<TypeTag, Properties::EquilibriumModelTraits>::numPhases());
 
-SET_TYPE_PROP(NonEquilibrium, EnergyLocalResidual, EnergyLocalResidualNonEquilibrium<TypeTag, GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)>);
+SET_TYPE_PROP(NonEquilibrium, EnergyLocalResidual, EnergyLocalResidualNonEquilibrium<TypeTag, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>);
 SET_TYPE_PROP(NonEquilibrium, LocalResidual, NonEquilibriumLocalResidual<TypeTag>);
 SET_TYPE_PROP(NonEquilibrium, HeatConductionType, FouriersLawNonEquilibrium<TypeTag>);
 

@@ -305,7 +305,7 @@ public:
         }
 
         // normalize pressure
-        if(GET_PROP_VALUE(SubDomainTypeTag<stokesIdx>, NormalizePressure))
+        if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
             momentumFlux -= couplingManager_.problem(stokesIdx).initial(scvf)[Indices<stokesIdx>::pressureIdx];
 
         momentumFlux *= scvf.directionSign();
@@ -624,8 +624,8 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     static constexpr bool useMoles = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::ModelTraits>::useMoles();
 
     static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numComponents() == numComponents, "Submodels must use same number of components");
-    static_assert(GET_PROP_VALUE(SubDomainTypeTag<darcyIdx>, UseMoles) == useMoles, "Both models must either use moles or not");
-    static_assert(GET_PROP_VALUE(SubDomainTypeTag<darcyIdx>, ReplaceCompEqIdx) == replaceCompEqIdx, "Both models must use the same replaceCompEqIdx");
+    static_assert(getPropValue<SubDomainTypeTag<darcyIdx>, Properties::UseMoles>() == useMoles, "Both models must either use moles or not");
+    static_assert(getPropValue<SubDomainTypeTag<darcyIdx>, Properties::ReplaceCompEqIdx>() == replaceCompEqIdx, "Both models must use the same replaceCompEqIdx");
     using NumEqVector = Dune::FieldVector<Scalar, numComponents>;
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;

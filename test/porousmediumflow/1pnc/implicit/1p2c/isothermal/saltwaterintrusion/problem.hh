@@ -94,7 +94,7 @@ class SaltWaterIntrusionTestProblem : public PorousMediumFlowProblem<TypeTag>
     enum { pressureIdx = Indices::pressureIdx };
 
     //! The test is defined using mass fractions
-    static_assert(!GET_PROP_VALUE(TypeTag, UseMoles), "This test uses mass fractions!");
+    static_assert(!getPropValue<TypeTag, Properties::UseMoles>(), "This test uses mass fractions!");
 
 public:
     SaltWaterIntrusionTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

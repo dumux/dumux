@@ -83,7 +83,7 @@ SET_PROP(StaggeredFreeFlowModel, FVGridGeometry)
 private:
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Traits = StaggeredFreeFlowDefaultFVGridGeometryTraits<GridView>;
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
 public:
     using type = StaggeredFVGridGeometry<GridView, enableCache, Traits>;
 };
@@ -104,7 +104,7 @@ SET_PROP(StaggeredFreeFlowModel, GridVolumeVariables)
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
+    static constexpr auto enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     using Traits = StaggeredGridDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
 public:
     using type = StaggeredGridVolumeVariables<Traits, enableCache>;

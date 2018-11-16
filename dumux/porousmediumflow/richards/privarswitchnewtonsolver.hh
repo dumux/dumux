@@ -38,7 +38,7 @@ class RichardsPrivarSwitchNewtonSolverImplementation;
  * \brief A base for the richards newton solver which derives from the right base newton solver.
   */
 template <class TypeTag, class Assembler, class LinearSolver>
-using RichardsPrivarSwitchNewtonSolver = RichardsPrivarSwitchNewtonSolverImplementation <TypeTag, Assembler, LinearSolver, GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir)>;
+using RichardsPrivarSwitchNewtonSolver = RichardsPrivarSwitchNewtonSolverImplementation <TypeTag, Assembler, LinearSolver, getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>()>;
 
 /*!
  * \ingroup RichardsModel

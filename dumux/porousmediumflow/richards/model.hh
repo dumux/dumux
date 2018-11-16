@@ -198,14 +198,14 @@ SET_PROP(Richards, IOFields)
 {
 private:
     static constexpr bool enableWaterDiffusionInAir
-        = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
+        = getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>();
 
 public:
     using type = RichardsIOFields<enableWaterDiffusionInAir>;
 };
 
 //! The model traits
-SET_TYPE_PROP(Richards, ModelTraits, RichardsModelTraits<GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir)>);
+SET_TYPE_PROP(Richards, ModelTraits, RichardsModelTraits<getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>()>);
 
 //! Set the volume variables property
 SET_PROP(Richards, VolumeVariables)
@@ -244,9 +244,6 @@ public:
 
 //! The primary variable switch for the richards model
 SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch);
-
-//! The primary variable switch for the richards model
-// SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
 
 /*!
  *\brief The fluid system used by the model.
@@ -293,7 +290,7 @@ public:
 SET_PROP(RichardsNI, ModelTraits)
 {
 private:
-    using IsothermalTraits = RichardsModelTraits<GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir)>;
+    using IsothermalTraits = RichardsModelTraits<getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>()>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
@@ -302,7 +299,7 @@ public:
 SET_PROP(RichardsNI, IOFields)
 {
     static constexpr bool enableWaterDiffusionInAir
-        = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
+        = getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>();
     using RichardsIOF = RichardsIOFields<enableWaterDiffusionInAir>;
     using type = EnergyIOFields<RichardsIOF>;
 };

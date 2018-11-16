@@ -152,9 +152,9 @@ private:
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
 
 public:
-    using type = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
-                                      GET_PROP_VALUE(TypeTag, UseMoles),
-                                      GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx) >;
+    using type = TwoPTwoCModelTraits< getPropValue<TypeTag, Properties::Formulation>(),
+                                      getPropValue<TypeTag, Properties::UseMoles>(),
+                                      getPropValue<TypeTag, Properties::ReplaceCompEqIdx>() >;
 };
 SET_TYPE_PROP(TwoPTwoC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>);
 
@@ -173,7 +173,7 @@ private:
     static_assert(FSY::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
     static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
 
-    static constexpr bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
+    static constexpr bool useConstraintSolver = getPropValue<TypeTag, Properties::UseConstraintSolver>();
 
     using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:

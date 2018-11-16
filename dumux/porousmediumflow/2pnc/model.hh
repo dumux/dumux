@@ -245,9 +245,9 @@ private:
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
 public:
     using type = TwoPNCModelTraits<FluidSystem::numComponents,
-                                   GET_PROP_VALUE(TypeTag, UseMoles),
-                                   GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
-                                   GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+                                   getPropValue<TypeTag, Properties::UseMoles>(),
+                                   getPropValue<TypeTag, Properties::SetMoleFractionsForFirstPhase>(),
+                                   getPropValue<TypeTag, Properties::Formulation>(), getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
 SET_TYPE_PROP(TwoPNC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>); //!< default the actually used traits to the base traits
 

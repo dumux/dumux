@@ -179,7 +179,7 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public Get
 
     static constexpr int numPhases = ModelTraits::numPhases();
     static constexpr int numComponents = ModelTraits::numComponents();
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
     enum { conti0EqIdx = Indices::conti0EqIdx };

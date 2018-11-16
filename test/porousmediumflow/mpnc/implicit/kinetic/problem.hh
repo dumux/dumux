@@ -191,7 +191,7 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
     enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
 
-    static constexpr bool enableChemicalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
+    static constexpr bool enableChemicalNonEquilibrium = getPropValue<TypeTag, Properties::EnableChemicalNonEquilibrium>();
     using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
     // formulations

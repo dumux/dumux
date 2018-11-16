@@ -126,8 +126,8 @@ private:
     template<std::size_t id>
     using JacobianDiagBlock = std::conditional_t<(id < 2),
                                                  std::conditional_t<(id == 0),
-                                                                    typename JacobianType<GetPropType<SubDomainTypeTag<0>, Properties::Scalar>, GET_PROP_VALUE(SubDomainTypeTag<0>, NumEqCellCenter)>::type,
-                                                                    typename JacobianType<GetPropType<SubDomainTypeTag<0>, Properties::Scalar>, GET_PROP_VALUE(SubDomainTypeTag<0>, NumEqFace)>::type>,
+                                                                    typename JacobianType<GetPropType<SubDomainTypeTag<0>, Properties::Scalar>, getPropValue<SubDomainTypeTag<0>, Properties::NumEqCellCenter>()>::type,
+                                                                    typename JacobianType<GetPropType<SubDomainTypeTag<0>, Properties::Scalar>, getPropValue<SubDomainTypeTag<0>, Properties::NumEqFace>()>::type>,
                                                  GetPropType<SubDomainTypeTag<id>, Properties::JacobianMatrix>>;
 
 public:

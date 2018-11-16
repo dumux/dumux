@@ -44,7 +44,7 @@ struct BoxDfmModel { using InheritsFrom = std::tuple<BoxModel>; };
 SET_PROP(BoxDfmModel, FVGridGeometry)
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:

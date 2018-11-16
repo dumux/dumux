@@ -76,7 +76,7 @@ public:
     static constexpr bool enableAdvection = ModelTraits::enableAdvection();
     static constexpr bool enableMolecularDiffusion = ModelTraits::enableMolecularDiffusion();
     static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
-    static constexpr bool enableThermalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
+    static constexpr bool enableThermalNonEquilibrium = getPropValue<TypeTag, Properties::EnableThermalNonEquilibrium>();
 
     //! The constructor
     PorousMediumFluxVariables()

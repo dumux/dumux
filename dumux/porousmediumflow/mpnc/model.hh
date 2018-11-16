@@ -256,9 +256,9 @@ private:
 public:
     using type = MPNCModelTraits<FluidSystem::numPhases,
                                  FluidSystem::numComponents,
-                                 GET_PROP_VALUE(TypeTag, PressureFormulation),
-                                 GET_PROP_VALUE(TypeTag, UseMoles),
-                                 GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+                                 getPropValue<TypeTag, Properties::PressureFormulation>(),
+                                 getPropValue<TypeTag, Properties::UseMoles>(),
+                                 getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
 
 //! This model uses the compositional fluid state
@@ -315,9 +315,9 @@ private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using IsothermalTraits = MPNCModelTraits<FluidSystem::numPhases,
                                              FluidSystem::numComponents,
-                                             GET_PROP_VALUE(TypeTag, PressureFormulation),
-                                             GET_PROP_VALUE(TypeTag, UseMoles),
-                                             GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+                                             getPropValue<TypeTag, Properties::PressureFormulation>(),
+                                             getPropValue<TypeTag, Properties::UseMoles>(),
+                                             getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
@@ -337,12 +337,12 @@ SET_PROP(MPNCNonequil, ModelTraits)
 {
 private:
     using EquiTraits = GetPropType<TypeTag, Properties::EquilibriumModelTraits>;
-    static constexpr bool enableTNE = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
-    static constexpr bool enableCNE = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
-    static constexpr int numEF = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
-    static constexpr int numES = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
-    static constexpr auto nf = GET_PROP_VALUE(TypeTag, NusseltFormulation);
-    static constexpr auto ns = GET_PROP_VALUE(TypeTag, SherwoodFormulation);
+    static constexpr bool enableTNE = getPropValue<TypeTag, Properties::EnableThermalNonEquilibrium>();
+    static constexpr bool enableCNE = getPropValue<TypeTag, Properties::EnableChemicalNonEquilibrium>();
+    static constexpr int numEF = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr int numES = getPropValue<TypeTag, Properties::NumEnergyEqSolid>();
+    static constexpr auto nf = getPropValue<TypeTag, Properties::NusseltFormulation>();
+    static constexpr auto ns = getPropValue<TypeTag, Properties::SherwoodFormulation>();
 
     using NonEquilTraits = NonEquilibriumModelTraits<EquiTraits, enableCNE, enableTNE, numEF, numES, nf, ns>;
 public:
@@ -357,9 +357,9 @@ private:
 public:
     using type = MPNCModelTraits<FluidSystem::numPhases,
                                  FluidSystem::numComponents,
-                                 GET_PROP_VALUE(TypeTag, PressureFormulation),
-                                 GET_PROP_VALUE(TypeTag, UseMoles),
-                                 GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+                                 getPropValue<TypeTag, Properties::PressureFormulation>(),
+                                 getPropValue<TypeTag, Properties::UseMoles>(),
+                                 getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
 
 //! in case we do not assume full non-equilibrium one needs a thermal conductivity
@@ -368,7 +368,7 @@ SET_PROP(MPNCNonequil, ThermalConductivityModel)
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = ThermalConductivitySimpleFluidLumping<Scalar, GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)>;
+    using type = ThermalConductivitySimpleFluidLumping<Scalar, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>;
 };
 
 //! use the mineralization volume variables together with the 2pnc vol vars

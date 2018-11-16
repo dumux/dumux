@@ -66,7 +66,7 @@ class RichardsLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalR
     };
 
     static constexpr bool enableWaterDiffusionInAir
-        = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
+        = getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>();
 public:
     using ParentType::ParentType;
 
