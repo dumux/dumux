@@ -76,6 +76,7 @@ public:
 
         // treat the velocity forward of the self face i.e. the face that is
         // forward wrt the self face by degree i
+        velocityForward_.clear();
         for (int i = 0; i < scvf.axisData().inAxisForwardDofs.size(); i++)
         {
              if(!(scvf.axisData().inAxisForwardDofs[i] < 0))
@@ -86,6 +87,7 @@ public:
 
         // treat the velocity at the first backward face i.e. the face that is
         // behind the opposite face by degree i
+        velocityBackward_.clear();
         for (int i = 0; i < scvf.axisData().inAxisBackwardDofs.size(); i++)
         {
              if(!(scvf.axisData().inAxisBackwardDofs[i] < 0))
