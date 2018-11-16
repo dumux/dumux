@@ -165,7 +165,8 @@ SET_TYPE_PROP(RichardsNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
 
 //! We set the replaceCompIdx to 0, i.e. the first equation is substituted with
 //! the total mass balance, i.e. the phase balance
-SET_INT_PROP(RichardsNC, ReplaceCompEqIdx, 0);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::RichardsNC> { static constexpr int value = 0; };
 
 //! Set the volume variables property
 SET_PROP(RichardsNC, VolumeVariables)

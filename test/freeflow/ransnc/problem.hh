@@ -94,7 +94,8 @@ SET_PROP(FlatPlateNCTest, FluidSystem)
 };
 
 // replace the main component balance eq with a total balance eq
-SET_INT_PROP(FlatPlateNCTest, ReplaceCompEqIdx, 0);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::FlatPlateNCTest> { static constexpr int value = 0; };
 
 // Set the grid type
 SET_TYPE_PROP(FlatPlateNCTest, Grid,

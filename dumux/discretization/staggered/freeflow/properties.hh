@@ -58,7 +58,8 @@ struct StaggeredFreeFlowModel { using InheritsFrom = std::tuple<StaggeredModel>;
  * \brief  Set the number of equations on the faces to 1. We only consider scalar values because the velocity vector
  *         is normal to the face.
  */
-SET_INT_PROP(StaggeredFreeFlowModel, NumEqFace, 1);
+template<class TypeTag>
+struct NumEqFace<TypeTag, TTag::StaggeredFreeFlowModel> { static constexpr int value = 1; };
 
 /*!
  * \brief  For free flow models, we take the number of "physical" equations

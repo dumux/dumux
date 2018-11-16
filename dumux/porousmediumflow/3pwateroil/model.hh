@@ -225,7 +225,8 @@ SET_PROP(ThreePWaterOilNI, FluidState){
 SET_TYPE_PROP(ThreePWaterOilNI, LocalResidual, ThreePWaterOilLocalResidual<TypeTag>);
 
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(ThreePWaterOilNI, ReplaceCompEqIdx, GetPropType<TypeTag, Properties::ModelTraits>::numComponents());
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::ThreePWaterOilNI> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(; });
 
 //! The primary variable switch for the 3p3c model
 SET_TYPE_PROP(ThreePWaterOilNI, PrimaryVariableSwitch, ThreePWaterOilPrimaryVariableSwitch<TypeTag>);

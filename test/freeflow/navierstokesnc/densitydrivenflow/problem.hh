@@ -55,7 +55,8 @@ SET_PROP(DensityDrivenFlow, FluidSystem)
     using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
-SET_INT_PROP(DensityDrivenFlow, ReplaceCompEqIdx, 0);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::DensityDrivenFlow> { static constexpr int value = 0; };
 
 // Set the grid type
 SET_TYPE_PROP(DensityDrivenFlow, Grid, Dune::YaspGrid<2>);

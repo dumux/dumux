@@ -65,7 +65,8 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::DarcyOnePTwoC> { static constexpr bool value = true; };
 
 // Do not replace one equation with a total mass balance
-SET_INT_PROP(DarcyOnePTwoC, ReplaceCompEqIdx, 3);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::DarcyOnePTwoC> { static constexpr int value = 3; };
 
 //! Use a model with constant tortuosity for the effective diffusivity
 SET_TYPE_PROP(DarcyOnePTwoC, EffectiveDiffusivityModel,

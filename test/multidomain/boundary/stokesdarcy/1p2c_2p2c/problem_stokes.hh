@@ -61,7 +61,8 @@ SET_PROP(StokesOnePTwoC, FluidSystem)
   using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
-SET_INT_PROP(StokesOnePTwoC, ReplaceCompEqIdx, 3);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::StokesOnePTwoC> { static constexpr int value = 3; };
 
 // Use formulation based on mass fractions
 template<class TypeTag>

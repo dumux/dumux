@@ -116,8 +116,10 @@ template<class TypeTag>
 struct EnableChemicalNonEquilibrium<TypeTag, TTag::NonEquilibrium> { static constexpr bool value = true; };
 
 //! Default values for the number of energy balance equations
-SET_INT_PROP(NonEquilibrium, NumEnergyEqSolid, 1);
-SET_INT_PROP(NonEquilibrium, NumEnergyEqFluid, GetPropType<TypeTag, Properties::EquilibriumModelTraits>::numPhases());
+template<class TypeTag>
+struct NumEnergyEqSolid<TypeTag, TTag::NonEquilibrium> { static constexpr int value = 1; };
+template<class TypeTag>
+struct NumEnergyEqFluid<TypeTag, TTag::NonEquilibrium> { static constexpr int value = GetPropType<TypeTag, Properties::EquilibriumModelTraits>::numPhases(; });
 
 SET_TYPE_PROP(NonEquilibrium, EnergyLocalResidual, EnergyLocalResidualNonEquilibrium<TypeTag, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>);
 SET_TYPE_PROP(NonEquilibrium, LocalResidual, NonEquilibriumLocalResidual<TypeTag>);

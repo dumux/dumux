@@ -256,7 +256,8 @@ SET_TYPE_PROP(TwoPNC, IOFields, TwoPNCIOFields);
 
 SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
 
-SET_INT_PROP(TwoPNC, ReplaceCompEqIdx, GetPropType<TypeTag, Properties::FluidSystem>::numComponents); //!< Per default, no component mass balance is replaced
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::TwoPNC> { static constexpr int value = GetPropType<TypeTag, Properties::FluidSystem>::numComponents; }; //!< Per default, no component mass balance is replaced
 
 //! Default formulation is pw-Sn, overwrite if necessary
 SET_PROP(TwoPNC, Formulation)

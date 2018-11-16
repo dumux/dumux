@@ -112,8 +112,10 @@ public:
 //#################
 //changes from the default settings which also assume chemical non-equilibrium
 //set the number of energyequations we want to use
-SET_INT_PROP(CombustionOneComponent, NumEnergyEqFluid, 1);
-SET_INT_PROP(CombustionOneComponent, NumEnergyEqSolid, 1);
+template<class TypeTag>
+struct NumEnergyEqFluid<TypeTag, TTag::CombustionOneComponent> { static constexpr int value = 1; };
+template<class TypeTag>
+struct NumEnergyEqSolid<TypeTag, TTag::CombustionOneComponent> { static constexpr int value = 1; };
 
 // by default chemical non equilibrium is enabled in the nonequil model, switch that off here
 template<class TypeTag>

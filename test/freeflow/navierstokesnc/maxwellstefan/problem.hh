@@ -49,7 +49,8 @@ namespace TTag {
 struct MaxwellStefanNCTest { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
 } // end namespace TTag
 
-SET_INT_PROP(MaxwellStefanNCTest, ReplaceCompEqIdx, 0);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr int value = 0; };
 
 // Set the grid type
 SET_TYPE_PROP(MaxwellStefanNCTest, Grid, Dune::YaspGrid<2>);

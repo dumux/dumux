@@ -289,7 +289,8 @@ public:
 };
 
 //! Per default, no component mass balance is replaced
-SET_INT_PROP(MPNC, ReplaceCompEqIdx, GetPropType<TypeTag, Properties::FluidSystem>::numComponents);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::MPNC> { static constexpr int value = GetPropType<TypeTag, Properties::FluidSystem>::numComponents; };
 //! Use mole fractions in the balance equations by default
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::MPNC> { static constexpr bool value = true; };

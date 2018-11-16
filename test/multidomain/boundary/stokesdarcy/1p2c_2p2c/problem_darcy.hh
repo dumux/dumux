@@ -62,7 +62,8 @@ SET_PROP(DarcyTwoPTwoC, Formulation)
 { static constexpr auto value = TwoPFormulation::p1s0; };
 
 //// The gas component balance (air) is replaced by the total mass balance
-SET_INT_PROP(DarcyTwoPTwoC, ReplaceCompEqIdx, 3);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::DarcyTwoPTwoC> { static constexpr int value = 3; };
 
 // Set the grid type
 SET_TYPE_PROP(DarcyTwoPTwoC, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);

@@ -143,7 +143,8 @@ public:
 
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::NavierStokesNC> { static constexpr bool value = false; }; //!< Defines whether molar (true) or mass (false) density is used
-SET_INT_PROP(NavierStokesNC, ReplaceCompEqIdx, 0); //<! Set the ReplaceCompEqIdx to 0 by default
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::NavierStokesNC> { static constexpr int value = 0; }; //<! Set the ReplaceCompEqIdx to 0 by default
 template<class TypeTag>
 struct NormalizePressure<TypeTag, TTag::NavierStokesNC> { static constexpr bool value = true; }; //!< Normalize the pressure term in the momentum balance by default
 

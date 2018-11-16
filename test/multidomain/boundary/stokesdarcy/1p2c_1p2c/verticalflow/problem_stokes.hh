@@ -72,7 +72,8 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 
 // Do not replace one equation with a total mass balance
-SET_INT_PROP(StokesOnePTwoC, ReplaceCompEqIdx, 3);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::StokesOnePTwoC> { static constexpr int value = 3; };
 }
 
 /*!

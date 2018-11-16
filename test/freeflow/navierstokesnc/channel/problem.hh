@@ -63,7 +63,8 @@ SET_PROP(ChannelNCTest, FluidSystem)
     using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
-SET_INT_PROP(ChannelNCTest, ReplaceCompEqIdx, 0);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::ChannelNCTest> { static constexpr int value = 0; };
 
 // Set the grid type
 SET_TYPE_PROP(ChannelNCTest, Grid, Dune::YaspGrid<2>);

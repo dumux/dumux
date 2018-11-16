@@ -150,7 +150,8 @@ struct OnePNCNI { using InheritsFrom = std::tuple<OnePNC>; };
 ///////////////////////////////////////////////////////////////////////////
 
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(OnePNC, ReplaceCompEqIdx, GetPropType<TypeTag, Properties::FluidSystem>::numComponents);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::OnePNC> { static constexpr int value = GetPropType<TypeTag, Properties::FluidSystem>::numComponents; };
 
 //! The base model traits. Per default, we use the number of components of the fluid system.
 SET_PROP(OnePNC, BaseModelTraits)

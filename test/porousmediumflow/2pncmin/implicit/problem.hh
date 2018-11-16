@@ -87,7 +87,8 @@ SET_PROP(Dissolution, SpatialParams)
 };
 
 //Set properties here to override the default property settings
-SET_INT_PROP(Dissolution, ReplaceCompEqIdx, 1); //!< Replace gas balance by total mass balance
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::Dissolution> { static constexpr int value = 1; }; //!< Replace gas balance by total mass balance
 SET_PROP(Dissolution, Formulation)
 { static constexpr auto value = TwoPFormulation::p1s0; };
 
