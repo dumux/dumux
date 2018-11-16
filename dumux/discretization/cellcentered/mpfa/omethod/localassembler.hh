@@ -46,275 +46,96 @@ namespace Dumux
  */
 template< class P, class EG, class EV >
 class InteractionVolumeAssemblerImpl< P, EG, EV, MpfaMethods::oMethod >
-      : public InteractionVolumeAssemblerBase< P, EG, EV >
+: public InteractionVolumeAssemblerBase< P, EG, EV >
 {
     using ParentType = InteractionVolumeAssemblerBase< P, EG, EV >;
 
 public:
-    //! Use the constructor of the base class
+    //! Pull up constructor of the base class
     using ParentType::ParentType;
 
     /*!
-     * \brief Assembles the transmissibility matrix within an
-     *        interaction volume in an mpfa-o type way.
+     * \brief Assembles the matrices involved in the flux
+     *        expressions and the local system of equations
+     *        within an interaction volume in an mpfa-o type way.
      *
      * \tparam IV The interaction volume type implementation
      * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
-     *                   which the local system is to be solved
+     *                    which the local system is to be solved
      *
-     * \param T The transmissibility matrix to be assembled
+     * \param handle The data handle in which the matrices are stored
      * \param iv The interaction volume
      * \param getT Lambda to evaluate the scv-wise tensors
      */
-    template< class IV, class TensorFunc >
-    void assemble(typename IV::Traits::MatVecTraits::TMatrix& T, IV& iv, const TensorFunc& getT)
+    template< class DataHandle, class IV, class TensorFunc >
+    void assembleMatrices(DataHandle& handle, IV& iv, const TensorFunc& getT)
     {
-        // assemble D into T directly
-        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getT);
+        assembleLocalMatrices_(handle.A(), handle.AB(), handle.CA(), handle.T(), iv, getT);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
         {
-            // T = C*A^-1*B + D
-            iv.A().invert();
-            iv.C().rightmultiply(iv.A());
-            T += multiplyMatrices(iv.C(), iv.B());
-        }
-    }
+            // T = C*(A^-1)*B + D
+            handle.A().invert();
+            handle.CA().rightmultiply(handle.A());
+            handle.T() += multiplyMatrices(handle.CA(), handle.AB());
+            handle.AB().leftmultiply(handle.A());
 
-    /*!
-     * \brief Assembles the interaction volume-local transmissibility
-     *        matrix for surface grids. The transmissibilities associated
-     *        with "outside" faces are stored in a separate container.
-     *
-     * \tparam TOutside Container to store the "outside" transmissibilities
-     * \tparam IV The interaction volume type implementation
-     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
-     *                    which the local system is to be solved
-     *
-     * \param outsideTij tij on "outside" faces to be assembled
-     * \param T The transmissibility matrix tij to be assembled
-     * \param iv The interaction volume
-     * \param getT Lambda to evaluate the scv-wise tensors
-     */
-    template< class TOutside, class IV, class TensorFunc >
-    void assemble(TOutside& outsideTij, typename IV::Traits::MatVecTraits::TMatrix& T, IV& iv, const TensorFunc& getT)
-    {
-        // assemble D into T directly
-        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getT);
-
-        // maybe solve the local system
-        if (iv.numUnknowns() > 0)
-        {
-            // T = C*A^-1*B + D
-            iv.A().invert();
-            iv.B().leftmultiply(iv.A());
-            T += multiplyMatrices(iv.C(), iv.B());
-
-            // bring outsideT vector to the right size
-            outsideTij.resize(iv.numFaces());
-            using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
-            for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
+            // On surface grids, compute the "outside" transmissibilities
+            using GridView = typename IV::Traits::GridView;
+            static constexpr int dim = GridView::dimension;
+            static constexpr int dimWorld = GridView::dimensionworld;
+            if (dim < dimWorld)
             {
-                // gravitational acceleration on this face
-                const auto& curLocalScvf = iv.localScvf(faceIdx);
-                const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.gridScvfIndex());
-                const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
-
-                // resize each face entry to the right number of outside faces
-                outsideTij[faceIdx].resize(numOutsideFaces);
-                std::for_each(outsideTij[faceIdx].begin(),
-                              outsideTij[faceIdx].end(),
-                              [&iv](auto& v) { resizeVector(v, iv.numKnowns()); });
-            }
-
-            // compute outside transmissibilities
-            for (const auto& localFaceData : iv.localFaceData())
-            {
-                // continue only for "outside" faces
-                if (!localFaceData.isOutsideFace())
-                    continue;
-
-                const auto localScvIdx = localFaceData.ivLocalInsideScvIndex();
-                const auto localScvfIdx = localFaceData.ivLocalScvfIndex();
-                const auto idxInOutside = localFaceData.scvfLocalOutsideScvfIndex();
-                const auto& posLocalScv = iv.localScv(localScvIdx);
-                const auto& wijk = iv.omegas()[localScvfIdx][idxInOutside+1];
-
-                // store the calculated transmissibilities in the data handle
-                auto& tij = outsideTij[localScvfIdx][idxInOutside];
-                tij = 0.0;
-
-                // add contributions from all local directions
+                // bring outside tij container to the right size
+                auto& tijOut = handle.tijOutside();
+                tijOut.resize(iv.numFaces());
                 using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
-                for (LocalIndexType localDir = 0; localDir < IV::Traits::GridView::dimension; localDir++)
+                for (LocalIndexType fIdx = 0; fIdx < iv.numFaces(); ++fIdx)
                 {
-                    // the scvf corresponding to this local direction in the scv
-                    const auto& curLocalScvf = iv.localScvf(posLocalScv.localScvfIndex(localDir));
+                    const auto& curGlobalScvf = this->fvGeometry().scvf(iv.localScvf(fIdx).gridScvfIndex());
+                    const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
+                    // resize each face entry to the right number of outside faces
+                    tijOut[fIdx].resize(numOutsideFaces);
+                    std::for_each(tijOut[fIdx].begin(), tijOut[fIdx].end(), [&iv](auto& v) { resizeVector(v, iv.numKnowns()); });
+                }
 
-                    // on interior faces the coefficients of the AB matrix come into play
-                    if (!curLocalScvf.isDirichlet())
+                // compute outside transmissibilities
+                for (const auto& localFaceData : iv.localFaceData())
+                {
+                    // continue only for "outside" faces
+                    if (!localFaceData.isOutsideFace())
+                        continue;
+
+                    const auto scvIdx = localFaceData.ivLocalInsideScvIndex();
+                    const auto scvfIdx = localFaceData.ivLocalScvfIndex();
+                    const auto idxInOut = localFaceData.scvfLocalOutsideScvfIndex();
+
+                    const auto& wijk = iv.omegas()[scvfIdx][idxInOut+1];
+                    auto& tij = tijOut[scvfIdx][idxInOut];
+
+                    tij = 0.0;
+                    for (unsigned int dir = 0; dir < dim; dir++)
                     {
-                        auto tmp = iv.B()[curLocalScvf.localDofIndex()];
-                        tmp *= wijk[localDir];
-                        tij -= tmp;
-                    }
-                    else
-                        tij[curLocalScvf.localDofIndex()] -= wijk[localDir];
+                        // the scvf corresponding to this local direction in the scv
+                        const auto& scvf = iv.localScvf(iv.localScv(scvIdx).localScvfIndex(dir));
 
-                    // add entry from the scv unknown
-                    tij[localScvIdx] += wijk[localDir];
+                        // on interior faces the coefficients of the AB matrix come into play
+                        if (!scvf.isDirichlet())
+                        {
+                            auto tmp = handle.AB()[scvf.localDofIndex()];
+                            tmp *= wijk[dir];
+                            tij -= tmp;
+                        }
+                        else
+                            tij[scvf.localDofIndex()] -= wijk[dir];
+
+                        // add entry from the scv unknown
+                        tij[scvIdx] += wijk[dir];
+                    }
                 }
             }
         }
-    }
-
-    /*!
-     * \brief Assemble the transmissibility matrix within an interaction
-     *        volume for the mpfa-o scheme to be used for advective flux
-     *        computation in the case that gravity is to be considered in
-     *        the local system of equations.
-     *
-     * \tparam GC The type of container used to store the
-     *            gravitational acceleration per scvf & phase
-     * \tparam IV The interaction volume type implementation
-     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
-     *                    which the local system is to be solved
-     *
-     * \param T The transmissibility matrix to be assembled
-     * \param g Container to assemble gravity per scvf & phase
-     * \param CA Matrix to store matrix product C*A^-1
-     * \param iv The mpfa-o interaction volume
-     * \param getT Lambda to evaluate the scv-wise tensors
-     */
-    template< class GC, class IV, class TensorFunc >
-    void assembleWithGravity(typename IV::Traits::MatVecTraits::TMatrix& T,
-                             GC& g,
-                             typename IV::Traits::MatVecTraits::CMatrix& CA,
-                             IV& iv,
-                             const TensorFunc& getT)
-    {
-        // assemble D into T & C into CA directly
-        assembleLocalMatrices_(iv.A(), iv.B(), CA, T, iv, getT);
-
-        // maybe solve the local system
-        if (iv.numUnknowns() > 0)
-        {
-            // T = C*A^-1*B + D
-            iv.A().invert();
-            CA.rightmultiply(iv.A());
-            T += multiplyMatrices(CA, iv.B());
-        }
-
-        // assemble gravitational acceleration container (enforce usage of mpfa-o type version)
-        assembleGravity(g, iv, CA, getT);
-    }
-
-    /*!
-     * \brief Assembles the interaction volume-local transmissibility
-     *        matrix in the case that gravity is to be considered in the
-     *        local system of equations. This specialization is to be used
-     *        on surface grids, where the gravitational flux contributions
-     *        on "outside" faces are stored in a separate container.
-     *
-     * \tparam GC The type of container used to store the
-     *            gravitational acceleration per scvf & phase
-     * \tparam GOut Type of container used to store gravity on "outside" faces
-     * \tparam TOutside Container to store the "outside" transmissibilities
-     * \tparam IV The interaction volume type implementation
-     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
-     *                    which the local system is to be solved
-     *
-     * \param outsideTij tij on "outside" faces to be assembled
-     * \param T The transmissibility matrix to be assembled
-     * \param outsideG Container to assemble gravity on "outside" faces
-     * \param g Container to assemble gravity per scvf & phase
-     * \param CA Matrix to store matrix product C*A^-1
-     * \param A Matrix to store the inverse A^-1
-     * \param iv The mpfa-o interaction volume
-     * \param getT Lambda to evaluate the scv-wise tensors
-     */
-    template< class GC, class GOut, class TOutside, class IV, class TensorFunc >
-    void assembleWithGravity(TOutside& outsideTij,
-                             typename IV::Traits::MatVecTraits::TMatrix& T,
-                             GOut& outsideG,
-                             GC& g,
-                             typename IV::Traits::MatVecTraits::CMatrix& CA,
-                             typename IV::Traits::MatVecTraits::AMatrix& A,
-                             IV& iv,
-                             const TensorFunc& getT)
-    {
-        // assemble D into T directly
-        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getT);
-
-        // maybe solve the local system
-        if (iv.numUnknowns() > 0)
-        {
-            // T = C*A^-1*B + D
-            iv.A().invert();
-            iv.B().leftmultiply(iv.A());
-            T += multiplyMatrices(iv.C(), iv.B());
-            A = iv.A();
-            CA = iv.C().rightmultiply(A);
-
-            // bring outsideT vector to the right size
-            outsideTij.resize(iv.numFaces());
-            using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
-            for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
-            {
-                // gravitational acceleration on this face
-                const auto& curLocalScvf = iv.localScvf(faceIdx);
-                const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.gridScvfIndex());
-                const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
-
-                // resize each face entry to the right number of outside faces
-                outsideTij[faceIdx].resize(numOutsideFaces);
-                std::for_each(outsideTij[faceIdx].begin(),
-                              outsideTij[faceIdx].end(),
-                              [&iv](auto& v) { resizeVector(v, iv.numKnowns()); });
-            }
-
-            // compute outside transmissibilities
-            for (const auto& localFaceData : iv.localFaceData())
-            {
-                // continue only for "outside" faces
-                if (!localFaceData.isOutsideFace())
-                    continue;
-
-                const auto localScvIdx = localFaceData.ivLocalInsideScvIndex();
-                const auto localScvfIdx = localFaceData.ivLocalScvfIndex();
-                const auto idxInOutside = localFaceData.scvfLocalOutsideScvfIndex();
-                const auto& posLocalScv = iv.localScv(localScvIdx);
-                const auto& wijk = iv.omegas()[localScvfIdx][idxInOutside+1];
-
-                // store the calculated transmissibilities in the data handle
-                auto& tij = outsideTij[localScvfIdx][idxInOutside];
-                tij = 0.0;
-
-                // add contributions from all local directions
-                using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
-                for (LocalIndexType localDir = 0; localDir < IV::Traits::GridView::dimension; localDir++)
-                {
-                    // the scvf corresponding to this local direction in the scv
-                    const auto& curLocalScvf = iv.localScvf(posLocalScv.localScvfIndex(localDir));
-
-                    // on interior faces the coefficients of the AB matrix come into play
-                    if (!curLocalScvf.isDirichlet())
-                    {
-                        auto tmp = iv.B()[curLocalScvf.localDofIndex()];
-                        tmp *= wijk[localDir];
-                        tij -= tmp;
-                    }
-                    else
-                        tij[curLocalScvf.localDofIndex()] -= wijk[localDir];
-
-                    // add entry from the scv unknown
-                    tij[localScvIdx] += wijk[localDir];
-                }
-            }
-        }
-
-        assembleGravity(g, outsideG, iv, CA, A, getT);
     }
 
     /*!
@@ -324,21 +145,20 @@ public:
      * \tparam IV The interaction volume type implementation
      * \tparam GetU Lambda to obtain the cell unknowns from grid indices
      *
-     * \param u The vector to be filled with the cell unknowns
+     * \param handle The data handle in which the vector is stored
      * \param iv The mpfa-o interaction volume
      * \param getU Lambda to obtain the desired cell/Dirichlet value from grid index
      */
-    template< class IV, class GetU >
-    void assemble(typename IV::Traits::MatVecTraits::CellVector& u, const IV& iv, const GetU& getU)
+    template< class DataHandle, class IV, class GetU >
+    void assembleU(DataHandle& handle, const IV& iv, const GetU& getU)
     {
-        // put the cell pressures first
+        auto& u = handle.uj();
         resizeVector(u, iv.numKnowns());
-        using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
-        for (LocalIndexType i = 0; i < iv.numScvs(); ++i)
-            u[i] = getU( iv.localScv(i).gridScvIndex() );
 
-        // Dirichlet BCs come afterwards
-        LocalIndexType i = iv.numScvs();
+        // put the cell unknowns first, then Dirichlet values
+        typename IV::Traits::IndexSet::LocalIndexType i = 0;
+        for (; i < iv.numScvs(); i++)
+            u[i] = getU( iv.localScv(i).gridScvIndex() );
         for (const auto& data : iv.dirichletData())
             u[i++] = getU( data.volVarIndex() );
     }

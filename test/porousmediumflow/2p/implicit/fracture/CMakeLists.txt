@@ -27,7 +27,7 @@ dune_add_test(NAME test_2p_fracture_mpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_mpfa-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa-00031.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa-00030.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa params.input -Problem.Name test_2p_fracture_mpfa")
 
 # tests with gravity

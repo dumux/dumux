@@ -443,45 +443,10 @@ private:
 
         // Assemble T only if permeability is sol-dependent or if update is forced
         if (forceUpdateAll || soldependentAdvection)
-        {
-            // distinguish between normal/surface grids (optimized away by compiler)
-            if (dim < dimWorld)
-            {
-                if (enableGravity)
-                    localAssembler.assembleWithGravity( handle.advectionHandle().tijOutside(),
-                                                        handle.advectionHandle().T(),
-                                                        handle.advectionHandle().gravityOutside(),
-                                                        handle.advectionHandle().gravity(),
-                                                        handle.advectionHandle().CA(),
-                                                        handle.advectionHandle().A(),
-                                                        iv,
-                                                        LambdaFactory::getAdvectionLambda() );
+            localAssembler.assembleMatrices(handle.advectionHandle(), iv, LambdaFactory::getAdvectionLambda());
 
-                else
-                    localAssembler.assemble( handle.advectionHandle().tijOutside(),
-                                             handle.advectionHandle().T(),
-                                             iv,
-                                             LambdaFactory::getAdvectionLambda() );
-            }
-
-            // normal grids
-            else
-            {
-                if (enableGravity)
-                    localAssembler.assembleWithGravity( handle.advectionHandle().T(),
-                                                        handle.advectionHandle().gravity(),
-                                                        handle.advectionHandle().CA(),
-                                                        iv,
-                                                        LambdaFactory::getAdvectionLambda() );
-                else
-                    localAssembler.assemble( handle.advectionHandle().T(),
-                                             iv,
-                                             LambdaFactory::getAdvectionLambda() );
-            }
-        }
-
-        // (maybe) only reassemble gravity vector
-        else if (enableGravity)
+        // maybe (re-)assemble gravity vector
+        if (enableGravity)
         {
             if (dim == dimWorld)
                 localAssembler.assembleGravity( handle.advectionHandle().gravity(),
@@ -503,7 +468,7 @@ private:
             handle.advectionHandle().setPhaseIndex(pIdx);
             const auto& evv = &elemVolVars();
             auto getPressure = [&evv, pIdx] (auto volVarIdx) { return (evv->operator[](volVarIdx)).pressure(pIdx); };
-            localAssembler.assemble(handle.advectionHandle().uj(), iv, getPressure);
+            localAssembler.assembleU(handle.advectionHandle(), iv, getPressure);
         }
     }
 
@@ -524,25 +489,17 @@ private:
         using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
-        // assemble T
+        // maybe (re-)assemble matrices
         if (forceUpdateAll || soldependentDiffusion)
-        {
-            if (dim < dimWorld)
-                localAssembler.assemble( handle.diffusionHandle().tijOutside(),
-                                         handle.diffusionHandle().T(),
-                                         iv,
-                                         LambdaFactory::getDiffusionLambda(phaseIdx, compIdx) );
-            else
-                localAssembler. assemble( handle.diffusionHandle().T(),
-                                          iv,
-                                          LambdaFactory::getDiffusionLambda(phaseIdx, compIdx) );
-        }
+            localAssembler.assembleMatrices(handle.diffusionHandle(),
+                                            iv,
+                                            LambdaFactory::getDiffusionLambda(phaseIdx, compIdx));
 
         // assemble vector of mole fractions
         const auto& evv = &elemVolVars();
         auto getMoleFraction = [&evv, phaseIdx, compIdx] (auto volVarIdx)
                                { return (evv->operator[](volVarIdx)).moleFraction(phaseIdx, compIdx); };
-        localAssembler.assemble(handle.diffusionHandle().uj(), iv, getMoleFraction);
+        localAssembler.assembleU(handle.diffusionHandle(), iv, getMoleFraction);
     }
 
     //! prepares the quantities necessary for conductive fluxes in the handle
@@ -553,29 +510,23 @@ private:
     void fillHeatConductionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
         using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
+        using ThermCondModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
 
         // get instance of the interaction volume-local assembler
         static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
         using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
+        // maybe (re-)assemble matrices (TODO: USE CORRECT SOLDEPENDENT FLAG!)
         if (forceUpdateAll || soldependentAdvection)
-        {
-            if (dim < dimWorld)
-                localAssembler.assemble( handle.heatConductionHandle().tijOutside(),
-                                         handle.heatConductionHandle().T(),
-                                         iv,
-                                         LambdaFactory::template getHeatConductionLambda<GetPropType<TypeTag, Properties::ThermalConductivityModel>>() );
-            else
-                localAssembler.assemble( handle.heatConductionHandle().T(),
-                                         iv,
-                                         LambdaFactory::template getHeatConductionLambda<GetPropType<TypeTag, Properties::ThermalConductivityModel>>() );
-        }
+            localAssembler.assembleMatrices(handle.heatConductionHandle(),
+                                            iv,
+                                            LambdaFactory::template getHeatConductionLambda<ThermCondModel>());
 
         // assemble vector of temperatures
         const auto& evv = &elemVolVars();
         auto getMoleFraction = [&evv] (auto volVarIdx) { return (evv->operator[](volVarIdx)).temperature(); };
-        localAssembler.assemble(handle.heatConductionHandle().uj(), iv, getMoleFraction);
+        localAssembler.assembleU(handle.heatConductionHandle(), iv, getMoleFraction);
     }
 
     //! fill handle only when advection uses mpfa
