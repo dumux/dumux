@@ -77,7 +77,8 @@ struct RANSModelTraits : NavierStokesModelTraits<dimension>
 };
 
 //! The model traits of the isothermal model
-SET_PROP(RANS, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::RANS>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -101,7 +102,8 @@ struct RANSNI { using InheritsFrom = std::tuple<RANS>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(RANSNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::RANSNI>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;

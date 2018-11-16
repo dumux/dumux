@@ -80,7 +80,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::OnePIncompressible> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // the fluid system
-SET_PROP(OnePIncompressible, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePIncompressible>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;

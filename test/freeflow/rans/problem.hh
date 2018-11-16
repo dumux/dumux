@@ -78,7 +78,8 @@ struct PipeLauferProblem { using InheritsFrom = std::tuple<ZeroEq, StaggeredFree
 } // end namespace TTag
 
 // the fluid system
-SET_PROP(PipeLauferProblem, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::PipeLauferProblem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePGas<Scalar, Components::Air<Scalar> >;

@@ -51,7 +51,8 @@ struct ChannelTest { using InheritsFrom = std::tuple<NavierStokesNI, StaggeredFr
 } // end namespace TTag
 
 // the fluid system
-SET_PROP(ChannelTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ChannelTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 #if NONISOTHERMAL

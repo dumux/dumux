@@ -68,7 +68,8 @@ struct ZeroEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useM, r
 };
 
 //! The model traits of the isothermal model
-SET_PROP(ZeroEqNC, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ZeroEqNC>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -82,7 +83,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(ZeroEqNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::ZeroEqNC>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -116,7 +118,8 @@ struct ZeroEqNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(ZeroEqNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ZeroEqNCNI>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -131,7 +134,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(ZeroEqNCNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::ZeroEqNCNI>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -151,7 +155,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(ZeroEqNCNI, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ZeroEqNCNI>
 {
 private:
     using IsothermalIOFields = FreeflowNCIOFields<RANSIOFields, true/*turbulenceModel*/>;

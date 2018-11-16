@@ -58,7 +58,8 @@ SET_TYPE_PROP(FVVelocity2PTestTypeTag, Problem, TestDiffusionProblem<TypeTag>);
 SET_TYPE_PROP(FVVelocity2PTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the fluid system
-SET_PROP(FVVelocity2PTestTypeTag, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::FVVelocity2PTestTypeTag>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
@@ -75,7 +76,8 @@ SET_TYPE_PROP(FVMPFAOVelocity2PTestTypeTag, Problem, TestDiffusionProblem<TypeTa
 SET_TYPE_PROP(FVMPFAOVelocity2PTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the fluid system
-SET_PROP(FVMPFAOVelocity2PTestTypeTag, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::FVMPFAOVelocity2PTestTypeTag>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
@@ -91,7 +93,8 @@ SET_TYPE_PROP(MimeticPressure2PTestTypeTag, Problem, TestDiffusionProblem<TypeTa
 SET_TYPE_PROP(MimeticPressure2PTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the fluid system
-SET_PROP(MimeticPressure2PTestTypeTag, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::MimeticPressure2PTestTypeTag>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;

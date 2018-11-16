@@ -61,7 +61,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::MaxwellStefanTest> { using type = MaxwellStefanTestProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(MaxwellStefanTest, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::MaxwellStefanTest>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

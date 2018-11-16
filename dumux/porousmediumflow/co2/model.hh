@@ -87,7 +87,8 @@ template<class TypeTag>
 struct PrimaryVariableSwitch<TypeTag, TTag::TwoPTwoCCO2NI> { using type = TwoPTwoCCO2PrimaryVariableSwitch; };
 
 //! the co2 volume variables use the same traits as the 2p2c model
-SET_PROP(TwoPTwoCCO2, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPTwoCCO2>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -103,7 +104,8 @@ public:
     using type = TwoPTwoCCO2VolumeVariables< Traits >;
 };
 
-SET_PROP(TwoPTwoCCO2NI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPTwoCCO2NI>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;

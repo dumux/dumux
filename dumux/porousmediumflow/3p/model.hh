@@ -141,7 +141,8 @@ struct ThreePNI { using InheritsFrom = std::tuple<ThreeP>; };
 //////////////////////////////////////////////////////////////////
 
 //! Set the model traits
-SET_PROP(ThreeP, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ThreeP>
 {
  private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -156,7 +157,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::ThreeP> { using type = ImmiscibleLocalResidual<TypeTag>; };
 
 //! Set the volume variables property
-SET_PROP(ThreeP, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::ThreeP>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -179,7 +181,8 @@ public:
  *  The fluid state should be chosen appropriately for the model ((non-)isothermal, equilibrium, ...).
  *  This can be done in the problem.
  */
-SET_PROP(ThreeP, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::ThreeP>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -197,7 +200,8 @@ struct IOFields<TypeTag, TTag::ThreeP> { using type = ThreePIOFields; };
 /////////////////////////////////////////////////
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(ThreePNI, ThermalConductivityModel)
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::ThreePNI>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -210,7 +214,8 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::ThreePNI> { using type = EnergyIOFields<ThreePIOFields>; };
 
 //! Set non-isothermal model traits
-SET_PROP(ThreePNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ThreePNI>
 {
 private:
    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;

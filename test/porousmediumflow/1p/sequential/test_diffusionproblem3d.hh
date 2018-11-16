@@ -68,7 +68,8 @@ SET_TYPE_PROP(DiffusionTest, Grid, Dune::YaspGrid<3>);
 SET_TYPE_PROP(DiffusionTest, Problem, TestDiffusion3DProblem<TypeTag>);
 
 // Set the fluid system
-SET_PROP(DiffusionTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::DiffusionTest>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;

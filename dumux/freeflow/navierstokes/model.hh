@@ -152,7 +152,8 @@ template<class TypeTag>
 struct NormalizePressure<TypeTag, TTag::NavierStokes> { static constexpr bool value = true; }; //!< Normalize the pressure term in the momentum balance by default
 
 //!< states some specifics of the Navier-Stokes model
-SET_PROP(NavierStokes, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::NavierStokes>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -167,7 +168,8 @@ public:
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(NavierStokes, FluidState){
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::NavierStokes>{
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -180,7 +182,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::NavierStokes> { using type = NavierStokesResidual<TypeTag>; };
 
 //! Set the volume variables property
-SET_PROP(NavierStokes, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::NavierStokes>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -214,7 +217,8 @@ struct IOFields<TypeTag, TTag::NavierStokes> { using type = NavierStokesIOFields
 //////////////////////////////////////////////////////////////////
 
 //! The model traits of the non-isothermal model
-SET_PROP(NavierStokesNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::NavierStokesNI>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;

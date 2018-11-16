@@ -250,7 +250,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::MPNC> { using type = MPNCLocalResidual<TypeTag>; };
 
 //! Set the model traits property
-SET_PROP(MPNC, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::MPNC>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -263,7 +264,8 @@ public:
 };
 
 //! This model uses the compositional fluid state
-SET_PROP(MPNC, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::MPNC>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -273,7 +275,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(MPNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::MPNC>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -299,7 +302,8 @@ struct UseMoles<TypeTag, TTag::MPNC> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EffectiveDiffusivityModel<TypeTag, TTag::MPNC> { using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 //! Set the default pressure formulation to the pressure of the (most) wetting phase
-SET_PROP(MPNC, PressureFormulation)
+template<class TypeTag>
+struct PressureFormulation<TypeTag, TTag::MPNC>
 {
 public:
     static const MpNcPressureFormulation value = MpNcPressureFormulation::mostWettingFirst;
@@ -314,7 +318,8 @@ struct IOFields<TypeTag, TTag::MPNC> { using type = MPNCIOFields; };
 /////////////////////////////////////////////////
 
 //! set the non-isothermal model traits
-SET_PROP(MPNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::MPNCNI>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -340,7 +345,8 @@ struct EquilibriumIOFields<TypeTag, TTag::MPNCNonequil> { using type = MPNCIOFie
 
 //! For non-equilibrium with mpnc we have to overwrite the model traits again,
 //! because the mpnc indices depend on the status of the non-equilibrium model traits
-SET_PROP(MPNCNonequil, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::MPNCNonequil>
 {
 private:
     using EquiTraits = GetPropType<TypeTag, Properties::EquilibriumModelTraits>;
@@ -357,7 +363,8 @@ public:
 };
 
 //! set equilibrium model traits
-SET_PROP(MPNCNonequil, EquilibriumModelTraits)
+template<class TypeTag>
+struct EquilibriumModelTraits<TypeTag, TTag::MPNCNonequil>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -370,7 +377,8 @@ public:
 };
 
 //! in case we do not assume full non-equilibrium one needs a thermal conductivity
-SET_PROP(MPNCNonequil, ThermalConductivityModel)
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::MPNCNonequil>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -379,7 +387,8 @@ public:
 };
 
 //! use the mineralization volume variables together with the 2pnc vol vars
-SET_PROP(MPNCNonequil, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::MPNCNonequil>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;

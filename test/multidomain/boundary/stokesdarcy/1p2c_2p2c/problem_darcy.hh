@@ -60,7 +60,8 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DarcyTwoPTwoC> { using type = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
-SET_PROP(DarcyTwoPTwoC, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::DarcyTwoPTwoC>
 { static constexpr auto value = TwoPFormulation::p1s0; };
 
 //// The gas component balance (air) is replaced by the total mass balance
@@ -74,7 +75,8 @@ struct Grid<TypeTag, TTag::DarcyTwoPTwoC> { using type = Dune::YaspGrid<2, Dune:
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::DarcyTwoPTwoC> { static constexpr bool value = true; };
 
-SET_PROP(DarcyTwoPTwoC, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::DarcyTwoPTwoC>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

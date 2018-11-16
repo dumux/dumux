@@ -66,7 +66,8 @@ struct Grid<TypeTag, TTag::OnePSub> { using type = Dune::YaspGrid<2>; };
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePSub> { using type = OnePSubProblem<TypeTag> ; };
 // Set the spatial parameters
-SET_PROP(OnePSub, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePSub>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

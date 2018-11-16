@@ -72,7 +72,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePTwoCTest> { using type = OnePTwoCTestProblem<TypeTag>; };
 
 // Set fluid configuration
-SET_PROP(OnePTwoCTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePTwoCTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
@@ -80,7 +81,8 @@ SET_PROP(OnePTwoCTest, FluidSystem)
 };
 
 // Set the spatial parameters
-SET_PROP(OnePTwoCTest, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePTwoCTest>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

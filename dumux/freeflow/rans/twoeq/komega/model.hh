@@ -119,7 +119,8 @@ struct KOmega { using InheritsFrom = std::tuple<RANS>; };
 } // end namespace TTag
 
 //! states some specifics of the isothermal k-omega model
-SET_PROP(KOmega, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::KOmega>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -129,7 +130,8 @@ public:
 };
 
 //! The flux variables
-SET_PROP(KOmega, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::KOmega>
 {
 private:
     using BaseFluxVariables = NavierStokesFluxVariables<TypeTag>;
@@ -138,7 +140,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(KOmega, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::KOmega>
 {
 private:
     using BaseLocalResidual = NavierStokesResidual<TypeTag>;
@@ -147,7 +150,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(KOmega, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::KOmega>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -181,7 +185,8 @@ struct KOmegaNI { using InheritsFrom = std::tuple<RANSNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(KOmegaNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::KOmegaNI>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -192,7 +197,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(KOmegaNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::KOmegaNI>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;

@@ -86,7 +86,8 @@ SET_TYPE_PROP(SequentialTwoPTwoC, Indices,SequentialTwoPTwoCIndices<TypeTag>);
 SET_INT_PROP(SequentialTwoPTwoC, NumEq, 3);
 
 // set fluid/component information
-SET_PROP(SequentialTwoPTwoC, NumPhases) //!< The number of phases in the 2p2c model is 2
+template<class TypeTag>
+struct NumPhases<TypeTag, TTag::SequentialTwoPTwoC> //!< The number of phases in the 2p2c model is 2
 {
     // the property is declared in dumux/porousmediumflow/sequential/properties.hh
 private:
@@ -98,7 +99,8 @@ public:
                   "Only fluid systems with 2 phases are supported by the 2p2c model!");
 };
 
-SET_PROP(SequentialTwoPTwoC, NumComponents) //!< The number of components in the 2p2c model is 2
+template<class TypeTag>
+struct NumComponents<TypeTag, TTag::SequentialTwoPTwoC> //!< The number of components in the 2p2c model is 2
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -122,7 +124,8 @@ SET_INT_PROP(SequentialTwoPTwoC,
         VelocityFormulation,
         GET_PROP_TYPE(TypeTag, Indices)::velocityW);
 
-SET_PROP(SequentialTwoPTwoC, TransportSolutionType)
+template<class TypeTag>
+struct TransportSolutionType<TypeTag, TTag::SequentialTwoPTwoC>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     //! type for vector of vector (of scalars)
@@ -134,7 +137,8 @@ SET_BOOL_PROP(SequentialTwoPTwoC, EnableCompressibility, true); //!< Composition
 SET_BOOL_PROP(SequentialTwoPTwoC, VisitFacesOnlyOnce, false); //!< Faces are regarded from both sides
 SET_BOOL_PROP(SequentialTwoPTwoC, EnableCapillarity, false); //!< Capillarity is enabled
 
-SET_PROP(SequentialTwoPTwoC, BoundaryMobility) //!< Saturation scales flux on Dirichlet B.C.
+template<class TypeTag>
+struct BoundaryMobility<TypeTag, TTag::SequentialTwoPTwoC> //!< Saturation scales flux on Dirichlet B.C.
 {    static const int value = SequentialTwoPTwoCIndices<TypeTag>::satDependent;};
 
 SET_TYPE_PROP(SequentialTwoPTwoC, Variables, VariableClass<TypeTag>);

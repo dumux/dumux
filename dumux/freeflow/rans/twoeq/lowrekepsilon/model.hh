@@ -128,7 +128,8 @@ struct LowReKEpsilon { using InheritsFrom = std::tuple<RANS>; };
 } // end namespace TTag
 
 //!< states some specifics of the isothermal low-Reynolds k-epsilon model
-SET_PROP(LowReKEpsilon, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::LowReKEpsilon>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -138,7 +139,8 @@ public:
 };
 
 //! The flux variables
-SET_PROP(LowReKEpsilon, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::LowReKEpsilon>
 {
 private:
     using BaseFluxVariables = NavierStokesFluxVariables<TypeTag>;
@@ -147,7 +149,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(LowReKEpsilon, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::LowReKEpsilon>
 {
 private:
     using BaseLocalResidual = NavierStokesResidual<TypeTag>;
@@ -156,7 +159,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(LowReKEpsilon, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::LowReKEpsilon>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -189,7 +193,8 @@ struct LowReKEpsilonNI { using InheritsFrom = std::tuple<RANSNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(LowReKEpsilonNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::LowReKEpsilonNI>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -200,7 +205,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(LowReKEpsilonNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::LowReKEpsilonNI>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;

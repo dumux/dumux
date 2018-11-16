@@ -72,7 +72,8 @@ SET_TYPE_PROP(ThreeDTwoPTest, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::noncon
 SET_TYPE_PROP(ThreeDTwoPTest, Problem, Test3D2PProblem<TypeTag>);
 
 // Set the fluid system
-SET_PROP(ThreeDTwoPTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ThreeDTwoPTest>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;

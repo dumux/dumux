@@ -93,7 +93,8 @@ struct KOmegaNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useMole
 };
 
 //!< states some specifics of the isothermal multi-component low-Reynolds k-epsilon model
-SET_PROP(KOmegaNC, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::KOmegaNC>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -107,7 +108,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(KOmegaNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::KOmegaNC>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -127,7 +129,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(KOmegaNC, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::KOmegaNC>
 {
 private:
     using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
@@ -136,7 +139,8 @@ public:
 };
 
 //! The flux variables
-SET_PROP(KOmegaNC, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::KOmegaNC>
 {
 private:
     using BaseFluxVariables = FreeflowNCFluxVariables<TypeTag>;
@@ -159,7 +163,8 @@ struct KOmegaNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(KOmegaNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::KOmegaNCNI>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -174,7 +179,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(KOmegaNCNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::KOmegaNCNI>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -194,7 +200,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(KOmegaNCNI, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::KOmegaNCNI>
 {
 private:
     using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
@@ -203,7 +210,8 @@ public:
 };
 
 //! The flux variables
-SET_PROP(KOmegaNCNI, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::KOmegaNCNI>
 {
 private:
     using BaseFluxVariables = FreeflowNCFluxVariables<TypeTag>;
@@ -212,7 +220,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(KOmegaNCNI, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::KOmegaNCNI>
 {
 private:
     using IsothermalIOFields = FreeflowNCIOFields<KOmegaIOFields, true/*turbulenceModel*/>;

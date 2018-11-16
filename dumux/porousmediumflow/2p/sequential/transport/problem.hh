@@ -33,7 +33,8 @@ namespace Dumux
 namespace Properties
 {
 // Set the model properties
-SET_PROP(TransportTwoP, Model)
+template<class TypeTag>
+struct Model<TypeTag, TTag::TransportTwoP>
 {
     using type = typename GET_PROP_TYPE(TypeTag, TransportModel);
 };

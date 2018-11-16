@@ -91,7 +91,8 @@ struct OneEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useMoles
 };
 
 //!< states some specifics of the isothermal multi-component one-equation model
-SET_PROP(OneEqNC, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OneEqNC>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -105,7 +106,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(OneEqNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OneEqNC>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -125,7 +127,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(OneEqNC, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OneEqNC>
 {
 private:
     using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
@@ -134,7 +137,8 @@ public:
 };
 
 //! The flux variables
-SET_PROP(OneEqNC, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::OneEqNC>
 {
 private:
     using BaseFluxVariables = FreeflowNCFluxVariables<TypeTag>;
@@ -157,7 +161,8 @@ struct OneEqNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(OneEqNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OneEqNCNI>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -172,7 +177,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(OneEqNCNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OneEqNCNI>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -192,7 +198,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(OneEqNCNI, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OneEqNCNI>
 {
 private:
     using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
@@ -201,7 +208,8 @@ public:
 };
 
 //! The flux variables
-SET_PROP(OneEqNCNI, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::OneEqNCNI>
 {
 private:
     using BaseFluxVariables = FreeflowNCFluxVariables<TypeTag>;
@@ -210,7 +218,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(OneEqNCNI, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OneEqNCNI>
 {
 private:
     using IsothermalIOFields = FreeflowNCIOFields<OneEqIOFields, true/*turbulenceModel*/>;

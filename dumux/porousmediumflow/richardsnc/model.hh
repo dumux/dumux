@@ -147,7 +147,8 @@ struct RichardsNCNI { using InheritsFrom = std::tuple<RichardsNC>; };
 //////////////////////////////////////////////////////////////////
 
 //! Set the model traits class
-SET_PROP(RichardsNC, BaseModelTraits)
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::RichardsNC>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -171,7 +172,8 @@ template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::RichardsNC> { static constexpr int value = 0; };
 
 //! Set the volume variables property
-SET_PROP(RichardsNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::RichardsNC>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -202,7 +204,8 @@ struct EnableWaterDiffusionInAir<TypeTag, TTag::RichardsNC> { static constexpr b
  *
  * By default this uses the liquid phase fluid system with simple H2O.
  */
-SET_PROP(RichardsNC, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::RichardsNC>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::LiquidPhaseTwoC<Scalar, Components::SimpleH2O<Scalar>, Components::Constant<1, Scalar>>;
@@ -214,7 +217,8 @@ SET_PROP(RichardsNC, FluidSystem)
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(RichardsNC, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::RichardsNC>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -238,7 +242,8 @@ struct ThermalConductivityModel<TypeTag, TTag::RichardsNCNI> { using type = Ther
 //////////////////////////////////////////////////////////////////
 
 //! set non-isothermal model traits
-SET_PROP(RichardsNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::RichardsNCNI>
 {
 private:
     using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;

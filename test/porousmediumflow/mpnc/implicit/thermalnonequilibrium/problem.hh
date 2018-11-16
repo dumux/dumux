@@ -78,7 +78,8 @@ struct FluidSystem<TypeTag, TTag::CombustionOneComponent>
 { using type = FluidSystems::CombustionFluidsystem<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Set the default pressure formulation: either pw first or pn first
-SET_PROP(CombustionOneComponent, PressureFormulation)
+template<class TypeTag>
+struct PressureFormulation<TypeTag, TTag::CombustionOneComponent>
 {
 public:
     static const MpNcPressureFormulation value = MpNcPressureFormulation::mostWettingFirst;
@@ -90,7 +91,8 @@ struct Scalar<TypeTag, TTag::CombustionOneComponent> { using type = double ; };
 // quad / double
 
 // We use different model traits for the equilibrium part because we want to deactivate diffusion
-SET_PROP(CombustionOneComponent, EquilibriumModelTraits)
+template<class TypeTag>
+struct EquilibriumModelTraits<TypeTag, TTag::CombustionOneComponent>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -101,7 +103,8 @@ public:
                                         getPropValue<TypeTag, Properties::UseMoles>() >;
 };
 
-SET_PROP(CombustionOneComponent, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::CombustionOneComponent>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -122,7 +125,8 @@ template<class TypeTag>
 struct EnableChemicalNonEquilibrium<TypeTag, TTag::CombustionOneComponent> { static constexpr bool value = false; };
 //#################
 
-SET_PROP(CombustionOneComponent, SolidSystem)
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::CombustionOneComponent>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ComponentOne = Dumux::Components::Constant<1, Scalar>;
@@ -131,7 +135,8 @@ SET_PROP(CombustionOneComponent, SolidSystem)
     using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo, numInertComponents>;
 };
 
-SET_PROP(CombustionOneComponent, SolidState)
+template<class TypeTag>
+struct SolidState<TypeTag, TTag::CombustionOneComponent>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

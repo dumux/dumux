@@ -164,7 +164,8 @@ struct TwoPNI { using InheritsFrom = std::tuple<TwoP>; };
 // properties for the isothermal two-phase model
 ///////////////////////////////////////////////////////////////////////////
  //!< Set the default formulation to pwsn
-SET_PROP(TwoP, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::TwoP>
 { static constexpr auto value = TwoPFormulation::p0s1; };
 
 template<class TypeTag>
@@ -181,7 +182,8 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::TwoP> { using type = TwoPIOFields; };
 
 //! Set the volume variables property
-SET_PROP(TwoP, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoP>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -203,7 +205,8 @@ public:
 };
 
 //! The two-phase model uses the immiscible fluid state
-SET_PROP(TwoP, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::TwoP>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -225,7 +228,8 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::TwoPNI> { using type = EnergyIOFields<TwoPIOFields>; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(TwoPNI, ThermalConductivityModel)
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::TwoPNI>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

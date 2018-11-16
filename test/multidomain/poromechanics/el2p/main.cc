@@ -51,7 +51,8 @@
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(TwoPSub, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::TwoPSub>
 {
 private:
     // define traits etc. as below in main
@@ -60,7 +61,8 @@ public:
     using type = PoroMechanicsCouplingManager< Traits >;
 };
 
-SET_PROP(PoroElasticSub, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::PoroElasticSub>
 {
 private:
     // define traits etc. as below in main

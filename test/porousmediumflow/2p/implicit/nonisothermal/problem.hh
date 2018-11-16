@@ -78,7 +78,8 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::Injection2PNITypeTag> { using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>; };
 
 // Set the spatial parameters
-SET_PROP(Injection2PNITypeTag, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Injection2PNITypeTag>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

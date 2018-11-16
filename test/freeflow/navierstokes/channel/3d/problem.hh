@@ -57,7 +57,8 @@ struct ThreeDChannelTest { using InheritsFrom = std::tuple<NavierStokes, Stagger
 } // end namespace TTag
 
 // the fluid system
-SET_PROP(ThreeDChannelTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ThreeDChannelTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;

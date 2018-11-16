@@ -60,7 +60,8 @@ struct Problem<TypeTag, TTag::InjectionProblem> { using type = InjectionProblem<
 
 
 // Set fluid configuration
-SET_PROP(InjectionProblem, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::InjectionProblem>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -70,7 +71,8 @@ public:
 };
 
 // Set the spatial parameters
-SET_PROP(InjectionProblem, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::InjectionProblem>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

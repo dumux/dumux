@@ -47,7 +47,8 @@ struct AngeliTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeF
 } // end namespace TTag
 
 // the fluid system
-SET_PROP(AngeliTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::AngeliTest>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

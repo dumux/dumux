@@ -209,7 +209,8 @@ struct ThreePThreeCNI { using InheritsFrom = std::tuple<ThreePThreeC>; };
 //////////////////////////////////////////////////////////////////
 
 //! Set the model traits
-SET_PROP(ThreePThreeC, BaseModelTraits)
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::ThreePThreeC>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -234,7 +235,8 @@ struct ReplaceCompEqIdx<TypeTag, TTag::ThreePThreeC> { static constexpr int valu
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(ThreePThreeC, FluidState){
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::ThreePThreeC>{
     private:
         using Scalar = GetPropType<TypeTag, Properties::Scalar>;
         using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -251,7 +253,8 @@ template<class TypeTag>
 struct PrimaryVariableSwitch<TypeTag, TTag::ThreePThreeC> { using type = ThreePThreeCPrimaryVariableSwitch; };
 
 //! The primary variables vector for the 3p3c model
-SET_PROP(ThreePThreeC, PrimaryVariables)
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::ThreePThreeC>
 {
 private:
     using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
@@ -261,7 +264,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(ThreePThreeC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::ThreePThreeC>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -298,7 +302,8 @@ struct ThermalConductivityModel<TypeTag, TTag::ThreePThreeCNI> { using type = Th
 //////////////////////////////////////////////////////////////////
 
 //! Set non-isothermal NumEq
-SET_PROP(ThreePThreeCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ThreePThreeCNI>
 {
 private:
     using IsothermalModelTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;

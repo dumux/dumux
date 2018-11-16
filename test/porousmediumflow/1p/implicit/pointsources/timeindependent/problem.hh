@@ -51,7 +51,8 @@ struct OnePSingularityCCTpfa { using InheritsFrom = std::tuple<OnePSingularity, 
 } // end namespace TTag
 
 // the fluid system
-SET_PROP(OnePSingularity, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePSingularity>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
@@ -67,7 +68,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePSingularity> { using type = OnePSingularityProblem<TypeTag> ; };
 
 // Set the spatial parameters
-SET_PROP(OnePSingularity, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePSingularity>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

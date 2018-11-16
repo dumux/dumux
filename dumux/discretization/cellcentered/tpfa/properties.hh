@@ -52,7 +52,8 @@ struct CCTpfaModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
 } // end namespace TTag
 
 //! Set the default for the global finite volume geometry
-SET_PROP(CCTpfaModel, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::CCTpfaModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
@@ -62,7 +63,8 @@ public:
 };
 
 //! The grid volume variables vector class
-SET_PROP(CCTpfaModel, GridVolumeVariables)
+template<class TypeTag>
+struct GridVolumeVariables<TypeTag, TTag::CCTpfaModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
@@ -73,7 +75,8 @@ public:
 };
 
 //! The grid flux variables cache vector class
-SET_PROP(CCTpfaModel, GridFluxVariablesCache)
+template<class TypeTag>
+struct GridFluxVariablesCache<TypeTag, TTag::CCTpfaModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();

@@ -94,7 +94,8 @@ struct ZeroEqNCNINameTestTypeTag { using InheritsFrom = std::tuple<ZeroEqNCNI, S
 } // end namespace TTag
 
 // The fluid system
-SET_PROP(StaggeredPVNamesTestTypeTag, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::StaggeredPVNamesTestTypeTag>
 {
   using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
   static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the air phase
@@ -108,7 +109,8 @@ struct Scalar<TypeTag, TTag::StaggeredPVNamesTestTypeTag> { using type = double;
 template<class TypeTag>
 struct Grid<TypeTag, TTag::StaggeredPVNamesTestTypeTag> { using type = Dune::YaspGrid<2>; };
 
-SET_PROP(StaggeredPVNamesTestTypeTag, Problem)
+template<class TypeTag>
+struct Problem<TypeTag, TTag::StaggeredPVNamesTestTypeTag>
 {
 private:
     // use the ZeroEqProblem as base class for non-RANS models and for the ZeroEq model

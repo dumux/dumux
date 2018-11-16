@@ -154,7 +154,8 @@ template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::OnePNC> { static constexpr int value = GetPropType<TypeTag, Properties::FluidSystem>::numComponents; };
 
 //! The base model traits. Per default, we use the number of components of the fluid system.
-SET_PROP(OnePNC, BaseModelTraits)
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::OnePNC>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -171,7 +172,8 @@ struct ModelTraits<TypeTag, TTag::OnePNC> { using type = GetPropType<TypeTag, Pr
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(OnePNC, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::OnePNC>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -195,7 +197,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::OnePNC> { using type = CompositionalLocalResidual<TypeTag>; };
 
 //! Set the volume variables property
-SET_PROP(OnePNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OnePNC>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -233,7 +236,8 @@ struct ThermalConductivityModel<TypeTag, TTag::OnePNCNI>
 { using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! model traits of the non-isothermal model.
-SET_PROP(OnePNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OnePNCNI>
 {
 private:
     using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;

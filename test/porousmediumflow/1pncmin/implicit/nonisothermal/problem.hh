@@ -62,7 +62,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::ThermoChem> { using type = ThermoChemProblem<TypeTag>; };
 
 // The fluid system
-SET_PROP(ThermoChem, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ThermoChem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using H2ON2 = FluidSystems::H2ON2<Scalar>;
@@ -70,7 +71,8 @@ SET_PROP(ThermoChem, FluidSystem)
     using type = FluidSystems::OnePAdapter<H2ON2, phaseIdx>;
 };
 
-SET_PROP(ThermoChem, SolidSystem)
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::ThermoChem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ComponentOne = Components::ModifiedCaO<Scalar>;
@@ -83,7 +85,8 @@ SET_PROP(ThermoChem, SolidSystem)
 // struct VtkAddVelocity<TypeTag, TTag::ThermoChem> { static constexpr bool value = false; };
 
 // Set the spatial parameters
-SET_PROP(ThermoChem, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::ThermoChem>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

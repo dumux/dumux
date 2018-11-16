@@ -144,7 +144,8 @@ struct TwoPTwoCNI { using InheritsFrom = std::tuple<TwoPTwoC>; };
 /*!
  * \brief Set the model traits property.
  */
-SET_PROP(TwoPTwoC, BaseModelTraits)
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::TwoPTwoC>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -160,7 +161,8 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::TwoPTwoC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; };
 
 //! Use the 2p2c VolumeVariables
-SET_PROP(TwoPTwoC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPTwoC>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -190,7 +192,8 @@ struct UseConstraintSolver<TypeTag, TTag::TwoPTwoC> { static constexpr bool valu
 //////////////////////////////////////////////////////////////////////
 
 //! Set the non-isothermal model traits
-SET_PROP(TwoPTwoCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPTwoCNI>
 {
 private:
     using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;

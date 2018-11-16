@@ -62,7 +62,8 @@ SET_TYPE_PROP(TestIMPESAdaptive, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::non
 SET_TYPE_PROP(TestIMPESAdaptive, Problem, TestIMPESAdaptiveProblem<TypeTag>);
 
 // Set the fluid system
-SET_PROP(TestIMPESAdaptive, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TestIMPESAdaptive>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;

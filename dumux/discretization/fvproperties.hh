@@ -44,7 +44,8 @@ struct FiniteVolumeModel { using InheritsFrom = std::tuple<GridProperties>; };
 } // end namespace TTag
 
 //! The grid variables
-SET_PROP(FiniteVolumeModel, GridVariables)
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::FiniteVolumeModel>
 {
 private:
     using GG = GetPropType<TypeTag, Properties::FVGridGeometry>;
@@ -78,7 +79,8 @@ template<class TypeTag>
 struct SolutionVector<TypeTag, TTag::FiniteVolumeModel> { using type = Dune::BlockVector<GetPropType<TypeTag, Properties::PrimaryVariables>>; };
 
 //! Set the type of a global jacobian matrix from the solution types TODO: move to LinearAlgebra traits
-SET_PROP(FiniteVolumeModel, JacobianMatrix)
+template<class TypeTag>
+struct JacobianMatrix<TypeTag, TTag::FiniteVolumeModel>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

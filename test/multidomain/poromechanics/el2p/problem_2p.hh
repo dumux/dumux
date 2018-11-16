@@ -52,7 +52,8 @@ struct TwoPSub { using InheritsFrom = std::tuple<TwoP, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the fluid system for TwoPSubProblem
-SET_PROP(TwoPSub, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TwoPSub>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
@@ -65,7 +66,8 @@ struct Grid<TypeTag, TTag::TwoPSub> { using type = Dune::YaspGrid<3>; };
 template<class TypeTag>
 struct Problem<TypeTag, TTag::TwoPSub> { using type = TwoPSubProblem<TypeTag> ; };
 // Set the spatial parameters
-SET_PROP(TwoPSub, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TwoPSub>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

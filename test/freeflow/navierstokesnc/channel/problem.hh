@@ -56,7 +56,8 @@ struct ChannelNCTest { using InheritsFrom = std::tuple<NavierStokesNCNI, Stagger
 } // end namespace TTag
 
 // Select the fluid system
-SET_PROP(ChannelNCTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ChannelNCTest>
 {
     using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
     static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;

@@ -54,13 +54,15 @@
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(Matrix, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::Matrix>
 {
     using Traits = MultiDomainTraits<TypeTag, TTAG(Fracture)>;
     using type = EmbeddedCouplingManager2d3d<Traits>;
 };
 
-SET_PROP(Fracture, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::Fracture>
 {
     using Traits = MultiDomainTraits<TTAG(Matrix), TypeTag>;
     using type = EmbeddedCouplingManager2d3d<Traits>;

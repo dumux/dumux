@@ -46,7 +46,8 @@ struct StokesOneP { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeF
 } // end namespace TTag
 
 // the fluid system
-SET_PROP(StokesOneP, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::StokesOneP>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;

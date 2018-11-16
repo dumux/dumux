@@ -154,7 +154,8 @@ struct TwoPOneCNI { using InheritsFrom = std::tuple<PorousMediumFlow>; };
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(TwoPOneCNI, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::TwoPOneCNI>
 {
 private:
      using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -164,7 +165,8 @@ public:
 };
 
 //! Set the default formulation to pw-sn
-SET_PROP(TwoPOneCNI, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::TwoPOneCNI>
 { static constexpr TwoPFormulation value = TwoPFormulation::p1s0; };
 
 //! Do not block spurious flows by default.
@@ -180,7 +182,8 @@ template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::TwoPOneCNI> { using type = TwoPOneCDarcysLaw<TypeTag>; };
 
 //! Set the volume variables property
-SET_PROP(TwoPOneCNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPOneCNI>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -204,7 +207,8 @@ template<class TypeTag>
 struct PrimaryVariableSwitch<TypeTag, TTag::TwoPOneCNI> { using type = TwoPOneCPrimaryVariableSwitch; };
 
 //! The primary variables vector for the 2p1cni model.
-SET_PROP(TwoPOneCNI, PrimaryVariables)
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::TwoPOneCNI>
 {
 private:
     using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,

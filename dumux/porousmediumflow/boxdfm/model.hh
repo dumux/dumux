@@ -41,7 +41,8 @@ struct BoxDfmModel { using InheritsFrom = std::tuple<BoxModel>; };
 } // end namespace TTag
 
 //! Set the default for the global finite volume geometry
-SET_PROP(BoxDfmModel, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::BoxDfmModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();

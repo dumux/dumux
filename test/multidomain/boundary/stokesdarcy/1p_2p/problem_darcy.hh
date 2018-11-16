@@ -61,7 +61,8 @@ struct Grid<TypeTag, TTag::DarcyTwoP> { using type = Dune::YaspGrid<2>; };
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::DarcyTwoP> { static constexpr bool value = false; };
 
-SET_PROP(DarcyTwoP, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::DarcyTwoP>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -69,7 +70,8 @@ SET_PROP(DarcyTwoP, SpatialParams)
 };
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
-SET_PROP(DarcyTwoP, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::DarcyTwoP>
 { static constexpr auto value = TwoPFormulation::p1s0; };
 }
 

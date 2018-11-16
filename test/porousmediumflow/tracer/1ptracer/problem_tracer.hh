@@ -67,7 +67,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::TracerTest> { using type = TracerTestProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(TracerTest, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TracerTest>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

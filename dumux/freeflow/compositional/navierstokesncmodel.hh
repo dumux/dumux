@@ -127,7 +127,8 @@ struct NavierStokesNCNI { using InheritsFrom = std::tuple<NavierStokesNC>; };
 ///////////////////////////////////////////////////////////////////////////
 
 //!< states some specifics of the free-flow model
-SET_PROP(NavierStokesNC, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::NavierStokesNC>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -153,7 +154,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::NavierStokesNC> { using type = FreeflowNCResidual<TypeTag>; };
 
 //! Set the volume variables property
-SET_PROP(NavierStokesNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::NavierStokesNC>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -189,7 +191,8 @@ struct IOFields<TypeTag, TTag::NavierStokesNC> { using type = FreeflowNCIOFields
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(NavierStokesNC, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::NavierStokesNC>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -207,7 +210,8 @@ struct MolecularDiffusionType<TypeTag, TTag::NavierStokesNC> { using type = Fick
 //////////////////////////////////////////////////////////////////////////
 
 //! The model traits of the non-isothermal model
-SET_PROP(NavierStokesNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::NavierStokesNCNI>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -222,7 +226,8 @@ public:
 };
 
 //! The non-isothermal I/O fields
-SET_PROP(NavierStokesNCNI, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::NavierStokesNCNI>
 {
 private:
     using IsothermalIOFields = FreeflowNCIOFields<NavierStokesIOFields>;

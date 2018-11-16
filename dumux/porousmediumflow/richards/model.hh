@@ -195,7 +195,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::Richards> { using type = RichardsLocalResidual<TypeTag>; };
 
 //! Set the vtk output fields specific to this model
-SET_PROP(Richards, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::Richards>
 {
 private:
     static constexpr bool enableWaterDiffusionInAir
@@ -210,7 +211,8 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::Richards> { using type = RichardsModelTraits<getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>()>; };
 
 //! Set the volume variables property
-SET_PROP(Richards, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::Richards>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -237,7 +239,8 @@ struct EffectiveDiffusivityModel<TypeTag, TTag::Richards>
 { using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! The primary variables vector for the richards model
-SET_PROP(Richards, PrimaryVariables)
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::Richards>
 {
 private:
     using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
@@ -255,7 +258,8 @@ struct PrimaryVariableSwitch<TypeTag, TTag::Richards> { using type = ExtendedRic
  *
  * By default this uses the H2O-Air fluid system with Simple H2O (constant density and viscosity).
  */
-SET_PROP(Richards, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Richards>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::H2OAir<Scalar,
@@ -269,7 +273,8 @@ SET_PROP(Richards, FluidSystem)
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(Richards, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::Richards>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -279,7 +284,8 @@ public:
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(RichardsNI, ThermalConductivityModel)
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::RichardsNI>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -292,7 +298,8 @@ public:
 /////////////////////////////////////////////////////
 
 //! set non-isothermal model traits
-SET_PROP(RichardsNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::RichardsNI>
 {
 private:
     using IsothermalTraits = RichardsModelTraits<getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>()>;
@@ -301,7 +308,8 @@ public:
 };
 
 //! Set the vtk output fields specific to th non-isothermal model
-SET_PROP(RichardsNI, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::RichardsNI>
 {
     static constexpr bool enableWaterDiffusionInAir
         = getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>();

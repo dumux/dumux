@@ -80,7 +80,8 @@ struct LowReKEpsilonNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, 
 };
 
 //!< states some specifics of the isothermal multi-component low-Reynolds k-epsilon model
-SET_PROP(LowReKEpsilonNC, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::LowReKEpsilonNC>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -94,7 +95,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(LowReKEpsilonNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::LowReKEpsilonNC>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -114,7 +116,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(LowReKEpsilonNC, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::LowReKEpsilonNC>
 {
 private:
     using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
@@ -123,7 +126,8 @@ public:
 };
 
 //! The flux variables
-SET_PROP(LowReKEpsilonNC, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::LowReKEpsilonNC>
 {
 private:
     using BaseFluxVariables = FreeflowNCFluxVariables<TypeTag>;
@@ -146,7 +150,8 @@ struct LowReKEpsilonNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(LowReKEpsilonNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::LowReKEpsilonNCNI>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -161,7 +166,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(LowReKEpsilonNCNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::LowReKEpsilonNCNI>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -181,7 +187,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(LowReKEpsilonNCNI, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::LowReKEpsilonNCNI>
 {
 private:
     using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
@@ -190,7 +197,8 @@ public:
 };
 
 //! The flux variables
-SET_PROP(LowReKEpsilonNCNI, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::LowReKEpsilonNCNI>
 {
 private:
     using BaseFluxVariables = FreeflowNCFluxVariables<TypeTag>;
@@ -199,7 +207,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(LowReKEpsilonNCNI, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::LowReKEpsilonNCNI>
 {
 private:
     using IsothermalIOFields = FreeflowNCIOFields<LowReKEpsilonIOFields, true/*turbulenceModel*/>;

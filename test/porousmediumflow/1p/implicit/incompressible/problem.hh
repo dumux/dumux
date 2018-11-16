@@ -64,7 +64,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePIncompressible> { using type = OnePTestProblem<TypeTag>; };
 
 // set the spatial params
-SET_PROP(OnePIncompressible, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePIncompressible>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -76,7 +77,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::OnePIncompressible> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // the fluid system
-SET_PROP(OnePIncompressible, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePIncompressible>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;

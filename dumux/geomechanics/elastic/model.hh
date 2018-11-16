@@ -104,7 +104,8 @@ struct ModelTraits<TypeTag, TTag::Elastic>
 };
 
 //! Set the volume variables property
-SET_PROP(Elastic, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::Elastic>
 {
 private:
     static constexpr int dim = GetPropType<TypeTag, Properties::GridView>::dimension;

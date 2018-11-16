@@ -101,7 +101,8 @@ SET_TYPE_PROP(SequentialModel, JacobianMatrix, typename GET_PROP_TYPE(TypeTag, P
 
 //! Dummy model traits for compatibility with the rest of dumux
 //! until the sequential models are incorporated into the general framework
-SET_PROP(SequentialModel, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::SequentialModel>
 {
 private:
     struct DummyTraits
@@ -114,7 +115,8 @@ public:
 };
 
 //! Use the leaf grid view if not defined otherwise
-SET_PROP(SequentialModel, GridView)
+template<class TypeTag>
+struct GridView<TypeTag, TTag::SequentialModel>
 {
 private:
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
@@ -124,7 +126,8 @@ public:
 };
 
 //! Default number of intersections for quadrilaterals
-SET_PROP(SequentialModel, MaxIntersections)
+template<class TypeTag>
+struct MaxIntersections<TypeTag, TTag::SequentialModel>
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -137,7 +140,8 @@ public:
 };
 
 //! A simplified grid geometry for compatibility with new style models
-SET_PROP(SequentialModel, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::SequentialModel>
 {
     struct MockFVGridGeometry
     : public DefaultMapperTraits<typename GET_PROP_TYPE(TypeTag, GridView)>
@@ -151,7 +155,8 @@ public:
 };
 
 //! For compatibility with new style models we need a solution vector type
-SET_PROP(SequentialModel, SolutionVector)
+template<class TypeTag>
+struct SolutionVector<TypeTag, TTag::SequentialModel>
 {
 public:
     using type = typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution;
@@ -162,7 +167,8 @@ public:
  *
  * This means shape functions, solution vectors, etc.
  */
-SET_PROP(SequentialModel, SolutionTypes)
+template<class TypeTag>
+struct SolutionTypes<TypeTag, TTag::SequentialModel>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -219,7 +225,8 @@ SET_TYPE_PROP(SequentialModel, TimeManager, Dumux::TimeManager<TypeTag>);
 /*!
  * \brief Boundary types at a single degree of freedom.
  */
-SET_PROP(SequentialModel, BoundaryTypes)
+template<class TypeTag>
+struct BoundaryTypes<TypeTag, TTag::SequentialModel>
 { private:
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 public:
@@ -227,7 +234,8 @@ public:
 };
 
 //! do not specific any model-specific default parameters here
-SET_PROP(SequentialModel, ModelDefaultParameters)
+template<class TypeTag>
+struct ModelDefaultParameters<TypeTag, TTag::SequentialModel>
 {
     static void defaultParams(Dune::ParameterTree& params, const std::string& group = "")
     {

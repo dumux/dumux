@@ -62,7 +62,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::InfiltrationThreePThreeC> { using type = InfiltrationThreePThreeCProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(InfiltrationThreePThreeC, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::InfiltrationThreePThreeC>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

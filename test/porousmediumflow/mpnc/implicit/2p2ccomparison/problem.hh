@@ -66,7 +66,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::MPNCComparison> { using type = MPNCComparisonProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(MPNCComparison, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::MPNCComparison>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

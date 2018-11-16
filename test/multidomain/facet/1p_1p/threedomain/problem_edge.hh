@@ -57,7 +57,8 @@ struct Grid<TypeTag, TTag::OnePEdge> { using type = Dune::FoamGrid<1, 3>; };
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePEdge> { using type = OnePEdgeProblem<TypeTag>; };
 // set the spatial params
-SET_PROP(OnePEdge, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePEdge>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -65,7 +66,8 @@ SET_PROP(OnePEdge, SpatialParams)
 };
 
 // the fluid system
-SET_PROP(OnePEdge, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePEdge>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

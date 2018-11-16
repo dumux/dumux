@@ -67,7 +67,8 @@ struct NumEqFace<TypeTag, TTag::StaggeredFreeFlowModel> { static constexpr int v
  *         and substract the number of dimensions. This yields the number of equations to be
  *         solved on the cell centers. Works also for non-isothermal models.
  */
-SET_PROP(StaggeredFreeFlowModel, NumEqCellCenter)
+template<class TypeTag>
+struct NumEqCellCenter<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -79,7 +80,8 @@ public:
 };
 
 //! The default fv grid geometry
-SET_PROP(StaggeredFreeFlowModel, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -90,7 +92,8 @@ public:
 };
 
 //! The variables living on the faces
-SET_PROP(StaggeredFreeFlowModel, FaceVariables)
+template<class TypeTag>
+struct FaceVariables<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
@@ -100,7 +103,8 @@ public:
 };
 
 //! Set the default global volume variables cache vector class
-SET_PROP(StaggeredFreeFlowModel, GridVolumeVariables)
+template<class TypeTag>
+struct GridVolumeVariables<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -113,7 +117,8 @@ public:
 
 
 //! Boundary types at a single degree of freedom
-SET_PROP(StaggeredFreeFlowModel, BoundaryTypes)
+template<class TypeTag>
+struct BoundaryTypes<TypeTag, TTag::StaggeredFreeFlowModel>
 {
     using type = StaggeredFreeFlowBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 };

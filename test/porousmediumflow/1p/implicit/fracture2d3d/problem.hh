@@ -73,13 +73,15 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::Fracture> { using type = Dumux::FractureProblem<TypeTag>; };
 
 // the fluid system
-SET_PROP(Fracture, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Fracture>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 // Set the spatial parameters
-SET_PROP(Fracture, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Fracture>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

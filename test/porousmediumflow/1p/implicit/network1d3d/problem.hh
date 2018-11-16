@@ -65,7 +65,8 @@ struct Grid<TypeTag, TTag::TubesTest> { using type = Dune::FoamGrid<1, 3>; };
 #endif
 
 // if we have pt scotch use the reordering dof mapper to optimally sort the dofs (cc)
-SET_PROP(TubesTestCCTpfa, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::TubesTestCCTpfa>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
@@ -79,7 +80,8 @@ public:
 };
 
 // if we have pt scotch use the reordering dof mapper to optimally sort the dofs (box)
-SET_PROP(TubesTestBox, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::TubesTestBox>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
@@ -98,7 +100,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::TubesTest> { using type = TubesTestProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(TubesTest, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TubesTest>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -106,7 +109,8 @@ SET_PROP(TubesTest, SpatialParams)
 };
 
 // the fluid system
-SET_PROP(TubesTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TubesTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;

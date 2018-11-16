@@ -65,13 +65,15 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::Dissolution> { using type = DissolutionProblem<TypeTag>; };
 
 // Set fluid configuration
-SET_PROP(Dissolution, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Dissolution>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::BrineAir<Scalar, Components::H2O<Scalar>>;
 };
 
-SET_PROP(Dissolution, SolidSystem)
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::Dissolution>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ComponentOne = Components::NaCl<Scalar>;
@@ -81,7 +83,8 @@ SET_PROP(Dissolution, SolidSystem)
 };
 
 // Set the spatial parameters
-SET_PROP(Dissolution, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Dissolution>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -91,7 +94,8 @@ SET_PROP(Dissolution, SpatialParams)
 //Set properties here to override the default property settings
 template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::Dissolution> { static constexpr int value = 1; }; //!< Replace gas balance by total mass balance
-SET_PROP(Dissolution, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::Dissolution>
 { static constexpr auto value = TwoPFormulation::p1s0; };
 
 } // end namespace Properties

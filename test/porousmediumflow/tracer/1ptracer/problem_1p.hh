@@ -59,7 +59,8 @@ struct Grid<TypeTag, TTag::IncompressibleTest> { using type = Dune::YaspGrid<2>;
 template<class TypeTag>
 struct Problem<TypeTag, TTag::IncompressibleTest> { using type = OnePTestProblem<TypeTag>; };
 
-SET_PROP(IncompressibleTest, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::IncompressibleTest>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -70,7 +71,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // the fluid system
-SET_PROP(IncompressibleTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::IncompressibleTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;

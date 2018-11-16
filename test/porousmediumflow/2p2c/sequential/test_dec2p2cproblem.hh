@@ -64,7 +64,8 @@ SET_TYPE_PROP(TestDecTwoPTwoC, PressureModel,FVPressure2P2C<TypeTag>);
 SET_INT_PROP(TestDecTwoPTwoC, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureN);
 
 // Select fluid system
-SET_PROP(TestDecTwoPTwoC, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TestDecTwoPTwoC>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::H2OAir<Scalar, Components::H2O<Scalar>>;

@@ -57,7 +57,8 @@ struct ZeroEq { using InheritsFrom = std::tuple<RANS>; };
 } // end namespace TTag
 
 //! Set the volume variables property
-SET_PROP(ZeroEq, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::ZeroEq>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -86,7 +87,8 @@ struct ZeroEqNI { using InheritsFrom = std::tuple<RANSNI>; };
 } // end namespace TTag
 
 //! Set the volume variables property
-SET_PROP(ZeroEqNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::ZeroEqNI>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;

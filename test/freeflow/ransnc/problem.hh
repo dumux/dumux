@@ -86,7 +86,8 @@ namespace TTag {
 } // end namespace TTag
 
 // The fluid system
-SET_PROP(FlatPlateNCTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::FlatPlateNCTest>
 {
   using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
   static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the air phase

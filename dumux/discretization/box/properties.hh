@@ -53,7 +53,8 @@ struct BoxModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
 } // end namespace TTag
 
 //! Set the default for the global finite volume geometry
-SET_PROP(BoxModel, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::BoxModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
@@ -64,7 +65,8 @@ public:
 };
 
 //! The grid volume variables vector class
-SET_PROP(BoxModel, GridVolumeVariables)
+template<class TypeTag>
+struct GridVolumeVariables<TypeTag, TTag::BoxModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
@@ -75,7 +77,8 @@ public:
 };
 
 //! The grid flux variables cache vector class
-SET_PROP(BoxModel, GridFluxVariablesCache)
+template<class TypeTag>
+struct GridFluxVariablesCache<TypeTag, TTag::BoxModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();

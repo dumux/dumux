@@ -73,7 +73,8 @@ namespace Properties
 SET_BOOL_PROP(Pressure, VisitFacesOnlyOnce, false);
 
 //Set defaults
-SET_PROP(Pressure, PressureCoefficientMatrix)
+template<class TypeTag>
+struct PressureCoefficientMatrix<TypeTag, TTag::Pressure>
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -82,7 +83,8 @@ private:
 public:
     using type = Dune::BCRSMatrix<MB>;
 };
-SET_PROP(Pressure, PressureRHSVector)
+template<class TypeTag>
+struct PressureRHSVector<TypeTag, TTag::Pressure>
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

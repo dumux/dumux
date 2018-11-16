@@ -68,7 +68,8 @@ struct FluidSystem<TypeTag, TTag::TwoPNCDiffusion>
 };
 
 // Set the spatial parameters
-SET_PROP(TwoPNCDiffusion, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TwoPNCDiffusion>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -84,7 +85,8 @@ template<class TypeTag>
 struct MolecularDiffusionType<TypeTag, TTag::TwoPNCDiffusion> { using type = DIFFUSIONTYPE; };
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
-SET_PROP(TwoPNCDiffusion, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::TwoPNCDiffusion>
 { static constexpr auto value = TwoPFormulation::p0s1; };
 
 } // end namespace Properties

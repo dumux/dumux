@@ -71,7 +71,8 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::Column>
 { using type = FluidSystems::H2OAirXylene<GetPropType<TypeTag, Properties::Scalar>>; };
 
-SET_PROP(Column, SolidSystem)
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::Column>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ComponentOne = Dumux::Components::Constant<1, Scalar>;
@@ -82,7 +83,8 @@ SET_PROP(Column, SolidSystem)
 
 
 //! The two-phase model uses the immiscible fluid state
-SET_PROP(Column, SolidState)
+template<class TypeTag>
+struct SolidState<TypeTag, TTag::Column>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -92,7 +94,8 @@ public:
 };
 
 // Set the spatial parameters
-SET_PROP(Column, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Column>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

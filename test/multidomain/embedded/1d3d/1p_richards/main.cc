@@ -52,13 +52,15 @@
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(SOILTYPETAG, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::SOILTYPETAG>
 {
     using Traits = MultiDomainTraits<TypeTag, TTAG(Root)>;
     using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
-SET_PROP(Root, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::Root>
 {
     using Traits = MultiDomainTraits<TTAG(SOILTYPETAG), TypeTag>;
     using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;

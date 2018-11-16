@@ -96,7 +96,8 @@ struct FluidSystem<TypeTag, TTag::EvaporationAtmosphere>
 };
 
 //! Set the default pressure formulation: either pw first or pn first
-SET_PROP(EvaporationAtmosphere, PressureFormulation)
+template<class TypeTag>
+struct PressureFormulation<TypeTag, TTag::EvaporationAtmosphere>
 {
 public:
     static const MpNcPressureFormulation value = MpNcPressureFormulation::leastWettingFirst;
@@ -107,7 +108,8 @@ template<class TypeTag>
 struct Scalar<TypeTag, TTag::EvaporationAtmosphere> { using type = double; };
 
 // Set the fluid system
-SET_PROP(EvaporationAtmosphere, SolidSystem)
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::EvaporationAtmosphere>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using InertComponent = Components::Constant<1, Scalar>;
@@ -119,7 +121,8 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere> { using type = EvaporationAtmosphereSpatialParams<TypeTag>; };
 
 // Set the interfacial area relation: wetting -- non-wetting
-SET_PROP(EvaporationAtmosphere, AwnSurface)
+template<class TypeTag>
+struct AwnSurface<TypeTag, TTag::EvaporationAtmosphere>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
@@ -131,7 +134,8 @@ public:
 
 
 // Set the interfacial area relation: wetting -- solid
-SET_PROP(EvaporationAtmosphere, AwsSurface)
+template<class TypeTag>
+struct AwsSurface<TypeTag, TTag::EvaporationAtmosphere>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
@@ -142,7 +146,8 @@ public:
 };
 
 // Set the interfacial area relation: non-wetting -- solid
-SET_PROP(EvaporationAtmosphere, AnsSurface)
+template<class TypeTag>
+struct AnsSurface<TypeTag, TTag::EvaporationAtmosphere>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;

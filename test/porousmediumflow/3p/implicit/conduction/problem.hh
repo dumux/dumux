@@ -73,7 +73,8 @@ struct FluidSystem<TypeTag, TTag::ThreePNIConduction>
 { using type = FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Set the spatial parameters
-SET_PROP(ThreePNIConduction, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::ThreePNIConduction>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

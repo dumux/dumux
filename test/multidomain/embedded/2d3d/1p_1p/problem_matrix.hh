@@ -81,7 +81,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::Matrix> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // the fluid system
-SET_PROP(Matrix, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Matrix>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;

@@ -197,7 +197,8 @@ struct ThreePWaterOilNI { using InheritsFrom = std::tuple<PorousMediumFlow>; };
 //////////////////////////////////////////////////////////////////
 
 //! Set the non-isothermal model traits property
-SET_PROP(ThreePWaterOilNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ThreePWaterOilNI>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -213,7 +214,8 @@ public:
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(ThreePWaterOilNI, FluidState){
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::ThreePWaterOilNI>{
     private:
         using Scalar = GetPropType<TypeTag, Properties::Scalar>;
         using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -234,7 +236,8 @@ template<class TypeTag>
 struct PrimaryVariableSwitch<TypeTag, TTag::ThreePWaterOilNI> { using type = ThreePWaterOilPrimaryVariableSwitch<TypeTag>; };
 
 //! The primary variables vector for the 3p3c model
-SET_PROP(ThreePWaterOilNI, PrimaryVariables)
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::ThreePWaterOilNI>
 {
 private:
     using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
@@ -248,7 +251,8 @@ template<class TypeTag>
 struct OnlyGasPhaseCanDisappear<TypeTag, TTag::ThreePWaterOilNI> { static constexpr bool value = true; };
 
 //! Set the volume variables property
-SET_PROP(ThreePWaterOilNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::ThreePWaterOilNI>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -274,7 +278,8 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::ThreePWaterOilNI> { static constexpr bool value = true; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(ThreePWaterOilNI, ThermalConductivityModel)
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::ThreePWaterOilNI>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

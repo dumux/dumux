@@ -375,7 +375,7 @@ public:
 //! TODO: fix adaptive simulations in parallel
 //#if HAVE_MPI
 //        // communicate ghost data
-//        using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+//        using SolutionTypes = typename GetProp<TypeTag, SolutionTypes>;
 //        using ElementMapper = typename SolutionTypes::ElementMapper;
 //        using DataHandle = VectorExchange<ElementMapper, std::vector<CellData> >;
 //        DataHandle dataHandle(problem.elementMapper(), this->cellDataGlobal());

@@ -105,7 +105,8 @@ template<class TypeTag>
 struct EnableBoxInterfaceSolver<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = false; };
 
 //! per default solid state is inert
-SET_PROP(PorousMediumFlow, SolidState)
+template<class TypeTag>
+struct SolidState<TypeTag, TTag::PorousMediumFlow>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -115,7 +116,8 @@ public:
 };
 
 // per default the solid system is inert with one constant component
-SET_PROP(PorousMediumFlow, SolidSystem)
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::PorousMediumFlow>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using InertComponent = Components::Constant<1, Scalar>;

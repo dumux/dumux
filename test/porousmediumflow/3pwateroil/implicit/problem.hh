@@ -63,7 +63,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::Sagd> { using type = Dumux::SagdProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(Sagd, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Sagd>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -82,7 +83,8 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::Sagd> { static constexpr bool value = true; };
 
 // Set the solid system
-SET_PROP(Sagd, SolidSystem)
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::Sagd>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using InertComponent = Components::Constant<1, Scalar>;

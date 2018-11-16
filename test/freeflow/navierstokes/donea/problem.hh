@@ -52,7 +52,8 @@ struct DoneaTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFl
 } // end namespace TTag
 
 // the fluid system
-SET_PROP(DoneaTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::DoneaTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;

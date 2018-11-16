@@ -105,7 +105,8 @@ namespace Properties
 {
 
 //! \cond \private
-SET_PROP(MPFAProperties, GridImplementation)
+template<class TypeTag>
+struct GridImplementation<TypeTag, TTag::MPFAProperties>
 {
 private:
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);

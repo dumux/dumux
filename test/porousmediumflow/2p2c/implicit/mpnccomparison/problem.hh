@@ -71,7 +71,8 @@ struct FluidSystem<TypeTag, TTag::TwoPTwoCComparison>
 };
 
 // Set the spatial parameters
-SET_PROP(TwoPTwoCComparison, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TwoPTwoCComparison>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -81,7 +82,8 @@ SET_PROP(TwoPTwoCComparison, SpatialParams)
 // decide which type to use for floating values (double / quad)
 template<class TypeTag>
 struct Scalar<TypeTag, TTag::TwoPTwoCComparison> { using type = double; };
-SET_PROP(TwoPTwoCComparison, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::TwoPTwoCComparison>
 {
 public:
     static const TwoPFormulation value = TwoPFormulation::p1s0;

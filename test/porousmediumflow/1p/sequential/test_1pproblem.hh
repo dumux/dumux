@@ -52,7 +52,8 @@ NEW_TYPE_TAG(TestOneP, INHERITS_FROM(FVPressureOneP));
 SET_TYPE_PROP(TestOneP, Grid, Dune::YaspGrid<2>);
 
 // the fluid system
-SET_PROP(TestOneP, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TestOneP>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;

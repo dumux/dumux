@@ -48,7 +48,8 @@ struct DensityDrivenFlow { using InheritsFrom = std::tuple<NavierStokesNC, Stagg
 } // end namespace TTag
 
 // Select the fluid system
-SET_PROP(DensityDrivenFlow, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::DensityDrivenFlow>
 {
     using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
     static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;

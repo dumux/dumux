@@ -47,7 +47,8 @@ NEW_TYPE_TAG(Test3d2pSpatialParams);
 SET_TYPE_PROP(Test3d2pSpatialParams, SpatialParams, Test3d2pSpatialParams<TypeTag>);
 
 // Set the material law
-SET_PROP(Test3d2pSpatialParams, MaterialLaw)
+template<class TypeTag>
+struct MaterialLaw<TypeTag, TTag::Test3d2pSpatialParams>
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

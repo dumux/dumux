@@ -57,7 +57,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::PoroElasticSub> { using type = Dumux::PoroElasticSubProblem<TypeTag>; };
 
 // Set the fluid system for TwoPSubProblem
-SET_PROP(PoroElasticSub, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::PoroElasticSub>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;

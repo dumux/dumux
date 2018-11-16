@@ -75,13 +75,15 @@ struct CouplingManager<TypeTag, TTag::OnePSub>
 
 // Set the grid type
 #if DOMAINSPLIT==1
-SET_PROP(OnePSub, Grid)
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePSub>
 {
     using FullDomainGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
     using type = Dune::SubGrid<FullDomainGrid::dimension, FullDomainGrid>;
 };
 #elif DOMAINSPLIT==0
-SET_PROP(OnePSub, Grid)
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePSub>
 {
     using FullDomainGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
     using type = FullDomainGrid;
@@ -97,7 +99,8 @@ struct SpatialParams<TypeTag, TTag::OnePSub>
 };
 
 // the fluid system
-SET_PROP(OnePSub, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePSub>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
@@ -132,7 +135,7 @@ int main(int argc, char** argv) try
     using SubTypeTag1 = TTAG(OnePSub1);
 
     // create the full grid that we are gonna split for the output
-    using FullDomainGrid = typename GET_PROP(TypeTag, Grid)::FullDomainGrid;
+    using FullDomainGrid = typename GetProp<TypeTag, Properties::Grid>::FullDomainGrid;
     GridManager<FullDomainGrid> gridManager;
     gridManager.init();
 

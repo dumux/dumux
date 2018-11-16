@@ -53,7 +53,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::DarcyOneP> { using type = Dumux::DarcySubProblem<TypeTag>; };
 
 // the fluid system
-SET_PROP(DarcyOneP, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::DarcyOneP>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
@@ -63,7 +64,8 @@ SET_PROP(DarcyOneP, FluidSystem)
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DarcyOneP> { using type = Dune::YaspGrid<2>; };
 
-SET_PROP(DarcyOneP, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::DarcyOneP>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

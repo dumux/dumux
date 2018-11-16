@@ -68,7 +68,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::Kuevette> { using type = KuevetteProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(Kuevette, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Kuevette>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

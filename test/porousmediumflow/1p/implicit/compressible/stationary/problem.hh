@@ -64,7 +64,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePCompressible> { using type = OnePTestProblem<TypeTag>; };
 
 // set the spatial params
-SET_PROP(OnePCompressible, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePCompressible>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -72,7 +73,8 @@ SET_PROP(OnePCompressible, SpatialParams)
 };
 
 // the fluid system
-SET_PROP(OnePCompressible, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePCompressible>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

@@ -55,13 +55,15 @@
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(StokesOnePTwoC, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::StokesOnePTwoC>
 {
     using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, TTAG(DarcyOnePTwoC)>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
-SET_PROP(DarcyOnePTwoC, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::DarcyOnePTwoC>
 {
     using Traits = StaggeredMultiDomainTraits<TTAG(StokesOnePTwoC), TTAG(StokesOnePTwoC), TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;

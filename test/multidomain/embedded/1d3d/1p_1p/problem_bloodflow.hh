@@ -76,7 +76,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::BloodFlow> { using type = BloodFlowProblem<TypeTag>; };
 
 // the fluid system
-SET_PROP(BloodFlow, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::BloodFlow>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;

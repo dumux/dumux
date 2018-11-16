@@ -63,13 +63,15 @@
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(StokesOneP, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::StokesOneP>
 {
     using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, TTAG(DarcyTwoP)>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
-SET_PROP(DarcyTwoP, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::DarcyTwoP>
 {
     using Traits = StaggeredMultiDomainTraits<TTAG(StokesOneP), TTAG(StokesOneP), TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
@@ -87,14 +89,16 @@ struct CouplingFluidSystem
 };
 
 // the fluid system for the free-flow model
-SET_PROP(StokesOneP, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::StokesOneP>
 {
     static constexpr auto phaseIdx = 1; // simulate the air phase
     using type = FluidSystems::OnePAdapter<typename CouplingFluidSystem<TypeTag>::type, phaseIdx>;
 };
 
 // the fluid system for the Darcy model
-SET_PROP(DarcyTwoP, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::DarcyTwoP>
 {
     using type = typename CouplingFluidSystem<TypeTag>::type;
 };

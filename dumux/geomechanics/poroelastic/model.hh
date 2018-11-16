@@ -81,7 +81,8 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::PoroElastic> { using type = PoroElasticIOFields; };
 
 //! The deault model traits of the poro-elastic model
-SET_PROP(PoroElastic, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::PoroElastic>
 {
 private:
     static constexpr int dim = GetPropType<TypeTag, Properties::GridView>::dimension;
@@ -94,7 +95,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(PoroElastic, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::PoroElastic>
 {
 private:
     static constexpr int dim = GetPropType<TypeTag, Properties::GridView>::dimension;
@@ -111,7 +113,8 @@ public:
 };
 
 //! Per default, we use effective stresses on the basis of Hooke's Law
-SET_PROP(PoroElastic, StressType)
+template<class TypeTag>
+struct StressType<TypeTag, TTag::PoroElastic>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

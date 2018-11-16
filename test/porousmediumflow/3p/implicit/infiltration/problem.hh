@@ -70,7 +70,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::InfiltrationThreeP> { using type = InfiltrationThreePProblem<TypeTag>; };
 
 // Set the fluid system
-SET_PROP(InfiltrationThreeP, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::InfiltrationThreeP>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -83,7 +84,8 @@ public:
 };
 
 // Set the spatial parameters
-SET_PROP(InfiltrationThreeP, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::InfiltrationThreeP>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

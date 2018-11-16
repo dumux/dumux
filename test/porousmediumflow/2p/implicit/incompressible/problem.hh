@@ -70,7 +70,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::TwoPIncompressible> { using type = TwoPIncompressibleLocalResidual<TypeTag>; };
 
 // Set the fluid system
-SET_PROP(TwoPIncompressible, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TwoPIncompressible>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
@@ -79,7 +80,8 @@ SET_PROP(TwoPIncompressible, FluidSystem)
 };
 
 // Set the spatial parameters
-SET_PROP(TwoPIncompressible, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TwoPIncompressible>
 {
 private:
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;

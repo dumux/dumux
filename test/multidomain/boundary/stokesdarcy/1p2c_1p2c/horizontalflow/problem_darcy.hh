@@ -54,7 +54,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::DarcyOnePTwoC> { using type = Dumux::DarcySubProblem<TypeTag>; };
 
 // The fluid system
-SET_PROP(DarcyOnePTwoC, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::DarcyOnePTwoC>
 {
   using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
   static constexpr auto phaseIdx = H2OAir::liquidPhaseIdx; // simulate the water phase
@@ -79,7 +80,8 @@ template<class TypeTag>
 struct Grid<TypeTag, TTag::DarcyOnePTwoC> { using type = Dune::YaspGrid<2>; };
 
 // Set the spatial paramaters type
-SET_PROP(DarcyOnePTwoC, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::DarcyOnePTwoC>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

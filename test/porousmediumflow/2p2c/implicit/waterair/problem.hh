@@ -68,7 +68,8 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::WaterAir> { using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Set the spatial parameters
-SET_PROP(WaterAir, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::WaterAir>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

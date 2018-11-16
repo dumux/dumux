@@ -66,7 +66,8 @@ struct SpatialParams<TypeTag, TTag::OnePBulk>
 };
 
 // the fluid system
-SET_PROP(OnePBulk, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePBulk>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

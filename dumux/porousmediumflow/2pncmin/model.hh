@@ -125,7 +125,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::TwoPNCMin> { using type = MineralizationLocalResidual<TypeTag>; };
 
 //! use the mineralization volume variables together with the 2pnc vol vars
-SET_PROP(TwoPNCMin, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPNCMin>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -147,7 +148,8 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::TwoPNCMin> { using type = MineralizationIOFields<TwoPNCIOFields>; };
 
 //! The 2pnc model traits define the non-mineralization part
-SET_PROP(TwoPNCMin, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPNCMin>
 {
 private:
     using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
@@ -157,7 +159,8 @@ public:
 };
 
 //! The two-phase model uses the immiscible fluid state
-SET_PROP(TwoPNCMin, SolidState)
+template<class TypeTag>
+struct SolidState<TypeTag, TTag::TwoPNCMin>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -171,7 +174,8 @@ public:
 //////////////////////////////////////////////////////////////////
 
 //! Set non-isothermal model traits
-SET_PROP(TwoPNCMinNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPNCMinNI>
 {
 private:
     using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
@@ -183,7 +187,8 @@ public:
 };
 
 //! non-isothermal vtkoutput
-SET_PROP(TwoPNCMinNI, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPNCMinNI>
 {
     using MineralizationIOF = MineralizationIOFields<TwoPNCIOFields>;
     using type = EnergyIOFields<MineralizationIOF>;

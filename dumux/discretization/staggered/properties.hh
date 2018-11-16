@@ -62,7 +62,8 @@ struct StaggeredModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
 } // end namespace TTag
 
 //! Set the default global face variables cache vector class
-SET_PROP(StaggeredModel, GridFaceVariables)
+template<class TypeTag>
+struct GridFaceVariables<TypeTag, TTag::StaggeredModel>
 {
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -77,7 +78,8 @@ template<class TypeTag>
 struct EnableGridFaceVariablesCache<TypeTag, TTag::StaggeredModel> { static constexpr bool value = true; };
 
 //! Set the global flux variables cache vector class
-SET_PROP(StaggeredModel, GridFluxVariablesCache)
+template<class TypeTag>
+struct GridFluxVariablesCache<TypeTag, TTag::StaggeredModel>
 {
 private:
     static constexpr auto enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
@@ -89,7 +91,8 @@ public:
 };
 
 //! Set the face solution type
-SET_PROP(StaggeredModel, StaggeredFaceSolution)
+template<class TypeTag>
+struct StaggeredFaceSolution<TypeTag, TTag::StaggeredModel>
 {
 private:
     using FaceSolutionVector = GetPropType<TypeTag, Properties::FaceSolutionVector>;
@@ -98,7 +101,8 @@ public:
 };
 
 //! Set the grid variables (volume, flux and face variables)
-SET_PROP(StaggeredModel, GridVariables)
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::StaggeredModel>
 {
 private:
     using GG = GetPropType<TypeTag, Properties::FVGridGeometry>;
@@ -151,7 +155,8 @@ struct FaceSolutionVector<TypeTag, TTag::StaggeredModel>
 { using type = Dune::BlockVector<GetPropType<TypeTag, Properties::FacePrimaryVariables>>; };
 
 //! default property value for the solution vector only used for monolithic solver TODO: move to LinearAlgebra traits
-SET_PROP(StaggeredModel, SolutionVector)
+template<class TypeTag>
+struct SolutionVector<TypeTag, TTag::StaggeredModel>
 {
 private:
     using CellCenterSolutionVector = GetPropType<TypeTag, Properties::CellCenterSolutionVector>;
@@ -161,7 +166,8 @@ public:
 };
 
 //! Set the type of a global jacobian matrix from the solution types TODO: move to LinearAlgebra traits
-SET_PROP(StaggeredModel, JacobianMatrix)
+template<class TypeTag>
+struct JacobianMatrix<TypeTag, TTag::StaggeredModel>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

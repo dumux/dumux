@@ -66,7 +66,8 @@ struct SpatialParams<TypeTag, TTag::OnePLowDim>
 };
 
 // the fluid system
-SET_PROP(OnePLowDim, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePLowDim>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

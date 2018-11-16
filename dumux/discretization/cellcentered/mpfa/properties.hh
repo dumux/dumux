@@ -58,7 +58,8 @@ struct CCMpfaModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
 } // end namespace TTag
 
 //! Set the index set type used on the dual grid nodes
-SET_PROP(CCMpfaModel, DualGridNodalIndexSet)
+template<class TypeTag>
+struct DualGridNodalIndexSet<TypeTag, TTag::CCMpfaModel>
 {
 private:
     using GV = GetPropType<TypeTag, Properties::GridView>;
@@ -69,14 +70,16 @@ public:
 };
 
 //! Per default, we use the dynamic mpfa-o interaction volume
-SET_PROP(CCMpfaModel, PrimaryInteractionVolume)
+template<class TypeTag>
+struct PrimaryInteractionVolume<TypeTag, TTag::CCMpfaModel>
 {
 public:
     using type = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
 };
 
 //! Per default, we use the dynamic mpfa-o interaction volume on boundaries
-SET_PROP(CCMpfaModel, SecondaryInteractionVolume)
+template<class TypeTag>
+struct SecondaryInteractionVolume<TypeTag, TTag::CCMpfaModel>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -89,7 +92,8 @@ public:
 };
 
 //! Set the default for the global finite volume geometry
-SET_PROP(CCMpfaModel, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::CCMpfaModel>
 {
 private:
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -102,7 +106,8 @@ public:
 };
 
 //! The grid volume variables vector class
-SET_PROP(CCMpfaModel, GridVolumeVariables)
+template<class TypeTag>
+struct GridVolumeVariables<TypeTag, TTag::CCMpfaModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
@@ -113,7 +118,8 @@ public:
 };
 
 //! The grid volume variables vector class
-SET_PROP(CCMpfaModel, GridFluxVariablesCache)
+template<class TypeTag>
+struct GridFluxVariablesCache<TypeTag, TTag::CCMpfaModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();

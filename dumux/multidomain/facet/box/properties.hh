@@ -78,7 +78,8 @@ struct ElementBoundaryTypes<TypeTag, TTag::BoxFacetCouplingModel>
 { using type = BoxFacetCouplingElementBoundaryTypes<GetPropType<TypeTag, Properties::BoundaryTypes>>; };
 
 //! Set the default for the grid finite volume geometry
-SET_PROP(BoxFacetCouplingModel, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::BoxFacetCouplingModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();

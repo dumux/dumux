@@ -208,7 +208,8 @@ struct TwoPNCNI { using InheritsFrom = std::tuple<TwoPNC>; };
 // Properties for the isothermal 2pnc model
 //////////////////////////////////////////////////////////////////
 //! The primary variables vector for the 2pnc model
-SET_PROP(TwoPNC, PrimaryVariables)
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::TwoPNC>
 {
 private:
     using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
@@ -221,7 +222,8 @@ template<class TypeTag>
 struct PrimaryVariableSwitch<TypeTag, TTag::TwoPNC> { using type = TwoPNCPrimaryVariableSwitch<TypeTag>; };         //!< The primary variable switch for the 2pnc model
 
 //! Set the volume variables property
-SET_PROP(TwoPNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPNC>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -238,7 +240,8 @@ public:
 };
 
 //! Set the base model traits
-SET_PROP(TwoPNC, BaseModelTraits)
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::TwoPNC>
 {
 private:
     //! we use the number of components specified by the fluid system here
@@ -264,7 +267,8 @@ template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::TwoPNC> { static constexpr int value = GetPropType<TypeTag, Properties::FluidSystem>::numComponents; }; //!< Per default, no component mass balance is replaced
 
 //! Default formulation is pw-Sn, overwrite if necessary
-SET_PROP(TwoPNC, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::TwoPNC>
 { static constexpr auto value = TwoPFormulation::p0s1; };
 
 template<class TypeTag>
@@ -277,7 +281,8 @@ template<class TypeTag>
 struct EffectiveDiffusivityModel<TypeTag, TTag::TwoPNC> { using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! This model uses the compositional fluid state
-SET_PROP(TwoPNC, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::TwoPNC>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -291,7 +296,8 @@ public:
 /////////////////////////////////////////////////
 
 //! Set the non-isothermal model traits
-SET_PROP(TwoPNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPNCNI>
 {
 private:
     using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
@@ -304,7 +310,8 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::TwoPNCNI> { using type = EnergyIOFields<TwoPNCIOFields>; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(TwoPNCNI, ThermalConductivityModel)
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::TwoPNCNI>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

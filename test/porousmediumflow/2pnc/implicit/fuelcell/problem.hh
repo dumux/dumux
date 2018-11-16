@@ -70,7 +70,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::FuelCell> { using type = FuelCellProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(FuelCell, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::FuelCell>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -78,11 +79,13 @@ SET_PROP(FuelCell, SpatialParams)
 };
 
 // Set the primary variable combination for the 2pnc model
-SET_PROP(FuelCell, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::FuelCell>
 { static constexpr auto value = TwoPFormulation::p1s0; };
 
 // Set fluid configuration
-SET_PROP(FuelCell, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::FuelCell>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

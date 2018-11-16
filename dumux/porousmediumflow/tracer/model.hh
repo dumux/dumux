@@ -134,7 +134,8 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::Tracer> { static constexpr bool value = true; };
 
 //! set the model traits
-SET_PROP(Tracer, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::Tracer>
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -151,7 +152,8 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::Tracer> { using type = TracerIOFields; };
 
 //! Set the volume variables property
-SET_PROP(Tracer, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::Tracer>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;

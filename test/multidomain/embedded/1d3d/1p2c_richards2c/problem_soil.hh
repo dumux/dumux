@@ -86,7 +86,8 @@ struct SpatialParams<TypeTag, TTag::Soil>
 };
 
 // Set the fluid system
-SET_PROP(Soil, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Soil>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::LiquidPhaseTwoC<Scalar, Components::SimpleH2O<Scalar>,

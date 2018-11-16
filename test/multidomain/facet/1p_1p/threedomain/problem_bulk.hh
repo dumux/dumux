@@ -55,7 +55,8 @@ struct Grid<TypeTag, TTag::OnePBulk> { using type = Dune::ALUGrid<3, 3, Dune::si
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePBulk> { using type = OnePBulkProblem<TypeTag>; };
 // set the spatial params
-SET_PROP(OnePBulk, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePBulk>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -63,7 +64,8 @@ SET_PROP(OnePBulk, SpatialParams)
 };
 
 // the fluid system
-SET_PROP(OnePBulk, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePBulk>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

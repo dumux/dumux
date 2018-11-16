@@ -46,7 +46,8 @@ struct ClosedSystemTest { using InheritsFrom = std::tuple<NavierStokes, Staggere
 } // end namespace TTag
 
 // the fluid system
-SET_PROP(ClosedSystemTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ClosedSystemTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;

@@ -95,7 +95,8 @@ struct NonEquilibrium {};
 /////////////////////////////////////////////////
 
 //! Set the model traits
-SET_PROP(NonEquilibrium, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::NonEquilibrium>
 {
 private:
     using EquiTraits = GetPropType<TypeTag, Properties::EquilibriumModelTraits>;
@@ -128,7 +129,8 @@ struct LocalResidual<TypeTag, TTag::NonEquilibrium> { using type = NonEquilibriu
 template<class TypeTag>
 struct HeatConductionType<TypeTag, TTag::NonEquilibrium> { using type = FouriersLawNonEquilibrium<TypeTag>; };
 
-SET_PROP(NonEquilibrium, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::NonEquilibrium>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -142,7 +144,8 @@ template<class TypeTag>
 struct GridVariables<TypeTag, TTag::NonEquilibrium> { using type = NonEquilibriumGridVariables<TypeTag>; };
 
 //! indices for non-isothermal models
-SET_PROP(NonEquilibrium, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::NonEquilibrium>
 {
 private:
     using EquilibriumIOFields = GetPropType<TypeTag, Properties::EquilibriumIOFields>;
@@ -151,7 +154,8 @@ public:
      using type = NonEquilibriumIOFields<ModelTraits, EquilibriumIOFields>;
 };
 
-SET_PROP(NonEquilibrium, NusseltFormulation)
+template<class TypeTag>
+struct NusseltFormulation<TypeTag, TTag::NonEquilibrium>
 {
 public:
     static constexpr Dumux::NusseltFormulation value = Dumux::NusseltFormulation::WakaoKaguei;
@@ -161,7 +165,8 @@ public:
  * \brief Set the default formulation for the sherwood correlation
  *        Other possible parametrizations can be found in the dimensionlessnumbers
  */
-SET_PROP(NonEquilibrium, SherwoodFormulation)
+template<class TypeTag>
+struct SherwoodFormulation<TypeTag, TTag::NonEquilibrium>
 {
 public:
     static constexpr Dumux::SherwoodFormulation value = Dumux::SherwoodFormulation::WakaoKaguei;

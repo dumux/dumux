@@ -112,7 +112,8 @@ struct KEpsilon { using InheritsFrom = std::tuple<RANS>; };
 } // end namespace TTag
 
 //!< states some specifics of the isothermal k-epsilon model
-SET_PROP(KEpsilon, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::KEpsilon>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -122,7 +123,8 @@ public:
 };
 
 //! The flux variables
-SET_PROP(KEpsilon, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::KEpsilon>
 {
 private:
     using BaseFluxVariables = NavierStokesFluxVariables<TypeTag>;
@@ -131,7 +133,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(KEpsilon, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::KEpsilon>
 {
 private:
     using BaseLocalResidual = NavierStokesResidual<TypeTag>;
@@ -140,7 +143,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(KEpsilon, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::KEpsilon>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -173,7 +177,8 @@ struct KEpsilonNI { using InheritsFrom = std::tuple<RANSNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(KEpsilonNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::KEpsilonNI>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -184,7 +189,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(KEpsilonNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::KEpsilonNI>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;

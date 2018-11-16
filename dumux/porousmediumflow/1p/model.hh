@@ -133,7 +133,8 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::OneP> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; }; //!< default the actually used traits to the base traits
 
 //! Set the volume variables property
-SET_PROP(OneP, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OneP>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -155,7 +156,8 @@ public:
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(OneP, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::OneP>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

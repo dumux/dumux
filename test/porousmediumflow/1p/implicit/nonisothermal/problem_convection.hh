@@ -74,7 +74,8 @@ struct FluidSystem<TypeTag, TTag::OnePNIConvection>
 };
 
 // Set the spatial parameters
-SET_PROP(OnePNIConvection, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePNIConvection>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

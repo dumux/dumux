@@ -126,7 +126,8 @@ struct OneEq { using InheritsFrom = std::tuple<RANS>; };
 } // end namespace TTag
 
 //!< states some specifics of the isothermal Spalart-Allmaras model
-SET_PROP(OneEq, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OneEq>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -136,7 +137,8 @@ public:
 };
 
 //! The flux variables
-SET_PROP(OneEq, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::OneEq>
 {
 private:
     using BaseFluxVariables = NavierStokesFluxVariables<TypeTag>;
@@ -145,7 +147,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(OneEq, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OneEq>
 {
 private:
     using BaseLocalResidual = NavierStokesResidual<TypeTag>;
@@ -154,7 +157,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(OneEq, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OneEq>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -187,7 +191,8 @@ struct OneEqNI { using InheritsFrom = std::tuple<RANSNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(OneEqNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OneEqNI>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
@@ -198,7 +203,8 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(OneEqNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OneEqNI>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;

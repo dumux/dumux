@@ -57,7 +57,8 @@ struct FluidSystem<TypeTag, TTag::SaltWaterIntrusionTest>
 { using type = FluidSystems::Brine< GetPropType<TypeTag, Properties::Scalar> >; };
 
 // Set the spatial parameters
-SET_PROP(SaltWaterIntrusionTest, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::SaltWaterIntrusionTest>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

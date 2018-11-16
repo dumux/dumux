@@ -71,7 +71,8 @@ struct FluidSystem<TypeTag, TTag::Injection>
 };
 
 // Set the spatial parameters
-SET_PROP(Injection, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Injection>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

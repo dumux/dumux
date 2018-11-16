@@ -58,7 +58,8 @@ template<class TypeTag>
 struct VelocityOutput<TypeTag, TTag::Geomechanics> { using type = GeomechanicsVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>>; };
 
 //! The solid state must be inert
-SET_PROP(Geomechanics, SolidState)
+template<class TypeTag>
+struct SolidState<TypeTag, TTag::Geomechanics>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -68,7 +69,8 @@ public:
 };
 
 //! Per default we use one constant component in the inert solid system
-SET_PROP(Geomechanics, SolidSystem)
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::Geomechanics>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
