@@ -38,7 +38,18 @@ namespace Detail {
  * \ingroup CCMpfaDiscretization
  * \brief Common base class to all handles. Stores arrays of the
  *        matrices involved in the interaction volume-local systems
- *        of equations.
+ *        of equations. Apart from the transmissibility matrix we
+ *        store those matrices that are needed e.g. for later face
+ *        pressure reconstruction.
+ *        The fluxes as well as the local systems of equations can
+ *        be expressed as functions of the intermediate unknown face
+ *        face values \f$\bar{\mathbf{u}}\f$ and the known cell/Dirichlet
+ *        values \f$\mathbf{u}\f$ using the matrices \f$\mathbf{A}\f$,
+ *        \f$\mathbf{B}\f$, \f$\mathbf{C}\f$, \f$\mathbf{D}\f$ and the
+ *        vector of Neumann fluxes \f$\mathbf{N}\f$ as follows:
+ *
+ *        Fluxes: \f$\mathbf{f} = \mathbf{C}\bar{\mathbf{u}} + \mathbf{D}\mathbf{u}\f$
+ *        Local eq system: \f$\mathbf{A}\bar{\mathbf{u}} = \mathbf{B}\mathbf{u} + \mathbf{N}\f$
  *
  * \tparam MVT The matrix/vector traits collecting type information used by the iv
  * \tparam size1 first size specifier for the arrays
@@ -48,6 +59,7 @@ template<class MVT, int size1, int size2>
 class MatrixDataHandleBase
 {
     using AMatrix = typename MVT::AMatrix;
+    using BMatrix = typename MVT::BMatrix;
     using CMatrix = typename MVT::CMatrix;
     using TMatrix = typename MVT::TMatrix;
     using CellVector = typename MVT::CellVector;
@@ -60,6 +72,9 @@ public:
 
     const AMatrix& A() const { return A_[contextIdx1_][contextIdx2_]; }
     AMatrix& A() { return A_[contextIdx1_][contextIdx2_]; }
+
+    const BMatrix& AB() const { return AB_[contextIdx1_][contextIdx2_]; }
+    BMatrix& AB() { return AB_[contextIdx1_][contextIdx2_]; }
 
     const TMatrix& T() const { return T_[contextIdx1_][contextIdx2_]; }
     TMatrix& T() { return T_[contextIdx1_][contextIdx2_]; }
@@ -78,6 +93,7 @@ protected:
 
     std::array< std::array<TMatrix, size2>, size1 > T_;             //!< The transmissibility matrix
     std::array< std::array<AMatrix, size2>, size1 > A_;             //!< Inverse of the iv-local system matrix
+    std::array< std::array<CMatrix, size2>, size1 > AB_;            //!< A_ left multiplied to B
     std::array< std::array<CMatrix, size2>, size1 > CA_;            //!< A_ right multiplied to C
     std::array< std::array<OutsideTij, size2>, size1 > tijOutside_; //!< The transmissibilities for "outside" faces (on surface grids)
 };
