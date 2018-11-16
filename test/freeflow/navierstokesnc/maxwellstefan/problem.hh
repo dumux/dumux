@@ -53,10 +53,12 @@ template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr int value = 0; };
 
 // Set the grid type
-SET_TYPE_PROP(MaxwellStefanNCTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::MaxwellStefanNCTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(MaxwellStefanNCTest, Problem, Dumux::MaxwellStefanNCTestProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::MaxwellStefanNCTest> { using type = Dumux::MaxwellStefanNCTestProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr bool value = true; };
@@ -71,7 +73,8 @@ struct UseMoles<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr bool valu
 
 
 //! Here we set FicksLaw or MaxwellStefansLaw
-SET_TYPE_PROP(MaxwellStefanNCTest, MolecularDiffusionType, MaxwellStefansLaw<TypeTag>);
+template<class TypeTag>
+struct MolecularDiffusionType<TypeTag, TTag::MaxwellStefanNCTest> { using type = MaxwellStefansLaw<TypeTag>; };
 
 
 /*!
@@ -189,7 +192,8 @@ public:
     }
 };
 
-SET_TYPE_PROP(MaxwellStefanNCTest, FluidSystem, MaxwellStefanFluidSystem<TypeTag>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::MaxwellStefanNCTest> { using type = MaxwellStefanFluidSystem<TypeTag>; };
 
 } //end namespace Property
 /*!

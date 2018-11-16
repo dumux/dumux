@@ -54,10 +54,12 @@ SET_PROP(KovasznayTest, FluidSystem)
 };
 
 // Set the grid type
-SET_TYPE_PROP(KovasznayTest, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::KovasznayTest> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
-SET_TYPE_PROP(KovasznayTest, Problem, Dumux::KovasznayTestProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::KovasznayTest> { using type = Dumux::KovasznayTestProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };

@@ -57,10 +57,12 @@ struct DissolutionCCTpfa { using InheritsFrom = std::tuple<Dissolution, CCTpfaMo
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Dissolution, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Dissolution> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(Dissolution, Problem, DissolutionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Dissolution> { using type = DissolutionProblem<TypeTag>; };
 
 // Set fluid configuration
 SET_PROP(Dissolution, FluidSystem)

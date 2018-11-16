@@ -65,9 +65,12 @@ public:
 namespace Dumux {
 namespace Properties {
 
-SET_TYPE_PROP(OnePBulkTpfa, CouplingManager, typename TestTraits::CouplingManager);
-SET_TYPE_PROP(OnePFacetTpfa, CouplingManager, typename TestTraits::CouplingManager);
-SET_TYPE_PROP(OnePEdgeTpfa, CouplingManager, typename TestTraits::CouplingManager);
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TestTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePFacetTpfa> { using type = typename TestTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePEdgeTpfa> { using type = typename TestTraits::CouplingManager; };
 
 } // end namespace Properties
 } // end namespace Dumux

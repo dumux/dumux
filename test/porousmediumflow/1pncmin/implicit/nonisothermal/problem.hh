@@ -55,9 +55,11 @@ struct ThermoChemBox { using InheritsFrom = std::tuple<ThermoChem, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(ThermoChem, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ThermoChem> { using type = Dune::YaspGrid<2>; };
 // Set the problem property
-SET_TYPE_PROP(ThermoChem, Problem, ThermoChemProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ThermoChem> { using type = ThermoChemProblem<TypeTag>; };
 
 // The fluid system
 SET_PROP(ThermoChem, FluidSystem)
@@ -78,7 +80,7 @@ SET_PROP(ThermoChem, SolidSystem)
 
 // // Enable velocity output
 // template<class TypeTag>
-struct VtkAddVelocity<TypeTag, TTag::ThermoChem> { static constexpr bool value = false; };
+// struct VtkAddVelocity<TypeTag, TTag::ThermoChem> { static constexpr bool value = false; };
 
 // Set the spatial parameters
 SET_PROP(ThermoChem, SpatialParams)

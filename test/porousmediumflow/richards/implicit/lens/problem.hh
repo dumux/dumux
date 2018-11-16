@@ -66,18 +66,25 @@ struct RichardsLensCC { using InheritsFrom = std::tuple<RichardsLens, CCTpfaMode
 
 #ifndef GRIDTYPE
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsLens, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::RichardsLens> { using type = Dune::YaspGrid<2>; };
 #else
 // Use GRIDTYPE from CMakeLists.txt
-SET_TYPE_PROP(RichardsLens, Grid, GRIDTYPE);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::RichardsLens> { using type = GRIDTYPE; };
 #endif
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsLens, Problem, RichardsLensProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::RichardsLens> { using type = RichardsLensProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsLens, SpatialParams, RichardsLensSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                                                            GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::RichardsLens>
+{
+    using type = RichardsLensSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                           GetPropType<TypeTag, Properties::Scalar>>;
+};
 } // end namespace Dumux
 
 /*!

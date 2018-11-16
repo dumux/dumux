@@ -51,10 +51,12 @@ struct TwoPOneCNIBox { using InheritsFrom = std::tuple<InjectionProblem, BoxMode
 struct TwoPOneCNICCTpfa { using InheritsFrom = std::tuple<InjectionProblem, CCTpfaModel>; };
 } // end namespace TTag
 
-SET_TYPE_PROP(InjectionProblem, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::InjectionProblem> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(InjectionProblem, Problem, InjectionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::InjectionProblem> { using type = InjectionProblem<TypeTag>; };
 
 
 // Set fluid configuration

@@ -40,10 +40,12 @@ struct OnePSingularityTimeDependentCCTpfa { using InheritsFrom = std::tuple<OneP
 } // end namespace TTag
 
 // Set the problem property
-SET_TYPE_PROP(OnePSingularityTimeDependentCCTpfa, Problem, OnePSingularityProblemTimeDependent<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePSingularityTimeDependentCCTpfa> { using type = OnePSingularityProblemTimeDependent<TypeTag>; };
 
 // point source
-SET_TYPE_PROP(OnePSingularityTimeDependentCCTpfa, PointSource, SolDependentPointSource<TypeTag>);
+template<class TypeTag>
+struct PointSource<TypeTag, TTag::OnePSingularityTimeDependentCCTpfa> { using type = SolDependentPointSource<TypeTag>; };
 }
 
 /*!

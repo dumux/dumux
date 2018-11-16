@@ -140,10 +140,12 @@ public:
 };
 
 //! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(CCMpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes);
+template<class TypeTag>
+struct ElementBoundaryTypes<TypeTag, TTag::CCMpfaModel> { using type = CCElementBoundaryTypes; };
 
 //! Set the BaseLocalResidual to CCLocalResidual
-SET_TYPE_PROP(CCMpfaModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
+template<class TypeTag>
+struct BaseLocalResidual<TypeTag, TTag::CCMpfaModel> { using type = CCLocalResidual<TypeTag>; };
 } // namespace Properties
 } // namespace Dumux
 

@@ -67,13 +67,15 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::FiniteVolumeModel> { static constexpr bool value = false; };
 
 //! Boundary types at a single degree of freedom
-SET_TYPE_PROP(FiniteVolumeModel, BoundaryTypes, Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>);
+template<class TypeTag>
+struct BoundaryTypes<TypeTag, TTag::FiniteVolumeModel> { using type = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
 
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
 
 //! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
-SET_TYPE_PROP(FiniteVolumeModel, SolutionVector, Dune::BlockVector<GetPropType<TypeTag, Properties::PrimaryVariables>>);
+template<class TypeTag>
+struct SolutionVector<TypeTag, TTag::FiniteVolumeModel> { using type = Dune::BlockVector<GetPropType<TypeTag, Properties::PrimaryVariables>>; };
 
 //! Set the type of a global jacobian matrix from the solution types TODO: move to LinearAlgebra traits
 SET_PROP(FiniteVolumeModel, JacobianMatrix)

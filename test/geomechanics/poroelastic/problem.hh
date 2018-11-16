@@ -46,17 +46,25 @@ namespace TTag {
 struct TestPoroElastic { using InheritsFrom = std::tuple<PoroElastic, BoxModel>; };
 } // end namespace TTag
 // Set the grid type
-SET_TYPE_PROP(TestPoroElastic, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TestPoroElastic> { using type = Dune::YaspGrid<2>; };
 // Set the problem property
-SET_TYPE_PROP(TestPoroElastic, Problem, Dumux::PoroElasticProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TestPoroElastic> { using type = Dumux::PoroElasticProblem<TypeTag>; };
 // The fluid phase consists of one constant component
-SET_TYPE_PROP(TestPoroElastic,
-              FluidSystem,
-              Dumux::FluidSystems::OnePLiquid< GetPropType<TypeTag, Properties::Scalar>,
-                                               Dumux::Components::Constant<0, GetPropType<TypeTag, Properties::Scalar>> >);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TestPoroElastic>
+{
+    using type = Dumux::FluidSystems::OnePLiquid< GetPropType<TypeTag, Properties::Scalar>,
+                                                  Dumux::Components::Constant<0, GetPropType<TypeTag, Properties::Scalar>> >;
+};
 // The spatial parameters property
-SET_TYPE_PROP(TestPoroElastic, SpatialParams, PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
-                                                                           GetPropType<TypeTag, Properties::FVGridGeometry> >);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TestPoroElastic>
+{
+    using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
+                                           GetPropType<TypeTag, Properties::FVGridGeometry> >;
+};
 }
 
 /*!

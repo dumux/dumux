@@ -81,8 +81,10 @@ struct TwoPTwoCCO2NI { using InheritsFrom = std::tuple<TwoPTwoCNI>; };
 } // end namespace TTag
 
 //! the CO2 privarswitch and VolumeVariables properties
-SET_TYPE_PROP(TwoPTwoCCO2, PrimaryVariableSwitch, TwoPTwoCCO2PrimaryVariableSwitch);
-SET_TYPE_PROP(TwoPTwoCCO2NI, PrimaryVariableSwitch, TwoPTwoCCO2PrimaryVariableSwitch);
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::TwoPTwoCCO2> { using type = TwoPTwoCCO2PrimaryVariableSwitch; };
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::TwoPTwoCCO2NI> { using type = TwoPTwoCCO2PrimaryVariableSwitch; };
 
 //! the co2 volume variables use the same traits as the 2p2c model
 SET_PROP(TwoPTwoCCO2, VolumeVariables)

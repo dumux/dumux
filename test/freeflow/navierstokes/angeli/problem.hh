@@ -56,10 +56,12 @@ public:
 };
 
 // Set the grid type
-SET_TYPE_PROP(AngeliTest, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::AngeliTest> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
-SET_TYPE_PROP(AngeliTest, Problem, Dumux::AngeliTestProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::AngeliTest> { using type = Dumux::AngeliTestProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::AngeliTest> { static constexpr bool value = true; };

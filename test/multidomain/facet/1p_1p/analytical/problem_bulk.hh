@@ -52,12 +52,18 @@ struct OnePBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OneP
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(OnePBulk, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePBulk> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 // Set the problem type
-SET_TYPE_PROP(OnePBulk, Problem, OnePBulkProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePBulk> { using type = OnePBulkProblem<TypeTag>; };
 // set the spatial params
-SET_TYPE_PROP(OnePBulk, SpatialParams, OnePSpatialParams< GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                                          GetPropType<TypeTag, Properties::Scalar> >);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePBulk>
+{
+    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                    GetPropType<TypeTag, Properties::Scalar> >;
+};
 
 // the fluid system
 SET_PROP(OnePBulk, FluidSystem)

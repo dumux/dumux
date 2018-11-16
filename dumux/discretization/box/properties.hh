@@ -86,10 +86,12 @@ public:
 };
 
 //! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<GetPropType<TypeTag, Properties::BoundaryTypes>>);
+template<class TypeTag>
+struct ElementBoundaryTypes<TypeTag, TTag::BoxModel> { using type = BoxElementBoundaryTypes<GetPropType<TypeTag, Properties::BoundaryTypes>>; };
 
 //! Set the BaseLocalResidual to BoxLocalResidual
-SET_TYPE_PROP(BoxModel, BaseLocalResidual, BoxLocalResidual<TypeTag>);
+template<class TypeTag>
+struct BaseLocalResidual<TypeTag, TTag::BoxModel> { using type = BoxLocalResidual<TypeTag>; };
 
 } // namespace Properties
 } // namespace Dumux

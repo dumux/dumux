@@ -52,15 +52,20 @@ struct TwoPNCDiffusionCC { using InheritsFrom = std::tuple<TwoPNCDiffusion, CCTp
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TwoPNCDiffusion, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPNCDiffusion> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(TwoPNCDiffusion, Problem, TwoPNCDiffusionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPNCDiffusion> { using type = TwoPNCDiffusionProblem<TypeTag>; };
 
 // // Set fluid configuration
-SET_TYPE_PROP(TwoPNCDiffusion,
-              FluidSystem,
-              FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TwoPNCDiffusion>
+{
+    using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>,
+                                     FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+};
 
 // Set the spatial parameters
 SET_PROP(TwoPNCDiffusion, SpatialParams)
@@ -75,7 +80,8 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::TwoPNCDiffusion> { static constexpr bool value = true; };
 
 //! Here we set FicksLaw or TwoPNCDiffusionsLaw
-SET_TYPE_PROP(TwoPNCDiffusion, MolecularDiffusionType, DIFFUSIONTYPE);
+template<class TypeTag>
+struct MolecularDiffusionType<TypeTag, TTag::TwoPNCDiffusion> { using type = DIFFUSIONTYPE; };
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
 SET_PROP(TwoPNCDiffusion, Formulation)

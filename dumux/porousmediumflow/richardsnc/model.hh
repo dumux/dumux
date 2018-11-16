@@ -154,14 +154,16 @@ private:
 public:
     using type = RichardsNCModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>(), getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
-SET_TYPE_PROP(RichardsNC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>);
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::RichardsNC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; };
 
 //! Define that per default mole fractions are used in the balance equations
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::RichardsNC> { static constexpr bool value = true; };
 
 //! Use the dedicated local residual
-SET_TYPE_PROP(RichardsNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::RichardsNC> { using type = CompositionalLocalResidual<TypeTag>; };
 
 //! We set the replaceCompIdx to 0, i.e. the first equation is substituted with
 //! the total mass balance, i.e. the phase balance
@@ -220,13 +222,16 @@ SET_PROP(RichardsNC, FluidState)
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(RichardsNC, IOFields, RichardsNCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::RichardsNC> { using type = RichardsNCIOFields; };
 
 //! The model after Millington (1961) is used for the effective diffusivity
-SET_TYPE_PROP(RichardsNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::RichardsNC> { using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! average is used as default model to compute the effective thermal heat conductivity
-SET_TYPE_PROP(RichardsNCNI, ThermalConductivityModel, ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::RichardsNCNI> { using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Richards n-components model

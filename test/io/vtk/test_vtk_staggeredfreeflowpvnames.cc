@@ -101,10 +101,12 @@ SET_PROP(StaggeredPVNamesTestTypeTag, FluidSystem)
   using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
-SET_TYPE_PROP(StaggeredPVNamesTestTypeTag, Scalar, double);
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::StaggeredPVNamesTestTypeTag> { using type = double; };
 
 // Set the grid type
-SET_TYPE_PROP(StaggeredPVNamesTestTypeTag, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::StaggeredPVNamesTestTypeTag> { using type = Dune::YaspGrid<2>; };
 
 SET_PROP(StaggeredPVNamesTestTypeTag, Problem)
 {

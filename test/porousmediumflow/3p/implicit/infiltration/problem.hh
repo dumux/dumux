@@ -62,10 +62,12 @@ struct InfiltrationThreePCCTpfa { using InheritsFrom = std::tuple<InfiltrationTh
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(InfiltrationThreeP, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::InfiltrationThreeP> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(InfiltrationThreeP, Problem, InfiltrationThreePProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::InfiltrationThreeP> { using type = InfiltrationThreePProblem<TypeTag>; };
 
 // Set the fluid system
 SET_PROP(InfiltrationThreeP, FluidSystem)

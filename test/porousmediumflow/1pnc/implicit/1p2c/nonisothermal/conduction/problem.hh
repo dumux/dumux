@@ -60,13 +60,16 @@ struct OnePTwoCNIConductionBox { using InheritsFrom = std::tuple<OnePTwoCNICondu
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(OnePTwoCNIConduction, Grid, Dune::UGGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePTwoCNIConduction> { using type = Dune::UGGrid<2>; };
 #else
-SET_TYPE_PROP(OnePTwoCNIConduction, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePTwoCNIConduction> { using type = Dune::YaspGrid<2>; };
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(OnePTwoCNIConduction, Problem, OnePTwoCNIConductionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePTwoCNIConduction> { using type = OnePTwoCNIConductionProblem<TypeTag>; };
 
 // Set fluid configuration
 SET_PROP(OnePTwoCNIConduction, FluidSystem)

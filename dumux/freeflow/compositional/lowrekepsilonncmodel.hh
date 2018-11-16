@@ -132,7 +132,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(LowReKEpsilonNC, IOFields, FreeflowNCIOFields<LowReKEpsilonIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::LowReKEpsilonNC> { using type = FreeflowNCIOFields<LowReKEpsilonIOFields, true/*turbulenceModel*/>; };
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component low-Re k-epsilon model

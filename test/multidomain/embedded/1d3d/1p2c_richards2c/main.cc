@@ -65,10 +65,14 @@ SET_PROP(Root, CouplingManager)
     using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
-SET_TYPE_PROP(Soil, PointSource, typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<0>);
-SET_TYPE_PROP(Root, PointSource, typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<1>);
-SET_TYPE_PROP(Soil, PointSourceHelper, typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<0>);
-SET_TYPE_PROP(Root, PointSourceHelper, typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<1>);
+template<class TypeTag>
+struct PointSource<TypeTag, TTag::Soil> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<0>; };
+template<class TypeTag>
+struct PointSource<TypeTag, TTag::Root> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<1>; };
+template<class TypeTag>
+struct PointSourceHelper<TypeTag, TTag::Soil> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<0>; };
+template<class TypeTag>
+struct PointSourceHelper<TypeTag, TTag::Root> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<1>; };
 
 } // end namespace Properties
 

@@ -59,16 +59,21 @@ struct OnePNIConductionCCMpfa { using InheritsFrom = std::tuple<OnePNIConduction
 
 
 // Set the grid type
-SET_TYPE_PROP(OnePNIConduction, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePNIConduction> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(OnePNIConduction, Problem,
-              OnePNIConductionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePNIConduction> { using type = OnePNIConductionProblem<TypeTag>; };
 
 // Set the fluid system
-SET_TYPE_PROP(OnePNIConduction, FluidSystem,
-            FluidSystems::OnePLiquid<GetPropType<TypeTag, Properties::Scalar>,
-                                                           Components::H2O<GetPropType<TypeTag, Properties::Scalar>> >);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePNIConduction>
+{
+    using type = FluidSystems::OnePLiquid<GetPropType<TypeTag, Properties::Scalar>,
+                                          Components::H2O<GetPropType<TypeTag, Properties::Scalar>> >;
+};
+
 // Set the spatial parameters
 SET_PROP(OnePNIConduction, SpatialParams)
 {

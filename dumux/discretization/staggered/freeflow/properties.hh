@@ -119,9 +119,12 @@ SET_PROP(StaggeredFreeFlowModel, BoundaryTypes)
 };
 
 //! The velocity output
-SET_TYPE_PROP(StaggeredFreeFlowModel, VelocityOutput,
-    StaggeredFreeFlowVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>,
-                                    GetPropType<TypeTag, Properties::SolutionVector>>);
+template<class TypeTag>
+struct VelocityOutput<TypeTag, TTag::StaggeredFreeFlowModel>
+{
+    using type = StaggeredFreeFlowVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>,
+                                                 GetPropType<TypeTag, Properties::SolutionVector>>;
+};
 
 } // namespace Properties
 } // namespace Dumux

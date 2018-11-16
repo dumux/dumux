@@ -173,7 +173,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(OneEq, IOFields, OneEqIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OneEq> { using type = OneEqIOFields; };
 
 //////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal Spalart-Allmaras model
@@ -216,7 +217,8 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_TYPE_PROP(OneEqNI, IOFields, FreeflowNonIsothermalIOFields<OneEqIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OneEqNI> { using type = FreeflowNonIsothermalIOFields<OneEqIOFields, true/*turbulenceModel*/>; };
 
 // \}
 }

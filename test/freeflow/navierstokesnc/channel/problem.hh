@@ -67,10 +67,12 @@ template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::ChannelNCTest> { static constexpr int value = 0; };
 
 // Set the grid type
-SET_TYPE_PROP(ChannelNCTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ChannelNCTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(ChannelNCTest, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ChannelNCTest> { using type = Dumux::ChannelNCTestProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = ENABLECACHING; };

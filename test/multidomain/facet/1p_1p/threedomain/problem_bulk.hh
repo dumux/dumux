@@ -49,9 +49,11 @@ struct OnePBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, 
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(OnePBulk, Grid, Dune::ALUGrid<3, 3, Dune::simplex, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePBulk> { using type = Dune::ALUGrid<3, 3, Dune::simplex, Dune::nonconforming>; };
 // Set the problem type
-SET_TYPE_PROP(OnePBulk, Problem, OnePBulkProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePBulk> { using type = OnePBulkProblem<TypeTag>; };
 // set the spatial params
 SET_PROP(OnePBulk, SpatialParams)
 {

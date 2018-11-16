@@ -69,8 +69,9 @@ struct OnePSub1 { using InheritsFrom = std::tuple<TwoP, OnePSub>; };
 } // end namespace TTag
 
 // the coupling manager
-SET_TYPE_PROP(OnePSub, CouplingManager,
-              DarcyDarcyBoundaryCouplingManager<MultiDomainTraits<TTAG(OnePSub0), TTAG(OnePSub1)>>);
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePSub>
+{ using type = DarcyDarcyBoundaryCouplingManager<MultiDomainTraits<TTAG(OnePSub0), TTAG(OnePSub1)>>; };
 
 // Set the grid type
 SET_PROP(OnePSub, Grid)
@@ -80,8 +81,12 @@ SET_PROP(OnePSub, Grid)
 };
 
 // set the spatial params
-SET_TYPE_PROP(OnePSub, SpatialParams, TestSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                                               GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePSub>
+{
+    using type = TestSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                   GetPropType<TypeTag, Properties::Scalar>>;
+};
 
 // differentiate between the two fluid systems
 SET_PROP(OnePSub0, FluidSystem)
@@ -98,8 +103,10 @@ SET_PROP(OnePSub1, FluidSystem)
 };
 
 // differentiate between the two subproblems
-SET_TYPE_PROP(OnePSub0, Problem, OnePTestProblem<TypeTag, 0>);
-SET_TYPE_PROP(OnePSub1, Problem, OnePTestProblem<TypeTag, 1>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePSub0> { using type = OnePTestProblem<TypeTag, 0>; };
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePSub1> { using type = OnePTestProblem<TypeTag, 1>; };
 
 } // end namespace Properties
 } // end namespace Dumux

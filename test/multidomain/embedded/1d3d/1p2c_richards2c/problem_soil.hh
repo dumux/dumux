@@ -57,7 +57,8 @@ struct Soil { using InheritsFrom = std::tuple<RichardsNC, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Soil, Grid, Dune::UGGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Soil> { using type = Dune::UGGrid<3>; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
@@ -73,11 +74,16 @@ template<class TypeTag>
 struct SolutionDependentHeatConduction<TypeTag, TTag::Soil> { static constexpr bool value = false; };
 
 // Set the problem property
-SET_TYPE_PROP(Soil, Problem, SoilProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Soil> { using type = SoilProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_TYPE_PROP(Soil, SpatialParams, SoilSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                                            GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Soil>
+{
+    using type = SoilSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                   GetPropType<TypeTag, Properties::Scalar>>;
+};
 
 // Set the fluid system
 SET_PROP(Soil, FluidSystem)

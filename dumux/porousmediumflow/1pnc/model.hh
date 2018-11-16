@@ -161,7 +161,8 @@ private:
 public:
     using type = OnePNCModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>(), getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
-SET_TYPE_PROP(OnePNC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>); //!< default the actually used traits to the base traits
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OnePNC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; }; //!< default the actually used traits to the base traits
 
 
 /*!
@@ -181,15 +182,17 @@ public:
 };
 
 //! Use the model after Millington (1961) for the effective diffusivity
-SET_TYPE_PROP(OnePNC, EffectiveDiffusivityModel,
-              DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::OnePNC>
+{ using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Use mole fractions in the balance equations by default
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::OnePNC> { static constexpr bool value = true; };
 
 //! The local residual function
-SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OnePNC> { using type = CompositionalLocalResidual<TypeTag>; };
 
 //! Set the volume variables property
 SET_PROP(OnePNC, VolumeVariables)
@@ -213,19 +216,21 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(OnePNC, IOFields, OnePNCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OnePNC> { using type = OnePNCIOFields; };
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
 //! the non-isothermal vtk output fields
-SET_TYPE_PROP(OnePNCNI, IOFields, EnergyIOFields<OnePNCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OnePNCNI> { using type = EnergyIOFields<OnePNCIOFields>; };
 
 //! Use the average for effective conductivities
-SET_TYPE_PROP(OnePNCNI,
-              ThermalConductivityModel,
-              ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::OnePNCNI>
+{ using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! model traits of the non-isothermal model.
 SET_PROP(OnePNCNI, ModelTraits)

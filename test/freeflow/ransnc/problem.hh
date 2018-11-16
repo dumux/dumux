@@ -98,11 +98,13 @@ template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::FlatPlateNCTest> { static constexpr int value = 0; };
 
 // Set the grid type
-SET_TYPE_PROP(FlatPlateNCTest, Grid,
-              Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::FlatPlateNCTest>
+{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
-SET_TYPE_PROP(FlatPlateNCTest, Problem, Dumux::FlatPlateNCTestProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FlatPlateNCTest> { using type = Dumux::FlatPlateNCTestProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::FlatPlateNCTest> { static constexpr bool value = true; };

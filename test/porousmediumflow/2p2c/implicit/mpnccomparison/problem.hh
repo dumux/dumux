@@ -55,17 +55,20 @@ struct TwoPTwoCComparisonCC { using InheritsFrom = std::tuple<TwoPTwoCComparison
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TwoPTwoCComparison, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPTwoCComparison> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(TwoPTwoCComparison,
-              Problem,
-              TwoPTwoCComparisonProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPTwoCComparison> { using type = TwoPTwoCComparisonProblem<TypeTag>; };
 
 // Set fluid configuration
-SET_TYPE_PROP(TwoPTwoCComparison,
-              FluidSystem,
-              FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TwoPTwoCComparison>
+{
+    using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>,
+                                     FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+};
 
 // Set the spatial parameters
 SET_PROP(TwoPTwoCComparison, SpatialParams)
@@ -76,7 +79,8 @@ SET_PROP(TwoPTwoCComparison, SpatialParams)
 };
 
 // decide which type to use for floating values (double / quad)
-SET_TYPE_PROP(TwoPTwoCComparison, Scalar, double);
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::TwoPTwoCComparison> { using type = double; };
 SET_PROP(TwoPTwoCComparison, Formulation)
 {
 public:
@@ -86,7 +90,8 @@ public:
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::TwoPTwoCComparison> { static constexpr bool value = true; };
 
-SET_TYPE_PROP(TwoPTwoCComparison, IOFields, TwoPTwoCMPNCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPTwoCComparison> { using type = TwoPTwoCMPNCIOFields; };
 } // end namespace Properties
 
 

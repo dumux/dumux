@@ -54,19 +54,24 @@ struct PorousMediumFlow { using InheritsFrom = std::tuple<ModelProperties>; };
 } // end namespace TTag
 
 //! The flux variables for models involving flow in porous media
-SET_TYPE_PROP(PorousMediumFlow, FluxVariables, PorousMediumFluxVariables<TypeTag>);
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::PorousMediumFlow> { using type = PorousMediumFluxVariables<TypeTag>; };
 
 //! The flux variables cache class for models involving flow in porous media
-SET_TYPE_PROP(PorousMediumFlow, FluxVariablesCache, PorousMediumFluxVariablesCache<TypeTag>);
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::PorousMediumFlow> { using type = PorousMediumFluxVariablesCache<TypeTag>; };
 
 //! By default, we use darcy's law for the advective fluxes
-SET_TYPE_PROP(PorousMediumFlow, AdvectionType, DarcysLaw<TypeTag>);
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::PorousMediumFlow> { using type = DarcysLaw<TypeTag>; };
 
 //! By default, we use fick's law for the diffusive fluxes
-SET_TYPE_PROP(PorousMediumFlow, MolecularDiffusionType, FicksLaw<TypeTag>);
+template<class TypeTag>
+struct MolecularDiffusionType<TypeTag, TTag::PorousMediumFlow> { using type = FicksLaw<TypeTag>; };
 
 //! By default, we use fourier's law as the default for heat conduction fluxes
-SET_TYPE_PROP(PorousMediumFlow, HeatConductionType, FouriersLaw<TypeTag>);
+template<class TypeTag>
+struct HeatConductionType<TypeTag, TTag::PorousMediumFlow> { using type = FouriersLaw<TypeTag>; };
 
 //! By default, parameters are solution-dependent
 template<class TypeTag>
@@ -77,15 +82,20 @@ template<class TypeTag>
 struct SolutionDependentHeatConduction<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = true; };
 
 //! The default implementation of the energy balance equation for flow problems in porous media.
-SET_TYPE_PROP(PorousMediumFlow, EnergyLocalResidual, Dumux::EnergyLocalResidual<TypeTag> );
+template<class TypeTag>
+struct EnergyLocalResidual<TypeTag, TTag::PorousMediumFlow> { using type = Dumux::EnergyLocalResidual<TypeTag> ; };
 
 //! Velocity output
-SET_TYPE_PROP(PorousMediumFlow, VelocityOutput,
-    PorousMediumFlowVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>,
-                                   GetPropType<TypeTag, Properties::FluxVariables>>);
+template<class TypeTag>
+struct VelocityOutput<TypeTag, TTag::PorousMediumFlow>
+{
+    using type = PorousMediumFlowVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>,
+                                                GetPropType<TypeTag, Properties::FluxVariables>>;
+};
 
 //! By default, we set an empty primary variables switch
-SET_TYPE_PROP(PorousMediumFlow, PrimaryVariableSwitch, NoPrimaryVariableSwitch);
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::PorousMediumFlow> { using type = NoPrimaryVariableSwitch; };
 
 template<class TypeTag>
 struct EnableThermalNonEquilibrium<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = false; };

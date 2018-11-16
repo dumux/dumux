@@ -59,10 +59,12 @@ template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
 
 // Set the grid type
-SET_TYPE_PROP(TracerTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TracerTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(TracerTest, Problem, TracerTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TracerTest> { using type = TracerTestProblem<TypeTag>; };
 
 // Set the spatial parameters
 SET_PROP(TracerTest, SpatialParams)
@@ -123,7 +125,8 @@ public:
     { return 0.0; }
 };
 
-SET_TYPE_PROP(TracerTest, FluidSystem, TracerFluidSystem<TypeTag>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TracerTest> { using type = TracerFluidSystem<TypeTag>; };
 
 } // end namespace Properties
 

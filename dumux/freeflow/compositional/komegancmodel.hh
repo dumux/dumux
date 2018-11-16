@@ -145,7 +145,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(KOmegaNC, IOFields, FreeflowNCIOFields<KOmegaIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::KOmegaNC> { using type = FreeflowNCIOFields<KOmegaIOFields, true/*turbulenceModel*/>; };
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component k-omega model

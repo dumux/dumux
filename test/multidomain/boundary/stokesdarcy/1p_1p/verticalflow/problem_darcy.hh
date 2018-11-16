@@ -49,7 +49,8 @@ struct DarcyOneP { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the problem property
-SET_TYPE_PROP(DarcyOneP, Problem, Dumux::DarcySubProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DarcyOneP> { using type = Dumux::DarcySubProblem<TypeTag>; };
 
 // the fluid system
 SET_PROP(DarcyOneP, FluidSystem)
@@ -59,7 +60,8 @@ SET_PROP(DarcyOneP, FluidSystem)
 };
 
 // Set the grid type
-SET_TYPE_PROP(DarcyOneP, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DarcyOneP> { using type = Dune::YaspGrid<2>; };
 
 SET_PROP(DarcyOneP, SpatialParams)
 {

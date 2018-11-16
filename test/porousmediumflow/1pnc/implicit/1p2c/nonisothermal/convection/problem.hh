@@ -60,13 +60,16 @@ struct OnePTwoCNIConvectionBox { using InheritsFrom = std::tuple<OnePTwoCNIConve
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(OnePTwoCNIConvection, Grid, Dune::UGGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePTwoCNIConvection> { using type = Dune::UGGrid<2>; };
 #else
-SET_TYPE_PROP(OnePTwoCNIConvection, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePTwoCNIConvection> { using type = Dune::YaspGrid<2>; };
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(OnePTwoCNIConvection, Problem, OnePTwoCNIConvectionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePTwoCNIConvection> { using type = OnePTwoCNIConvectionProblem<TypeTag>; };
 
 // Set fluid configuration
 SET_PROP(OnePTwoCNIConvection, FluidSystem)

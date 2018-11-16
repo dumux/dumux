@@ -123,10 +123,14 @@ struct OnePNI { using InheritsFrom = std::tuple<OneP>; };
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(OneP, IOFields, OnePIOFields);                          //!< default I/O fields specific to this model
-SET_TYPE_PROP(OneP, LocalResidual, ImmiscibleLocalResidual<TypeTag>); //!< the local residual function
-SET_TYPE_PROP(OneP, BaseModelTraits, OnePModelTraits);                //!< states some specifics of the one-phase model
-SET_TYPE_PROP(OneP, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>); //!< default the actually used traits to the base traits
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OneP> { using type = OnePIOFields; };                          //!< default I/O fields specific to this model
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OneP> { using type = ImmiscibleLocalResidual<TypeTag>; }; //!< the local residual function
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::OneP> { using type = OnePModelTraits; };                //!< states some specifics of the one-phase model
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OneP> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; }; //!< default the actually used traits to the base traits
 
 //! Set the volume variables property
 SET_PROP(OneP, VolumeVariables)
@@ -165,15 +169,17 @@ public:
 ///////////////////////////////////////////////////////////////////////////
 
 //! Add temperature to the output
-SET_TYPE_PROP(OnePNI, IOFields, EnergyIOFields<OnePIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OnePNI> { using type = EnergyIOFields<OnePIOFields>; };
 
 //! The model traits of the non-isothermal model
-SET_TYPE_PROP(OnePNI, ModelTraits, PorousMediumFlowNIModelTraits<OnePModelTraits>);
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OnePNI> { using type = PorousMediumFlowNIModelTraits<OnePModelTraits>; };
 
 //! Use the average for effective conductivities
-SET_TYPE_PROP(OnePNI,
-              ThermalConductivityModel,
-              ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::OnePNI>
+{ using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux

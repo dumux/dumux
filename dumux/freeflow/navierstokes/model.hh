@@ -176,7 +176,8 @@ public:
 };
 
 //! The local residual
-SET_TYPE_PROP(NavierStokes, LocalResidual, NavierStokesResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::NavierStokes> { using type = NavierStokesResidual<TypeTag>; };
 
 //! Set the volume variables property
 SET_PROP(NavierStokes, VolumeVariables)
@@ -197,13 +198,16 @@ public:
 };
 
 //! The flux variables
-SET_TYPE_PROP(NavierStokes, FluxVariables, NavierStokesFluxVariables<TypeTag>);
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::NavierStokes> { using type = NavierStokesFluxVariables<TypeTag>; };
 
 //! The flux variables cache class, by default the one for free flow
-SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::NavierStokes> { using type = FreeFlowFluxVariablesCache<TypeTag>; };
 
 //! The specific I/O fields
-SET_TYPE_PROP(NavierStokes, IOFields, NavierStokesIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::NavierStokes> { using type = NavierStokesIOFields; };
 
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Navier-Stokes model
@@ -221,7 +225,8 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_TYPE_PROP(NavierStokesNI, IOFields, FreeflowNonIsothermalIOFields<NavierStokesIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::NavierStokesNI> { using type = FreeflowNonIsothermalIOFields<NavierStokesIOFields>; };
 
  // \}
 }

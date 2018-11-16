@@ -51,7 +51,8 @@ struct StokesOnePTwoC { using InheritsFrom = std::tuple<NavierStokesNCNI, Stagge
 
 
 // Set the grid type
-SET_TYPE_PROP(StokesOnePTwoC, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::StokesOnePTwoC> { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // The fluid system
 SET_PROP(StokesOnePTwoC, FluidSystem)
@@ -69,7 +70,8 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 
 // Set the problem property
-SET_TYPE_PROP(StokesOnePTwoC, Problem, Dumux::StokesSubProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::StokesOnePTwoC> { using type = Dumux::StokesSubProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };

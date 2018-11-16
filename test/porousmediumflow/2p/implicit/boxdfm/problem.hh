@@ -62,10 +62,12 @@ struct TwoPIncompressibleBoxDfm { using InheritsFrom = std::tuple<BoxDfmModel, T
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TwoPIncompressibleBoxDfm, Grid, GRIDTYPE);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPIncompressibleBoxDfm> { using type = GRIDTYPE; };
 
 // Set the problem type
-SET_TYPE_PROP(TwoPIncompressibleBoxDfm, Problem, TwoPTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPIncompressibleBoxDfm> { using type = TwoPTestProblem<TypeTag>; };
 
 // Set the spatial parameters
 SET_PROP(TwoPIncompressibleBoxDfm, SpatialParams)
@@ -78,7 +80,8 @@ public:
 };
 
 // the local residual containing the analytic derivative methods
-SET_TYPE_PROP(TwoPIncompressibleBoxDfm, LocalResidual, TwoPIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoPIncompressibleBoxDfm> { using type = TwoPIncompressibleLocalResidual<TypeTag>; };
 
 // Set the fluid system
 SET_PROP(TwoPIncompressibleBoxDfm, FluidSystem)

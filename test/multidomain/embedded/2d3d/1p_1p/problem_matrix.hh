@@ -56,7 +56,8 @@ struct Matrix { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Matrix, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Matrix> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::Matrix> { static constexpr bool value = true; };
@@ -72,10 +73,12 @@ template<class TypeTag>
 struct SolutionDependentHeatConduction<TypeTag, TTag::Matrix> { static constexpr bool value = false; };
 
 // Set the problem property
-SET_TYPE_PROP(Matrix, Problem, MatrixProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Matrix> { using type = MatrixProblem<TypeTag>; };
 
 // Set the problem property
-SET_TYPE_PROP(Matrix, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::Matrix> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // the fluid system
 SET_PROP(Matrix, FluidSystem)
@@ -85,8 +88,12 @@ SET_PROP(Matrix, FluidSystem)
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(Matrix, SpatialParams, MatrixFractureSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                                                        GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Matrix>
+{
+    using type = MatrixFractureSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                             GetPropType<TypeTag, Properties::Scalar>>;
+};
 } // end namespace Properties
 
 

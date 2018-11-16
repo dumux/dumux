@@ -55,7 +55,8 @@ struct BloodFlowBox { using InheritsFrom = std::tuple<BloodFlow, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(BloodFlow, Grid, Dune::FoamGrid<1, 3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::BloodFlow> { using type = Dune::FoamGrid<1, 3>; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
@@ -71,7 +72,8 @@ template<class TypeTag>
 struct SolutionDependentHeatConduction<TypeTag, TTag::BloodFlow> { static constexpr bool value = false; };
 
 // Set the problem property
-SET_TYPE_PROP(BloodFlow, Problem, BloodFlowProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::BloodFlow> { using type = BloodFlowProblem<TypeTag>; };
 
 // the fluid system
 SET_PROP(BloodFlow, FluidSystem)
@@ -81,12 +83,16 @@ SET_PROP(BloodFlow, FluidSystem)
 };
 
 // Set the problem property
-SET_TYPE_PROP(BloodFlow, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::BloodFlow> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // Set the spatial parameters
-SET_TYPE_PROP(BloodFlow, SpatialParams,
-              BloodFlowSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                     GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::BloodFlow>
+{
+    using type = BloodFlowSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                        GetPropType<TypeTag, Properties::Scalar>>;
+};
 } // end namespace Properties
 
 /*!

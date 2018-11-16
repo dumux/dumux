@@ -56,13 +56,16 @@ struct WaterAirCCTpfa { using InheritsFrom = std::tuple<WaterAir, CCTpfaModel>; 
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(WaterAir, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::WaterAir> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(WaterAir, Problem, WaterAirProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::WaterAir> { using type = WaterAirProblem<TypeTag>; };
 
 // Set the wetting phase
-SET_TYPE_PROP(WaterAir, FluidSystem, FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::WaterAir> { using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Set the spatial parameters
 SET_PROP(WaterAir, SpatialParams)

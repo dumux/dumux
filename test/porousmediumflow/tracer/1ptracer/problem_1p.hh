@@ -52,10 +52,12 @@ struct IncompressibleTest { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; 
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(IncompressibleTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::IncompressibleTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem type
-SET_TYPE_PROP(IncompressibleTest, Problem, OnePTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::IncompressibleTest> { using type = OnePTestProblem<TypeTag>; };
 
 SET_PROP(IncompressibleTest, SpatialParams)
 {
@@ -64,7 +66,8 @@ SET_PROP(IncompressibleTest, SpatialParams)
     using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
-SET_TYPE_PROP(IncompressibleTest, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // the fluid system
 SET_PROP(IncompressibleTest, FluidSystem)

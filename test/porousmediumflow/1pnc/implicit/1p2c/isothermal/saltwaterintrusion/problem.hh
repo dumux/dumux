@@ -44,15 +44,17 @@ struct SaltWaterIntrusionTest { using InheritsFrom = std::tuple<OnePNC, BoxModel
 } // end namespace TTag
 
 // Use a structured yasp grid
-SET_TYPE_PROP(SaltWaterIntrusionTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::SaltWaterIntrusionTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(SaltWaterIntrusionTest, Problem, SaltWaterIntrusionTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::SaltWaterIntrusionTest> { using type = SaltWaterIntrusionTestProblem<TypeTag>; };
 
 // Set fluid configuration
-SET_TYPE_PROP(SaltWaterIntrusionTest,
-              FluidSystem,
-              FluidSystems::Brine< GetPropType<TypeTag, Properties::Scalar> >);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::SaltWaterIntrusionTest>
+{ using type = FluidSystems::Brine< GetPropType<TypeTag, Properties::Scalar> >; };
 
 // Set the spatial parameters
 SET_PROP(SaltWaterIntrusionTest, SpatialParams)

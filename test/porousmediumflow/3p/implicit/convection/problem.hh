@@ -59,16 +59,18 @@ struct ThreePNIConvectionCCMpfa { using InheritsFrom = std::tuple<ThreePNIConvec
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(ThreePNIConvection, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ThreePNIConvection> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(ThreePNIConvection, Problem, ThreePNIConvectionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ThreePNIConvection> { using type = ThreePNIConvectionProblem<TypeTag>; };
 
 
 // Set the fluid system
-SET_TYPE_PROP(ThreePNIConvection,
-              FluidSystem,
-              FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ThreePNIConvection>
+{ using type = FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Set the spatial parameters
 SET_PROP(ThreePNIConvection, SpatialParams)

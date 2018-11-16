@@ -55,10 +55,12 @@ struct ThreePWaterOilSagdBox { using InheritsFrom = std::tuple<Sagd, BoxModel>; 
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Sagd, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Sagd> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(Sagd, Problem, Dumux::SagdProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Sagd> { using type = Dumux::SagdProblem<TypeTag>; };
 
 // Set the spatial parameters
 SET_PROP(Sagd, SpatialParams)
@@ -69,9 +71,9 @@ SET_PROP(Sagd, SpatialParams)
 };
 
 // Set the fluid system
-SET_TYPE_PROP(Sagd,
-              FluidSystem,
-              Dumux::FluidSystems::H2OHeavyOil<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Sagd>
+{ using type = Dumux::FluidSystems::H2OHeavyOil<GetPropType<TypeTag, Properties::Scalar>>; };
 
 template<class TypeTag>
 struct OnlyGasPhaseCanDisappear<TypeTag, TTag::Sagd> { static constexpr bool value = true; };
@@ -79,7 +81,7 @@ struct OnlyGasPhaseCanDisappear<TypeTag, TTag::Sagd> { static constexpr bool val
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::Sagd> { static constexpr bool value = true; };
 
-// Set the fluid system
+// Set the solid system
 SET_PROP(Sagd, SolidSystem)
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

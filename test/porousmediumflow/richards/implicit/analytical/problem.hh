@@ -67,10 +67,12 @@ struct RichardsAnalyticalCC { using InheritsFrom = std::tuple<RichardsAnalytical
 } // end namespace TTag
 
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsAnalytical, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::RichardsAnalytical> { using type = Dune::YaspGrid<2>; };
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsAnalytical, Problem, RichardsAnalyticalProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::RichardsAnalytical> { using type = RichardsAnalyticalProblem<TypeTag>; };
 
 // Set the spatial parameters
 SET_PROP(RichardsAnalytical, SpatialParams)

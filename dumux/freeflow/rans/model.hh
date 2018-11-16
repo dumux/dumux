@@ -87,7 +87,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(RANS, IOFields, RANSIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::RANS> { using type = RANSIOFields; };
 
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Reynolds-averaged Navier-Stokes model
@@ -112,10 +113,12 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_TYPE_PROP(RANSNI, IOFields, FreeflowNonIsothermalIOFields<RANSIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::RANSNI> { using type = FreeflowNonIsothermalIOFields<RANSIOFields, true/*turbulenceModel*/>; };
 
 //! Use Fourier's Law as default heat conduction type
-SET_TYPE_PROP(RANSNI, HeatConductionType, FouriersLaw<TypeTag>);
+template<class TypeTag>
+struct HeatConductionType<TypeTag, TTag::RANSNI> { using type = FouriersLaw<TypeTag>; };
 
 // \}
 } // end namespace Properties

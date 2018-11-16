@@ -58,10 +58,12 @@ SET_PROP(NavierStokesAnalytic, FluidSystem)
 };
 
 // Set the grid type
-SET_TYPE_PROP(NavierStokesAnalytic, Grid, Dune::YaspGrid<1>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::NavierStokesAnalytic> { using type = Dune::YaspGrid<1>; };
 
 // Set the problem property
-SET_TYPE_PROP(NavierStokesAnalytic, Problem, Dumux::NavierStokesAnalyticProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::NavierStokesAnalytic> { using type = Dumux::NavierStokesAnalyticProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = true; };

@@ -73,10 +73,12 @@ struct PoroElastic { using InheritsFrom = std::tuple<Elastic>; };
 } // end namespace TTag
 
 //! Use the local residual of the poro-elastic model
-SET_TYPE_PROP(PoroElastic, LocalResidual, PoroElasticLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::PoroElastic> { using type = PoroElasticLocalResidual<TypeTag>; };
 
 //! default vtk output fields specific to this model
-SET_TYPE_PROP(PoroElastic, IOFields, PoroElasticIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::PoroElastic> { using type = PoroElasticIOFields; };
 
 //! The deault model traits of the poro-elastic model
 SET_PROP(PoroElastic, ModelTraits)

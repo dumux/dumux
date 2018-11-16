@@ -68,13 +68,19 @@ namespace Properties {
 template<class Traits>
 using TheCouplingManager = EmbeddedCouplingManager1d3d<Traits, COUPLINGMODE>;
 
-SET_TYPE_PROP(BULKTYPETAG, CouplingManager, TheCouplingManager<MultiDomainTraits<TypeTag, TTAG(LOWDIMTYPETAG)>>);
-SET_TYPE_PROP(BULKTYPETAG, PointSource, typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<0>);
-SET_TYPE_PROP(BULKTYPETAG, PointSourceHelper, typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<0>);
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::BULKTYPETAG> { using type = TheCouplingManager<MultiDomainTraits<TypeTag, TTAG(LOWDIMTYPETAG; }>>);
+template<class TypeTag>
+struct PointSource<TypeTag, TTag::BULKTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<0>; };
+template<class TypeTag>
+struct PointSourceHelper<TypeTag, TTag::BULKTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<0>; };
 
-SET_TYPE_PROP(LOWDIMTYPETAG, CouplingManager, TheCouplingManager<MultiDomainTraits<TTAG(BULKTYPETAG), TypeTag>>);
-SET_TYPE_PROP(LOWDIMTYPETAG, PointSource, typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<1>);
-SET_TYPE_PROP(LOWDIMTYPETAG, PointSourceHelper, typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<1>);
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::LOWDIMTYPETAG> { using type = TheCouplingManager<MultiDomainTraits<TTAG(BULKTYPETAG; }, TypeTag>>);
+template<class TypeTag>
+struct PointSource<TypeTag, TTag::LOWDIMTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<1>; };
+template<class TypeTag>
+struct PointSourceHelper<TypeTag, TTag::LOWDIMTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<1>; };
 
 } // end namespace Properties
 } // end namespace Dumux

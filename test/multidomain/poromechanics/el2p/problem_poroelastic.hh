@@ -50,9 +50,11 @@ namespace TTag {
 struct PoroElasticSub { using InheritsFrom = std::tuple<PoroElastic, BoxModel>; };
 } // end namespace TTag
 // Set the grid type
-SET_TYPE_PROP(PoroElasticSub, Grid, Dune::YaspGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::PoroElasticSub> { using type = Dune::YaspGrid<3>; };
 // Set the problem property
-SET_TYPE_PROP(PoroElasticSub, Problem, Dumux::PoroElasticSubProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::PoroElasticSub> { using type = Dumux::PoroElasticSubProblem<TypeTag>; };
 
 // Set the fluid system for TwoPSubProblem
 SET_PROP(PoroElasticSub, FluidSystem)
@@ -62,9 +64,12 @@ SET_PROP(PoroElasticSub, FluidSystem)
 };
 
 // The spatial parameters property
-SET_TYPE_PROP(PoroElasticSub, SpatialParams, PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
-                                                                              GetPropType<TypeTag, Properties::FVGridGeometry> >);
-
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::PoroElasticSub>
+{
+    using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
+                                           GetPropType<TypeTag, Properties::FVGridGeometry> >;
+};
 } // end namespace Properties
 
 /*!

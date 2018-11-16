@@ -73,16 +73,23 @@ struct TwoPAdaptivePointSource { using InheritsFrom = std::tuple<TwoPIncompressi
 
 //! Use non-conforming refinement in the cell-centered tests, conforming for box
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(TwoPIncompressibleAdaptiveTpfa, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-SET_TYPE_PROP(TwoPIncompressibleAdaptiveMpfa, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPIncompressibleAdaptiveTpfa> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPIncompressibleAdaptiveMpfa> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 #endif
 #if HAVE_DUNE_UGGRID
-SET_TYPE_PROP(TwoPIncompressibleAdaptiveBox, Grid, Dune::UGGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPIncompressibleAdaptiveBox> { using type = Dune::UGGrid<2>; };
 #endif
-SET_TYPE_PROP(TwoPAdaptivePointSource, Problem, PointSourceTestProblem<TypeTag>);
-SET_TYPE_PROP(TwoPIncompressibleAdaptiveTpfa, Problem, TwoPTestProblemAdaptive<TypeTag>);
-SET_TYPE_PROP(TwoPIncompressibleAdaptiveMpfa, Problem, TwoPTestProblemAdaptive<TypeTag>);
-SET_TYPE_PROP(TwoPIncompressibleAdaptiveBox, Problem, TwoPTestProblemAdaptive<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPAdaptivePointSource> { using type = PointSourceTestProblem<TypeTag>; };
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPIncompressibleAdaptiveTpfa> { using type = TwoPTestProblemAdaptive<TypeTag>; };
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPIncompressibleAdaptiveMpfa> { using type = TwoPTestProblemAdaptive<TypeTag>; };
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPIncompressibleAdaptiveBox> { using type = TwoPTestProblemAdaptive<TypeTag>; };
 } // end namespace Properties
 } // end namespace Dumux
 

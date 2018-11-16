@@ -167,14 +167,18 @@ struct TwoPNI { using InheritsFrom = std::tuple<TwoP>; };
 SET_PROP(TwoP, Formulation)
 { static constexpr auto value = TwoPFormulation::p0s1; };
 
-SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoP> { using type = ImmiscibleLocalResidual<TypeTag>; };         //!< Use the immiscible local residual operator for the 2p model
 
 //! The base model traits class
-SET_TYPE_PROP(TwoP, BaseModelTraits, TwoPModelTraits<getPropValue<TypeTag, Properties::Formulation>()>);
-SET_TYPE_PROP(TwoP, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>); //!< default the actually used traits to the base traits
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::TwoP> { using type = TwoPModelTraits<getPropValue<TypeTag, Properties::Formulation>()>; };
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoP> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; }; //!< default the actually used traits to the base traits
 
 //! Set the vtk output fields specific to the twop model
-SET_TYPE_PROP(TwoP, IOFields, TwoPIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoP> { using type = TwoPIOFields; };
 
 //! Set the volume variables property
 SET_PROP(TwoP, VolumeVariables)
@@ -213,10 +217,12 @@ public:
 ////////////////////////////////////////////////////////
 
 //! The non-isothermal model traits class
-SET_TYPE_PROP(TwoPNI, ModelTraits, PorousMediumFlowNIModelTraits<GetPropType<TypeTag, Properties::BaseModelTraits>>);
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPNI> { using type = PorousMediumFlowNIModelTraits<GetPropType<TypeTag, Properties::BaseModelTraits>>; };
 
 //! Set the vtk output fields specific to the non-isothermal twop model
-SET_TYPE_PROP(TwoPNI, IOFields, EnergyIOFields<TwoPIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPNI> { using type = EnergyIOFields<TwoPIOFields>; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNI, ThermalConductivityModel)

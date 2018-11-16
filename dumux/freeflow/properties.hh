@@ -40,7 +40,8 @@ struct FreeFlow { using InheritsFrom = std::tuple<ModelProperties>; };
 } // end namespace TTag
 
 //! Use Fourier's Law as default heat conduction type
-SET_TYPE_PROP(FreeFlow, HeatConductionType, FouriersLaw<TypeTag>);
+template<class TypeTag>
+struct HeatConductionType<TypeTag, TTag::FreeFlow> { using type = FouriersLaw<TypeTag>; };
 
 } // namespace Properties
 } // namespace Dumux

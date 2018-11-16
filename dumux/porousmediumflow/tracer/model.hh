@@ -143,10 +143,12 @@ public:
 };
 
 //! Use the tracer local residual function for the tracer model
-SET_TYPE_PROP(Tracer, LocalResidual, TracerLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::Tracer> { using type = TracerLocalResidual<TypeTag>; };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(Tracer, IOFields, TracerIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::Tracer> { using type = TracerIOFields; };
 
 //! Set the volume variables property
 SET_PROP(Tracer, VolumeVariables)
@@ -164,10 +166,12 @@ public:
 };
 
 //! We use darcy's law as the default for the advective fluxes
-SET_TYPE_PROP(Tracer, AdvectionType, StationaryVelocityField<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::Tracer> { using type = StationaryVelocityField<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Use simple model with constant tortuosity as pm diffusivity model
-SET_TYPE_PROP(Tracer, EffectiveDiffusivityModel, DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::Tracer> { using type = DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>; };
 } // end namespace Properties
 // \}
 } // end namespace Dumux

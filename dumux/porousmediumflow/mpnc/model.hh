@@ -246,7 +246,8 @@ struct MPNCNonequil { using InheritsFrom = std::tuple<NonEquilibrium, MPNC>; };
 //////////////////////////////////////////////////////////////////
 
 //! Use the MpNc local residual for the MpNc model
-SET_TYPE_PROP(MPNC, LocalResidual,  MPNCLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::MPNC> { using type = MPNCLocalResidual<TypeTag>; };
 
 //! Set the model traits property
 SET_PROP(MPNC, ModelTraits)
@@ -295,7 +296,8 @@ struct ReplaceCompEqIdx<TypeTag, TTag::MPNC> { static constexpr int value = GetP
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::MPNC> { static constexpr bool value = true; };
 //! Use the model after Millington (1961) for the effective diffusivity
-SET_TYPE_PROP(MPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::MPNC> { using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 //! Set the default pressure formulation to the pressure of the (most) wetting phase
 SET_PROP(MPNC, PressureFormulation)
 {
@@ -304,7 +306,8 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(MPNC, IOFields, MPNCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::MPNC> { using type = MPNCIOFields; };
 
 /////////////////////////////////////////////////
 // Properties for the non-isothermal mpnc model
@@ -328,10 +331,12 @@ public:
 // Properties for the non-equilibrium mpnc model
 /////////////////////////////////////////////////
 
-SET_TYPE_PROP(MPNCNonequil, EquilibriumLocalResidual, MPNCLocalResidual<TypeTag>);
+template<class TypeTag>
+struct EquilibriumLocalResidual<TypeTag, TTag::MPNCNonequil> { using type = MPNCLocalResidual<TypeTag>; };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(MPNCNonequil, EquilibriumIOFields, MPNCIOFields);
+template<class TypeTag>
+struct EquilibriumIOFields<TypeTag, TTag::MPNCNonequil> { using type = MPNCIOFields; };
 
 //! For non-equilibrium with mpnc we have to overwrite the model traits again,
 //! because the mpnc indices depend on the status of the non-equilibrium model traits

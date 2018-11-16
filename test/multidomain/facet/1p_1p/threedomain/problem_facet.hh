@@ -50,9 +50,11 @@ struct OnePFacetTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel,
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(OnePFacet, Grid, Dune::FoamGrid<2, 3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePFacet> { using type = Dune::FoamGrid<2, 3>; };
 // Set the problem type
-SET_TYPE_PROP(OnePFacet, Problem, OnePFacetProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePFacet> { using type = OnePFacetProblem<TypeTag>; };
 // set the spatial params
 SET_PROP(OnePFacet, SpatialParams)
 {

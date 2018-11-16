@@ -64,11 +64,13 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::Fracture> { static constexpr 
 
 //! The grid type
 #if HAVE_DUNE_FOAMGRID
-SET_TYPE_PROP(Fracture, Grid, Dune::FoamGrid<2, 3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Fracture> { using type = Dune::FoamGrid<2, 3>; };
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(Fracture, Problem, Dumux::FractureProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Fracture> { using type = Dumux::FractureProblem<TypeTag>; };
 
 // the fluid system
 SET_PROP(Fracture, FluidSystem)

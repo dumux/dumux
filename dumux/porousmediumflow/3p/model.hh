@@ -152,7 +152,8 @@ SET_PROP(ThreeP, ModelTraits)
 };
 
 //! The local residual function of the conservation equations
-SET_TYPE_PROP(ThreeP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::ThreeP> { using type = ImmiscibleLocalResidual<TypeTag>; };
 
 //! Set the volume variables property
 SET_PROP(ThreeP, VolumeVariables)
@@ -188,7 +189,8 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(ThreeP, IOFields, ThreePIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ThreeP> { using type = ThreePIOFields; };
 
 /////////////////////////////////////////////////
 // Properties for the non-isothermal 3p model
@@ -204,7 +206,8 @@ public:
 };
 
 //! Set non-isothermal output fields
-SET_TYPE_PROP(ThreePNI, IOFields, EnergyIOFields<ThreePIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ThreePNI> { using type = EnergyIOFields<ThreePIOFields>; };
 
 //! Set non-isothermal model traits
 SET_PROP(ThreePNI, ModelTraits)

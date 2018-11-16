@@ -71,13 +71,17 @@ namespace Properties {
 
 // set cm property for the box test
 using BoxTraits = TestTraits<TTAG(OnePBulkBox), TTAG(OnePLowDimBox)>;
-SET_TYPE_PROP(OnePBulkBox, CouplingManager, typename BoxTraits::CouplingManager);
-SET_TYPE_PROP(OnePLowDimBox, CouplingManager, typename BoxTraits::CouplingManager);
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePBulkBox> { using type = typename BoxTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePLowDimBox> { using type = typename BoxTraits::CouplingManager; };
 
 // set cm property for the tpfa test
 using TpfaTraits = TestTraits<TTAG(OnePBulkTpfa), TTAG(OnePLowDimTpfa)>;
-SET_TYPE_PROP(OnePBulkTpfa, CouplingManager, typename TpfaTraits::CouplingManager);
-SET_TYPE_PROP(OnePLowDimTpfa, CouplingManager, typename TpfaTraits::CouplingManager);
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TpfaTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePLowDimTpfa> { using type = typename TpfaTraits::CouplingManager; };
 
 } // end namespace Properties
 } // end namespace Dumux

@@ -60,7 +60,8 @@ struct TubesTestBox { using InheritsFrom = std::tuple<TubesTest, BoxModel>; };
 
 // Set the grid type
 #if HAVE_DUNE_FOAMGRID
-SET_TYPE_PROP(TubesTest, Grid, Dune::FoamGrid<1, 3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TubesTest> { using type = Dune::FoamGrid<1, 3>; };
 #endif
 
 // if we have pt scotch use the reordering dof mapper to optimally sort the dofs (cc)
@@ -93,7 +94,8 @@ public:
 };
 
 // Set the problem property
-SET_TYPE_PROP(TubesTest, Problem, TubesTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TubesTest> { using type = TubesTestProblem<TypeTag>; };
 
 // Set the spatial parameters
 SET_PROP(TubesTest, SpatialParams)

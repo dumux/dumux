@@ -85,11 +85,13 @@ SET_PROP(PipeLauferProblem, FluidSystem)
 };
 
 // Set the grid type
-SET_TYPE_PROP(PipeLauferProblem, Grid,
-              Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::PipeLauferProblem>
+{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
-SET_TYPE_PROP(PipeLauferProblem, Problem, Dumux::PipeLauferProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::PipeLauferProblem> { using type = Dumux::PipeLauferProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::PipeLauferProblem> { static constexpr bool value = true; };

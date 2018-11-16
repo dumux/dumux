@@ -59,10 +59,12 @@ SET_PROP(DoneaTest, FluidSystem)
 };
 
 // Set the grid type
-SET_TYPE_PROP(DoneaTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DoneaTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(DoneaTest, Problem, Dumux::DoneaTestProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DoneaTest> { using type = Dumux::DoneaTestProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };

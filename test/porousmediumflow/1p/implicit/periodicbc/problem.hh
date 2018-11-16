@@ -63,17 +63,21 @@ struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressibl
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(OnePIncompressible, Grid, Dune::SPGrid<double, 2>);
-// SET_TYPE_PROP(OnePIncompressible, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePIncompressible> { using type = Dune::SPGrid<double, 2>; };
+// struct Grid<TypeTag, TTag::OnePIncompressible> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 
 // Set the problem type
-SET_TYPE_PROP(OnePIncompressible, Problem, OnePTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePIncompressible> { using type = OnePTestProblem<TypeTag>; };
 
 // set the spatial params
-SET_TYPE_PROP(OnePIncompressible, SpatialParams, OnePTestSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePIncompressible> { using type = OnePTestSpatialParams<TypeTag>; };
 
 // use the incompressible local residual (provides analytic jacobian)
-SET_TYPE_PROP(OnePIncompressible, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OnePIncompressible> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // the fluid system
 SET_PROP(OnePIncompressible, FluidSystem)

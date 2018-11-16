@@ -159,7 +159,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(KEpsilon, IOFields, KEpsilonIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::KEpsilon> { using type = KEpsilonIOFields; };
 
 //////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal k-epsilon model
@@ -202,7 +203,8 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_TYPE_PROP(KEpsilonNI, IOFields, FreeflowNonIsothermalIOFields<KEpsilonIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::KEpsilonNI> { using type = FreeflowNonIsothermalIOFields<KEpsilonIOFields, true/*turbulenceModel*/>; };
 
 // \}
 }

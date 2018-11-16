@@ -51,9 +51,11 @@ struct OnePEdgeTpfa { using InheritsFrom = std::tuple<OnePEdge, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(OnePEdge, Grid, Dune::FoamGrid<1, 3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePEdge> { using type = Dune::FoamGrid<1, 3>; };
 // Set the problem type
-SET_TYPE_PROP(OnePEdge, Problem, OnePEdgeProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePEdge> { using type = OnePEdgeProblem<TypeTag>; };
 // set the spatial params
 SET_PROP(OnePEdge, SpatialParams)
 {

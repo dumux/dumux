@@ -218,7 +218,8 @@ private:
 public:
     using type = ThreePThreeCModelTraits<getPropValue<TypeTag, Properties::UseConstraintSolver>(), getPropValue<TypeTag, Properties::UseMoles>()>;
 };
-SET_TYPE_PROP(ThreePThreeC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>);
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ThreePThreeC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; };
 
 //! Determines whether a constraint solver should be used explicitly
 template<class TypeTag>
@@ -242,10 +243,12 @@ SET_PROP(ThreePThreeC, FluidState){
 };
 
 //! The local residual function of the conservation equations
-SET_TYPE_PROP(ThreePThreeC, LocalResidual, ThreePThreeCLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::ThreePThreeC> { using type = ThreePThreeCLocalResidual<TypeTag>; };
 
 //! The primary variable switch for the 3p3c model
-SET_TYPE_PROP(ThreePThreeC, PrimaryVariableSwitch, ThreePThreeCPrimaryVariableSwitch);
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::ThreePThreeC> { using type = ThreePThreeCPrimaryVariableSwitch; };
 
 //! The primary variables vector for the 3p3c model
 SET_PROP(ThreePThreeC, PrimaryVariables)
@@ -275,17 +278,20 @@ public:
 };
 
 //! The model after Millington (1961) is used for the effective diffusivity
-SET_TYPE_PROP(ThreePThreeC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::ThreePThreeC> { using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(ThreePThreeC, IOFields, ThreePThreeCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ThreePThreeC> { using type = ThreePThreeCIOFields; };
 
 //! Use mole fractions in the balance equations by default
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::ThreePThreeC> { static constexpr bool value = true; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_TYPE_PROP(ThreePThreeCNI, ThermalConductivityModel, ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::ThreePThreeCNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
@@ -301,7 +307,8 @@ public:
 };
 
 //! Set the non-isothermal vktoutputfields
-SET_TYPE_PROP(ThreePThreeCNI, IOFields, EnergyIOFields<ThreePThreeCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ThreePThreeCNI> { using type = EnergyIOFields<ThreePThreeCIOFields>; };
 
 } // end namespace Properties
 } // end namespace Dumux

@@ -43,12 +43,17 @@ namespace TTag {
 struct TestElastic { using InheritsFrom = std::tuple<Elastic, BoxModel>; };
 } // end namespace TTag
 // Set the grid type
-SET_TYPE_PROP(TestElastic, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TestElastic> { using type = Dune::YaspGrid<2>; };
 // Set the problem property
-SET_TYPE_PROP(TestElastic, Problem, Dumux::ElasticProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TestElastic> { using type = Dumux::ElasticProblem<TypeTag>; };
 // The spatial parameters property
-SET_TYPE_PROP(TestElastic, SpatialParams, ElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
-                                                                   GetPropType<TypeTag, Properties::FVGridGeometry> >);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TestElastic>
+{ using type = ElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
+                                     GetPropType<TypeTag, Properties::FVGridGeometry> >;
+};
 }
 
 /*!

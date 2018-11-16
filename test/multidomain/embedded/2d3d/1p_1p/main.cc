@@ -66,10 +66,14 @@ SET_PROP(Fracture, CouplingManager)
     using type = EmbeddedCouplingManager2d3d<Traits>;
 };
 
-SET_TYPE_PROP(Matrix, PointSource, typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<0>);
-SET_TYPE_PROP(Fracture, PointSource, typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<1>);
-SET_TYPE_PROP(Matrix, PointSourceHelper, typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<0>);
-SET_TYPE_PROP(Fracture, PointSourceHelper, typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<1>);
+template<class TypeTag>
+struct PointSource<TypeTag, TTag::Matrix> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<0>; };
+template<class TypeTag>
+struct PointSource<TypeTag, TTag::Fracture> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<1>; };
+template<class TypeTag>
+struct PointSourceHelper<TypeTag, TTag::Matrix> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<0>; };
+template<class TypeTag>
+struct PointSourceHelper<TypeTag, TTag::Fracture> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<1>; };
 
 } // end namespace Properties
 

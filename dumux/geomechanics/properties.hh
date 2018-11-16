@@ -46,11 +46,16 @@ struct Geomechanics { using InheritsFrom = std::tuple<ModelProperties>; };
 } // end namespace TTag
 
 //! The flux variables cache class for models involving flow in porous media
-SET_TYPE_PROP(Geomechanics, FluxVariablesCache, StressVariablesCache< GetPropType<TypeTag, Properties::Scalar>,
-                                                                      GetPropType<TypeTag, Properties::FVGridGeometry> >);
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::Geomechanics>
+{
+    using type = StressVariablesCache< GetPropType<TypeTag, Properties::Scalar>,
+                                       GetPropType<TypeTag, Properties::FVGridGeometry> >;
+};
 
 //! The (currently empty) velocity output
-SET_TYPE_PROP(Geomechanics, VelocityOutput, GeomechanicsVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>>);
+template<class TypeTag>
+struct VelocityOutput<TypeTag, TTag::Geomechanics> { using type = GeomechanicsVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>>; };
 
 //! The solid state must be inert
 SET_PROP(Geomechanics, SolidState)

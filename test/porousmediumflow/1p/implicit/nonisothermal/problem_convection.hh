@@ -58,15 +58,20 @@ struct OnePNIConvectionCCMpfa { using InheritsFrom = std::tuple<OnePNIConvection
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(OnePNIConvection, Grid, Dune::YaspGrid<1>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePNIConvection> { using type = Dune::YaspGrid<1>; };
 
 // Set the problem property
-SET_TYPE_PROP(OnePNIConvection, Problem, OnePNIConvectionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePNIConvection> { using type = OnePNIConvectionProblem<TypeTag>; };
 
 // Set the fluid system
-SET_TYPE_PROP(OnePNIConvection, FluidSystem,
-              FluidSystems::OnePLiquid<GetPropType<TypeTag, Properties::Scalar>,
-                                                           Components::H2O<GetPropType<TypeTag, Properties::Scalar>> >);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePNIConvection>
+{
+    using type = FluidSystems::OnePLiquid<GetPropType<TypeTag, Properties::Scalar>,
+                                          Components::H2O<GetPropType<TypeTag, Properties::Scalar>> >;
+};
 
 // Set the spatial parameters
 SET_PROP(OnePNIConvection, SpatialParams)

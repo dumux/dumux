@@ -172,10 +172,12 @@ template<class TypeTag>
 struct UseBlockingOfSpuriousFlow<TypeTag, TTag::TwoPOneCNI> { static constexpr bool value = false; };
 
 //! The specific local residual (i.e. balance equations).
-SET_TYPE_PROP(TwoPOneCNI, LocalResidual, TwoPOneCLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoPOneCNI> { using type = TwoPOneCLocalResidual<TypeTag>; };
 
 //! Use a modified version of Darcy's law which allows for blocking of spurious flows.
-SET_TYPE_PROP(TwoPOneCNI, AdvectionType, TwoPOneCDarcysLaw<TypeTag>);
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::TwoPOneCNI> { using type = TwoPOneCDarcysLaw<TypeTag>; };
 
 //! Set the volume variables property
 SET_PROP(TwoPOneCNI, VolumeVariables)
@@ -198,7 +200,8 @@ public:
 };
 
 //! The primary variable switch for the 2p1cni model.
-SET_TYPE_PROP(TwoPOneCNI, PrimaryVariableSwitch, TwoPOneCPrimaryVariableSwitch);
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::TwoPOneCNI> { using type = TwoPOneCPrimaryVariableSwitch; };
 
 //! The primary variables vector for the 2p1cni model.
 SET_PROP(TwoPOneCNI, PrimaryVariables)
@@ -211,17 +214,20 @@ public:
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity.
-SET_TYPE_PROP(TwoPOneCNI, ThermalConductivityModel, ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::TwoPOneCNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
 //! Set the non-isothermal model traits
-SET_TYPE_PROP(TwoPOneCNI, ModelTraits, TwoPOneCNIModelTraits<getPropValue<TypeTag, Properties::Formulation>()>);
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPOneCNI> { using type = TwoPOneCNIModelTraits<getPropValue<TypeTag, Properties::Formulation>()>; };
 
 //! The non-isothermal vtk output fields.
-SET_TYPE_PROP(TwoPOneCNI, IOFields, EnergyIOFields<TwoPOneCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPOneCNI> { using type = EnergyIOFields<TwoPOneCIOFields>; };
 
 } // end namespace Properties
 } // end namespace Dumux

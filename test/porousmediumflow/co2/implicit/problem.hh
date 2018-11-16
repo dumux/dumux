@@ -64,21 +64,30 @@ struct HeterogeneousCCTpfa { using InheritsFrom = std::tuple<Heterogeneous, CCTp
 } // end namespace TTag
 
 //Set the grid type
-SET_TYPE_PROP(Heterogeneous, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Heterogeneous> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 
 // Set the problem property
-SET_TYPE_PROP(Heterogeneous, Problem, HeterogeneousProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Heterogeneous> { using type = HeterogeneousProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_TYPE_PROP(Heterogeneous, SpatialParams, HeterogeneousSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                                                              GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Heterogeneous>
+{
+    using type = HeterogeneousSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                            GetPropType<TypeTag, Properties::Scalar>>;
+};
 
 // Set fluid configuration
-SET_TYPE_PROP(Heterogeneous, FluidSystem,
-    FluidSystems::BrineCO2<GetPropType<TypeTag, Properties::Scalar>,
-                           HeterogeneousCO2Tables::CO2Tables,
-                           Components::TabulatedComponent<Components::H2O<GetPropType<TypeTag, Properties::Scalar>>>,
-                           FluidSystems::BrineCO2DefaultPolicy</*constantSalinity=*/true, /*simpleButFast=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Heterogeneous>
+{
+    using type = FluidSystems::BrineCO2<GetPropType<TypeTag, Properties::Scalar>,
+                                        HeterogeneousCO2Tables::CO2Tables,
+                                        Components::TabulatedComponent<Components::H2O<GetPropType<TypeTag, Properties::Scalar>>>,
+                                        FluidSystems::BrineCO2DefaultPolicy</*constantSalinity=*/true, /*simpleButFast=*/true>>;
+};
 
 // Use Moles
 template<class TypeTag>
@@ -93,18 +102,28 @@ struct HeterogeneousNICCTpfa { using InheritsFrom = std::tuple<HeterogeneousNI, 
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(HeterogeneousNI, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::HeterogeneousNI> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 
 // Set the problem property
-SET_TYPE_PROP(HeterogeneousNI, Problem, HeterogeneousProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::HeterogeneousNI> { using type = HeterogeneousProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_TYPE_PROP(HeterogeneousNI, SpatialParams,HeterogeneousSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                                                               GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::HeterogeneousNI>
+{
+    using type = HeterogeneousSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                            GetPropType<TypeTag, Properties::Scalar>>;
+};
 
 // Set fluid configuration
-SET_TYPE_PROP(HeterogeneousNI, FluidSystem, FluidSystems::BrineCO2<GetPropType<TypeTag, Properties::Scalar>,
-                                                                        HeterogeneousCO2Tables::CO2Tables>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::HeterogeneousNI>
+{
+    using type = FluidSystems::BrineCO2<GetPropType<TypeTag, Properties::Scalar>,
+                                        HeterogeneousCO2Tables::CO2Tables>;
+};
 
 // Use Moles
 template<class TypeTag>

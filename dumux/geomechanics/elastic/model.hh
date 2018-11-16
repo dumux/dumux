@@ -92,11 +92,16 @@ struct Elastic { using InheritsFrom = std::tuple<Geomechanics>; };
 } // end namespace TTag
 
 //! Use the local residual of the elastic model
-SET_TYPE_PROP(Elastic, LocalResidual, ElasticLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::Elastic> { using type = ElasticLocalResidual<TypeTag>; };
 
 //! The model traits of the elastic model
-SET_TYPE_PROP(Elastic, ModelTraits, ElasticModelTraits< GetPropType<TypeTag, Properties::GridView>::dimension,
-                                                        GetPropType<TypeTag, Properties::SolidSystem>::numComponents >);
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::Elastic>
+{
+    using type = ElasticModelTraits< GetPropType<TypeTag, Properties::GridView>::dimension,
+                                     GetPropType<TypeTag, Properties::SolidSystem>::numComponents >;
+};
 
 //! Set the volume variables property
 SET_PROP(Elastic, VolumeVariables)
@@ -114,8 +119,12 @@ public:
 };
 
 //! By default, we use hooke's law for stress evaluations
-SET_TYPE_PROP(Elastic, StressType, HookesLaw< GetPropType<TypeTag, Properties::Scalar>,
-                                              GetPropType<TypeTag, Properties::FVGridGeometry> >);
+template<class TypeTag>
+struct StressType<TypeTag, TTag::Elastic>
+{
+    using type = HookesLaw< GetPropType<TypeTag, Properties::Scalar>,
+                            GetPropType<TypeTag, Properties::FVGridGeometry> >;
+};
 
 } // namespace Properties
 } // namespace Dumux

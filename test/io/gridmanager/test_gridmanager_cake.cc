@@ -47,9 +47,11 @@ struct GridCreatorCakeTest {};
 }
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::GridCreatorCakeTest> { using type = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>; };
 #elif HAVE_UG
-SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::UGGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::GridCreatorCakeTest> { using type = Dune::UGGrid<3>; };
 #endif
 }
 }

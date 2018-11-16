@@ -166,7 +166,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(KOmega, IOFields, KOmegaIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::KOmega> { using type = KOmegaIOFields; };
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal k-omega single phase model
@@ -210,7 +211,8 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_TYPE_PROP(KOmegaNI, IOFields, FreeflowNonIsothermalIOFields<KOmegaIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::KOmegaNI> { using type = FreeflowNonIsothermalIOFields<KOmegaIOFields, true/*turbulenceModel*/>; };
 
 // \}
 }

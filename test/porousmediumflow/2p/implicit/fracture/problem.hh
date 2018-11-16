@@ -59,11 +59,13 @@ struct FractureCCMpfa { using InheritsFrom = std::tuple<Fracture, CCMpfaModel>; 
 
 // set the grid property
 #if HAVE_DUNE_FOAMGRID
-SET_TYPE_PROP(Fracture, Grid, Dune::FoamGrid<2, 3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Fracture> { using type = Dune::FoamGrid<2, 3>; };
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(Fracture, Problem, Dumux::FractureProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Fracture> { using type = Dumux::FractureProblem<TypeTag>; };
 
 // Set the fluid system
 SET_PROP(Fracture, FluidSystem)

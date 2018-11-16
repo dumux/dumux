@@ -50,7 +50,8 @@ struct DarcyOnePTwoC { using InheritsFrom = std::tuple<OnePNC, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the problem property
-SET_TYPE_PROP(DarcyOnePTwoC, Problem, Dumux::DarcySubProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DarcyOnePTwoC> { using type = Dumux::DarcySubProblem<TypeTag>; };
 
 // The fluid system
 SET_PROP(DarcyOnePTwoC, FluidSystem)
@@ -69,11 +70,13 @@ template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::DarcyOnePTwoC> { static constexpr int value = 3; };
 
 //! Use a model with constant tortuosity for the effective diffusivity
-SET_TYPE_PROP(DarcyOnePTwoC, EffectiveDiffusivityModel,
-              DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::DarcyOnePTwoC>
+{ using type = DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Set the grid type
-SET_TYPE_PROP(DarcyOnePTwoC, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DarcyOnePTwoC> { using type = Dune::YaspGrid<2>; };
 
 // Set the spatial paramaters type
 SET_PROP(DarcyOnePTwoC, SpatialParams)

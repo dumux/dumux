@@ -49,13 +49,16 @@ struct TwoPCornerPoint { using InheritsFrom = std::tuple<CCTpfaModel, TwoP>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TwoPCornerPoint, Grid, Dune::CpGrid);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPCornerPoint> { using type = Dune::CpGrid; };
 
 // Set the problem type
-SET_TYPE_PROP(TwoPCornerPoint, Problem, TwoPCornerPointTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPCornerPoint> { using type = TwoPCornerPointTestProblem<TypeTag>; };
 
 // the local residual containing the analytic derivative methods
-SET_TYPE_PROP(TwoPCornerPoint, LocalResidual, TwoPIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoPCornerPoint> { using type = TwoPIncompressibleLocalResidual<TypeTag>; };
 
 // Set the fluid system
 SET_PROP(TwoPCornerPoint, FluidSystem)

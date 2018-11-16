@@ -59,10 +59,12 @@ template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::DensityDrivenFlow> { static constexpr int value = 0; };
 
 // Set the grid type
-SET_TYPE_PROP(DensityDrivenFlow, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DensityDrivenFlow> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(DensityDrivenFlow, Problem, Dumux::DensityDrivenFlowProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DensityDrivenFlow> { using type = Dumux::DensityDrivenFlowProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value = true; };

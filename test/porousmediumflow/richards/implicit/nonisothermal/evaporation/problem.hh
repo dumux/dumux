@@ -56,14 +56,16 @@ struct RichardsNIEvaporationCC { using InheritsFrom = std::tuple<RichardsNIEvapo
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(RichardsNIEvaporation, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::RichardsNIEvaporation> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(RichardsNIEvaporation, Problem,
-              RichardsNIEvaporationProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::RichardsNIEvaporation> { using type = RichardsNIEvaporationProblem<TypeTag>; };
 
 // Set the fluid system
-SET_TYPE_PROP(RichardsNIEvaporation, FluidSystem, FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::RichardsNIEvaporation> { using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>; };
 
 // Set the spatial parameters
 SET_PROP(RichardsNIEvaporation, SpatialParams)

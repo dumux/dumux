@@ -65,13 +65,16 @@ SET_PROP(ThreeDChannelTest, FluidSystem)
 
 // Set the grid type
 #if DIM_3D
-SET_TYPE_PROP(ThreeDChannelTest, Grid, Dune::YaspGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ThreeDChannelTest> { using type = Dune::YaspGrid<3>; };
 #else
-SET_TYPE_PROP(ThreeDChannelTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ThreeDChannelTest> { using type = Dune::YaspGrid<2>; };
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(ThreeDChannelTest, Problem, ThreeDChannelTestProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ThreeDChannelTest> { using type = ThreeDChannelTestProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };

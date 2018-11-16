@@ -66,13 +66,16 @@ struct InjectionCC2PNITypeTag { using InheritsFrom = std::tuple<Injection2PNITyp
 } // end namespace TTag
 
 // Obtain grid type from COMPILE_DEFINITIONS
-SET_TYPE_PROP(Injection2PNITypeTag, Grid, GRIDTYPE);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Injection2PNITypeTag> { using type = GRIDTYPE; };
 
 // Set the problem property
-SET_TYPE_PROP(Injection2PNITypeTag, Problem, InjectionProblem2PNI<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Injection2PNITypeTag> { using type = InjectionProblem2PNI<TypeTag>; };
 
 // Use the same fluid system as the 2p2c injection problem
-SET_TYPE_PROP(Injection2PNITypeTag, FluidSystem, FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Injection2PNITypeTag> { using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>; };
 
 // Set the spatial parameters
 SET_PROP(Injection2PNITypeTag, SpatialParams)

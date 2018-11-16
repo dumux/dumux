@@ -60,10 +60,12 @@ struct KuevetteCCTpfa { using InheritsFrom = std::tuple<Kuevette, CCTpfaModel>; 
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Kuevette, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Kuevette> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(Kuevette, Problem, KuevetteProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Kuevette> { using type = KuevetteProblem<TypeTag>; };
 
 // Set the spatial parameters
 SET_PROP(Kuevette, SpatialParams)
@@ -74,9 +76,9 @@ SET_PROP(Kuevette, SpatialParams)
 };
 
 // Set the fluid system
-SET_TYPE_PROP(Kuevette,
-              FluidSystem,
-              FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Kuevette>
+{ using type = FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>; };
 } // end namespace Properties
 
 /*!

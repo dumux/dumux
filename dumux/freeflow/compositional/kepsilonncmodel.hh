@@ -127,7 +127,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(KEpsilonNC, IOFields, FreeflowNCIOFields<KEpsilonIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::KEpsilonNC> { using type = FreeflowNCIOFields<KEpsilonIOFields, true/*turbulenceModel*/>; };
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component k-epsilon model

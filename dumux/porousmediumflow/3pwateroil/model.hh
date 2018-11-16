@@ -222,14 +222,16 @@ SET_PROP(ThreePWaterOilNI, FluidState){
 };
 
 //! The local residual function of the conservation equations
-SET_TYPE_PROP(ThreePWaterOilNI, LocalResidual, ThreePWaterOilLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::ThreePWaterOilNI> { using type = ThreePWaterOilLocalResidual<TypeTag>; };
 
 //! Set as default that no component mass balance is replaced by the total mass balance
 template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::ThreePWaterOilNI> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(; });
 
 //! The primary variable switch for the 3p3c model
-SET_TYPE_PROP(ThreePWaterOilNI, PrimaryVariableSwitch, ThreePWaterOilPrimaryVariableSwitch<TypeTag>);
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::ThreePWaterOilNI> { using type = ThreePWaterOilPrimaryVariableSwitch<TypeTag>; };
 
 //! The primary variables vector for the 3p3c model
 SET_PROP(ThreePWaterOilNI, PrimaryVariables)
@@ -263,8 +265,9 @@ public:
 };
 
 //! Use the model after Millington (1961) for the effective diffusivity
-SET_TYPE_PROP(ThreePWaterOilNI, EffectiveDiffusivityModel,
-             DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::ThreePWaterOilNI>
+{ using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Define that mole fractions are used in the balance equations per default
 template<class TypeTag>
@@ -280,7 +283,8 @@ public:
 };
 
 //! Set the non-isothermal vkt output fields
-SET_TYPE_PROP(ThreePWaterOilNI, IOFields, EnergyIOFields<ThreePWaterOilIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ThreePWaterOilNI> { using type = EnergyIOFields<ThreePWaterOilIOFields>; };
 
 } // end namespace Properties
 } // end namespace Dumux

@@ -61,7 +61,8 @@ struct TissueBox { using InheritsFrom = std::tuple<Tissue, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Tissue, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Tissue> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::Tissue> { static constexpr bool value = true; };
@@ -77,10 +78,12 @@ template<class TypeTag>
 struct SolutionDependentHeatConduction<TypeTag, TTag::Tissue> { static constexpr bool value = false; };
 
 // Set the problem property
-SET_TYPE_PROP(Tissue, Problem, TissueProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Tissue> { using type = TissueProblem<TypeTag>; };
 
 // Set the problem property
-SET_TYPE_PROP(Tissue, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::Tissue> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // the fluid system
 SET_PROP(Tissue, FluidSystem)
@@ -90,9 +93,12 @@ SET_PROP(Tissue, FluidSystem)
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(Tissue, SpatialParams,
-              TissueSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                  GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Tissue>
+{
+    using type = TissueSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                     GetPropType<TypeTag, Properties::Scalar>>;
+};
 } // end namespace Properties
 
 

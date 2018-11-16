@@ -46,13 +46,16 @@ struct DarcyTwoP { using InheritsFrom = std::tuple<TwoP, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the problem property
-SET_TYPE_PROP(DarcyTwoP, Problem, Dumux::DarcySubProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DarcyTwoP> { using type = Dumux::DarcySubProblem<TypeTag>; };
 
 // Set the grid type
 #if ENABLE_3D
-SET_TYPE_PROP(DarcyTwoP, Grid, Dune::YaspGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DarcyTwoP> { using type = Dune::YaspGrid<3>; };
 #else
-SET_TYPE_PROP(DarcyTwoP, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DarcyTwoP> { using type = Dune::YaspGrid<2>; };
 #endif
 
 template<class TypeTag>

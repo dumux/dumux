@@ -61,10 +61,12 @@ struct ObstacleCC { using InheritsFrom = std::tuple<Obstacle, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Obstacle, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Obstacle> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(Obstacle, Problem, ObstacleProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Obstacle> { using type = ObstacleProblem<TypeTag>; };
 
 // Set the spatial parameters
 SET_PROP(Obstacle, SpatialParams)
@@ -76,12 +78,16 @@ SET_PROP(Obstacle, SpatialParams)
 };
 
 // Set fluid configuration
-SET_TYPE_PROP(Obstacle,
-              FluidSystem,
-              FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Obstacle>
+{
+    using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>,
+                                     FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+};
 
 // decide which type to use for floating values (double / quad)
-SET_TYPE_PROP(Obstacle, Scalar, double);
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::Obstacle> { using type = double; };
 
 }
 

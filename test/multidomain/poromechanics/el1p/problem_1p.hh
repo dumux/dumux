@@ -52,15 +52,19 @@ struct OnePSub { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // The fluid phase consists of one constant component
-SET_TYPE_PROP(OnePSub,
-              FluidSystem,
-              Dumux::FluidSystems::OnePLiquid< GetPropType<TypeTag, Properties::Scalar>,
-                                               Dumux::Components::Constant<0, GetPropType<TypeTag, Properties::Scalar>> >);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePSub>
+{
+    using type = Dumux::FluidSystems::OnePLiquid< GetPropType<TypeTag, Properties::Scalar>,
+                                                  Dumux::Components::Constant<0, GetPropType<TypeTag, Properties::Scalar>> >;
+};
 
 // Set the grid type
-SET_TYPE_PROP(OnePSub, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePSub> { using type = Dune::YaspGrid<2>; };
 // Set the problem property
-SET_TYPE_PROP(OnePSub, Problem, OnePSubProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePSub> { using type = OnePSubProblem<TypeTag> ; };
 // Set the spatial parameters
 SET_PROP(OnePSub, SpatialParams)
 {

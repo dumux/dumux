@@ -57,10 +57,12 @@ struct RichardsWellTracerCC { using InheritsFrom = std::tuple<RichardsWellTracer
 } // end namespace TTag
 
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsWellTracer, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::RichardsWellTracer> { using type = Dune::YaspGrid<2>; };
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsWellTracer, Problem, RichardsWellTracerProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::RichardsWellTracer> { using type = RichardsWellTracerProblem<TypeTag>; };
 
 // Set the spatial parameters
 SET_PROP(RichardsWellTracer, SpatialParams)
@@ -71,7 +73,8 @@ SET_PROP(RichardsWellTracer, SpatialParams)
 };
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsWellTracer, PointSource, SolDependentPointSource<TypeTag>);
+template<class TypeTag>
+struct PointSource<TypeTag, TTag::RichardsWellTracer> { using type = SolDependentPointSource<TypeTag>; };
 } // end namespace Properties
 
 /*!

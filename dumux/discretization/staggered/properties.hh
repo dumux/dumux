@@ -110,38 +110,45 @@ public:
 };
 
 //! Use the cell center element boundary types per default
-SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, CCElementBoundaryTypes);
+template<class TypeTag>
+struct ElementBoundaryTypes<TypeTag, TTag::StaggeredModel> { using type = CCElementBoundaryTypes; };
 
 //! Set the BaseLocalResidual to StaggeredLocalResidual
-SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, StaggeredLocalResidual<TypeTag>);
+template<class TypeTag>
+struct BaseLocalResidual<TypeTag, TTag::StaggeredModel> { using type = StaggeredLocalResidual<TypeTag>; };
 
 //! The cell center primary variables
-SET_TYPE_PROP(StaggeredModel,
-              CellCenterPrimaryVariables,
-              Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
-                                getPropValue<TypeTag, Properties::NumEqCellCenter>()>);
+template<class TypeTag>
+struct CellCenterPrimaryVariables<TypeTag, TTag::StaggeredModel>
+{
+    using type = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
+                                   getPropValue<TypeTag, Properties::NumEqCellCenter>()>;
+};
 
 //! The face primary variables
-SET_TYPE_PROP(StaggeredModel,
-              FacePrimaryVariables,
-              Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
-                                getPropValue<TypeTag, Properties::NumEqFace>()>);
+template<class TypeTag>
+struct FacePrimaryVariables<TypeTag, TTag::StaggeredModel>
+{
+    using type = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
+                                   getPropValue<TypeTag, Properties::NumEqFace>()>;
+};
 
 //! Boundary types at a single degree of freedom
-SET_TYPE_PROP(StaggeredModel, BoundaryTypes, Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>);
+template<class TypeTag>
+struct BoundaryTypes<TypeTag, TTag::StaggeredModel> { using type = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
 
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
 
 //! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
-SET_TYPE_PROP(StaggeredModel,
-              CellCenterSolutionVector,
-              Dune::BlockVector<GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>>);
+template<class TypeTag>
+struct CellCenterSolutionVector<TypeTag, TTag::StaggeredModel>
+{ using type = Dune::BlockVector<GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>>; };
 
 //! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
-SET_TYPE_PROP(StaggeredModel,
-              FaceSolutionVector,
-              Dune::BlockVector<GetPropType<TypeTag, Properties::FacePrimaryVariables>>);
+template<class TypeTag>
+struct FaceSolutionVector<TypeTag, TTag::StaggeredModel>
+{ using type = Dune::BlockVector<GetPropType<TypeTag, Properties::FacePrimaryVariables>>; };
 
 //! default property value for the solution vector only used for monolithic solver TODO: move to LinearAlgebra traits
 SET_PROP(StaggeredModel, SolutionVector)

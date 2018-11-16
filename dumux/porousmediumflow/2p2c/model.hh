@@ -156,7 +156,8 @@ public:
                                       getPropValue<TypeTag, Properties::UseMoles>(),
                                       getPropValue<TypeTag, Properties::ReplaceCompEqIdx>() >;
 };
-SET_TYPE_PROP(TwoPTwoC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>);
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPTwoC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; };
 
 //! Use the 2p2c VolumeVariables
 SET_PROP(TwoPTwoC, VolumeVariables)
@@ -198,10 +199,12 @@ public:
 };
 
 //! Set non-isothermal output fields
-SET_TYPE_PROP(TwoPTwoCNI, IOFields, EnergyIOFields<TwoPNCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPTwoCNI> { using type = EnergyIOFields<TwoPNCIOFields>; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_TYPE_PROP(TwoPTwoCNI, ThermalConductivityModel, ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux

@@ -58,10 +58,12 @@ struct MPNCComparisonCC { using InheritsFrom = std::tuple<MPNCComparison, CCTpfa
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(MPNCComparison, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::MPNCComparison> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(MPNCComparison, Problem, MPNCComparisonProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::MPNCComparison> { using type = MPNCComparisonProblem<TypeTag>; };
 
 // Set the spatial parameters
 SET_PROP(MPNCComparison, SpatialParams)
@@ -73,15 +75,20 @@ SET_PROP(MPNCComparison, SpatialParams)
 };
 
 // Set fluid configuration
-SET_TYPE_PROP(MPNCComparison,
-              FluidSystem,
-              FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::MPNCComparison>
+{
+    using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>,
+                                     FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+};
 
 // decide which type to use for floating values (double / quad)
-SET_TYPE_PROP(MPNCComparison, Scalar, double);
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::MPNCComparison> { using type = double; };
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::MPNCComparison> { static constexpr bool value = true; };
-SET_TYPE_PROP(MPNCComparison, IOFields, TwoPTwoCMPNCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::MPNCComparison> { using type = TwoPTwoCMPNCIOFields; };
 } // end namespace Dumux
 
 /*!

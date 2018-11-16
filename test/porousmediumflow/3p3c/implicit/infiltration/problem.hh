@@ -54,10 +54,12 @@ struct InfiltrationThreePThreeCCCTpfa { using InheritsFrom = std::tuple<Infiltra
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(InfiltrationThreePThreeC, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::InfiltrationThreePThreeC> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(InfiltrationThreePThreeC, Problem, InfiltrationThreePThreeCProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::InfiltrationThreePThreeC> { using type = InfiltrationThreePThreeCProblem<TypeTag>; };
 
 // Set the spatial parameters
 SET_PROP(InfiltrationThreePThreeC, SpatialParams)
@@ -68,9 +70,9 @@ SET_PROP(InfiltrationThreePThreeC, SpatialParams)
 };
 
 // Set the fluid system
-SET_TYPE_PROP(InfiltrationThreePThreeC,
-              FluidSystem,
-              FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::InfiltrationThreePThreeC>
+{ using type = FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>; };
 }
 
 /*!

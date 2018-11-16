@@ -51,7 +51,8 @@ struct Root { using InheritsFrom = std::tuple<OnePNC, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Root, Grid, Dune::FoamGrid<1, 3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Root> { using type = Dune::FoamGrid<1, 3>; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::Root> { static constexpr bool value = true; };
@@ -67,7 +68,8 @@ template<class TypeTag>
 struct SolutionDependentHeatConduction<TypeTag, TTag::Root> { static constexpr bool value = false; };
 
 // Set the problem property
-SET_TYPE_PROP(Root, Problem, RootProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Root> { using type = RootProblem<TypeTag>; };
 
 // Set the fluid system
 SET_PROP(Root, FluidSystem)
@@ -78,8 +80,12 @@ SET_PROP(Root, FluidSystem)
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(Root, SpatialParams, RootSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                                            GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Root>
+{
+    using type = RootSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                   GetPropType<TypeTag, Properties::Scalar>>;
+};
 
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::Root> { static constexpr bool value = true; };

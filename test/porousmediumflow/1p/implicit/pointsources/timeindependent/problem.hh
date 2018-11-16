@@ -58,11 +58,13 @@ SET_PROP(OnePSingularity, FluidSystem)
 };
 
 // Set the grid type
-SET_TYPE_PROP(OnePSingularity, Grid,
-    Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePSingularity>
+{ using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
-SET_TYPE_PROP(OnePSingularity, Problem, OnePSingularityProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePSingularity> { using type = OnePSingularityProblem<TypeTag> ; };
 
 // Set the spatial parameters
 SET_PROP(OnePSingularity, SpatialParams)

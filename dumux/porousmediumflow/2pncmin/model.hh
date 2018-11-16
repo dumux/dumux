@@ -121,7 +121,8 @@ struct TwoPNCMinNI { using InheritsFrom = std::tuple<TwoPNCMin>; };
 //////////////////////////////////////////////////////////////////
 
 // use the mineralization local residual
-SET_TYPE_PROP(TwoPNCMin, LocalResidual, MineralizationLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoPNCMin> { using type = MineralizationLocalResidual<TypeTag>; };
 
 //! use the mineralization volume variables together with the 2pnc vol vars
 SET_PROP(TwoPNCMin, VolumeVariables)
@@ -142,7 +143,8 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(TwoPNCMin, IOFields, MineralizationIOFields<TwoPNCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPNCMin> { using type = MineralizationIOFields<TwoPNCIOFields>; };
 
 //! The 2pnc model traits define the non-mineralization part
 SET_PROP(TwoPNCMin, ModelTraits)

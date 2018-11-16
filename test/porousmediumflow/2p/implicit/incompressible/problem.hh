@@ -58,13 +58,16 @@ struct TwoPIncompressibleBox { using InheritsFrom = std::tuple<TwoPIncompressibl
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TwoPIncompressible, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPIncompressible> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem type
-SET_TYPE_PROP(TwoPIncompressible, Problem, TwoPTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPIncompressible> { using type = TwoPTestProblem<TypeTag>; };
 
 // the local residual containing the analytic derivative methods
-SET_TYPE_PROP(TwoPIncompressible, LocalResidual, TwoPIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoPIncompressible> { using type = TwoPIncompressibleLocalResidual<TypeTag>; };
 
 // Set the fluid system
 SET_PROP(TwoPIncompressible, FluidSystem)

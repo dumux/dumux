@@ -121,9 +121,12 @@ struct NumEnergyEqSolid<TypeTag, TTag::NonEquilibrium> { static constexpr int va
 template<class TypeTag>
 struct NumEnergyEqFluid<TypeTag, TTag::NonEquilibrium> { static constexpr int value = GetPropType<TypeTag, Properties::EquilibriumModelTraits>::numPhases(; });
 
-SET_TYPE_PROP(NonEquilibrium, EnergyLocalResidual, EnergyLocalResidualNonEquilibrium<TypeTag, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>);
-SET_TYPE_PROP(NonEquilibrium, LocalResidual, NonEquilibriumLocalResidual<TypeTag>);
-SET_TYPE_PROP(NonEquilibrium, HeatConductionType, FouriersLawNonEquilibrium<TypeTag>);
+template<class TypeTag>
+struct EnergyLocalResidual<TypeTag, TTag::NonEquilibrium> { using type = EnergyLocalResidualNonEquilibrium<TypeTag, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>; };
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::NonEquilibrium> { using type = NonEquilibriumLocalResidual<TypeTag>; };
+template<class TypeTag>
+struct HeatConductionType<TypeTag, TTag::NonEquilibrium> { using type = FouriersLawNonEquilibrium<TypeTag>; };
 
 SET_PROP(NonEquilibrium, FluidState)
 {
@@ -135,7 +138,8 @@ public:
 };
 
 //! The grid variables
-SET_TYPE_PROP(NonEquilibrium, GridVariables, NonEquilibriumGridVariables<TypeTag>);
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::NonEquilibrium> { using type = NonEquilibriumGridVariables<TypeTag>; };
 
 //! indices for non-isothermal models
 SET_PROP(NonEquilibrium, IOFields)

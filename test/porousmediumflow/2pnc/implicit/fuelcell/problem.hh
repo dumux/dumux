@@ -62,10 +62,12 @@ struct FuelCellCCTpfa { using InheritsFrom = std::tuple<FuelCell, CCTpfaModel>; 
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(FuelCell, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::FuelCell> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(FuelCell, Problem, FuelCellProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FuelCell> { using type = FuelCellProblem<TypeTag>; };
 
 // Set the spatial parameters
 SET_PROP(FuelCell, SpatialParams)

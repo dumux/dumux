@@ -55,15 +55,20 @@ struct InjectionCCMpfa { using InheritsFrom = std::tuple<Injection, CCMpfaModel>
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Injection, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Injection> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(Injection, Problem, InjectionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Injection> { using type = InjectionProblem<TypeTag>; };
 
 // Set fluid configuration
-SET_TYPE_PROP(Injection,
-              FluidSystem,
-              FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Injection>
+{
+    using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>,
+                                     FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+};
 
 // Set the spatial parameters
 SET_PROP(Injection, SpatialParams)

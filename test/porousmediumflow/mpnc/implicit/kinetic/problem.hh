@@ -80,15 +80,20 @@ struct EvaporationAtmosphereBox { using InheritsFrom = std::tuple<EvaporationAtm
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(EvaporationAtmosphere, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::EvaporationAtmosphere> { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
-SET_TYPE_PROP(EvaporationAtmosphere, Problem, EvaporationAtmosphereProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::EvaporationAtmosphere> { using type = EvaporationAtmosphereProblem<TypeTag>; };
 
 // Set fluid configuration
-SET_TYPE_PROP(EvaporationAtmosphere,
-              FluidSystem,
-              FluidSystems::H2ON2Kinetic<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::EvaporationAtmosphere>
+{
+    using type = FluidSystems::H2ON2Kinetic<GetPropType<TypeTag, Properties::Scalar>,
+                                            FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+};
 
 //! Set the default pressure formulation: either pw first or pn first
 SET_PROP(EvaporationAtmosphere, PressureFormulation)
@@ -98,7 +103,8 @@ public:
 };
 
 // Set the type used for scalar values
-SET_TYPE_PROP(EvaporationAtmosphere, Scalar, double);
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::EvaporationAtmosphere> { using type = double; };
 
 // Set the fluid system
 SET_PROP(EvaporationAtmosphere, SolidSystem)
@@ -109,7 +115,8 @@ SET_PROP(EvaporationAtmosphere, SolidSystem)
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(EvaporationAtmosphere, SpatialParams, EvaporationAtmosphereSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere> { using type = EvaporationAtmosphereSpatialParams<TypeTag>; };
 
 // Set the interfacial area relation: wetting -- non-wetting
 SET_PROP(EvaporationAtmosphere, AwnSurface)

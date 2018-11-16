@@ -52,12 +52,18 @@ struct OnePLowDimBox { using InheritsFrom = std::tuple<OnePLowDim, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(OnePLowDim, Grid, Dune::FoamGrid<1, 2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePLowDim> { using type = Dune::FoamGrid<1, 2>; };
 // Set the problem type
-SET_TYPE_PROP(OnePLowDim, Problem, OnePLowDimProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePLowDim> { using type = OnePLowDimProblem<TypeTag>; };
 // set the spatial params
-SET_TYPE_PROP(OnePLowDim, SpatialParams, OnePSpatialParams< GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                                            GetPropType<TypeTag, Properties::Scalar> >);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePLowDim>
+{
+    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                    GetPropType<TypeTag, Properties::Scalar> >;
+};
 
 // the fluid system
 SET_PROP(OnePLowDim, FluidSystem)

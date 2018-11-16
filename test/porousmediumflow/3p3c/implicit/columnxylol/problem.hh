@@ -59,15 +59,17 @@ struct ColumnCCTpfa { using InheritsFrom = std::tuple<Column, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Column, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Column> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(Column, Problem, ColumnProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Column> { using type = ColumnProblem<TypeTag>; };
 
 // Set the fluid system
-SET_TYPE_PROP(Column,
-              FluidSystem,
-              FluidSystems::H2OAirXylene<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Column>
+{ using type = FluidSystems::H2OAirXylene<GetPropType<TypeTag, Properties::Scalar>>; };
 
 SET_PROP(Column, SolidSystem)
 {

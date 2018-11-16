@@ -143,7 +143,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(OneEqNC, IOFields, FreeflowNCIOFields<OneEqIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OneEqNC> { using type = FreeflowNCIOFields<OneEqIOFields, true/*turbulenceModel*/>; };
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component one-equation model

@@ -53,10 +53,12 @@ struct MaxwellStefanTestBox { using InheritsFrom = std::tuple<MaxwellStefanTest,
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(MaxwellStefanTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::MaxwellStefanTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(MaxwellStefanTest, Problem, MaxwellStefanTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::MaxwellStefanTest> { using type = MaxwellStefanTestProblem<TypeTag>; };
 
 // Set the spatial parameters
 SET_PROP(MaxwellStefanTest, SpatialParams)
@@ -71,7 +73,8 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::MaxwellStefanTest> { static constexpr bool value = true; };
 
 //! Here we set FicksLaw or MaxwellStefansLaw
-SET_TYPE_PROP(MaxwellStefanTest, MolecularDiffusionType, MaxwellStefansLaw<TypeTag>);
+template<class TypeTag>
+struct MolecularDiffusionType<TypeTag, TTag::MaxwellStefanTest> { using type = MaxwellStefansLaw<TypeTag>; };
 
 //! A simple fluid system with one MaxwellStefan component
 template<class TypeTag>
@@ -183,7 +186,8 @@ public:
     }
 };
 
-SET_TYPE_PROP(MaxwellStefanTest, FluidSystem, H2N2CO2FluidSystem<TypeTag>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::MaxwellStefanTest> { using type = H2N2CO2FluidSystem<TypeTag>; };
 
 } // end namespace Properties
 

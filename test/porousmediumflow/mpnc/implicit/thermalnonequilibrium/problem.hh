@@ -65,18 +65,17 @@ struct CombustionOneComponentBox { using InheritsFrom = std::tuple<CombustionOne
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(CombustionOneComponent, Grid, Dune::OneDGrid);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::CombustionOneComponent> { using type = Dune::OneDGrid; };
 
 // Set the problem property
-SET_TYPE_PROP(CombustionOneComponent,
-              Problem,
-              CombustionProblemOneComponent<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::CombustionOneComponent>
+{ using type = CombustionProblemOneComponent<TypeTag>; };
 
-
-
-SET_TYPE_PROP(CombustionOneComponent,
-              FluidSystem,
-              FluidSystems::CombustionFluidsystem<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::CombustionOneComponent>
+{ using type = FluidSystems::CombustionFluidsystem<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Set the default pressure formulation: either pw first or pn first
 SET_PROP(CombustionOneComponent, PressureFormulation)
@@ -86,7 +85,8 @@ public:
 };
 
 // Set the type used for scalar values
-SET_TYPE_PROP(CombustionOneComponent, Scalar, double );
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::CombustionOneComponent> { using type = double ; };
 // quad / double
 
 // We use different model traits for the equilibrium part because we want to deactivate diffusion
@@ -141,7 +141,8 @@ public:
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(CombustionOneComponent, SpatialParams, CombustionSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::CombustionOneComponent> { using type = CombustionSpatialParams<TypeTag>; };
 
 }
 /*!

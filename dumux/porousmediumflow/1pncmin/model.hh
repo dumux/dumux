@@ -121,7 +121,8 @@ public:
 };
 
 // Use the mineralization local residual
-SET_TYPE_PROP(OnePNCMin, LocalResidual, MineralizationLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OnePNCMin> { using type = MineralizationLocalResidual<TypeTag>; };
 
 //! Use non-mineralization model traits with 1pnc traits
 SET_PROP(OnePNCMin, ModelTraits)
@@ -144,7 +145,8 @@ public:
 };
 
 //! Use the mineralization vtk output fields
-SET_TYPE_PROP(OnePNCMin, IOFields, MineralizationIOFields<OnePNCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OnePNCMin> { using type = MineralizationIOFields<OnePNCIOFields>; };
 
 //////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2pncmin model
@@ -169,9 +171,9 @@ public:
 };
 
 //! Use the average for effective conductivities
-SET_TYPE_PROP(OnePNCMinNI,
-              ThermalConductivityModel,
-              ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::OnePNCMinNI>
+{ using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux

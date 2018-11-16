@@ -52,7 +52,8 @@ public:
 };
 
 //! The flux variables cache class specific to box-dfm porous medium flow models
-SET_TYPE_PROP(BoxDfmModel, FluxVariablesCache, BoxDfmFluxVariablesCache<TypeTag>);
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::BoxDfmModel> { using type = BoxDfmFluxVariablesCache<TypeTag>; };
 
 } // namespace Properties
 } // namespace Dumux

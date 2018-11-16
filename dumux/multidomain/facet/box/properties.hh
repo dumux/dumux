@@ -53,23 +53,29 @@ struct BoxFacetCouplingModel { using InheritsFrom = std::tuple<BoxModel>; };
 } // end namespace TTag
 
 //! Use the box local residual for models with facet coupling
-SET_TYPE_PROP(BoxFacetCouplingModel, BaseLocalResidual, BoxFacetCouplingLocalResidual<TypeTag>);
+template<class TypeTag>
+struct BaseLocalResidual<TypeTag, TTag::BoxFacetCouplingModel> { using type = BoxFacetCouplingLocalResidual<TypeTag>; };
 
 //! Use the box facet coupling-specific Darcy's law
-SET_TYPE_PROP(BoxFacetCouplingModel,
-              AdvectionType,
-              BoxFacetCouplingDarcysLaw< GetPropType<TypeTag, Properties::Scalar>,
-                                         GetPropType<TypeTag, Properties::FVGridGeometry> >);
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::BoxFacetCouplingModel>
+{
+    using type = BoxFacetCouplingDarcysLaw< GetPropType<TypeTag, Properties::Scalar>,
+                                            GetPropType<TypeTag, Properties::FVGridGeometry> >;
+};
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
-SET_TYPE_PROP(BoxFacetCouplingModel,
-              FluxVariables,
-              PorousMediumFluxVariables<TypeTag, BoxFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::FVGridGeometry>>>);
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::BoxFacetCouplingModel>
+{
+    using type = PorousMediumFluxVariables<TypeTag,
+                                           BoxFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::FVGridGeometry>>>;
+};
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
-SET_TYPE_PROP(BoxFacetCouplingModel,
-              ElementBoundaryTypes,
-              BoxFacetCouplingElementBoundaryTypes<GetPropType<TypeTag, Properties::BoundaryTypes>>);
+template<class TypeTag>
+struct ElementBoundaryTypes<TypeTag, TTag::BoxFacetCouplingModel>
+{ using type = BoxFacetCouplingElementBoundaryTypes<GetPropType<TypeTag, Properties::BoundaryTypes>>; };
 
 //! Set the default for the grid finite volume geometry
 SET_PROP(BoxFacetCouplingModel, FVGridGeometry)

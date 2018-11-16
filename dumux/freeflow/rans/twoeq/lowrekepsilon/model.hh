@@ -175,7 +175,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(LowReKEpsilon, IOFields, LowReKEpsilonIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::LowReKEpsilon> { using type = LowReKEpsilonIOFields; };
 
 //////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal low-Reynolds k-epsilon model
@@ -218,7 +219,8 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_TYPE_PROP(LowReKEpsilonNI, IOFields, FreeflowNonIsothermalIOFields<LowReKEpsilonIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::LowReKEpsilonNI> { using type = FreeflowNonIsothermalIOFields<LowReKEpsilonIOFields, true/*turbulenceModel*/>; };
 
 // \}
 }

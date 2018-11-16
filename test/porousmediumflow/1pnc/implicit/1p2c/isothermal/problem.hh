@@ -60,13 +60,16 @@ struct OnePTwoCTestCCMpfa { using InheritsFrom = std::tuple<OnePTwoCTest, CCMpfa
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(OnePTwoCTest, Grid, Dune::UGGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePTwoCTest> { using type = Dune::UGGrid<2>; };
 #else
-SET_TYPE_PROP(OnePTwoCTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePTwoCTest> { using type = Dune::YaspGrid<2>; };
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(OnePTwoCTest, Problem, OnePTwoCTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePTwoCTest> { using type = OnePTwoCTestProblem<TypeTag>; };
 
 // Set fluid configuration
 SET_PROP(OnePTwoCTest, FluidSystem)

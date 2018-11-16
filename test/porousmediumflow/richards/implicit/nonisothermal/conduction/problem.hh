@@ -57,14 +57,16 @@ struct RichardsNIConductionCC { using InheritsFrom = std::tuple<RichardsNIConduc
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(RichardsNIConduction, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::RichardsNIConduction> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(RichardsNIConduction, Problem,
-              RichardsNIConductionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::RichardsNIConduction> { using type = RichardsNIConductionProblem<TypeTag>; };
 
 // Set the fluid system
-SET_TYPE_PROP(RichardsNIConduction, FluidSystem, FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::RichardsNIConduction> { using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>; };
 
 // Set the spatial parameters
 SET_PROP(RichardsNIConduction, SpatialParams)

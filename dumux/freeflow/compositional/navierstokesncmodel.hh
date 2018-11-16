@@ -149,7 +149,8 @@ template<class TypeTag>
 struct NormalizePressure<TypeTag, TTag::NavierStokesNC> { static constexpr bool value = true; }; //!< Normalize the pressure term in the momentum balance by default
 
 //! The local residual
-SET_TYPE_PROP(NavierStokesNC, LocalResidual, FreeflowNCResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::NavierStokesNC> { using type = FreeflowNCResidual<TypeTag>; };
 
 //! Set the volume variables property
 SET_PROP(NavierStokesNC, VolumeVariables)
@@ -171,13 +172,16 @@ public:
 };
 
 //! The flux variables
-SET_TYPE_PROP(NavierStokesNC, FluxVariables, FreeflowNCFluxVariables<TypeTag>);
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::NavierStokesNC> { using type = FreeflowNCFluxVariables<TypeTag>; };
 
 //! The flux variables cache class, by default the one for free flow
-SET_TYPE_PROP(NavierStokesNC, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::NavierStokesNC> { using type = FreeFlowFluxVariablesCache<TypeTag>; };
 
 //! The specific I/O fields
-SET_TYPE_PROP(NavierStokesNC, IOFields, FreeflowNCIOFields<NavierStokesIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::NavierStokesNC> { using type = FreeflowNCIOFields<NavierStokesIOFields>; };
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -195,7 +199,8 @@ public:
 };
 
 //! Use Fick's law for molecular diffusion per default
-SET_TYPE_PROP(NavierStokesNC, MolecularDiffusionType, FicksLaw<TypeTag>);
+template<class TypeTag>
+struct MolecularDiffusionType<TypeTag, TTag::NavierStokesNC> { using type = FicksLaw<TypeTag>; };
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component free-flow model
@@ -226,7 +231,8 @@ public:
 };
 
 //! Use Fourier's Law as default heat conduction type
-SET_TYPE_PROP(NavierStokesNCNI, HeatConductionType, FouriersLaw<TypeTag>);
+template<class TypeTag>
+struct HeatConductionType<TypeTag, TTag::NavierStokesNCNI> { using type = FouriersLaw<TypeTag>; };
 
 // \}
 } // end namespace Properties

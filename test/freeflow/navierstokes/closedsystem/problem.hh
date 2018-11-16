@@ -53,10 +53,12 @@ SET_PROP(ClosedSystemTest, FluidSystem)
 };
 
 // Set the grid type
-SET_TYPE_PROP(ClosedSystemTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ClosedSystemTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(ClosedSystemTest, Problem, Dumux::ClosedSystemTestProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ClosedSystemTest> { using type = Dumux::ClosedSystemTestProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::ClosedSystemTest> { static constexpr bool value = true; };

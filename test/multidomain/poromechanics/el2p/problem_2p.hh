@@ -59,9 +59,11 @@ SET_PROP(TwoPSub, FluidSystem)
 };
 
 // Set the grid type
-SET_TYPE_PROP(TwoPSub, Grid, Dune::YaspGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPSub> { using type = Dune::YaspGrid<3>; };
 // Set the problem property
-SET_TYPE_PROP(TwoPSub, Problem, TwoPSubProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPSub> { using type = TwoPSubProblem<TypeTag> ; };
 // Set the spatial parameters
 SET_PROP(TwoPSub, SpatialParams)
 {

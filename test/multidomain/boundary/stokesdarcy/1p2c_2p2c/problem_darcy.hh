@@ -52,10 +52,12 @@ struct DarcyTwoPTwoC { using InheritsFrom = std::tuple<TwoPTwoCNI, CCTpfaModel>;
 } // end namespace TTag
 
 // Set the problem property
-SET_TYPE_PROP(DarcyTwoPTwoC, Problem, Dumux::DarcySubProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DarcyTwoPTwoC> { using type = Dumux::DarcySubProblem<TypeTag>; };
 
 // the fluid system
-SET_TYPE_PROP(DarcyTwoPTwoC, FluidSystem, FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::DarcyTwoPTwoC> { using type = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
 SET_PROP(DarcyTwoPTwoC, Formulation)
@@ -66,7 +68,8 @@ template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::DarcyTwoPTwoC> { static constexpr int value = 3; };
 
 // Set the grid type
-SET_TYPE_PROP(DarcyTwoPTwoC, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DarcyTwoPTwoC> { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::DarcyTwoPTwoC> { static constexpr bool value = true; };

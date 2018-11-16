@@ -217,7 +217,8 @@ public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
 
-SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);         //!< The primary variable switch for the 2pnc model
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::TwoPNC> { using type = TwoPNCPrimaryVariableSwitch<TypeTag>; };         //!< The primary variable switch for the 2pnc model
 
 //! Set the volume variables property
 SET_PROP(TwoPNC, VolumeVariables)
@@ -249,12 +250,15 @@ public:
                                    getPropValue<TypeTag, Properties::SetMoleFractionsForFirstPhase>(),
                                    getPropValue<TypeTag, Properties::Formulation>(), getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
-SET_TYPE_PROP(TwoPNC, ModelTraits, GetPropType<TypeTag, Properties::BaseModelTraits>); //!< default the actually used traits to the base traits
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPNC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; }; //!< default the actually used traits to the base traits
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(TwoPNC, IOFields, TwoPNCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPNC> { using type = TwoPNCIOFields; };
 
-SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoPNC> { using type = CompositionalLocalResidual<TypeTag>; };                  //!< Use the compositional local residual
 
 template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::TwoPNC> { static constexpr int value = GetPropType<TypeTag, Properties::FluidSystem>::numComponents; }; //!< Per default, no component mass balance is replaced
@@ -269,7 +273,8 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::TwoPNC> { static constexpr bool value = true; };                         //!< Use mole fractions in the balance equations by default
 
 //! Use the model after Millington (1961) for the effective diffusivity
-SET_TYPE_PROP(TwoPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::TwoPNC> { using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! This model uses the compositional fluid state
 SET_PROP(TwoPNC, FluidState)
@@ -295,7 +300,8 @@ public:
 };
 
 //! Set non-isothermal output fields
-SET_TYPE_PROP(TwoPNCNI, IOFields, EnergyIOFields<TwoPNCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPNCNI> { using type = EnergyIOFields<TwoPNCIOFields>; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNCNI, ThermalConductivityModel)

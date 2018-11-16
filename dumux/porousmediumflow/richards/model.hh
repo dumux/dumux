@@ -191,7 +191,8 @@ struct RichardsNI { using InheritsFrom = std::tuple<Richards>; };
 //////////////////////////////////////////////////////////////////
 
 //! The local residual operator
-SET_TYPE_PROP(Richards, LocalResidual, RichardsLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::Richards> { using type = RichardsLocalResidual<TypeTag>; };
 
 //! Set the vtk output fields specific to this model
 SET_PROP(Richards, IOFields)
@@ -205,7 +206,8 @@ public:
 };
 
 //! The model traits
-SET_TYPE_PROP(Richards, ModelTraits, RichardsModelTraits<getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>()>);
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::Richards> { using type = RichardsModelTraits<getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>()>; };
 
 //! Set the volume variables property
 SET_PROP(Richards, VolumeVariables)
@@ -230,8 +232,9 @@ template<class TypeTag>
 struct EnableWaterDiffusionInAir<TypeTag, TTag::Richards> { static constexpr bool value = false; };
 
 //! Use the model after Millington (1961) for the effective diffusivity
-SET_TYPE_PROP(Richards, EffectiveDiffusivityModel,
-              DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::Richards>
+{ using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! The primary variables vector for the richards model
 SET_PROP(Richards, PrimaryVariables)
@@ -244,7 +247,8 @@ public:
 };
 
 //! The primary variable switch for the richards model
-SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch);
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::Richards> { using type = ExtendedRichardsPrimaryVariableSwitch; };
 
 /*!
  *\brief The fluid system used by the model.

@@ -59,16 +59,18 @@ struct ThreePNIConductionCCMpfa { using InheritsFrom = std::tuple<ThreePNIConduc
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(ThreePNIConduction, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ThreePNIConduction> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(ThreePNIConduction, Problem, ThreePNIConductionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ThreePNIConduction> { using type = ThreePNIConductionProblem<TypeTag>; };
 
 
 // Set the fluid system
-SET_TYPE_PROP(ThreePNIConduction,
-              FluidSystem,
-              FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ThreePNIConduction>
+{ using type = FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Set the spatial parameters
 SET_PROP(ThreePNIConduction, SpatialParams)

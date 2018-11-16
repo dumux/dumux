@@ -62,10 +62,12 @@ SET_PROP(ChannelTest, FluidSystem)
 };
 
 // Set the grid type
-SET_TYPE_PROP(ChannelTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ChannelTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(ChannelTest, Problem, Dumux::ChannelTestProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ChannelTest> { using type = Dumux::ChannelTestProblem<TypeTag> ; };
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::ChannelTest> { static constexpr bool value = true; };
