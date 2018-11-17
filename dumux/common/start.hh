@@ -73,7 +73,7 @@ int start_(int argc,
     // parse the command line arguments and input file
     ////////////////////////////////////////////////////////////
 
-    auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TypeTag, ModelDefaultParameters)::defaultParams(p);};
+    auto defaultParams = [] (Dune::ParameterTree& p) {GetProp<TypeTag, Properties::ModelDefaultParameters>::defaultParams(p);};
     Parameters::init(argc, argv, defaultParams, usage);
 
     //////////////////////////////////////////////////////////////////////

@@ -38,21 +38,24 @@ struct GridProperties {};
 }
 
 //! Use the leaf grid view if not defined otherwise
-SET_TYPE_PROP(GridProperties, GridView, typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
+template<class TypeTag>
+struct GridView<TypeTag, TTag::GridProperties> { using type = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView; };
 
 //! Use the minimal point source implementation as default
-SET_PROP(GridProperties, PointSource)
+template<class TypeTag>
+struct PointSource<TypeTag, TTag::GridProperties>
 {
 private:
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using GlobalPosition = typename Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
 public:
     using type = Dumux::PointSource<GlobalPosition, SourceValues>;
 };
 
 //! Use the point source helper using the bounding box tree as a default
-SET_TYPE_PROP(GridProperties, PointSourceHelper, BoundingBoxTreePointSourceHelper);
+template<class TypeTag>
+struct PointSourceHelper<TypeTag, TTag::GridProperties> { using type = BoundingBoxTreePointSourceHelper; };
 
 } // namespace Properties
 } // namespace Dumux

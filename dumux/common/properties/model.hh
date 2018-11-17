@@ -43,30 +43,37 @@ struct ModelProperties {};
 }
 
 //! Set the default type of scalar values to double
-SET_TYPE_PROP(ModelProperties, Scalar, double);
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::ModelProperties> { using type = double; };
 
 //! Set the default vector with size number of equations to a field vector
-SET_TYPE_PROP(ModelProperties, NumEqVector, Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar), GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
+template<class TypeTag>
+struct NumEqVector<TypeTag, TTag::ModelProperties> { using type = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
 
 //! Set the default primary variable vector to a vector of size of number of equations
-SET_TYPE_PROP(ModelProperties, PrimaryVariables, typename GET_PROP_TYPE(TypeTag, NumEqVector));
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::ModelProperties> { using type = GetPropType<TypeTag, Properties::NumEqVector>; };
 
 //! do not specific any model-specific default parameters here
-SET_PROP(ModelProperties, ModelDefaultParameters)
+template<class TypeTag>
+struct ModelDefaultParameters<TypeTag, TTag::ModelProperties>
 {
     static void defaultParams(Dune::ParameterTree& tree, const std::string& group = "") { }
 };
 
 //! \todo this property is deprecated use IOFields instead!
-SET_PROP(ModelProperties, VtkOutputFields) {
-    using type DUNE_DEPRECATED_MSG("This property is deprecated use property IOFields instead") = typename GET_PROP_TYPE(TypeTag, IOFields);
+template<class TypeTag>
+struct VtkOutputFields<TypeTag, TTag::ModelProperties> {
+    using type DUNE_DEPRECATED_MSG("This property is deprecated use property IOFields instead") = GetPropType<TypeTag, Properties::IOFields>;
 };
 
 //! Set the default to an implementation throwing a NotImplemented error
-SET_TYPE_PROP(ModelProperties, IOFields, DefaultIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ModelProperties> { using type = DefaultIOFields; };
 
 //! Set the default class for the balance equation options
-SET_TYPE_PROP(ModelProperties, BalanceEqOpts, BalanceEquationOptions<TypeTag>);
+template<class TypeTag>
+struct BalanceEqOpts<TypeTag, TTag::ModelProperties> { using type = BalanceEquationOptions<TypeTag>; };
 
 } // namespace Properties
 } // namespace Dumux
