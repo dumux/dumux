@@ -52,11 +52,11 @@
 // obtain/define some types to be used below in the property definitions and in main
 class TestTraits
 {
-    using BulkFVG = Dumux::GetPropType<TTAG(OnePBulkTpfa), Dumux::Properties::FVGridGeometry>;
-    using FacetFVG = Dumux::GetPropType<TTAG(OnePFacetTpfa), Dumux::Properties::FVGridGeometry>;
-    using EdgeFVG = Dumux::GetPropType<TTAG(OnePEdgeTpfa), Dumux::Properties::FVGridGeometry>;
+    using BulkFVG = Dumux::GetPropType<Dumux::Properties::TTag::OnePBulkTpfa, Dumux::Properties::FVGridGeometry>;
+    using FacetFVG = Dumux::GetPropType<Dumux::Properties::TTag::OnePFacetTpfa, Dumux::Properties::FVGridGeometry>;
+    using EdgeFVG = Dumux::GetPropType<Dumux::Properties::TTag::OnePEdgeTpfa, Dumux::Properties::FVGridGeometry>;
 public:
-    using MDTraits = Dumux::MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePFacetTpfa), TTAG(OnePEdgeTpfa)>;
+    using MDTraits = Dumux::MultiDomainTraits<Dumux::Properties::TTag::OnePBulkTpfa, Dumux::Properties::TTag::OnePFacetTpfa, Dumux::Properties::TTag::OnePEdgeTpfa>;
     using CouplingMapper = Dumux::FacetCouplingThreeDomainMapper<BulkFVG, FacetFVG, EdgeFVG>;
     using CouplingManager = Dumux::FacetCouplingThreeDomainManager<MDTraits, CouplingMapper>;
 };
@@ -93,9 +93,9 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
-    using BulkProblemTypeTag = TTAG(OnePBulkTpfa);
-    using FacetProblemTypeTag = TTAG(OnePFacetTpfa);
-    using EdgeProblemTypeTag = TTAG(OnePEdgeTpfa);
+    using BulkProblemTypeTag = Properties::TTag::OnePBulkTpfa;
+    using FacetProblemTypeTag = Properties::TTag::OnePFacetTpfa;
+    using EdgeProblemTypeTag = Properties::TTag::OnePEdgeTpfa;
     using BulkGrid = GetPropType<BulkProblemTypeTag, Properties::Grid>;
     using FacetGrid = GetPropType<FacetProblemTypeTag, Properties::Grid>;
     using EdgeGrid = GetPropType<EdgeProblemTypeTag, Properties::Grid>;

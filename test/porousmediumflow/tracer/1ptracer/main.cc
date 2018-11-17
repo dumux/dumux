@@ -51,8 +51,8 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     //! define the type tags for this problem
-    using OnePTypeTag = TTAG(IncompressibleTest);
-    using TracerTypeTag = TTAG(TracerTestCC);
+    using OnePTypeTag = Properties::TTag::IncompressibleTest;
+    using TracerTypeTag = Properties::TTag::TracerTestCC;
 
     //! initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);

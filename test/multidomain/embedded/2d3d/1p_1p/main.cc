@@ -57,14 +57,14 @@ namespace Properties {
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::Matrix>
 {
-    using Traits = MultiDomainTraits<TypeTag, TTAG(Fracture)>;
+    using Traits = MultiDomainTraits<TypeTag, Properties::TTag::Fracture>;
     using type = EmbeddedCouplingManager2d3d<Traits>;
 };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::Fracture>
 {
-    using Traits = MultiDomainTraits<TTAG(Matrix), TypeTag>;
+    using Traits = MultiDomainTraits<Properties::TTag::Matrix, TypeTag>;
     using type = EmbeddedCouplingManager2d3d<Traits>;
 };
 
@@ -148,8 +148,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using BulkTypeTag = TTAG(Matrix);
-    using LowDimTypeTag = TTAG(Fracture);
+    using BulkTypeTag = Properties::TTag::Matrix;
+    using LowDimTypeTag = Properties::TTag::Fracture;
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains

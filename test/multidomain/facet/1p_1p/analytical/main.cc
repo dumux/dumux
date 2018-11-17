@@ -70,14 +70,14 @@ namespace Dumux {
 namespace Properties {
 
 // set cm property for the box test
-using BoxTraits = TestTraits<TTAG(OnePBulkBox), TTAG(OnePLowDimBox)>;
+using BoxTraits = TestTraits<Properties::TTag::OnePBulkBox, Properties::TTag::OnePLowDimBox>;
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePBulkBox> { using type = typename BoxTraits::CouplingManager; };
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePLowDimBox> { using type = typename BoxTraits::CouplingManager; };
 
 // set cm property for the tpfa test
-using TpfaTraits = TestTraits<TTAG(OnePBulkTpfa), TTAG(OnePLowDimTpfa)>;
+using TpfaTraits = TestTraits<Properties::TTag::OnePBulkTpfa, Properties::TTag::OnePLowDimTpfa>;
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TpfaTraits::CouplingManager; };
 template<class TypeTag>
@@ -202,8 +202,8 @@ int main(int argc, char** argv) try
     //////////////////////////////////////////////////////
     // try to create the grids (from the given grid file)
     //////////////////////////////////////////////////////
-    using BulkProblemTypeTag = TTAG(BULKTYPETAG);
-    using LowDimProblemTypeTag = TTAG(LOWDIMTYPETAG);
+    using BulkProblemTypeTag = Properties::TTag::BULKTYPETAG;
+    using LowDimProblemTypeTag = Properties::TTag::LOWDIMTYPETAG;
     using BulkGrid = GetPropType<BulkProblemTypeTag, Properties::Grid>;
     using LowDimGrid = GetPropType<LowDimProblemTypeTag, Properties::Grid>;
 

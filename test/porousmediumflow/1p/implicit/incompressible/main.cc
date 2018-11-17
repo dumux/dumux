@@ -53,7 +53,7 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    using TypeTag = TTAG(TYPETAG);
+    using TypeTag = Properties::TTag::TYPETAG;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);

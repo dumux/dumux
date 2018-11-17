@@ -58,14 +58,14 @@ namespace Properties {
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::StokesOnePTwoC>
 {
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, TTAG(DarcyTwoPTwoC)>;
+    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyTwoPTwoC>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::DarcyTwoPTwoC>
 {
-    using Traits = StaggeredMultiDomainTraits<TTAG(StokesOnePTwoC), TTAG(StokesOnePTwoC), TypeTag>;
+    using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOnePTwoC, Properties::TTag::StokesOnePTwoC, TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
@@ -87,8 +87,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using StokesTypeTag = TTAG(StokesOnePTwoC);
-    using DarcyTypeTag = TTAG(DarcyTwoPTwoC);
+    using StokesTypeTag = Properties::TTag::StokesOnePTwoC;
+    using DarcyTypeTag = Properties::TTag::DarcyTwoPTwoC;
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains

@@ -71,7 +71,7 @@ struct OnePSub1 { using InheritsFrom = std::tuple<TwoP, OnePSub>; };
 // the coupling manager
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePSub>
-{ using type = DarcyDarcyBoundaryCouplingManager<MultiDomainTraits<TTAG(OnePSub0), TTAG(OnePSub1)>>; };
+{ using type = DarcyDarcyBoundaryCouplingManager<MultiDomainTraits<Properties::TTag::OnePSub0, Properties::TTag::OnePSub1>>; };
 
 // Set the grid type
 template<class TypeTag>
@@ -129,9 +129,9 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using TypeTag = TTAG(OnePSub);
-    using SubTypeTag0 = TTAG(OnePSub0);
-    using SubTypeTag1 = TTAG(OnePSub1);
+    using TypeTag = Properties::TTag::OnePSub;
+    using SubTypeTag0 = Properties::TTag::OnePSub0;
+    using SubTypeTag1 = Properties::TTag::OnePSub1;
 
     // create the full grid that we are gonna split for the output
     using FullDomainGrid = typename GetProp<TypeTag, Properties::Grid>::FullDomainGrid;

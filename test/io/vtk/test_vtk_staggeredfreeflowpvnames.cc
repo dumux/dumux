@@ -325,7 +325,7 @@ int main(int argc, char** argv) try
 
     Parameters::init(parameters);
 
-    using CommonTypeTag = TTAG(StaggeredPVNamesTestTypeTag);
+    using CommonTypeTag = Properties::TTag::StaggeredPVNamesTestTypeTag;
     using Grid = GetPropType<CommonTypeTag, Properties::Grid>;
     using FVGridGeometry = GetPropType<CommonTypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<CommonTypeTag, Properties::Scalar>;
@@ -344,35 +344,35 @@ int main(int argc, char** argv) try
     using FluidSystem = GetPropType<CommonTypeTag, Properties::FluidSystem>;
     FluidSystem::init();
 
-    testWriteAndReadVtk<TTAG(NavierStokesPVNameTypeTag)>(fvGridGeometry, std::array<Scalar, 1>{1e5}, "navierstokes");
-    testWriteAndReadVtk<TTAG(NavierStokesNIPVNameTypeTag)>(fvGridGeometry, std::array<Scalar, 2>{1e5, 300.0}, "navierstokesni");
-    testWriteAndReadVtk<TTAG(NavierStokesNCPVNameTypeTag)>(fvGridGeometry, std::array<Scalar, 2>{1e5, 1e-3}, "navierstokesnc");
-    testWriteAndReadVtk<TTAG(NavierStokesNCNIPVNameTypeTag)>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1e-3, 300.0}, "navierstokesncni");
+    testWriteAndReadVtk<Properties::TTag::NavierStokesPVNameTypeTag>(fvGridGeometry, std::array<Scalar, 1>{1e5}, "navierstokes");
+    testWriteAndReadVtk<Properties::TTag::NavierStokesNIPVNameTypeTag>(fvGridGeometry, std::array<Scalar, 2>{1e5, 300.0}, "navierstokesni");
+    testWriteAndReadVtk<Properties::TTag::NavierStokesNCPVNameTypeTag>(fvGridGeometry, std::array<Scalar, 2>{1e5, 1e-3}, "navierstokesnc");
+    testWriteAndReadVtk<Properties::TTag::NavierStokesNCNIPVNameTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1e-3, 300.0}, "navierstokesncni");
 
-    testWriteAndReadVtk<TTAG(ZeroEqNameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 1>{1e5}, "zeroeq");
-    testWriteAndReadVtk<TTAG(ZeroEqNINameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 2>{1e5, 300.0}, "zeroeqni");
-    testWriteAndReadVtk<TTAG(ZeroEqNCNameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 2>{1e5, 1e-3}, "zeroeqnc");
-    testWriteAndReadVtk<TTAG(ZeroEqNCNINameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1e-3, 300.0}, "zeroeqncni");
+    testWriteAndReadVtk<Properties::TTag::ZeroEqNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 1>{1e5}, "zeroeq");
+    testWriteAndReadVtk<Properties::TTag::ZeroEqNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 2>{1e5, 300.0}, "zeroeqni");
+    testWriteAndReadVtk<Properties::TTag::ZeroEqNCNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 2>{1e5, 1e-3}, "zeroeqnc");
+    testWriteAndReadVtk<Properties::TTag::ZeroEqNCNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1e-3, 300.0}, "zeroeqncni");
 
-    testWriteAndReadVtk<TTAG(OneEqNameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 2>{1e5, 1.0}, "oneeq");
-    testWriteAndReadVtk<TTAG(OneEqNINameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1.0, 300.0}, "oneeqni");
-    testWriteAndReadVtk<TTAG(OneEqNCNameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1e-3, 1.0}, "oneeqnc");
-    testWriteAndReadVtk<TTAG(OneEqNCNINameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.0, 300.0}, "oneeqncni");
+    testWriteAndReadVtk<Properties::TTag::OneEqNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 2>{1e5, 1.0}, "oneeq");
+    testWriteAndReadVtk<Properties::TTag::OneEqNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1.0, 300.0}, "oneeqni");
+    testWriteAndReadVtk<Properties::TTag::OneEqNCNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1e-3, 1.0}, "oneeqnc");
+    testWriteAndReadVtk<Properties::TTag::OneEqNCNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.0, 300.0}, "oneeqncni");
 
-    testWriteAndReadVtk<TTAG(KEpsilonNameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1.1, 1.2}, "kepsilon");
-    testWriteAndReadVtk<TTAG(KEpsilonNINameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1.1, 1.2, 300.0}, "kepsilonni");
-    testWriteAndReadVtk<TTAG(KEpsilonNCNameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.1, 1.2}, "kepsilonnc");
-    testWriteAndReadVtk<TTAG(KEpsilonNCNINameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 5>{1e5, 1e-3, 1.1, 1.2, 300.0}, "kepsilonncni");
+    testWriteAndReadVtk<Properties::TTag::KEpsilonNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1.1, 1.2}, "kepsilon");
+    testWriteAndReadVtk<Properties::TTag::KEpsilonNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1.1, 1.2, 300.0}, "kepsilonni");
+    testWriteAndReadVtk<Properties::TTag::KEpsilonNCNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.1, 1.2}, "kepsilonnc");
+    testWriteAndReadVtk<Properties::TTag::KEpsilonNCNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 5>{1e5, 1e-3, 1.1, 1.2, 300.0}, "kepsilonncni");
 
-    testWriteAndReadVtk<TTAG(LowReKEpsilonNameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1.1, 1.2}, "lowrekepsilon");
-    testWriteAndReadVtk<TTAG(LowReKEpsilonNINameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1.1, 1.2, 300.0}, "lowrekepsilonni");
-    testWriteAndReadVtk<TTAG(LowReKEpsilonNCNameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.1, 1.2}, "lowrekepsilonnc");
-    testWriteAndReadVtk<TTAG(LowReKEpsilonNCNINameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 5>{1e5, 1e-3, 1.1, 1.2, 300.0}, "lowrekepsilonncni");
+    testWriteAndReadVtk<Properties::TTag::LowReKEpsilonNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1.1, 1.2}, "lowrekepsilon");
+    testWriteAndReadVtk<Properties::TTag::LowReKEpsilonNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1.1, 1.2, 300.0}, "lowrekepsilonni");
+    testWriteAndReadVtk<Properties::TTag::LowReKEpsilonNCNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.1, 1.2}, "lowrekepsilonnc");
+    testWriteAndReadVtk<Properties::TTag::LowReKEpsilonNCNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 5>{1e5, 1e-3, 1.1, 1.2, 300.0}, "lowrekepsilonncni");
 
-    testWriteAndReadVtk<TTAG(KOmegaNameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1.1, 1.2}, "komega");
-    testWriteAndReadVtk<TTAG(KOmegaNINameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1.1, 1.2, 300.0}, "komegani");
-    testWriteAndReadVtk<TTAG(KOmegaNCNameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.1, 1.2}, "komeganc");
-    testWriteAndReadVtk<TTAG(KOmegaNCNINameTestTypeTag)>(fvGridGeometry, std::array<Scalar, 5>{1e5, 1e-3, 1.1, 1.2, 300.0}, "komegancni");
+    testWriteAndReadVtk<Properties::TTag::KOmegaNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1.1, 1.2}, "komega");
+    testWriteAndReadVtk<Properties::TTag::KOmegaNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1.1, 1.2, 300.0}, "komegani");
+    testWriteAndReadVtk<Properties::TTag::KOmegaNCNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.1, 1.2}, "komeganc");
+    testWriteAndReadVtk<Properties::TTag::KOmegaNCNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 5>{1e5, 1e-3, 1.1, 1.2, 300.0}, "komegancni");
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

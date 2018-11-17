@@ -55,7 +55,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(TestElastic);
+    using TypeTag = Properties::TTag::TestElastic;
 
     // stop time for the entire computation
     Dune::Timer timer;

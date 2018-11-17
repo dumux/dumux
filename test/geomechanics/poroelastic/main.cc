@@ -98,7 +98,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(TestPoroElastic);
+    using TypeTag = Properties::TTag::TestPoroElastic;
 
     // stop time for the entire computation
     Dune::Timer timer;

@@ -55,14 +55,14 @@ namespace Properties {
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::SOILTYPETAG>
 {
-    using Traits = MultiDomainTraits<TypeTag, TTAG(Root)>;
+    using Traits = MultiDomainTraits<TypeTag, Properties::TTag::Root>;
     using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::Root>
 {
-    using Traits = MultiDomainTraits<TTAG(SOILTYPETAG), TypeTag>;
+    using Traits = MultiDomainTraits<Properties::TTag::SOILTYPETAG, TypeTag>;
     using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
@@ -93,8 +93,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using BulkTypeTag = TTAG(SOILTYPETAG);
-    using LowDimTypeTag = TTAG(Root);
+    using BulkTypeTag = Properties::TTag::SOILTYPETAG;
+    using LowDimTypeTag = Properties::TTag::Root;
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains

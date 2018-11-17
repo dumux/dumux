@@ -62,7 +62,7 @@ int main(int argc, char** argv) try
     Dune::MPIHelper::instance(argc, argv);
 
     // using declarations
-    using TypeTag = TTAG(GridCreatorCakeTest);
+    using TypeTag = Dumux::Properties::TTag::GridCreatorCakeTest;
     using Grid = Dumux::GetPropType<TypeTag, Dumux::Properties::Grid>;
     using GridManager = typename Dumux::CakeGridCreator<Grid>;
     GridManager gridManager;

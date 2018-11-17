@@ -91,8 +91,8 @@ int main(int argc, char** argv) try
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
-    using OnePTypeTag = TTAG(OnePSub);
-    using PoroMechTypeTag = TTAG(PoroElasticSub);
+    using OnePTypeTag = Properties::TTag::OnePSub;
+    using PoroMechTypeTag = Properties::TTag::PoroElasticSub;
 
     // we simply extract the grid creator from one of the type tags
     using GridManager = Dumux::GridManager<GetPropType<OnePTypeTag, Properties::Grid>>;
