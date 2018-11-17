@@ -30,7 +30,8 @@
 
 namespace Dumux {
 namespace Properties
-{ NEW_PROP_TAG( MaterialLaw ); }
+{ template<class TypeTag, class MyTypeTag>
+struct  MaterialLaw  { using type = UndefinedProperty; }; }
 
 /*!
  * \ingroup SpatialParameters

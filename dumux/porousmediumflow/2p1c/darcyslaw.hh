@@ -35,7 +35,8 @@ namespace Dumux
 
 namespace Properties
 {
-     NEW_PROP_TAG(UseBlockingOfSpuriousFlow); //!< Determines whether blocking of spurious flow is used or not.
+     template<class TypeTag, class MyTypeTag>
+struct UseBlockingOfSpuriousFlow { using type = UndefinedProperty; }; //!< Determines whether blocking of spurious flow is used or not.
 }
 
 /*!
