@@ -561,20 +561,20 @@ class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*
 {
     using ThisType = SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>;
     using ParentType = SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/false>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
-    enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+    enum { dim = GetPropType<TypeTag, Properties::GridView>::dimension };
 
-    static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
-    static constexpr bool enableGridVolVarsCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
+    static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    static constexpr bool enableGridVolVarsCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     static constexpr auto domainI = Dune::index_constant<id>();
 
 public:

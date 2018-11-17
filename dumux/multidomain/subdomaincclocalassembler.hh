@@ -553,10 +553,10 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
     using ThisType = SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>;
     using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/false>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
 
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+    static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
     static constexpr auto domainI = Dune::index_constant<id>();
 
 public:
