@@ -120,7 +120,7 @@ struct EnableChemicalNonEquilibrium<TypeTag, TTag::NonEquilibrium> { static cons
 template<class TypeTag>
 struct NumEnergyEqSolid<TypeTag, TTag::NonEquilibrium> { static constexpr int value = 1; };
 template<class TypeTag>
-struct NumEnergyEqFluid<TypeTag, TTag::NonEquilibrium> { static constexpr int value = GetPropType<TypeTag, Properties::EquilibriumModelTraits>::numPhases(; });
+struct NumEnergyEqFluid<TypeTag, TTag::NonEquilibrium> { static constexpr int value = GetPropType<TypeTag, Properties::EquilibriumModelTraits>::numPhases(); };
 
 template<class TypeTag>
 struct EnergyLocalResidual<TypeTag, TTag::NonEquilibrium> { using type = EnergyLocalResidualNonEquilibrium<TypeTag, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>; };

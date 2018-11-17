@@ -19,6 +19,7 @@
 #ifndef DUMUX_IMPET_PROPERTIES_HH
 #define DUMUX_IMPET_PROPERTIES_HH
 
+#include <dumux/common/properties/propertysystemmacros.hh>
 #include <dumux/porousmediumflow/sequential/properties.hh>
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/sequential/transportproperties.hh>

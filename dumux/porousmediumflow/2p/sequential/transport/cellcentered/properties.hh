@@ -24,6 +24,7 @@
 #ifndef DUMUX_FV_TRANSPORT_PROPERTIES_2P_HH
 #define DUMUX_FV_TRANSPORT_PROPERTIES_2P_HH
 
+#include <dumux/common/properties/propertysystemmacros.hh>
 #include <dumux/porousmediumflow/2p/sequential/transport/properties.hh>
 
 namespace Dumux

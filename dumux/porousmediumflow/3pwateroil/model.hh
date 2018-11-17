@@ -229,7 +229,7 @@ struct LocalResidual<TypeTag, TTag::ThreePWaterOilNI> { using type = ThreePWater
 
 //! Set as default that no component mass balance is replaced by the total mass balance
 template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::ThreePWaterOilNI> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(; });
+struct ReplaceCompEqIdx<TypeTag, TTag::ThreePWaterOilNI> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(); };
 
 //! The primary variable switch for the 3p3c model
 template<class TypeTag>

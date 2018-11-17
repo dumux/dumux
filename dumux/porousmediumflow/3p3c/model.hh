@@ -228,7 +228,7 @@ struct UseConstraintSolver<TypeTag, TTag::ThreePThreeC> { static constexpr bool 
 
 //! Set as default that _no_ component mass balance is replaced by the total mass balance
 template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::ThreePThreeC> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(; });
+struct ReplaceCompEqIdx<TypeTag, TTag::ThreePThreeC> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(); };
 /*!
  * \brief The fluid state which is used by the volume variables to
  *        store the thermodynamic state. This should be chosen
