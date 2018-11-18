@@ -156,6 +156,7 @@ public:
         auto numElements = this->gridView().size(0);
         scvs_.resize(numElements);
         scvfs_.resize(numElements);
+        hasBoundaryScvf_.resize(numElements, false);
 
         boundaryDofIndices_.assign(numDofs(), false);
 
@@ -215,6 +216,8 @@ public:
                 if (intersection.boundary() && !intersection.neighbor())
                 {
                     const auto isGeometry = intersection.geometry();
+                    hasBoundaryScvf_[eIdx] = true;
+
                     // count
                     numScvf_ += isGeometry.corners();
                     numBoundaryScvf_ += isGeometry.corners();
@@ -317,6 +320,10 @@ public:
     const std::unordered_map<std::size_t, std::size_t>& periodicVertexMap() const
     { return periodicVertexMap_; }
 
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf(std::size_t  eIdx) const
+    { return hasBoundaryScvf_[eIdx]; }
+
 private:
 
     const FeCache feCache_;
@@ -330,6 +337,7 @@ private:
 
     // vertices on the boudary
     std::vector<bool> boundaryDofIndices_;
+    std::vector<bool> hasBoundaryScvf_;
 
     // a map for periodic boundary vertices
     std::unordered_map<std::size_t, std::size_t> periodicVertexMap_;

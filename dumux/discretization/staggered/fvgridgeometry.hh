@@ -281,6 +281,7 @@ public:
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
         localToGlobalScvfIndices_.resize(numScvs);
+        hasBoundaryScvf_.resize(numScvs, false);
 
         // Build the scvs and scv faces
         IndexType scvfIdx = 0;
@@ -328,6 +329,8 @@ public:
                                         geometryHelper);
                     localToGlobalScvfIndices_[eIdx][localFaceIndex] = scvfIdx;
                     scvfsIndexSet.push_back(scvfIdx++);
+
+                    hasBoundaryScvf_[eIdx] = true;
                 }
             }
 
@@ -398,6 +401,10 @@ public:
         return FaceFVGridGeometry<ThisType>(this);
     }
 
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf(IndexType eIdx) const
+    { return hasBoundaryScvf_[eIdx]; }
+
 private:
 
     // mappers
@@ -409,6 +416,7 @@ private:
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<IndexType>> localToGlobalScvfIndices_;
     IndexType numBoundaryScvf_;
+    std::vector<bool> hasBoundaryScvf_;
 };
 
 /*!

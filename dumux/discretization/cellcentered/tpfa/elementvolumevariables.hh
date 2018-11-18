@@ -152,28 +152,31 @@ public:
             ++localIdx;
         }
 
-        // Update boundary volume variables
-        for (auto&& scvf : scvfs(fvGeometry))
+        if (fvGeometry.hasBoundaryScvf())
         {
-            // if we are not on a boundary, skip to the next scvf
-            if (!scvf.boundary())
+            // Update boundary volume variables
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                // if we are not on a boundary, skip to the next scvf
+                if (!scvf.boundary())
                 continue;
 
-            // check if boundary is a pure dirichlet boundary
-            const auto bcTypes = problem.boundaryTypes(element, scvf);
-            if (bcTypes.hasOnlyDirichlet())
-            {
-                const auto dirichletPriVars = elementSolution<FVElementGeometry>(problem.dirichlet(element, scvf));
+                // check if boundary is a pure dirichlet boundary
+                const auto bcTypes = problem.boundaryTypes(element, scvf);
+                if (bcTypes.hasOnlyDirichlet())
+                {
+                    const auto dirichletPriVars = elementSolution<FVElementGeometry>(problem.dirichlet(element, scvf));
 
-                volumeVariables_.resize(localIdx+1);
-                volVarIndices_.resize(localIdx+1);
-                volumeVariables_[localIdx].update(dirichletPriVars,
-                                                  problem,
-                                                  element,
-                                                  scvI);
-                volVarIndices_[localIdx] = scvf.outsideScvIdx();
-                ++localIdx;
-            }
+                    volumeVariables_.resize(localIdx+1);
+                    volVarIndices_.resize(localIdx+1);
+                    volumeVariables_[localIdx].update(dirichletPriVars,
+                        problem,
+                        element,
+                        scvI);
+                        volVarIndices_[localIdx] = scvf.outsideScvIdx();
+                        ++localIdx;
+                    }
+                }
         }
 
         //! Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends

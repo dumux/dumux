@@ -80,25 +80,28 @@ public:
                 volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
             }
 
-            // handle the boundary volume variables
-            for (auto&& scvf : scvfs(fvGeometry))
+            if (fvGeometry.hasBoundaryScvf())
             {
-                // if we are not on a boundary, skip the rest
-                if (!scvf.boundary())
-                    continue;
-
-                // check if boundary is a pure dirichlet boundary
-                const auto bcTypes = problem().boundaryTypes(element, scvf);
-                if (bcTypes.hasOnlyDirichlet())
+                // handle the boundary volume variables
+                for (auto&& scvf : scvfs(fvGeometry))
                 {
-                    const auto insideScvIdx = scvf.insideScvIdx();
-                    const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const auto dirichletPriVars = elementSolution<typename FVGridGeometry::LocalView>(problem().dirichlet(element, scvf));
+                    // if we are not on a boundary, skip the rest
+                    if (!scvf.boundary())
+                        continue;
 
-                    volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars,
-                                                                  problem(),
-                                                                  element,
-                                                                  insideScv);
+                    // check if boundary is a pure dirichlet boundary
+                    const auto bcTypes = problem().boundaryTypes(element, scvf);
+                    if (bcTypes.hasOnlyDirichlet())
+                    {
+                        const auto insideScvIdx = scvf.insideScvIdx();
+                        const auto& insideScv = fvGeometry.scv(insideScvIdx);
+                        const auto dirichletPriVars = elementSolution<typename FVGridGeometry::LocalView>(problem().dirichlet(element, scvf));
+
+                        volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars,
+                                                                      problem(),
+                                                                      element,
+                                                                      insideScv);
+                    }
                 }
             }
         }

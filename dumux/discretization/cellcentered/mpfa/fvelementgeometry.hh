@@ -154,6 +154,10 @@ public:
     const FVGridGeometry& fvGridGeometry() const
     { return *fvGridGeometryPtr_; }
 
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf() const
+    { return fvGridGeometry().hasBoundaryScvf(scvIndices_[0]); }
+
 private:
 
     std::array<GridIndexType, 1> scvIndices_;
@@ -309,6 +313,10 @@ public:
     const FVGridGeometry& fvGridGeometry() const
     { return *fvGridGeometryPtr_; }
 
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf() const
+    { return hasBoundaryScvf_; }
+
 private:
 
     //! Computes the number of neighboring scvfs that have to be prepared
@@ -385,6 +393,8 @@ private:
                 // do not build scvfs connected to a processor boundary
                 if (fvGridGeometry().isGhostVertex(vIdxGlobal))
                     continue;
+
+                hasBoundaryScvf_ = (hasBoundaryScvf_ || is.boundary());
 
                 scvfs_.emplace_back(MpfaHelper(),
                                     MpfaHelper::getScvfCorners(isPositions, numCorners, c),
@@ -514,6 +524,8 @@ private:
         neighborScvfIndices_.clear();
         neighborScvs_.clear();
         neighborScvfs_.clear();
+
+        hasBoundaryScvf_ = false;
     }
 
     const FVGridGeometry* fvGridGeometryPtr_;
@@ -528,6 +540,8 @@ private:
     std::vector<GridIndexType> neighborScvfIndices_;
     std::vector<SubControlVolume> neighborScvs_;
     std::vector<SubControlVolumeFace> neighborScvfs_;
+
+    bool hasBoundaryScvf_ = false;
 };
 
 } // end namespace

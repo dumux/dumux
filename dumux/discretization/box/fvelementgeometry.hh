@@ -148,6 +148,10 @@ public:
     const FVGridGeometry& fvGridGeometry() const
     { return *fvGridGeometryPtr_; }
 
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf() const
+    { return fvGridGeometry().hasBoundaryScvf(eIdx_); }
+
 private:
     const Element* elementPtr_;
     const FVGridGeometry* fvGridGeometryPtr_;
@@ -263,11 +267,16 @@ public:
     const FVGridGeometry& fvGridGeometry() const
     { return *fvGridGeometryPtr_; }
 
+    //! Returns whether one of the geometry's scvfs lies on a boundary
+    bool hasBoundaryScvf() const
+    { return hasBoundaryScvf_; }
+
 private:
 
     void makeElementGeometries(const Element& element)
     {
         auto eIdx = fvGridGeometry().elementMapper().index(element);
+        hasBoundaryScvf_ = false;
 
         // get the element geometry
         auto elementGeometry = element.geometry();
@@ -316,6 +325,7 @@ private:
             if (intersection.boundary() && !intersection.neighbor())
             {
                 const auto isGeometry = intersection.geometry();
+                hasBoundaryScvf_ = true;
 
                 for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < isGeometry.corners(); ++isScvfLocalIdx)
                 {
@@ -348,6 +358,8 @@ private:
     //! vectors to store the geometries locally after binding an element
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
+
+    bool hasBoundaryScvf_ = false;
 };
 
 } // end namespace Dumux

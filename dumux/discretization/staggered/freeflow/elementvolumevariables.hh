@@ -91,7 +91,8 @@ public:
               const SolutionVector& sol)
     {
         // the last parameter {} is needed for the PassKey pattern which restricts access to the ElementVolVars class
-        gridVolVars().updateBoundary_(element, fvGeometry, sol, {});
+        if (fvGeometry.hasBoundaryScvf())
+            gridVolVars().updateBoundary_(element, fvGeometry, sol, {});
     }
 
     //! function to prepare the vol vars within the element
@@ -181,24 +182,27 @@ public:
             ++localIdx;
         }
 
-        // Update boundary volume variables
-        for (auto&& scvf : scvfs(fvGeometry))
+        if (fvGeometry.hasBoundaryScvf())
         {
-            // if we are not on a boundary, skip to the next scvf
-            if (!scvf.boundary())
-                continue;
+            // Update boundary volume variables
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                // if we are not on a boundary, skip to the next scvf
+                if (!scvf.boundary())
+                    continue;
 
-            volumeVariables_.resize(localIdx+1);
-            volVarIndices_.resize(localIdx+1);
+                volumeVariables_.resize(localIdx+1);
+                volVarIndices_.resize(localIdx+1);
 
-            auto boundaryPriVars = gridVolVars().getBoundaryPriVars(problem, sol, element, scvf);
-            auto elemSol = elementSolution<FVElementGeometry>(std::move(boundaryPriVars));
-            volumeVariables_[localIdx].update(elemSol,
-                                              problem,
-                                              element,
-                                              scvI);
-            volVarIndices_[localIdx] = scvf.outsideScvIdx();
-            ++localIdx;
+                auto boundaryPriVars = gridVolVars().getBoundaryPriVars(problem, sol, element, scvf);
+                auto elemSol = elementSolution<FVElementGeometry>(std::move(boundaryPriVars));
+                volumeVariables_[localIdx].update(elemSol,
+                                                  problem,
+                                                  element,
+                                                  scvI);
+                volVarIndices_[localIdx] = scvf.outsideScvIdx();
+                ++localIdx;
+            }
         }
     }
 
