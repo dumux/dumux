@@ -133,12 +133,21 @@ int main (int argc, char *argv[]) try
         if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
+        std::size_t boundaryCount = 0;
         for (auto&& scvf : scvfs(fvGeometry))
         {
             std::cout << "-- scvf " << scvf.index() << " ip at: " << scvf.ipGlobal() << " normal: " << scvf.unitOuterNormal();
-            if (scvf.boundary()) std::cout << " (on boundary).";
+            if (scvf.boundary())
+            {
+                ++boundaryCount;
+                std::cout << " (on boundary).";
+            }
             std::cout << std::endl;
         }
+
+        if ((boundaryCount>0) != fvGeometry.hasBoundaryScvf())
+            DUNE_THROW(Dune::InvalidStateException, "fvGeometry.hasBoundaryScvf() reports " << fvGeometry.hasBoundaryScvf()
+                            << " but the number of boundary scvfs is " << boundaryCount);
     }
 }
 // //////////////////////////////////
