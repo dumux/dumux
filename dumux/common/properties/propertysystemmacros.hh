@@ -39,7 +39,6 @@
 #ifndef DUMUX_PROPERTY_SYSTEM_MACROS_HH
 #define DUMUX_PROPERTY_SYSTEM_MACROS_HH
 
-#warning "The property system macros are deprecated -- use the property system without the macros."
 #include <dumux/common/properties/propertysystem.hh>
 
 namespace Dumux {
