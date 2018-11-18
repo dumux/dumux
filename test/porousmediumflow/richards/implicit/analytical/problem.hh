@@ -59,21 +59,27 @@ class RichardsAnalyticalProblem;
 // Specify the properties for the analytical problem
 //////////
 namespace Properties {
-NEW_TYPE_TAG(RichardsAnalytical, INHERITS_FROM(Richards));
-NEW_TYPE_TAG(RichardsAnalyticalBox, INHERITS_FROM(BoxModel, RichardsAnalytical));
-NEW_TYPE_TAG(RichardsAnalyticalCC, INHERITS_FROM(CCTpfaModel, RichardsAnalytical));
+// Create new type tags
+namespace TTag {
+struct RichardsAnalytical { using InheritsFrom = std::tuple<Richards>; };
+struct RichardsAnalyticalBox { using InheritsFrom = std::tuple<RichardsAnalytical, BoxModel>; };
+struct RichardsAnalyticalCC { using InheritsFrom = std::tuple<RichardsAnalytical, CCTpfaModel>; };
+} // end namespace TTag
 
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsAnalytical, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::RichardsAnalytical> { using type = Dune::YaspGrid<2>; };
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsAnalytical, Problem, RichardsAnalyticalProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::RichardsAnalytical> { using type = RichardsAnalyticalProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(RichardsAnalytical, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::RichardsAnalytical>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = RichardsAnalyticalSpatialParams<FVGridGeometry, Scalar>;
 };
 } // end namespace Properties
@@ -97,14 +103,14 @@ template <class TypeTag>
 class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     enum {
         // copy some indices for convenience
         pwIdx = Indices::pressureIdx,

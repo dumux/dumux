@@ -67,37 +67,44 @@ struct PoroElasticModelTraits
 namespace Properties {
 
 //! Type tag for the poro-elastic geomechanical model
-NEW_TYPE_TAG(PoroElastic, INHERITS_FROM(Elastic));
+// Create new type tags
+namespace TTag {
+struct PoroElastic { using InheritsFrom = std::tuple<Elastic>; };
+} // end namespace TTag
 
 //! Use the local residual of the poro-elastic model
-SET_TYPE_PROP(PoroElastic, LocalResidual, PoroElasticLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::PoroElastic> { using type = PoroElasticLocalResidual<TypeTag>; };
 
 //! default vtk output fields specific to this model
-SET_TYPE_PROP(PoroElastic, IOFields, PoroElasticIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::PoroElastic> { using type = PoroElasticIOFields; };
 
 //! The deault model traits of the poro-elastic model
-SET_PROP(PoroElastic, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::PoroElastic>
 {
 private:
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    static constexpr int numSC = GET_PROP_TYPE(TypeTag, SolidSystem)::numComponents;
-    static constexpr int numFP = GET_PROP_TYPE(TypeTag, FluidSystem)::numPhases;
-    static constexpr int numFC = GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents;
+    static constexpr int dim = GetPropType<TypeTag, Properties::GridView>::dimension;
+    static constexpr int numSC = GetPropType<TypeTag, Properties::SolidSystem>::numComponents;
+    static constexpr int numFP = GetPropType<TypeTag, Properties::FluidSystem>::numPhases;
+    static constexpr int numFC = GetPropType<TypeTag, Properties::FluidSystem>::numComponents;
 
 public:
     using type = PoroElasticModelTraits<dim, numSC, numFP, numFC>;
 };
 
 //! Set the volume variables property
-SET_PROP(PoroElastic, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::PoroElastic>
 {
 private:
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    static constexpr int dim = GetPropType<TypeTag, Properties::GridView>::dimension;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using DV = Dune::FieldVector<typename PV::value_type, dim>;
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
 
     // we reuse the elastic volume variable traits here
     using Traits = ElasticVolumeVariablesTraits<PV, DV, MT, SST, SSY>;
@@ -106,11 +113,12 @@ public:
 };
 
 //! Per default, we use effective stresses on the basis of Hooke's Law
-SET_PROP(PoroElastic, StressType)
+template<class TypeTag>
+struct StressType<TypeTag, TTag::PoroElastic>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using ElasticStressType = HookesLaw< Scalar, FVGridGeometry >;
 public:
     using type = EffectiveStressLaw< ElasticStressType, FVGridGeometry >;

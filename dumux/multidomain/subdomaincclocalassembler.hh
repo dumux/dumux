@@ -57,14 +57,14 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, implicit>;
 
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using SolutionVector = typename Assembler::SolutionVector;
-    using SubSolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using SubSolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
@@ -74,7 +74,7 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using CouplingManager = typename Assembler::CouplingManager;
@@ -84,7 +84,7 @@ public:
     //! export the domain id of this sub-domain
     static constexpr auto domainId = typename Dune::index_constant<id>();
     //! the local residual type of this domain
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     //! pull up constructor of parent class
     using ParentType::ParentType;
 
@@ -277,20 +277,20 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
     using ThisType = SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/true>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
 
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
     enum { dim = GridView::dimension };
 
-    static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
-    static constexpr bool enableGridVolVarsCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
-    static constexpr int maxElementStencilSize = FVGridGeometry::maxElementStencilSize;;
+    static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    static constexpr bool enableGridVolVarsCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    static constexpr int maxElementStencilSize = FVGridGeometry::maxElementStencilSize;
     static constexpr auto domainI = Dune::index_constant<id>();
 
 public:
@@ -553,10 +553,10 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
     using ThisType = SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>;
     using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/false>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
 
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+    static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
     static constexpr auto domainI = Dune::index_constant<id>();
 
 public:
@@ -677,12 +677,12 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*
 {
     using ThisType = SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true>;
     using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/true>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
     enum { dim = GridView::dimension };
 
     static constexpr auto domainI = Dune::index_constant<id>();

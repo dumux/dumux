@@ -56,57 +56,68 @@ class FlatPlateNCTestProblem;
 namespace Properties
 {
 
+// Create new type tags
+namespace TTag {
 #if NONISOTHERMAL
   #if LOWREKEPSILON
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNCNI));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<LowReKEpsilonNCNI, StaggeredFreeFlowModel>; };
   #elif KEPSILON
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNCNI));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<KEpsilonNCNI, StaggeredFreeFlowModel>; };
   #elif KOMEGA
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNCNI));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<KOmegaNCNI, StaggeredFreeFlowModel>; };
   #elif ONEEQ
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNCNI));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<OneEqNCNI, StaggeredFreeFlowModel>; };
   #else
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<ZeroEqNCNI, StaggeredFreeFlowModel>; };
   #endif
 #else
   #if LOWREKEPSILON
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNC));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<LowReKEpsilonNC, StaggeredFreeFlowModel>; };
   #elif KEPSILON
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNC));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<KEpsilonNC, StaggeredFreeFlowModel>; };
   #elif KOMEGA
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNC));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<KOmegaNC, StaggeredFreeFlowModel>; };
   #elif ONEEQ
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNC));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<OneEqNC, StaggeredFreeFlowModel>; };
   #else
-  NEW_TYPE_TAG(FlatPlateNCTest, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
+  struct FlatPlateNCTest { using InheritsFrom = std::tuple<ZeroEqNC, StaggeredFreeFlowModel>; };
   #endif
 #endif
+} // end namespace TTag
 
 // The fluid system
-SET_PROP(FlatPlateNCTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::FlatPlateNCTest>
 {
-  using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+  using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
   static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the air phase
   using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
 // replace the main component balance eq with a total balance eq
-SET_INT_PROP(FlatPlateNCTest, ReplaceCompEqIdx, 0);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::FlatPlateNCTest> { static constexpr int value = 0; };
 
 // Set the grid type
-SET_TYPE_PROP(FlatPlateNCTest, Grid,
-              Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::FlatPlateNCTest>
+{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
-SET_TYPE_PROP(FlatPlateNCTest, Problem, Dumux::FlatPlateNCTestProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FlatPlateNCTest> { using type = Dumux::FlatPlateNCTestProblem<TypeTag> ; };
 
-SET_BOOL_PROP(FlatPlateNCTest, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::FlatPlateNCTest> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(FlatPlateNCTest, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(FlatPlateNCTest, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::FlatPlateNCTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::FlatPlateNCTest> { static constexpr bool value = true; };
 
 // Enable gravity
-SET_BOOL_PROP(FlatPlateNCTest, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::FlatPlateNCTest> { static constexpr bool value = true; };
 } // end namespace Properties
 
 /*!
@@ -141,24 +152,24 @@ class FlatPlateNCTestProblem : public ZeroEqProblem<TypeTag>
     using ParentType = ZeroEqProblem<TypeTag>;
 #endif
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
-    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
     static constexpr auto transportEqIdx = Indices::conti0EqIdx + 1;
     static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
 

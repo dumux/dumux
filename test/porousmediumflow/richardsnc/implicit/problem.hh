@@ -49,26 +49,33 @@ class RichardsWellTracerProblem;
 
 // Specify the properties for the lens problem
 namespace Properties {
-NEW_TYPE_TAG(RichardsWellTracer, INHERITS_FROM(RichardsNC));
-NEW_TYPE_TAG(RichardsWellTracerBox, INHERITS_FROM(BoxModel, RichardsWellTracer));
-NEW_TYPE_TAG(RichardsWellTracerCC, INHERITS_FROM(CCTpfaModel, RichardsWellTracer));
+// Create new type tags
+namespace TTag {
+struct RichardsWellTracer { using InheritsFrom = std::tuple<RichardsNC>; };
+struct RichardsWellTracerBox { using InheritsFrom = std::tuple<RichardsWellTracer, BoxModel>; };
+struct RichardsWellTracerCC { using InheritsFrom = std::tuple<RichardsWellTracer, CCTpfaModel>; };
+} // end namespace TTag
 
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsWellTracer, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::RichardsWellTracer> { using type = Dune::YaspGrid<2>; };
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsWellTracer, Problem, RichardsWellTracerProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::RichardsWellTracer> { using type = RichardsWellTracerProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(RichardsWellTracer, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::RichardsWellTracer>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = RichardsWellTracerSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsWellTracer, PointSource, SolDependentPointSource<TypeTag>);
+template<class TypeTag>
+struct PointSource<TypeTag, TTag::RichardsWellTracer> { using type = SolDependentPointSource<TypeTag>; };
 } // end namespace Properties
 
 /*!
@@ -101,21 +108,21 @@ template <class TypeTag>
 class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using PointSource = GetPropType<TypeTag, Properties::PointSource>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     enum {
         pressureIdx = Indices::pressureIdx,
         compIdx = Indices::compMainIdx + 1,

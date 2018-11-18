@@ -46,35 +46,45 @@ template <class TypeTag>
 class FractureProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Fracture, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(FractureBox, INHERITS_FROM(BoxModel, Fracture));
-NEW_TYPE_TAG(FractureCCTpfa, INHERITS_FROM(CCTpfaModel, Fracture));
-NEW_TYPE_TAG(FractureCCMpfa, INHERITS_FROM(CCMpfaModel, Fracture));
+// Create new type tags
+namespace TTag {
+struct Fracture { using InheritsFrom = std::tuple<OneP>; };
+struct FractureBox { using InheritsFrom = std::tuple<Fracture, BoxModel>; };
+struct FractureCCTpfa { using InheritsFrom = std::tuple<Fracture, CCTpfaModel>; };
+struct FractureCCMpfa { using InheritsFrom = std::tuple<Fracture, CCMpfaModel>; };
+} // end namespace TTag
 
 //! Enable caching (more memory, but faster runtime)
-SET_BOOL_PROP(Fracture, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Fracture, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Fracture, EnableGridFluxVariablesCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
 
 //! The grid type
 #if HAVE_DUNE_FOAMGRID
-SET_TYPE_PROP(Fracture, Grid, Dune::FoamGrid<2, 3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Fracture> { using type = Dune::FoamGrid<2, 3>; };
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(Fracture, Problem, Dumux::FractureProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Fracture> { using type = Dumux::FractureProblem<TypeTag>; };
 
 // the fluid system
-SET_PROP(Fracture, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Fracture>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 // Set the spatial parameters
-SET_PROP(Fracture, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Fracture>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FractureSpatialParams<FVGridGeometry, Scalar>;
 };
 
@@ -91,8 +101,8 @@ template <class TypeTag>
 class FractureProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum { dimWorld = GridView::dimensionworld };
 
@@ -101,12 +111,12 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
         pressureIdx = Indices::pressureIdx
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
 public:
     /*!

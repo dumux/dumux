@@ -25,6 +25,7 @@
 #define DUMUX_FVMPFAL3DPROPERTIES2P_HH
 
 // dumux environment
+#include <dumux/common/properties/propertysystemmacros.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 

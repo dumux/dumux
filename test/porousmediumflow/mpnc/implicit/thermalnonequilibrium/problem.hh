@@ -58,84 +58,96 @@ struct CombustionModelTraits : public MPNCModelTraits<numP, numC, formulation, u
 };
 
 namespace Properties {
-NEW_TYPE_TAG(CombustionOneComponent, INHERITS_FROM(MPNCNonequil));
-NEW_TYPE_TAG(CombustionOneComponentBox, INHERITS_FROM(BoxModel, CombustionOneComponent));
+// Create new type tags
+namespace TTag {
+struct CombustionOneComponent { using InheritsFrom = std::tuple<MPNCNonequil>; };
+struct CombustionOneComponentBox { using InheritsFrom = std::tuple<CombustionOneComponent, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(CombustionOneComponent, Grid, Dune::OneDGrid);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::CombustionOneComponent> { using type = Dune::OneDGrid; };
 
 // Set the problem property
-SET_TYPE_PROP(CombustionOneComponent,
-              Problem,
-              CombustionProblemOneComponent<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::CombustionOneComponent>
+{ using type = CombustionProblemOneComponent<TypeTag>; };
 
-
-
-SET_TYPE_PROP(CombustionOneComponent,
-              FluidSystem,
-              FluidSystems::CombustionFluidsystem<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::CombustionOneComponent>
+{ using type = FluidSystems::CombustionFluidsystem<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Set the default pressure formulation: either pw first or pn first
-SET_PROP(CombustionOneComponent, PressureFormulation)
+template<class TypeTag>
+struct PressureFormulation<TypeTag, TTag::CombustionOneComponent>
 {
 public:
     static const MpNcPressureFormulation value = MpNcPressureFormulation::mostWettingFirst;
 };
 
 // Set the type used for scalar values
-SET_TYPE_PROP(CombustionOneComponent, Scalar, double );
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::CombustionOneComponent> { using type = double ; };
 // quad / double
 
 // We use different model traits for the equilibrium part because we want to deactivate diffusion
-SET_PROP(CombustionOneComponent, EquilibriumModelTraits)
+template<class TypeTag>
+struct EquilibriumModelTraits<TypeTag, TTag::CombustionOneComponent>
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = CombustionModelTraits< FluidSystem::numPhases,
                                         FluidSystem::numComponents,
-                                        GET_PROP_VALUE(TypeTag, PressureFormulation),
-                                        GET_PROP_VALUE(TypeTag, UseMoles) >;
+                                        getPropValue<TypeTag, Properties::PressureFormulation>(),
+                                        getPropValue<TypeTag, Properties::UseMoles>() >;
 };
 
-SET_PROP(CombustionOneComponent, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::CombustionOneComponent>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 //#################
 //changes from the default settings which also assume chemical non-equilibrium
 //set the number of energyequations we want to use
-SET_INT_PROP(CombustionOneComponent, NumEnergyEqFluid, 1);
-SET_INT_PROP(CombustionOneComponent, NumEnergyEqSolid, 1);
+template<class TypeTag>
+struct NumEnergyEqFluid<TypeTag, TTag::CombustionOneComponent> { static constexpr int value = 1; };
+template<class TypeTag>
+struct NumEnergyEqSolid<TypeTag, TTag::CombustionOneComponent> { static constexpr int value = 1; };
 
 // by default chemical non equilibrium is enabled in the nonequil model, switch that off here
-SET_BOOL_PROP(CombustionOneComponent, EnableChemicalNonEquilibrium, false);
+template<class TypeTag>
+struct EnableChemicalNonEquilibrium<TypeTag, TTag::CombustionOneComponent> { static constexpr bool value = false; };
 //#################
 
-SET_PROP(CombustionOneComponent, SolidSystem)
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::CombustionOneComponent>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ComponentOne = Dumux::Components::Constant<1, Scalar>;
     using ComponentTwo = Dumux::Components::Constant<2, Scalar>;
     static constexpr int numInertComponents = 2;
     using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo, numInertComponents>;
 };
 
-SET_PROP(CombustionOneComponent, SolidState)
+template<class TypeTag>
+struct SolidState<TypeTag, TTag::CombustionOneComponent>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 public:
     using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(CombustionOneComponent, SpatialParams, CombustionSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::CombustionOneComponent> { using type = CombustionSpatialParams<TypeTag>; };
 
 }
 /*!
@@ -147,24 +159,24 @@ template<class TypeTag>
 class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     enum {dimWorld = GridView::dimensionworld};

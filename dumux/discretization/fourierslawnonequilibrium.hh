@@ -39,7 +39,7 @@ class FouriersLawNonEquilibriumImplementation
  * \brief Evaluates the heat conduction flux according to Fouriers's law
  */
 template <class TypeTag>
-using FouriersLawNonEquilibrium = FouriersLawNonEquilibriumImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+using FouriersLawNonEquilibrium = FouriersLawNonEquilibriumImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
 
 } // end namespace Dumux
 

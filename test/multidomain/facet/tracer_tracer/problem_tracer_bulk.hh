@@ -44,44 +44,55 @@ template <class TypeTag>
 class TracerBulkProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TracerTestBulk, INHERITS_FROM(Tracer));
+// Create new type tags
+namespace TTag {
+struct TracerTestBulk { using InheritsFrom = std::tuple<Tracer>; };
 
 // define the type tags
-NEW_TYPE_TAG(TracerBulkTpfa, INHERITS_FROM(TracerTestBulk, CCTpfaFacetCouplingModel));
-NEW_TYPE_TAG(TracerBulkBox, INHERITS_FROM(TracerTestBulk, BoxFacetCouplingModel));
+struct TracerBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, TracerTestBulk>; };
+struct TracerBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, TracerTestBulk>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TracerTestBulk, Grid, Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TracerTestBulk> { using type = Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>; };
 
 //! Overwrite the advection type property
-SET_TYPE_PROP(TracerBulkTpfa, AdvectionType, StationaryVelocityField<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-SET_TYPE_PROP(TracerBulkBox, AdvectionType, StationaryVelocityField<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::TracerBulkTpfa> { using type = StationaryVelocityField<GetPropType<TypeTag, Properties::Scalar>>; };
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::TracerBulkBox> { using type = StationaryVelocityField<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Set the problem property
-SET_TYPE_PROP(TracerTestBulk, Problem, TracerBulkProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TracerTestBulk> { using type = TracerBulkProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(TracerTestBulk, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TracerTestBulk>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TracerSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(TracerTestBulk, UseMoles, false);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::TracerTestBulk> { static constexpr bool value = false; };
 
 //! set the model traits (with disabled diffusion)
-SET_PROP(TracerTestBulk, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TracerTestBulk>
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
-    using type = TracerTestModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles)>;
+    using type = TracerTestModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>()>;
 };
 
 // use the test-specific fluid system
-SET_TYPE_PROP(TracerTestBulk, FluidSystem, TracerFluidSystem<TypeTag>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TracerTestBulk> { using type = TracerFluidSystem<TypeTag>; };
 } // end namespace Properties
 
 
@@ -95,19 +106,19 @@ class TracerBulkProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
     //! property that defines whether mole or mass fractions are used
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

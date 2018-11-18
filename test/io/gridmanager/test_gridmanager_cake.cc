@@ -42,12 +42,16 @@ namespace Dumux
 
 namespace Properties
 {
-NEW_TYPE_TAG(GridCreatorCakeTest);
+namespace TTag {
+struct GridCreatorCakeTest {};
+}
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::GridCreatorCakeTest> { using type = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>; };
 #elif HAVE_UG
-SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::UGGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::GridCreatorCakeTest> { using type = Dune::UGGrid<3>; };
 #endif
 }
 }
@@ -58,8 +62,8 @@ int main(int argc, char** argv) try
     Dune::MPIHelper::instance(argc, argv);
 
     // using declarations
-    using TypeTag = TTAG(GridCreatorCakeTest);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using TypeTag = Dumux::Properties::TTag::GridCreatorCakeTest;
+    using Grid = Dumux::GetPropType<TypeTag, Dumux::Properties::Grid>;
     using GridManager = typename Dumux::CakeGridCreator<Grid>;
     GridManager gridManager;
 

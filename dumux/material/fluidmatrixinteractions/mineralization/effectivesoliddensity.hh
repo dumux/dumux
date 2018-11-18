@@ -39,17 +39,17 @@ namespace Dumux {
 template<class TypeTag>
 class DUNE_DEPRECATED_MSG("Implement SolidSystems instead!") EffectiveSolidDensity
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    static const int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
-    static const int numSolidPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numSPhases();
+    static const int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents();
+    static const int numSolidPhases = GetPropType<TypeTag, Properties::ModelTraits>::numSPhases();
 
     using Element = typename GridView::template Codim<0>:: Entity;
 

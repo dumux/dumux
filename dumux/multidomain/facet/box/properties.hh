@@ -47,34 +47,44 @@ namespace Properties {
 
 //! Type tag for the box scheme with coupling to
 //! another sub-domain living on the grid facets.
-NEW_TYPE_TAG(BoxFacetCouplingModel, INHERITS_FROM(BoxModel));
+// Create new type tags
+namespace TTag {
+struct BoxFacetCouplingModel { using InheritsFrom = std::tuple<BoxModel>; };
+} // end namespace TTag
 
 //! Use the box local residual for models with facet coupling
-SET_TYPE_PROP(BoxFacetCouplingModel, BaseLocalResidual, BoxFacetCouplingLocalResidual<TypeTag>);
+template<class TypeTag>
+struct BaseLocalResidual<TypeTag, TTag::BoxFacetCouplingModel> { using type = BoxFacetCouplingLocalResidual<TypeTag>; };
 
 //! Use the box facet coupling-specific Darcy's law
-SET_TYPE_PROP(BoxFacetCouplingModel,
-              AdvectionType,
-              BoxFacetCouplingDarcysLaw< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                         typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::BoxFacetCouplingModel>
+{
+    using type = BoxFacetCouplingDarcysLaw< GetPropType<TypeTag, Properties::Scalar>,
+                                            GetPropType<TypeTag, Properties::FVGridGeometry> >;
+};
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
-SET_TYPE_PROP(BoxFacetCouplingModel,
-              FluxVariables,
-              PorousMediumFluxVariables<TypeTag, BoxFacetCouplingUpwindScheme<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>>);
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::BoxFacetCouplingModel>
+{
+    using type = PorousMediumFluxVariables<TypeTag,
+                                           BoxFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::FVGridGeometry>>>;
+};
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
-SET_TYPE_PROP(BoxFacetCouplingModel,
-              ElementBoundaryTypes,
-              BoxFacetCouplingElementBoundaryTypes<typename GET_PROP_TYPE(TypeTag, BoundaryTypes)>);
+template<class TypeTag>
+struct ElementBoundaryTypes<TypeTag, TTag::BoxFacetCouplingModel>
+{ using type = BoxFacetCouplingElementBoundaryTypes<GetPropType<TypeTag, Properties::BoundaryTypes>>; };
 
 //! Set the default for the grid finite volume geometry
-SET_PROP(BoxFacetCouplingModel, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::BoxFacetCouplingModel>
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = BoxFacetCouplingFVGridGeometry<Scalar, GridView, enableCache>;
 };

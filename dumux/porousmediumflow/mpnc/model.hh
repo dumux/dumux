@@ -234,51 +234,58 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 //! The type tags for the isothermal & non-isothermal two-phase model
-NEW_TYPE_TAG(MPNC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(MPNCNI, INHERITS_FROM(MPNC));
-NEW_TYPE_TAG(MPNCNonequil, INHERITS_FROM(MPNC, NonEquilibrium));
+// Create new type tags
+namespace TTag {
+struct MPNC { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+struct MPNCNI { using InheritsFrom = std::tuple<MPNC>; };
+struct MPNCNonequil { using InheritsFrom = std::tuple<NonEquilibrium, MPNC>; };
+} // end namespace TTag
 
 /////////////////////////////////////////////////////////////////
 // Properties for the isothermal mpnc model
 //////////////////////////////////////////////////////////////////
 
 //! Use the MpNc local residual for the MpNc model
-SET_TYPE_PROP(MPNC, LocalResidual,  MPNCLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::MPNC> { using type = MPNCLocalResidual<TypeTag>; };
 
 //! Set the model traits property
-SET_PROP(MPNC, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::MPNC>
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = MPNCModelTraits<FluidSystem::numPhases,
                                  FluidSystem::numComponents,
-                                 GET_PROP_VALUE(TypeTag, PressureFormulation),
-                                 GET_PROP_VALUE(TypeTag, UseMoles),
-                                 GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+                                 getPropValue<TypeTag, Properties::PressureFormulation>(),
+                                 getPropValue<TypeTag, Properties::UseMoles>(),
+                                 getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
 
 //! This model uses the compositional fluid state
-SET_PROP(MPNC, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::MPNC>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 //! Set the volume variables property
-SET_PROP(MPNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::MPNC>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = MPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -286,35 +293,41 @@ public:
 };
 
 //! Per default, no component mass balance is replaced
-SET_INT_PROP(MPNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::MPNC> { static constexpr int value = GetPropType<TypeTag, Properties::FluidSystem>::numComponents; };
 //! Use mole fractions in the balance equations by default
-SET_BOOL_PROP(MPNC, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::MPNC> { static constexpr bool value = true; };
 //! Use the model after Millington (1961) for the effective diffusivity
-SET_TYPE_PROP(MPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::MPNC> { using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 //! Set the default pressure formulation to the pressure of the (most) wetting phase
-SET_PROP(MPNC, PressureFormulation)
+template<class TypeTag>
+struct PressureFormulation<TypeTag, TTag::MPNC>
 {
 public:
     static const MpNcPressureFormulation value = MpNcPressureFormulation::mostWettingFirst;
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(MPNC, IOFields, MPNCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::MPNC> { using type = MPNCIOFields; };
 
 /////////////////////////////////////////////////
 // Properties for the non-isothermal mpnc model
 /////////////////////////////////////////////////
 
 //! set the non-isothermal model traits
-SET_PROP(MPNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::MPNCNI>
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using IsothermalTraits = MPNCModelTraits<FluidSystem::numPhases,
                                              FluidSystem::numComponents,
-                                             GET_PROP_VALUE(TypeTag, PressureFormulation),
-                                             GET_PROP_VALUE(TypeTag, UseMoles),
-                                             GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+                                             getPropValue<TypeTag, Properties::PressureFormulation>(),
+                                             getPropValue<TypeTag, Properties::UseMoles>(),
+                                             getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
@@ -323,23 +336,26 @@ public:
 // Properties for the non-equilibrium mpnc model
 /////////////////////////////////////////////////
 
-SET_TYPE_PROP(MPNCNonequil, EquilibriumLocalResidual, MPNCLocalResidual<TypeTag>);
+template<class TypeTag>
+struct EquilibriumLocalResidual<TypeTag, TTag::MPNCNonequil> { using type = MPNCLocalResidual<TypeTag>; };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(MPNCNonequil, EquilibriumIOFields, MPNCIOFields);
+template<class TypeTag>
+struct EquilibriumIOFields<TypeTag, TTag::MPNCNonequil> { using type = MPNCIOFields; };
 
 //! For non-equilibrium with mpnc we have to overwrite the model traits again,
 //! because the mpnc indices depend on the status of the non-equilibrium model traits
-SET_PROP(MPNCNonequil, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::MPNCNonequil>
 {
 private:
-    using EquiTraits = typename GET_PROP_TYPE(TypeTag, EquilibriumModelTraits);
-    static constexpr bool enableTNE = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
-    static constexpr bool enableCNE = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
-    static constexpr int numEF = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
-    static constexpr int numES = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
-    static constexpr auto nf = GET_PROP_VALUE(TypeTag, NusseltFormulation);
-    static constexpr auto ns = GET_PROP_VALUE(TypeTag, SherwoodFormulation);
+    using EquiTraits = GetPropType<TypeTag, Properties::EquilibriumModelTraits>;
+    static constexpr bool enableTNE = getPropValue<TypeTag, Properties::EnableThermalNonEquilibrium>();
+    static constexpr bool enableCNE = getPropValue<TypeTag, Properties::EnableChemicalNonEquilibrium>();
+    static constexpr int numEF = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr int numES = getPropValue<TypeTag, Properties::NumEnergyEqSolid>();
+    static constexpr auto nf = getPropValue<TypeTag, Properties::NusseltFormulation>();
+    static constexpr auto ns = getPropValue<TypeTag, Properties::SherwoodFormulation>();
 
     using NonEquilTraits = NonEquilibriumModelTraits<EquiTraits, enableCNE, enableTNE, numEF, numES, nf, ns>;
 public:
@@ -347,38 +363,41 @@ public:
 };
 
 //! set equilibrium model traits
-SET_PROP(MPNCNonequil, EquilibriumModelTraits)
+template<class TypeTag>
+struct EquilibriumModelTraits<TypeTag, TTag::MPNCNonequil>
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = MPNCModelTraits<FluidSystem::numPhases,
                                  FluidSystem::numComponents,
-                                 GET_PROP_VALUE(TypeTag, PressureFormulation),
-                                 GET_PROP_VALUE(TypeTag, UseMoles),
-                                 GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+                                 getPropValue<TypeTag, Properties::PressureFormulation>(),
+                                 getPropValue<TypeTag, Properties::UseMoles>(),
+                                 getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
 
 //! in case we do not assume full non-equilibrium one needs a thermal conductivity
-SET_PROP(MPNCNonequil, ThermalConductivityModel)
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::MPNCNonequil>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = ThermalConductivitySimpleFluidLumping<Scalar, GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)>;
+    using type = ThermalConductivitySimpleFluidLumping<Scalar, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>;
 };
 
 //! use the mineralization volume variables together with the 2pnc vol vars
-SET_PROP(MPNCNonequil, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::MPNCNonequil>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = MPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
     using EquilibriumVolVars = MPNCVolumeVariables<Traits>;

@@ -58,24 +58,31 @@ namespace Dumux {
 template <class TypeTag> class InjectionProblem2PNI;
 
 namespace Properties {
-NEW_TYPE_TAG(Injection2PNITypeTag, INHERITS_FROM(TwoPNI));
-NEW_TYPE_TAG(InjectionBox2PNITypeTag, INHERITS_FROM(BoxModel, Injection2PNITypeTag));
-NEW_TYPE_TAG(InjectionCC2PNITypeTag, INHERITS_FROM(CCTpfaModel, Injection2PNITypeTag));
+// Create new type tags
+namespace TTag {
+struct Injection2PNITypeTag { using InheritsFrom = std::tuple<TwoPNI>; };
+struct InjectionBox2PNITypeTag { using InheritsFrom = std::tuple<Injection2PNITypeTag, BoxModel>; };
+struct InjectionCC2PNITypeTag { using InheritsFrom = std::tuple<Injection2PNITypeTag, CCTpfaModel>; };
+} // end namespace TTag
 
 // Obtain grid type from COMPILE_DEFINITIONS
-SET_TYPE_PROP(Injection2PNITypeTag, Grid, GRIDTYPE);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Injection2PNITypeTag> { using type = GRIDTYPE; };
 
 // Set the problem property
-SET_TYPE_PROP(Injection2PNITypeTag, Problem, InjectionProblem2PNI<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Injection2PNITypeTag> { using type = InjectionProblem2PNI<TypeTag>; };
 
 // Use the same fluid system as the 2p2c injection problem
-SET_TYPE_PROP(Injection2PNITypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Injection2PNITypeTag> { using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>; };
 
 // Set the spatial parameters
-SET_PROP(Injection2PNITypeTag, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Injection2PNITypeTag>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = InjectionSpatialParams<FVGridGeometry, Scalar>;
 };
 
@@ -113,13 +120,13 @@ template<class TypeTag>
 class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     enum
@@ -141,13 +148,13 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
 public:
     /*!
@@ -263,7 +270,7 @@ public:
             values[contiN2EqIdx] = -1e-3; // kg/(s*m^2)
 
             // compute enthalpy flux associated with this injection [(J/(kg*s)]
-            using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+            using FluidState = GetPropType<TypeTag, Properties::FluidState>;
             FluidState fs;
 
             const auto initialValues = initialAtPos(globalPos);

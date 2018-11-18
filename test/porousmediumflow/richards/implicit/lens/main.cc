@@ -57,7 +57,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(TYPETAG);
+    using TypeTag = Properties::TTag::TYPETAG;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -70,7 +70,7 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
-    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     ////////////////////////////////////////////////////////////
@@ -81,27 +81,27 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     // the problem (initial and boundary conditions)
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // check if we are about to restart a previously interrupted simulation
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const auto restartTime = getParam<Scalar>("Restart.Time", 0);
 
     // the solution vector
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(fvGridGeometry->numDofs());
     if (restartTime > 0)
     {
-        using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
-        using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+        using IOFields = GetPropType<TypeTag, Properties::IOFields>;
+        using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+        using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+        using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
         const auto fileName = getParam<std::string>("Restart.File");
         loadSolution(x, fileName, createPVNameFunction<IOFields, PrimaryVariables, ModelTraits, FluidSystem>(), *fvGridGeometry);
     }
@@ -113,14 +113,14 @@ int main(int argc, char** argv) try
     auto xOld = x;
 
     // the grid variables
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
     // intialize the vtk output module
-    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+    using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(restartTime);

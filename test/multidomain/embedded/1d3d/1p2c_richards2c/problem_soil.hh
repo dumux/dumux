@@ -51,34 +51,51 @@ class SoilProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(Soil, INHERITS_FROM(CCTpfaModel, RichardsNC));
+// Create new type tags
+namespace TTag {
+struct Soil { using InheritsFrom = std::tuple<RichardsNC, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Soil, Grid, Dune::UGGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Soil> { using type = Dune::UGGrid<3>; };
 
-SET_BOOL_PROP(Soil, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Soil, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Soil, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(Soil, SolutionDependentAdvection, false);
-SET_BOOL_PROP(Soil, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(Soil, SolutionDependentHeatConduction, false);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::Soil> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::Soil> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::Soil> { static constexpr bool value = false; };
 
 // Set the problem property
-SET_TYPE_PROP(Soil, Problem, SoilProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Soil> { using type = SoilProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_TYPE_PROP(Soil, SpatialParams, SoilSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                            typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Soil>
+{
+    using type = SoilSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                   GetPropType<TypeTag, Properties::Scalar>>;
+};
 
 // Set the fluid system
-SET_PROP(Soil, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Soil>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::LiquidPhaseTwoC<Scalar, Components::SimpleH2O<Scalar>,
                                                        Components::Constant<1, Scalar>>;
 };
 
-SET_BOOL_PROP(Soil, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::Soil> { static constexpr bool value = true; };
 
 } // end namespace Properties
 
@@ -90,24 +107,24 @@ template <class TypeTag>
 class SoilProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
     using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PointSource = GetPropType<TypeTag, Properties::PointSource>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     enum Indices {
         // world dimension
         dim = GridView::dimension,
@@ -133,7 +150,7 @@ public:
 
         // for initial conditions
         const Scalar sw = getParam<Scalar>("Problem.InitTopSaturation", 0.3); // start with 30% saturation on top
-        using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
+        using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
         pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(fvGridGeometry->bBoxMax()), sw);
     }
 

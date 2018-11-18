@@ -87,24 +87,28 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(OnePNCMin, INHERITS_FROM(OnePNC));
-NEW_TYPE_TAG(OnePNCMinNI, INHERITS_FROM(OnePNCMin));
+// Create new type tags
+namespace TTag {
+struct OnePNCMin { using InheritsFrom = std::tuple<OnePNC>; };
+struct OnePNCMinNI { using InheritsFrom = std::tuple<OnePNCMin>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags for the isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
 
 //! use the mineralization volume variables together with the 1pnc vol vars
-SET_PROP(OnePNCMin, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OnePNCMin>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
@@ -118,57 +122,63 @@ public:
 };
 
 // Use the mineralization local residual
-SET_TYPE_PROP(OnePNCMin, LocalResidual, MineralizationLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OnePNCMin> { using type = MineralizationLocalResidual<TypeTag>; };
 
 //! Use non-mineralization model traits with 1pnc traits
-SET_PROP(OnePNCMin, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OnePNCMin>
 {
 private:
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using NonMinTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+    using NonMinTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = MineralizationModelTraits<NonMinTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 };
 
 //! The two-phase model uses the immiscible fluid state
-SET_PROP(OnePNCMin, SolidState)
+template<class TypeTag>
+struct SolidState<TypeTag, TTag::OnePNCMin>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 public:
     using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
 
 //! Use the mineralization vtk output fields
-SET_TYPE_PROP(OnePNCMin, IOFields, MineralizationIOFields<OnePNCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OnePNCMin> { using type = MineralizationIOFields<OnePNCIOFields>; };
 
 //////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
 
 //! non-isothermal vtk output
-SET_PROP(OnePNCMinNI, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OnePNCMinNI>
 {
     using MineralizationIOF = MineralizationIOFields<OnePNCIOFields>;
     using type = EnergyIOFields<MineralizationIOF>;
 };
 
 //! The non-isothermal model traits
-SET_PROP(OnePNCMinNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OnePNCMinNI>
 {
 private:
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using OnePNCTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+    using OnePNCTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
     using IsothermalTraits = MineralizationModelTraits<OnePNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
 //! Use the average for effective conductivities
-SET_TYPE_PROP(OnePNCMinNI,
-              ThermalConductivityModel,
-              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::OnePNCMinNI>
+{ using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux

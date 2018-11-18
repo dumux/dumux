@@ -35,29 +35,29 @@ template<class TypeTag, bool enableThermalNonEquilibrium, bool enableChemicalNon
 class NonEquilibriumLocalResidualImplementation;
 
 template <class TypeTag>
-using NonEquilibriumLocalResidual = NonEquilibriumLocalResidualImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableThermalNonEquilibrium(), GET_PROP_TYPE(TypeTag, ModelTraits)::enableChemicalNonEquilibrium()>;
+using NonEquilibriumLocalResidual = NonEquilibriumLocalResidualImplementation<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableThermalNonEquilibrium(), GetPropType<TypeTag, Properties::ModelTraits>::enableChemicalNonEquilibrium()>;
 
 /*!
  * \ingroup PorousmediumNonEquilibriumModel
  * \brief The mass conservation part of the nonequilibrium model for a model without chemical non-equilibrium
  */
 template<class TypeTag>
-class NonEquilibriumLocalResidualImplementation<TypeTag, true, false>: public GET_PROP_TYPE(TypeTag, EquilibriumLocalResidual)
+class NonEquilibriumLocalResidualImplementation<TypeTag, true, false>: public GetPropType<TypeTag, Properties::EquilibriumLocalResidual>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ParentType = typename GET_PROP_TYPE(TypeTag, EquilibriumLocalResidual);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using ParentType = GetPropType<TypeTag, Properties::EquilibriumLocalResidual>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     static constexpr int numPhases = ModelTraits::numPhases();
@@ -152,34 +152,34 @@ public:
 /*!
  * \brief The mass conservation part of the nonequilibrium model for a model assuming chemical non-equilibrium and two phases */
 template<class TypeTag>
-class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public GET_PROP_TYPE(TypeTag, EquilibriumLocalResidual)
+class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public GetPropType<TypeTag, Properties::EquilibriumLocalResidual>
 {
-    using ParentType = typename GET_PROP_TYPE(TypeTag, EquilibriumLocalResidual);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using ParentType = GetPropType<TypeTag, Properties::EquilibriumLocalResidual>;
+    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     static constexpr int numPhases = ModelTraits::numPhases();
     static constexpr int numComponents = ModelTraits::numComponents();
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
     enum { conti0EqIdx = Indices::conti0EqIdx };

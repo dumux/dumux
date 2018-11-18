@@ -41,21 +41,21 @@ class FicksLawImplementation;
 template <class TypeTag>
 class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    using BalanceEqOpts = GetPropType<TypeTag, Properties::BalanceEqOpts>;
 
-    static constexpr int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
+    static constexpr int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents();
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
     //! Class that fills the cache corresponding to mpfa Fick's Law
@@ -91,19 +91,19 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     //! The cache used in conjunction with the mpfa Fick's Law
     class MpfaFicksLawCache
     {
-        using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+        using DualGridNodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
         using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
 
         using MpfaHelper = typename FVGridGeometry::MpfaHelper;
         static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
 
-        using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+        using PrimaryInteractionVolume = GetPropType<TypeTag, Properties::PrimaryInteractionVolume>;
         using PrimaryIvLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
         using PrimaryIvDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle;
         using PrimaryIvCellVector = typename PrimaryInteractionVolume::Traits::MatVecTraits::CellVector;
         using PrimaryIvTij = typename PrimaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
 
-        using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+        using SecondaryInteractionVolume = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
         using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
         using SecondaryIvDataHandle = typename ElementFluxVariablesCache::SecondaryIvDataHandle;
         using SecondaryIvCellVector = typename SecondaryInteractionVolume::Traits::MatVecTraits::CellVector;
@@ -111,7 +111,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
-        static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
+        static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases();
 
     public:
         // export filler type
@@ -308,7 +308,7 @@ private:
                                            const SubControlVolumeFace& scvf,
                                            const unsigned int phaseIdx)
     {
-        using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+        using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
         // use the harmonic mean between inside and outside
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];

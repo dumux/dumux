@@ -48,13 +48,13 @@ class PorousMediumFluxVariablesCacheImplementation;
  *        cache class are provided for different combinations of processes.
  */
 template<class TypeTag>
-using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
 
 //! We only store discretization-related quantities for the box method. Thus, we need no
 //! physics-dependent specialization and simply inherit from the physics-independent implementation.
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::box>
-: public BoxFluxVariablesCache<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>
+: public BoxFluxVariablesCache<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::FVGridGeometry>>
 {};
 
 // the following classes choose the cache type: empty if the law disabled and the law's cache if it's enabled
@@ -62,32 +62,32 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
 // in order to prevent that instead of std::conditional_t we use this helper type is only dependent on the advection type
 // if advection is enabled otherwise its an empty cache type
 template<class TypeTag, bool EnableAdvection> class AdvectionCacheChooser : public FluxVariablesCaching::EmptyAdvectionCache {};
-template<class TypeTag> class AdvectionCacheChooser<TypeTag, true> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache {};
+template<class TypeTag> class AdvectionCacheChooser<TypeTag, true> : public GetPropType<TypeTag, Properties::AdvectionType>::Cache {};
 template<class TypeTag, bool EnableMolecularDiffusion> class DiffusionCacheChooser : public FluxVariablesCaching::EmptyDiffusionCache {};
-template<class TypeTag> class DiffusionCacheChooser<TypeTag, true> : public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache {};
+template<class TypeTag> class DiffusionCacheChooser<TypeTag, true> : public GetPropType<TypeTag, Properties::MolecularDiffusionType>::Cache {};
 template<class TypeTag, bool EnableEnergyBalance> class EnergyCacheChooser : public FluxVariablesCaching::EmptyHeatConductionCache {};
-template<class TypeTag> class EnergyCacheChooser<TypeTag, true> : public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
+template<class TypeTag> class EnergyCacheChooser<TypeTag, true> : public GetPropType<TypeTag, Properties::HeatConductionType>::Cache {};
 
 
 // specialization for the cell centered tpfa method
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::cctpfa>
-: public AdvectionCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableAdvection()>
-, public DiffusionCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableMolecularDiffusion()>
-, public EnergyCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>
+: public AdvectionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableAdvection()>
+, public DiffusionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableMolecularDiffusion()>
+, public EnergyCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance()>
 {};
 
 //! specialization of the flux variables cache for the cell centered finite volume mpfa scheme
 //! stores data which is commonly used by all the different types of processes
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::ccmpfa>
-: public AdvectionCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableAdvection()>
-, public DiffusionCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableMolecularDiffusion()>
-, public EnergyCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>
+: public AdvectionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableAdvection()>
+, public DiffusionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableMolecularDiffusion()>
+, public EnergyCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance()>
 {
-    using GridIndexType = typename GET_PROP_TYPE(TypeTag, GridView)::IndexSet::IndexType;
+    using GridIndexType = typename GetPropType<TypeTag, Properties::GridView>::IndexSet::IndexType;
 
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::MpfaHelper;
+    using MpfaHelper = typename GetPropType<TypeTag, Properties::FVGridGeometry>::MpfaHelper;
     static constexpr bool considerSecondary = MpfaHelper::considerSecondaryIVs();
 public:
     //! Returns whether or not this cache has been updated

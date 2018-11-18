@@ -29,7 +29,6 @@
 
 #ifndef DUMUX_PROPERTY_SYSTEM_HH
 #include <dumux/common/properties/propertysystem.hh>
-#include <dumux/common/properties/propertysystemmacros.hh> // remove this once all macros are gone
 #endif
 
 namespace Dumux {
@@ -38,171 +37,263 @@ namespace Properties {
 ///////////////////////////////////////
 // Basic properties of numeric models:
 ///////////////////////////////////////
-NEW_PROP_TAG(Scalar);                 //!< Property to specify the type of scalar values.
-NEW_PROP_TAG(ModelDefaultParameters); //!< Property which defines the group that is queried for parameters by default
-NEW_PROP_TAG(Grid);                   //!< The DUNE grid type
-NEW_PROP_TAG(PrimaryVariables);       //!< A vector of primary variables
-NEW_PROP_TAG(NumEqVector);            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
-NEW_PROP_TAG(GridView);               //!< The type of the grid view according to the grid type
-NEW_PROP_TAG(ModelTraits);            //!< Traits class encapsulating model specifications
-NEW_PROP_TAG(BaseModelTraits);        //!< Model traits to be used as a base for nonisothermal, mineralization ... models
-NEW_PROP_TAG(Problem);                //!< Property to specify the type of a problem which has to be solved
-NEW_PROP_TAG(PointSource);            //!< Property defining the type of point source used
-NEW_PROP_TAG(PointSourceHelper);      //!< Property defining the class that computes which sub control volume point sources belong to
+template<class TypeTag, class MyTypeTag>
+struct Scalar { using type = UndefinedProperty; };                 //!< Property to specify the type of scalar values.
+template<class TypeTag, class MyTypeTag>
+struct ModelDefaultParameters { using type = UndefinedProperty; }; //!< Property which defines the group that is queried for parameters by default
+template<class TypeTag, class MyTypeTag>
+struct Grid { using type = UndefinedProperty; };                   //!< The DUNE grid type
+template<class TypeTag, class MyTypeTag>
+struct PrimaryVariables { using type = UndefinedProperty; };       //!< A vector of primary variables
+template<class TypeTag, class MyTypeTag>
+struct NumEqVector { using type = UndefinedProperty; };            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
+template<class TypeTag, class MyTypeTag>
+struct GridView { using type = UndefinedProperty; };               //!< The type of the grid view according to the grid type
+template<class TypeTag, class MyTypeTag>
+struct ModelTraits { using type = UndefinedProperty; };            //!< Traits class encapsulating model specifications
+template<class TypeTag, class MyTypeTag>
+struct BaseModelTraits { using type = UndefinedProperty; };        //!< Model traits to be used as a base for nonisothermal, mineralization ... models
+template<class TypeTag, class MyTypeTag>
+struct Problem { using type = UndefinedProperty; };                //!< Property to specify the type of a problem which has to be solved
+template<class TypeTag, class MyTypeTag>
+struct PointSource { using type = UndefinedProperty; };            //!< Property defining the type of point source used
+template<class TypeTag, class MyTypeTag>
+struct PointSourceHelper { using type = UndefinedProperty; };      //!< Property defining the class that computes which sub control volume point sources belong to
 // TODO: Remove deprecated property VtkOutputFields
-NEW_PROP_TAG(VtkOutputFields);        //!< A class helping models to define default vtk output parameters
-NEW_PROP_TAG(IOFields);               //!< A class helping models to define input and output fields
-NEW_PROP_TAG(BaseLocalResidual);      //!< The type of the base class of the local residual (specific to a discretization scheme)
-NEW_PROP_TAG(JacobianMatrix);         //!< Type of the global jacobian matrix
-NEW_PROP_TAG(SolutionVector);         //!< Vector containing all primary variable vector of the grid
-NEW_PROP_TAG(BoundaryTypes);          //!< Stores the boundary types of a single degree of freedom
+template<class TypeTag, class MyTypeTag>
+struct VtkOutputFields { using type = UndefinedProperty; };        //!< A class helping models to define default vtk output parameters
+template<class TypeTag, class MyTypeTag>
+struct IOFields { using type = UndefinedProperty; };               //!< A class helping models to define input and output fields
+template<class TypeTag, class MyTypeTag>
+struct BaseLocalResidual { using type = UndefinedProperty; };      //!< The type of the base class of the local residual (specific to a discretization scheme)
+template<class TypeTag, class MyTypeTag>
+struct JacobianMatrix { using type = UndefinedProperty; };         //!< Type of the global jacobian matrix
+template<class TypeTag, class MyTypeTag>
+struct SolutionVector { using type = UndefinedProperty; };         //!< Vector containing all primary variable vector of the grid
+template<class TypeTag, class MyTypeTag>
+struct BoundaryTypes { using type = UndefinedProperty; };          //!< Stores the boundary types of a single degree of freedom
 
 //! The type of the local residual function, i.e. the equation to be solved. Must inherit
 //! from the BaseLocalResidual property and fulfill its interfaces.
-NEW_PROP_TAG(LocalResidual);
+template<class TypeTag, class MyTypeTag>
+struct LocalResidual { using type = UndefinedProperty; };
 
 //! TODO: Remove this property as soon as the decoupled models are integrated
-NEW_PROP_TAG(LinearSolver);
+template<class TypeTag, class MyTypeTag>
+struct LinearSolver { using type = UndefinedProperty; };
 
 ////////////////////////////////////////////////
 // Basic properties regarding balance equations
 /////////////////////////////////////////////////
 // TODO: Integrate UseMoles into BalanceEqOpts
-NEW_PROP_TAG(UseMoles);               //!< Property whether to use moles or kg as amount unit for balance equations
-NEW_PROP_TAG(ReplaceCompEqIdx);       //!< The component balance index that should be replaced by the total mass/mole balance
-NEW_PROP_TAG(BalanceEqOpts);          //!< A class that collects options for the evaluation of the balance equations
+template<class TypeTag, class MyTypeTag>
+struct UseMoles { using type = UndefinedProperty; };               //!< Property whether to use moles or kg as amount unit for balance equations
+template<class TypeTag, class MyTypeTag>
+struct ReplaceCompEqIdx { using type = UndefinedProperty; };       //!< The component balance index that should be replaced by the total mass/mole balance
+template<class TypeTag, class MyTypeTag>
+struct BalanceEqOpts { using type = UndefinedProperty; };          //!< A class that collects options for the evaluation of the balance equations
 
 /////////////////////////////////////////////
 // Properties used by finite volume schemes:
 /////////////////////////////////////////////
-NEW_PROP_TAG(ElementBoundaryTypes);                //!< Stores the boundary types on an element
+template<class TypeTag, class MyTypeTag>
+struct ElementBoundaryTypes { using type = UndefinedProperty; };                //!< Stores the boundary types on an element
 
-NEW_PROP_TAG(FVGridGeometry);                      //!< The type of the global finite volume geometry
-NEW_PROP_TAG(EnableFVGridGeometryCache);           //!< specifies if geometric data is saved (faster, but more memory consuming)
+template<class TypeTag, class MyTypeTag>
+struct FVGridGeometry { using type = UndefinedProperty; };                      //!< The type of the global finite volume geometry
+template<class TypeTag, class MyTypeTag>
+struct EnableFVGridGeometryCache { using type = UndefinedProperty; };           //!< specifies if geometric data is saved (faster, but more memory consuming)
 
-NEW_PROP_TAG(VolumeVariables);                     //!< The secondary variables within a sub-control volume
-NEW_PROP_TAG(GridVolumeVariables);                 //!< The type for a global container for the volume variables
-NEW_PROP_TAG(EnableGridVolumeVariablesCache);      //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
-NEW_PROP_TAG(FluxVariables);                       //!< Container storing the different types of flux variables
-NEW_PROP_TAG(FluxVariablesCache);                  //!< Stores data associated with flux vars
-NEW_PROP_TAG(GridFluxVariablesCache);              //!< The global vector of flux variable containers
-NEW_PROP_TAG(EnableGridFluxVariablesCache);        //!< specifies if data on flux vars should be saved (faster, but more memory consuming)
-NEW_PROP_TAG(GridVariables);                       //!< The grid variables object managing variable data on the grid (volvars/fluxvars cache)
+template<class TypeTag, class MyTypeTag>
+struct VolumeVariables { using type = UndefinedProperty; };                     //!< The secondary variables within a sub-control volume
+template<class TypeTag, class MyTypeTag>
+struct GridVolumeVariables { using type = UndefinedProperty; };                 //!< The type for a global container for the volume variables
+template<class TypeTag, class MyTypeTag>
+struct EnableGridVolumeVariablesCache { using type = UndefinedProperty; };      //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
+template<class TypeTag, class MyTypeTag>
+struct FluxVariables { using type = UndefinedProperty; };                       //!< Container storing the different types of flux variables
+template<class TypeTag, class MyTypeTag>
+struct FluxVariablesCache { using type = UndefinedProperty; };                  //!< Stores data associated with flux vars
+template<class TypeTag, class MyTypeTag>
+struct GridFluxVariablesCache { using type = UndefinedProperty; };              //!< The global vector of flux variable containers
+template<class TypeTag, class MyTypeTag>
+struct EnableGridFluxVariablesCache { using type = UndefinedProperty; };        //!< specifies if data on flux vars should be saved (faster, but more memory consuming)
+template<class TypeTag, class MyTypeTag>
+struct GridVariables { using type = UndefinedProperty; };                       //!< The grid variables object managing variable data on the grid (volvars/fluxvars cache)
 
 /////////////////////////////////////////////////////////////////
 // Additional properties used by the cell-centered mpfa schemes:
 /////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(PrimaryInteractionVolume);            //!< The primary interaction volume type
-NEW_PROP_TAG(SecondaryInteractionVolume);          //!< The secondary interaction volume type used e.g. on the boundaries
-NEW_PROP_TAG(DualGridNodalIndexSet);               //!< The type used for the nodal index sets of the dual grid
+template<class TypeTag, class MyTypeTag>
+struct PrimaryInteractionVolume { using type = UndefinedProperty; };            //!< The primary interaction volume type
+template<class TypeTag, class MyTypeTag>
+struct SecondaryInteractionVolume { using type = UndefinedProperty; };          //!< The secondary interaction volume type used e.g. on the boundaries
+template<class TypeTag, class MyTypeTag>
+struct DualGridNodalIndexSet { using type = UndefinedProperty; };               //!< The type used for the nodal index sets of the dual grid
 
 /////////////////////////////////////////////////////////////
 // Properties used by models involving flow in porous media:
 /////////////////////////////////////////////////////////////
-NEW_PROP_TAG(EnergyLocalResidual);                 //!< The local residual of the energy equation
-NEW_PROP_TAG(AdvectionType);                       //!< The type for the calculation the advective fluxes
-NEW_PROP_TAG(SolutionDependentAdvection);          //!< specifies if the parameters for the advective fluxes depend on the solution
-NEW_PROP_TAG(MolecularDiffusionType);              //!< The type for the calculation of the molecular diffusion fluxes
-NEW_PROP_TAG(SolutionDependentMolecularDiffusion); //!< specifies if the parameters for the diffusive fluxes depend on the solution
-NEW_PROP_TAG(HeatConductionType);                  //!< The type for the calculation of the heat conduction fluxes
-NEW_PROP_TAG(SolutionDependentHeatConduction);     //!< specifies if the parameters for the heat conduction fluxes depend on the solution
+template<class TypeTag, class MyTypeTag>
+struct EnergyLocalResidual { using type = UndefinedProperty; };                 //!< The local residual of the energy equation
+template<class TypeTag, class MyTypeTag>
+struct AdvectionType { using type = UndefinedProperty; };                       //!< The type for the calculation the advective fluxes
+template<class TypeTag, class MyTypeTag>
+struct SolutionDependentAdvection { using type = UndefinedProperty; };          //!< specifies if the parameters for the advective fluxes depend on the solution
+template<class TypeTag, class MyTypeTag>
+struct MolecularDiffusionType { using type = UndefinedProperty; };              //!< The type for the calculation of the molecular diffusion fluxes
+template<class TypeTag, class MyTypeTag>
+struct SolutionDependentMolecularDiffusion { using type = UndefinedProperty; }; //!< specifies if the parameters for the diffusive fluxes depend on the solution
+template<class TypeTag, class MyTypeTag>
+struct HeatConductionType { using type = UndefinedProperty; };                  //!< The type for the calculation of the heat conduction fluxes
+template<class TypeTag, class MyTypeTag>
+struct SolutionDependentHeatConduction { using type = UndefinedProperty; };     //!< specifies if the parameters for the heat conduction fluxes depend on the solution
 
-NEW_PROP_TAG(SpatialParams);                       //!< The type of the spatial parameters object
-NEW_PROP_TAG(FluidSystem);                         //!< The type of the fluid system to use
-NEW_PROP_TAG(FluidState);                          //!< The type of the fluid state to use
-NEW_PROP_TAG(SolidSystem);                         //!< The type of the solid system to use
-NEW_PROP_TAG(SolidState);                           //!< The type of the solid state to use
-NEW_PROP_TAG(PrimaryVariableSwitch);               //!< The primary variable switch needed for compositional models
-NEW_PROP_TAG(EffectiveDiffusivityModel);           //!< The employed model for the computation of the effective diffusivity
-NEW_PROP_TAG(ThermalConductivityModel);            //!< Model to be used for the calculation of the effective conductivity
-NEW_PROP_TAG(VelocityOutput);                      //!< specifies the velocity calculation module to be used
-NEW_PROP_TAG(Formulation);                         //!< The formulation of the model
+template<class TypeTag, class MyTypeTag>
+struct SpatialParams { using type = UndefinedProperty; };                       //!< The type of the spatial parameters object
+template<class TypeTag, class MyTypeTag>
+struct FluidSystem { using type = UndefinedProperty; };                         //!< The type of the fluid system to use
+template<class TypeTag, class MyTypeTag>
+struct FluidState { using type = UndefinedProperty; };                          //!< The type of the fluid state to use
+template<class TypeTag, class MyTypeTag>
+struct SolidSystem { using type = UndefinedProperty; };                         //!< The type of the solid system to use
+template<class TypeTag, class MyTypeTag>
+struct SolidState { using type = UndefinedProperty; };                           //!< The type of the solid state to use
+template<class TypeTag, class MyTypeTag>
+struct PrimaryVariableSwitch { using type = UndefinedProperty; };               //!< The primary variable switch needed for compositional models
+template<class TypeTag, class MyTypeTag>
+struct EffectiveDiffusivityModel { using type = UndefinedProperty; };           //!< The employed model for the computation of the effective diffusivity
+template<class TypeTag, class MyTypeTag>
+struct ThermalConductivityModel { using type = UndefinedProperty; };            //!< Model to be used for the calculation of the effective conductivity
+template<class TypeTag, class MyTypeTag>
+struct VelocityOutput { using type = UndefinedProperty; };                      //!< specifies the velocity calculation module to be used
+template<class TypeTag, class MyTypeTag>
+struct Formulation { using type = UndefinedProperty; };                         //!< The formulation of the model
 // TODO: is this useful? -> everything is a constraint solver just a different type
-NEW_PROP_TAG(UseConstraintSolver);                 //!< Whether to use a contraint solver for computing the secondary variables
+template<class TypeTag, class MyTypeTag>
+struct UseConstraintSolver { using type = UndefinedProperty; };                 //!< Whether to use a contraint solver for computing the secondary variables
 
 // When using the box method in a multi-phase context, an interface solver might be necessary
-NEW_PROP_TAG(EnableBoxInterfaceSolver);
+template<class TypeTag, class MyTypeTag>
+struct EnableBoxInterfaceSolver { using type = UndefinedProperty; };
 
 //////////////////////////////////////////////////////////////
 // Additional properties used by the 2pnc and 2pncmin models:
 //////////////////////////////////////////////////////////////
-NEW_PROP_TAG(Chemistry);                           //!< The chemistry class with which solves equlibrium reactions
-NEW_PROP_TAG(SetMoleFractionsForFirstPhase);       //!< Set the mole fraction in the wetting or non-wetting phase
+template<class TypeTag, class MyTypeTag>
+struct Chemistry { using type = UndefinedProperty; };                           //!< The chemistry class with which solves equlibrium reactions
+template<class TypeTag, class MyTypeTag>
+struct SetMoleFractionsForFirstPhase { using type = UndefinedProperty; };       //!< Set the mole fraction in the wetting or non-wetting phase
 
 //////////////////////////////////////////////////////////////
 // Additional properties used by the richards model
 //////////////////////////////////////////////////////////////
-NEW_PROP_TAG(EnableWaterDiffusionInAir); //!< Property for turning Richards into extended Richards
+template<class TypeTag, class MyTypeTag>
+struct EnableWaterDiffusionInAir { using type = UndefinedProperty; }; //!< Property for turning Richards into extended Richards
 
 //////////////////////////////////////////////////////////////
 // Additional properties used by the 3pwateroil model:
 //////////////////////////////////////////////////////////////
-NEW_PROP_TAG(OnlyGasPhaseCanDisappear); //!< reduces the phasestates to threePhases and wnPhaseOnly
+template<class TypeTag, class MyTypeTag>
+struct OnlyGasPhaseCanDisappear { using type = UndefinedProperty; }; //!< reduces the phasestates to threePhases and wnPhaseOnly
 
 /////////////////////////////////////////////////////////////
 // Properties used by geomechanical models:
 /////////////////////////////////////////////////////////////
-NEW_PROP_TAG(StressType);       //!< The type used for the evaluation of stress tensors and forces
+template<class TypeTag, class MyTypeTag>
+struct StressType { using type = UndefinedProperty; };       //!< The type used for the evaluation of stress tensors and forces
 
 /////////////////////////////////////////////////////////////
 // Properties used by the staggered-grid discretization method
 /////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(NumEqCellCenter);                     //!< The number of equations for cell-centered dofs
-NEW_PROP_TAG(NumEqFace);                           //!< The number of equations for face dofs
-NEW_PROP_TAG(CellCenterSolutionVector);            //!< The solution vector type for cell-centered dofs
-NEW_PROP_TAG(FaceSolutionVector);                  //!< The solution vector type for face dofs
-NEW_PROP_TAG(GridFaceVariables);                   //!< Global vector containing face-related data
-NEW_PROP_TAG(CellCenterPrimaryVariables);          //!< The primary variables container type for cell-centered dofs
-NEW_PROP_TAG(FacePrimaryVariables);                //!< The primary variables container type for face dofs
-NEW_PROP_TAG(IntersectionMapper);                  //!< Specifies the intersection mapper
-NEW_PROP_TAG(StaggeredPrimaryVariables);           //!< The hybrid primary variables container type
-NEW_PROP_TAG(BaseEpsilon);                         //!< A base epsilon for numerical differentiation, can contain multiple values
-NEW_PROP_TAG(FaceVariables);                       //!< Class containing local face-related data
-NEW_PROP_TAG(BoundaryValues);                      //!< Class containing local boundary data
-NEW_PROP_TAG(StaggeredFaceSolution);               //!< A vector containing the solution for a face (similar to ElementSolution)
-NEW_PROP_TAG(EnableGridFaceVariablesCache);      //!< Switch on/off caching of face variables
+template<class TypeTag, class MyTypeTag>
+struct NumEqCellCenter { using type = UndefinedProperty; };                     //!< The number of equations for cell-centered dofs
+template<class TypeTag, class MyTypeTag>
+struct NumEqFace { using type = UndefinedProperty; };                           //!< The number of equations for face dofs
+template<class TypeTag, class MyTypeTag>
+struct CellCenterSolutionVector { using type = UndefinedProperty; };            //!< The solution vector type for cell-centered dofs
+template<class TypeTag, class MyTypeTag>
+struct FaceSolutionVector { using type = UndefinedProperty; };                  //!< The solution vector type for face dofs
+template<class TypeTag, class MyTypeTag>
+struct GridFaceVariables { using type = UndefinedProperty; };                   //!< Global vector containing face-related data
+template<class TypeTag, class MyTypeTag>
+struct CellCenterPrimaryVariables { using type = UndefinedProperty; };          //!< The primary variables container type for cell-centered dofs
+template<class TypeTag, class MyTypeTag>
+struct FacePrimaryVariables { using type = UndefinedProperty; };                //!< The primary variables container type for face dofs
+template<class TypeTag, class MyTypeTag>
+struct IntersectionMapper { using type = UndefinedProperty; };                  //!< Specifies the intersection mapper
+template<class TypeTag, class MyTypeTag>
+struct StaggeredPrimaryVariables { using type = UndefinedProperty; };           //!< The hybrid primary variables container type
+template<class TypeTag, class MyTypeTag>
+struct BaseEpsilon { using type = UndefinedProperty; };                         //!< A base epsilon for numerical differentiation, can contain multiple values
+template<class TypeTag, class MyTypeTag>
+struct FaceVariables { using type = UndefinedProperty; };                       //!< Class containing local face-related data
+template<class TypeTag, class MyTypeTag>
+struct BoundaryValues { using type = UndefinedProperty; };                      //!< Class containing local boundary data
+template<class TypeTag, class MyTypeTag>
+struct StaggeredFaceSolution { using type = UndefinedProperty; };               //!< A vector containing the solution for a face (similar to ElementSolution)
+template<class TypeTag, class MyTypeTag>
+struct EnableGridFaceVariablesCache { using type = UndefinedProperty; };      //!< Switch on/off caching of face variables
 
 /////////////////////////////////////////////////////////////
 // Properties used by the mpnc model
 /////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(PressureFormulation); //! the formulation of the pressure e.g most wetting first
+template<class TypeTag, class MyTypeTag>
+struct PressureFormulation { using type = UndefinedProperty; }; //! the formulation of the pressure e.g most wetting first
 
 /////////////////////////////////////////////////////////////
 // Properties used by the nonequilibrium model
 /////////////////////////////////////////////////////////////
-NEW_PROP_TAG(EquilibriumModelTraits);
-NEW_PROP_TAG(EquilibriumLocalResidual);
-NEW_PROP_TAG(EquilibriumIndices);
-NEW_PROP_TAG(EquilibriumIOFields);
-NEW_PROP_TAG(NumEqBalance);
-NEW_PROP_TAG(EnableThermalNonEquilibrium);
-NEW_PROP_TAG(EnableChemicalNonEquilibrium);
-NEW_PROP_TAG(NumEnergyEqFluid);
-NEW_PROP_TAG(NumEnergyEqSolid);
+template<class TypeTag, class MyTypeTag>
+struct EquilibriumModelTraits { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct EquilibriumLocalResidual { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct EquilibriumIndices { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct EquilibriumIOFields { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct NumEqBalance { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct EnableThermalNonEquilibrium { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct EnableChemicalNonEquilibrium { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct NumEnergyEqFluid { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct NumEnergyEqSolid { using type = UndefinedProperty; };
 
-NEW_PROP_TAG(AwnSurface);
-NEW_PROP_TAG(AwsSurface);
-NEW_PROP_TAG(AnsSurface);
-NEW_PROP_TAG(NusseltFormulation);
-NEW_PROP_TAG(SherwoodFormulation);
+template<class TypeTag, class MyTypeTag>
+struct AwnSurface { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct AwsSurface { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct AnsSurface { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct NusseltFormulation { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct SherwoodFormulation { using type = UndefinedProperty; };
 
 /////////////////////////////////////////////////////////////
 // Properties used by free flow models
 /////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
+template<class TypeTag, class MyTypeTag>
+struct NormalizePressure { using type = UndefinedProperty; }; //!<  Returns whether to normalize the pressure term in the momentum balance or not
 
 /////////////////////////////////////////////////////////////
 // Properties used by multidomain simulations
 /////////////////////////////////////////////////////////////
-NEW_PROP_TAG(CouplingManager);
+template<class TypeTag, class MyTypeTag>
+struct CouplingManager { using type = UndefinedProperty; };
 
 ///////////////////////////////////////
 // Basic properties of sequential models:
 ///////////////////////////////////////
-NEW_PROP_TAG(TimeManager);
+template<class TypeTag, class MyTypeTag>
+struct TimeManager { using type = UndefinedProperty; };
 
 } // end namespace Properties
 } // end namespace Dumux

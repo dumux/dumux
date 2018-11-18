@@ -40,15 +40,15 @@ class ThreePWaterOilPrimaryVariableSwitch
     using ParentType = PrimaryVariableSwitch<ThreePWaterOilPrimaryVariableSwitch<TypeTag>>;
     friend ParentType;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using IndexType = typename GridView::IndexSet::IndexType;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     enum {
         switch1Idx = Indices::switch1Idx,
@@ -86,7 +86,7 @@ protected:
         auto phasePresence = priVars.state();
         int newPhasePresence = phasePresence;
 
-        bool onlyGasPhaseCanDisappear = GET_PROP_VALUE(TypeTag, OnlyGasPhaseCanDisappear);
+        bool onlyGasPhaseCanDisappear = getPropValue<TypeTag, Properties::OnlyGasPhaseCanDisappear>();
 
         if(onlyGasPhaseCanDisappear)
         {

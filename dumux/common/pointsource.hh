@@ -203,15 +203,15 @@ private:
  * \brief A point source class for time dependent point sources
  */
 template<class TypeTag>
-class SolDependentPointSource : public PointSource<Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, GridView)::ctype,
-                                                           GET_PROP_TYPE(TypeTag, GridView)::dimensionworld>,
-                                                   typename GET_PROP_TYPE(TypeTag, NumEqVector)>
+class SolDependentPointSource : public PointSource<Dune::FieldVector<typename GetPropType<TypeTag, Properties::GridView>::ctype,
+                                                           GetPropType<TypeTag, Properties::GridView>::dimensionworld>,
+                                                   GetPropType<TypeTag, Properties::NumEqVector>>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 

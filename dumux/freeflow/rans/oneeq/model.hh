@@ -119,21 +119,26 @@ struct OneEqModelTraits : RANSModelTraits<dimension>
 // default property values for the isothermal Spalart-Allmaras model
 ///////////////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal Spalart-Allmaras model
-NEW_TYPE_TAG(OneEq, INHERITS_FROM(RANS));
+struct OneEq { using InheritsFrom = std::tuple<RANS>; };
+} // end namespace TTag
 
 //!< states some specifics of the isothermal Spalart-Allmaras model
-SET_PROP(OneEq, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OneEq>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 public:
     using type = OneEqModelTraits<dim>;
 };
 
 //! The flux variables
-SET_PROP(OneEq, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::OneEq>
 {
 private:
     using BaseFluxVariables = NavierStokesFluxVariables<TypeTag>;
@@ -142,7 +147,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(OneEq, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OneEq>
 {
 private:
     using BaseLocalResidual = NavierStokesResidual<TypeTag>;
@@ -151,13 +157,14 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(OneEq, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OneEq>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
@@ -170,20 +177,25 @@ public:
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(OneEq, IOFields, OneEqIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OneEq> { using type = OneEqIOFields; };
 
 //////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal Spalart-Allmaras model
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal Spalart-Allmaras model
-NEW_TYPE_TAG(OneEqNI, INHERITS_FROM(RANSNI));
+struct OneEqNI { using InheritsFrom = std::tuple<RANSNI>; };
+} // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(OneEqNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OneEqNI>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
     using IsothermalTraits = OneEqModelTraits<dim>;
 public:
@@ -191,13 +203,14 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(OneEqNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OneEqNI>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
@@ -210,7 +223,8 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_TYPE_PROP(OneEqNI, IOFields, FreeflowNonIsothermalIOFields<OneEqIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OneEqNI> { using type = FreeflowNonIsothermalIOFields<OneEqIOFields, true/*turbulenceModel*/>; };
 
 // \}
 }

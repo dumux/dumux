@@ -46,38 +46,51 @@ class ChannelNCTestProblem;
 
 namespace Properties {
 
+// Create new type tags
+namespace TTag {
 #if !NONISOTHERMAL
-NEW_TYPE_TAG(ChannelNCTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+struct ChannelNCTest { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
 #else
-NEW_TYPE_TAG(ChannelNCTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI));
+struct ChannelNCTest { using InheritsFrom = std::tuple<NavierStokesNCNI, StaggeredFreeFlowModel>; };
 #endif
+} // end namespace TTag
 
 // Select the fluid system
-SET_PROP(ChannelNCTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ChannelNCTest>
 {
-    using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+    using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
     static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
     using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
-SET_INT_PROP(ChannelNCTest, ReplaceCompEqIdx, 0);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::ChannelNCTest> { static constexpr int value = 0; };
 
 // Set the grid type
-SET_TYPE_PROP(ChannelNCTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ChannelNCTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(ChannelNCTest, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ChannelNCTest> { using type = Dumux::ChannelNCTestProblem<TypeTag> ; };
 
-SET_BOOL_PROP(ChannelNCTest, EnableFVGridGeometryCache, ENABLECACHING);
-SET_BOOL_PROP(ChannelNCTest, EnableGridFluxVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(ChannelNCTest, EnableGridVolumeVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(ChannelNCTest, EnableGridFaceVariablesCache, ENABLECACHING);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridFaceVariablesCache<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = ENABLECACHING; };
 
 // Use mole fraction formulation
 #if USE_MASS
-SET_BOOL_PROP(ChannelNCTest, UseMoles, false);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = false; };
 #else
-SET_BOOL_PROP(ChannelNCTest, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = true; };
 #endif
 
 }
@@ -92,15 +105,15 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;

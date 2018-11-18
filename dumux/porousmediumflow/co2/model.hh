@@ -74,40 +74,47 @@ struct TwoPTwoCCO2VolumeVariablesTraits
 
 namespace Properties {
 
-NEW_TYPE_TAG(TwoPTwoCCO2, INHERITS_FROM(TwoPTwoC));
-NEW_TYPE_TAG(TwoPTwoCCO2NI, INHERITS_FROM(TwoPTwoCNI));
+// Create new type tags
+namespace TTag {
+struct TwoPTwoCCO2 { using InheritsFrom = std::tuple<TwoPTwoC>; };
+struct TwoPTwoCCO2NI { using InheritsFrom = std::tuple<TwoPTwoCNI>; };
+} // end namespace TTag
 
 //! the CO2 privarswitch and VolumeVariables properties
-SET_TYPE_PROP(TwoPTwoCCO2, PrimaryVariableSwitch, TwoPTwoCCO2PrimaryVariableSwitch);
-SET_TYPE_PROP(TwoPTwoCCO2NI, PrimaryVariableSwitch, TwoPTwoCCO2PrimaryVariableSwitch);
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::TwoPTwoCCO2> { using type = TwoPTwoCCO2PrimaryVariableSwitch; };
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::TwoPTwoCCO2NI> { using type = TwoPTwoCCO2PrimaryVariableSwitch; };
 
 //! the co2 volume variables use the same traits as the 2p2c model
-SET_PROP(TwoPTwoCCO2, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPTwoCCO2>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = TwoPTwoCCO2VolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
     using type = TwoPTwoCCO2VolumeVariables< Traits >;
 };
 
-SET_PROP(TwoPTwoCCO2NI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPTwoCCO2NI>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = TwoPTwoCCO2VolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:

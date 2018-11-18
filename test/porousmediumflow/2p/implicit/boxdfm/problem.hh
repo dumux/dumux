@@ -56,43 +56,55 @@ namespace Properties {
 
 // we need to derive first from twop and then from the box-dfm Model
 // because the flux variables cache type of TwoP is overwritten in BoxDfmModel
-NEW_TYPE_TAG(TwoPIncompressibleBoxDfm, INHERITS_FROM(TwoP, BoxDfmModel));
+// Create new type tags
+namespace TTag {
+struct TwoPIncompressibleBoxDfm { using InheritsFrom = std::tuple<BoxDfmModel, TwoP>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TwoPIncompressibleBoxDfm, Grid, GRIDTYPE);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPIncompressibleBoxDfm> { using type = GRIDTYPE; };
 
 // Set the problem type
-SET_TYPE_PROP(TwoPIncompressibleBoxDfm, Problem, TwoPTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPIncompressibleBoxDfm> { using type = TwoPTestProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(TwoPIncompressibleBoxDfm, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TwoPIncompressibleBoxDfm>
 {
 private:
-    using FVG = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVG = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = TwoPTestSpatialParams<FVG, Scalar>;
 };
 
 // the local residual containing the analytic derivative methods
-SET_TYPE_PROP(TwoPIncompressibleBoxDfm, LocalResidual, TwoPIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoPIncompressibleBoxDfm> { using type = TwoPIncompressibleLocalResidual<TypeTag>; };
 
 // Set the fluid system
-SET_PROP(TwoPIncompressibleBoxDfm, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TwoPIncompressibleBoxDfm>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 // Enable caching
-SET_BOOL_PROP(TwoPIncompressibleBoxDfm, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(TwoPIncompressibleBoxDfm, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(TwoPIncompressibleBoxDfm, EnableFVGridGeometryCache, false);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPIncompressibleBoxDfm> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPIncompressibleBoxDfm> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::TwoPIncompressibleBoxDfm> { static constexpr bool value = false; };
 
 // Enable the box-interface solver
-SET_BOOL_PROP(TwoPIncompressibleBoxDfm, EnableBoxInterfaceSolver, true);
+template<class TypeTag>
+struct EnableBoxInterfaceSolver<TypeTag, TTag::TwoPIncompressibleBoxDfm> { static constexpr bool value = true; };
 } // end namespace Properties
 
 /*!
@@ -104,20 +116,20 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
 
     // some indices for convenience
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum
     {
         pressureH2OIdx = Indices::pressureIdx,

@@ -75,7 +75,8 @@ SET_TYPE_PROP(MPFATwoPTest, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(MPFATwoPTest, Problem, MPFATwoPTestProblem<TypeTag>);
 
 // Set the fluid system
-SET_PROP(MPFATwoPTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::MPFATwoPTest>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;

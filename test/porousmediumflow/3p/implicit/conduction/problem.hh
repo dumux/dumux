@@ -50,28 +50,34 @@ template <class TypeTag>
 class ThreePNIConductionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(ThreePNIConduction, INHERITS_FROM(ThreePNI));
-NEW_TYPE_TAG(ThreePNIConductionBox, INHERITS_FROM(BoxModel, ThreePNIConduction));
-NEW_TYPE_TAG(ThreePNIConductionCCTpfa, INHERITS_FROM(CCTpfaModel, ThreePNIConduction));
-NEW_TYPE_TAG(ThreePNIConductionCCMpfa, INHERITS_FROM(CCMpfaModel, ThreePNIConduction));
+// Create new type tags
+namespace TTag {
+struct ThreePNIConduction { using InheritsFrom = std::tuple<ThreePNI>; };
+struct ThreePNIConductionBox { using InheritsFrom = std::tuple<ThreePNIConduction, BoxModel>; };
+struct ThreePNIConductionCCTpfa { using InheritsFrom = std::tuple<ThreePNIConduction, CCTpfaModel>; };
+struct ThreePNIConductionCCMpfa { using InheritsFrom = std::tuple<ThreePNIConduction, CCMpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(ThreePNIConduction, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ThreePNIConduction> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(ThreePNIConduction, Problem, ThreePNIConductionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ThreePNIConduction> { using type = ThreePNIConductionProblem<TypeTag>; };
 
 
 // Set the fluid system
-SET_TYPE_PROP(ThreePNIConduction,
-              FluidSystem,
-              FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ThreePNIConduction>
+{ using type = FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Set the spatial parameters
-SET_PROP(ThreePNIConduction, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::ThreePNIConduction>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = ThreePNISpatialParams<FVGridGeometry, Scalar>;
 };
 }// end namespace Properties
@@ -105,20 +111,20 @@ class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using IapwsH2O = Components::H2O<Scalar>;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum {
         // index of the primary variables
         pressureIdx = Indices::pressureIdx,

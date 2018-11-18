@@ -48,7 +48,8 @@ NEW_TYPE_TAG(TestTransportSpatialParams);
 SET_TYPE_PROP(TestTransportSpatialParams, SpatialParams, TestTransportSpatialParams<TypeTag>);
 
 // Set the material law
-SET_PROP(TestTransportSpatialParams, MaterialLaw)
+template<class TypeTag>
+struct MaterialLaw<TypeTag, TTag::TestTransportSpatialParams>
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

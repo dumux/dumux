@@ -46,37 +46,50 @@ template <class TypeTag>
 class InjectionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Injection, INHERITS_FROM(TwoPTwoC));
-NEW_TYPE_TAG(InjectionBox, INHERITS_FROM(BoxModel, Injection));
-NEW_TYPE_TAG(InjectionCCTpfa, INHERITS_FROM(CCTpfaModel, Injection));
-NEW_TYPE_TAG(InjectionCCMpfa, INHERITS_FROM(CCMpfaModel, Injection));
+// Create new type tags
+namespace TTag {
+struct Injection { using InheritsFrom = std::tuple<TwoPTwoC>; };
+struct InjectionBox { using InheritsFrom = std::tuple<Injection, BoxModel>; };
+struct InjectionCCTpfa { using InheritsFrom = std::tuple<Injection, CCTpfaModel>; };
+struct InjectionCCMpfa { using InheritsFrom = std::tuple<Injection, CCMpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Injection, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Injection> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(Injection, Problem, InjectionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Injection> { using type = InjectionProblem<TypeTag>; };
 
 // Set fluid configuration
-SET_TYPE_PROP(Injection,
-              FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Injection>
+{
+    using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>,
+                                     FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+};
 
 // Set the spatial parameters
-SET_PROP(Injection, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Injection>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = InjectionSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(Injection, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::Injection> { static constexpr bool value = true; };
 
 // Enable caching or not (reference solutions created without caching)
-SET_BOOL_PROP(Injection, EnableFVGridGeometryCache, ENABLECACHING);
-SET_BOOL_PROP(Injection, EnableGridVolumeVariablesCache, ENABLECACHING);
-SET_BOOL_PROP(Injection, EnableGridFluxVariablesCache, ENABLECACHING);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Injection> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Injection> { static constexpr bool value = ENABLECACHING; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Injection> { static constexpr bool value = ENABLECACHING; };
 } // end namespace Properties
 
 /*!
@@ -105,12 +118,12 @@ template <class TypeTag>
 class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     // primary variable indices
@@ -138,13 +151,13 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
         N2Idx = FluidSystem::N2Idx
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     //! property that defines whether mole or mass fractions are used

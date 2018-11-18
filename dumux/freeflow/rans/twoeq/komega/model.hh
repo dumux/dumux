@@ -112,21 +112,26 @@ struct KOmegaModelTraits : RANSModelTraits<dimension>
 // default property values for the isothermal k-omega single phase model
 ///////////////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal k-omega model
-NEW_TYPE_TAG(KOmega, INHERITS_FROM(RANS));
+struct KOmega { using InheritsFrom = std::tuple<RANS>; };
+} // end namespace TTag
 
 //! states some specifics of the isothermal k-omega model
-SET_PROP(KOmega, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::KOmega>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 public:
     using type = KOmegaModelTraits<dim>;
 };
 
 //! The flux variables
-SET_PROP(KOmega, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::KOmega>
 {
 private:
     using BaseFluxVariables = NavierStokesFluxVariables<TypeTag>;
@@ -135,7 +140,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(KOmega, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::KOmega>
 {
 private:
     using BaseLocalResidual = NavierStokesResidual<TypeTag>;
@@ -144,13 +150,14 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(KOmega, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::KOmega>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
@@ -163,21 +170,26 @@ public:
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(KOmega, IOFields, KOmegaIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::KOmega> { using type = KOmegaIOFields; };
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal k-omega single phase model
 ///////////////////////////////////////////////////////////////////////////
 
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, non-isothermal k-omega 2-Eq. model
-NEW_TYPE_TAG(KOmegaNI, INHERITS_FROM(RANSNI));
+struct KOmegaNI { using InheritsFrom = std::tuple<RANSNI>; };
+} // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(KOmegaNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::KOmegaNI>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
     using IsothermalTraits = KOmegaModelTraits<dim>;
 public:
@@ -185,13 +197,14 @@ public:
 };
 
 //! Set the volume variables property
-SET_PROP(KOmegaNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::KOmegaNI>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
@@ -204,7 +217,8 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_TYPE_PROP(KOmegaNI, IOFields, FreeflowNonIsothermalIOFields<KOmegaIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::KOmegaNI> { using type = FreeflowNonIsothermalIOFields<KOmegaIOFields, true/*turbulenceModel*/>; };
 
 // \}
 }

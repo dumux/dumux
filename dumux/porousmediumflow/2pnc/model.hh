@@ -198,35 +198,41 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(TwoPNC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(TwoPNCNI, INHERITS_FROM(TwoPNC));
+// Create new type tags
+namespace TTag {
+struct TwoPNC { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+struct TwoPNCNI { using InheritsFrom = std::tuple<TwoPNC>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Properties for the isothermal 2pnc model
 //////////////////////////////////////////////////////////////////
 //! The primary variables vector for the 2pnc model
-SET_PROP(TwoPNC, PrimaryVariables)
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::TwoPNC>
 {
 private:
-    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
+    using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
+                                                     GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
 
-SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);         //!< The primary variable switch for the 2pnc model
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::TwoPNC> { using type = TwoPNCPrimaryVariableSwitch<TypeTag>; };         //!< The primary variable switch for the 2pnc model
 
 //! Set the volume variables property
-SET_PROP(TwoPNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPNC>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -234,43 +240,53 @@ public:
 };
 
 //! Set the base model traits
-SET_PROP(TwoPNC, BaseModelTraits)
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::TwoPNC>
 {
 private:
     //! we use the number of components specified by the fluid system here
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
 public:
     using type = TwoPNCModelTraits<FluidSystem::numComponents,
-                                   GET_PROP_VALUE(TypeTag, UseMoles),
-                                   GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
-                                   GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+                                   getPropValue<TypeTag, Properties::UseMoles>(),
+                                   getPropValue<TypeTag, Properties::SetMoleFractionsForFirstPhase>(),
+                                   getPropValue<TypeTag, Properties::Formulation>(), getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
-SET_TYPE_PROP(TwoPNC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits)); //!< default the actually used traits to the base traits
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPNC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; }; //!< default the actually used traits to the base traits
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(TwoPNC, IOFields, TwoPNCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPNC> { using type = TwoPNCIOFields; };
 
-SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoPNC> { using type = CompositionalLocalResidual<TypeTag>; };                  //!< Use the compositional local residual
 
-SET_INT_PROP(TwoPNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents); //!< Per default, no component mass balance is replaced
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::TwoPNC> { static constexpr int value = GetPropType<TypeTag, Properties::FluidSystem>::numComponents; }; //!< Per default, no component mass balance is replaced
 
 //! Default formulation is pw-Sn, overwrite if necessary
-SET_PROP(TwoPNC, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::TwoPNC>
 { static constexpr auto value = TwoPFormulation::p0s1; };
 
-SET_BOOL_PROP(TwoPNC, SetMoleFractionsForFirstPhase, true);  //!< Set the primary variables mole fractions for the wetting or non-wetting phase
-SET_BOOL_PROP(TwoPNC, UseMoles, true);                         //!< Use mole fractions in the balance equations by default
+template<class TypeTag>
+struct SetMoleFractionsForFirstPhase<TypeTag, TTag::TwoPNC> { static constexpr bool value = true; };  //!< Set the primary variables mole fractions for the wetting or non-wetting phase
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::TwoPNC> { static constexpr bool value = true; };                         //!< Use mole fractions in the balance equations by default
 
 //! Use the model after Millington (1961) for the effective diffusivity
-SET_TYPE_PROP(TwoPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::TwoPNC> { using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! This model uses the compositional fluid state
-SET_PROP(TwoPNC, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::TwoPNC>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
@@ -280,22 +296,25 @@ public:
 /////////////////////////////////////////////////
 
 //! Set the non-isothermal model traits
-SET_PROP(TwoPNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPNCNI>
 {
 private:
-    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
 //! Set non-isothermal output fields
-SET_TYPE_PROP(TwoPNCNI, IOFields, EnergyIOFields<TwoPNCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPNCNI> { using type = EnergyIOFields<TwoPNCIOFields>; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(TwoPNCNI, ThermalConductivityModel)
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::TwoPNCNI>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = ThermalConductivitySomerton<Scalar>;
 };

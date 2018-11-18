@@ -44,7 +44,7 @@ class DarcysLawImplementation
  * These specializations are found in the headers included below.
  */
 template <class TypeTag>
-using DarcysLaw = DarcysLawImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+using DarcysLaw = DarcysLawImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
 
 } // end namespace Dumux
 

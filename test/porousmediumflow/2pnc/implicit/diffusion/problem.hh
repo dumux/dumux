@@ -45,36 +45,48 @@ template <class TypeTag>
 class TwoPNCDiffusionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TwoPNCDiffusion, INHERITS_FROM(TwoPNC));
-NEW_TYPE_TAG(TwoPNCDiffusionCC, INHERITS_FROM(CCTpfaModel, TwoPNCDiffusion));
+// Create new type tags
+namespace TTag {
+struct TwoPNCDiffusion { using InheritsFrom = std::tuple<TwoPNC>; };
+struct TwoPNCDiffusionCC { using InheritsFrom = std::tuple<TwoPNCDiffusion, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TwoPNCDiffusion, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPNCDiffusion> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(TwoPNCDiffusion, Problem, TwoPNCDiffusionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPNCDiffusion> { using type = TwoPNCDiffusionProblem<TypeTag>; };
 
 // // Set fluid configuration
-SET_TYPE_PROP(TwoPNCDiffusion,
-              FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TwoPNCDiffusion>
+{
+    using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>,
+                                     FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+};
 
 // Set the spatial parameters
-SET_PROP(TwoPNCDiffusion, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TwoPNCDiffusion>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TwoPNCDiffusionSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(TwoPNCDiffusion, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::TwoPNCDiffusion> { static constexpr bool value = true; };
 
 //! Here we set FicksLaw or TwoPNCDiffusionsLaw
-SET_TYPE_PROP(TwoPNCDiffusion, MolecularDiffusionType, DIFFUSIONTYPE);
+template<class TypeTag>
+struct MolecularDiffusionType<TypeTag, TTag::TwoPNCDiffusion> { using type = DIFFUSIONTYPE; };
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
-SET_PROP(TwoPNCDiffusion, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::TwoPNCDiffusion>
 { static constexpr auto value = TwoPFormulation::p0s1; };
 
 } // end namespace Properties
@@ -88,9 +100,9 @@ template <class TypeTag>
 class TwoPNCDiffusionProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     enum {
         // Grid and world dimension
@@ -98,16 +110,16 @@ class TwoPNCDiffusionProblem : public PorousMediumFlowProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
     //! property that defines whether mole or mass fractions are used
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
 public:
     /*!

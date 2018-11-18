@@ -48,29 +48,37 @@ template <class TypeTag>
 class WaterAirProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(WaterAir, INHERITS_FROM(TwoPTwoCNI));
-NEW_TYPE_TAG(WaterAirBox, INHERITS_FROM(BoxModel, WaterAir));
-NEW_TYPE_TAG(WaterAirCCTpfa, INHERITS_FROM(CCTpfaModel, WaterAir));
+// Create new type tags
+namespace TTag {
+struct WaterAir { using InheritsFrom = std::tuple<TwoPTwoCNI>; };
+struct WaterAirBox { using InheritsFrom = std::tuple<WaterAir, BoxModel>; };
+struct WaterAirCCTpfa { using InheritsFrom = std::tuple<WaterAir, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(WaterAir, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::WaterAir> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(WaterAir, Problem, WaterAirProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::WaterAir> { using type = WaterAirProblem<TypeTag>; };
 
 // Set the wetting phase
-SET_TYPE_PROP(WaterAir, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::WaterAir> { using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Set the spatial parameters
-SET_PROP(WaterAir, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::WaterAir>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = WaterAirSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(WaterAir, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::WaterAir> { static constexpr bool value = true; };
 } // end namespace Dumux
 
 /*!
@@ -112,10 +120,10 @@ class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     // primary variable indices
@@ -139,15 +147,15 @@ class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
     // component index
     enum { N2Idx = FluidSystem::N2Idx };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = ModelTraits::useMoles();

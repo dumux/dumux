@@ -43,7 +43,7 @@ class FreeflowNCFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>
-using FreeflowNCFluxVariables = FreeflowNCFluxVariablesImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+using FreeflowNCFluxVariables = FreeflowNCFluxVariablesImpl<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
 
 
 } // end namespace

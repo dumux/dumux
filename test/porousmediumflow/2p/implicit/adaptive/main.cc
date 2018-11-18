@@ -63,23 +63,33 @@
 namespace Dumux {
 namespace Properties {
 //! Type Tags for the adaptive tests
-NEW_TYPE_TAG(TwoPIncompressibleAdaptiveTpfa, INHERITS_FROM(TwoPIncompressibleTpfa));
-NEW_TYPE_TAG(TwoPIncompressibleAdaptiveMpfa, INHERITS_FROM(TwoPIncompressibleMpfa));
-NEW_TYPE_TAG(TwoPIncompressibleAdaptiveBox, INHERITS_FROM(TwoPIncompressibleBox));
-NEW_TYPE_TAG(TwoPAdaptivePointSource, INHERITS_FROM(TwoPIncompressibleAdaptiveTpfa));
+// Create new type tags
+namespace TTag {
+struct TwoPIncompressibleAdaptiveTpfa { using InheritsFrom = std::tuple<TwoPIncompressibleTpfa>; };
+struct TwoPIncompressibleAdaptiveMpfa { using InheritsFrom = std::tuple<TwoPIncompressibleMpfa>; };
+struct TwoPIncompressibleAdaptiveBox { using InheritsFrom = std::tuple<TwoPIncompressibleBox>; };
+struct TwoPAdaptivePointSource { using InheritsFrom = std::tuple<TwoPIncompressibleAdaptiveTpfa>; };
+} // end namespace TTag
 
 //! Use non-conforming refinement in the cell-centered tests, conforming for box
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(TwoPIncompressibleAdaptiveTpfa, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-SET_TYPE_PROP(TwoPIncompressibleAdaptiveMpfa, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPIncompressibleAdaptiveTpfa> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPIncompressibleAdaptiveMpfa> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 #endif
 #if HAVE_DUNE_UGGRID
-SET_TYPE_PROP(TwoPIncompressibleAdaptiveBox, Grid, Dune::UGGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPIncompressibleAdaptiveBox> { using type = Dune::UGGrid<2>; };
 #endif
-SET_TYPE_PROP(TwoPAdaptivePointSource, Problem, PointSourceTestProblem<TypeTag>);
-SET_TYPE_PROP(TwoPIncompressibleAdaptiveTpfa, Problem, TwoPTestProblemAdaptive<TypeTag>);
-SET_TYPE_PROP(TwoPIncompressibleAdaptiveMpfa, Problem, TwoPTestProblemAdaptive<TypeTag>);
-SET_TYPE_PROP(TwoPIncompressibleAdaptiveBox, Problem, TwoPTestProblemAdaptive<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPAdaptivePointSource> { using type = PointSourceTestProblem<TypeTag>; };
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPIncompressibleAdaptiveTpfa> { using type = TwoPTestProblemAdaptive<TypeTag>; };
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPIncompressibleAdaptiveMpfa> { using type = TwoPTestProblemAdaptive<TypeTag>; };
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPIncompressibleAdaptiveBox> { using type = TwoPTestProblemAdaptive<TypeTag>; };
 } // end namespace Properties
 } // end namespace Dumux
 
@@ -88,7 +98,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(TYPETAG);
+    using TypeTag = Properties::TTag::TYPETAG;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -101,7 +111,7 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
-    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     ////////////////////////////////////////////////////////////
@@ -112,28 +122,28 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     // the problem (initial and boundary conditions)
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
     problem->computePointSourceMap(); // enable point sources
 
     // the solution vector
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
     // instantiate indicator & data transfer, read parameters for indicator
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const Scalar refineTol = getParam<Scalar>("Adaptive.RefineTolerance");
     const Scalar coarsenTol = getParam<Scalar>("Adaptive.CoarsenTolerance");
     TwoPGridAdaptIndicator<TypeTag> indicator(fvGridGeometry);
@@ -177,15 +187,15 @@ int main(int argc, char** argv) try
     }
 
     // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
-    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+    using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);

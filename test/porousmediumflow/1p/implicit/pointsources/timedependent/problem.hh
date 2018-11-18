@@ -34,13 +34,18 @@ class OnePSingularityProblemTimeDependent;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePSingularityTimeDependentCCTpfa, INHERITS_FROM(OnePSingularityCCTpfa));
+// Create new type tags
+namespace TTag {
+struct OnePSingularityTimeDependentCCTpfa { using InheritsFrom = std::tuple<OnePSingularityCCTpfa>; };
+} // end namespace TTag
 
 // Set the problem property
-SET_TYPE_PROP(OnePSingularityTimeDependentCCTpfa, Problem, OnePSingularityProblemTimeDependent<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePSingularityTimeDependentCCTpfa> { using type = OnePSingularityProblemTimeDependent<TypeTag>; };
 
 // point source
-SET_TYPE_PROP(OnePSingularityTimeDependentCCTpfa, PointSource, SolDependentPointSource<TypeTag>);
+template<class TypeTag>
+struct PointSource<TypeTag, TTag::OnePSingularityTimeDependentCCTpfa> { using type = SolDependentPointSource<TypeTag>; };
 }
 
 /*!
@@ -61,17 +66,17 @@ template <class TypeTag>
 class OnePSingularityProblemTimeDependent : public OnePSingularityProblem<TypeTag>
 {
     using ParentType = OnePSingularityProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using PointSource = GetPropType<TypeTag, Properties::PointSource>;
 
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
 public:
     OnePSingularityProblemTimeDependent(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

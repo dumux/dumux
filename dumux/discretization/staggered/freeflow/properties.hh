@@ -49,13 +49,17 @@ namespace Properties
 {
 
 //! Type tag for the staggered scheme specialized for free flow.
-NEW_TYPE_TAG(StaggeredFreeFlowModel, INHERITS_FROM(StaggeredModel));
+// Create new type tags
+namespace TTag {
+struct StaggeredFreeFlowModel { using InheritsFrom = std::tuple<StaggeredModel>; };
+} // end namespace TTag
 
 /*!
  * \brief  Set the number of equations on the faces to 1. We only consider scalar values because the velocity vector
  *         is normal to the face.
  */
-SET_INT_PROP(StaggeredFreeFlowModel, NumEqFace, 1);
+template<class TypeTag>
+struct NumEqFace<TypeTag, TTag::StaggeredFreeFlowModel> { static constexpr int value = 1; };
 
 /*!
  * \brief  For free flow models, we take the number of "physical" equations
@@ -63,11 +67,12 @@ SET_INT_PROP(StaggeredFreeFlowModel, NumEqFace, 1);
  *         and substract the number of dimensions. This yields the number of equations to be
  *         solved on the cell centers. Works also for non-isothermal models.
  */
-SET_PROP(StaggeredFreeFlowModel, NumEqCellCenter)
+template<class TypeTag>
+struct NumEqCellCenter<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     static constexpr auto dim = GridView::dimension;
     static constexpr auto numEq = ModelTraits::numEq();
 public:
@@ -75,33 +80,36 @@ public:
 };
 
 //! The default fv grid geometry
-SET_PROP(StaggeredFreeFlowModel, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Traits = StaggeredFreeFlowDefaultFVGridGeometryTraits<GridView>;
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
 public:
     using type = StaggeredFVGridGeometry<GridView, enableCache, Traits>;
 };
 
 //! The variables living on the faces
-SET_PROP(StaggeredFreeFlowModel, FaceVariables)
+template<class TypeTag>
+struct FaceVariables<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 public:
     using type = StaggeredFaceVariables<FacePrimaryVariables, GridView::dimension>;
 };
 
 //! Set the default global volume variables cache vector class
-SET_PROP(StaggeredFreeFlowModel, GridVolumeVariables)
+template<class TypeTag>
+struct GridVolumeVariables<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    static constexpr auto enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     using Traits = StaggeredGridDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
 public:
     using type = StaggeredGridVolumeVariables<Traits, enableCache>;
@@ -109,15 +117,19 @@ public:
 
 
 //! Boundary types at a single degree of freedom
-SET_PROP(StaggeredFreeFlowModel, BoundaryTypes)
+template<class TypeTag>
+struct BoundaryTypes<TypeTag, TTag::StaggeredFreeFlowModel>
 {
-    using type = StaggeredFreeFlowBoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
+    using type = StaggeredFreeFlowBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 };
 
 //! The velocity output
-SET_TYPE_PROP(StaggeredFreeFlowModel, VelocityOutput,
-    StaggeredFreeFlowVelocityOutput<typename GET_PROP_TYPE(TypeTag, GridVariables),
-                                    typename GET_PROP_TYPE(TypeTag, SolutionVector)>);
+template<class TypeTag>
+struct VelocityOutput<TypeTag, TTag::StaggeredFreeFlowModel>
+{
+    using type = StaggeredFreeFlowVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>,
+                                                 GetPropType<TypeTag, Properties::SolutionVector>>;
+};
 
 } // namespace Properties
 } // namespace Dumux

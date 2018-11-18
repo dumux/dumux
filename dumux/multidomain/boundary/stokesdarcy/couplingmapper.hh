@@ -74,12 +74,12 @@ private:
     // the sub domain type tags
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
-    using CouplingManager = typename GET_PROP_TYPE(StokesTypeTag, CouplingManager);
+    using CouplingManager = GetPropType<StokesTypeTag, Properties::CouplingManager>;
 
-    static_assert(GET_PROP_TYPE(SubDomainTypeTag<stokesIdx>, FVGridGeometry)::discMethod == DiscretizationMethod::staggered,
+    static_assert(GetPropType<SubDomainTypeTag<stokesIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::staggered,
                   "The free flow domain must use the staggered discretization");
 
-    static_assert(GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, FVGridGeometry)::discMethod == DiscretizationMethod::cctpfa,
+    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa,
                   "The Darcy domain must use the CCTpfa discretization");
 public:
 

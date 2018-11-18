@@ -60,24 +60,30 @@
 namespace Dumux {
 namespace Properties {
 
-NEW_TYPE_TAG(OnePSub, INHERITS_FROM(CCTpfaModel, OneP));
+// Create new type tags
+namespace TTag {
+struct OnePSub { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 // differentiate between the two subproblems
-NEW_TYPE_TAG(OnePSub0, INHERITS_FROM(OnePSub));
-NEW_TYPE_TAG(OnePSub1, INHERITS_FROM(OnePSub));
+struct OnePSub0 { using InheritsFrom = std::tuple<OnePSub>; };
+struct OnePSub1 { using InheritsFrom = std::tuple<OnePSub>; };
+} // end namespace TTag
 
 // the coupling manager
-SET_TYPE_PROP(OnePSub, CouplingManager,
-              DarcyDarcyBoundaryCouplingManager<MultiDomainTraits<TTAG(OnePSub0), TTAG(OnePSub1)>>);
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePSub>
+{ using type = DarcyDarcyBoundaryCouplingManager<MultiDomainTraits<Properties::TTag::OnePSub0, Properties::TTag::OnePSub1>>; };
 
 // Set the grid type
 #if DOMAINSPLIT==1
-SET_PROP(OnePSub, Grid)
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePSub>
 {
     using FullDomainGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
     using type = Dune::SubGrid<FullDomainGrid::dimension, FullDomainGrid>;
 };
 #elif DOMAINSPLIT==0
-SET_PROP(OnePSub, Grid)
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePSub>
 {
     using FullDomainGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
     using type = FullDomainGrid;
@@ -85,19 +91,26 @@ SET_PROP(OnePSub, Grid)
 #endif
 
 // set the spatial params
-SET_TYPE_PROP(OnePSub, SpatialParams, OnePTestSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                   typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePSub>
+{
+    using type = OnePTestSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                       GetPropType<TypeTag, Properties::Scalar>>;
+};
 
 // the fluid system
-SET_PROP(OnePSub, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePSub>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // differentiate between the two subproblems
-SET_TYPE_PROP(OnePSub0, Problem, OnePTestProblem<TypeTag, 0>);
-SET_TYPE_PROP(OnePSub1, Problem, OnePTestProblem<TypeTag, 1>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePSub0> { using type = OnePTestProblem<TypeTag, 0>; };
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePSub1> { using type = OnePTestProblem<TypeTag, 1>; };
 
 } // end namespace Properties
 } // end namespace Dumux
@@ -117,12 +130,12 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using TypeTag = TTAG(OnePSub);
-    using SubTypeTag0 = TTAG(OnePSub0);
-    using SubTypeTag1 = TTAG(OnePSub1);
+    using TypeTag = Properties::TTag::OnePSub;
+    using SubTypeTag0 = Properties::TTag::OnePSub0;
+    using SubTypeTag1 = Properties::TTag::OnePSub1;
 
     // create the full grid that we are gonna split for the output
-    using FullDomainGrid = typename GET_PROP(TypeTag, Grid)::FullDomainGrid;
+    using FullDomainGrid = typename GetProp<TypeTag, Properties::Grid>::FullDomainGrid;
     GridManager<FullDomainGrid> gridManager;
     gridManager.init();
 
@@ -159,7 +172,7 @@ int main(int argc, char** argv) try
 #elif DOMAINSPLIT==0
 
     // create an upper half and lower half grid
-    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager0, gridManager1;
+    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager0, gridManager1;
     gridManager0.init("1");
     gridManager1.init("2");
 
@@ -174,7 +187,7 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////
 
     // create the finite volume grid geometries
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     auto fvGridGeometry0 = std::make_shared<FVGridGeometry>(gridView0);
     auto fvGridGeometry1 = std::make_shared<FVGridGeometry>(gridView1);
     fvGridGeometry0->update();
@@ -186,14 +199,14 @@ int main(int argc, char** argv) try
     constexpr auto domain1Idx = Traits::template DomainIdx<1>();
 
     // the coupling manager
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // the problem (initial and boundary conditions)
-    using Problem0 = typename GET_PROP_TYPE(SubTypeTag0, Problem);
+    using Problem0 = GetPropType<SubTypeTag0, Properties::Problem>;
     auto problem0 = std::make_shared<Problem0>(fvGridGeometry0, couplingManager, "1");
     problem0->spatialParams().setLens(lensLowerLeft, lensUpperRight);
-    using Problem1 = typename GET_PROP_TYPE(SubTypeTag1, Problem);
+    using Problem1 = GetPropType<SubTypeTag1, Properties::Problem>;
     auto problem1 = std::make_shared<Problem1>(fvGridGeometry1, couplingManager, "2");
     problem1->spatialParams().setLens(lensLowerLeft, lensUpperRight);
 
@@ -209,9 +222,9 @@ int main(int argc, char** argv) try
     couplingManager->init(problem0, problem1, sol);
 
     // the grid variables
-    using GridVariables0 = typename GET_PROP_TYPE(SubTypeTag0, GridVariables);
+    using GridVariables0 = GetPropType<SubTypeTag0, Properties::GridVariables>;
     auto gridVariables0 = std::make_shared<GridVariables0>(problem0, fvGridGeometry0);
-    using GridVariables1 = typename GET_PROP_TYPE(SubTypeTag1, GridVariables);
+    using GridVariables1 = GetPropType<SubTypeTag1, Properties::GridVariables>;
     auto gridVariables1 = std::make_shared<GridVariables1>(problem1, fvGridGeometry1);
     gridVariables0->init(sol[domain0Idx], oldSol[domain0Idx]);
     gridVariables1->init(sol[domain1Idx], oldSol[domain1Idx]);
@@ -225,12 +238,12 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using SolutionVector0 = std::decay_t<decltype(sol[domain0Idx])>;
     VtkOutputModule<GridVariables0, SolutionVector0> vtkWriter0(*gridVariables0, sol[domain0Idx], problem0->name());
-    GET_PROP_TYPE(SubTypeTag0, IOFields)::initOutputModule(vtkWriter0);
+    GetPropType<SubTypeTag0, Properties::IOFields>::initOutputModule(vtkWriter0);
     vtkWriter0.write(0.0);
 
     using SolutionVector1 = std::decay_t<decltype(sol[domain1Idx])>;
     VtkOutputModule<GridVariables1, SolutionVector1> vtkWriter1(*gridVariables1, sol[domain1Idx], problem1->name());
-    GET_PROP_TYPE(SubTypeTag1, IOFields)::initOutputModule(vtkWriter1);
+    GetPropType<SubTypeTag1, Properties::IOFields>::initOutputModule(vtkWriter1);
     vtkWriter1.write(0.0);
 
     // instantiate time loop

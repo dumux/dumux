@@ -89,29 +89,29 @@ private:
     template<std::size_t id>
     using SolutionSubVector = std::conditional_t<(id < 2),
                                                  std::conditional_t<(id == 0),
-                                                                    typename GET_PROP_TYPE(SubDomainTypeTag<0>, CellCenterSolutionVector),
-                                                                    typename GET_PROP_TYPE(SubDomainTypeTag<0>, FaceSolutionVector)>,
-                                                 typename GET_PROP_TYPE(SubDomainTypeTag<id>, SolutionVector)>;
+                                                                    GetPropType<SubDomainTypeTag<0>, Properties::CellCenterSolutionVector>,
+                                                                    GetPropType<SubDomainTypeTag<0>, Properties::FaceSolutionVector>>,
+                                                 GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>>;
 
     template<std::size_t id>
-    using SubDomainScalar = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Scalar);
+    using SubDomainScalar = GetPropType<SubDomainTypeTag<id>, Properties::Scalar>;
 
     template<std::size_t id>
-    using SubDomainProblem = std::shared_ptr<const typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem)>;
+    using SubDomainProblem = std::shared_ptr<const GetPropType<SubDomainTypeTag<id>, Properties::Problem>>;
 
     template<std::size_t id>
     using SubDomainFVGridGeometry = std::shared_ptr<std::conditional_t<(id < 2),
                                                                        std::conditional_t<(id == 0),
-                                                                                          typename GET_PROP_TYPE(SubDomainTypeTag<0>, FVGridGeometry)::CellCenterFVGridGeometryType,
-                                                                                          typename GET_PROP_TYPE(SubDomainTypeTag<0>, FVGridGeometry)::FaceFVGridGeometryType>,
-                                                                       typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry)>>;
+                                                                                          typename GetPropType<SubDomainTypeTag<0>, Properties::FVGridGeometry>::CellCenterFVGridGeometryType,
+                                                                                          typename GetPropType<SubDomainTypeTag<0>, Properties::FVGridGeometry>::FaceFVGridGeometryType>,
+                                                                       GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>>>;
 
     template<std::size_t id>
     using SubDomainGridVariables = std::shared_ptr<std::conditional_t<(id < 2),
                                                                       std::conditional_t<(id == 0),
-                                                                                         typename GET_PROP_TYPE(SubDomainTypeTag<0>, GridVariables)::CellCenterGridVariablesType,
-                                                                                         typename GET_PROP_TYPE(SubDomainTypeTag<0>, GridVariables)::FaceGridVariablesType>,
-                                                                      typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVariables)>>;
+                                                                                         typename GetPropType<SubDomainTypeTag<0>, Properties::GridVariables>::CellCenterGridVariablesType,
+                                                                                         typename GetPropType<SubDomainTypeTag<0>, Properties::GridVariables>::FaceGridVariablesType>,
+                                                                      GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>>>;
 
     template<class Scalar, int numEq>
     struct JacobianType
@@ -126,9 +126,9 @@ private:
     template<std::size_t id>
     using JacobianDiagBlock = std::conditional_t<(id < 2),
                                                  std::conditional_t<(id == 0),
-                                                                    typename JacobianType<typename GET_PROP_TYPE(SubDomainTypeTag<0>, Scalar), GET_PROP_VALUE(SubDomainTypeTag<0>, NumEqCellCenter)>::type,
-                                                                    typename JacobianType<typename GET_PROP_TYPE(SubDomainTypeTag<0>, Scalar), GET_PROP_VALUE(SubDomainTypeTag<0>, NumEqFace)>::type>,
-                                                 typename GET_PROP_TYPE(SubDomainTypeTag<id>, JacobianMatrix)>;
+                                                                    typename JacobianType<GetPropType<SubDomainTypeTag<0>, Properties::Scalar>, getPropValue<SubDomainTypeTag<0>, Properties::NumEqCellCenter>()>::type,
+                                                                    typename JacobianType<GetPropType<SubDomainTypeTag<0>, Properties::Scalar>, getPropValue<SubDomainTypeTag<0>, Properties::NumEqFace>()>::type>,
+                                                 GetPropType<SubDomainTypeTag<id>, Properties::JacobianMatrix>>;
 
 public:
 
@@ -140,9 +140,9 @@ public:
 
     template<std::size_t id>
     using PrimaryVariables = std::conditional_t<(id < 2),
-                                                 std::conditional_t<(id == 0), typename GET_PROP_TYPE(SubDomainTypeTag<0>, CellCenterPrimaryVariables),
-                                                                               typename GET_PROP_TYPE(SubDomainTypeTag<0>, FacePrimaryVariables)>,
-                                                 typename GET_PROP_TYPE(SubDomainTypeTag<id>, PrimaryVariables)>;
+                                                 std::conditional_t<(id == 0), GetPropType<SubDomainTypeTag<0>, Properties::CellCenterPrimaryVariables>,
+                                                                               GetPropType<SubDomainTypeTag<0>, Properties::FacePrimaryVariables>>,
+                                                 GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>>;
 
     template<typename... MatrixBlocks>
     using createMatrixType = typename Detail::createMultiTypeBlockMatrixType<Scalar, MatrixBlocks...>::type::type;

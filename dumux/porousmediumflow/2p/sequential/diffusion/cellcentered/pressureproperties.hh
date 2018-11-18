@@ -26,6 +26,7 @@
 #define DUMUX_FVPRESSUREPORPERTIES2P_SEQUENTIAL_HH
 
 //Dumux-includes
+#include <dumux/common/properties/propertysystemmacros.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 
 namespace Dumux

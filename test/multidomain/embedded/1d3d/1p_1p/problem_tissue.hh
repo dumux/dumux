@@ -53,37 +53,53 @@ class TissueProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(Tissue, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(TissueCC, INHERITS_FROM(CCTpfaModel, Tissue));
-NEW_TYPE_TAG(TissueBox, INHERITS_FROM(BoxModel, Tissue));
+// Create new type tags
+namespace TTag {
+struct Tissue { using InheritsFrom = std::tuple<OneP>; };
+struct TissueCC { using InheritsFrom = std::tuple<Tissue, CCTpfaModel>; };
+struct TissueBox { using InheritsFrom = std::tuple<Tissue, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Tissue, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Tissue> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >; };
 
-SET_BOOL_PROP(Tissue, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Tissue, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Tissue, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(Tissue, SolutionDependentAdvection, false);
-SET_BOOL_PROP(Tissue, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(Tissue, SolutionDependentHeatConduction, false);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Tissue> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Tissue> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Tissue> { static constexpr bool value = true; };
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::Tissue> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::Tissue> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::Tissue> { static constexpr bool value = false; };
 
 // Set the problem property
-SET_TYPE_PROP(Tissue, Problem, TissueProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Tissue> { using type = TissueProblem<TypeTag>; };
 
 // Set the problem property
-SET_TYPE_PROP(Tissue, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::Tissue> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // the fluid system
-SET_PROP(Tissue, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Tissue>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(Tissue, SpatialParams,
-              TissueSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                  typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Tissue>
+{
+    using type = TissueSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                     GetPropType<TypeTag, Properties::Scalar>>;
+};
 } // end namespace Properties
 
 
@@ -94,22 +110,22 @@ template <class TypeTag>
 class TissueProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PointSource = GetPropType<TypeTag, Properties::PointSource>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
 
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     TissueProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,

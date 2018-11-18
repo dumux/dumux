@@ -42,7 +42,7 @@ class LowReKEpsilonFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseFluxVariables>
-using LowReKEpsilonFluxVariables = LowReKEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+using LowReKEpsilonFluxVariables = LowReKEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
 
 } // end namespace
 

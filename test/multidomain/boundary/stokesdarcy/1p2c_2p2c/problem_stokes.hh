@@ -40,35 +40,46 @@ class StokesSubProblem;
 
 namespace Properties
 {
+// Create new type tags
+namespace TTag {
 #if !NONISOTHERMAL
-NEW_TYPE_TAG(StokesOnePTwoC, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+struct StokesOnePTwoC { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
 #else
-NEW_TYPE_TAG(StokesOnePTwoC, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI));
+struct StokesOnePTwoC { using InheritsFrom = std::tuple<NavierStokesNCNI, StaggeredFreeFlowModel>; };
 #endif
+} // end namespace TTag
 
 
 // Set the grid type
-SET_TYPE_PROP(StokesOnePTwoC, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::StokesOnePTwoC> { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // The fluid system
-SET_PROP(StokesOnePTwoC, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::StokesOnePTwoC>
 {
-  using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+  using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
   static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the water phase
   using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
-SET_INT_PROP(StokesOnePTwoC, ReplaceCompEqIdx, 3);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::StokesOnePTwoC> { static constexpr int value = 3; };
 
 // Use formulation based on mass fractions
-SET_BOOL_PROP(StokesOnePTwoC, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 
 // Set the problem property
-SET_TYPE_PROP(StokesOnePTwoC, Problem, Dumux::StokesSubProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::StokesOnePTwoC> { using type = Dumux::StokesSubProblem<TypeTag> ; };
 
-SET_BOOL_PROP(StokesOnePTwoC, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(StokesOnePTwoC, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(StokesOnePTwoC, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 
 }
 
@@ -83,31 +94,31 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables)::LocalView;
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFaceVariables = typename GetPropType<TypeTag, Properties::GridFaceVariables>::LocalView;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
-    static constexpr bool useMoles = GET_PROP_TYPE(TypeTag, ModelTraits)::useMoles();
+    static constexpr bool useMoles = GetPropType<TypeTag, Properties::ModelTraits>::useMoles();
 
 public:
     StokesSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, std::shared_ptr<CouplingManager> couplingManager)

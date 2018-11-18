@@ -61,8 +61,8 @@ namespace Dumux {
 template <class TypeTag>
 class TimeManager
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     TimeManager(const TimeManager&)
     {}

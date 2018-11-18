@@ -51,21 +51,26 @@ class TubesTestProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(TubesTest, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(TubesTestCCTpfa, INHERITS_FROM(CCTpfaModel, TubesTest));
-NEW_TYPE_TAG(TubesTestBox, INHERITS_FROM(BoxModel, TubesTest));
+// Create new type tags
+namespace TTag {
+struct TubesTest { using InheritsFrom = std::tuple<OneP>; };
+struct TubesTestCCTpfa { using InheritsFrom = std::tuple<TubesTest, CCTpfaModel>; };
+struct TubesTestBox { using InheritsFrom = std::tuple<TubesTest, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
 #if HAVE_DUNE_FOAMGRID
-SET_TYPE_PROP(TubesTest, Grid, Dune::FoamGrid<1, 3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TubesTest> { using type = Dune::FoamGrid<1, 3>; };
 #endif
 
 // if we have pt scotch use the reordering dof mapper to optimally sort the dofs (cc)
-SET_PROP(TubesTestCCTpfa, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::TubesTestCCTpfa>
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     using ElementMapper = ReorderingDofMapper<GridView>;
     using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
@@ -75,12 +80,13 @@ public:
 };
 
 // if we have pt scotch use the reordering dof mapper to optimally sort the dofs (box)
-SET_PROP(TubesTestBox, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::TubesTestBox>
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
     using VertexMapper = ReorderingDofMapper<GridView>;
@@ -90,20 +96,23 @@ public:
 };
 
 // Set the problem property
-SET_TYPE_PROP(TubesTest, Problem, TubesTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TubesTest> { using type = TubesTestProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(TubesTest, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TubesTest>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TubesTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // the fluid system
-SET_PROP(TubesTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TubesTest>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 } // end namespace Properties
@@ -117,32 +126,32 @@ template <class TypeTag>
 class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
     // Grid and world dimension
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum {
         // indices of the primary variables
         conti0EqIdx = Indices::conti0EqIdx,
         pressureIdx = Indices::pressureIdx
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum { isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box };
+    enum { isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box };
 
 public:
     TubesTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

@@ -42,23 +42,23 @@ namespace Dumux
 template<class TypeTag>
 class CCMpfaFluxVariablesCacheFiller
 {
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using MpfaHelper = typename FVGridGeometry::MpfaHelper;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
 
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using PrimaryInteractionVolume = GetPropType<TypeTag, Properties::PrimaryInteractionVolume>;
     using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle;
     using PrimaryLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
-    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+    using SecondaryInteractionVolume = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
     using SecondaryDataHandle = typename ElementFluxVariablesCache::SecondaryIvDataHandle;
     using SecondaryLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
 
@@ -69,9 +69,9 @@ class CCMpfaFluxVariablesCacheFiller
     static constexpr bool doDiffusion = ModelTraits::enableMolecularDiffusion();
     static constexpr bool doHeatConduction = ModelTraits::enableEnergyBalance();
 
-    static constexpr bool soldependentAdvection = GET_PROP_VALUE(TypeTag, SolutionDependentAdvection);
-    static constexpr bool soldependentDiffusion = GET_PROP_VALUE(TypeTag, SolutionDependentMolecularDiffusion);
-    static constexpr bool soldependentHeatConduction = GET_PROP_VALUE(TypeTag, SolutionDependentHeatConduction);
+    static constexpr bool soldependentAdvection = getPropValue<TypeTag, Properties::SolutionDependentAdvection>();
+    static constexpr bool soldependentDiffusion = getPropValue<TypeTag, Properties::SolutionDependentMolecularDiffusion>();
+    static constexpr bool soldependentHeatConduction = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
 
 public:
     //! This cache filler is always solution-dependent, as it updates the
@@ -252,7 +252,7 @@ private:
                        const std::vector<FluxVariablesCache*>& ivFluxVarCaches,
                        bool forceUpdateAll = false)
     {
-        using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+        using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
         using AdvectionFiller = typename AdvectionType::Cache::Filler;
 
         // fill data in the handle
@@ -308,7 +308,7 @@ private:
                        const std::vector<FluxVariablesCache*>& ivFluxVarCaches,
                        bool forceUpdateAll = false)
     {
-        using DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
+        using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
         using DiffusionFiller = typename DiffusionType::Cache::Filler;
 
         static constexpr int numPhases = ModelTraits::numPhases();
@@ -318,7 +318,7 @@ private:
         {
             for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+                using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
                 if (compIdx == FluidSystem::getMainComponent(phaseIdx))
                     continue;
 
@@ -379,7 +379,7 @@ private:
                             const std::vector<FluxVariablesCache*>& ivFluxVarCaches,
                             bool forceUpdateAll = false)
     {
-        using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+        using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
         using HeatConductionFiller = typename HeatConductionType::Cache::Filler;
 
         // prepare data in handle
@@ -427,7 +427,7 @@ private:
     //! prepares the quantities necessary for advective fluxes in the handle
     template< class InteractionVolume,
               class DataHandle,
-              class AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType),
+              class AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>,
               typename std::enable_if_t<AdvectionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
     void fillAdvectionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
@@ -509,7 +509,7 @@ private:
     //! prepares the quantities necessary for diffusive fluxes in the handle
     template< class InteractionVolume,
               class DataHandle,
-              class DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType),
+              class DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>,
               typename std::enable_if_t<DiffusionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
     void fillDiffusionHandle(InteractionVolume& iv,
                              DataHandle& handle,
@@ -551,7 +551,7 @@ private:
     //! prepares the quantities necessary for conductive fluxes in the handle
     template< class InteractionVolume,
               class DataHandle,
-              class HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType),
+              class HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>,
               typename std::enable_if_t<HeatConductionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
     void fillHeatConductionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
@@ -568,11 +568,11 @@ private:
                 localAssembler.assemble( handle.heatConductionTout(),
                                          handle.heatConductionT(),
                                          iv,
-                                         LambdaFactory::template getHeatConductionLambda<typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel)>() );
+                                         LambdaFactory::template getHeatConductionLambda<GetPropType<TypeTag, Properties::ThermalConductivityModel>>() );
             else
                 localAssembler.assemble( handle.heatConductionT(),
                                          iv,
-                                         LambdaFactory::template getHeatConductionLambda<typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel)>() );
+                                         LambdaFactory::template getHeatConductionLambda<GetPropType<TypeTag, Properties::ThermalConductivityModel>>() );
         }
 
         // assemble vector of temperatures
@@ -584,21 +584,21 @@ private:
     //! fill handle only when advection uses mpfa
     template< class InteractionVolume,
               class DataHandle,
-              class AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType),
+              class AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>,
               typename std::enable_if_t<AdvectionType::discMethod != DiscretizationMethod::ccmpfa, int> = 0 >
     void fillAdvectionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll) {}
 
     //! fill handle only when diffusion uses mpfa
     template< class InteractionVolume,
               class DataHandle,
-              class DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType),
+              class DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>,
               typename std::enable_if_t<DiffusionType::discMethod != DiscretizationMethod::ccmpfa, int> = 0 >
     void fillDiffusionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll, int phaseIdx, int compIdx) {}
 
     //! fill handle only when heat conduction uses mpfa
     template< class InteractionVolume,
               class DataHandle,
-              class HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType),
+              class HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>,
               typename std::enable_if_t<HeatConductionType::discMethod != DiscretizationMethod::ccmpfa, int> = 0 >
     void fillHeatConductionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll) {}
 

@@ -73,46 +73,59 @@ template <class TypeTag>
 class EvaporationAtmosphereProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(EvaporationAtmosphere, INHERITS_FROM(MPNCNonequil));
-NEW_TYPE_TAG(EvaporationAtmosphereBox, INHERITS_FROM(BoxModel, EvaporationAtmosphere));
+// Create new type tags
+namespace TTag {
+struct EvaporationAtmosphere { using InheritsFrom = std::tuple<MPNCNonequil>; };
+struct EvaporationAtmosphereBox { using InheritsFrom = std::tuple<EvaporationAtmosphere, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(EvaporationAtmosphere, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::EvaporationAtmosphere> { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
-SET_TYPE_PROP(EvaporationAtmosphere, Problem, EvaporationAtmosphereProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::EvaporationAtmosphere> { using type = EvaporationAtmosphereProblem<TypeTag>; };
 
 // Set fluid configuration
-SET_TYPE_PROP(EvaporationAtmosphere,
-              FluidSystem,
-              FluidSystems::H2ON2Kinetic<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::EvaporationAtmosphere>
+{
+    using type = FluidSystems::H2ON2Kinetic<GetPropType<TypeTag, Properties::Scalar>,
+                                            FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+};
 
 //! Set the default pressure formulation: either pw first or pn first
-SET_PROP(EvaporationAtmosphere, PressureFormulation)
+template<class TypeTag>
+struct PressureFormulation<TypeTag, TTag::EvaporationAtmosphere>
 {
 public:
     static const MpNcPressureFormulation value = MpNcPressureFormulation::leastWettingFirst;
 };
 
 // Set the type used for scalar values
-SET_TYPE_PROP(EvaporationAtmosphere, Scalar, double);
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::EvaporationAtmosphere> { using type = double; };
 
 // Set the fluid system
-SET_PROP(EvaporationAtmosphere, SolidSystem)
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::EvaporationAtmosphere>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using InertComponent = Components::Constant<1, Scalar>;
     using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(EvaporationAtmosphere, SpatialParams, EvaporationAtmosphereSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere> { using type = EvaporationAtmosphereSpatialParams<TypeTag>; };
 
 // Set the interfacial area relation: wetting -- non-wetting
-SET_PROP(EvaporationAtmosphere, AwnSurface)
+template<class TypeTag>
+struct AwnSurface<TypeTag, TTag::EvaporationAtmosphere>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
     using MaterialLawParams = typename MaterialLaw::Params;
     using EffectiveIALaw = AwnSurfacePcMaxFct<Scalar>;
 public:
@@ -121,10 +134,11 @@ public:
 
 
 // Set the interfacial area relation: wetting -- solid
-SET_PROP(EvaporationAtmosphere, AwsSurface)
+template<class TypeTag>
+struct AwsSurface<TypeTag, TTag::EvaporationAtmosphere>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
     using MaterialLawParams = typename MaterialLaw::Params;
     using EffectiveIALaw = AwnSurfacePolynomial2ndOrder<Scalar>;
 public:
@@ -132,10 +146,11 @@ public:
 };
 
 // Set the interfacial area relation: non-wetting -- solid
-SET_PROP(EvaporationAtmosphere, AnsSurface)
+template<class TypeTag>
+struct AnsSurface<TypeTag, TTag::EvaporationAtmosphere>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
     using MaterialLawParams = typename MaterialLaw::Params;
     using EffectiveIALaw = AwnSurfaceExpSwPcTo3<Scalar>;
 public:
@@ -153,25 +168,25 @@ template <class TypeTag>
 class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     enum { dimWorld = GridView::dimensionworld };
@@ -188,7 +203,7 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
     enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
 
-    static constexpr bool enableChemicalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
+    static constexpr bool enableChemicalNonEquilibrium = getPropValue<TypeTag, Properties::EnableChemicalNonEquilibrium>();
     using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
     // formulations

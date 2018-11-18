@@ -38,23 +38,23 @@ template<class TypeTag>
 class TwoPOneCLocalResidual : public ImmiscibleLocalResidual<TypeTag>
 {
     using ParentType = ImmiscibleLocalResidual<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     // first index for the mass balance
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
-    static const int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
+    static const int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases();
 
 public:
     //! Use the parent type's constructor

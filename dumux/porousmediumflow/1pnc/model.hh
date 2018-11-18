@@ -139,25 +139,31 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the implicit the isothermal & non-isothermal one phase n component problems
-NEW_TYPE_TAG(OnePNC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(OnePNCNI, INHERITS_FROM(OnePNC));
+// Create new type tags
+namespace TTag {
+struct OnePNC { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+struct OnePNCNI { using InheritsFrom = std::tuple<OnePNC>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(OnePNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::OnePNC> { static constexpr int value = GetPropType<TypeTag, Properties::FluidSystem>::numComponents; };
 
 //! The base model traits. Per default, we use the number of components of the fluid system.
-SET_PROP(OnePNC, BaseModelTraits)
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::OnePNC>
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
-    using type = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using type = OnePNCModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>(), getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
-SET_TYPE_PROP(OnePNC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits)); //!< default the actually used traits to the base traits
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OnePNC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; }; //!< default the actually used traits to the base traits
 
 
 /*!
@@ -166,37 +172,42 @@ SET_TYPE_PROP(OnePNC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTrai
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(OnePNC, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::OnePNC>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 //! Use the model after Millington (1961) for the effective diffusivity
-SET_TYPE_PROP(OnePNC, EffectiveDiffusivityModel,
-              DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::OnePNC>
+{ using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Use mole fractions in the balance equations by default
-SET_BOOL_PROP(OnePNC, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::OnePNC> { static constexpr bool value = true; };
 
 //! The local residual function
-SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OnePNC> { using type = CompositionalLocalResidual<TypeTag>; };
 
 //! Set the volume variables property
-SET_PROP(OnePNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OnePNC>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
     static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
@@ -208,25 +219,28 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(OnePNC, IOFields, OnePNCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OnePNC> { using type = OnePNCIOFields; };
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
 //! the non-isothermal vtk output fields
-SET_TYPE_PROP(OnePNCNI, IOFields, EnergyIOFields<OnePNCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OnePNCNI> { using type = EnergyIOFields<OnePNCIOFields>; };
 
 //! Use the average for effective conductivities
-SET_TYPE_PROP(OnePNCNI,
-              ThermalConductivityModel,
-              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::OnePNCNI>
+{ using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! model traits of the non-isothermal model.
-SET_PROP(OnePNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OnePNCNI>
 {
 private:
-    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };

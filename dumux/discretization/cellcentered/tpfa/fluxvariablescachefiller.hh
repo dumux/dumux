@@ -36,14 +36,14 @@ namespace Dumux {
 template<class TypeTag>
 class CCTpfaFluxVariablesCacheFiller
 {
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
 
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -51,9 +51,9 @@ class CCTpfaFluxVariablesCacheFiller
     static constexpr bool doDiffusion = ModelTraits::enableMolecularDiffusion();
     static constexpr bool doHeatConduction = ModelTraits::enableEnergyBalance();
 
-    static constexpr bool soldependentAdvection = GET_PROP_VALUE(TypeTag, SolutionDependentAdvection);
-    static constexpr bool soldependentDiffusion = GET_PROP_VALUE(TypeTag, SolutionDependentMolecularDiffusion);
-    static constexpr bool soldependentHeatConduction = GET_PROP_VALUE(TypeTag, SolutionDependentHeatConduction);
+    static constexpr bool soldependentAdvection = getPropValue<TypeTag, Properties::SolutionDependentAdvection>();
+    static constexpr bool soldependentDiffusion = getPropValue<TypeTag, Properties::SolutionDependentMolecularDiffusion>();
+    static constexpr bool soldependentHeatConduction = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
 
 public:
     static constexpr bool isSolDependent = (doAdvection && soldependentAdvection) ||
@@ -115,7 +115,7 @@ private:
                   const ElementVolumeVariables& elemVolVars,
                   const SubControlVolumeFace& scvf)
     {
-        using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+        using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
         using AdvectionFiller = typename AdvectionType::Cache::Filler;
 
         // forward to the filler for the advective quantities
@@ -141,9 +141,9 @@ private:
                   const ElementVolumeVariables& elemVolVars,
                   const SubControlVolumeFace& scvf)
     {
-        using DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
+        using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
         using DiffusionFiller = typename DiffusionType::Cache::Filler;
-        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+        using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
         static constexpr int numPhases = ModelTraits::numPhases();
         static constexpr int numComponents = ModelTraits::numComponents();
@@ -174,7 +174,7 @@ private:
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvf)
     {
-        using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+        using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
         using HeatConductionFiller = typename HeatConductionType::Cache::Filler;
 
         // forward to the filler of the diffusive quantities

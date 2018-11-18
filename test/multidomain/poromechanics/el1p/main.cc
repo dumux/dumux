@@ -49,20 +49,22 @@
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(OnePSub, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePSub>
 {
 private:
     // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(OnePSub), TTAG(PoroElasticSub)>;
+    using Traits = MultiDomainTraits<TTag::OnePSub, TTag::PoroElasticSub>;
 public:
     using type = PoroMechanicsCouplingManager< Traits >;
 };
 
-SET_PROP(PoroElasticSub, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::PoroElasticSub>
 {
 private:
     // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(OnePSub), TTAG(PoroElasticSub)>;
+    using Traits = MultiDomainTraits<TTag::OnePSub, TTag::PoroElasticSub>;
 public:
     using type = PoroMechanicsCouplingManager< Traits >;
 };
@@ -89,11 +91,11 @@ int main(int argc, char** argv) try
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
-    using OnePTypeTag = TTAG(OnePSub);
-    using PoroMechTypeTag = TTAG(PoroElasticSub);
+    using OnePTypeTag = Properties::TTag::OnePSub;
+    using PoroMechTypeTag = Properties::TTag::PoroElasticSub;
 
     // we simply extract the grid creator from one of the type tags
-    using GridManager = Dumux::GridManager<typename GET_PROP_TYPE(OnePTypeTag, Grid)>;
+    using GridManager = Dumux::GridManager<GetPropType<OnePTypeTag, Properties::Grid>>;
     GridManager gridManager;
     gridManager.init();
 
@@ -105,8 +107,8 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometries
-    using OnePFVGridGeometry = typename GET_PROP_TYPE(OnePTypeTag, FVGridGeometry);
-    using PoroMechFVGridGeometry = typename GET_PROP_TYPE(PoroMechTypeTag, FVGridGeometry);
+    using OnePFVGridGeometry = GetPropType<OnePTypeTag, Properties::FVGridGeometry>;
+    using PoroMechFVGridGeometry = GetPropType<PoroMechTypeTag, Properties::FVGridGeometry>;
     auto onePFvGridGeometry = std::make_shared<OnePFVGridGeometry>(leafGridView);
     auto poroMechFvGridGeometry = std::make_shared<PoroMechFVGridGeometry>(leafGridView);
     onePFvGridGeometry->update();
@@ -118,8 +120,8 @@ int main(int argc, char** argv) try
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // the problems (boundary conditions)
-    using OnePProblem = typename GET_PROP_TYPE(OnePTypeTag, Problem);
-    using PoroMechProblem = typename GET_PROP_TYPE(PoroMechTypeTag, Problem);
+    using OnePProblem = GetPropType<OnePTypeTag, Properties::Problem>;
+    using PoroMechProblem = GetPropType<PoroMechTypeTag, Properties::Problem>;
     auto onePSpatialParams = std::make_shared<typename OnePProblem::SpatialParams>(onePFvGridGeometry, couplingManager);
     auto onePProblem = std::make_shared<OnePProblem>(onePFvGridGeometry, onePSpatialParams, "OneP");
     auto poroMechProblem = std::make_shared<PoroMechProblem>(poroMechFvGridGeometry, couplingManager, "PoroElastic");
@@ -140,22 +142,22 @@ int main(int argc, char** argv) try
     couplingManager->init(onePProblem, poroMechProblem, x);
 
     // the grid variables
-    using OnePGridVariables = typename GET_PROP_TYPE(OnePTypeTag, GridVariables);
-    using PoroMechGridVariables = typename GET_PROP_TYPE(PoroMechTypeTag, GridVariables);
+    using OnePGridVariables = GetPropType<OnePTypeTag, Properties::GridVariables>;
+    using PoroMechGridVariables = GetPropType<PoroMechTypeTag, Properties::GridVariables>;
     auto onePGridVariables = std::make_shared<OnePGridVariables>(onePProblem, onePFvGridGeometry);
     auto poroMechGridVariables = std::make_shared<PoroMechGridVariables>(poroMechProblem, poroMechFvGridGeometry);
     onePGridVariables->init(x[onePId]);
     poroMechGridVariables->init(x[poroMechId]);
 
     // intialize the vtk output module
-    using OnePVtkOutputModule = Dumux::VtkOutputModule<OnePGridVariables, typename GET_PROP_TYPE(OnePTypeTag, SolutionVector)>;
-    using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, typename GET_PROP_TYPE(PoroMechTypeTag, SolutionVector)>;
+    using OnePVtkOutputModule = Dumux::VtkOutputModule<OnePGridVariables, GetPropType<OnePTypeTag, Properties::SolutionVector>>;
+    using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, GetPropType<PoroMechTypeTag, Properties::SolutionVector>>;
     OnePVtkOutputModule onePVtkWriter(*onePGridVariables, x[onePId], onePProblem->name());
     PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechProblem->name());
 
     // add output fields to writers
-    using OnePOutputFields = typename GET_PROP_TYPE(OnePTypeTag, IOFields);
-    using PoroMechOutputFields = typename GET_PROP_TYPE(PoroMechTypeTag, IOFields);
+    using OnePOutputFields = GetPropType<OnePTypeTag, Properties::IOFields>;
+    using PoroMechOutputFields = GetPropType<PoroMechTypeTag, Properties::IOFields>;
     OnePOutputFields::initOutputModule(onePVtkWriter);
     PoroMechOutputFields::initOutputModule(poroMechVtkWriter);
 

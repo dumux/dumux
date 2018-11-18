@@ -38,30 +38,30 @@ namespace Dumux {
 template<class TypeTag>
 class StaggeredLocalResidual
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FaceResidual = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables)::LocalView;
+    using CellCenterResidual = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
+    using FaceResidual = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
+    using ElementFaceVariables = typename GetPropType<TypeTag, Properties::GridFaceVariables>::LocalView;
 
     using TimeLoop = TimeLoopBase<Scalar>;
 
 public:
-    using CellCenterResidualValue = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FaceResidualValue = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using CellCenterResidualValue = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
+    using FaceResidualValue = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using ElementResidualVector = CellCenterResidualValue;
 
     //! the constructor

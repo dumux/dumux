@@ -63,22 +63,24 @@
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(StokesOneP, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::StokesOneP>
 {
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, TTAG(DarcyTwoP)>;
+    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyTwoP>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
-SET_PROP(DarcyTwoP, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::DarcyTwoP>
 {
-    using Traits = StaggeredMultiDomainTraits<TTAG(StokesOneP), TTAG(StokesOneP), TypeTag>;
+    using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOneP, Properties::TTag::StokesOneP, TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
 template<class TypeTag>
 struct CouplingFluidSystem
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using H2OType = Dumux::Components::SimpleH2O<Scalar>;
     using H2OPhase = Dumux::FluidSystems::OnePLiquid<Scalar, H2OType>;
     using AirType = Dumux::Components::TabulatedComponent<Components::Air<Scalar>, false >;
@@ -87,14 +89,16 @@ struct CouplingFluidSystem
 };
 
 // the fluid system for the free-flow model
-SET_PROP(StokesOneP, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::StokesOneP>
 {
     static constexpr auto phaseIdx = 1; // simulate the air phase
     using type = FluidSystems::OnePAdapter<typename CouplingFluidSystem<TypeTag>::type, phaseIdx>;
 };
 
 // the fluid system for the Darcy model
-SET_PROP(DarcyTwoP, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::DarcyTwoP>
 {
     using type = typename CouplingFluidSystem<TypeTag>::type;
 };
@@ -117,16 +121,16 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using StokesTypeTag = TTAG(StokesOneP);
-    using DarcyTypeTag = TTAG(DarcyTwoP);
+    using StokesTypeTag = Properties::TTag::StokesOneP;
+    using DarcyTypeTag = Properties::TTag::DarcyTwoP;
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains
-    using DarcyGridManager = Dumux::GridManager<typename GET_PROP_TYPE(DarcyTypeTag, Grid)>;
+    using DarcyGridManager = Dumux::GridManager<GetPropType<DarcyTypeTag, Properties::Grid>>;
     DarcyGridManager darcyGridManager;
     darcyGridManager.init("Darcy"); // pass parameter group
 
-    using StokesGridManager = Dumux::GridManager<typename GET_PROP_TYPE(StokesTypeTag, Grid)>;
+    using StokesGridManager = Dumux::GridManager<GetPropType<StokesTypeTag, Properties::Grid>>;
     StokesGridManager stokesGridManager;
     stokesGridManager.init("Stokes"); // pass parameter group
 
@@ -135,10 +139,10 @@ int main(int argc, char** argv) try
     const auto& stokesGridView = stokesGridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using StokesFVGridGeometry = typename GET_PROP_TYPE(StokesTypeTag, FVGridGeometry);
+    using StokesFVGridGeometry = GetPropType<StokesTypeTag, Properties::FVGridGeometry>;
     auto stokesFvGridGeometry = std::make_shared<StokesFVGridGeometry>(stokesGridView);
     stokesFvGridGeometry->update();
-    using DarcyFVGridGeometry = typename GET_PROP_TYPE(DarcyTypeTag, FVGridGeometry);
+    using DarcyFVGridGeometry = GetPropType<DarcyTypeTag, Properties::FVGridGeometry>;
     auto darcyFvGridGeometry = std::make_shared<DarcyFVGridGeometry>(darcyGridView);
     darcyFvGridGeometry->update();
 
@@ -154,13 +158,13 @@ int main(int argc, char** argv) try
     constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
     // the problem (initial and boundary conditions)
-    using StokesProblem = typename GET_PROP_TYPE(StokesTypeTag, Problem);
+    using StokesProblem = GetPropType<StokesTypeTag, Properties::Problem>;
     auto stokesProblem = std::make_shared<StokesProblem>(stokesFvGridGeometry, couplingManager);
-    using DarcyProblem = typename GET_PROP_TYPE(DarcyTypeTag, Problem);
+    using DarcyProblem = GetPropType<DarcyTypeTag, Properties::Problem>;
     auto darcyProblem = std::make_shared<DarcyProblem>(darcyFvGridGeometry, couplingManager);
 
     // initialize the fluidsystem (tabulation)
-    GET_PROP_TYPE(StokesTypeTag, FluidSystem)::init(/*tempMin=*/273.15,
+    GetPropType<StokesTypeTag, Properties::FluidSystem>::init(/*tempMin=*/273.15,
                                                     /*tempMax=*/320,
                                                     /*numTemp=*/100,
                                                     /*pMin=*/1e4,
@@ -177,7 +181,7 @@ int main(int argc, char** argv) try
     const auto& faceSol = sol[stokesFaceIdx];
 
     // apply initial solution for instationary problems
-    typename GET_PROP_TYPE(StokesTypeTag, SolutionVector) stokesSol;
+    GetPropType<StokesTypeTag, Properties::SolutionVector> stokesSol;
     std::get<0>(stokesSol) = cellCenterSol;
     std::get<1>(stokesSol) = faceSol;
     stokesProblem->applyInitialSolution(stokesSol);
@@ -193,28 +197,28 @@ int main(int argc, char** argv) try
     couplingManager->init(stokesProblem, darcyProblem, sol);
 
     // the grid variables
-    using StokesGridVariables = typename GET_PROP_TYPE(StokesTypeTag, GridVariables);
+    using StokesGridVariables = GetPropType<StokesTypeTag, Properties::GridVariables>;
     auto stokesGridVariables = std::make_shared<StokesGridVariables>(stokesProblem, stokesFvGridGeometry);
     stokesGridVariables->init(stokesSol, solStokesOld);
-    using DarcyGridVariables = typename GET_PROP_TYPE(DarcyTypeTag, GridVariables);
+    using DarcyGridVariables = GetPropType<DarcyTypeTag, Properties::GridVariables>;
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyFvGridGeometry);
     darcyGridVariables->init(sol[darcyIdx], solDarcyOld);
 
     // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(StokesTypeTag, Scalar);
+    using Scalar = GetPropType<StokesTypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
-    StaggeredVtkOutputModule<StokesGridVariables, typename GET_PROP_TYPE(StokesTypeTag, SolutionVector)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
-    GET_PROP_TYPE(StokesTypeTag, IOFields)::initOutputModule(stokesVtkWriter);
+    StaggeredVtkOutputModule<StokesGridVariables, GetPropType<StokesTypeTag, Properties::SolutionVector>> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
+    GetPropType<StokesTypeTag, Properties::IOFields>::initOutputModule(stokesVtkWriter);
     stokesVtkWriter.write(0.0);
 
-    VtkOutputModule<DarcyGridVariables, typename GET_PROP_TYPE(DarcyTypeTag, SolutionVector)> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx], darcyProblem->name());
-    using DarcyVelocityOutput = typename GET_PROP_TYPE(DarcyTypeTag, VelocityOutput);
+    VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx], darcyProblem->name());
+    using DarcyVelocityOutput = GetPropType<DarcyTypeTag, Properties::VelocityOutput>;
     darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
-    GET_PROP_TYPE(DarcyTypeTag, IOFields)::initOutputModule(darcyVtkWriter);
+    GetPropType<DarcyTypeTag, Properties::IOFields>::initOutputModule(darcyVtkWriter);
     darcyVtkWriter.write(0.0);
 
     // instantiate time loop

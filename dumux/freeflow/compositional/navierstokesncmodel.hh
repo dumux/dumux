@@ -113,46 +113,55 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, multi-component isothermal free-flow model
-NEW_TYPE_TAG(NavierStokesNC, INHERITS_FROM(FreeFlow));
+struct NavierStokesNC { using InheritsFrom = std::tuple<FreeFlow>; };
 
 //! The type tag for the single-phase, multi-component non-isothermal free-flow model
-NEW_TYPE_TAG(NavierStokesNCNI, INHERITS_FROM(NavierStokesNC));
+struct NavierStokesNCNI { using InheritsFrom = std::tuple<NavierStokesNC>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values
 ///////////////////////////////////////////////////////////////////////////
 
 //!< states some specifics of the free-flow model
-SET_PROP(NavierStokesNC, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::NavierStokesNC>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static constexpr int numComponents = FluidSystem::numComponents;
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
+    static constexpr int replaceCompEqIdx = getPropValue<TypeTag, Properties::ReplaceCompEqIdx>();
 
 public:
     using type = NavierStokesNCModelTraits<dim, numComponents, useMoles, replaceCompEqIdx>;
 };
 
-SET_BOOL_PROP(NavierStokesNC, UseMoles, false); //!< Defines whether molar (true) or mass (false) density is used
-SET_INT_PROP(NavierStokesNC, ReplaceCompEqIdx, 0); //<! Set the ReplaceCompEqIdx to 0 by default
-SET_BOOL_PROP(NavierStokesNC, NormalizePressure, true); //!< Normalize the pressure term in the momentum balance by default
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::NavierStokesNC> { static constexpr bool value = false; }; //!< Defines whether molar (true) or mass (false) density is used
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::NavierStokesNC> { static constexpr int value = 0; }; //<! Set the ReplaceCompEqIdx to 0 by default
+template<class TypeTag>
+struct NormalizePressure<TypeTag, TTag::NavierStokesNC> { static constexpr bool value = true; }; //!< Normalize the pressure term in the momentum balance by default
 
 //! The local residual
-SET_TYPE_PROP(NavierStokesNC, LocalResidual, FreeflowNCResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::NavierStokesNC> { using type = FreeflowNCResidual<TypeTag>; };
 
 //! Set the volume variables property
-SET_PROP(NavierStokesNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::NavierStokesNC>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
@@ -165,13 +174,16 @@ public:
 };
 
 //! The flux variables
-SET_TYPE_PROP(NavierStokesNC, FluxVariables, FreeflowNCFluxVariables<TypeTag>);
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::NavierStokesNC> { using type = FreeflowNCFluxVariables<TypeTag>; };
 
 //! The flux variables cache class, by default the one for free flow
-SET_TYPE_PROP(NavierStokesNC, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::NavierStokesNC> { using type = FreeFlowFluxVariablesCache<TypeTag>; };
 
 //! The specific I/O fields
-SET_TYPE_PROP(NavierStokesNC, IOFields, FreeflowNCIOFields<NavierStokesIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::NavierStokesNC> { using type = FreeflowNCIOFields<NavierStokesIOFields>; };
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -179,39 +191,43 @@ SET_TYPE_PROP(NavierStokesNC, IOFields, FreeflowNCIOFields<NavierStokesIOFields>
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(NavierStokesNC, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::NavierStokesNC>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 //! Use Fick's law for molecular diffusion per default
-SET_TYPE_PROP(NavierStokesNC, MolecularDiffusionType, FicksLaw<TypeTag>);
+template<class TypeTag>
+struct MolecularDiffusionType<TypeTag, TTag::NavierStokesNC> { using type = FicksLaw<TypeTag>; };
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component free-flow model
 //////////////////////////////////////////////////////////////////////////
 
 //! The model traits of the non-isothermal model
-SET_PROP(NavierStokesNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::NavierStokesNCNI>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static constexpr int numComponents = FluidSystem::numComponents;
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
+    static constexpr int replaceCompEqIdx = getPropValue<TypeTag, Properties::ReplaceCompEqIdx>();
     using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents, useMoles, replaceCompEqIdx>;
 public:
     using type = FreeflowNIModelTraits<IsothermalModelTraits>;
 };
 
 //! The non-isothermal I/O fields
-SET_PROP(NavierStokesNCNI, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::NavierStokesNCNI>
 {
 private:
     using IsothermalIOFields = FreeflowNCIOFields<NavierStokesIOFields>;
@@ -220,7 +236,8 @@ public:
 };
 
 //! Use Fourier's Law as default heat conduction type
-SET_TYPE_PROP(NavierStokesNCNI, HeatConductionType, FouriersLaw<TypeTag>);
+template<class TypeTag>
+struct HeatConductionType<TypeTag, TTag::NavierStokesNCNI> { using type = FouriersLaw<TypeTag>; };
 
 // \}
 } // end namespace Properties

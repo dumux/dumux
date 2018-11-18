@@ -45,34 +45,51 @@ template <class TypeTag> class RootProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(Root, INHERITS_FROM(CCTpfaModel, OnePNC));
+// Create new type tags
+namespace TTag {
+struct Root { using InheritsFrom = std::tuple<OnePNC, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Root, Grid, Dune::FoamGrid<1, 3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Root> { using type = Dune::FoamGrid<1, 3>; };
 
-SET_BOOL_PROP(Root, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(Root, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(Root, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(Root, SolutionDependentAdvection, false);
-SET_BOOL_PROP(Root, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(Root, SolutionDependentHeatConduction, false);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::Root> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::Root> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::Root> { static constexpr bool value = true; };
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::Root> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::Root> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::Root> { static constexpr bool value = false; };
 
 // Set the problem property
-SET_TYPE_PROP(Root, Problem, RootProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Root> { using type = RootProblem<TypeTag>; };
 
 // Set the fluid system
-SET_PROP(Root, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Root>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::LiquidPhaseTwoC<Scalar, Components::SimpleH2O<Scalar>,
                                                        Components::Constant<1, Scalar>>;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(Root, SpatialParams, RootSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                            typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Root>
+{
+    using type = RootSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                   GetPropType<TypeTag, Properties::Scalar>>;
+};
 
-SET_BOOL_PROP(Root, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::Root> { static constexpr bool value = true; };
 
 } // end namespace Properties
 
@@ -84,26 +101,26 @@ template <class TypeTag>
 class RootProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PointSource = GetPropType<TypeTag, Properties::PointSource>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
+    using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     enum Indices {
         // Grid and world dimension
         dim = GridView::dimension,

@@ -46,8 +46,11 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tags for the single-phase, multi-component isothermal one-equation model
-NEW_TYPE_TAG(OneEqNC, INHERITS_FROM(NavierStokesNC));
+struct OneEqNC { using InheritsFrom = std::tuple<NavierStokesNC>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values
@@ -88,27 +91,29 @@ struct OneEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useMoles
 };
 
 //!< states some specifics of the isothermal multi-component one-equation model
-SET_PROP(OneEqNC, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OneEqNC>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dimension = GridView::dimension;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static constexpr int numComponents = FluidSystem::numComponents;
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
+    static constexpr int replaceCompEqIdx = getPropValue<TypeTag, Properties::ReplaceCompEqIdx>();
 public:
     using type = OneEqNCModelTraits<dimension, numComponents, useMoles, replaceCompEqIdx>;
 };
 
 //! Set the volume variables property
-SET_PROP(OneEqNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OneEqNC>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
@@ -122,7 +127,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(OneEqNC, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OneEqNC>
 {
 private:
     using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
@@ -131,7 +137,8 @@ public:
 };
 
 //! The flux variables
-SET_PROP(OneEqNC, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::OneEqNC>
 {
 private:
     using BaseFluxVariables = FreeflowNCFluxVariables<TypeTag>;
@@ -140,38 +147,44 @@ public:
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(OneEqNC, IOFields, FreeflowNCIOFields<OneEqIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OneEqNC> { using type = FreeflowNCIOFields<OneEqIOFields, true/*turbulenceModel*/>; };
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component one-equation model
 //////////////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tags for the single-phase, multi-component non-isothermal one-equation models
-NEW_TYPE_TAG(OneEqNCNI, INHERITS_FROM(NavierStokesNCNI));
+struct OneEqNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
+} // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(OneEqNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OneEqNCNI>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static constexpr int numComponents = FluidSystem::numComponents;
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
+    static constexpr int replaceCompEqIdx = getPropValue<TypeTag, Properties::ReplaceCompEqIdx>();
     using IsothermalModelTraits = OneEqNCModelTraits<dim, numComponents, useMoles, replaceCompEqIdx>;
 public:
     using type = FreeflowNIModelTraits<IsothermalModelTraits>;
 };
 
 //! Set the volume variables property
-SET_PROP(OneEqNCNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OneEqNCNI>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
@@ -185,7 +198,8 @@ public:
 };
 
 //! The local residual
-SET_PROP(OneEqNCNI, LocalResidual)
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OneEqNCNI>
 {
 private:
     using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
@@ -194,7 +208,8 @@ public:
 };
 
 //! The flux variables
-SET_PROP(OneEqNCNI, FluxVariables)
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::OneEqNCNI>
 {
 private:
     using BaseFluxVariables = FreeflowNCFluxVariables<TypeTag>;
@@ -203,7 +218,8 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(OneEqNCNI, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::OneEqNCNI>
 {
 private:
     using IsothermalIOFields = FreeflowNCIOFields<OneEqIOFields, true/*turbulenceModel*/>;

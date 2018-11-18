@@ -67,7 +67,8 @@ SET_TYPE_PROP(Adaptive2p2c3d, TransportModel, FV3dTransport2P2CAdaptive<TTAG(Ada
 SET_TYPE_PROP(Adaptive2p2c3d, PressureModel, FV3dPressure2P2CAdaptive<TTAG(Adaptive2p2c3d)>);
 
 // Select fluid system
-SET_PROP(Adaptive2p2c3d, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Adaptive2p2c3d>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::H2OAir<Scalar, Components::H2O<Scalar>, FluidSystems::H2OAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;

@@ -56,7 +56,8 @@ NEW_PROP_TAG(EvalCflFluxFunction); //!< Type of the evaluation of the CFL-condit
  * immiscible 2p system, this would represent a vector holding the saturation
  * of one phase.
  */
-SET_PROP(Transport, TransportSolutionType)
+template<class TypeTag>
+struct TransportSolutionType<TypeTag, TTag::Transport>
 {
  private:
     using SolutionType = typename GET_PROP(TypeTag, SolutionTypes);

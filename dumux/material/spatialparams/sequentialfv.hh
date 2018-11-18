@@ -30,7 +30,8 @@
 
 namespace Dumux {
 namespace Properties
-{ NEW_PROP_TAG( MaterialLaw ); }
+{ template<class TypeTag, class MyTypeTag>
+struct  MaterialLaw  { using type = UndefinedProperty; }; }
 
 /*!
  * \ingroup SpatialParameters
@@ -40,10 +41,10 @@ namespace Properties
 template<class TypeTag>
 class SequentialFVSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Implementation = GetPropType<TypeTag, Properties::SpatialParams>;
 
     enum
     {
@@ -53,7 +54,7 @@ class SequentialFVSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     /// @cond false
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using MaterialLawParams = typename GetPropType<TypeTag, Properties::MaterialLaw>::Params;
     /// @endcond
 
 public:

@@ -84,7 +84,8 @@ SET_TYPE_PROP(IMPESTest, Problem, IMPESTestProblem<TypeTag>);
 ////////////////////////////////////////////////////////////////////////
 
 // Set the fluid system
-SET_PROP(IMPESTest, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::IMPESTest>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;

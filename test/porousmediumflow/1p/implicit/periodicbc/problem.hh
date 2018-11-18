@@ -54,35 +54,46 @@ template<class TypeTag> class OnePTestProblem;
 
 namespace Properties {
 // create the type tag nodes
-NEW_TYPE_TAG(OnePIncompressible, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePIncompressibleTpfa, INHERITS_FROM(CCTpfaModel, OnePIncompressible));
-NEW_TYPE_TAG(OnePIncompressibleMpfa, INHERITS_FROM(CCMpfaModel, OnePIncompressible));
-NEW_TYPE_TAG(OnePIncompressibleBox, INHERITS_FROM(BoxModel, OnePIncompressible));
+// Create new type tags
+namespace TTag {
+struct OnePIncompressible { using InheritsFrom = std::tuple<OneP>; };
+struct OnePIncompressibleTpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCTpfaModel>; };
+struct OnePIncompressibleMpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCMpfaModel>; };
+struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressible, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(OnePIncompressible, Grid, Dune::SPGrid<double, 2>);
-// SET_TYPE_PROP(OnePIncompressible, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePIncompressible> { using type = Dune::SPGrid<double, 2>; };
+// struct Grid<TypeTag, TTag::OnePIncompressible> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 
 // Set the problem type
-SET_TYPE_PROP(OnePIncompressible, Problem, OnePTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePIncompressible> { using type = OnePTestProblem<TypeTag>; };
 
 // set the spatial params
-SET_TYPE_PROP(OnePIncompressible, SpatialParams, OnePTestSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePIncompressible> { using type = OnePTestSpatialParams<TypeTag>; };
 
 // use the incompressible local residual (provides analytic jacobian)
-SET_TYPE_PROP(OnePIncompressible, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::OnePIncompressible> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // the fluid system
-SET_PROP(OnePIncompressible, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePIncompressible>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Enable caching
-SET_BOOL_PROP(OnePIncompressible, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(OnePIncompressible, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(OnePIncompressible, EnableFVGridGeometryCache, FVGEOMCACHING);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = FVGEOMCACHING; };
 } // end namespace Properties
 
 /*!
@@ -96,13 +107,13 @@ template<class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

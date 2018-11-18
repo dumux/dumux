@@ -131,8 +131,11 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(TwoPTwoC, INHERITS_FROM(TwoPNC));
-NEW_TYPE_TAG(TwoPTwoCNI, INHERITS_FROM(TwoPTwoC));
+// Create new type tags
+namespace TTag {
+struct TwoPTwoC { using InheritsFrom = std::tuple<TwoPNC>; };
+struct TwoPTwoCNI { using InheritsFrom = std::tuple<TwoPTwoC>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property values
@@ -141,36 +144,39 @@ NEW_TYPE_TAG(TwoPTwoCNI, INHERITS_FROM(TwoPTwoC));
 /*!
  * \brief Set the model traits property.
  */
-SET_PROP(TwoPTwoC, BaseModelTraits)
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::TwoPTwoC>
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
 
 public:
-    using type = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
-                                      GET_PROP_VALUE(TypeTag, UseMoles),
-                                      GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx) >;
+    using type = TwoPTwoCModelTraits< getPropValue<TypeTag, Properties::Formulation>(),
+                                      getPropValue<TypeTag, Properties::UseMoles>(),
+                                      getPropValue<TypeTag, Properties::ReplaceCompEqIdx>() >;
 };
-SET_TYPE_PROP(TwoPTwoC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits));
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPTwoC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; };
 
 //! Use the 2p2c VolumeVariables
-SET_PROP(TwoPTwoC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPTwoC>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     static_assert(FSY::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
     static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
 
-    static constexpr bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
+    static constexpr bool useConstraintSolver = getPropValue<TypeTag, Properties::UseConstraintSolver>();
 
     using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -178,26 +184,30 @@ public:
 };
 
 //! Determines whether the constraint solver is used
-SET_BOOL_PROP(TwoPTwoC, UseConstraintSolver, true);
+template<class TypeTag>
+struct UseConstraintSolver<TypeTag, TTag::TwoPTwoC> { static constexpr bool value = true; };
 
 //////////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2p2c model (inherited from 2pnc)
 //////////////////////////////////////////////////////////////////////
 
 //! Set the non-isothermal model traits
-SET_PROP(TwoPTwoCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPTwoCNI>
 {
 private:
-    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
 //! Set non-isothermal output fields
-SET_TYPE_PROP(TwoPTwoCNI, IOFields, EnergyIOFields<TwoPNCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPTwoCNI> { using type = EnergyIOFields<TwoPNCIOFields>; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_TYPE_PROP(TwoPTwoCNI, ThermalConductivityModel, ThermalConductivitySomerton<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux

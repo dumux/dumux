@@ -59,9 +59,9 @@ class CCTpfaForchheimersLaw;
  */
 template <class TypeTag>
 class ForchheimersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
-: public CCTpfaForchheimersLaw<typename GET_PROP_TYPE(TypeTag, Scalar),
-                         typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         (GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView::dimension < GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView::dimensionworld)>
+: public CCTpfaForchheimersLaw<GetPropType<TypeTag, Properties::Scalar>,
+                         GetPropType<TypeTag, Properties::FVGridGeometry>,
+                         (GetPropType<TypeTag, Properties::FVGridGeometry>::GridView::dimension < GetPropType<TypeTag, Properties::FVGridGeometry>::GridView::dimensionworld)>
 {};
 
 /*!

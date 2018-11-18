@@ -54,8 +54,11 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes model
-NEW_TYPE_TAG(RANS, INHERITS_FROM(NavierStokes));
+struct RANS { using InheritsFrom = std::tuple<NavierStokes>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
@@ -74,30 +77,36 @@ struct RANSModelTraits : NavierStokesModelTraits<dimension>
 };
 
 //! The model traits of the isothermal model
-SET_PROP(RANS, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::RANS>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 public:
     using type = RANSModelTraits<dim>;
 };
 
 //! The specific I/O fields
-SET_TYPE_PROP(RANS, IOFields, RANSIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::RANS> { using type = RANSIOFields; };
 
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Reynolds-averaged Navier-Stokes model
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes model
-NEW_TYPE_TAG(RANSNI, INHERITS_FROM(RANS));
+struct RANSNI { using InheritsFrom = std::tuple<RANS>; };
+} // end namespace TTag
 
 //! The model traits of the non-isothermal model
-SET_PROP(RANSNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::RANSNI>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 
     using IsothermalTraits = RANSModelTraits<dim>;
@@ -106,10 +115,12 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_TYPE_PROP(RANSNI, IOFields, FreeflowNonIsothermalIOFields<RANSIOFields, true/*turbulenceModel*/>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::RANSNI> { using type = FreeflowNonIsothermalIOFields<RANSIOFields, true/*turbulenceModel*/>; };
 
 //! Use Fourier's Law as default heat conduction type
-SET_TYPE_PROP(RANSNI, HeatConductionType, FouriersLaw<TypeTag>);
+template<class TypeTag>
+struct HeatConductionType<TypeTag, TTag::RANSNI> { using type = FouriersLaw<TypeTag>; };
 
 // \}
 } // end namespace Properties

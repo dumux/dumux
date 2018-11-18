@@ -110,27 +110,32 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(TwoPNCMin, INHERITS_FROM(TwoPNC));
-NEW_TYPE_TAG(TwoPNCMinNI, INHERITS_FROM(TwoPNCMin));
+// Create new type tags
+namespace TTag {
+struct TwoPNCMin { using InheritsFrom = std::tuple<TwoPNC>; };
+struct TwoPNCMinNI { using InheritsFrom = std::tuple<TwoPNCMin>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags for the isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
 
 // use the mineralization local residual
-SET_TYPE_PROP(TwoPNCMin, LocalResidual, MineralizationLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoPNCMin> { using type = MineralizationLocalResidual<TypeTag>; };
 
 //! use the mineralization volume variables together with the 2pnc vol vars
-SET_PROP(TwoPNCMin, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPNCMin>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
     using NonMinVolVars = TwoPNCVolumeVariables<Traits>;
@@ -139,24 +144,27 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(TwoPNCMin, IOFields, MineralizationIOFields<TwoPNCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPNCMin> { using type = MineralizationIOFields<TwoPNCIOFields>; };
 
 //! The 2pnc model traits define the non-mineralization part
-SET_PROP(TwoPNCMin, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPNCMin>
 {
 private:
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using NonMineralizationTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+    using NonMineralizationTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = MineralizationModelTraits<NonMineralizationTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 };
 
 //! The two-phase model uses the immiscible fluid state
-SET_PROP(TwoPNCMin, SolidState)
+template<class TypeTag>
+struct SolidState<TypeTag, TTag::TwoPNCMin>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 public:
     using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
@@ -166,11 +174,12 @@ public:
 //////////////////////////////////////////////////////////////////
 
 //! Set non-isothermal model traits
-SET_PROP(TwoPNCMinNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPNCMinNI>
 {
 private:
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using TwoPNCTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+    using TwoPNCTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
     using IsothermalTraits = MineralizationModelTraits<TwoPNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
     // the mineralization traits, based on 2pnc traits, are the isothermal traits
@@ -178,7 +187,8 @@ public:
 };
 
 //! non-isothermal vtkoutput
-SET_PROP(TwoPNCMinNI, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPNCMinNI>
 {
     using MineralizationIOF = MineralizationIOFields<TwoPNCIOFields>;
     using type = EnergyIOFields<MineralizationIOF>;

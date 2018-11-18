@@ -64,12 +64,12 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
 
     // further types specific to the sub-problems
-    template<std::size_t id> using PrimaryVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, PrimaryVariables);
-    template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
-    template<std::size_t id> using NumEqVector = typename GET_PROP_TYPE(SubDomainTypeTag<id>, NumEqVector);
-    template<std::size_t id> using LocalResidual = typename GET_PROP_TYPE(SubDomainTypeTag<id>, LocalResidual);
+    template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
+    template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+    template<std::size_t id> using NumEqVector = GetPropType<SubDomainTypeTag<id>, Properties::NumEqVector>;
+    template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
 
-    template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::SubControlVolume;
     template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::SubControlVolumeFace;
@@ -77,7 +77,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using IndexType = typename GridView<id>::IndexSet::IndexType;
 
-    template<std::size_t id> using GridVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVariables);
+    template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using GridVolumeVariables = typename GridVariables<id>::GridVolumeVariables;
     template<std::size_t id> using ElementVolumeVariables = typename GridVolumeVariables<id>::LocalView;
     template<std::size_t id> using VolumeVariables = typename ElementVolumeVariables<id>::VolumeVariables;
@@ -85,11 +85,11 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     template<std::size_t id> using ElementFluxVariablesCache = typename GridFluxVariablesCache<id>::LocalView;
 
     // this currently does not work for some grid-wide caches being active
-    static_assert(!GET_PROP_VALUE(SubDomainTypeTag<bulkId>, EnableGridFluxVariablesCache),
+    static_assert(!getPropValue<SubDomainTypeTag<bulkId>, Properties::EnableGridFluxVariablesCache>(),
                   "Grid flux variables caching currently not supported in the bulk domain of cc-facet coupling models");
-    static_assert(!GET_PROP_VALUE(SubDomainTypeTag<lowDimId>, EnableGridVolumeVariablesCache),
+    static_assert(!getPropValue<SubDomainTypeTag<lowDimId>, Properties::EnableGridVolumeVariablesCache>(),
                   "Grid volume variables caching currently not supported in the lower-dimensional domain of cc-facet coupling models");
-    static_assert(!GET_PROP_VALUE(SubDomainTypeTag<bulkId>, EnableGridVolumeVariablesCache),
+    static_assert(!getPropValue<SubDomainTypeTag<bulkId>, Properties::EnableGridVolumeVariablesCache>(),
                   "Grid volume variables caching currently not supported in the bulk domain of cc-facet coupling models");
 
     // extract corresponding grid ids from the mapper

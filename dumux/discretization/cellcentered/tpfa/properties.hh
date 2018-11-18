@@ -46,46 +46,54 @@ namespace Dumux {
 namespace Properties {
 
 //! Type tag for the cell-centered tpfa scheme.
-NEW_TYPE_TAG(CCTpfaModel, INHERITS_FROM(FiniteVolumeModel));
+// Create new type tags
+namespace TTag {
+struct CCTpfaModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
+} // end namespace TTag
 
 //! Set the default for the global finite volume geometry
-SET_PROP(CCTpfaModel, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::CCTpfaModel>
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 public:
     using type = CCTpfaFVGridGeometry<GridView, enableCache>;
 };
 
 //! The grid volume variables vector class
-SET_PROP(CCTpfaModel, GridVolumeVariables)
+template<class TypeTag>
+struct GridVolumeVariables<TypeTag, TTag::CCTpfaModel>
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 public:
     using type = CCTpfaGridVolumeVariables<Problem, VolumeVariables, enableCache>;
 };
 
 //! The grid flux variables cache vector class
-SET_PROP(CCTpfaModel, GridFluxVariablesCache)
+template<class TypeTag>
+struct GridFluxVariablesCache<TypeTag, TTag::CCTpfaModel>
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
     using FluxVariablesCacheFiller = CCTpfaFluxVariablesCacheFiller<TypeTag>;
 public:
     using type = CCTpfaGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
 };
 
 //! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes);
+template<class TypeTag>
+struct ElementBoundaryTypes<TypeTag, TTag::CCTpfaModel> { using type = CCElementBoundaryTypes; };
 
 //! Set the BaseLocalResidual to CCLocalResidual
-SET_TYPE_PROP(CCTpfaModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
+template<class TypeTag>
+struct BaseLocalResidual<TypeTag, TTag::CCTpfaModel> { using type = CCLocalResidual<TypeTag>; };
 } // namespace Properties
 } // namespace Dumux
 

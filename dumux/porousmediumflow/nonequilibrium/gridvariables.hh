@@ -39,22 +39,22 @@ namespace Dumux {
  */
 template<class TypeTag>
 class NonEquilibriumGridVariables
-: public FVGridVariables<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, GridVolumeVariables),
-                         typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)>
+: public FVGridVariables<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                         GetPropType<TypeTag, Properties::GridVolumeVariables>,
+                         GetPropType<TypeTag, Properties::GridFluxVariablesCache>>
 {
-    using ParentType = FVGridVariables<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                       typename GET_PROP_TYPE(TypeTag, GridVolumeVariables),
-                                       typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)>;
+    using ParentType = FVGridVariables<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                       GetPropType<TypeTag, Properties::GridVolumeVariables>,
+                                       GetPropType<TypeTag, Properties::GridFluxVariablesCache>>;
 
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
 
     enum { dim = GridView::dimension }; // Grid and world dimension
     enum { dimWorld = GridView::dimensionworld };
 
-    static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
+    static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases();
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
 
 public:
@@ -75,7 +75,7 @@ public:
     void calcVelocityAverage(const SolutionVector& curSol)
     {
         // instatiate the velocity output
-        using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+        using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
         VelocityOutput velocityOutput(*this);
 
         using Scalar = typename SolutionVector::field_type;

@@ -45,7 +45,7 @@ struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethod::staggered>
 template<class TypeTag>
 using NavierStokesParentProblem =
       typename NavierStokesParentProblemImpl<TypeTag,
-      GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>::type;
+      GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>::type;
 
 /*!
  * \ingroup NavierStokesModel
@@ -59,24 +59,24 @@ template<class TypeTag>
 class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
 {
     using ParentType = NavierStokesParentProblem<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridFaceVariables = typename GridVariables::GridFaceVariables;
     using ElementFaceVariables = typename GridFaceVariables::LocalView;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum {
         dim = GridView::dimension,

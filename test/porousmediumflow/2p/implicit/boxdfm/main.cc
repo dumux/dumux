@@ -86,7 +86,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(TwoPIncompressibleBoxDfm);
+    using TypeTag = Properties::TTag::TwoPIncompressibleBoxDfm;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -101,7 +101,7 @@ int main(int argc, char** argv) try
     // we reuse the facet coupling grid manager to create the grid
     // from a mesh file with the fractures being incorporated as
     // lower-dimensional elements.
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
     using FractureGrid = FRACTUREGRIDTYPE;
     using GridManager = FacetCouplingGridManager<Grid, FractureGrid>;
     GridManager gridManager;
@@ -118,16 +118,16 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.template grid<0>().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update(fractureGridAdapter);
 
     // the problem (initial and boundary conditions)
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
@@ -136,19 +136,19 @@ int main(int argc, char** argv) try
     problem->spatialParams().updateMaterialInterfaceParams(x);
 
     // the grid variables
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
     // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
     using VtkOutputModule = BoxDfmVtkOutputModule<GridVariables, SolutionVector, FractureGrid>;
-    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule vtkWriter(*gridVariables, x, problem->name(), fractureGridAdapter, "", Dune::VTK::nonconforming);
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);

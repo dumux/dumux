@@ -42,7 +42,7 @@ class KEpsilonFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseFluxVariables>
-using KEpsilonFluxVariables = KEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+using KEpsilonFluxVariables = KEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
 
 } // end namespace
 

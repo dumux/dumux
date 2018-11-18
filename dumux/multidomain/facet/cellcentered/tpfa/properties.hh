@@ -44,21 +44,30 @@ namespace Properties {
 
 //! Type tag for the cell-centered tpfa scheme with coupling to
 //! another sub-domain living on the grid facets.
-NEW_TYPE_TAG(CCTpfaFacetCouplingModel, INHERITS_FROM(CCTpfaModel));
+// Create new type tags
+namespace TTag {
+struct CCTpfaFacetCouplingModel { using InheritsFrom = std::tuple<CCTpfaModel>; };
+} // end namespace TTag
 
 //! Use the tpfa facet coupling-specific Darcy's law
-SET_TYPE_PROP(CCTpfaFacetCouplingModel,
-              AdvectionType,
-              CCTpfaFacetCouplingDarcysLaw< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                            typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::CCTpfaFacetCouplingModel>
+{
+    using type = CCTpfaFacetCouplingDarcysLaw< GetPropType<TypeTag, Properties::Scalar>,
+                                               GetPropType<TypeTag, Properties::FVGridGeometry> >;
+};
 
 //! Use the cc local residual for models with facet coupling
-SET_TYPE_PROP(CCTpfaFacetCouplingModel, BaseLocalResidual, CCFacetCouplingLocalResidual<TypeTag>);
+template<class TypeTag>
+struct BaseLocalResidual<TypeTag, TTag::CCTpfaFacetCouplingModel> { using type = CCFacetCouplingLocalResidual<TypeTag>; };
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
-SET_TYPE_PROP(CCTpfaFacetCouplingModel,
-              FluxVariables,
-              PorousMediumFluxVariables<TypeTag, CCFacetCouplingUpwindScheme<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>>);
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::CCTpfaFacetCouplingModel>
+{
+    using type = PorousMediumFluxVariables<TypeTag,
+                                           CCFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::FVGridGeometry>>>;
+};
 
 } // namespace Properties
 } // namespace Dumux

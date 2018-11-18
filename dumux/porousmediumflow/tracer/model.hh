@@ -120,39 +120,47 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the fully implicit tracer model.
-NEW_TYPE_TAG(Tracer, INHERITS_FROM(PorousMediumFlow));
+// Create new type tags
+namespace TTag {
+struct Tracer { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the tracer model
 ///////////////////////////////////////////////////////////////////////////
 
 //! Define that mole fractions are used in the balance equations
-SET_BOOL_PROP(Tracer, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::Tracer> { static constexpr bool value = true; };
 
 //! set the model traits
-SET_PROP(Tracer, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::Tracer>
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
-    using type = TracerModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles)>;
+    using type = TracerModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>()>;
 };
 
 //! Use the tracer local residual function for the tracer model
-SET_TYPE_PROP(Tracer, LocalResidual, TracerLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::Tracer> { using type = TracerLocalResidual<TypeTag>; };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(Tracer, IOFields, TracerIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::Tracer> { using type = TracerIOFields; };
 
 //! Set the volume variables property
-SET_PROP(Tracer, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::Tracer>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     using Traits = TracerVolumeVariablesTraits<PV, FSY, SSY, SST, MT>;
 public:
@@ -160,10 +168,12 @@ public:
 };
 
 //! We use darcy's law as the default for the advective fluxes
-SET_TYPE_PROP(Tracer, AdvectionType, StationaryVelocityField<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::Tracer> { using type = StationaryVelocityField<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Use simple model with constant tortuosity as pm diffusivity model
-SET_TYPE_PROP(Tracer, EffectiveDiffusivityModel, DiffusivityConstantTortuosity<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::Tracer> { using type = DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>; };
 } // end namespace Properties
 // \}
 } // end namespace Dumux

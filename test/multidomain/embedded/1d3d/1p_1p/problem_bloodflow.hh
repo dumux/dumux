@@ -47,37 +47,53 @@ template <class TypeTag> class BloodFlowProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(BloodFlow, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(BloodFlowCC, INHERITS_FROM(CCTpfaModel, BloodFlow));
-NEW_TYPE_TAG(BloodFlowBox, INHERITS_FROM(BoxModel, BloodFlow));
+// Create new type tags
+namespace TTag {
+struct BloodFlow { using InheritsFrom = std::tuple<OneP>; };
+struct BloodFlowCC { using InheritsFrom = std::tuple<BloodFlow, CCTpfaModel>; };
+struct BloodFlowBox { using InheritsFrom = std::tuple<BloodFlow, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(BloodFlow, Grid, Dune::FoamGrid<1, 3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::BloodFlow> { using type = Dune::FoamGrid<1, 3>; };
 
-SET_BOOL_PROP(BloodFlow, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(BloodFlow, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(BloodFlow, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(BloodFlow, SolutionDependentAdvection, false);
-SET_BOOL_PROP(BloodFlow, SolutionDependentMolecularDiffusion, false);
-SET_BOOL_PROP(BloodFlow, SolutionDependentHeatConduction, false);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::BloodFlow> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::BloodFlow> { static constexpr bool value = false; };
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::BloodFlow> { static constexpr bool value = false; };
 
 // Set the problem property
-SET_TYPE_PROP(BloodFlow, Problem, BloodFlowProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::BloodFlow> { using type = BloodFlowProblem<TypeTag>; };
 
 // the fluid system
-SET_PROP(BloodFlow, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::BloodFlow>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the problem property
-SET_TYPE_PROP(BloodFlow, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::BloodFlow> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 // Set the spatial parameters
-SET_TYPE_PROP(BloodFlow, SpatialParams,
-              BloodFlowSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                     typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::BloodFlow>
+{
+    using type = BloodFlowSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                        GetPropType<TypeTag, Properties::Scalar>>;
+};
 } // end namespace Properties
 
 /*!
@@ -88,20 +104,20 @@ template <class TypeTag>
 class BloodFlowProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PointSource = GetPropType<TypeTag, Properties::PointSource>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     BloodFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,

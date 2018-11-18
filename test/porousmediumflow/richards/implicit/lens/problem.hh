@@ -57,24 +57,34 @@ class RichardsLensProblem;
 
 // Specify the properties for the lens problem
 namespace Properties {
-NEW_TYPE_TAG(RichardsLens, INHERITS_FROM(Richards));
-NEW_TYPE_TAG(RichardsLensBox, INHERITS_FROM(BoxModel, RichardsLens));
-NEW_TYPE_TAG(RichardsLensCC, INHERITS_FROM(CCTpfaModel, RichardsLens));
+// Create new type tags
+namespace TTag {
+struct RichardsLens { using InheritsFrom = std::tuple<Richards>; };
+struct RichardsLensBox { using InheritsFrom = std::tuple<RichardsLens, BoxModel>; };
+struct RichardsLensCC { using InheritsFrom = std::tuple<RichardsLens, CCTpfaModel>; };
+} // end namespace TTag
 
 #ifndef GRIDTYPE
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsLens, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::RichardsLens> { using type = Dune::YaspGrid<2>; };
 #else
 // Use GRIDTYPE from CMakeLists.txt
-SET_TYPE_PROP(RichardsLens, Grid, GRIDTYPE);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::RichardsLens> { using type = GRIDTYPE; };
 #endif
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsLens, Problem, RichardsLensProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::RichardsLens> { using type = RichardsLensProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsLens, SpatialParams, RichardsLensSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                            typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::RichardsLens>
+{
+    using type = RichardsLensSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                           GetPropType<TypeTag, Properties::Scalar>>;
+};
 } // end namespace Dumux
 
 /*!
@@ -108,13 +118,13 @@ template <class TypeTag>
 class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     enum {
         // copy some indices for convenience
         pressureIdx = Indices::pressureIdx,

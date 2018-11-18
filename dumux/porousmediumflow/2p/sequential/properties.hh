@@ -83,7 +83,8 @@ SET_INT_PROP(SequentialTwoP, NumComponents, 1); //!< Each phase consists of 1 pu
 SET_INT_PROP(SequentialTwoP, Formulation, SequentialTwoPCommonIndices::pwsw);
 
 //! Chose the set of indices depending on the chosen formulation
-SET_PROP(SequentialTwoP, Indices)
+template<class TypeTag>
+struct Indices<TypeTag, TTag::SequentialTwoP>
 {
     using type = SequentialTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0>;
 };
@@ -113,7 +114,8 @@ SET_TYPE_PROP(SequentialTwoP, Variables, VariableClass<TypeTag>);
 SET_TYPE_PROP(SequentialTwoP, CellData, CellData2P<TypeTag, GET_PROP_VALUE(TypeTag, EnableCompressibility)>);
 
 //! Set default fluid state
-SET_PROP(SequentialTwoP, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::SequentialTwoP>
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

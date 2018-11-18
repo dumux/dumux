@@ -51,24 +51,30 @@ template <class TypeTag>
 class ColumnProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Column, INHERITS_FROM(ThreePThreeCNI));
-NEW_TYPE_TAG(ColumnBox, INHERITS_FROM(BoxModel, Column));
-NEW_TYPE_TAG(ColumnCCTpfa, INHERITS_FROM(CCTpfaModel, Column));
+// Create new type tags
+namespace TTag {
+struct Column { using InheritsFrom = std::tuple<ThreePThreeCNI>; };
+struct ColumnBox { using InheritsFrom = std::tuple<Column, BoxModel>; };
+struct ColumnCCTpfa { using InheritsFrom = std::tuple<Column, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Column, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Column> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(Column, Problem, ColumnProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Column> { using type = ColumnProblem<TypeTag>; };
 
 // Set the fluid system
-SET_TYPE_PROP(Column,
-              FluidSystem,
-              FluidSystems::H2OAirXylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Column>
+{ using type = FluidSystems::H2OAirXylene<GetPropType<TypeTag, Properties::Scalar>>; };
 
-SET_PROP(Column, SolidSystem)
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::Column>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ComponentOne = Dumux::Components::Constant<1, Scalar>;
     using ComponentTwo = Dumux::Components::Constant<2, Scalar>;
     static constexpr int numInertComponents = 2;
@@ -77,20 +83,22 @@ SET_PROP(Column, SolidSystem)
 
 
 //! The two-phase model uses the immiscible fluid state
-SET_PROP(Column, SolidState)
+template<class TypeTag>
+struct SolidState<TypeTag, TTag::Column>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 public:
     using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
 
 // Set the spatial parameters
-SET_PROP(Column, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Column>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = ColumnSpatialParams<FVGridGeometry, Scalar>;
 };
 } // end namespace Properties
@@ -123,12 +131,12 @@ SET_PROP(Column, SpatialParams)
 template <class TypeTag >
 class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     enum
@@ -149,14 +157,14 @@ class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
         threePhases = Indices::threePhases
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:

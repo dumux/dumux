@@ -40,19 +40,19 @@ template<class TypeTag>
 class OnePIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
 {
     using ParentType = ImmiscibleLocalResidual<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     // first index for the mass balance
     enum { conti0EqIdx = Indices::conti0EqIdx };
     enum { pressureIdx = Indices::pressureIdx };
@@ -81,7 +81,7 @@ public:
 
     //! flux derivatives for the cell-centered tpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::cctpfa, void>
+    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -107,7 +107,7 @@ public:
 
     //! flux derivatives for the cell-centered mpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::ccmpfa, void>
+    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::ccmpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -165,7 +165,7 @@ public:
 
     //! flux derivatives for the box scheme
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box, void>
     addFluxDerivatives(JacobianMatrix& A,
                        const Problem& problem,
                        const Element& element,
@@ -179,7 +179,7 @@ public:
         static_assert(FluidSystem::viscosityIsConstant(0),
                       "1p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
 
-        using AdvectionType = typename GET_PROP_TYPE(T, AdvectionType);
+        using AdvectionType = GetPropType<T, Properties::AdvectionType>;
         const auto ti = AdvectionType::calculateTransmissibilities(problem,
                                                                    element,
                                                                    fvGeometry,
@@ -203,7 +203,7 @@ public:
 
     //! Dirichlet flux derivatives for the cell-centered tpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::cctpfa, void>
+    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa, void>
     addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                                   const Problem& problem,
                                   const Element& element,
@@ -223,7 +223,7 @@ public:
 
     //! Dirichlet flux derivatives for the cell-centered mpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::ccmpfa, void>
+    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::ccmpfa, void>
     addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                                   const Problem& problem,
                                   const Element& element,

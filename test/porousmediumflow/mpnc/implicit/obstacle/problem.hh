@@ -53,32 +53,42 @@ template <class TypeTag>
 class ObstacleProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Obstacle, INHERITS_FROM(MPNC));
-NEW_TYPE_TAG(ObstacleBox, INHERITS_FROM(BoxModel, Obstacle));
-NEW_TYPE_TAG(ObstacleCC, INHERITS_FROM(CCTpfaModel, Obstacle));
+// Create new type tags
+namespace TTag {
+struct Obstacle { using InheritsFrom = std::tuple<MPNC>; };
+struct ObstacleBox { using InheritsFrom = std::tuple<Obstacle, BoxModel>; };
+struct ObstacleCC { using InheritsFrom = std::tuple<Obstacle, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Obstacle, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Obstacle> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(Obstacle, Problem, ObstacleProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Obstacle> { using type = ObstacleProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(Obstacle, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Obstacle>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using type = ObstacleSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
 };
 
 // Set fluid configuration
-SET_TYPE_PROP(Obstacle,
-              FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Obstacle>
+{
+    using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>,
+                                     FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+};
 
 // decide which type to use for floating values (double / quad)
-SET_TYPE_PROP(Obstacle, Scalar, double);
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::Obstacle> { using type = double; };
 
 }
 
@@ -115,22 +125,22 @@ class ObstacleProblem
     : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     enum { dimWorld = GridView::dimensionworld };

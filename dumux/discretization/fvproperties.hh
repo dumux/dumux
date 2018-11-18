@@ -38,43 +38,53 @@ namespace Dumux {
 namespace Properties {
 
 //! Type tag for finite-volume schemes.
-NEW_TYPE_TAG(FiniteVolumeModel, INHERITS_FROM(GridProperties));
+// Create new type tags
+namespace TTag {
+struct FiniteVolumeModel { using InheritsFrom = std::tuple<GridProperties>; };
+} // end namespace TTag
 
 //! The grid variables
-SET_PROP(FiniteVolumeModel, GridVariables)
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::FiniteVolumeModel>
 {
 private:
-    using GG = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GVV = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using GFVC = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
+    using GG = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GVV = GetPropType<TypeTag, Properties::GridVolumeVariables>;
+    using GFVC = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
 public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
 
 //! We do not store the FVGeometry by default
-SET_BOOL_PROP(FiniteVolumeModel, EnableFVGridGeometryCache, false);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::FiniteVolumeModel> { static constexpr bool value = false; };
 
 //! We do not store the volume variables by default
-SET_BOOL_PROP(FiniteVolumeModel, EnableGridVolumeVariablesCache, false);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::FiniteVolumeModel> { static constexpr bool value = false; };
 
 //! disable flux variables data caching by default
-SET_BOOL_PROP(FiniteVolumeModel, EnableGridFluxVariablesCache, false);
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::FiniteVolumeModel> { static constexpr bool value = false; };
 
 //! Boundary types at a single degree of freedom
-SET_TYPE_PROP(FiniteVolumeModel, BoundaryTypes, Dumux::BoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
+template<class TypeTag>
+struct BoundaryTypes<TypeTag, TTag::FiniteVolumeModel> { using type = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
 
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
 
 //! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
-SET_TYPE_PROP(FiniteVolumeModel, SolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
+template<class TypeTag>
+struct SolutionVector<TypeTag, TTag::FiniteVolumeModel> { using type = Dune::BlockVector<GetPropType<TypeTag, Properties::PrimaryVariables>>; };
 
 //! Set the type of a global jacobian matrix from the solution types TODO: move to LinearAlgebra traits
-SET_PROP(FiniteVolumeModel, JacobianMatrix)
+template<class TypeTag>
+struct JacobianMatrix<TypeTag, TTag::FiniteVolumeModel>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
     using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
 public:
     using type = typename Dune::BCRSMatrix<MatrixBlock>;

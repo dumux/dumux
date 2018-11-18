@@ -49,27 +49,36 @@ class OnePNIConvectionProblem;
 namespace Properties
 {
 
-NEW_TYPE_TAG(OnePNIConvection, INHERITS_FROM(OnePNI));
-NEW_TYPE_TAG(OnePNIConvectionBox, INHERITS_FROM(BoxModel, OnePNIConvection));
-NEW_TYPE_TAG(OnePNIConvectionCCTpfa, INHERITS_FROM(CCTpfaModel, OnePNIConvection));
-NEW_TYPE_TAG(OnePNIConvectionCCMpfa, INHERITS_FROM(CCMpfaModel, OnePNIConvection));
+// Create new type tags
+namespace TTag {
+struct OnePNIConvection { using InheritsFrom = std::tuple<OnePNI>; };
+struct OnePNIConvectionBox { using InheritsFrom = std::tuple<OnePNIConvection, BoxModel>; };
+struct OnePNIConvectionCCTpfa { using InheritsFrom = std::tuple<OnePNIConvection, CCTpfaModel>; };
+struct OnePNIConvectionCCMpfa { using InheritsFrom = std::tuple<OnePNIConvection, CCMpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(OnePNIConvection, Grid, Dune::YaspGrid<1>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePNIConvection> { using type = Dune::YaspGrid<1>; };
 
 // Set the problem property
-SET_TYPE_PROP(OnePNIConvection, Problem, OnePNIConvectionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePNIConvection> { using type = OnePNIConvectionProblem<TypeTag>; };
 
 // Set the fluid system
-SET_TYPE_PROP(OnePNIConvection, FluidSystem,
-              FluidSystems::OnePLiquid<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                           Components::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePNIConvection>
+{
+    using type = FluidSystems::OnePLiquid<GetPropType<TypeTag, Properties::Scalar>,
+                                          Components::H2O<GetPropType<TypeTag, Properties::Scalar>> >;
+};
 
 // Set the spatial parameters
-SET_PROP(OnePNIConvection, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePNIConvection>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePNISpatialParams<FVGridGeometry, Scalar>;
 };
 } // end namespace Properties
@@ -101,22 +110,22 @@ template <class TypeTag>
 class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using IapwsH2O = Components::H2O<Scalar>;
 
     enum { dimWorld = GridView::dimensionworld };
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
@@ -128,10 +137,10 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
 public:
     OnePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup)

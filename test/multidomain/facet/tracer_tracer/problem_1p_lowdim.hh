@@ -45,23 +45,33 @@ template<class TypeTag> class OnePLowDimProblem;
 
 namespace Properties {
 // create the type tag nodes
-NEW_TYPE_TAG(OnePLowDim, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePLowDimTpfa, INHERITS_FROM(CCTpfaModel, OnePLowDim));
-NEW_TYPE_TAG(OnePLowDimBox, INHERITS_FROM(BoxModel, OnePLowDim));
+// Create new type tags
+namespace TTag {
+struct OnePLowDim { using InheritsFrom = std::tuple<OneP>; };
+struct OnePLowDimTpfa { using InheritsFrom = std::tuple<OnePLowDim, CCTpfaModel>; };
+struct OnePLowDimBox { using InheritsFrom = std::tuple<OnePLowDim, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(OnePLowDim, Grid, Dune::FoamGrid<1, 2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePLowDim> { using type = Dune::FoamGrid<1, 2>; };
 // Set the problem type
-SET_TYPE_PROP(OnePLowDim, Problem, OnePLowDimProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePLowDim> { using type = OnePLowDimProblem<TypeTag>; };
 // set the spatial params
-SET_TYPE_PROP(OnePLowDim, SpatialParams, OnePSpatialParams< typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                            typename GET_PROP_TYPE(TypeTag, Scalar) >);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePLowDim>
+{
+    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                    GetPropType<TypeTag, Properties::Scalar> >;
+};
 
 // the fluid system
-SET_PROP(OnePLowDim, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePLowDim>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = FluidSystems::OnePLiquid< Scalar, Components::SimpleH2O<Scalar> >;
 };
@@ -77,7 +87,7 @@ class OnePLowDimProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using PrimaryVariables = typename GridVariables::PrimaryVariables;
     using Scalar = typename GridVariables::Scalar;
@@ -89,10 +99,10 @@ class OnePLowDimProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
 public:
     OnePLowDimProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,

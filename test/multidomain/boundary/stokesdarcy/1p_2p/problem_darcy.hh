@@ -40,29 +40,38 @@ class DarcySubProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DarcyTwoP, INHERITS_FROM(CCTpfaModel, TwoP));
+// Create new type tags
+namespace TTag {
+struct DarcyTwoP { using InheritsFrom = std::tuple<TwoP, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the problem property
-SET_TYPE_PROP(DarcyTwoP, Problem, Dumux::DarcySubProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DarcyTwoP> { using type = Dumux::DarcySubProblem<TypeTag>; };
 
 // Set the grid type
 #if ENABLE_3D
-SET_TYPE_PROP(DarcyTwoP, Grid, Dune::YaspGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DarcyTwoP> { using type = Dune::YaspGrid<3>; };
 #else
-SET_TYPE_PROP(DarcyTwoP, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DarcyTwoP> { using type = Dune::YaspGrid<2>; };
 #endif
 
-SET_BOOL_PROP(DarcyTwoP, UseMoles, false);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::DarcyTwoP> { static constexpr bool value = false; };
 
-SET_PROP(DarcyTwoP, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::DarcyTwoP>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = ConservationSpatialParams<FVGridGeometry, Scalar>;
 };
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
-SET_PROP(DarcyTwoP, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::DarcyTwoP>
 { static constexpr auto value = TwoPFormulation::p1s0; };
 }
 
@@ -70,22 +79,22 @@ template <class TypeTag>
 class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum {
         // primary variable indices
         conti0EqIdx = Indices::conti0EqIdx,
@@ -96,7 +105,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     DarcySubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,

@@ -40,7 +40,7 @@ class FicksLawImplementation;
  * \brief Evaluates the diffusive mass flux according to Fick's law
  */
 template <class TypeTag>
-using FicksLaw = FicksLawImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+using FicksLaw = FicksLawImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
 
 } // end namespace Dumux
 

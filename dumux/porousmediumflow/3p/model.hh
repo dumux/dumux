@@ -129,20 +129,23 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
+namespace TTag {
 //! The type tags for the isothermal three-phase model
-NEW_TYPE_TAG(ThreeP, INHERITS_FROM(PorousMediumFlow));
+struct ThreeP { using InheritsFrom = std::tuple<PorousMediumFlow>; };
 //! The type tags for the non-isothermal three-phase model
-NEW_TYPE_TAG(ThreePNI, INHERITS_FROM(ThreeP));
+struct ThreePNI { using InheritsFrom = std::tuple<ThreeP>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Properties for the isothermal 3p model
 //////////////////////////////////////////////////////////////////
 
 //! Set the model traits
-SET_PROP(ThreeP, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ThreeP>
 {
  private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p model!");
     static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p model!");
  public:
@@ -150,19 +153,21 @@ SET_PROP(ThreeP, ModelTraits)
 };
 
 //! The local residual function of the conservation equations
-SET_TYPE_PROP(ThreeP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::ThreeP> { using type = ImmiscibleLocalResidual<TypeTag>; };
 
 //! Set the volume variables property
-SET_PROP(ThreeP, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::ThreeP>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = ThreePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -176,39 +181,44 @@ public:
  *  The fluid state should be chosen appropriately for the model ((non-)isothermal, equilibrium, ...).
  *  This can be done in the problem.
  */
-SET_PROP(ThreeP, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::ThreeP>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(ThreeP, IOFields, ThreePIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ThreeP> { using type = ThreePIOFields; };
 
 /////////////////////////////////////////////////
 // Properties for the non-isothermal 3p model
 /////////////////////////////////////////////////
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(ThreePNI, ThermalConductivityModel)
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::ThreePNI>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = ThermalConductivitySomerton<Scalar>;
 };
 
 //! Set non-isothermal output fields
-SET_TYPE_PROP(ThreePNI, IOFields, EnergyIOFields<ThreePIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ThreePNI> { using type = EnergyIOFields<ThreePIOFields>; };
 
 //! Set non-isothermal model traits
-SET_PROP(ThreePNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ThreePNI>
 {
 private:
-   using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
    static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p model!");
    static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p model!");
 public:

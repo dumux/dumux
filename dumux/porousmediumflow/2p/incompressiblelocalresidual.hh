@@ -47,22 +47,22 @@ template<class TypeTag>
 class TwoPIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
 {
     using ParentType = ImmiscibleLocalResidual<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr int numPhases = ModelTraits::numPhases();
     static constexpr int pressureIdx = ModelTraits::Indices::pressureIdx;
@@ -148,7 +148,7 @@ public:
      * \param scv The sub control volume
      */
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::cctpfa, void>
+    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -171,7 +171,7 @@ public:
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
 
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+        using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
         static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
@@ -266,7 +266,7 @@ public:
      * \param scv The sub control volume
      */
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box, void>
     addFluxDerivatives(JacobianMatrix& A,
                        const Problem& problem,
                        const Element& element,
@@ -289,7 +289,7 @@ public:
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p0-s1 formulation!");
 
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+        using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
         static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
@@ -434,7 +434,7 @@ public:
                                        const SubControlVolumeFace& scvf) const
     {
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+        using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
         static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");

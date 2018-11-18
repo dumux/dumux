@@ -49,17 +49,17 @@ namespace Dumux {
 template <class TypeTag>
 class FluxOverSurface
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum {
@@ -248,7 +248,7 @@ public:
      */
     void calculateVolumeFluxes()
     {
-        const auto isCompositional = std::integral_constant<bool, (GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents() > 1) >();
+        const auto isCompositional = std::integral_constant<bool, (GetPropType<TypeTag, Properties::ModelTraits>::numComponents() > 1) >();
         calculateVolumeFluxesImpl_(isCompositional);
     }
 
@@ -366,7 +366,7 @@ private:
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-            constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+            constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
             const auto density = [useMoles](const auto& volVars)
             {
                 return useMoles ? volVars.molarDensity() : volVars.density() ;
@@ -374,8 +374,8 @@ private:
 
             const auto avgDensity = 0.5*density(insideVolVars) + 0.5*density(outsideVolVars);
 
-            constexpr auto replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-            constexpr auto numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
+            constexpr auto replaceCompEqIdx = getPropValue<TypeTag, Properties::ReplaceCompEqIdx>();
+            constexpr auto numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents();
 
             const Scalar cumulativeFlux = [replaceCompEqIdx, numComponents, &massOrMoleFlux]()
             {

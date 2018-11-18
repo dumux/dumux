@@ -196,73 +196,85 @@ struct ThreePThreeCVolumeVariablesTraits
 };
 
 namespace Properties {
+// Create new type tags
+namespace TTag {
 //! The type tags for the isothermal three-phase three-component model
-NEW_TYPE_TAG(ThreePThreeC, INHERITS_FROM(PorousMediumFlow));
+struct ThreePThreeC { using InheritsFrom = std::tuple<PorousMediumFlow>; };
 //! The type tags for the non-isothermal three-phase three-component model
-NEW_TYPE_TAG(ThreePThreeCNI, INHERITS_FROM(ThreePThreeC));
+struct ThreePThreeCNI { using InheritsFrom = std::tuple<ThreePThreeC>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
 
 //! Set the model traits
-SET_PROP(ThreePThreeC, BaseModelTraits)
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::ThreePThreeC>
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p3c model!");
     static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p3c model!");
 public:
-    using type = ThreePThreeCModelTraits<GET_PROP_VALUE(TypeTag, UseConstraintSolver), GET_PROP_VALUE(TypeTag, UseMoles)>;
+    using type = ThreePThreeCModelTraits<getPropValue<TypeTag, Properties::UseConstraintSolver>(), getPropValue<TypeTag, Properties::UseMoles>()>;
 };
-SET_TYPE_PROP(ThreePThreeC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits));
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ThreePThreeC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; };
 
 //! Determines whether a constraint solver should be used explicitly
-SET_BOOL_PROP(ThreePThreeC, UseConstraintSolver, false);
+template<class TypeTag>
+struct UseConstraintSolver<TypeTag, TTag::ThreePThreeC> { static constexpr bool value = false; };
 
 //! Set as default that _no_ component mass balance is replaced by the total mass balance
-SET_INT_PROP(ThreePThreeC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::ThreePThreeC> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(); };
 /*!
  * \brief The fluid state which is used by the volume variables to
  *        store the thermodynamic state. This should be chosen
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(ThreePThreeC, FluidState){
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::ThreePThreeC>{
     private:
-        using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+        using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+        using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     public:
         using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 //! The local residual function of the conservation equations
-SET_TYPE_PROP(ThreePThreeC, LocalResidual, ThreePThreeCLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::ThreePThreeC> { using type = ThreePThreeCLocalResidual<TypeTag>; };
 
 //! The primary variable switch for the 3p3c model
-SET_TYPE_PROP(ThreePThreeC, PrimaryVariableSwitch, ThreePThreeCPrimaryVariableSwitch);
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::ThreePThreeC> { using type = ThreePThreeCPrimaryVariableSwitch; };
 
 //! The primary variables vector for the 3p3c model
-SET_PROP(ThreePThreeC, PrimaryVariables)
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::ThreePThreeC>
 {
 private:
-    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
+    using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
+                                                     GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
 
 //! Set the volume variables property
-SET_PROP(ThreePThreeC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::ThreePThreeC>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     using Traits = ThreePThreeCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -270,32 +282,38 @@ public:
 };
 
 //! The model after Millington (1961) is used for the effective diffusivity
-SET_TYPE_PROP(ThreePThreeC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::ThreePThreeC> { using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(ThreePThreeC, IOFields, ThreePThreeCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ThreePThreeC> { using type = ThreePThreeCIOFields; };
 
 //! Use mole fractions in the balance equations by default
-SET_BOOL_PROP(ThreePThreeC, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::ThreePThreeC> { static constexpr bool value = true; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_TYPE_PROP(ThreePThreeCNI, ThermalConductivityModel, ThermalConductivitySomerton<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::ThreePThreeCNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
 //! Set non-isothermal NumEq
-SET_PROP(ThreePThreeCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::ThreePThreeCNI>
 {
 private:
-    using IsothermalModelTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using IsothermalModelTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalModelTraits>;
 };
 
 //! Set the non-isothermal vktoutputfields
-SET_TYPE_PROP(ThreePThreeCNI, IOFields, EnergyIOFields<ThreePThreeCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ThreePThreeCNI> { using type = EnergyIOFields<ThreePThreeCIOFields>; };
 
 } // end namespace Properties
 } // end namespace Dumux

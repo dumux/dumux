@@ -134,8 +134,11 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the implicit isothermal one-phase two-component problems
-NEW_TYPE_TAG(RichardsNC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(RichardsNCNI, INHERITS_FROM(RichardsNC));
+// Create new type tags
+namespace TTag {
+struct RichardsNC { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+struct RichardsNCNI { using InheritsFrom = std::tuple<RichardsNC>; };
+} // end namespace TTag
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
@@ -144,36 +147,42 @@ NEW_TYPE_TAG(RichardsNCNI, INHERITS_FROM(RichardsNC));
 //////////////////////////////////////////////////////////////////
 
 //! Set the model traits class
-SET_PROP(RichardsNC, BaseModelTraits)
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::RichardsNC>
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
-    using type = RichardsNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using type = RichardsNCModelTraits<FluidSystem::numComponents, getPropValue<TypeTag, Properties::UseMoles>(), getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
-SET_TYPE_PROP(RichardsNC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits));
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::RichardsNC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; };
 
 //! Define that per default mole fractions are used in the balance equations
-SET_BOOL_PROP(RichardsNC, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::RichardsNC> { static constexpr bool value = true; };
 
 //! Use the dedicated local residual
-SET_TYPE_PROP(RichardsNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::RichardsNC> { using type = CompositionalLocalResidual<TypeTag>; };
 
 //! We set the replaceCompIdx to 0, i.e. the first equation is substituted with
 //! the total mass balance, i.e. the phase balance
-SET_INT_PROP(RichardsNC, ReplaceCompEqIdx, 0);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::RichardsNC> { static constexpr int value = 0; };
 
 //! Set the volume variables property
-SET_PROP(RichardsNC, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::RichardsNC>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
@@ -187,16 +196,18 @@ public:
 
 //! The default richardsnc model computes no diffusion in the air phase
 //! Turning this on leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
-SET_BOOL_PROP(RichardsNC, EnableWaterDiffusionInAir, false);
+template<class TypeTag>
+struct EnableWaterDiffusionInAir<TypeTag, TTag::RichardsNC> { static constexpr bool value = false; };
 
 /*!
  *\brief The fluid system used by the model.
  *
  * By default this uses the liquid phase fluid system with simple H2O.
  */
-SET_PROP(RichardsNC, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::RichardsNC>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::LiquidPhaseTwoC<Scalar, Components::SimpleH2O<Scalar>, Components::Constant<1, Scalar>>;
 };
 
@@ -206,31 +217,36 @@ SET_PROP(RichardsNC, FluidSystem)
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(RichardsNC, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::RichardsNC>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(RichardsNC, IOFields, RichardsNCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::RichardsNC> { using type = RichardsNCIOFields; };
 
 //! The model after Millington (1961) is used for the effective diffusivity
-SET_TYPE_PROP(RichardsNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::RichardsNC> { using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! average is used as default model to compute the effective thermal heat conductivity
-SET_TYPE_PROP(RichardsNCNI, ThermalConductivityModel, ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::RichardsNCNI> { using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Richards n-components model
 //////////////////////////////////////////////////////////////////
 
 //! set non-isothermal model traits
-SET_PROP(RichardsNCNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::RichardsNCNI>
 {
 private:
-    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
+    using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };

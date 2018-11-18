@@ -63,7 +63,8 @@ SET_TYPE_PROP(Adaptive2p2c2d, Grid, Dune::YaspGrid<3>);
 SET_TYPE_PROP(Adaptive2p2c2d, Problem, Adaptive2p2c2d<TTAG(Adaptive2p2c2d)>);
 
 // Select fluid system
-SET_PROP(Adaptive2p2c2d, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Adaptive2p2c2d>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::H2OAir<Scalar, Components::H2O<Scalar>>;

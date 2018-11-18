@@ -29,6 +29,7 @@
 #ifndef DUMUX_2P2CADAPTIVE_PROPERTIES_HH
 #define DUMUX_2P2CADAPTIVE_PROPERTIES_HH
 
+#include <dumux/common/properties/propertysystemmacros.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 

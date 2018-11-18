@@ -42,25 +42,25 @@ namespace Dumux {
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag,
-         class UpwindScheme = UpwindScheme<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)> >
+         class UpwindScheme = UpwindScheme<GetPropType<TypeTag, Properties::FVGridGeometry>> >
 class PorousMediumFluxVariables
-: public FluxVariablesBase<typename GET_PROP_TYPE(TypeTag, Problem),
-                           typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView,
-                           typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView,
-                           typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView>
+: public FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
+                           typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView,
+                           typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView,
+                           typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
 
     enum
     {
@@ -69,14 +69,14 @@ class PorousMediumFluxVariables
     };
 
 public:
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
-    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+    using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
+    using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
 
     static constexpr bool enableAdvection = ModelTraits::enableAdvection();
     static constexpr bool enableMolecularDiffusion = ModelTraits::enableMolecularDiffusion();
     static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
-    static constexpr bool enableThermalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
+    static constexpr bool enableThermalNonEquilibrium = getPropValue<TypeTag, Properties::EnableThermalNonEquilibrium>();
 
     //! The constructor
     PorousMediumFluxVariables()

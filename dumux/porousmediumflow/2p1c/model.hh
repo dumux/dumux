@@ -139,7 +139,10 @@ struct TwoPOneCNIVolumeVariablesTraits
 
 namespace Properties {
 //! The type tag for the non-isothermal two-phase one-component model.
-NEW_TYPE_TAG(TwoPOneCNI, INHERITS_FROM(PorousMediumFlow));
+// Create new type tags
+namespace TTag {
+struct TwoPOneCNI { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Properties
@@ -151,39 +154,45 @@ NEW_TYPE_TAG(TwoPOneCNI, INHERITS_FROM(PorousMediumFlow));
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(TwoPOneCNI, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::TwoPOneCNI>
 {
 private:
-     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
      using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 //! Set the default formulation to pw-sn
-SET_PROP(TwoPOneCNI, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::TwoPOneCNI>
 { static constexpr TwoPFormulation value = TwoPFormulation::p1s0; };
 
 //! Do not block spurious flows by default.
-SET_BOOL_PROP(TwoPOneCNI, UseBlockingOfSpuriousFlow, false);
+template<class TypeTag>
+struct UseBlockingOfSpuriousFlow<TypeTag, TTag::TwoPOneCNI> { static constexpr bool value = false; };
 
 //! The specific local residual (i.e. balance equations).
-SET_TYPE_PROP(TwoPOneCNI, LocalResidual, TwoPOneCLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoPOneCNI> { using type = TwoPOneCLocalResidual<TypeTag>; };
 
 //! Use a modified version of Darcy's law which allows for blocking of spurious flows.
-SET_TYPE_PROP(TwoPOneCNI, AdvectionType, TwoPOneCDarcysLaw<TypeTag>);
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::TwoPOneCNI> { using type = TwoPOneCDarcysLaw<TypeTag>; };
 
 //! Set the volume variables property
-SET_PROP(TwoPOneCNI, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPOneCNI>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
     static_assert(FSY::numComponents == 1, "Only fluid systems with 1 component are supported by the 2p1cni model!");
     static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p1cni model!");
@@ -194,30 +203,35 @@ public:
 };
 
 //! The primary variable switch for the 2p1cni model.
-SET_TYPE_PROP(TwoPOneCNI, PrimaryVariableSwitch, TwoPOneCPrimaryVariableSwitch);
+template<class TypeTag>
+struct PrimaryVariableSwitch<TypeTag, TTag::TwoPOneCNI> { using type = TwoPOneCPrimaryVariableSwitch; };
 
 //! The primary variables vector for the 2p1cni model.
-SET_PROP(TwoPOneCNI, PrimaryVariables)
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::TwoPOneCNI>
 {
 private:
-    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
+    using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
+                                                     GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity.
-SET_TYPE_PROP(TwoPOneCNI, ThermalConductivityModel, ThermalConductivitySomerton<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::TwoPOneCNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
 //! Set the non-isothermal model traits
-SET_TYPE_PROP(TwoPOneCNI, ModelTraits, TwoPOneCNIModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPOneCNI> { using type = TwoPOneCNIModelTraits<getPropValue<TypeTag, Properties::Formulation>()>; };
 
 //! The non-isothermal vtk output fields.
-SET_TYPE_PROP(TwoPOneCNI, IOFields, EnergyIOFields<TwoPOneCIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPOneCNI> { using type = EnergyIOFields<TwoPOneCIOFields>; };
 
 } // end namespace Properties
 } // end namespace Dumux

@@ -44,36 +44,44 @@ template <class TypeTag>
 class InjectionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPOneCNI));
-NEW_TYPE_TAG(TwoPOneCNIBox, INHERITS_FROM(BoxModel, InjectionProblem));
-NEW_TYPE_TAG(TwoPOneCNICCTpfa, INHERITS_FROM(CCTpfaModel, InjectionProblem));
+// Create new type tags
+namespace TTag {
+struct InjectionProblem { using InheritsFrom = std::tuple<TwoPOneCNI>; };
+struct TwoPOneCNIBox { using InheritsFrom = std::tuple<InjectionProblem, BoxModel>; };
+struct TwoPOneCNICCTpfa { using InheritsFrom = std::tuple<InjectionProblem, CCTpfaModel>; };
+} // end namespace TTag
 
-SET_TYPE_PROP(InjectionProblem, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::InjectionProblem> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(InjectionProblem, Problem, InjectionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::InjectionProblem> { using type = InjectionProblem<TypeTag>; };
 
 
 // Set fluid configuration
-SET_PROP(InjectionProblem, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::InjectionProblem>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using H2OType = Dumux::Components::TabulatedComponent<Dumux::Components::H2O<Scalar> >;
 public:
     using type = Dumux::FluidSystems::TwoPOneC<Scalar, H2OType >;
 };
 
 // Set the spatial parameters
-SET_PROP(InjectionProblem, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::InjectionProblem>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = InjectionProblemSpatialParams<FVGridGeometry, Scalar>;
 };
 
 //Define whether spurious cold-water flow into the steam is blocked
-SET_BOOL_PROP(InjectionProblem, UseBlockingOfSpuriousFlow, true);
+template<class TypeTag>
+struct UseBlockingOfSpuriousFlow<TypeTag, TTag::InjectionProblem> { static constexpr bool value = true; };
 } // end namespace Properties
 
 /*!
@@ -88,19 +96,19 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
     // copy some indices for convenience
     enum {

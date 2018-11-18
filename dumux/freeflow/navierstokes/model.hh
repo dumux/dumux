@@ -136,22 +136,27 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the single-phase, isothermal Navier-Stokes model
-NEW_TYPE_TAG(NavierStokes, INHERITS_FROM(FreeFlow));
+struct NavierStokes { using InheritsFrom = std::tuple<FreeFlow>; };
 
 //! The type tag for the corresponding non-isothermal model
-NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes));
+struct NavierStokesNI { using InheritsFrom = std::tuple<NavierStokes>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_BOOL_PROP(NavierStokes, NormalizePressure, true); //!< Normalize the pressure term in the momentum balance by default
+template<class TypeTag>
+struct NormalizePressure<TypeTag, TTag::NavierStokes> { static constexpr bool value = true; }; //!< Normalize the pressure term in the momentum balance by default
 
 //!< states some specifics of the Navier-Stokes model
-SET_PROP(NavierStokes, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::NavierStokes>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr auto dim = GridView::dimension;
 public:
     using type = NavierStokesModelTraits<dim>;
@@ -163,25 +168,28 @@ public:
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(NavierStokes, FluidState){
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::NavierStokes>{
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = Dumux::ImmiscibleFluidState<Scalar, FluidSystem>;
 };
 
 //! The local residual
-SET_TYPE_PROP(NavierStokes, LocalResidual, NavierStokesResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::NavierStokes> { using type = NavierStokesResidual<TypeTag>; };
 
 //! Set the volume variables property
-SET_PROP(NavierStokes, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::NavierStokes>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
@@ -193,23 +201,27 @@ public:
 };
 
 //! The flux variables
-SET_TYPE_PROP(NavierStokes, FluxVariables, NavierStokesFluxVariables<TypeTag>);
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::NavierStokes> { using type = NavierStokesFluxVariables<TypeTag>; };
 
 //! The flux variables cache class, by default the one for free flow
-SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::NavierStokes> { using type = FreeFlowFluxVariablesCache<TypeTag>; };
 
 //! The specific I/O fields
-SET_TYPE_PROP(NavierStokes, IOFields, NavierStokesIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::NavierStokes> { using type = NavierStokesIOFields; };
 
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Navier-Stokes model
 //////////////////////////////////////////////////////////////////
 
 //! The model traits of the non-isothermal model
-SET_PROP(NavierStokesNI, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::NavierStokesNI>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
     static constexpr auto dim = GridView::dimension;
     using IsothermalTraits = NavierStokesModelTraits<dim>;
 public:
@@ -217,7 +229,8 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_TYPE_PROP(NavierStokesNI, IOFields, FreeflowNonIsothermalIOFields<NavierStokesIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::NavierStokesNI> { using type = FreeflowNonIsothermalIOFields<NavierStokesIOFields>; };
 
  // \}
 }

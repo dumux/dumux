@@ -40,30 +40,40 @@ namespace Dumux {
 namespace Properties {
 
 //! Type tag for geomechanical models
-NEW_TYPE_TAG(Geomechanics, INHERITS_FROM(ModelProperties));
+// Create new type tags
+namespace TTag {
+struct Geomechanics { using InheritsFrom = std::tuple<ModelProperties>; };
+} // end namespace TTag
 
 //! The flux variables cache class for models involving flow in porous media
-SET_TYPE_PROP(Geomechanics, FluxVariablesCache, StressVariablesCache< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                      typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::Geomechanics>
+{
+    using type = StressVariablesCache< GetPropType<TypeTag, Properties::Scalar>,
+                                       GetPropType<TypeTag, Properties::FVGridGeometry> >;
+};
 
 //! The (currently empty) velocity output
-SET_TYPE_PROP(Geomechanics, VelocityOutput, GeomechanicsVelocityOutput<typename GET_PROP_TYPE(TypeTag, GridVariables)>);
+template<class TypeTag>
+struct VelocityOutput<TypeTag, TTag::Geomechanics> { using type = GeomechanicsVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>>; };
 
 //! The solid state must be inert
-SET_PROP(Geomechanics, SolidState)
+template<class TypeTag>
+struct SolidState<TypeTag, TTag::Geomechanics>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 public:
     using type = InertSolidState<Scalar, SolidSystem>;
 };
 
 //! Per default we use one constant component in the inert solid system
-SET_PROP(Geomechanics, SolidSystem)
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::Geomechanics>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using InertComponent = Components::Constant<1, Scalar>;
 public:
     using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;

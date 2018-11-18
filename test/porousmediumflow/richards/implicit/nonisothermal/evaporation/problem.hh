@@ -48,29 +48,36 @@ template <class TypeTag>
 class RichardsNIEvaporationProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(RichardsNIEvaporation, INHERITS_FROM(RichardsNI));
-NEW_TYPE_TAG(RichardsNIEvaporationBox, INHERITS_FROM(BoxModel, RichardsNIEvaporation));
-NEW_TYPE_TAG(RichardsNIEvaporationCC, INHERITS_FROM(CCTpfaModel, RichardsNIEvaporation));
+// Create new type tags
+namespace TTag {
+struct RichardsNIEvaporation { using InheritsFrom = std::tuple<RichardsNI>; };
+struct RichardsNIEvaporationBox { using InheritsFrom = std::tuple<RichardsNIEvaporation, BoxModel>; };
+struct RichardsNIEvaporationCC { using InheritsFrom = std::tuple<RichardsNIEvaporation, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(RichardsNIEvaporation, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::RichardsNIEvaporation> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(RichardsNIEvaporation, Problem,
-              RichardsNIEvaporationProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::RichardsNIEvaporation> { using type = RichardsNIEvaporationProblem<TypeTag>; };
 
 // Set the fluid system
-SET_TYPE_PROP(RichardsNIEvaporation, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::RichardsNIEvaporation> { using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>; };
 
 // Set the spatial parameters
-SET_PROP(RichardsNIEvaporation, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::RichardsNIEvaporation>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = RichardsNISpatialParams<FVGridGeometry, Scalar>;
 };
 
-SET_BOOL_PROP(RichardsNIEvaporation, EnableWaterDiffusionInAir, true);
+template<class TypeTag>
+struct EnableWaterDiffusionInAir<TypeTag, TTag::RichardsNIEvaporation> { static constexpr bool value = true; };
 } // end namespace Properties
 
 /*!
@@ -90,24 +97,24 @@ class RichardsNIEvaporationProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
+    using GridVolumeVariables = GetPropType<TypeTag, Properties::GridVolumeVariables>;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using IapwsH2O = Components::H2O<Scalar>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum { dimWorld = GridView::dimensionworld };
 
     enum {

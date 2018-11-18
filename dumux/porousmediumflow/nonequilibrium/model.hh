@@ -86,62 +86,76 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(NonEquilibrium);
+namespace TTag {
+struct NonEquilibrium {};
+}
 
 /////////////////////////////////////////////////
 // Properties for the non-equilibrium mpnc model
 /////////////////////////////////////////////////
 
 //! Set the model traits
-SET_PROP(NonEquilibrium, ModelTraits)
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::NonEquilibrium>
 {
 private:
-    using EquiTraits = typename GET_PROP_TYPE(TypeTag, EquilibriumModelTraits);
-    static constexpr bool enableTNE = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
-    static constexpr bool enableCNE = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
-    static constexpr int numEF = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
-    static constexpr int numES = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
-    static constexpr auto nf = GET_PROP_VALUE(TypeTag, NusseltFormulation);
-    static constexpr auto ns = GET_PROP_VALUE(TypeTag, SherwoodFormulation);
+    using EquiTraits = GetPropType<TypeTag, Properties::EquilibriumModelTraits>;
+    static constexpr bool enableTNE = getPropValue<TypeTag, Properties::EnableThermalNonEquilibrium>();
+    static constexpr bool enableCNE = getPropValue<TypeTag, Properties::EnableChemicalNonEquilibrium>();
+    static constexpr int numEF = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr int numES = getPropValue<TypeTag, Properties::NumEnergyEqSolid>();
+    static constexpr auto nf = getPropValue<TypeTag, Properties::NusseltFormulation>();
+    static constexpr auto ns = getPropValue<TypeTag, Properties::SherwoodFormulation>();
 public:
     using type = NonEquilibriumModelTraits<EquiTraits, enableCNE, enableTNE, numEF, numES, nf, ns>;
 };
 
 //! Per default, we consider both thermal and chemical non-equilibrium
-SET_BOOL_PROP(NonEquilibrium, EnableThermalNonEquilibrium, true);
-SET_BOOL_PROP(NonEquilibrium, EnableChemicalNonEquilibrium, true);
+template<class TypeTag>
+struct EnableThermalNonEquilibrium<TypeTag, TTag::NonEquilibrium> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableChemicalNonEquilibrium<TypeTag, TTag::NonEquilibrium> { static constexpr bool value = true; };
 
 //! Default values for the number of energy balance equations
-SET_INT_PROP(NonEquilibrium, NumEnergyEqSolid, 1);
-SET_INT_PROP(NonEquilibrium, NumEnergyEqFluid, GET_PROP_TYPE(TypeTag, EquilibriumModelTraits)::numPhases());
+template<class TypeTag>
+struct NumEnergyEqSolid<TypeTag, TTag::NonEquilibrium> { static constexpr int value = 1; };
+template<class TypeTag>
+struct NumEnergyEqFluid<TypeTag, TTag::NonEquilibrium> { static constexpr int value = GetPropType<TypeTag, Properties::EquilibriumModelTraits>::numPhases(); };
 
-SET_TYPE_PROP(NonEquilibrium, EnergyLocalResidual, EnergyLocalResidualNonEquilibrium<TypeTag, GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)>);
-SET_TYPE_PROP(NonEquilibrium, LocalResidual, NonEquilibriumLocalResidual<TypeTag>);
-SET_TYPE_PROP(NonEquilibrium, HeatConductionType, FouriersLawNonEquilibrium<TypeTag>);
+template<class TypeTag>
+struct EnergyLocalResidual<TypeTag, TTag::NonEquilibrium> { using type = EnergyLocalResidualNonEquilibrium<TypeTag, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>; };
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::NonEquilibrium> { using type = NonEquilibriumLocalResidual<TypeTag>; };
+template<class TypeTag>
+struct HeatConductionType<TypeTag, TTag::NonEquilibrium> { using type = FouriersLawNonEquilibrium<TypeTag>; };
 
-SET_PROP(NonEquilibrium, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::NonEquilibrium>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
      using type = NonEquilibriumFluidState<Scalar, FluidSystem>;
 };
 
 //! The grid variables
-SET_TYPE_PROP(NonEquilibrium, GridVariables, NonEquilibriumGridVariables<TypeTag>);
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::NonEquilibrium> { using type = NonEquilibriumGridVariables<TypeTag>; };
 
 //! indices for non-isothermal models
-SET_PROP(NonEquilibrium, IOFields)
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::NonEquilibrium>
 {
 private:
-    using EquilibriumIOFields = typename GET_PROP_TYPE(TypeTag, EquilibriumIOFields);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using EquilibriumIOFields = GetPropType<TypeTag, Properties::EquilibriumIOFields>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 public:
      using type = NonEquilibriumIOFields<ModelTraits, EquilibriumIOFields>;
 };
 
-SET_PROP(NonEquilibrium, NusseltFormulation)
+template<class TypeTag>
+struct NusseltFormulation<TypeTag, TTag::NonEquilibrium>
 {
 public:
     static constexpr Dumux::NusseltFormulation value = Dumux::NusseltFormulation::WakaoKaguei;
@@ -151,7 +165,8 @@ public:
  * \brief Set the default formulation for the sherwood correlation
  *        Other possible parametrizations can be found in the dimensionlessnumbers
  */
-SET_PROP(NonEquilibrium, SherwoodFormulation)
+template<class TypeTag>
+struct SherwoodFormulation<TypeTag, TTag::NonEquilibrium>
 {
 public:
     static constexpr Dumux::SherwoodFormulation value = Dumux::SherwoodFormulation::WakaoKaguei;

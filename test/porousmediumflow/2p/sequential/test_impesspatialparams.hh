@@ -45,7 +45,8 @@ NEW_TYPE_TAG(TestIMPESSpatialParams);
 SET_TYPE_PROP(TestIMPESSpatialParams, SpatialParams, TestIMPESSpatialParams<TypeTag>);
 
 // Set the material law
-SET_PROP(TestIMPESSpatialParams, MaterialLaw)
+template<class TypeTag>
+struct MaterialLaw<TypeTag, TTag::TestIMPESSpatialParams>
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

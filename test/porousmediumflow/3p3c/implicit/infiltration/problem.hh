@@ -46,28 +46,34 @@ template <class TypeTag>
 class InfiltrationThreePThreeCProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(InfiltrationThreePThreeC, INHERITS_FROM(ThreePThreeC));
-NEW_TYPE_TAG(InfiltrationThreePThreeCBox, INHERITS_FROM(BoxModel, InfiltrationThreePThreeC));
-NEW_TYPE_TAG(InfiltrationThreePThreeCCCTpfa, INHERITS_FROM(CCTpfaModel, InfiltrationThreePThreeC));
+// Create new type tags
+namespace TTag {
+struct InfiltrationThreePThreeC { using InheritsFrom = std::tuple<ThreePThreeC>; };
+struct InfiltrationThreePThreeCBox { using InheritsFrom = std::tuple<InfiltrationThreePThreeC, BoxModel>; };
+struct InfiltrationThreePThreeCCCTpfa { using InheritsFrom = std::tuple<InfiltrationThreePThreeC, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(InfiltrationThreePThreeC, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::InfiltrationThreePThreeC> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(InfiltrationThreePThreeC, Problem, InfiltrationThreePThreeCProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::InfiltrationThreePThreeC> { using type = InfiltrationThreePThreeCProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(InfiltrationThreePThreeC, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::InfiltrationThreePThreeC>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = InfiltrationThreePThreeCSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Set the fluid system
-SET_TYPE_PROP(InfiltrationThreePThreeC,
-              FluidSystem,
-              FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::InfiltrationThreePThreeC>
+{ using type = FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>; };
 }
 
 /*!
@@ -107,10 +113,10 @@ class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     // copy some indices for convenience
     enum {
@@ -129,10 +135,10 @@ class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

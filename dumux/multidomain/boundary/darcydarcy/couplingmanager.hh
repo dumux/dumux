@@ -59,11 +59,11 @@ class DarcyDarcyBoundaryCouplingManager
     using SolutionVector = typename MDTraits::SolutionVector;
 
     template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<i>;
-    template<std::size_t i> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<i>, Problem);
-    template<std::size_t i> using PrimaryVariables = typename GET_PROP_TYPE(SubDomainTypeTag<i>, PrimaryVariables);
-    template<std::size_t i> using NumEqVector = typename GET_PROP_TYPE(SubDomainTypeTag<i>, NumEqVector);
-    template<std::size_t i> using ElementVolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<i>, GridVolumeVariables)::LocalView;
-    template<std::size_t i> using VolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<i>, GridVolumeVariables)::VolumeVariables;
+    template<std::size_t i> using Problem = GetPropType<SubDomainTypeTag<i>, Properties::Problem>;
+    template<std::size_t i> using PrimaryVariables = GetPropType<SubDomainTypeTag<i>, Properties::PrimaryVariables>;
+    template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
+    template<std::size_t i> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<i>, Properties::GridVolumeVariables>::LocalView;
+    template<std::size_t i> using VolumeVariables = typename GetPropType<SubDomainTypeTag<i>, Properties::GridVolumeVariables>::VolumeVariables;
     template<std::size_t i> using FVGridGeometry = typename MDTraits::template SubDomainFVGridGeometry<i>;
     template<std::size_t i> using FVElementGeometry = typename FVGridGeometry<i>::LocalView;
     template<std::size_t i> using SubControlVolumeFace = typename FVGridGeometry<i>::SubControlVolumeFace;

@@ -60,8 +60,8 @@
 template< class BulkTypeTag, class LowDimTypeTag >
 class TestTraits
 {
-    using BulkFVGridGeometry = typename GET_PROP_TYPE(BulkTypeTag, FVGridGeometry);
-    using LowDimFVGridGeometry = typename GET_PROP_TYPE(LowDimTypeTag, FVGridGeometry);
+    using BulkFVGridGeometry = Dumux::GetPropType<BulkTypeTag, Dumux::Properties::FVGridGeometry>;
+    using LowDimFVGridGeometry = Dumux::GetPropType<LowDimTypeTag, Dumux::Properties::FVGridGeometry>;
 public:
     using MDTraits = Dumux::MultiDomainTraits<BulkTypeTag, LowDimTypeTag>;
     using CouplingMapper = Dumux::FacetCouplingMapper<BulkFVGridGeometry, LowDimFVGridGeometry>;
@@ -73,20 +73,28 @@ namespace Dumux {
 namespace Properties {
 
 // set cm property for the box test
-using BoxTraits = TestTraits<TTAG(OnePBulkBox), TTAG(OnePLowDimBox)>;
-using BoxTracerTraits = TestTraits<TTAG(TracerBulkBox), TTAG(TracerLowDimBox)>;
-SET_TYPE_PROP(OnePBulkBox, CouplingManager, typename BoxTraits::CouplingManager);
-SET_TYPE_PROP(OnePLowDimBox, CouplingManager, typename BoxTraits::CouplingManager);
-SET_TYPE_PROP(TracerBulkBox, CouplingManager, typename BoxTracerTraits::CouplingManager);
-SET_TYPE_PROP(TracerLowDimBox, CouplingManager, typename BoxTracerTraits::CouplingManager);
+using BoxTraits = TestTraits<Properties::TTag::OnePBulkBox, Properties::TTag::OnePLowDimBox>;
+using BoxTracerTraits = TestTraits<Properties::TTag::TracerBulkBox, Properties::TTag::TracerLowDimBox>;
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePBulkBox> { using type = typename BoxTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePLowDimBox> { using type = typename BoxTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::TracerBulkBox> { using type = typename BoxTracerTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::TracerLowDimBox> { using type = typename BoxTracerTraits::CouplingManager; };
 
 // set cm property for the tpfa test
-using TpfaTraits = TestTraits<TTAG(OnePBulkTpfa), TTAG(OnePLowDimTpfa)>;
-using TpfaTracerTraits = TestTraits<TTAG(TracerBulkTpfa), TTAG(TracerLowDimTpfa)>;
-SET_TYPE_PROP(OnePBulkTpfa, CouplingManager, typename TpfaTraits::CouplingManager);
-SET_TYPE_PROP(OnePLowDimTpfa, CouplingManager, typename TpfaTraits::CouplingManager);
-SET_TYPE_PROP(TracerBulkTpfa, CouplingManager, typename TpfaTracerTraits::CouplingManager);
-SET_TYPE_PROP(TracerLowDimTpfa, CouplingManager, typename TpfaTracerTraits::CouplingManager);
+using TpfaTraits = TestTraits<Properties::TTag::OnePBulkTpfa, Properties::TTag::OnePLowDimTpfa>;
+using TpfaTracerTraits = TestTraits<Properties::TTag::TracerBulkTpfa, Properties::TTag::TracerLowDimTpfa>;
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TpfaTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePLowDimTpfa> { using type = typename TpfaTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::TracerBulkTpfa> { using type = typename TpfaTracerTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::TracerLowDimTpfa> { using type = typename TpfaTracerTraits::CouplingManager; };
 
 } // end namespace Properties
 } // end namespace Dumux
@@ -206,10 +214,10 @@ int main(int argc, char** argv) try
     //////////////////////////////////////////////////////
     // try to create the grids (from the given grid file)
     //////////////////////////////////////////////////////
-    using BulkOnePTypeTag = TTAG(ONEPBULKTYPETAG);
-    using LowDimOnePTypeTag = TTAG(ONEPLOWDIMTYPETAG);
-    using BulkGrid = typename GET_PROP_TYPE(BulkOnePTypeTag, Grid);
-    using LowDimGrid = typename GET_PROP_TYPE(LowDimOnePTypeTag, Grid);
+    using BulkOnePTypeTag = Properties::TTag::ONEPBULKTYPETAG;
+    using LowDimOnePTypeTag = Properties::TTag::ONEPLOWDIMTYPETAG;
+    using BulkGrid = GetPropType<BulkOnePTypeTag, Properties::Grid>;
+    using LowDimGrid = GetPropType<LowDimOnePTypeTag, Properties::Grid>;
 
     using GridManager = FacetCouplingGridManager<BulkGrid, LowDimGrid>;
     GridManager gridManager;
@@ -225,8 +233,8 @@ int main(int argc, char** argv) try
     std::vector< std::vector<double> > lowDimVolumeFluxes;
 
     // create the finite volume grid geometries
-    using BulkFVGridGeometry = typename GET_PROP_TYPE(BulkOnePTypeTag, FVGridGeometry);
-    using LowDimFVGridGeometry = typename GET_PROP_TYPE(LowDimOnePTypeTag, FVGridGeometry);
+    using BulkFVGridGeometry = GetPropType<BulkOnePTypeTag, Properties::FVGridGeometry>;
+    using LowDimFVGridGeometry = GetPropType<LowDimOnePTypeTag, Properties::FVGridGeometry>;
     auto bulkFvGridGeometry = std::make_shared<BulkFVGridGeometry>(bulkGridView);
     auto lowDimFvGridGeometry = std::make_shared<LowDimFVGridGeometry>(lowDimGridView);
     updateBulkFVGridGeometry(*bulkFvGridGeometry, gridManager, lowDimGridView);
@@ -256,8 +264,8 @@ int main(int argc, char** argv) try
         auto couplingManager = std::make_shared<CouplingManager>();
 
         // the problems (boundary conditions)
-        using BulkProblem = typename GET_PROP_TYPE(BulkOnePTypeTag, Problem);
-        using LowDimProblem = typename GET_PROP_TYPE(LowDimOnePTypeTag, Problem);
+        using BulkProblem = GetPropType<BulkOnePTypeTag, Properties::Problem>;
+        using LowDimProblem = GetPropType<LowDimOnePTypeTag, Properties::Problem>;
         auto bulkSpatialParams = std::make_shared<typename BulkProblem::SpatialParams>(bulkFvGridGeometry, "Bulk.OneP");
         auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, bulkSpatialParams, couplingManager, "Bulk.OneP");
         auto lowDimSpatialParams = std::make_shared<typename LowDimProblem::SpatialParams>(lowDimFvGridGeometry, "LowDim.OneP");
@@ -274,8 +282,8 @@ int main(int argc, char** argv) try
         couplingManager->init(bulkProblem, lowDimProblem, couplingMapper, x);
 
         // the grid variables
-        using BulkGridVariables = typename GET_PROP_TYPE(BulkOnePTypeTag, GridVariables);
-        using LowDimGridVariables = typename GET_PROP_TYPE(LowDimOnePTypeTag, GridVariables);
+        using BulkGridVariables = GetPropType<BulkOnePTypeTag, Properties::GridVariables>;
+        using LowDimGridVariables = GetPropType<LowDimOnePTypeTag, Properties::GridVariables>;
         auto bulkGridVariables = std::make_shared<BulkGridVariables>(bulkProblem, bulkFvGridGeometry);
         auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
         bulkGridVariables->init(x[bulkId]);
@@ -289,8 +297,8 @@ int main(int argc, char** argv) try
         VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, x[lowDimId], lowDimProblem->name(), "LowDim.OneP");
 
         // Add model specific output fields
-        using BulkIOFields = typename GET_PROP_TYPE(BulkOnePTypeTag, IOFields);
-        using LowDimIOFields = typename GET_PROP_TYPE(LowDimOnePTypeTag, IOFields);
+        using BulkIOFields = GetPropType<BulkOnePTypeTag, Properties::IOFields>;
+        using LowDimIOFields = GetPropType<LowDimOnePTypeTag, Properties::IOFields>;
         BulkIOFields::initOutputModule(bulkVtkWriter);
         LowDimIOFields::initOutputModule(lowDimVtkWriter);
 
@@ -321,8 +329,8 @@ int main(int argc, char** argv) try
         lowDimVtkWriter.write(1.0);
 
         // compute the volume fluxes and store them in the arrays
-        using BulkFluxVariables = typename GET_PROP_TYPE(BulkOnePTypeTag, FluxVariables);
-        using LowDimFluxVariables = typename GET_PROP_TYPE(LowDimOnePTypeTag, FluxVariables);
+        using BulkFluxVariables = GetPropType<BulkOnePTypeTag, Properties::FluxVariables>;
+        using LowDimFluxVariables = GetPropType<LowDimOnePTypeTag, Properties::FluxVariables>;
         computeVolumeFluxes<BulkFluxVariables>(bulkVolumeFluxes, *couplingManager, *assembler,
                                                *bulkProblem, *bulkFvGridGeometry, *bulkGridVariables, x[bulkId], bulkId);
         computeVolumeFluxes<LowDimFluxVariables>(lowDimVolumeFluxes, *couplingManager, *assembler,
@@ -334,8 +342,8 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////////////////////
 
     //! the problem (initial and boundary conditions)
-    using BulkTracerTypeTag = TTAG(TRACERBULKTYPETAG);
-    using LowDimTracerTypeTag = TTAG(TRACERLOWDIMTYPETAG);
+    using BulkTracerTypeTag = Properties::TTag::TRACERBULKTYPETAG;
+    using LowDimTracerTypeTag = Properties::TTag::TRACERLOWDIMTYPETAG;
 
     // instantiate coupling manager
     using TracerTestTraits = TestTraits<BulkTracerTypeTag, LowDimTracerTypeTag>;
@@ -343,8 +351,8 @@ int main(int argc, char** argv) try
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // instantiate the tracer problems reusing the fv grid geometries
-    using TracerBulkProblem = typename GET_PROP_TYPE(BulkTracerTypeTag, Problem);
-    using TracerLowDimProblem = typename GET_PROP_TYPE(LowDimTracerTypeTag, Problem);
+    using TracerBulkProblem = GetPropType<BulkTracerTypeTag, Properties::Problem>;
+    using TracerLowDimProblem = GetPropType<LowDimTracerTypeTag, Properties::Problem>;
     using TracerBulkSpatialParams = typename TracerBulkProblem::SpatialParams;
     using TracerLowDimSpatialParams = typename TracerLowDimProblem::SpatialParams;
     auto bulkSpatialParams = std::make_shared<TracerBulkSpatialParams>(bulkFvGridGeometry, bulkVolumeFluxes, "Bulk.Tracer");
@@ -368,8 +376,8 @@ int main(int argc, char** argv) try
     couplingManager->init(bulkProblem, lowDimProblem, couplingMapper, x);
 
     // the grid variables
-    using BulkGridVariables = typename GET_PROP_TYPE(BulkTracerTypeTag, GridVariables);
-    using LowDimGridVariables = typename GET_PROP_TYPE(LowDimTracerTypeTag, GridVariables);
+    using BulkGridVariables = GetPropType<BulkTracerTypeTag, Properties::GridVariables>;
+    using LowDimGridVariables = GetPropType<LowDimTracerTypeTag, Properties::GridVariables>;
     auto bulkGridVariables = std::make_shared<BulkGridVariables>(bulkProblem, bulkFvGridGeometry);
     auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
     bulkGridVariables->init(x[bulkId]);
@@ -383,8 +391,8 @@ int main(int argc, char** argv) try
     VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, x[lowDimId], lowDimProblem->name(), "LowDim.Tracer");
 
     // Add model specific output fields
-    using BulkIOFields = typename GET_PROP_TYPE(BulkTracerTypeTag, IOFields);
-    using LowDimIOFields = typename GET_PROP_TYPE(LowDimTracerTypeTag, IOFields);
+    using BulkIOFields = GetPropType<BulkTracerTypeTag, Properties::IOFields>;
+    using LowDimIOFields = GetPropType<LowDimTracerTypeTag, Properties::IOFields>;
     BulkIOFields::initOutputModule(bulkVtkWriter);
     LowDimIOFields::initOutputModule(lowDimVtkWriter);
 

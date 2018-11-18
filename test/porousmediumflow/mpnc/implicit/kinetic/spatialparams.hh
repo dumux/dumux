@@ -43,12 +43,12 @@ namespace Dumux {
  */
 template<class TypeTag>
 class EvaporationAtmosphereSpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
+: public FVSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                         GetPropType<TypeTag, Properties::Scalar>,
                          EvaporationAtmosphereSpatialParams<TypeTag>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -58,10 +58,10 @@ class EvaporationAtmosphereSpatialParams
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
     enum { dimWorld = GridView::dimensionworld };
-    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
+    enum { numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases() };
 
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     enum { liquidPhaseIdx   = FluidSystem::liquidPhaseIdx };
 public:
@@ -70,9 +70,9 @@ public:
     //! export the material law type used
     using MaterialLaw = TwoPAdapter<liquidPhaseIdx, EffToAbsLaw<RegularizedBrooksCorey<Scalar>>>;
     //! export the types used for interfacial area calculations
-    using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
-    using AwsSurface = typename GET_PROP_TYPE(TypeTag, AwsSurface);
-    using AnsSurface = typename GET_PROP_TYPE(TypeTag, AnsSurface);
+    using AwnSurface = GetPropType<TypeTag, Properties::AwnSurface>;
+    using AwsSurface = GetPropType<TypeTag, Properties::AwsSurface>;
+    using AnsSurface = GetPropType<TypeTag, Properties::AnsSurface>;
 
     //! convenience aliases of the law parameters
     using MaterialLawParams = typename MaterialLaw::Params;

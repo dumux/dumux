@@ -43,12 +43,12 @@ class NavierStokesFluxVariablesImpl;
  */
 template<class TypeTag>
 class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
-: public FluxVariablesBase<typename GET_PROP_TYPE(TypeTag, Problem),
-                           typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView,
-                           typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView,
-                           typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView>
+: public FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
+                           typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView,
+                           typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView,
+                           typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView>
 {
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
@@ -61,20 +61,20 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using ElementFaceVariables = typename GridFaceVariables::LocalView;
     using FaceVariables = typename GridFaceVariables::FaceVariables;
 
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
+    using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    static constexpr bool normalizePressure = GET_PROP_VALUE(TypeTag, NormalizePressure);
+    static constexpr bool normalizePressure = getPropValue<TypeTag, Properties::NormalizePressure>();
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -83,7 +83,7 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 
 public:
 
-    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+    using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
 
     /*!
     * \brief Returns the advective flux over a sub control volume face.

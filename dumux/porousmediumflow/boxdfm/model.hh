@@ -35,21 +35,26 @@ namespace Dumux {
 namespace Properties {
 
 //! Type tag for the box scheme.
-NEW_TYPE_TAG(BoxDfmModel, INHERITS_FROM(BoxModel));
+// Create new type tags
+namespace TTag {
+struct BoxDfmModel { using InheritsFrom = std::tuple<BoxModel>; };
+} // end namespace TTag
 
 //! Set the default for the global finite volume geometry
-SET_PROP(BoxDfmModel, FVGridGeometry)
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::BoxDfmModel>
 {
 private:
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = BoxDfmFVGridGeometry<Scalar, GridView, enableCache>;
 };
 
 //! The flux variables cache class specific to box-dfm porous medium flow models
-SET_TYPE_PROP(BoxDfmModel, FluxVariablesCache, BoxDfmFluxVariablesCache<TypeTag>);
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::BoxDfmModel> { using type = BoxDfmFluxVariablesCache<TypeTag>; };
 
 } // namespace Properties
 } // namespace Dumux

@@ -56,51 +56,78 @@ template <class TypeTag>
 class HeterogeneousProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Heterogeneous, INHERITS_FROM(TwoPTwoCCO2));
-NEW_TYPE_TAG(HeterogeneousBox, INHERITS_FROM(BoxModel, Heterogeneous));
-NEW_TYPE_TAG(HeterogeneousCCTpfa, INHERITS_FROM(CCTpfaModel, Heterogeneous));
+// Create new type tags
+namespace TTag {
+struct Heterogeneous { using InheritsFrom = std::tuple<TwoPTwoCCO2>; };
+struct HeterogeneousBox { using InheritsFrom = std::tuple<Heterogeneous, BoxModel>; };
+struct HeterogeneousCCTpfa { using InheritsFrom = std::tuple<Heterogeneous, CCTpfaModel>; };
+} // end namespace TTag
 
 //Set the grid type
-SET_TYPE_PROP(Heterogeneous, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Heterogeneous> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 
 // Set the problem property
-SET_TYPE_PROP(Heterogeneous, Problem, HeterogeneousProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Heterogeneous> { using type = HeterogeneousProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_TYPE_PROP(Heterogeneous, SpatialParams, HeterogeneousSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                              typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Heterogeneous>
+{
+    using type = HeterogeneousSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                            GetPropType<TypeTag, Properties::Scalar>>;
+};
 
 // Set fluid configuration
-SET_TYPE_PROP(Heterogeneous, FluidSystem,
-    FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
-                           HeterogeneousCO2Tables::CO2Tables,
-                           Components::TabulatedComponent<Components::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>>,
-                           FluidSystems::BrineCO2DefaultPolicy</*constantSalinity=*/true, /*simpleButFast=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Heterogeneous>
+{
+    using type = FluidSystems::BrineCO2<GetPropType<TypeTag, Properties::Scalar>,
+                                        HeterogeneousCO2Tables::CO2Tables,
+                                        Components::TabulatedComponent<Components::H2O<GetPropType<TypeTag, Properties::Scalar>>>,
+                                        FluidSystems::BrineCO2DefaultPolicy</*constantSalinity=*/true, /*simpleButFast=*/true>>;
+};
 
 // Use Moles
-SET_BOOL_PROP(Heterogeneous, UseMoles, false);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::Heterogeneous> { static constexpr bool value = false; };
 
 #if !ISOTHERMAL
-NEW_TYPE_TAG(HeterogeneousNI, INHERITS_FROM(TwoPTwoCCO2NI));
-NEW_TYPE_TAG(HeterogeneousNIBox, INHERITS_FROM(BoxModel, HeterogeneousNI));
-NEW_TYPE_TAG(HeterogeneousNICCTpfa, INHERITS_FROM(CCTpfaModel, HeterogeneousNI));
+// Create new type tags
+namespace TTag {
+struct HeterogeneousNI { using InheritsFrom = std::tuple<TwoPTwoCCO2NI>; };
+struct HeterogeneousNIBox { using InheritsFrom = std::tuple<HeterogeneousNI, BoxModel>; };
+struct HeterogeneousNICCTpfa { using InheritsFrom = std::tuple<HeterogeneousNI, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(HeterogeneousNI, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::HeterogeneousNI> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 
 // Set the problem property
-SET_TYPE_PROP(HeterogeneousNI, Problem, HeterogeneousProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::HeterogeneousNI> { using type = HeterogeneousProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_TYPE_PROP(HeterogeneousNI, SpatialParams,HeterogeneousSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                               typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::HeterogeneousNI>
+{
+    using type = HeterogeneousSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+                                            GetPropType<TypeTag, Properties::Scalar>>;
+};
 
 // Set fluid configuration
-SET_TYPE_PROP(HeterogeneousNI, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                        HeterogeneousCO2Tables::CO2Tables>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::HeterogeneousNI>
+{
+    using type = FluidSystems::BrineCO2<GetPropType<TypeTag, Properties::Scalar>,
+                                        HeterogeneousCO2Tables::CO2Tables>;
+};
 
 // Use Moles
-SET_BOOL_PROP(HeterogeneousNI, UseMoles, false);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::HeterogeneousNI> { static constexpr bool value = false; };
 #endif
 } // end namespace Properties
 
@@ -131,13 +158,13 @@ template <class TypeTag >
 class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     // copy some indices for convenience
@@ -166,13 +193,13 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     };
 #endif
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
@@ -182,7 +209,7 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr bool useMoles = ModelTraits::useMoles();
 
     // the discretization method we are using
-    static constexpr auto discMethod = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod;
+    static constexpr auto discMethod = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod;
 
     // world dimension to access gravity vector
     static constexpr int dimWorld = GridView::dimensionworld;

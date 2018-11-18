@@ -151,41 +151,51 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
+// Create new type tags
+namespace TTag {
 //! The type tag for the isothermal two-phase model
-NEW_TYPE_TAG(TwoP, INHERITS_FROM(PorousMediumFlow));
+struct TwoP { using InheritsFrom = std::tuple<PorousMediumFlow>; };
+
 //! The type tag for the non-isothermal two-phase model
-NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP));
+struct TwoPNI { using InheritsFrom = std::tuple<TwoP>; };
+} // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal two-phase model
 ///////////////////////////////////////////////////////////////////////////
  //!< Set the default formulation to pwsn
-SET_PROP(TwoP, Formulation)
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::TwoP>
 { static constexpr auto value = TwoPFormulation::p0s1; };
 
-SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoP> { using type = ImmiscibleLocalResidual<TypeTag>; };         //!< Use the immiscible local residual operator for the 2p model
 
 //! The base model traits class
-SET_TYPE_PROP(TwoP, BaseModelTraits, TwoPModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
-SET_TYPE_PROP(TwoP, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits)); //!< default the actually used traits to the base traits
+template<class TypeTag>
+struct BaseModelTraits<TypeTag, TTag::TwoP> { using type = TwoPModelTraits<getPropValue<TypeTag, Properties::Formulation>()>; };
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoP> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; }; //!< default the actually used traits to the base traits
 
 //! Set the vtk output fields specific to the twop model
-SET_TYPE_PROP(TwoP, IOFields, TwoPIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoP> { using type = TwoPIOFields; };
 
 //! Set the volume variables property
-SET_PROP(TwoP, VolumeVariables)
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoP>
 {
 private:
-    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
-    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
-    static constexpr auto DM = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod;
-    static constexpr bool enableIS = GET_PROP_VALUE(TypeTag, EnableBoxInterfaceSolver);
+    static constexpr auto DM = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod;
+    static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
     // class used for scv-wise reconstruction of non-wetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
 
@@ -195,11 +205,12 @@ public:
 };
 
 //! The two-phase model uses the immiscible fluid state
-SET_PROP(TwoP, FluidState)
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::TwoP>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
@@ -209,16 +220,19 @@ public:
 ////////////////////////////////////////////////////////
 
 //! The non-isothermal model traits class
-SET_TYPE_PROP(TwoPNI, ModelTraits, PorousMediumFlowNIModelTraits<typename GET_PROP_TYPE(TypeTag, BaseModelTraits)>);
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPNI> { using type = PorousMediumFlowNIModelTraits<GetPropType<TypeTag, Properties::BaseModelTraits>>; };
 
 //! Set the vtk output fields specific to the non-isothermal twop model
-SET_TYPE_PROP(TwoPNI, IOFields, EnergyIOFields<TwoPIOFields>);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPNI> { using type = EnergyIOFields<TwoPIOFields>; };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(TwoPNI, ThermalConductivityModel)
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::TwoPNI>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = ThermalConductivitySomerton<Scalar>;
 };

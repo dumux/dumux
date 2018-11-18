@@ -43,40 +43,51 @@ namespace Dumux {
 template<class TypeTag> class TwoPCornerPointTestProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TwoPCornerPoint, INHERITS_FROM(TwoP, CCTpfaModel));
+// Create new type tags
+namespace TTag {
+struct TwoPCornerPoint { using InheritsFrom = std::tuple<CCTpfaModel, TwoP>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TwoPCornerPoint, Grid, Dune::CpGrid);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPCornerPoint> { using type = Dune::CpGrid; };
 
 // Set the problem type
-SET_TYPE_PROP(TwoPCornerPoint, Problem, TwoPCornerPointTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPCornerPoint> { using type = TwoPCornerPointTestProblem<TypeTag>; };
 
 // the local residual containing the analytic derivative methods
-SET_TYPE_PROP(TwoPCornerPoint, LocalResidual, TwoPIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoPCornerPoint> { using type = TwoPIncompressibleLocalResidual<TypeTag>; };
 
 // Set the fluid system
-SET_PROP(TwoPCornerPoint, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TwoPCornerPoint>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 // Set the spatial parameters
-SET_PROP(TwoPCornerPoint, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TwoPCornerPoint>
 {
 private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = TwoPCornerPointTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Enable caching
-SET_BOOL_PROP(TwoPCornerPoint, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(TwoPCornerPoint, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(TwoPCornerPoint, EnableFVGridGeometryCache, false);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPCornerPoint> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPCornerPoint> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::TwoPCornerPoint> { static constexpr bool value = false; };
 } // end namespace Properties
 
 /*!
@@ -87,20 +98,20 @@ template<class TypeTag>
 class TwoPCornerPointTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum { dimWorld = GridView::dimensionworld };
 
 public:

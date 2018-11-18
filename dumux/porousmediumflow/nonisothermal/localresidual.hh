@@ -34,7 +34,7 @@ template<class TypeTag, bool enableEneryBalance>
 class EnergyLocalResidualImplementation;
 
 template<class TypeTag>
-using EnergyLocalResidual = EnergyLocalResidualImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>;
+using EnergyLocalResidual = EnergyLocalResidualImplementation<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance()>;
 
 /*!
  * \ingroup NIModel
@@ -43,12 +43,12 @@ using EnergyLocalResidual = EnergyLocalResidualImplementation<TypeTag, GET_PROP_
 template<class TypeTag>
 class EnergyLocalResidualImplementation<TypeTag, false>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
 
 public:
     /*!
@@ -107,13 +107,13 @@ public:
 template<class TypeTag>
 class EnergyLocalResidualImplementation<TypeTag, true>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum { energyEqIdx = Indices::energyEqIdx };
 

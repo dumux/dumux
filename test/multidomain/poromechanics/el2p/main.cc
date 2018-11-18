@@ -51,20 +51,22 @@
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(TwoPSub, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::TwoPSub>
 {
 private:
     // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(TwoPSub), TTAG(PoroElasticSub)>;
+    using Traits = MultiDomainTraits<Properties::TTag::TwoPSub, Properties::TTag::PoroElasticSub>;
 public:
     using type = PoroMechanicsCouplingManager< Traits >;
 };
 
-SET_PROP(PoroElasticSub, CouplingManager)
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::PoroElasticSub>
 {
 private:
     // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(TwoPSub), TTAG(PoroElasticSub)>;
+    using Traits = MultiDomainTraits<Properties::TTag::TwoPSub, Properties::TTag::PoroElasticSub>;
 public:
     using type = PoroMechanicsCouplingManager< Traits >;
 };
@@ -91,11 +93,11 @@ int main(int argc, char** argv) try
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
-    using TwoPTypeTag = TTAG(TwoPSub);
-    using PoroMechTypeTag = TTAG(PoroElasticSub);
+    using TwoPTypeTag = Properties::TTag::TwoPSub;
+    using PoroMechTypeTag = Properties::TTag::PoroElasticSub;
 
     // we simply extract the grid creator from one of the type tags
-    using GridManager = Dumux::GridManager<typename GET_PROP_TYPE(TwoPTypeTag, Grid)>;
+    using GridManager = Dumux::GridManager<GetPropType<TwoPTypeTag, Properties::Grid>>;
     GridManager gridManager;
     gridManager.init();
 
@@ -107,8 +109,8 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometries
-    using TwoPFVGridGeometry = typename GET_PROP_TYPE(TwoPTypeTag, FVGridGeometry);
-    using PoroMechFVGridGeometry = typename GET_PROP_TYPE(PoroMechTypeTag, FVGridGeometry);
+    using TwoPFVGridGeometry = GetPropType<TwoPTypeTag, Properties::FVGridGeometry>;
+    using PoroMechFVGridGeometry = GetPropType<PoroMechTypeTag, Properties::FVGridGeometry>;
     auto twoPFvGridGeometry = std::make_shared<TwoPFVGridGeometry>(leafGridView);
     auto poroMechFvGridGeometry = std::make_shared<PoroMechFVGridGeometry>(leafGridView);
     twoPFvGridGeometry->update();
@@ -120,8 +122,8 @@ int main(int argc, char** argv) try
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // the problems (boundary conditions)
-    using TwoPProblem = typename GET_PROP_TYPE(TwoPTypeTag, Problem);
-    using PoroMechProblem = typename GET_PROP_TYPE(PoroMechTypeTag, Problem);
+    using TwoPProblem = GetPropType<TwoPTypeTag, Properties::Problem>;
+    using PoroMechProblem = GetPropType<PoroMechTypeTag, Properties::Problem>;
     auto twoPSpatialParams = std::make_shared<typename TwoPProblem::SpatialParams>(twoPFvGridGeometry, couplingManager);
     auto twoPProblem = std::make_shared<TwoPProblem>(twoPFvGridGeometry, twoPSpatialParams, "TwoP");
     auto poroMechProblem = std::make_shared<PoroMechProblem>(poroMechFvGridGeometry, couplingManager, "PoroElastic");
@@ -142,28 +144,28 @@ int main(int argc, char** argv) try
     couplingManager->init(twoPProblem, poroMechProblem, x);
 
     // the grid variables
-    using TwoPGridVariables = typename GET_PROP_TYPE(TwoPTypeTag, GridVariables);
-    using PoroMechGridVariables = typename GET_PROP_TYPE(PoroMechTypeTag, GridVariables);
+    using TwoPGridVariables = GetPropType<TwoPTypeTag, Properties::GridVariables>;
+    using PoroMechGridVariables = GetPropType<PoroMechTypeTag, Properties::GridVariables>;
     auto twoPGridVariables = std::make_shared<TwoPGridVariables>(twoPProblem, twoPFvGridGeometry);
     auto poroMechGridVariables = std::make_shared<PoroMechGridVariables>(poroMechProblem, poroMechFvGridGeometry);
     twoPGridVariables->init(x[twoPId]);
     poroMechGridVariables->init(x[poroMechId]);
 
     // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(TwoPTypeTag, Scalar);
+    using Scalar = GetPropType<TwoPTypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDT = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
-    using TwoPVtkOutputModule = Dumux::VtkOutputModule<TwoPGridVariables, typename GET_PROP_TYPE(TwoPTypeTag, SolutionVector)>;
-    using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, typename GET_PROP_TYPE(PoroMechTypeTag, SolutionVector)>;
+    using TwoPVtkOutputModule = Dumux::VtkOutputModule<TwoPGridVariables, GetPropType<TwoPTypeTag, Properties::SolutionVector>>;
+    using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, GetPropType<PoroMechTypeTag, Properties::SolutionVector>>;
     TwoPVtkOutputModule twoPVtkWriter(*twoPGridVariables, x[twoPId], twoPProblem->name());
     PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechProblem->name());
 
     // add output fields to writers
-    using TwoPOutputFields = typename GET_PROP_TYPE(TwoPTypeTag, IOFields);
-    using PoroMechOutputFields = typename GET_PROP_TYPE(PoroMechTypeTag, IOFields);
+    using TwoPOutputFields = GetPropType<TwoPTypeTag, Properties::IOFields>;
+    using PoroMechOutputFields = GetPropType<PoroMechTypeTag, Properties::IOFields>;
     TwoPOutputFields::initOutputModule(twoPVtkWriter);
     PoroMechOutputFields::initOutputModule(poroMechVtkWriter);
 
@@ -212,7 +214,7 @@ int main(int argc, char** argv) try
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        using TwoPPrimaryVariables = typename GET_PROP_TYPE(TwoPTypeTag, PrimaryVariables);
+        using TwoPPrimaryVariables = GetPropType<TwoPTypeTag, Properties::PrimaryVariables>;
         TwoPPrimaryVariables storage(0);
         const auto& twoPLocalResidual = assembler->localResidual(twoPId);
         for (const auto& element : elements(leafGridView, Dune::Partitions::interior))

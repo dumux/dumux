@@ -47,38 +47,48 @@ template<class TypeTag> class OnePTestProblem;
 namespace Properties
 {
 // create the type tag nodes
-NEW_TYPE_TAG(OnePCompressible, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePCompressibleTpfa, INHERITS_FROM(CCTpfaModel, OnePCompressible));
-NEW_TYPE_TAG(OnePCompressibleMpfa, INHERITS_FROM(CCMpfaModel, OnePCompressible));
-NEW_TYPE_TAG(OnePCompressibleBox, INHERITS_FROM(BoxModel, OnePCompressible));
+// Create new type tags
+namespace TTag {
+struct OnePCompressible { using InheritsFrom = std::tuple<OneP>; };
+struct OnePCompressibleTpfa { using InheritsFrom = std::tuple<OnePCompressible, CCTpfaModel>; };
+struct OnePCompressibleMpfa { using InheritsFrom = std::tuple<OnePCompressible, CCMpfaModel>; };
+struct OnePCompressibleBox { using InheritsFrom = std::tuple<OnePCompressible, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(OnePCompressible, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePCompressible> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem type
-SET_TYPE_PROP(OnePCompressible, Problem, OnePTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::OnePCompressible> { using type = OnePTestProblem<TypeTag>; };
 
 // set the spatial params
-SET_PROP(OnePCompressible, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::OnePCompressible>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // the fluid system
-SET_PROP(OnePCompressible, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::OnePCompressible>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = FluidSystems::OnePLiquid<Scalar, Components::TabulatedComponent<Components::H2O<Scalar>>>;
 };
 
 // Disable caching (for testing purposes)
-SET_BOOL_PROP(OnePCompressible, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(OnePCompressible, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(OnePCompressible, EnableFVGridGeometryCache, false);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
 
 } // end namespace Properties
 /*!
@@ -92,12 +102,12 @@ template<class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

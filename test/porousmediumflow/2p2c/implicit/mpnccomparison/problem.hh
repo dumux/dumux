@@ -47,42 +47,53 @@ template <class TypeTag>
 class TwoPTwoCComparisonProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TwoPTwoCComparison, INHERITS_FROM(TwoPTwoC));
-NEW_TYPE_TAG(TwoPTwoCComparisonBox, INHERITS_FROM(BoxModel, TwoPTwoCComparison));
-NEW_TYPE_TAG(TwoPTwoCComparisonCC, INHERITS_FROM(CCTpfaModel, TwoPTwoCComparison));
+// Create new type tags
+namespace TTag {
+struct TwoPTwoCComparison { using InheritsFrom = std::tuple<TwoPTwoC>; };
+struct TwoPTwoCComparisonBox { using InheritsFrom = std::tuple<TwoPTwoCComparison, BoxModel>; };
+struct TwoPTwoCComparisonCC { using InheritsFrom = std::tuple<TwoPTwoCComparison, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TwoPTwoCComparison, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPTwoCComparison> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(TwoPTwoCComparison,
-              Problem,
-              TwoPTwoCComparisonProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPTwoCComparison> { using type = TwoPTwoCComparisonProblem<TypeTag>; };
 
 // Set fluid configuration
-SET_TYPE_PROP(TwoPTwoCComparison,
-              FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TwoPTwoCComparison>
+{
+    using type = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>,
+                                     FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
+};
 
 // Set the spatial parameters
-SET_PROP(TwoPTwoCComparison, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TwoPTwoCComparison>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TwoPTwoCComparisonSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // decide which type to use for floating values (double / quad)
-SET_TYPE_PROP(TwoPTwoCComparison, Scalar, double);
-SET_PROP(TwoPTwoCComparison, Formulation)
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::TwoPTwoCComparison> { using type = double; };
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::TwoPTwoCComparison>
 {
 public:
     static const TwoPFormulation value = TwoPFormulation::p1s0;
 };
 
-SET_BOOL_PROP(TwoPTwoCComparison, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::TwoPTwoCComparison> { static constexpr bool value = true; };
 
-SET_TYPE_PROP(TwoPTwoCComparison, IOFields, TwoPTwoCMPNCIOFields);
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPTwoCComparison> { using type = TwoPTwoCMPNCIOFields; };
 } // end namespace Properties
 
 
@@ -95,20 +106,20 @@ template <class TypeTag>
 class TwoPTwoCComparisonProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
 public:

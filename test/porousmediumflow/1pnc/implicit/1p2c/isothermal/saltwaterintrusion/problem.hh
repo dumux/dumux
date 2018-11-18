@@ -38,29 +38,36 @@ template <class TypeTag>
 class SaltWaterIntrusionTestProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(SaltWaterIntrusionTest, INHERITS_FROM(BoxModel, OnePNC));
+// Create new type tags
+namespace TTag {
+struct SaltWaterIntrusionTest { using InheritsFrom = std::tuple<OnePNC, BoxModel>; };
+} // end namespace TTag
 
 // Use a structured yasp grid
-SET_TYPE_PROP(SaltWaterIntrusionTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::SaltWaterIntrusionTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(SaltWaterIntrusionTest, Problem, SaltWaterIntrusionTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::SaltWaterIntrusionTest> { using type = SaltWaterIntrusionTestProblem<TypeTag>; };
 
 // Set fluid configuration
-SET_TYPE_PROP(SaltWaterIntrusionTest,
-              FluidSystem,
-              FluidSystems::Brine< typename GET_PROP_TYPE(TypeTag, Scalar) >);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::SaltWaterIntrusionTest>
+{ using type = FluidSystems::Brine< GetPropType<TypeTag, Properties::Scalar> >; };
 
 // Set the spatial parameters
-SET_PROP(SaltWaterIntrusionTest, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::SaltWaterIntrusionTest>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Use mass fractions to set salinity conveniently
-SET_BOOL_PROP(SaltWaterIntrusionTest, UseMoles, false);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::SaltWaterIntrusionTest> { static constexpr bool value = false; };
 
 } // end namespace Properties
 
@@ -77,21 +84,21 @@ class SaltWaterIntrusionTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
     // copy pressure index for convenience
     enum { pressureIdx = Indices::pressureIdx };
 
     //! The test is defined using mass fractions
-    static_assert(!GET_PROP_VALUE(TypeTag, UseMoles), "This test uses mass fractions!");
+    static_assert(!getPropValue<TypeTag, Properties::UseMoles>(), "This test uses mass fractions!");
 
 public:
     SaltWaterIntrusionTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

@@ -42,7 +42,7 @@ class StaggeredCouplingManagerBase: public CouplingManager<MDTraits>
     using ParentType = CouplingManager<MDTraits>;
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
-    template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
+    template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
 
     using StaggeredSubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
 

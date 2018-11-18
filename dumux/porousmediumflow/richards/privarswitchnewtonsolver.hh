@@ -38,7 +38,7 @@ class RichardsPrivarSwitchNewtonSolverImplementation;
  * \brief A base for the richards newton solver which derives from the right base newton solver.
   */
 template <class TypeTag, class Assembler, class LinearSolver>
-using RichardsPrivarSwitchNewtonSolver = RichardsPrivarSwitchNewtonSolverImplementation <TypeTag, Assembler, LinearSolver, GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir)>;
+using RichardsPrivarSwitchNewtonSolver = RichardsPrivarSwitchNewtonSolverImplementation <TypeTag, Assembler, LinearSolver, getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>()>;
 
 /*!
  * \ingroup RichardsModel
@@ -56,9 +56,9 @@ public:
  * \brief the case with switchable primary variables
   */
 template <class TypeTag, class Assembler, class LinearSolver>
-class RichardsPrivarSwitchNewtonSolverImplementation<TypeTag, Assembler, LinearSolver, true> : public PriVarSwitchNewtonSolver<Assembler, LinearSolver, typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch)>
+class RichardsPrivarSwitchNewtonSolverImplementation<TypeTag, Assembler, LinearSolver, true> : public PriVarSwitchNewtonSolver<Assembler, LinearSolver, GetPropType<TypeTag, Properties::PrimaryVariableSwitch>>
 {
-    using PrimaryVariableSwitch = typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
+    using PrimaryVariableSwitch = GetPropType<TypeTag, Properties::PrimaryVariableSwitch>;
     using ParentType = PriVarSwitchNewtonSolver<Assembler, LinearSolver, PrimaryVariableSwitch>;
 public:
     using ParentType::ParentType;

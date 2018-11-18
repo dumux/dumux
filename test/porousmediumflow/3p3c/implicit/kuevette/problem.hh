@@ -52,28 +52,34 @@ template <class TypeTag>
 class KuevetteProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(Kuevette, INHERITS_FROM(ThreePThreeCNI));
-NEW_TYPE_TAG(KuevetteBox, INHERITS_FROM(BoxModel, Kuevette));
-NEW_TYPE_TAG(KuevetteCCTpfa, INHERITS_FROM(CCTpfaModel, Kuevette));
+// Create new type tags
+namespace TTag {
+struct Kuevette { using InheritsFrom = std::tuple<ThreePThreeCNI>; };
+struct KuevetteBox { using InheritsFrom = std::tuple<Kuevette, BoxModel>; };
+struct KuevetteCCTpfa { using InheritsFrom = std::tuple<Kuevette, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Kuevette, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Kuevette> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(Kuevette, Problem, KuevetteProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Kuevette> { using type = KuevetteProblem<TypeTag>; };
 
 // Set the spatial parameters
-SET_PROP(Kuevette, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Kuevette>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = KuevetteSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Set the fluid system
-SET_TYPE_PROP(Kuevette,
-              FluidSystem,
-              FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::Kuevette>
+{ using type = FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>; };
 } // end namespace Properties
 
 /*!
@@ -113,12 +119,12 @@ template <class TypeTag >
 class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     enum {
 
         pressureIdx = Indices::pressureIdx,
@@ -138,14 +144,14 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
 
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;

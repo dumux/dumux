@@ -35,7 +35,8 @@ namespace Dumux
 
 namespace Properties
 {
-     NEW_PROP_TAG(UseBlockingOfSpuriousFlow); //!< Determines whether blocking of spurious flow is used or not.
+     template<class TypeTag, class MyTypeTag>
+struct UseBlockingOfSpuriousFlow { using type = UndefinedProperty; }; //!< Determines whether blocking of spurious flow is used or not.
 }
 
 /*!
@@ -48,18 +49,18 @@ template <class TypeTag>
 class TwoPOneCDarcysLaw : public DarcysLaw<TypeTag>
 {
     using ParentType = DarcysLaw<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElemFluxVarCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using FluxVarCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using ElemFluxVarCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using FluxVarCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using CoordScalar = typename GridView::ctype;
@@ -91,7 +92,7 @@ public:
         const Scalar flux = ParentType::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarCache);
 
         // only block wetting-phase (i.e. liquid water) fluxes
-        if((!GET_PROP_VALUE(TypeTag, UseBlockingOfSpuriousFlow)) || phaseIdx != liquidPhaseIdx)
+        if((!getPropValue<TypeTag, Properties::UseBlockingOfSpuriousFlow>()) || phaseIdx != liquidPhaseIdx)
             return flux;
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];

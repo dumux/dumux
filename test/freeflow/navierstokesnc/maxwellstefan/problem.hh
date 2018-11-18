@@ -44,26 +44,37 @@ class MaxwellStefanNCTestProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(MaxwellStefanNCTest, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+// Create new type tags
+namespace TTag {
+struct MaxwellStefanNCTest { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
+} // end namespace TTag
 
-SET_INT_PROP(MaxwellStefanNCTest, ReplaceCompEqIdx, 0);
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr int value = 0; };
 
 // Set the grid type
-SET_TYPE_PROP(MaxwellStefanNCTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::MaxwellStefanNCTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(MaxwellStefanNCTest, Problem, Dumux::MaxwellStefanNCTestProblem<TypeTag> );
+template<class TypeTag>
+struct Problem<TypeTag, TTag::MaxwellStefanNCTest> { using type = Dumux::MaxwellStefanNCTestProblem<TypeTag> ; };
 
-SET_BOOL_PROP(MaxwellStefanNCTest, EnableFVGridGeometryCache, true);
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(MaxwellStefanNCTest, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(MaxwellStefanNCTest, EnableGridVolumeVariablesCache, true);
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr bool value = true; };
 
-SET_BOOL_PROP(MaxwellStefanNCTest, UseMoles, true);
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr bool value = true; };
 
 
 //! Here we set FicksLaw or MaxwellStefansLaw
-SET_TYPE_PROP(MaxwellStefanNCTest, MolecularDiffusionType, MaxwellStefansLaw<TypeTag>);
+template<class TypeTag>
+struct MolecularDiffusionType<TypeTag, TTag::MaxwellStefanNCTest> { using type = MaxwellStefansLaw<TypeTag>; };
 
 
 /*!
@@ -73,10 +84,10 @@ SET_TYPE_PROP(MaxwellStefanNCTest, MolecularDiffusionType, MaxwellStefansLaw<Typ
  */
 template<class TypeTag>
 class MaxwellStefanFluidSystem
-: public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar), MaxwellStefanFluidSystem<TypeTag>>
+: public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>, MaxwellStefanFluidSystem<TypeTag>>
 
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ThisType = MaxwellStefanFluidSystem<TypeTag>;
     using Base = FluidSystems::Base<Scalar, ThisType>;
 
@@ -181,7 +192,8 @@ public:
     }
 };
 
-SET_TYPE_PROP(MaxwellStefanNCTest, FluidSystem, MaxwellStefanFluidSystem<TypeTag>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::MaxwellStefanNCTest> { using type = MaxwellStefanFluidSystem<TypeTag>; };
 
 } //end namespace Property
 /*!
@@ -193,13 +205,13 @@ class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

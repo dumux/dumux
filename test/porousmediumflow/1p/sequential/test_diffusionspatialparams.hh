@@ -45,7 +45,8 @@ NEW_TYPE_TAG(TestDiffusionSpatialParams);
 SET_TYPE_PROP(TestDiffusionSpatialParams, SpatialParams, TestDiffusionSpatialParams<TypeTag>);
 
 // Set the material law
-SET_PROP(TestDiffusionSpatialParams, MaterialLaw)
+template<class TypeTag>
+struct MaterialLaw<TypeTag, TTag::TestDiffusionSpatialParams>
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

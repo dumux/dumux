@@ -49,46 +49,58 @@ namespace Dumux {
 template<class TypeTag> class TwoPTestProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TwoPIncompressible, INHERITS_FROM(TwoP));
-NEW_TYPE_TAG(TwoPIncompressibleTpfa, INHERITS_FROM(CCTpfaModel, TwoPIncompressible));
-NEW_TYPE_TAG(TwoPIncompressibleMpfa, INHERITS_FROM(CCMpfaModel, TwoPIncompressible));
-NEW_TYPE_TAG(TwoPIncompressibleBox, INHERITS_FROM(BoxModel, TwoPIncompressible));
+// Create new type tags
+namespace TTag {
+struct TwoPIncompressible { using InheritsFrom = std::tuple<TwoP>; };
+struct TwoPIncompressibleTpfa { using InheritsFrom = std::tuple<TwoPIncompressible, CCTpfaModel>; };
+struct TwoPIncompressibleMpfa { using InheritsFrom = std::tuple<TwoPIncompressible, CCMpfaModel>; };
+struct TwoPIncompressibleBox { using InheritsFrom = std::tuple<TwoPIncompressible, BoxModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TwoPIncompressible, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPIncompressible> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem type
-SET_TYPE_PROP(TwoPIncompressible, Problem, TwoPTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPIncompressible> { using type = TwoPTestProblem<TypeTag>; };
 
 // the local residual containing the analytic derivative methods
-SET_TYPE_PROP(TwoPIncompressible, LocalResidual, TwoPIncompressibleLocalResidual<TypeTag>);
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TwoPIncompressible> { using type = TwoPIncompressibleLocalResidual<TypeTag>; };
 
 // Set the fluid system
-SET_PROP(TwoPIncompressible, FluidSystem)
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TwoPIncompressible>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 // Set the spatial parameters
-SET_PROP(TwoPIncompressible, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TwoPIncompressible>
 {
 private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Enable caching
-SET_BOOL_PROP(TwoPIncompressible, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(TwoPIncompressible, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(TwoPIncompressible, EnableFVGridGeometryCache, false);
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = false; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = false; };
 
 // Maybe enable the box-interface solver
-SET_BOOL_PROP(TwoPIncompressible, EnableBoxInterfaceSolver, ENABLEINTERFACESOLVER);
+template<class TypeTag>
+struct EnableBoxInterfaceSolver<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = ENABLEINTERFACESOLVER; };
 } // end namespace Properties
 
 /*!
@@ -99,16 +111,16 @@ template<class TypeTag>
 class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum {
         pressureH2OIdx = Indices::pressureIdx,
         saturationDNAPLIdx = Indices::saturationIdx,
@@ -149,7 +161,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
+        GetPropType<TypeTag, Properties::FluidState> fluidState;
         fluidState.setTemperature(temperature());
         fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);
@@ -203,7 +215,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
+        GetPropType<TypeTag, Properties::FluidState> fluidState;
         fluidState.setTemperature(temperature());
         fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);

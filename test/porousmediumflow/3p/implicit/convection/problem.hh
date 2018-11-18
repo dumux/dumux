@@ -50,28 +50,34 @@ template <class TypeTag>
 class ThreePNIConvectionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(ThreePNIConvection, INHERITS_FROM(ThreePNI));
-NEW_TYPE_TAG(ThreePNIConvectionBox, INHERITS_FROM(BoxModel, ThreePNIConvection));
-NEW_TYPE_TAG(ThreePNIConvectionCCTpfa, INHERITS_FROM(CCTpfaModel, ThreePNIConvection));
-NEW_TYPE_TAG(ThreePNIConvectionCCMpfa, INHERITS_FROM(CCMpfaModel, ThreePNIConvection));
+// Create new type tags
+namespace TTag {
+struct ThreePNIConvection { using InheritsFrom = std::tuple<ThreePNI>; };
+struct ThreePNIConvectionBox { using InheritsFrom = std::tuple<ThreePNIConvection, BoxModel>; };
+struct ThreePNIConvectionCCTpfa { using InheritsFrom = std::tuple<ThreePNIConvection, CCTpfaModel>; };
+struct ThreePNIConvectionCCMpfa { using InheritsFrom = std::tuple<ThreePNIConvection, CCMpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(ThreePNIConvection, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ThreePNIConvection> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(ThreePNIConvection, Problem, ThreePNIConvectionProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ThreePNIConvection> { using type = ThreePNIConvectionProblem<TypeTag>; };
 
 
 // Set the fluid system
-SET_TYPE_PROP(ThreePNIConvection,
-              FluidSystem,
-              FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ThreePNIConvection>
+{ using type = FluidSystems::H2OAirMesitylene<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Set the spatial parameters
-SET_PROP(ThreePNIConvection, SpatialParams)
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::ThreePNIConvection>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = ThreePNISpatialParams<FVGridGeometry, Scalar>;
 };
 } // end namespace Properties
@@ -105,22 +111,22 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using IapwsH2O = Components::H2O<Scalar>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum {
         // index of the primary variables
         pressureIdx = Indices::pressureIdx,

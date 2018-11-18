@@ -50,14 +50,14 @@ namespace Dumux {
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class FVAssembler
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using TimeLoop = TimeLoopBase<typename GET_PROP_TYPE(TypeTag, Scalar)>;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr DiscretizationMethod discMethod = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod;
+    static constexpr DiscretizationMethod discMethod = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod;
     static constexpr bool isBox = discMethod == DiscretizationMethod::box;
 
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;
@@ -65,10 +65,10 @@ class FVAssembler
                                                      CCLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>>;
 
 public:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using ResidualType = SolutionVector;
 

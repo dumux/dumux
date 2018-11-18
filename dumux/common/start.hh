@@ -58,9 +58,9 @@ int start_(int argc,
            void (*usage)(const char *, const std::string &))
 {
     // some aliases for better readability
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -73,14 +73,14 @@ int start_(int argc,
     // parse the command line arguments and input file
     ////////////////////////////////////////////////////////////
 
-    auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TypeTag, ModelDefaultParameters)::defaultParams(p);};
+    auto defaultParams = [] (Dune::ParameterTree& p) {GetProp<TypeTag, Properties::ModelDefaultParameters>::defaultParams(p);};
     Parameters::init(argc, argv, defaultParams, usage);
 
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     //////////////////////////////////////////////////////////////////////
