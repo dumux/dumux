@@ -249,11 +249,6 @@ public:
                 }
             }
         }
-
-        // Maybe resize local matrices if dynamic types are used
-        resizeMatrix(A_, numUnknowns_, numUnknowns_);
-        resizeMatrix(B_, numUnknowns_, numKnowns_);
-        resizeMatrix(C_, numFaces_, numUnknowns_);
     }
 
     //! returns the number of primary scvfs of this interaction volume
@@ -296,18 +291,6 @@ public:
     const std::vector<DirichletData>& dirichletData() const
     { return dirichletData_; }
 
-    //! returns the matrix associated with face unknowns in local equation system
-    const AMatrix& A() const { return A_; }
-    AMatrix& A() { return A_; }
-
-    //! returns the matrix associated with cell unknowns in local equation system
-    const BMatrix& B() const { return B_; }
-    BMatrix& B() { return B_; }
-
-    //! returns the matrix associated with face unknowns in flux expressions
-    const CMatrix& C() const { return C_; }
-    CMatrix& C() { return C_; }
-
     //! returns container storing the transmissibilities for each face & coordinate
     const TransmissibilityStorage& omegas() const { return wijk_; }
     TransmissibilityStorage& omegas() { return wijk_; }
@@ -348,11 +331,6 @@ private:
     std::vector<LocalScvfType> scvfs_;
     std::vector<LocalFaceData> localFaceData_;
     std::vector<DirichletData> dirichletData_;
-
-    // Matrices needed for computation of transmissibilities
-    AMatrix A_;
-    BMatrix B_;
-    CMatrix C_;
 
     // The omega factors are stored during assembly of local system
     TransmissibilityStorage wijk_;
