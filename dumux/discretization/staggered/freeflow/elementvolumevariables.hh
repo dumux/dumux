@@ -26,7 +26,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <iterator>
 #include <vector>
 
 #include <dune/common/exceptions.hh>
@@ -60,17 +59,29 @@ public:
 
     //! Constructor
     StaggeredElementVolumeVariables(const GridVolumeVariables& gridVolVars)
-    : gridVolVarsPtr_(&gridVolVars) {}
+    : gridVolVarsPtr_(&gridVolVars)
+    , numScv_(gridVolVars.problem().fvGridGeometry().numScv())
+    {}
 
     //! operator for the access with an scv
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return gridVolVars().volVars(scv.dofIndex()); }
+    {
+        if (scv.dofIndex() < numScv_)
+            return gridVolVars().volVars(scv.dofIndex());
+        else
+            return boundaryVolumeVariables_[getLocalIdx_(scv.dofIndex())];
+    }
 
     //! operator for the access with an index
     //! needed for Staggered methods for the access to the boundary volume variables
     const VolumeVariables& operator [](const std::size_t scvIdx) const
-    { return gridVolVars().volVars(scvIdx); }
+    {
+        if (scvIdx < numScv_)
+            return gridVolVars().volVars(scvIdx);
+        else
+            return boundaryVolumeVariables_[getLocalIdx_(scvIdx)];
+    }
 
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
@@ -90,9 +101,34 @@ public:
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
-        // the last parameter {} is needed for the PassKey pattern which restricts access to the ElementVolVars class
-        if (fvGeometry.hasBoundaryScvf())
-            gridVolVars().updateBoundary_(element, fvGeometry, sol, {});
+        if (!fvGeometry.hasBoundaryScvf())
+            return;
+
+        clear();
+        boundaryVolVarIndices_.reserve(fvGeometry.numScvf());
+        boundaryVolumeVariables_.reserve(fvGeometry.numScvf());
+
+        // handle the boundary volume variables
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            // if we are not on a boundary, skip the rest
+            if (!scvf.boundary())
+                continue;
+
+            const auto& problem = gridVolVars().problem();
+            auto boundaryPriVars = gridVolVars().getBoundaryPriVars(problem, sol, element, scvf);
+            const auto elemSol = elementSolution<FVElementGeometry>(std::move(boundaryPriVars));
+            auto&& scvI = fvGeometry.scv(scvf.insideScvIdx());
+
+            VolumeVariables volVars;
+            volVars.update(elemSol,
+                           problem,
+                           element,
+                           scvI);
+
+           boundaryVolumeVariables_.emplace_back(std::move(volVars));
+           boundaryVolVarIndices_.push_back(scvf.outsideScvIdx());
+        }
     }
 
     //! function to prepare the vol vars within the element
@@ -106,8 +142,27 @@ public:
     const GridVolumeVariables& gridVolVars() const
     { return *gridVolVarsPtr_; }
 
+    //! Clear all local storage
+    void clear()
+    {
+        boundaryVolVarIndices_.clear();
+        boundaryVolumeVariables_.clear();
+    }
+
 private:
     const GridVolumeVariables* gridVolVarsPtr_;
+
+    //! map a global scv index to the local storage index
+    int getLocalIdx_(const int volVarIdx) const
+    {
+        auto it = std::find(boundaryVolVarIndices_.begin(), boundaryVolVarIndices_.end(), volVarIdx);
+        assert(it != boundaryVolVarIndices_.end() && "Could not find the current volume variables for volVarIdx!");
+        return std::distance(boundaryVolVarIndices_.begin(), it);
+    }
+
+    std::vector<std::size_t> boundaryVolVarIndices_;
+    std::vector<VolumeVariables> boundaryVolumeVariables_;
+    const std::size_t numScv_;
 };
 
 

@@ -44,10 +44,6 @@ struct StaggeredGridDefaultGridVolumeVariablesTraits
     template<class GridVolumeVariables, bool cachingEnabled>
     using LocalView = StaggeredElementVolumeVariables<GridVolumeVariables, cachingEnabled>;
 
-    //! Use the PassKey pattern to restrict access to a member function only to a specific class
-    template<class T>
-    class Key { friend T; Key() {} Key(Key const&) {} };
-
     //! Returns the primary variables used for the boundary volVars and checks for admissible
     //! combinations for boundary conditions.
     template<class Problem, class SolutionVector, class Element, class SubControlVolumeFace>
@@ -165,9 +161,8 @@ public:
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
         auto numScv = fvGridGeometry.numScv();
-        auto numBoundaryScvf = fvGridGeometry.numBoundaryScvf();
+        volumeVariables_.resize(numScv);
 
-        volumeVariables_.resize(numScv + numBoundaryScvf);
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {
             auto fvGeometry = localView(fvGridGeometry);
@@ -182,26 +177,6 @@ public:
                 auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
                 volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
             }
-        }
-    }
-
-    //! Update the boundary volume variables.
-    //! Use the PassKey pattern to grant access only to the LocalView (ElementVolumeVariables) class.
-    template<class Element, class FVGeometry, class SolutionVector>
-    void updateBoundary_(const Element& element, const FVGeometry& fvGeometry, const SolutionVector& sol,
-                         typename Traits::template Key<LocalView>) const
-    {
-        // handle the boundary volume variables
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            // if we are not on a boundary, skip the rest
-            if (!scvf.boundary())
-                continue;
-
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            auto boundaryPriVars = Traits::getBoundaryPriVars(problem(), sol, element, scvf);
-            const auto elemSol = elementSolution<FVGeometry>(std::move(boundaryPriVars));
-            volumeVariables_[scvf.outsideScvIdx()].update(elemSol, problem(), element, insideScv);
         }
     }
 
@@ -222,9 +197,17 @@ public:
     const Problem& problem() const
     { return *problemPtr_; }
 
+    //! Returns the primary variables used for the boundary volVars and checks for admissible
+    //! combinations for boundary conditions.
+    template<class... Args>
+    PrimaryVariables getBoundaryPriVars(Args&&... args) const
+    {
+        return Traits::getBoundaryPriVars(std::forward<Args>(args)...);
+    }
+
 private:
     const Problem* problemPtr_;
-    mutable std::vector<VolumeVariables> volumeVariables_;
+    std::vector<VolumeVariables> volumeVariables_;
 };
 
 
