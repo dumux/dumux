@@ -25,9 +25,54 @@
 #ifndef DUMUX_ENERGY_VOLUME_VARIABLES_HH
 #define DUMUX_ENERGY_VOLUME_VARIABLES_HH
 
+#include <type_traits>
+
+#include <dumux/material/solidsystems/inertsolidphase.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
 namespace Dumux {
+
+#ifndef DOXYGEN
+namespace Detail {
+// helper struct detecting if the user-defined spatial params class has user-specified functions
+// for solidHeatCapacity, solidDensity, and solidThermalConductivity.
+// for g++ > 5.3, this can be replaced by a lambda
+template<class E, class SCV, class ES, class SS>
+struct hasSolidHeatCapacity
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.solidHeatCapacity(std::declval<E>(), std::declval<SCV>(), std::declval<ES>(), std::declval<SS>()))
+    {}
+};
+
+template<class E, class SCV, class ES, class SS>
+struct hasSolidDensity
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.solidDensity(std::declval<E>(), std::declval<SCV>(), std::declval<ES>(), std::declval<SS>()))
+    {}
+};
+
+template<class E, class SCV, class ES, class SS>
+struct hasSolidThermalConductivity
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.solidThermalConductivity(std::declval<E>(), std::declval<SCV>(), std::declval<ES>(), std::declval<SS>()))
+    {}
+};
+
+template<class SolidSystem>
+struct isInertSolidPhase : public std::false_type {};
+
+template<class Scalar, class Component>
+struct isInertSolidPhase<SolidSystems::InertSolidPhase<Scalar, Component>> : public std::true_type {};
+
+} // end namespace Detail
+#endif
+
 
 // forward declaration
 template <class IsothermalTraits, class Impl, bool enableEnergyBalance>
@@ -55,6 +100,7 @@ public:
     using FluidState = typename IsothermalTraits::FluidState;
     using SolidState = typename IsothermalTraits::SolidState;
     using FluidSystem = typename IsothermalTraits::FluidSystem;
+    using SpatialParams = typename IsothermalTraits::SpatialParams;
 
     //! The temperature is obtained from the problem as a constant for isothermal models
     template<class ElemSol, class Problem, class Element, class Scv>
@@ -163,15 +209,14 @@ public:
                                  const Scv &scv,
                                  SolidState & solidState)
     {
+        Scalar cs = solidHeatCapacity_(elemSol, problem, element, scv, solidState);
+        solidState.setHeatCapacity(cs);
 
-        Scalar solidHeatCapacity = SolidSystem::heatCapacity(solidState);
-        solidState.setHeatCapacity(solidHeatCapacity);
+        Scalar rhos = solidDensity_(elemSol, problem, element, scv, solidState);
+        solidState.setDensity(rhos);
 
-        Scalar solidDensity = SolidSystem::density(solidState);
-        solidState.setDensity(solidDensity);
-
-        Scalar solidThermalConductivity = SolidSystem::thermalConductivity(solidState);
-        solidState.setThermalConductivity(solidThermalConductivity);
+        Scalar lambdas = solidThermalConductivity_(elemSol, problem, element, scv, solidState);
+        solidState.setThermalConductivity(lambdas);
     }
 
     /*!
@@ -249,6 +294,176 @@ public:
 protected:
     const Impl &asImp_() const { return *static_cast<const Impl*>(this); }
     Impl &asImp_() { return *static_cast<Impl*>(this); }
+
+private:
+    /*!
+     * It has to be decided if the full solid system / solid state interface is used (general option, but more complicated),
+     * or the simple nonisothermal spatial params interface (simpler but less general).
+     * In the simple nonisothermal spatial params interface the functions solidHeatCapacity, solidDensity, and solidThermalConductivity
+     * in the spatial params overwrite the parameters given in the solid system. This only makes sense in combination
+     * with the simplest solid system InertSolidPhase, and can be used to quickly change parameters in certain domain regions.
+     * For setups with more general solids with several components these functions should not exist. Instead, the solid system
+     * determines the values for solidHeatCapacity, solidDensity, and solidThermalConductivity depending on the given composition.
+     */
+
+    /*!
+     * \name Access functions for the solidsystem / solidstate interface
+     */
+    // \{
+
+    /*!
+     * \brief get the solid heat capacity in an scv
+     * \param elemSol the element solution vector
+     * \param problem the problem to solve
+     * \param element the element (codim-0-entity) the scv belongs to
+     * \param scv the sub control volume
+     * \param solidState the solid state
+     * \note this gets selected if the user uses the solidsystem / solidstate interface
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    auto solidHeatCapacity_(const ElemSol& elemSol,
+                            const Problem& problem,
+                            const Element& element,
+                            const Scv& scv,
+                            const SolidState& solidState)
+    -> typename std::enable_if_t<!decltype(
+            isValid(Detail::hasSolidHeatCapacity<Element, Scv, ElemSol, SolidState>())(problem.spatialParams())
+                                            )::value, Scalar>
+    {
+        return SolidSystem::heatCapacity(solidState);
+    }
+
+    /*!
+     * \brief get the solid density in an scv
+     * \param elemSol the element solution vector
+     * \param problem the problem to solve
+     * \param element the element (codim-0-entity) the scv belongs to
+     * \param scv the sub control volume
+     * \param solidState the solid state
+     * \note this gets selected if the user uses the solidsystem / solidstate interface
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    auto solidDensity_(const ElemSol& elemSol,
+                       const Problem& problem,
+                       const Element& element,
+                       const Scv& scv,
+                       const SolidState& solidState)
+    -> typename std::enable_if_t<!decltype(
+            isValid(Detail::hasSolidDensity<Element, Scv, ElemSol, SolidState>())(problem.spatialParams())
+                                            )::value, Scalar>
+    {
+        return SolidSystem::density(solidState);
+    }
+
+    /*!
+     * \brief get the solid's thermal conductivity in an scv
+     * \param elemSol the element solution vector
+     * \param problem the problem to solve
+     * \param element the element (codim-0-entity) the scv belongs to
+     * \param scv the sub control volume
+     * \param solidState the solid state
+     * \note this gets selected if the user uses the solidsystem / solidstate interface
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    auto solidThermalConductivity_(const ElemSol& elemSol,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const Scv& scv,
+                                   const SolidState& solidState)
+    -> typename std::enable_if_t<!decltype(
+            isValid(Detail::hasSolidThermalConductivity<Element, Scv, ElemSol, SolidState>())(problem.spatialParams())
+                                            )::value, Scalar>
+    {
+        return SolidSystem::thermalConductivity(solidState);
+    }
+
+    // \}
+
+    /*!
+     * \name Access functions for the simple nonisothermal spatial params interface in
+     *       combination with an InertSolidPhase as solid system
+     */
+    // \{
+
+    /*!
+     * \brief get the solid heat capacity in an scv
+     * \param elemSol the element solution vector
+     * \param problem the problem to solve
+     * \param element the element (codim-0-entity) the scv belongs to
+     * \param scv the sub control volume
+     * \param solidState the solid state
+     * \note this gets selected if the user uses the simple spatial params interface in
+     *       combination with an InertSolidPhase as solid system
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    auto solidHeatCapacity_(const ElemSol& elemSol,
+                            const Problem& problem,
+                            const Element& element,
+                            const Scv& scv,
+                            const SolidState& solidState)
+    -> typename std::enable_if_t<decltype(
+            isValid(Detail::hasSolidHeatCapacity<Element, Scv, ElemSol, SolidState>())(problem.spatialParams())
+                                            )::value, Scalar>
+    {
+        static_assert(Detail::isInertSolidPhase<SolidSystem>::value,
+            "solidHeatCapacity can only be overwritten in the spatial params when the solid system is a simple InertSolidPhase\n"
+            "If you select a proper solid system, the solid heat capacity will be computed as stated in the solid system!");
+        return problem.spatialParams().solidHeatCapacity(element, scv, elemSol, solidState);
+    }
+
+    /*!
+     * \brief get the solid density in an scv
+     * \param elemSol the element solution vector
+     * \param problem the problem to solve
+     * \param element the element (codim-0-entity) the scv belongs to
+     * \param scv the sub control volume
+     * \param solidState the solid state
+     * \note this gets selected if the user uses the simple spatial params interface in
+     *       combination with an InertSolidPhase as solid system
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    auto solidDensity_(const ElemSol& elemSol,
+                       const Problem& problem,
+                       const Element& element,
+                       const Scv& scv,
+                       const SolidState& solidState)
+    -> typename std::enable_if_t<decltype(
+            isValid(Detail::hasSolidDensity<Element, Scv, ElemSol, SolidState>())(problem.spatialParams())
+                                            )::value, Scalar>
+    {
+        static_assert(Detail::isInertSolidPhase<SolidSystem>::value,
+            "solidDensity can only be overwritten in the spatial params when the solid system is a simple InertSolidPhase\n"
+            "If you select a proper solid system, the solid density will be computed as stated in the solid system!");
+        return problem.spatialParams().solidDensity(element, scv, elemSol, solidState);
+    }
+
+    /*!
+     * \brief get the solid's heat capacity in an scv
+     * \param elemSol the element solution vector
+     * \param problem the problem to solve
+     * \param element the element (codim-0-entity) the scv belongs to
+     * \param scv the sub control volume
+     * \param solidState the solid state
+     * \note this gets selected if the user uses the simple spatial params interface in
+     *       combination with an InertSolidPhase as solid system
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    auto solidThermalConductivity_(const ElemSol& elemSol,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const Scv& scv,
+                                   const SolidState& solidState)
+    -> typename std::enable_if_t<decltype(
+            isValid(Detail::hasSolidThermalConductivity<Element, Scv, ElemSol, SolidState>())(problem.spatialParams())
+                                            )::value, Scalar>
+    {
+        static_assert(Detail::isInertSolidPhase<SolidSystem>::value,
+            "solidThermalConductivity can only be overwritten in the spatial params when the solid system is a simple InertSolidPhase\n"
+            "If you select a proper solid system, the solid thermal conductivity will be computed as stated in the solid system!");
+        return problem.spatialParams().solidThermalConductivity(element, scv, elemSol, solidState);
+    }
+
+    // \}
 
 };
 

@@ -70,12 +70,11 @@ public:
         coarseK_ = 1.4e-8;
 
         // porosities
-        finePorosity_ = 0.46;
-        coarsePorosity_ = 0.46;
+        porosity_ = 0.46;
 
         // specific heat capacities
-        fineHeatCap_ = 850.;
-        coarseHeatCap_ = 84000.;
+        fineHeatCap_ = getParam<Scalar>("Component.SolidHeatCapacityFine", 850.0);
+        coarseHeatCap_ = getParam<Scalar>("Component.SolidHeatCapacityCoarse", 84000.0);
 
         // residual saturations
         fineMaterialParams_.setSwr(0.12);
@@ -121,31 +120,13 @@ public:
         return coarseK_;
     }
 
-    /*!
-     * \brief Define the porosity \f$[-]\f$ of the spatial parameters
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     */
-    template<class SolidSystem>
-    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos,
-                                    int compIdx) const
+    /*! \brief Define the porosity in [-].
+   *
+   * \param globalPos The global position where we evaluate
+   */
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
-        if (compIdx == SolidSystem::comp0Idx)
-        {
-            if (isFineMaterial_(globalPos))
-                return 1-finePorosity_;
-            else
-                return 0;
-        }
-        else
-        {
-            if (isFineMaterial_(globalPos))
-                  return 0;
-            else
-                return 1-coarsePorosity_;
-        }
+        return porosity_;
     }
 
     /*!
@@ -168,6 +149,28 @@ public:
             return coarseMaterialParams_;
     }
 
+    /*!
+     * \brief User-defined solid heat capacity.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \param solidState The solid state
+     * \return the solid heat capacity
+     */
+    template <class ElementSolution, class SolidState>
+    Scalar solidHeatCapacity(const Element& element,
+                             const SubControlVolume& scv,
+                             const ElementSolution& elemSol,
+                             const SolidState& solidState) const
+    {
+        const auto& globalPos = scv.dofPosition();
+        if (isFineMaterial_(globalPos))
+            return fineHeatCap_;
+        else
+            return coarseHeatCap_;
+    }
+
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
     {
@@ -177,8 +180,7 @@ private:
     Scalar fineK_;
     Scalar coarseK_;
 
-    Scalar finePorosity_;
-    Scalar coarsePorosity_;
+    Scalar porosity_;
 
     Scalar fineHeatCap_;
     Scalar coarseHeatCap_;
