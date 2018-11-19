@@ -15,6 +15,7 @@ dune_add_test(COMPILE_ONLY # since it currently fails miserably with very differ
 #install sources
 install(FILES
 combustionfluidsystem.hh
+combustionlocalresidual.hh
 problem.hh
 spatialparams.hh
 main.cc

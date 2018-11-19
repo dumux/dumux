@@ -44,6 +44,7 @@
 
 #include "spatialparams.hh"
 #include "combustionfluidsystem.hh"
+#include "combustionlocalresidual.hh"
 
 namespace Dumux {
 
@@ -154,6 +155,10 @@ private:
 public:
     using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
+
+template<class TypeTag>
+struct EnergyLocalResidual<TypeTag, TTag::CombustionOneComponent>
+{ using type = CombustionEnergyLocalResidual<TypeTag>; };
 }
 /*!
  * \ingroup MPNCTests
