@@ -220,10 +220,12 @@ class HeatConductionDataHandle<MatVecTraits, PhysicsTraits, false> : public Empt
 template<class MVT, class PT>
 class InteractionVolumeDataHandle
 {
+
+public:
+    //! export the underlying process-specific handle types
     using AdvectionHandle = AdvectionDataHandle<MVT, PT, PT::enableAdvection>;
     using DiffusionHandle = DiffusionDataHandle<MVT, PT, PT::enableMolecularDiffusion>;
     using HeatConductionHandle = HeatConductionDataHandle<MVT, PT, PT::enableHeatConduction>;
-public:
 
     //! return references to the handle containing data related to advection
     const AdvectionHandle& advectionHandle() const { return advectionHandle_; }

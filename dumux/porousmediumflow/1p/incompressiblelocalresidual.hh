@@ -126,41 +126,20 @@ public:
                                  / curElemVolVars[scvf.insideScvIdx()].viscosity();
 
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+        const auto localFaceIdx = fluxVarsCache.ivLocalFaceIndex();
+        const auto usesSecondary = fluxVarsCache.usesSecondaryIv();
+        const auto switchSign = fluxVarsCache.advectionSwitchFluxSign();
+
         const auto& stencil = fluxVarsCache.advectionStencil();
-        if (fluxVarsCache.usesSecondaryIv())
-        {
-            const auto& tij = fluxVarsCache.advectionTijSecondaryIv();
+        const auto& tij = usesSecondary ? fluxVarsCache.advectionSecondaryDataHandle().T()[localFaceIdx]
+                                        : fluxVarsCache.advectionPrimaryDataHandle().T()[localFaceIdx];
 
-            // We assume same the tij are order as the stencil up to stencil.size()
-            // any contribution of Dirichlet BCs is assumed to be placed afterwards
-            assert(stencil.size() <= tij.size());
-
-            // add partial derivatives to the respective given matrices
-            for (unsigned int i = 0; i < stencil.size();++i)
-            {
-                if (fluxVarsCache.advectionSwitchFluxSign())
-                    derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] -= tij[i]*up;
-                else
-                    derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] += tij[i]*up;
-            }
-        }
-        else
-        {
-            const auto& tij = fluxVarsCache.advectionTijPrimaryIv();
-
-            // We assume same the tij are order as the stencil up to stencil.size()
-            // any contribution of Dirichlet BCs is assumed to be placed afterwards
-            assert(stencil.size() <= tij.size());
-
-            // add partial derivatives to the respective given matrices
-            for (unsigned int i = 0; i < stencil.size();++i)
-            {
-                if (fluxVarsCache.advectionSwitchFluxSign())
-                    derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] -= tij[i]*up;
-                else
-                    derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] += tij[i]*up;
-            }
-        }
+        // We assume same the tij are order as the stencil up to stencil.size()
+        // any contribution of Dirichlet BCs is assumed to be placed afterwards
+        assert(stencil.size() <= tij.size());
+        for (unsigned int i = 0; i < stencil.size();++i)
+            derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] += switchSign ? -tij[i]*up
+                                                                                   :  tij[i]*up;
     }
 
     //! flux derivatives for the box scheme

@@ -231,6 +231,9 @@ private:
             ivFluxVarCaches[i]->setIvIndexInContainer(ivIndexInContainer);
             ivFluxVarCaches[i]->setUpdateStatus(true);
             ivFluxVarCaches[i]->setSecondaryIvUsage(isSecondary);
+            ivFluxVarCaches[i]->setIvLocalFaceIndex(d.ivLocalScvfIndex());
+            if (dim < dimWorld)
+                ivFluxVarCaches[i]->setIndexInOutsideFaces(d.scvfLocalOutsideScvfIndex());
             i++;
         }
 
