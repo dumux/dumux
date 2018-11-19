@@ -41,7 +41,7 @@ dune_add_test(NAME test_ff_stokes2c_advection
                              -Problem.Name test_ff_stokes2c_advection")
 
 dune_add_test(NAME test_ff_stokes2c_advection_nocaching
-              TARGET test_ff_stokes2c
+              SOURCES main.cc
               LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS ENABLECACHING=0
@@ -49,7 +49,7 @@ dune_add_test(NAME test_ff_stokes2c_advection_nocaching
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_advection-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_advection_nocaching-00009.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c params_advection.input
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_advection_nocaching params_advection.input
                              -Problem.Name test_ff_stokes2c_advection_nocaching")
 
 add_executable(test_ff_stokes2cni EXCLUDE_FROM_ALL main.cc)
