@@ -49,7 +49,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::box>
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:

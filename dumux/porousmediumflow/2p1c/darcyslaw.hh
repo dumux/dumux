@@ -62,7 +62,6 @@ class TwoPOneCDarcysLaw : public DarcysLaw<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
     using CoordScalar = typename GridView::ctype;
 
     enum { dim = GridView::dimension};
@@ -86,7 +85,7 @@ public:
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvf,
-                       const IndexType phaseIdx,
+                       const int phaseIdx,
                        const ElemFluxVarCache& elemFluxVarCache)
     {
         const Scalar flux = ParentType::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarCache);
