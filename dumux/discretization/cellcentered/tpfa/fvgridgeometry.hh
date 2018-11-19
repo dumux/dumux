@@ -89,7 +89,9 @@ class CCTpfaFVGridGeometry<GV, true, Traits>
     using ThisType = CCTpfaFVGridGeometry<GV, true, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
-    using IndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename GV::IndexSet::IndexType;
+    using ScvfIndexType = typename Traits::SubControlVolumeFace::Traits::GridIndexType;
+    using ScvIndexType = typename Traits::SubControlVolume::Traits::GridIndexType;
     using Element = typename GV::template Codim<0>::Entity;
 
     static const int dim = GV::dimension;
@@ -163,8 +165,8 @@ public:
         flipScvfIndices_.clear();
 
         // determine size of containers
-        IndexType numScvs = numDofs();
-        IndexType numScvf = 0;
+        std::size_t numScvs = numDofs();
+        std::size_t numScvf = 0;
         for (const auto& element : elements(this->gridView()))
             numScvf += element.subEntities(1);
 
@@ -175,7 +177,7 @@ public:
         hasBoundaryScvf_.resize(numScvs, false);
 
         // Build the scvs and scv faces
-        IndexType scvfIdx = 0;
+        ScvfIndexType scvfIdx = 0;
         numBoundaryScvf_ = 0;
         for (const auto& element : elements(this->gridView()))
         {
@@ -183,7 +185,7 @@ public:
             scvs_[eIdx] = SubControlVolume(element.geometry(), eIdx);
 
             // the element-wise index sets for finite volume geometry
-            std::vector<IndexType> scvfsIndexSet;
+            std::vector<ScvfIndexType> scvfsIndexSet;
             scvfsIndexSet.reserve(element.subEntities(1));
 
             // for network grids there might be multiple intersection with the same geometryInInside
@@ -286,26 +288,26 @@ public:
     }
 
     //! Get a sub control volume with a global scv index
-    const SubControlVolume& scv(IndexType scvIdx) const
+    const SubControlVolume& scv(ScvIndexType scvIdx) const
     {
         return scvs_[scvIdx];
     }
 
     //! Get a sub control volume face with a global scvf index
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(ScvfIndexType scvfIdx) const
     {
         return scvfs_[scvfIdx];
     }
 
     //! Get the scvf on the same face but from the other side
     //! Note that e.g. the normals might be different in the case of surface grids
-    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
+    const SubControlVolumeFace& flipScvf(ScvfIndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
     {
         return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]];
     }
 
     //! Get the sub control volume face indices of an scv by global index
-    const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
+    const std::vector<ScvfIndexType>& scvfIndicesOfScv(ScvIndexType scvIdx) const
     {
         return scvfIndicesOfScv_[scvIdx];
     }
@@ -318,12 +320,12 @@ public:
     { return connectivityMap_; }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
-    bool hasBoundaryScvf(IndexType eIdx) const
+    bool hasBoundaryScvf(GridIndexType eIdx) const
     { return hasBoundaryScvf_[eIdx]; }
 
 private:
     // find the scvf that has insideScvIdx in its outsideScvIdx list and outsideScvIdx as its insideScvIdx
-    IndexType findFlippedScvfIndex_(IndexType insideScvIdx, IndexType outsideScvIdx)
+    ScvfIndexType findFlippedScvfIndex_(ScvIndexType insideScvIdx, ScvIndexType outsideScvIdx)
     {
         // go over all potential scvfs of the outside scv
         for (auto outsideScvfIndex : scvfIndicesOfScv_[outsideScvIdx])
@@ -343,12 +345,12 @@ private:
     //! containers storing the global data
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
-    std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
-    IndexType numBoundaryScvf_;
+    std::vector<std::vector<ScvfIndexType>> scvfIndicesOfScv_;
+    std::size_t numBoundaryScvf_;
     std::vector<bool> hasBoundaryScvf_;
 
     //! needed for embedded surface and network grids (dim < dimWorld)
-    std::vector<std::vector<IndexType>> flipScvfIndices_;
+    std::vector<std::vector<ScvfIndexType>> flipScvfIndices_;
 };
 
 /*!
@@ -366,7 +368,9 @@ class CCTpfaFVGridGeometry<GV, false, Traits>
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
 
-    using IndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename GV::IndexSet::IndexType;
+    using ScvfIndexType = typename Traits::SubControlVolumeFace::Traits::GridIndexType;
+    using ScvIndexType = typename Traits::SubControlVolume::Traits::GridIndexType;
     using Element = typename GV::template Codim<0>::Entity;
 
     static const int dim = GV::dimension;
@@ -375,7 +379,7 @@ class CCTpfaFVGridGeometry<GV, false, Traits>
     using ScvfGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::GridIndexStorage;
     using NeighborVolVarIndices = typename std::conditional_t< (dim<dimWorld),
                                                                ScvfGridIndexStorage,
-                                                               Dune::ReservedVector<IndexType, 1> >;
+                                                               Dune::ReservedVector<GridIndexType, 1> >;
 
 public:
     //! export the type of the fv element geometry (the local view type)
@@ -456,7 +460,7 @@ public:
 
             // the element-wise index sets for finite volume geometry
             auto numLocalFaces = element.subEntities(1);
-            std::vector<IndexType> scvfsIndexSet;
+            std::vector<ScvfIndexType> scvfsIndexSet;
             std::vector<NeighborVolVarIndices> neighborVolVarIndexSet;
             scvfsIndexSet.reserve(numLocalFaces);
             neighborVolVarIndexSet.reserve(numLocalFaces);
@@ -525,11 +529,11 @@ public:
         connectivityMap_.update(*this);
     }
 
-    const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
+    const std::vector<ScvfIndexType>& scvfIndicesOfScv(ScvIndexType scvIdx) const
     { return scvfIndicesOfScv_[scvIdx]; }
 
     //! Return the neighbor volVar indices for all scvfs in the scv with index scvIdx
-    const std::vector<NeighborVolVarIndices>& neighborVolVarIndices(IndexType scvIdx) const
+    const std::vector<NeighborVolVarIndices>& neighborVolVarIndices(ScvIndexType scvIdx) const
     { return neighborVolVarIndices_[scvIdx]; }
 
     /*!
@@ -542,15 +546,15 @@ public:
 private:
 
     //! Information on the global number of geometries
-    IndexType numScvs_;
-    IndexType numScvf_;
-    IndexType numBoundaryScvf_;
+    std::size_t numScvs_;
+    std::size_t numScvf_;
+    std::size_t numBoundaryScvf_;
 
     //! connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
 
     //! vectors that store the global data
-    std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
+    std::vector<std::vector<ScvfIndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<NeighborVolVarIndices>> neighborVolVarIndices_;
 };
 
