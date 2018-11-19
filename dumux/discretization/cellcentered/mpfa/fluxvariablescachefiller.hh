@@ -443,7 +443,6 @@ private:
             localAssembler.assembleMatrices(handle.advectionHandle(), iv, LambdaFactory::getAdvectionLambda());
 
         // assemble pressure vectors
-        const auto& evv = &elemVolVars();
         for (unsigned int pIdx = 0; pIdx < ModelTraits::numPhases(); ++pIdx)
         {
             // set context in handle
@@ -456,7 +455,7 @@ private:
                 localAssembler.assembleGravity(handle.advectionHandle(), iv, getRho);
 
             // reassemble pressure vector
-            auto getPressure = [&evv, pIdx] (auto volVarIdx) { return (evv->operator[](volVarIdx)).pressure(pIdx); };
+            auto getPressure = [pIdx] (const auto& volVars) { return volVars.pressure(pIdx); };
             localAssembler.assembleU(handle.advectionHandle(), iv, getPressure);
         }
     }
@@ -485,9 +484,7 @@ private:
                                             LambdaFactory::getDiffusionLambda(phaseIdx, compIdx));
 
         // assemble vector of mole fractions
-        const auto& evv = &elemVolVars();
-        auto getMoleFraction = [&evv, phaseIdx, compIdx] (auto volVarIdx)
-                               { return (evv->operator[](volVarIdx)).moleFraction(phaseIdx, compIdx); };
+        auto getMoleFraction = [phaseIdx, compIdx] (const auto& volVars) { return volVars.moleFraction(phaseIdx, compIdx); };
         localAssembler.assembleU(handle.diffusionHandle(), iv, getMoleFraction);
     }
 
@@ -513,8 +510,7 @@ private:
                                             LambdaFactory::template getHeatConductionLambda<ThermCondModel>());
 
         // assemble vector of temperatures
-        const auto& evv = &elemVolVars();
-        auto getMoleFraction = [&evv] (auto volVarIdx) { return (evv->operator[](volVarIdx)).temperature(); };
+        auto getMoleFraction = [] (const auto& volVars) { return volVars.temperature(); };
         localAssembler.assembleU(handle.heatConductionHandle(), iv, getMoleFraction);
     }
 

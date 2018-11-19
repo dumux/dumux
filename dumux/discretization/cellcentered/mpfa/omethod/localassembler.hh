@@ -147,7 +147,7 @@ public:
      *
      * \param handle The data handle in which the vector is stored
      * \param iv The mpfa-o interaction volume
-     * \param getU Lambda to obtain the desired cell/Dirichlet value from grid index
+     * \param getU Lambda to obtain the desired cell/Dirichlet value from vol vars
      */
     template< class DataHandle, class IV, class GetU >
     void assembleU(DataHandle& handle, const IV& iv, const GetU& getU)
@@ -158,9 +158,9 @@ public:
         // put the cell unknowns first, then Dirichlet values
         typename IV::Traits::IndexSet::LocalIndexType i = 0;
         for (; i < iv.numScvs(); i++)
-            u[i] = getU( iv.localScv(i).gridScvIndex() );
+            u[i] = getU( this->elemVolVars()[iv.localScv(i).gridScvIndex()] );
         for (const auto& data : iv.dirichletData())
-            u[i++] = getU( data.volVarIndex() );
+            u[i++] = getU( this->elemVolVars()[data.volVarIndex()] );
     }
 
     /*!
