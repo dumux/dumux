@@ -380,8 +380,8 @@ int main(int argc, char** argv) try
     using LowDimGridVariables = GetPropType<LowDimTracerTypeTag, Properties::GridVariables>;
     auto bulkGridVariables = std::make_shared<BulkGridVariables>(bulkProblem, bulkFvGridGeometry);
     auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
-    bulkGridVariables->init(x[bulkId]);
-    lowDimGridVariables->init(x[lowDimId]);
+    bulkGridVariables->init(x[bulkId], x[bulkId]);
+    lowDimGridVariables->init(x[lowDimId], x[lowDimId]);
 
     // intialize the vtk output modules
     const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethod::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
