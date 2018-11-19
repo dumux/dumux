@@ -147,7 +147,7 @@ class EnrichedVertexDofMapper
     static constexpr int dim = GV::dimension;
     static_assert(dim > 1, "Vertex dof enrichment mapper currently only works for dim > 1!");
 
-    using IT = typename GV::IndexSet::IndexType;
+    using GIType = typename GV::IndexSet::IndexType;
     using Vertex = typename GV::template Codim<dim>::Entity;
     using Element = typename GV::template Codim<0>::Entity;
     using MCMGMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GV>;
@@ -156,7 +156,7 @@ public:
     //! export the underlying grid view type
     using GridView = GV;
     //! export the grid index type
-    using IndexType = IT;
+    using GridIndexType = GIType;
 
     //! the constructor
     EnrichedVertexDofMapper(const GV& gridView)
@@ -176,21 +176,21 @@ public:
     }
 
     //! map nodal subentity of codim 0 entity to the grid dof
-    IndexType subIndex(const Element& e, unsigned int i, unsigned int codim) const
+    GridIndexType subIndex(const Element& e, unsigned int i, unsigned int codim) const
     {
         assert(codim == dim && "Only element corners can be mapped by this mapper");
         return indexMap_[elementMapper_.index(e)][i];
     }
 
     //! map nodal subentity of codim 0 entity to the grid vertex index
-    IndexType vertexIndex(const Element& e, unsigned int i, unsigned int codim) const
+    GridIndexType vertexIndex(const Element& e, unsigned int i, unsigned int codim) const
     {
         assert(codim == dim && "Only element corners can be mapped by this mapper");
         return vertexMapper_.subIndex(e, i, codim);
     }
 
     //! map nodal entity to the grid vertex index
-    IndexType vertexIndex(const Vertex& v) const
+    GridIndexType vertexIndex(const Vertex& v) const
     {
         assert(Vertex::Geometry::mydimension == 0 && "Only vertices can be mapped by this mapper");
         return vertexMapper_.index(v);
@@ -201,7 +201,7 @@ public:
     //!       We therefore ask this in every call. This means quite some overhead, but
     //!       this mapper is not designed optimally for the case of no enriched nodes.
     template< class EntityType >
-    IndexType index(const EntityType& e) const
+    GridIndexType index(const EntityType& e) const
     {
         if (hasEnrichedVertices_)
             DUNE_THROW(Dune::InvalidStateException, "Index map contains enriched vertex dofs. Direct mapping from vertex to index not possible.");

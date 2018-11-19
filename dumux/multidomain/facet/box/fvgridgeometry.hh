@@ -95,7 +95,7 @@ class BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>
 {
     using ThisType = BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
-    using IndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename GV::IndexSet::IndexType;
 
     using Element = typename GV::template Codim<0>::Entity;
     using CoordScalar = typename GV::ctype;
@@ -290,11 +290,11 @@ public:
     { return feCache_; }
 
     //! Get the local scvs for an element
-    const std::vector<SubControlVolume>& scvs(IndexType eIdx) const
+    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
     { return scvs_[eIdx]; }
 
     //! Get the local scvfs for an element
-    const std::vector<SubControlVolumeFace>& scvfs(IndexType eIdx) const
+    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
     { return scvfs_[eIdx]; }
 
     //! If a d.o.f. is on the boundary
@@ -346,7 +346,7 @@ class BoxFacetCouplingFVGridGeometry<Scalar, GV, false, Traits>
 {
     using ThisType = BoxFacetCouplingFVGridGeometry<Scalar, GV, false, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
-    using IndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename GV::IndexSet::IndexType;
 
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
@@ -456,7 +456,7 @@ public:
                 for (int i = 0; i < numFaceCorners; ++i)
                     vIndicesLocal[i] = static_cast<LocalIndexType>(referenceElement.subEntity(idxInInside, 1, i, dim));
 
-                std::vector<IndexType> gridVertexIndices(numFaceCorners);
+                std::vector<GridIndexType> gridVertexIndices(numFaceCorners);
                 for (int i = 0; i < numFaceCorners; ++i)
                     gridVertexIndices[i] = this->vertexMapper().vertexIndex(element, vIndicesLocal[i], dim);
 

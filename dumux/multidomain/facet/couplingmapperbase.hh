@@ -210,10 +210,10 @@ protected:
                       const FVGridGeometry& fvGridGeometry)
     {
         static constexpr int dim = FVGridGeometry::GridView::dimension;
-        using IndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
+        using GridIndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
 
         const auto numCorners = element.subEntities(dim);
-        std::vector< IndexType > nodalDofs(numCorners);
+        std::vector< GridIndexType > nodalDofs(numCorners);
         for (unsigned int i = 0; i < numCorners; ++i)
             nodalDofs[i] = fvGridGeometry.vertexMapper().subIndex(element, i, dim);
 
@@ -235,9 +235,9 @@ private:
     std::vector< typename FVGridGeometry::GridView::IndexSet::IndexType >
     makeInsertionToGridIndexMap_(std::shared_ptr<const Embeddings> embeddings, const FVGridGeometry& fvGridGeometry) const
     {
-        using IndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
+        using GridIndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
 
-        std::vector< IndexType > map(fvGridGeometry.gridView().size(0));
+        std::vector< GridIndexType > map(fvGridGeometry.gridView().size(0));
         for (const auto& e : elements(fvGridGeometry.gridView()))
             map[ embeddings->template insertionIndex<bulkId>(e) ] = fvGridGeometry.elementMapper().index(e);
 

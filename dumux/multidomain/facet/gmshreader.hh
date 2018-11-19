@@ -61,7 +61,7 @@ class FacetCouplingGmshReader
     static constexpr int bulkDim = BulkGrid::dimension;
     static constexpr int bulkDimWorld = BulkGrid::dimensionworld;
     using ctype = typename BulkGrid::ctype;
-    using IndexType = typename BulkGrid::LeafGridView::IndexSet::IndexType;
+    using GridIndexType = typename BulkGrid::LeafGridView::IndexSet::IndexType;
     using GlobalPosition = Dune::FieldVector<ctype, bulkDimWorld>;
 
     // determine minimum dimension for which a grid is created
@@ -69,7 +69,7 @@ class FacetCouplingGmshReader
     static_assert(minGridDim >= 1, "Grids with dim < 1 cannot be read!");
 
     // structure to store data on an element
-    using VertexIndexSet = std::vector<IndexType>;
+    using VertexIndexSet = std::vector<GridIndexType>;
     struct ElementData
     {
         Dune::GeometryType gt;
@@ -143,10 +143,10 @@ public:
         // indices to lowDim vertex indices. -1 indicates non-initialized status
         std::size_t elemCount = 0;
         std::array<std::size_t, numGrids-1> lowDimVertexCount;
-        std::array<std::vector<IndexType>, numGrids-1> lowDimVertexMap;
+        std::array<std::vector<GridIndexType>, numGrids-1> lowDimVertexMap;
         std::array<std::vector<bool>, numGrids-1> idxIsAssigned;
         std::fill(lowDimVertexCount.begin(), lowDimVertexCount.end(), 0);
-        std::fill(lowDimVertexMap.begin(), lowDimVertexMap.end(), std::vector<IndexType>(vertexCount));
+        std::fill(lowDimVertexMap.begin(), lowDimVertexMap.end(), std::vector<GridIndexType>(vertexCount));
         std::fill(idxIsAssigned.begin(), idxIsAssigned.end(), std::vector<bool>(vertexCount, false));
         std::getline(gridFile, line);
         while (line.find("$EndElements") == std::string::npos)
@@ -314,14 +314,14 @@ public:
     }
 
     //! Returns the maps of the embedded entities
-    std::unordered_map< IndexType, std::vector<IndexType> >& embeddedEntityMap(std::size_t id)
+    std::unordered_map< GridIndexType, std::vector<GridIndexType> >& embeddedEntityMap(std::size_t id)
     {
         assert(id < numGrids && "Index exceeds number of grids provided");
         return embeddedEntityMaps_[id];
     }
 
     //! Returns the maps of the embedments
-    std::unordered_map< IndexType, std::vector<IndexType> >& adjoinedEntityMap(std::size_t id)
+    std::unordered_map< GridIndexType, std::vector<GridIndexType> >& adjoinedEntityMap(std::size_t id)
     {
         assert(id < numGrids && "Index exceeds number of grids provided");
         return adjoinedEntityMaps_[id];
@@ -374,7 +374,7 @@ private:
     void addEmbeddings(const VertexIndexSet& corners,
                        unsigned int gridIdx,
                        std::size_t curElemIdx,
-                       const std::vector<IndexType>& lowDimVIndices,
+                       const std::vector<GridIndexType>& lowDimVIndices,
                        const std::vector<bool>& idxIsAssigned)
     {
         const unsigned int embeddedGridIdx = gridIdx+1;
@@ -413,8 +413,8 @@ private:
     std::array<std::vector<VertexIndexSet>, numGrids> boundarySegments_;
 
     //! data on connectivity between the grids
-    std::array< std::unordered_map< IndexType, std::vector<IndexType> >, numGrids > embeddedEntityMaps_;
-    std::array< std::unordered_map< IndexType, std::vector<IndexType> >, numGrids > adjoinedEntityMaps_;
+    std::array< std::unordered_map< GridIndexType, std::vector<GridIndexType> >, numGrids > embeddedEntityMaps_;
+    std::array< std::unordered_map< GridIndexType, std::vector<GridIndexType> >, numGrids > adjoinedEntityMaps_;
 
     //! data on domain and boundary markers
     std::array< std::vector<int>, numGrids > elementMarkerMaps_;

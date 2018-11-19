@@ -63,11 +63,11 @@ class VertexEnrichmentHelper
     using Intersection = typename GridView::Intersection;
     using ReferenceElements = typename Dune::ReferenceElements<typename GridView::ctype, dim>;
     using MCMGMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using ElementPath = std::vector< IndexType >;
+    using ElementPath = std::vector< GridIndexType >;
     using NodalElementPaths = std::vector< std::vector<ElementPath> >;
 
 public:
@@ -116,7 +116,7 @@ public:
 
                 // first, get indices of all vertices of this intersection
                 const auto numCorners = is.geometry().corners();
-                std::vector<IndexType> faceVertexIndices(numCorners);
+                std::vector<GridIndexType> faceVertexIndices(numCorners);
                 for (int i = 0; i < numCorners; ++i)
                     faceVertexIndices[i] = vertexMapper.subIndex( e,
                                                                   refElement.subEntity(is.indexInInside(), 1, i, dim),
@@ -226,7 +226,7 @@ private:
                                     const Element& element,
                                     const ReferenceElement& refElement,
                                     const Intersection& prevIntersection,
-                                    IndexType vIdxGlobal)
+                                    GridIndexType vIdxGlobal)
     {
         // on 2d/3d grids, we need to find 1/2 more intersections at vertex
         static constexpr int numIsToFind = dim == 3 ? 2 : 1;
@@ -241,7 +241,7 @@ private:
 
             // determine all vertex indices of this face
             const auto numCorners = is.geometry().corners();
-            std::vector<IndexType> faceVertexIndices(numCorners);
+            std::vector<GridIndexType> faceVertexIndices(numCorners);
             for (int i = 0; i < numCorners; ++i)
                 faceVertexIndices[i] = vertexMapper.subIndex( element,
                                                               refElement.subEntity(is.indexInInside(), 1, i, dim),

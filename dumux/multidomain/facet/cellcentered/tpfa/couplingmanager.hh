@@ -73,7 +73,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::SubControlVolumeFace;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
-    template<std::size_t id> using IndexType = typename GridView<id>::IndexSet::IndexType;
+    template<std::size_t id> using GridIndexType = typename GridView<id>::IndexSet::IndexType;
 
     template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using GridVolumeVariables = typename GridVariables<id>::GridVolumeVariables;
@@ -105,7 +105,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     struct BulkCouplingContext
     {
         bool isSet;
-        IndexType< bulkId > elementIdx;
+        GridIndexType< bulkId > elementIdx;
         std::vector< FVElementGeometry<lowDimId> > lowDimFvGeometries;
         std::vector< VolumeVariables<lowDimId> > lowDimVolVars;
 
@@ -131,7 +131,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     struct LowDimCouplingContext
     {
         bool isSet;
-        IndexType< lowDimId > elementIdx;
+        GridIndexType< lowDimId > elementIdx;
         std::unique_ptr< FVElementGeometry<bulkId> > bulkFvGeometry;
         std::unique_ptr< ElementVolumeVariables<bulkId> > bulkElemVolVars;
         std::unique_ptr< ElementFluxVariablesCache<bulkId> > bulkElemFluxVarsCache;
@@ -309,7 +309,7 @@ public:
     evalCouplingResidual(BulkIdType,
                          const BulkLocalAssembler& bulkLocalAssembler,
                          LowDimIdType,
-                         IndexType<lowDimId> dofIdxGlobalJ)
+                         GridIndexType<lowDimId> dofIdxGlobalJ)
     {
         const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
 
@@ -340,7 +340,7 @@ public:
     evalCouplingResidual(LowDimIdType,
                          const LowDimLocalAssembler& lowDimLocalAssembler,
                          BulkIdType,
-                         IndexType<bulkId> dofIdxGlobalJ)
+                         GridIndexType<bulkId> dofIdxGlobalJ)
     {
         // make sure this is called for the element for which the context was set
         assert(lowDimContext_.isSet);
@@ -513,7 +513,7 @@ public:
     void updateCouplingContext(BulkIdType domainI,
                                const BulkLocalAssembler& bulkLocalAssembler,
                                LowDimIdType domainJ,
-                               IndexType<lowDimId> dofIdxGlobalJ,
+                               GridIndexType<lowDimId> dofIdxGlobalJ,
                                const PrimaryVariables<lowDimId>& priVarsJ,
                                unsigned int pvIdxJ)
     {
@@ -593,7 +593,7 @@ public:
     void updateCouplingContext(BulkIdType domainI,
                                const BulkLocalAssembler& bulkLocalAssembler,
                                BulkIdType domainJ,
-                               IndexType<bulkId> dofIdxGlobalJ,
+                               GridIndexType<bulkId> dofIdxGlobalJ,
                                const PrimaryVariables<bulkId>& priVarsJ,
                                unsigned int pvIdxJ)
     {
@@ -610,7 +610,7 @@ public:
     void updateCouplingContext(LowDimIdType domainI,
                                const LowDimLocalAssembler& lowDimLocalAssembler,
                                BulkIdType domainJ,
-                               IndexType<bulkId> dofIdxGlobalJ,
+                               GridIndexType<bulkId> dofIdxGlobalJ,
                                const PrimaryVariables<bulkId>& priVarsJ,
                                unsigned int pvIdxJ)
     {
@@ -657,7 +657,7 @@ public:
     void updateCouplingContext(LowDimIdType domainI,
                                const LowDimLocalAssembler& lowDimLocalAssembler,
                                LowDimIdType domainJ,
-                               IndexType<lowDimId> dofIdxGlobalJ,
+                               GridIndexType<lowDimId> dofIdxGlobalJ,
                                const PrimaryVariables<lowDimId>& priVarsJ,
                                unsigned int pvIdxJ)
     {
