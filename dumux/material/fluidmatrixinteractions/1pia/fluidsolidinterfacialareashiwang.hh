@@ -24,11 +24,8 @@
 #ifndef FLUIDSOLID_INTERFACIALAREA_SHI_WANG_HH
 #define FLUIDSOLID_INTERFACIALAREA_SHI_WANG_HH
 
-#include <algorithm>
+namespace Dumux {
 
-
-namespace Dumux
-{
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Description of a interfacial area between solid and fluid phase
@@ -47,5 +44,7 @@ public:
                                             const Scalar characteristicLength)
     { return 6.0*(1.0-porosity)/characteristicLength; }
 };
-}
+
+} // end namespace Dumux
+
 #endif
