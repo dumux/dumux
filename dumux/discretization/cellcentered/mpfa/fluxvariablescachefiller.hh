@@ -447,20 +447,7 @@ private:
 
         // maybe (re-)assemble gravity vector
         if (enableGravity)
-        {
-            if (dim == dimWorld)
-                localAssembler.assembleGravity( handle.advectionHandle().gravity(),
-                                                iv,
-                                                handle.advectionHandle().CA(),
-                                                LambdaFactory::getAdvectionLambda() );
-            else
-                localAssembler.assembleGravity( handle.advectionHandle().gravity(),
-                                                handle.advectionHandle().gravityOutside(),
-                                                iv,
-                                                handle.advectionHandle().CA(),
-                                                handle.advectionHandle().A(),
-                                                LambdaFactory::getAdvectionLambda() );
-        }
+            localAssembler.assembleGravity(handle.advectionHandle(), iv);
 
         // assemble pressure vectors
         for (unsigned int pIdx = 0; pIdx < ModelTraits::numPhases(); ++pIdx)

@@ -164,159 +164,14 @@ public:
     }
 
     /*!
-     * \brief Assemble the gravitational flux contributions on the scvfs within
-     *        an mpfa-o interaction volume.
-     *
-     * \note  For each face, the gravity term in the form of \f$\rho \mathbf{n K g}\f$ is
-     *        evaluated. Thus, make sure to only call this with a lambda that returns the
-     *        hydraulic conductivity.
-     *
-     * \tparam GC The type of container used to store the
-     *            gravitational acceleration per scvf & phase
-     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
-     *                    which the local system is to be solved
-     *
-     * \param g Container to assemble gravity per scvf & phase
-     * \param iv The mpfa-o interaction volume
-     * \param CA Projection matrix transforming the gravity terms in the local system of
-     *        equations to the entire set of faces within the interaction volume
-     * \param getT Lambda to evaluate scv-wise hydraulic conductivities
-     */
-    template< class GC, class IV, class TensorFunc >
-    void assembleGravity(GC& g,
-                         const IV& iv,
-                         const typename IV::Traits::MatVecTraits::CMatrix& CA,
-                         const TensorFunc& getT)
-    {
-        //! We require the gravity container to be a two-dimensional vector/array type, structured as follows:
-        //! - first index adresses the respective phases
-        //! - second index adresses the face within the interaction volume
-
-        // resize the g vector
-        std::for_each(g.begin(), g.end(), [&iv] (auto& v) { resizeVector(v, iv.numFaces()); });
-
-        // make sure CA matrix has the correct size already
-        assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns());
-
-        //! For each face, we...
-        //! - arithmetically average the phase densities
-        //! - compute the term \f$ \alpha := A \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
-        //! - compute \f$ \alpha^* = \alpha_{outside} - \alpha_{inside} \f$
-        using Scalar = typename IV::Traits::MatVecTraits::TMatrix::value_type;
-        using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
-        using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
-
-        // reset gravity containers to zero
-        const auto numPhases = g.size();
-        std::vector< FaceVector > sum_alphas(numPhases);
-        for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-        {
-            resizeVector(sum_alphas[pIdx], iv.numUnknowns());
-            sum_alphas[pIdx] = 0.0;
-            g[pIdx] = 0.0;
-        }
-
-        for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
-        {
-            // gravitational acceleration on this face
-            const auto& curLocalScvf = iv.localScvf(faceIdx);
-            const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.gridScvfIndex());
-            const auto gravity = this->problem().gravityAtPos(curGlobalScvf.ipGlobal());
-
-            // get permeability tensor in "positive" sub volume
-            const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
-            const auto& posLocalScv = iv.localScv(neighborScvIndices[0]);
-            const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.gridScvIndex());
-            const auto& posVolVars = this->elemVolVars()[posGlobalScv];
-            const auto& posElement = iv.element(neighborScvIndices[0]);
-            const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
-
-            // On surface grids one should use the function specialization below
-            assert(neighborScvIndices.size() <= 2);
-
-            std::vector< Scalar > rho(numPhases);
-            const auto alpha_inside = posVolVars.extrusionFactor()*vtmv(curGlobalScvf.unitOuterNormal(), tensor, gravity);
-            if (!curLocalScvf.isDirichlet())
-            {
-                for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                    rho[pIdx] = posVolVars.density(pIdx);
-
-                if (!curGlobalScvf.boundary())
-                {
-                    // obtain outside tensor
-                    const auto& negLocalScv = iv.localScv( neighborScvIndices[1] );
-                    const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.gridScvIndex());
-                    const auto& negVolVars = this->elemVolVars()[negGlobalScv];
-                    const auto& negElement = iv.element( neighborScvIndices[1] );
-                    const auto negTensor = getT(this->problem(), negElement, negVolVars, this->fvGeometry(), negGlobalScv);
-
-                    const auto sum_alpha = negVolVars.extrusionFactor()
-                                           * vtmv(curGlobalScvf.unitOuterNormal(), negTensor, gravity)
-                                           - alpha_inside;
-
-                    const auto localDofIdx = curLocalScvf.localDofIndex();
-                    for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                    {
-                        rho[pIdx] = 0.5*( rho[pIdx] + negVolVars.density(pIdx) );
-                        sum_alphas[pIdx][localDofIdx] = sum_alpha*rho[pIdx]*curGlobalScvf.area();
-                    }
-                }
-                else
-                {
-                    const auto localDofIdx = curLocalScvf.localDofIndex();
-                    for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                        sum_alphas[pIdx][localDofIdx] -= alpha_inside*rho[pIdx]*curGlobalScvf.area();
-                }
-            }
-            // use Dirichlet BC densities
-            else
-            {
-                const auto& dirichletVolVars = this->elemVolVars()[curGlobalScvf.outsideScvIdx()];
-                for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                    rho[pIdx] = dirichletVolVars.density(pIdx);
-            }
-
-            // add "inside" alpha to gravity container
-            for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                g[pIdx][faceIdx] += alpha_inside*rho[pIdx]*curGlobalScvf.area();
-        }
-
-        // g += CA*sum_alphas
-        for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-            CA.umv(sum_alphas[pIdx], g[pIdx]);
-    }
-
-    /*!
      * \brief Assembles the gravitational flux contributions on the scvfs within an mpfa-o
-     *        interaction volume. This specialization is to be used on surface grids, where the
-     *        gravitational flux contributions on "outside" faces are stored in a separate container.
+     *        interaction volume.
      *
-     * \note  For each face, the gravity term in the form of \f$\rho \mathbf{n K g}\f$ is
-     *        evaluated. Thus, make sure to only call this with a lambda that returns the
-     *        hydraulic conductivity.
-     *
-     * \tparam GC The type of container used to store the
-     *            gravitational acceleration per scvf & phase
-     * \tparam GOut Type of container used to store gravity on "outside" faces
-     * \tparam IV The interaction volume type implementation
-     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
-     *                    which the local system is to be solved
-     *
-     * \param g Container to store gravity per scvf & phase
-     * \param outsideG Container to store gravity per "outside" scvf & phase
+     * \param handle The data handle in which the vector is stored
      * \param iv The mpfa-o interaction volume
-     * \param CA Projection matrix transforming the gravity terms in the local system of
-     *        equations to the entire set of faces within the interaction volume
-     * \param A Matrix needed for the "reconstruction" of face unknowns as a function of gravity
-     * \param getT Lambda to evaluate scv-wise hydraulic conductivities
      */
-    template< class GC, class GOut, class IV, class TensorFunc >
-    void assembleGravity(GC& g,
-                         GOut& outsideG,
-                         const IV& iv,
-                         const typename IV::Traits::MatVecTraits::CMatrix& CA,
-                         const typename IV::Traits::MatVecTraits::AMatrix& A,
-                         const TensorFunc& getT)
+    template< class DataHandle, class IV >
+    void assembleGravity(DataHandle& handle, const IV& iv)
     {
         //! We require the gravity container to be a two-dimensional vector/array type, structured as follows:
         //! - first index adresses the respective phases
@@ -325,11 +180,19 @@ public:
         //! - first index adresses the respective phases
         //! - second index adresses the face within the interaction volume
         //! - third index adresses the i-th "outside" face of the current face
+        using GridView = typename IV::Traits::GridView;
+        static constexpr int dim = GridView::dimension;
+        static constexpr int dimWorld = GridView::dimensionworld;
+        static constexpr bool isSurfaceGrid = dim < dimWorld;
 
-        // resize the g vector
-        auto resizeToNumFaces = [&iv] (auto& v) { resizeVector(v, iv.numFaces()); };
-        std::for_each(g.begin(), g.end(), resizeToNumFaces);
-        std::for_each(outsideG.begin(), outsideG.end(), resizeToNumFaces);
+        // resize the gravity vectors
+        auto& g = handle.gravity();
+        auto& outsideG = handle.gravityOutside();
+        std::for_each(g.begin(), g.end(), [&iv] (auto& v) { resizeVector(v, iv.numFaces()); });
+        if (isSurfaceGrid)
+            std::for_each(outsideG.begin(),
+                          outsideG.end(),
+                          [&iv] (auto& v) { resizeVector(v, iv.numFaces()); });
 
         // we require the CA matrix to have the correct size already
         assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns());
@@ -344,40 +207,37 @@ public:
 
         // reset everything to zero
         const auto numPhases = g.size();
-        std::vector< FaceVector > sum_alphas(numPhases);
-        for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-        {
-            resizeVector(sum_alphas[pIdx], iv.numUnknowns());
-            sum_alphas[pIdx] = 0.0;
-            g[pIdx] = 0.0;
-        }
+        std::vector< std::vector<Scalar> > sum_alphas(numPhases);
+        std::for_each(sum_alphas.begin(), sum_alphas.end(), [&iv] (auto& v) { resizeVector(v, iv.numUnknowns()); });
+        std::for_each(sum_alphas.begin(), sum_alphas.end(), [] (auto& v) { std::fill(v.begin(), v.end(), 0.0); });
+        std::for_each(g.begin(), g.end(), [] (auto& v) { v = 0.0; });
 
         for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
         {
             // gravitational acceleration on this face
             const auto& curLocalScvf = iv.localScvf(faceIdx);
             const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.gridScvfIndex());
-            const auto gravity = this->problem().gravityAtPos(curGlobalScvf.ipGlobal());
+            const auto& gravity = this->problem().gravityAtPos(curGlobalScvf.ipGlobal());
 
             // get permeability tensor in "positive" sub volume
             const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
-            const auto& posLocalScv = iv.localScv(neighborScvIndices[0]);
-            const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.gridScvIndex());
+            const auto& posGlobalScv = this->fvGeometry().scv(iv.localScv(neighborScvIndices[0]).gridScvIndex());
             const auto& posVolVars = this->elemVolVars()[posGlobalScv];
-            const auto& posElement = iv.element(neighborScvIndices[0]);
-            const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
+            const auto alpha_inside = posVolVars.extrusionFactor()*vtmv(curGlobalScvf.unitOuterNormal(),
+                                                                        posVolVars.permeability(),
+                                                                        gravity);
 
-            const auto alpha_inside = posVolVars.extrusionFactor()*vtmv(curGlobalScvf.unitOuterNormal(), tensor, gravity);
             const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
             std::vector< Scalar > alpha_outside(numOutsideFaces);
             std::vector< Scalar > rho(numPhases);
 
-            // resize & reset entries in outside gravity vector
-            for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-            {
-                outsideG[pIdx][faceIdx].resize(numOutsideFaces);
-                outsideG[pIdx][faceIdx] = 0.0;
-            }
+            if (isSurfaceGrid)
+                for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
+                {
+                    resizeVector(outsideG[pIdx][faceIdx], numOutsideFaces);
+                    outsideG[pIdx][faceIdx] = 0.0;
+                }
+
 
             if (!curLocalScvf.isDirichlet())
             {
@@ -391,19 +251,22 @@ public:
                     for (unsigned int idxInOutside = 0; idxInOutside < curGlobalScvf.numOutsideScvs(); ++idxInOutside)
                     {
                         // obtain outside tensor
-                        const auto& negLocalScv = iv.localScv( neighborScvIndices[idxInOutside] );
-                        const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.gridScvIndex());
+                        const auto negLocalScvIdx = neighborScvIndices[idxInOutside+1];
+                        const auto& negGlobalScv = this->fvGeometry().scv(iv.localScv(negLocalScvIdx).gridScvIndex());
                         const auto& negVolVars = this->elemVolVars()[negGlobalScv];
-                        const auto& negElement = iv.element( neighborScvIndices[idxInOutside] );
-                        const auto negTensor = getT(this->problem(), negElement, negVolVars, this->fvGeometry(), negGlobalScv);
+                        const auto& flipScvf = !isSurfaceGrid ? curGlobalScvf
+                                                              : this->fvGeometry().flipScvf(curGlobalScvf.index(), idxInOutside);
 
-                        const auto& flipScvf = this->fvGeometry().flipScvf(curGlobalScvf.index(), idxInOutside);
-                        alpha_outside[idxInOutside] = negVolVars.extrusionFactor()*vtmv(flipScvf.unitOuterNormal(), negTensor, gravity);
+                        alpha_outside[idxInOutside] = negVolVars.extrusionFactor()*vtmv(flipScvf.unitOuterNormal(),
+                                                                                        negVolVars.permeability(),
+                                                                                        gravity);
+                        if (isSurfaceGrid)
+                            alpha_outside[idxInOutside] *= -1.0;
 
                         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
                         {
                             rho[pIdx] += negVolVars.density(pIdx);
-                            sum_alphas[pIdx][localDofIdx] -= alpha_outside[idxInOutside];
+                            sum_alphas[pIdx][localDofIdx] += alpha_outside[idxInOutside];
                         }
                     }
                 }
@@ -427,9 +290,13 @@ public:
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
             {
                 g[pIdx][faceIdx] += alpha_inside*rho[pIdx]*curGlobalScvf.area();
-                unsigned int i = 0;
-                for (const auto& alpha : alpha_outside)
-                    outsideG[pIdx][faceIdx][i++] -= alpha*rho[pIdx]*curGlobalScvf.area();
+
+                if (isSurfaceGrid)
+                {
+                    unsigned int i = 0;
+                    for (const auto& alpha : alpha_outside)
+                        outsideG[pIdx][faceIdx][i++] += alpha*rho[pIdx]*curGlobalScvf.area();
+                }
             }
         }
 
@@ -437,36 +304,39 @@ public:
         // outsideG = wikj*A^-1*sum_alphas + outsideG
         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
         {
-            CA.umv(sum_alphas[pIdx], g[pIdx]);
+            handle.CA().umv(sum_alphas[pIdx], g[pIdx]);
 
-            FaceVector AG(iv.numUnknowns());
-            A.mv(sum_alphas[pIdx], AG);
-
-            // compute gravitational accelerations
-            for (const auto& localFaceData : iv.localFaceData())
+            if (isSurfaceGrid)
             {
-                // continue only for "outside" faces
-                if (!localFaceData.isOutsideFace())
-                    continue;
+                FaceVector AG(iv.numUnknowns());
+                handle.A().mv(sum_alphas[pIdx], AG);
 
-                const auto localScvIdx = localFaceData.ivLocalInsideScvIndex();
-                const auto localScvfIdx = localFaceData.ivLocalScvfIndex();
-                const auto idxInOutside = localFaceData.scvfLocalOutsideScvfIndex();
-                const auto& posLocalScv = iv.localScv(localScvIdx);
-                const auto& wijk = iv.omegas()[localScvfIdx][idxInOutside+1];
-
-                // make sure the given outside gravity container has the right size
-                assert(outsideG[pIdx][localScvfIdx].size() == iv.localScvf(localScvfIdx).neighboringLocalScvIndices().size()-1);
-
-                // add contributions from all local directions
-                for (LocalIndexType localDir = 0; localDir < IV::Traits::GridView::dimension; localDir++)
+                // compute gravitational accelerations
+                for (const auto& localFaceData : iv.localFaceData())
                 {
-                    // the scvf corresponding to this local direction in the scv
-                    const auto& curLocalScvf = iv.localScvf(posLocalScv.localScvfIndex(localDir));
+                    // continue only for "outside" faces
+                    if (!localFaceData.isOutsideFace())
+                        continue;
 
-                    // on interior faces the coefficients of the AB matrix come into play
-                    if (!curLocalScvf.isDirichlet())
-                        outsideG[pIdx][localScvfIdx][idxInOutside] -= wijk[localDir]*AG[curLocalScvf.localDofIndex()];
+                    const auto localScvIdx = localFaceData.ivLocalInsideScvIndex();
+                    const auto localScvfIdx = localFaceData.ivLocalScvfIndex();
+                    const auto idxInOutside = localFaceData.scvfLocalOutsideScvfIndex();
+                    const auto& posLocalScv = iv.localScv(localScvIdx);
+                    const auto& wijk = iv.omegas()[localScvfIdx][idxInOutside+1];
+
+                    // make sure the given outside gravity container has the right size
+                    assert(outsideG[pIdx][localScvfIdx].size() == iv.localScvf(localScvfIdx).neighboringLocalScvIndices().size()-1);
+
+                    // add contributions from all local directions
+                    for (LocalIndexType localDir = 0; localDir < IV::Traits::GridView::dimension; localDir++)
+                    {
+                        // the scvf corresponding to this local direction in the scv
+                        const auto& curLocalScvf = iv.localScvf(posLocalScv.localScvfIndex(localDir));
+
+                        // on interior faces the coefficients of the AB matrix come into play
+                        if (!curLocalScvf.isDirichlet())
+                            outsideG[pIdx][localScvfIdx][idxInOutside] -= wijk[localDir]*AG[curLocalScvf.localDofIndex()];
+                    }
                 }
             }
         }
