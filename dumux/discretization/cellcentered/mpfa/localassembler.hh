@@ -182,7 +182,6 @@ class InteractionVolumeAssemblerBase
         FaceVector sum_alphas;
         resizeVector_(sum_alphas, iv.numUnknowns());
         sum_alphas = 0.0;
-        std::fill(g.begin(), g.end(), 0.0);
         for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
         {
             // gravitational acceleration on this face
@@ -207,10 +206,7 @@ class InteractionVolumeAssemblerBase
             Scalar rho;
 
             if (isSurfaceGrid)
-            {
                 resizeVector_(outsideG[faceIdx], numOutsideFaces);
-                std::fill(outsideG[faceIdx].begin(), outsideG[faceIdx].end(), 0.0);
-            }
 
             if (!curLocalScvf.isDirichlet())
             {
@@ -249,13 +245,13 @@ class InteractionVolumeAssemblerBase
                 rho = getRho(elemVolVars()[curGlobalScvf.outsideScvIdx()]);
 
             // add "inside" & "outside" alphas to gravity containers
-            g[faceIdx] += alpha_inside*rho*curGlobalScvf.area();
+            g[faceIdx] = alpha_inside*rho*curGlobalScvf.area();
 
             if (isSurfaceGrid)
             {
                 unsigned int i = 0;
                 for (const auto& alpha : alpha_outside)
-                    outsideG[faceIdx][i++] += alpha*rho*curGlobalScvf.area();
+                    outsideG[faceIdx][i++] = alpha*rho*curGlobalScvf.area();
             }
         }
 
