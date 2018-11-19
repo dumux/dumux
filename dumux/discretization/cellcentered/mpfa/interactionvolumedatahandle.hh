@@ -149,6 +149,7 @@ class AdvectionDataHandle
     static constexpr int numPhases = PhysicsTraits::numPhases;
     using Base2 = Detail::VectorDataHandleBase<MatVecTraits, numPhases, 1>;
 
+    using UnknownVector = typename MatVecTraits::AMatrix::row_type;
     using FaceVector = typename MatVecTraits::FaceVector;
     using FaceScalar = typename FaceVector::value_type;
     using OutsideGravityStorage = std::vector< std::vector<FaceScalar> >;
@@ -161,12 +162,17 @@ public:
     const FaceVector& g() const { return g_[Base2::contextIdx1_]; }
     FaceVector& g() { return g_[Base2::contextIdx1_]; }
 
+    //! The deltaG vector for gravity within the iv-local eq-system
+    const UnknownVector& deltaG() const { return deltaG_[Base2::contextIdx1_]; }
+    UnknownVector& deltaG() { return deltaG_[Base2::contextIdx1_]; }
+
     //! The gravitational acceleration for one phase on "outside" faces (used on surface grids)
     const OutsideGravityStorage& gOutside() const { return outsideG_[Base2::contextIdx1_]; }
     OutsideGravityStorage& gOutside() { return outsideG_[Base2::contextIdx1_]; }
 
 private:
-    std::array< FaceVector, numPhases > g_;           //!< The gravitational acceleration at each scvf (only for enabled gravity)
+    std::array< FaceVector, numPhases > g_; //!< The gravitational acceleration at each scvf (only for enabled gravity)
+    std::array< UnknownVector, numPhases > deltaG_; //!< The gravity coefficients forming part of iv-local eq-system
     std::array< OutsideGravityStorage, numPhases > outsideG_;  //!< The gravitational acceleration on "outside" faces (only on surface grids)
 };
 

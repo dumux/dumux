@@ -163,8 +163,10 @@ class InteractionVolumeAssemblerBase
 
         // resize the gravity vectors
         auto& g = handle.g();
+        auto& deltaG = handle.deltaG();
         auto& outsideG = handle.gOutside();
         resizeVector_(g, iv.numFaces());
+        resizeVector_(deltaG, iv.numUnknowns());
         if (isSurfaceGrid)
             resizeVector_(outsideG, iv.numFaces());
 
@@ -176,12 +178,8 @@ class InteractionVolumeAssemblerBase
         //! - compute the term \f$ \alpha := \mathbf{A} \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
         //! - compute \f$ \alpha^* = \sum{\alpha_{outside, i}} - \alpha_{inside} \f$
         using Scalar = typename IV::Traits::MatVecTraits::TMatrix::value_type;
-        using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
         using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
 
-        FaceVector sum_alphas;
-        resizeVector_(sum_alphas, iv.numUnknowns());
-        sum_alphas = 0.0;
         for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
         {
             // gravitational acceleration on this face
@@ -210,10 +208,11 @@ class InteractionVolumeAssemblerBase
 
             if (!curLocalScvf.isDirichlet())
             {
-                rho = getRho(posVolVars);
-
-                // arithmetically average density on inside faces
                 const auto localDofIdx = curLocalScvf.localDofIndex();
+
+                rho = getRho(posVolVars);
+                deltaG[localDofIdx] = 0.0;
+
                 if (!curGlobalScvf.boundary())
                 {
                     for (unsigned int idxInOutside = 0; idxInOutside < curGlobalScvf.numOutsideScvs(); ++idxInOutside)
@@ -232,13 +231,13 @@ class InteractionVolumeAssemblerBase
                             alpha_outside[idxInOutside] *= -1.0;
 
                         rho += getRho(negVolVars);
-                        sum_alphas[localDofIdx] += alpha_outside[idxInOutside];
+                        deltaG[localDofIdx] += alpha_outside[idxInOutside];
                     }
                 }
 
                 rho /= numOutsideFaces + 1;
-                sum_alphas[localDofIdx] -= alpha_inside;
-                sum_alphas[localDofIdx] *= rho*curGlobalScvf.area();
+                deltaG[localDofIdx] -= alpha_inside;
+                deltaG[localDofIdx] *= rho*curGlobalScvf.area();
             }
             // use density resulting from Dirichlet BCs
             else
@@ -255,16 +254,14 @@ class InteractionVolumeAssemblerBase
             }
         }
 
-        // g += CA*sum_alphas
-        // outsideG = wikj*A^-1*sum_alphas + outsideG
-        handle.CA().umv(sum_alphas, g);
-
+        // add iv-wide contributions to gravity vectors
+        handle.CA().umv(deltaG, g);
         if (isSurfaceGrid)
         {
             using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
             FaceVector AG;
             resizeVector_(AG, iv.numUnknowns());
-            handle.A().mv(sum_alphas, AG);
+            handle.A().mv(deltaG, AG);
 
             // compute gravitational accelerations
             for (const auto& localFaceData : iv.localFaceData())
@@ -278,9 +275,6 @@ class InteractionVolumeAssemblerBase
                 const auto idxInOutside = localFaceData.scvfLocalOutsideScvfIndex();
                 const auto& posLocalScv = iv.localScv(localScvIdx);
                 const auto& wijk = iv.omegas()[localScvfIdx][idxInOutside+1];
-
-                // make sure the given outside gravity container has the right size
-                assert(outsideG[localScvfIdx].size() == iv.localScvf(localScvfIdx).neighboringLocalScvIndices().size()-1);
 
                 // add contributions from all local directions
                 for (LocalIndexType localDir = 0; localDir < dim; localDir++)
