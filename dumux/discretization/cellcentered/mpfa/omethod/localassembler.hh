@@ -169,30 +169,22 @@ public:
      *
      * \param handle The data handle in which the vector is stored
      * \param iv The mpfa-o interaction volume
+     * \param getRho Lambda to obtain the density from volume variables
      */
-    template< class DataHandle, class IV >
-    void assembleGravity(DataHandle& handle, const IV& iv)
+    template< class DataHandle, class IV, class GetRho >
+    void assembleGravity(DataHandle& handle, const IV& iv, const GetRho& getRho)
     {
-        //! We require the gravity container to be a two-dimensional vector/array type, structured as follows:
-        //! - first index adresses the respective phases
-        //! - second index adresses the face within the interaction volume
-        //! We require the outside gravity container to be a three-dimensional vector/array type, structured as follows:
-        //! - first index adresses the respective phases
-        //! - second index adresses the face within the interaction volume
-        //! - third index adresses the i-th "outside" face of the current face
         using GridView = typename IV::Traits::GridView;
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
         static constexpr bool isSurfaceGrid = dim < dimWorld;
 
         // resize the gravity vectors
-        auto& g = handle.gravity();
-        auto& outsideG = handle.gravityOutside();
-        std::for_each(g.begin(), g.end(), [&iv] (auto& v) { resizeVector(v, iv.numFaces()); });
+        auto& g = handle.g();
+        auto& outsideG = handle.gOutside();
+        resizeVector(g, iv.numFaces());
         if (isSurfaceGrid)
-            std::for_each(outsideG.begin(),
-                          outsideG.end(),
-                          [&iv] (auto& v) { resizeVector(v, iv.numFaces()); });
+            resizeVector(outsideG, iv.numFaces());
 
         // we require the CA matrix to have the correct size already
         assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns());
@@ -202,16 +194,10 @@ public:
         //! - compute the term \f$ \alpha := \mathbf{A} \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
         //! - compute \f$ \alpha^* = \sum{\alpha_{outside, i}} - \alpha_{inside} \f$
         using Scalar = typename IV::Traits::MatVecTraits::TMatrix::value_type;
-        using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
         using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
 
-        // reset everything to zero
-        const auto numPhases = g.size();
-        std::vector< std::vector<Scalar> > sum_alphas(numPhases);
-        std::for_each(sum_alphas.begin(), sum_alphas.end(), [&iv] (auto& v) { resizeVector(v, iv.numUnknowns()); });
-        std::for_each(sum_alphas.begin(), sum_alphas.end(), [] (auto& v) { std::fill(v.begin(), v.end(), 0.0); });
-        std::for_each(g.begin(), g.end(), [] (auto& v) { v = 0.0; });
-
+        std::fill(g.begin(), g.end(), 0.0);
+        std::vector<Scalar> sum_alphas(iv.numUnknowns(), 0.0);
         for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
         {
             // gravitational acceleration on this face
@@ -228,21 +214,19 @@ public:
                                                                         gravity);
 
             const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
+            Scalar rho;
             std::vector< Scalar > alpha_outside(numOutsideFaces);
-            std::vector< Scalar > rho(numPhases);
 
             if (isSurfaceGrid)
-                for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                {
-                    resizeVector(outsideG[pIdx][faceIdx], numOutsideFaces);
-                    outsideG[pIdx][faceIdx] = 0.0;
-                }
+            {
+                resizeVector(outsideG[faceIdx], numOutsideFaces);
+                std::fill(outsideG[faceIdx].begin(), outsideG[faceIdx].end(), 0.0);
+            }
 
 
             if (!curLocalScvf.isDirichlet())
             {
-                for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                    rho[pIdx] = posVolVars.density(pIdx);
+                rho = getRho(posVolVars);
 
                 // arithmetically average density on inside faces
                 const auto localDofIdx = curLocalScvf.localDofIndex();
@@ -263,80 +247,64 @@ public:
                         if (isSurfaceGrid)
                             alpha_outside[idxInOutside] *= -1.0;
 
-                        for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                        {
-                            rho[pIdx] += negVolVars.density(pIdx);
-                            sum_alphas[pIdx][localDofIdx] += alpha_outside[idxInOutside];
-                        }
+                        rho += getRho(negVolVars);
+                        sum_alphas[localDofIdx] += alpha_outside[idxInOutside];
                     }
                 }
 
-                for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                {
-                    rho[pIdx] /= numOutsideFaces + 1;
-                    sum_alphas[pIdx][localDofIdx] -= alpha_inside;
-                    sum_alphas[pIdx][localDofIdx] *= rho[pIdx]*curGlobalScvf.area();
-                }
+                rho /= numOutsideFaces + 1;
+                sum_alphas[localDofIdx] -= alpha_inside;
+                sum_alphas[localDofIdx] *= rho*curGlobalScvf.area();
             }
-            // use Dirichlet BC densities
+            // use density resulting from Dirichlet BCs
             else
-            {
-                const auto& dirichletVolVars = this->elemVolVars()[curGlobalScvf.outsideScvIdx()];
-                for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                    rho[pIdx] = dirichletVolVars.density(pIdx);
-            }
+                rho = getRho(this->elemVolVars()[curGlobalScvf.outsideScvIdx()]);
 
             // add "inside" & "outside" alphas to gravity containers
-            for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-            {
-                g[pIdx][faceIdx] += alpha_inside*rho[pIdx]*curGlobalScvf.area();
+            g[faceIdx] += alpha_inside*rho*curGlobalScvf.area();
 
-                if (isSurfaceGrid)
-                {
-                    unsigned int i = 0;
-                    for (const auto& alpha : alpha_outside)
-                        outsideG[pIdx][faceIdx][i++] += alpha*rho[pIdx]*curGlobalScvf.area();
-                }
+            if (isSurfaceGrid)
+            {
+                unsigned int i = 0;
+                for (const auto& alpha : alpha_outside)
+                    outsideG[faceIdx][i++] += alpha*rho*curGlobalScvf.area();
             }
         }
 
         // g += CA*sum_alphas
         // outsideG = wikj*A^-1*sum_alphas + outsideG
-        for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
+        handle.CA().umv(sum_alphas, g);
+
+        if (isSurfaceGrid)
         {
-            handle.CA().umv(sum_alphas[pIdx], g[pIdx]);
+            using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
+            FaceVector AG;
+            resizeVector(AG, iv.numUnknowns());
+            handle.A().mv(sum_alphas, AG);
 
-            if (isSurfaceGrid)
+            // compute gravitational accelerations
+            for (const auto& localFaceData : iv.localFaceData())
             {
-                FaceVector AG(iv.numUnknowns());
-                handle.A().mv(sum_alphas[pIdx], AG);
+                // continue only for "outside" faces
+                if (!localFaceData.isOutsideFace())
+                    continue;
 
-                // compute gravitational accelerations
-                for (const auto& localFaceData : iv.localFaceData())
+                const auto localScvIdx = localFaceData.ivLocalInsideScvIndex();
+                const auto localScvfIdx = localFaceData.ivLocalScvfIndex();
+                const auto idxInOutside = localFaceData.scvfLocalOutsideScvfIndex();
+                const auto& posLocalScv = iv.localScv(localScvIdx);
+                const auto& wijk = iv.omegas()[localScvfIdx][idxInOutside+1];
+
+                // make sure the given outside gravity container has the right size
+                assert(outsideG[localScvfIdx].size() == iv.localScvf(localScvfIdx).neighboringLocalScvIndices().size()-1);
+
+                // add contributions from all local directions
+                for (LocalIndexType localDir = 0; localDir < dim; localDir++)
                 {
-                    // continue only for "outside" faces
-                    if (!localFaceData.isOutsideFace())
-                        continue;
-
-                    const auto localScvIdx = localFaceData.ivLocalInsideScvIndex();
-                    const auto localScvfIdx = localFaceData.ivLocalScvfIndex();
-                    const auto idxInOutside = localFaceData.scvfLocalOutsideScvfIndex();
-                    const auto& posLocalScv = iv.localScv(localScvIdx);
-                    const auto& wijk = iv.omegas()[localScvfIdx][idxInOutside+1];
-
-                    // make sure the given outside gravity container has the right size
-                    assert(outsideG[pIdx][localScvfIdx].size() == iv.localScvf(localScvfIdx).neighboringLocalScvIndices().size()-1);
-
-                    // add contributions from all local directions
-                    for (LocalIndexType localDir = 0; localDir < IV::Traits::GridView::dimension; localDir++)
-                    {
-                        // the scvf corresponding to this local direction in the scv
-                        const auto& curLocalScvf = iv.localScvf(posLocalScv.localScvfIndex(localDir));
-
-                        // on interior faces the coefficients of the AB matrix come into play
-                        if (!curLocalScvf.isDirichlet())
-                            outsideG[pIdx][localScvfIdx][idxInOutside] -= wijk[localDir]*AG[curLocalScvf.localDofIndex()];
-                    }
+                    // the scvf corresponding to this local direction in the scv
+                    const auto& curLocalScvf = iv.localScvf(posLocalScv.localScvfIndex(localDir));
+                    if (!curLocalScvf.isDirichlet())
+                        outsideG[localScvfIdx][idxInOutside] -= wijk[localDir]*AG[curLocalScvf.localDofIndex()];
                 }
             }
         }

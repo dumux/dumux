@@ -151,7 +151,7 @@ class AdvectionDataHandle
 
     using FaceVector = typename MatVecTraits::FaceVector;
     using FaceScalar = typename FaceVector::value_type;
-    using OutsideGravityStorage = std::vector< Dune::DynamicVector<FaceScalar> >;
+    using OutsideGravityStorage = std::vector< std::vector<FaceScalar> >;
 
 public:
     //! Set the phase index of the context
@@ -160,14 +160,6 @@ public:
     //! The gravitational flux contributions for a phase on all faces
     const FaceVector& g() const { return g_[Base2::contextIdx1_]; }
     FaceVector& g() { return g_[Base2::contextIdx1_]; }
-
-    //! Access to the gravitational flux contributions for all phases
-    const std::array< FaceVector, numPhases >& gravity() const { return g_; }
-    std::array< FaceVector, numPhases >& gravity() { return g_; }
-
-    //! The gravitational acceleration for "outside" faces (used on surface grids)
-    const std::array< OutsideGravityStorage, numPhases >& gravityOutside() const { return outsideG_; }
-    std::array< OutsideGravityStorage, numPhases >& gravityOutside() { return outsideG_; }
 
     //! The gravitational acceleration for one phase on "outside" faces (used on surface grids)
     const OutsideGravityStorage& gOutside() const { return outsideG_[Base2::contextIdx1_]; }

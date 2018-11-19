@@ -438,22 +438,24 @@ private:
         using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
-        // Use different assembly if gravity is enabled
-        static const bool enableGravity = getParamFromGroup<bool>(problem().paramGroup(), "Problem.EnableGravity");
-
         // Assemble T only if permeability is sol-dependent or if update is forced
         if (forceUpdateAll || soldependentAdvection)
             localAssembler.assembleMatrices(handle.advectionHandle(), iv, LambdaFactory::getAdvectionLambda());
 
-        // maybe (re-)assemble gravity vector
-        if (enableGravity)
-            localAssembler.assembleGravity(handle.advectionHandle(), iv);
-
         // assemble pressure vectors
+        const auto& evv = &elemVolVars();
         for (unsigned int pIdx = 0; pIdx < ModelTraits::numPhases(); ++pIdx)
         {
+            // set context in handle
             handle.advectionHandle().setPhaseIndex(pIdx);
-            const auto& evv = &elemVolVars();
+
+            // maybe (re-)assemble gravity contribution vector
+            auto getRho = [pIdx] (const auto& volVars) { return volVars.density(pIdx); };
+            static const bool enableGravity = getParamFromGroup<bool>(problem().paramGroup(), "Problem.EnableGravity");
+            if (enableGravity)
+                localAssembler.assembleGravity(handle.advectionHandle(), iv, getRho);
+
+            // reassemble pressure vector
             auto getPressure = [&evv, pIdx] (auto volVarIdx) { return (evv->operator[](volVarIdx)).pressure(pIdx); };
             localAssembler.assembleU(handle.advectionHandle(), iv, getPressure);
         }
