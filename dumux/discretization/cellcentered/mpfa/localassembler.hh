@@ -26,8 +26,9 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_HH
 
-#include <dune/common/exceptions.hh>
+#include <type_traits>
 
+#include <dune/common/exceptions.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 
 namespace Dumux
@@ -58,7 +59,34 @@ class InteractionVolumeAssemblerBase
     using FVElementGeometry = EG;
     using ElementVolumeVariables = EV;
 
-  public:
+    typedef std::true_type yes;
+    typedef std::false_type no;
+
+    //! Determines whether or not a matrix has a resize() function
+    template<typename M>
+    struct matrix_has_resize_method
+    {
+    private:
+        // resize function is called with two indices for matrices
+        template<typename U> static auto test(int) -> decltype(std::declval<U>().resize(0, 0), yes());
+        template<typename> static no test(...);
+    public:
+        static constexpr bool value = std::is_same<decltype(test<M>(0)), yes>::value;
+    };
+
+    //! determines whether or not a vector has a resize() function
+    template<typename V>
+    struct vector_has_resize_method
+    {
+    private:
+        // resize function is called with one index for vectors
+        template<typename U> static auto test(int) -> decltype(std::declval<U>().resize(0), yes());
+        template<typename> static no test(...);
+    public:
+        static constexpr bool value = std::is_same<decltype(test<V>(0)), yes>::value;
+    };
+
+ public:
     /*!
      * \brief The constructor.
      *        Sets pointers to the objects required for a subsequent call to assemble().
@@ -131,7 +159,40 @@ class InteractionVolumeAssemblerBase
         DUNE_THROW(Dune::NotImplemented, "Implementation does not provide a assembleGravity() function");
     }
 
-  private:
+protected:
+    //! resizes a matrix to the given sizes (specialization for dynamic matrix type)
+    template< class Matrix,
+              class size_type,
+              std::enable_if_t<matrix_has_resize_method<Matrix>::value, int> = 0 >
+    void resizeMatrix_(Matrix& M, size_type rows, size_type cols)
+    {
+        M.resize(rows, cols);
+    }
+
+    //! resizes a matrix to the given sizes (specialization for static matrix type - do nothing)
+    template< class Matrix,
+              class size_type,
+              std::enable_if_t<!matrix_has_resize_method<Matrix>::value, int> = 0 >
+    void resizeMatrix_(Matrix& M, size_type rows, size_type cols)
+    {}
+
+    //! resizes a vector to the given size (specialization for dynamic matrix type)
+    template< class Vector,
+              class size_type,
+              std::enable_if_t<vector_has_resize_method<Vector>::value, int> = 0 >
+    void resizeVector_(Vector& v, size_type size)
+    {
+        v.resize(size);
+    }
+
+    //! resizes a vector to the given size (specialization for static vector type - do nothing)
+    template< class Vector,
+              class size_type,
+              std::enable_if_t<!vector_has_resize_method<Vector>::value, int> = 0 >
+    void resizeVector_(Vector& v, size_type rows)
+    {}
+
+private:
     // pointers to the data required for assembly
     const Problem* problemPtr_;
     const FVElementGeometry* fvGeometryPtr_;

@@ -30,7 +30,6 @@
 #include <dune/common/fvector.hh>
 
 #include <dumux/common/math.hh>
-#include <dumux/common/matrixvectorhelper.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>

@@ -26,7 +26,6 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 
 #include <dumux/common/math.hh>
-#include <dumux/common/matrixvectorhelper.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassembler.hh>
@@ -97,7 +96,9 @@ public:
                     const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
                     // resize each face entry to the right number of outside faces
                     tijOut[fIdx].resize(numOutsideFaces);
-                    std::for_each(tijOut[fIdx].begin(), tijOut[fIdx].end(), [&iv](auto& v) { resizeVector(v, iv.numKnowns()); });
+                    std::for_each(tijOut[fIdx].begin(),
+                                  tijOut[fIdx].end(),
+                                  [&](auto& v) { this->resizeVector_(v, iv.numKnowns()); });
                 }
 
                 // compute outside transmissibilities
@@ -153,7 +154,7 @@ public:
     void assembleU(DataHandle& handle, const IV& iv, const GetU& getU)
     {
         auto& u = handle.uj();
-        resizeVector(u, iv.numKnowns());
+        this->resizeVector_(u, iv.numKnowns());
 
         // put the cell unknowns first, then Dirichlet values
         typename IV::Traits::IndexSet::LocalIndexType i = 0;
@@ -182,9 +183,9 @@ public:
         // resize the gravity vectors
         auto& g = handle.g();
         auto& outsideG = handle.gOutside();
-        resizeVector(g, iv.numFaces());
+        this->resizeVector_(g, iv.numFaces());
         if (isSurfaceGrid)
-            resizeVector(outsideG, iv.numFaces());
+            this->resizeVector_(outsideG, iv.numFaces());
 
         // we require the CA matrix to have the correct size already
         assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns());
@@ -219,7 +220,7 @@ public:
 
             if (isSurfaceGrid)
             {
-                resizeVector(outsideG[faceIdx], numOutsideFaces);
+                this->resizeVector_(outsideG[faceIdx], numOutsideFaces);
                 std::fill(outsideG[faceIdx].begin(), outsideG[faceIdx].end(), 0.0);
             }
 
@@ -279,7 +280,7 @@ public:
         {
             using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
             FaceVector AG;
-            resizeVector(AG, iv.numUnknowns());
+            this->resizeVector_(AG, iv.numUnknowns());
             handle.A().mv(sum_alphas, AG);
 
             // compute gravitational accelerations
@@ -350,7 +351,7 @@ private:
         if (iv.numUnknowns() == 0)
         {
             // resize & reset D matrix
-            resizeMatrix(D, iv.numFaces(), iv.numKnowns()); D = 0.0;
+            this->resizeMatrix_(D, iv.numFaces(), iv.numKnowns()); D = 0.0;
 
             // Loop over all the faces, in this case these are all dirichlet boundaries
             for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
@@ -382,10 +383,10 @@ private:
         else
         {
             // resize & reset matrices
-            resizeMatrix(A, iv.numUnknowns(), iv.numUnknowns()); A = 0.0;
-            resizeMatrix(B, iv.numUnknowns(), iv.numKnowns());   B = 0.0;
-            resizeMatrix(C, iv.numFaces(), iv.numUnknowns());    C = 0.0;
-            resizeMatrix(D, iv.numFaces(), iv.numKnowns());      D = 0.0;
+            this->resizeMatrix_(A, iv.numUnknowns(), iv.numUnknowns()); A = 0.0;
+            this->resizeMatrix_(B, iv.numUnknowns(), iv.numKnowns());   B = 0.0;
+            this->resizeMatrix_(C, iv.numFaces(), iv.numUnknowns());    C = 0.0;
+            this->resizeMatrix_(D, iv.numFaces(), iv.numKnowns());      D = 0.0;
 
             auto& wijk = iv.omegas();
             for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
