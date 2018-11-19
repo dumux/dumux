@@ -28,8 +28,8 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
-#include <dumux/material/solidstates/compositionalsolidstate.hh>
-#include <dumux/material/solidsystems/compositionalsolidphase.hh>
+#include <dumux/material/solidstates/inertsolidstate.hh>
+#include <dumux/material/solidsystems/inertsolidphase.hh>
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
@@ -75,12 +75,9 @@ template<class TypeTag>
 struct SolidSystem<TypeTag, TTag::Column>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ComponentOne = Dumux::Components::Constant<1, Scalar>;
-    using ComponentTwo = Dumux::Components::Constant<2, Scalar>;
-    static constexpr int numInertComponents = 2;
-    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo, numInertComponents>;
+    using Component = Dumux::Components::Constant<1, Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, Component>;
 };
-
 
 //! The two-phase model uses the immiscible fluid state
 template<class TypeTag>
@@ -90,7 +87,7 @@ private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
 public:
-    using type = CompositionalSolidState<Scalar, SolidSystem>;
+    using type = InertSolidState<Scalar, SolidSystem>;
 };
 
 // Set the spatial parameters
