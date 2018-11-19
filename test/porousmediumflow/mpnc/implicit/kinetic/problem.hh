@@ -124,42 +124,6 @@ struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar>;
 };
-
-// Set the interfacial area relation: wetting -- non-wetting
-template<class TypeTag>
-struct AwnSurface<TypeTag, TTag::EvaporationAtmosphere>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALaw = AwnSurfacePcMaxFct<Scalar>;
-public:
-    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
-};
-
-// Set the interfacial area relation: wetting -- solid
-template<class TypeTag>
-struct AwsSurface<TypeTag, TTag::EvaporationAtmosphere>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALaw = AwnSurfacePolynomial2ndOrder<Scalar>;
-public:
-    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
-};
-
-// Set the interfacial area relation: non-wetting -- solid
-template<class TypeTag>
-struct AnsSurface<TypeTag, TTag::EvaporationAtmosphere>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALaw = AwnSurfaceExpSwPcTo3<Scalar>;
-public:
-    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
-};
 } // end namespace Properties
 
 /*!
