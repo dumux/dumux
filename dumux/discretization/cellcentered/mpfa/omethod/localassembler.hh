@@ -25,8 +25,9 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 
-#include <dumux/common/math.hh>
+#include <dune/common/reservedvector.hh>
 
+#include <dumux/common/math.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassembler.hh>
 #include <dumux/discretization/cellcentered/mpfa/computetransmissibility.hh>
@@ -195,10 +196,13 @@ public:
         //! - compute the term \f$ \alpha := \mathbf{A} \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
         //! - compute \f$ \alpha^* = \sum{\alpha_{outside, i}} - \alpha_{inside} \f$
         using Scalar = typename IV::Traits::MatVecTraits::TMatrix::value_type;
+        using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
         using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
 
+        FaceVector sum_alphas;
+        this->resizeVector_(sum_alphas, iv.numUnknowns());
+        sum_alphas = 0.0;
         std::fill(g.begin(), g.end(), 0.0);
-        std::vector<Scalar> sum_alphas(iv.numUnknowns(), 0.0);
         for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
         {
             // gravitational acceleration on this face
@@ -214,16 +218,19 @@ public:
                                                                         posVolVars.permeability(),
                                                                         gravity);
 
-            const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
+            const auto numOutsideFaces = !curGlobalScvf.boundary() ? curGlobalScvf.numOutsideScvs() : 0;
+            using OutsideAlphaStorage = std::conditional_t< isSurfaceGrid,
+                                                            std::vector<Scalar>,
+                                                            Dune::ReservedVector<Scalar, 1> >;
+            OutsideAlphaStorage alpha_outside; alpha_outside.resize(numOutsideFaces);
+            std::fill(alpha_outside.begin(), alpha_outside.end(), 0.0);
             Scalar rho;
-            std::vector< Scalar > alpha_outside(numOutsideFaces);
 
             if (isSurfaceGrid)
             {
                 this->resizeVector_(outsideG[faceIdx], numOutsideFaces);
                 std::fill(outsideG[faceIdx].begin(), outsideG[faceIdx].end(), 0.0);
             }
-
 
             if (!curLocalScvf.isDirichlet())
             {
