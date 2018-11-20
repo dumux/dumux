@@ -475,17 +475,6 @@ private:
         return !(selfIdx == otherIdx || localOppositeIdx_(selfIdx) == otherIdx);
     };
 
-    /*!
-     * \brief Returns the global index of the common entity
-     *
-     * \param localIdx The local index of the common entity
-     * \param element The element
-     */
-    int localToGlobalCommonEntityIdx_(const int localIdx, const Element& element) const
-    {
-        return this->gridView_.indexSet().subIndex(element, localIdx, codimCommonEntity);
-    };
-
     auto getFacet_(const int localFacetIdx, const Element& element) const
     {
         return element.template subEntity <1> (localFacetIdx);
