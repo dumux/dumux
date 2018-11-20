@@ -130,39 +130,38 @@ public:
         const auto numVolVars = assemblyMapI.size() + 1;
 
         // resize local containers to the required size (for internal elements)
-        volumeVariables_.resize(numVolVars);
-        volVarIndices_.resize(numVolVars);
-        unsigned int localIdx = 0;
+        const auto maxNumBoundaryVolVars = maxNumBoundaryVolVars_(fvGeometry);
+        volumeVariables_.reserve(numVolVars+maxNumBoundaryVolVars);
+        volVarIndices_.reserve(numVolVars+maxNumBoundaryVolVars);
 
-        // update the volume variables of the element at hand
+        VolumeVariables volVars;
         const auto& scvI = fvGeometry.scv(globalI);
-        volumeVariables_[localIdx].update(elementSolution(element, sol, fvGridGeometry),
-                                          problem,
-                                          element,
-                                          scvI);
-        volVarIndices_[localIdx] = scvI.dofIndex();
-        ++localIdx;
+        volVars.update(elementSolution(element, sol, fvGridGeometry),
+                       problem,
+                       element,
+                       scvI);
+
+        volVarIndices_.push_back(scvI.dofIndex());
+        volumeVariables_.emplace_back(std::move(volVars));
 
         // Update the volume variables of the neighboring elements
         for (auto&& dataJ : assemblyMapI)
         {
             const auto& elementJ = fvGridGeometry.element(dataJ.globalJ);
             const auto& scvJ = fvGeometry.scv(dataJ.globalJ);
-            volumeVariables_[localIdx].update(elementSolution(elementJ, sol, fvGridGeometry),
-                                              problem,
-                                              elementJ,
-                                              scvJ);
-            volVarIndices_[localIdx] = scvJ.dofIndex();
-            ++localIdx;
+            VolumeVariables volVarsJ;
+            volVarsJ.update(elementSolution(elementJ, sol, fvGridGeometry),
+                            problem,
+                            elementJ,
+                            scvJ);
+
+            volVarIndices_.push_back(scvJ.dofIndex());
+            volumeVariables_.emplace_back(std::move(volVarsJ));
         }
 
         // maybe prepare boundary volume variables
-        const auto maxNumBoundaryVolVars = maxNumBoundaryVolVars_(fvGeometry);
         if (maxNumBoundaryVolVars > 0)
         {
-            volumeVariables_.reserve(numVolVars+maxNumBoundaryVolVars);
-            volVarIndices_.reserve(numVolVars+maxNumBoundaryVolVars);
-
             if (fvGeometry.hasBoundaryScvf())
             {
                 // treat the BCs inside the element
