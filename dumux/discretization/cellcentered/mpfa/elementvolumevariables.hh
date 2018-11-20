@@ -178,7 +178,7 @@ namespace Detail {
                                           gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet() );
         }
     }
-}
+} // end namespace Detail
 
 /*!
  * \ingroup CCMpfaDiscretization
