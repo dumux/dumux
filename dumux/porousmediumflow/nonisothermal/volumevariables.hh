@@ -100,7 +100,6 @@ public:
     using FluidState = typename IsothermalTraits::FluidState;
     using SolidState = typename IsothermalTraits::SolidState;
     using FluidSystem = typename IsothermalTraits::FluidSystem;
-    using SpatialParams = typename IsothermalTraits::SpatialParams;
 
     //! The temperature is obtained from the problem as a constant for isothermal models
     template<class ElemSol, class Problem, class Element, class Scv>
