@@ -118,6 +118,66 @@ namespace Detail {
             }
         }
     }
+
+    /*!
+     * \ingroup CCMpfaDiscretization
+     * \brief Adds the boundary volume variables found within the stencil to the
+     *        provided containers and stores the indices associated with them.
+     *
+     * \param volVars       The container where the volume variables are stored
+     * \param volVarIndices The container where the volume variable indices are stored
+     * \param problem       The problem containing the Dirichlet boundary conditions
+     * \param element        The element to which the finite volume geometry was bound
+     * \param fvGeometry    The element finite volume geometry
+     */
+    template<class VolumeVariables, class IndexType, class Problem, class FVElemGeom>
+    void addBoundaryVolVars(std::vector<VolumeVariables>& volVars,
+                            std::vector<IndexType>& volVarIndices,
+                            const Problem& problem,
+                            const typename FVElemGeom::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+                            const FVElemGeom& fvGeometry)
+    {
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+
+        // treat the BCs inside the element
+        if (fvGeometry.hasBoundaryScvf())
+        {
+            const auto boundElemIdx = fvGridGeometry.elementMapper().index(element);
+            const auto& scvI = fvGeometry.scv(boundElemIdx);
+
+            for (const auto& scvf : scvfs(fvGeometry))
+            {
+                if (!scvf.boundary())
+                    continue;
+
+                // Only proceed on dirichlet boundaries. On Neumann
+                // boundaries the "outside" vol vars cannot be properly defined.
+                if (problem.boundaryTypes(element, scvf).hasOnlyDirichlet())
+                {
+                    VolumeVariables dirichletVolVars;
+                    dirichletVolVars.update(elementSolution<FVElemGeom>(problem.dirichlet(element, scvf)),
+                                            problem,
+                                            element,
+                                            scvI);
+
+                    volVars.emplace_back(std::move(dirichletVolVars));
+                    volVarIndices.push_back(scvf.outsideScvIdx());
+                }
+            }
+        }
+
+        // Update boundary volume variables in the neighbors
+        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+                addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
+                                          gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet() );
+            else
+                addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
+                                          gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet() );
+        }
+    }
 }
 
 /*!
@@ -209,7 +269,6 @@ public:
 
         const auto& problem = gridVolVars().problem();
         const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
-        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
 
         // stencil information
         const auto globalI = fvGridGeometry.elementMapper().index(element);
@@ -248,54 +307,7 @@ public:
 
         // maybe prepare boundary volume variables
         if (maxNumBoundaryVolVars > 0)
-        {
-            if (fvGeometry.hasBoundaryScvf())
-            {
-                // treat the BCs inside the element
-                for (const auto& scvf : scvfs(fvGeometry))
-                {
-                    // if we are not on a boundary, skip to the next scvf
-                    if (!scvf.boundary())
-                        continue;
-
-                    const auto bcTypes = problem.boundaryTypes(element, scvf);
-
-                    // Only proceed on dirichlet boundaries. Fluxes across Neumann
-                    // boundaries are never computed - the user-defined flux is taken.
-                    if (bcTypes.hasOnlyDirichlet())
-                    {
-                        // boundary volume variables
-                        VolumeVariables dirichletVolVars;
-                        dirichletVolVars.update(elementSolution<FVElementGeometry>(problem.dirichlet(element, scvf)),
-                                                problem,
-                                                element,
-                                                scvI);
-
-                        volumeVariables_.emplace_back(std::move(dirichletVolVars));
-                        volVarIndices_.push_back(scvf.outsideScvIdx());
-                    }
-                }
-            }
-
-            // Update boundary volume variables in the neighbors
-            for (const auto& scvf : scvfs(fvGeometry))
-            {
-                if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-                {
-                    const auto& nodalIndexSet = gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet();
-                    // if present, insert boundary vol vars
-                    if (nodalIndexSet.numBoundaryScvfs() > 0)
-                        Detail::addBoundaryVolVarsAtNode(volumeVariables_, volVarIndices_, problem, element, fvGeometry, nodalIndexSet);
-                }
-                else
-                {
-                    const auto& nodalIndexSet = gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet();
-                    // if present, insert boundary vol vars
-                    if (nodalIndexSet.numBoundaryScvfs() > 0)
-                        Detail::addBoundaryVolVarsAtNode(volumeVariables_, volVarIndices_, problem, element, fvGeometry, nodalIndexSet);
-                }
-            }
-        }
+            Detail::addBoundaryVolVars(volumeVariables_, volVarIndices_, problem, element, fvGeometry);
 
         // //! TODO Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
         // //! on additional DOFs not included in the discretization schemes' occupation pattern
