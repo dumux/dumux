@@ -32,6 +32,36 @@
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
 namespace Dumux {
+namespace Detail {
+    /*!
+     * \ingroup CCMpfaDiscretization
+     * \brief Computes how many boundary vol vars come into play for flux calculations
+     *        on an element (for a given element finite volume geometry). This number here
+     *        is probably always higher than the actually needed number of volume variables.
+     *        However, we want to make sure it is high enough so that enough memory is reserved
+     *        in the element volume variables below.
+     * \todo TODO What about non-symmetric schemes? Is there a better way for estimating this?
+     *
+     * \param fvGeometry the element finite volume geometry
+     */
+    template<class FVElementGeometry>
+    std::size_t maxNumBoundaryVolVars(const FVElementGeometry& fvGeometry)
+    {
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+
+        std::size_t numBoundaryVolVars = 0;
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+                numBoundaryVolVars += gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
+            else
+                numBoundaryVolVars += gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
+        }
+
+        return numBoundaryVolVars;
+    }
+}
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -130,7 +160,7 @@ public:
         const auto numVolVars = assemblyMapI.size() + 1;
 
         // resize local containers to the required size (for internal elements)
-        const auto maxNumBoundaryVolVars = maxNumBoundaryVolVars_(fvGeometry);
+        const auto maxNumBoundaryVolVars = Detail::maxNumBoundaryVolVars(fvGeometry);
         volumeVariables_.reserve(numVolVars+maxNumBoundaryVolVars);
         volVarIndices_.reserve(numVolVars+maxNumBoundaryVolVars);
 
@@ -287,29 +317,6 @@ public:
 
 private:
     const GridVolumeVariables* gridVolVarsPtr_;
-
-    // Computes how many boundary vol vars come into play for flux calculations
-    // on this element. This number here is probably always higher than the actually
-    // needed number of volume variables. However, memory is not an issue for the global
-    // caching being deactivated and we want to make sure we reserve enough memory here.
-    // TODO: What about non-symmetric schemes? Is there a better way for estimating this?
-    template<class FVElementGeometry>
-    std::size_t maxNumBoundaryVolVars_(const FVElementGeometry& fvGeometry)
-    {
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
-        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
-
-        std::size_t numBoundaryVolVars = 0;
-        for (const auto& scvf : scvfs(fvGeometry))
-        {
-            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-                numBoundaryVolVars += gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
-            else
-                numBoundaryVolVars += gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
-        }
-
-        return numBoundaryVolVars;
-    }
 
     //! adds the volume variables from a given nodal index set to the local containers
     template<class Problem, class FVElementGeometry, class NodalIndexSet>
