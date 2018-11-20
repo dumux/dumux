@@ -28,6 +28,8 @@
 #include <memory>
 #include <cassert>
 
+#include <dune/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -68,6 +70,32 @@ public:
     , gridFluxVarsCache_(*problem)
     {}
 
+    //! initialize all variables (stationary case)
+    template<class SolutionVector>
+    void init(const SolutionVector& curSol)
+    {
+        // resize and update the volVars with the initial solution
+        curGridVolVars_.update(*fvGridGeometry_, curSol);
+
+        // update the flux variables caches (always force flux cache update on initialization)
+        gridFluxVarsCache_.update(*fvGridGeometry_, curGridVolVars_, curSol, true);
+
+        // set the volvars of the previous time step in case we have an instationary problem
+        // note that this means some memory overhead in the case of enabled caching, however
+        // this it outweighted by the advantage of having a single grid variables object for
+        // stationary and instationary problems
+        prevGridVolVars_ = curGridVolVars_;
+    }
+
+    //! initialize all variables (instationary case)
+    template<class SolutionVector>
+    DUNE_DEPRECATED_MSG("Use init(sol) instead. The class now works without modification for stationary and instationary cases.")
+    void init(const SolutionVector& curSol, const SolutionVector& initSol)
+    {
+        // initialize current volvars and the flux var cache
+        init(initSol);
+    }
+
     //! update all variables
     template<class SolutionVector>
     void update(const SolutionVector& curSol, bool forceFluxCacheUpdate = false)
@@ -88,33 +116,7 @@ public:
 
         // for instationary problems also update the variables
         // for the previous time step to the new grid
-        if (!problemIsStationary_)
-            prevGridVolVars_ = curGridVolVars_;
-    }
-
-    //! initialize all variables (stationary case)
-    template<class SolutionVector>
-    void init(const SolutionVector& curSol)
-    {
-        // resize and update the volVars with the initial solution
-        curGridVolVars_.update(*fvGridGeometry_, curSol);
-
-        // update the flux variables caches (always force flux cache update on initialization)
-        gridFluxVarsCache_.update(*fvGridGeometry_, curGridVolVars_, curSol, true);
-    }
-
-    //! initialize all variables (instationary case)
-    template<class SolutionVector>
-    void init(const SolutionVector& curSol, const SolutionVector& initSol)
-    {
-        // remember that we have a stationary problem
-        problemIsStationary_ = false;
-
-        // initialize current volvars and the flux var cache
-        init(curSol);
-
-        // update the old time step vol vars with the initial solution
-        prevGridVolVars_.update(*fvGridGeometry_, initSol);
+        prevGridVolVars_ = curGridVolVars_;
     }
 
     /*!
@@ -123,7 +125,6 @@ public:
      */
     void advanceTimeStep()
     {
-        assert(!problemIsStationary_);
         prevGridVolVars_ = curGridVolVars_;
     }
 
@@ -131,8 +132,6 @@ public:
     template<class SolutionVector>
     void resetTimeStep(const SolutionVector& solution)
     {
-        assert(!problemIsStationary_);
-
         // set the new time step vol vars to old vol vars
         curGridVolVars_ = prevGridVolVars_;
 
@@ -177,8 +176,6 @@ private:
     GridVolumeVariables prevGridVolVars_; //!< the previous time step's volume variables (primary and secondary variables)
 
     GridFluxVariablesCache gridFluxVarsCache_; //!< the flux variables cache
-
-    bool problemIsStationary_ = true;
 };
 
 } // end namespace Dumux
