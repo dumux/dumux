@@ -53,6 +53,12 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
       - _Boundary:_ coupling across sub-domain boundaries
       - _Embedded:_ Coupling between a bulk domain and an embedded lower-dimensional sub-domain which has an independent grid
       - _Facet:_ Coupling betweeen a bulk domain and a codimension-one sub-domain, which is conforming with the element facets of the bulk domain
+    - __Free-flow models:__ The previous Navier-Stokes model using the box method has been replaced by one that employs a staggered grid discretization.
+      The latter does not  require any stabilization techniques while those were necessary for the box method in order to avoid spurious oscillations.
+      The free-flow models in DuMux 3.0 consider single phase flow with or without component/energy transport. So far, only regular cartesian grids are supported
+      but local grid refinement will be added in a future release.
+      Several RANS models for turbulent flow have been added: k-omega, k-epsilon, low-Re-k-epsilon, one-eq, zero-eq. The RANS models might be subject to further (interface)
+      changes.
     - __Runtime parameters:__ Runtime parameters are no longer accessed with preprocessor macros. They have been replaced by C++ function templates
       `Dumux::getParam`, `Dumux::haveParam`, `Dumux::getParamFromGroup`. The `..FromGroup` version has been redesigned to allow the specification
       of parameters for different models in one input file. The concept of a parameter group string was extended to make it possible to
