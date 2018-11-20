@@ -29,7 +29,7 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
-#include <dumux/discretization/cellcentered/mpfa/localassembler.hh>
+#include <dumux/discretization/cellcentered/mpfa/localassemblerbase.hh>
 #include <dumux/discretization/cellcentered/mpfa/computetransmissibility.hh>
 
 namespace Dumux
@@ -45,7 +45,7 @@ namespace Dumux
  * \tparam EV The element volume variables type
  */
 template< class P, class EG, class EV >
-class InteractionVolumeAssemblerImpl< P, EG, EV, MpfaMethods::oMethod >
+class MpfaOInteractionVolumeAssembler
 : public InteractionVolumeAssemblerBase< P, EG, EV >
 {
     using ParentType = InteractionVolumeAssemblerBase< P, EG, EV >;

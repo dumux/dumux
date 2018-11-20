@@ -37,6 +37,7 @@
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 
+#include "localassembler.hh"
 #include "localsubcontrolentities.hh"
 #include "interactionvolumeindexset.hh"
 
@@ -96,6 +97,10 @@ public:
     static constexpr int numScvs = C;
     //! export the number of scvfs in the interaction volumes
     static constexpr int numScvfs = F;
+
+    //! the type of assembler used for the o-method's iv-local eq systems
+    template<class Problem, class FVElementGeometry, class ElemVolVars>
+    using LocalAssembler = MpfaOInteractionVolumeAssembler<Problem, FVElementGeometry, ElemVolVars>;
 };
 
 /*!

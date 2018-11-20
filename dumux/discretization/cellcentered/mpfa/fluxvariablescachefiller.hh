@@ -29,7 +29,6 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>
-#include <dumux/discretization/cellcentered/mpfa/localassembler.hh>
 
 namespace Dumux
 {
@@ -437,8 +436,8 @@ private:
         using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
 
         // get instance of the interaction volume-local assembler
-        static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
-        using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
+        using Traits = typename InteractionVolume::Traits;
+        using IvLocalAssembler = typename Traits::template LocalAssembler<Problem, FVElementGeometry, ElementVolumeVariables>;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         // Assemble T only if permeability is sol-dependent or if update is forced
@@ -476,8 +475,8 @@ private:
         using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
 
         // get instance of the interaction volume-local assembler
-        static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
-        using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
+        using Traits = typename InteractionVolume::Traits;
+        using IvLocalAssembler = typename Traits::template LocalAssembler<Problem, FVElementGeometry, ElementVolumeVariables>;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         // maybe (re-)assemble matrices
@@ -502,8 +501,8 @@ private:
         using ThermCondModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
 
         // get instance of the interaction volume-local assembler
-        static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
-        using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
+        using Traits = typename InteractionVolume::Traits;
+        using IvLocalAssembler = typename Traits::template LocalAssembler<Problem, FVElementGeometry, ElementVolumeVariables>;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         // maybe (re-)assemble matrices (TODO: USE CORRECT SOLDEPENDENT FLAG!)

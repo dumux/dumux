@@ -51,6 +51,8 @@ namespace Dumux
  * using LocalFaceData = ...;
  * //! export the matrix/vector type traits to be used by the iv
  * using MatVecTraits = ...;
+ * //! export the type used for the assembly of the iv's local eq system
+ * using LocalAssembler = ...;
  * \endcode
  */
 

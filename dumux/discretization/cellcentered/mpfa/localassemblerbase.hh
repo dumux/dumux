@@ -21,25 +21,17 @@
  * \ingroup CCMpfaDiscretization
  * \brief Defines the general interface of classes used for the assembly
  *        of the local systems of equations involved in the transmissibility
- *        computaion in mpfa schemes.
+ *        computation in mpfa schemes.
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_BASE_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_BASE_HH
 
 #include <type_traits>
 
 #include <dune/common/exceptions.hh>
-#include <dumux/discretization/cellcentered/mpfa/methods.hh>
 
 namespace Dumux
 {
-//! Forward declaration of the implementation
-template< class P, class EG, class EV, MpfaMethods M > class InteractionVolumeAssemblerImpl;
-
-//! Alias to select the right implementation.
-template< class P, class EG, class EV, MpfaMethods M >
-using InteractionVolumeAssembler = InteractionVolumeAssemblerImpl< P, EG, EV, M >;
-
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Defines the general interface of the local assembler
@@ -329,8 +321,5 @@ private:
 };
 
 } // end namespace Dumux
-
-//! include all specializations for different mpfa schemes
-#include <dumux/discretization/cellcentered/mpfa/omethod/localassembler.hh>
 
 #endif

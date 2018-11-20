@@ -38,6 +38,7 @@
 #include <dumux/discretization/cellcentered/mpfa/localfacedata.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 
+#include "localassembler.hh"
 #include "localsubcontrolentities.hh"
 #include "interactionvolumeindexset.hh"
 
@@ -91,6 +92,10 @@ public:
     using LocalFaceData = InteractionVolumeLocalFaceData<GridIndexType, LocalIndexType>;
     //! export the matrix/vector traits to be used by the iv
     using MatVecTraits = MVTraits;
+
+    //! the type of assembler used for the o-method's iv-local eq systems
+    template<class Problem, class FVElementGeometry, class ElemVolVars>
+    using LocalAssembler = MpfaOInteractionVolumeAssembler<Problem, FVElementGeometry, ElemVolVars>;
 };
 
 /*!
