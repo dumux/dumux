@@ -94,6 +94,7 @@ struct EnableFVGridGeometryCache<TypeTag, TTag::OnePIncompressible> { static con
 
 // define a TypeTag for a quad precision test
 #if HAVE_QUAD
+namespace TTag {
 struct OnePIncompressibleTpfaQuad { using InheritsFrom = std::tuple<OnePIncompressibleTpfa>; };
 } // end namespace TTag
 template<class TypeTag>
