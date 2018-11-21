@@ -68,8 +68,6 @@ public:
     /*!
      * \brief Returns the index of the wetting phase in the
      *        fluid-solid configuration (for porous medium systems).
-     *
-     * \param phaseIdx the index of the phase
      */
     int wettingPhase() const { return wPhaseIdx_; }
 
