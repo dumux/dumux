@@ -24,6 +24,7 @@
 #ifndef DUMUX_STAGGERED_GRID_VARIABLES_HH
 #define DUMUX_STAGGERED_GRID_VARIABLES_HH
 
+#include <dune/common/deprecated.hh>
 #include <dumux/discretization/fvgridvariables.hh>
 
 namespace Dumux {
@@ -125,15 +126,15 @@ public:
     {
         this->curGridVolVars().update(this->fvGridGeometry(), curSol);
         this->gridFluxVarsCache().update(this->fvGridGeometry(), this->curGridVolVars(), curSol, true);
+        this->prevGridVolVars().update(this->fvGridGeometry(), curSol);
     }
 
     //! initialize all variables (instationary case)
     template<class SolVector>
+    DUNE_DEPRECATED_MSG("Use init with one argument")
     void init(const SolVector& curSol, const SolVector& initSol)
     {
-        this->curGridVolVars().update(this->fvGridGeometry(), curSol);
-        this->gridFluxVarsCache().update(this->fvGridGeometry(), this->curGridVolVars(), curSol, true);
-        this->prevGridVolVars().update(this->fvGridGeometry(), initSol);
+        init(initSol);
     }
 
     //! update the volume variables and the flux variables cache
@@ -170,14 +171,15 @@ public:
     void init(const SolVector& curSol)
     {
         this->curGridFaceVars().update(this->fvGridGeometry(), curSol);
+        this->prevGridFaceVars().update(this->fvGridGeometry(), curSol);
     }
 
     //! initialize all variables (instationary case)
     template<class SolVector>
+    DUNE_DEPRECATED_MSG("Use init with one argument")
     void init(const SolVector& curSol, const SolVector& initSol)
     {
-        this->curGridFaceVars().update(this->fvGridGeometry(), curSol);
-        this->prevGridFaceVars().update(this->fvGridGeometry(), initSol);
+        init(initSol);
     }
 
     //! update the face variables
@@ -251,15 +253,15 @@ public:
     {
         ParentType::init(curSol[cellCenterIdx]);
         curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
+        prevGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
     }
 
     //! initialize all variables (instationary case)
     template<class SolutionVector>
+    DUNE_DEPRECATED_MSG("Use init with one argument")
     void init(const SolutionVector& curSol, const SolutionVector& initSol)
     {
-        ParentType::init(curSol[cellCenterIdx], initSol[cellCenterIdx]);
-        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
-        prevGridFaceVariables_.update(*this->fvGridGeometry_, initSol[faceIdx]);
+        init(initSol);
     }
 
     //! Sets the current state as the previous for next time step
