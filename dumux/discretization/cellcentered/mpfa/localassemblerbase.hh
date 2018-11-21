@@ -266,7 +266,7 @@ class InteractionVolumeAssemblerBase
                 const auto localScvfIdx = localFaceData.ivLocalScvfIndex();
                 const auto idxInOutside = localFaceData.scvfLocalOutsideScvfIndex();
                 const auto& posLocalScv = iv.localScv(localScvIdx);
-                const auto& wijk = iv.omegas()[localScvfIdx][idxInOutside+1];
+                const auto& wijk = handle.omegas()[localScvfIdx][idxInOutside+1];
 
                 // add contributions from all local directions
                 for (LocalIndexType localDir = 0; localDir < dim; localDir++)

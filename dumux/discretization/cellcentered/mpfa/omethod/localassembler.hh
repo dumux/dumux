@@ -70,7 +70,7 @@ public:
     template< class DataHandle, class IV, class TensorFunc >
     void assembleMatrices(DataHandle& handle, IV& iv, const TensorFunc& getT)
     {
-        assembleLocalMatrices_(handle.A(), handle.AB(), handle.CA(), handle.T(), iv, getT);
+        assembleLocalMatrices_(handle.A(), handle.AB(), handle.CA(), handle.T(), handle.omegas(), iv, getT);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
@@ -113,7 +113,7 @@ public:
                     const auto scvfIdx = localFaceData.ivLocalScvfIndex();
                     const auto idxInOut = localFaceData.scvfLocalOutsideScvfIndex();
 
-                    const auto& wijk = iv.omegas()[scvfIdx][idxInOut+1];
+                    const auto& wijk = handle.omegas()[scvfIdx][idxInOut+1];
                     auto& tij = tijOut[scvfIdx][idxInOut];
 
                     tij = 0.0;
@@ -194,11 +194,15 @@ private:
                                 typename IV::Traits::MatVecTraits::BMatrix& B,
                                 typename IV::Traits::MatVecTraits::CMatrix& C,
                                 typename IV::Traits::MatVecTraits::DMatrix& D,
+                                typename IV::Traits::MatVecTraits::OmegaStorage& wijk,
                                 IV& iv, const TensorFunc& getT)
     {
         using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
         static constexpr int dim = IV::Traits::GridView::dimension;
         static constexpr int dimWorld = IV::Traits::GridView::dimensionworld;
+
+        // resize omegas
+        this->resizeVector_(wijk, iv.numFaces());
 
         // if only Dirichlet faces are present in the iv,
         // the matrices A, B & C are undefined and D = T
@@ -222,15 +226,16 @@ private:
                 const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
 
                 // the omega factors of the "positive" sub volume
-                const auto wijk = computeMpfaTransmissibility(posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
+                this->resizeVector_(wijk[faceIdx], /*no outside scvs present*/1);
+                wijk[faceIdx][0] = computeMpfaTransmissibility(posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
 
                 const auto posScvLocalDofIdx = posLocalScv.localDofIndex();
                 for (LocalIndexType localDir = 0; localDir < dim; localDir++)
                 {
                     const auto& otherLocalScvf = iv.localScvf( posLocalScv.localScvfIndex(localDir) );
                     const auto otherLocalDofIdx = otherLocalScvf.localDofIndex();
-                    D[faceIdx][otherLocalDofIdx] -= wijk[localDir];
-                    D[faceIdx][posScvLocalDofIdx] += wijk[localDir];
+                    D[faceIdx][otherLocalDofIdx] -= wijk[faceIdx][0][localDir];
+                    D[faceIdx][posScvLocalDofIdx] += wijk[faceIdx][0][localDir];
                 }
             }
         }
@@ -242,7 +247,6 @@ private:
             this->resizeMatrix_(C, iv.numFaces(), iv.numUnknowns());    C = 0.0;
             this->resizeMatrix_(D, iv.numFaces(), iv.numKnowns());      D = 0.0;
 
-            auto& wijk = iv.omegas();
             for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
             {
                 const auto& curLocalScvf = iv.localScvf(faceIdx);
@@ -259,6 +263,7 @@ private:
                 const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
 
                 // the omega factors of the "positive" sub volume
+                this->resizeVector_(wijk[faceIdx], neighborScvIndices.size());
                 wijk[faceIdx][0] = computeMpfaTransmissibility(posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
 
                 // go over the coordinate directions in the positive sub volume

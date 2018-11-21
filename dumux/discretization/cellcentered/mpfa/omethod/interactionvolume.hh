@@ -67,9 +67,16 @@ private:
     static constexpr int dim = NodalIndexSet::Traits::GridView::dimension;
     static constexpr int dimWorld = NodalIndexSet::Traits::GridView::dimensionworld;
 
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using FaceOmegas = typename std::conditional< (dim<dimWorld),
+                                                  std::vector<DimVector>,
+                                                  Dune::ReservedVector<DimVector, 2> >::type;
+
     //! Matrix/Vector traits to be used by the data handle
     struct MVTraits
     {
+        using OmegaStorage = std::vector< FaceOmegas >;
+
         using AMatrix = Dune::DynamicMatrix< Scalar >;
         using BMatrix = Dune::DynamicMatrix< Scalar >;
         using CMatrix = Dune::DynamicMatrix< Scalar >;
@@ -116,16 +123,6 @@ class CCMpfaOInteractionVolume
     using LocalIndexType = typename IndexSet::LocalIndexType;
     using Stencil = typename IndexSet::NodalGridStencilType;
 
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-
-    //! export scalar type from T matrix and define omegas
-    using Scalar = typename Traits::MatVecTraits::TMatrix::value_type;
-    using DimVector = Dune::FieldVector<Scalar, dim>;
-    using FaceOmegas = typename std::conditional< (dim<dimWorld),
-                                                  std::vector<DimVector>,
-                                                  Dune::ReservedVector<DimVector, 2> >::type;
-
     using LocalScvType = typename Traits::LocalScvType;
     using LocalScvfType = typename Traits::LocalScvfType;
     using LocalFaceData = typename Traits::LocalFaceData;
@@ -143,9 +140,6 @@ public:
         //! Return corresponding vol var index
         GridIndexType volVarIndex() const { return volVarIndex_; }
     };
-
-    //! export the type used for transmissibility storage
-    using TransmissibilityStorage = std::vector< FaceOmegas >;
 
     //! publicly state the mpfa-scheme this interaction volume is associated with
     static constexpr MpfaMethods MpfaMethod = MpfaMethods::oMethod;
@@ -193,7 +187,6 @@ public:
         numKnowns_ = numLocalScvs;
 
         // set up quantitites related to sub-control volume faces
-        wijk_.resize(numFaces_);
         for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < numFaces_; ++faceIdxLocal)
         {
             const auto& scvf = fvGeometry.scvf(indexSet.gridScvfIndex(faceIdxLocal));
@@ -206,7 +199,6 @@ public:
 
             // we will need as many omegas as scvs around the face
             const auto numNeighborScvs = neighborScvIndicesLocal.size();
-            wijk_[faceIdxLocal].resize(numNeighborScvs);
 
             // create iv-local scvf object
             if (scvf.boundary())
@@ -230,7 +222,7 @@ public:
                 {
                     // loop over scvfs in outside scv until we find the one coinciding with current scvf
                     const auto outsideLocalScvIdx = neighborScvIndicesLocal[i];
-                    for (int coord = 0; coord < dim; ++coord)
+                    for (int coord = 0; coord < GridView::dimension; ++coord)
                     {
                         if (indexSet.localScvfIndex(outsideLocalScvIdx, coord) == faceIdxLocal)
                         {
@@ -291,10 +283,6 @@ public:
     const std::vector<DirichletData>& dirichletData() const
     { return dirichletData_; }
 
-    //! returns container storing the transmissibilities for each face & coordinate
-    const TransmissibilityStorage& omegas() const { return wijk_; }
-    TransmissibilityStorage& omegas() { return wijk_; }
-
     //! returns the number of interaction volumes living around a vertex
     template< class NI >
     static constexpr std::size_t numIVAtVertex(const NI& nodalIndexSet) { return 1; }
@@ -331,9 +319,6 @@ private:
     std::vector<LocalScvfType> scvfs_;
     std::vector<LocalFaceData> localFaceData_;
     std::vector<DirichletData> dirichletData_;
-
-    // The omega factors are stored during assembly of local system
-    TransmissibilityStorage wijk_;
 
     // sizes involved in the local system equations
     std::size_t numFaces_;

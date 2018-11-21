@@ -68,9 +68,14 @@ private:
     static constexpr int dim = NI::Traits::GridView::dimension;
     static constexpr int dimWorld = NI::Traits::GridView::dimensionworld;
 
+    using DimVector = Dune::FieldVector<S, dim>;
+    using FaceOmegas = Dune::ReservedVector<DimVector, 2>;
+
     //! Matrix/Vector traits to be used by the data handle
     struct MVTraits
     {
+        using OmegaStorage = std::array< FaceOmegas, F >;
+
         using AMatrix = Dune::FieldMatrix< S, F, F >;
         using BMatrix = Dune::FieldMatrix< S, F, C >;
         using CMatrix = Dune::FieldMatrix< S, F, F >;
@@ -125,14 +130,6 @@ class CCMpfaOStaticInteractionVolume
     using LocalIndexType = typename IndexSet::LocalIndexType;
     using Stencil = typename IndexSet::NodalGridStencilType;
 
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-
-    //! export scalar type from T matrix and define omegas
-    using Scalar = typename Traits::MatVecTraits::TMatrix::value_type;
-    using DimVector = Dune::FieldVector<Scalar, dim>;
-    using FaceOmegas = typename Dune::ReservedVector<DimVector, 2>;
-
     using LocalScvType = typename Traits::LocalScvType;
     using LocalScvfType = typename Traits::LocalScvfType;
     using LocalFaceData = typename Traits::LocalFaceData;
@@ -143,9 +140,6 @@ class CCMpfaOStaticInteractionVolume
 public:
     //! export the standard o-methods dirichlet data
     using DirichletData = typename CCMpfaOInteractionVolume< Traits >::DirichletData;
-
-    //! export the type used for transmissibility storage
-    using TransmissibilityStorage = std::array< FaceOmegas, numScvf >;
 
     //! publicly state the mpfa-scheme this interaction volume is associated with
     static constexpr MpfaMethods MpfaMethod = MpfaMethods::oMethod;
@@ -190,7 +184,7 @@ public:
 
             // add local face data objects for the outside face
             const auto outsideLocalScvIdx = neighborScvIndicesLocal[1];
-            for (int coord = 0; coord < dim; ++coord)
+            for (int coord = 0; coord < GridView::dimension; ++coord)
             {
                 if (indexSet.localScvfIndex(outsideLocalScvIdx, coord) == faceIdxLocal)
                 {
@@ -250,10 +244,6 @@ public:
     const std::array<DirichletData, 0>& dirichletData() const
     { return dirichletData_; }
 
-    //! returns container storing the transmissibilities for each face & coordinate
-    const TransmissibilityStorage& omegas() const { return wijk_; }
-    TransmissibilityStorage& omegas() { return wijk_; }
-
     //! returns the number of interaction volumes living around a vertex
     template< class NI >
     static constexpr std::size_t numIVAtVertex(const NI& nodalIndexSet)
@@ -290,9 +280,6 @@ private:
     std::array<LocalScvType, numScv> scvs_;
     std::array<LocalScvfType, numScvf> scvfs_;
     std::array<LocalFaceData, numScvf*2> localFaceData_;
-
-    // The omega factors are stored during assembly of local system
-    TransmissibilityStorage wijk_;
 
     // Dummy dirichlet data container (compatibility with dynamic o-iv)
     std::array<DirichletData, 0> dirichletData_;

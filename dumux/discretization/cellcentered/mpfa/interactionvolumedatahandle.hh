@@ -64,6 +64,7 @@ class MatrixDataHandleBase
     using TMatrix = typename MVT::TMatrix;
     using CellVector = typename MVT::CellVector;
     using OutsideTij = std::vector< std::vector<CellVector> >;
+    using OmegaStorage = typename MVT::OmegaStorage;
 
 public:
     //! Access functions to context-dependent data
@@ -82,6 +83,9 @@ public:
     const OutsideTij& tijOutside() const { return tijOutside_[contextIdx1_][contextIdx2_]; }
     OutsideTij& tijOutside() { return tijOutside_[contextIdx1_][contextIdx2_]; }
 
+    const OmegaStorage& omegas() const { return wijk_[contextIdx1_][contextIdx2_]; }
+    OmegaStorage& omegas() { return wijk_[contextIdx1_][contextIdx2_]; }
+
     //! functionality to set the context indices
     void setContextIndex1(unsigned int idx) const { assert(idx < size1); contextIdx1_ = idx; }
     void setContextIndex2(unsigned int idx) const { assert(idx < size2); contextIdx2_ = idx; }
@@ -90,6 +94,8 @@ protected:
     //! indices to be set before accessing data
     mutable unsigned int contextIdx1_{0};
     mutable unsigned int contextIdx2_{0};
+
+    std::array< std::array<OmegaStorage, size2>, size1 > wijk_;     //!< The omega factors that form the entries of the matrices
 
     std::array< std::array<TMatrix, size2>, size1 > T_;             //!< The transmissibility matrix
     std::array< std::array<AMatrix, size2>, size1 > A_;             //!< Inverse of the iv-local system matrix
