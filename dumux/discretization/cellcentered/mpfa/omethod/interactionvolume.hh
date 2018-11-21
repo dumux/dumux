@@ -126,10 +126,6 @@ class CCMpfaOInteractionVolume
                                                   std::vector<DimVector>,
                                                   Dune::ReservedVector<DimVector, 2> >::type;
 
-    using AMatrix = typename Traits::MatVecTraits::AMatrix;
-    using BMatrix = typename Traits::MatVecTraits::BMatrix;
-    using CMatrix = typename Traits::MatVecTraits::CMatrix;
-
     using LocalScvType = typename Traits::LocalScvType;
     using LocalScvfType = typename Traits::LocalScvfType;
     using LocalFaceData = typename Traits::LocalFaceData;
