@@ -505,8 +505,8 @@ private:
         using IvLocalAssembler = typename Traits::template LocalAssembler<Problem, FVElementGeometry, ElementVolumeVariables>;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
-        // maybe (re-)assemble matrices (TODO: USE CORRECT SOLDEPENDENT FLAG!)
-        if (forceUpdateAll || soldependentAdvection)
+        // maybe (re-)assemble matrices
+        if (forceUpdateAll || soldependentHeatConduction)
             localAssembler.assembleMatrices(handle.heatConductionHandle(),
                                             iv,
                                             LambdaFactory::template getHeatConductionLambda<ThermCondModel>());
