@@ -23,6 +23,7 @@
 #ifndef DUMUX_TWOP_CORNERPOINT_TEST_PROBLEM_HH
 #define DUMUX_TWOP_CORNERPOINT_TEST_PROBLEM_HH
 
+#if HAVE_OPM_GRID
 #include <opm/grid/CpGrid.hpp>
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
@@ -263,5 +264,9 @@ private:
 };
 
 } // end namespace Dumux
+
+#else
+#warning "The opm-grid module is needed to use this class!"
+#endif
 
 #endif

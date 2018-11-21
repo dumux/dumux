@@ -32,8 +32,11 @@
 #include <string>
 #include <utility>
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
 #include <dune/common/timer.hh>
+#include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 

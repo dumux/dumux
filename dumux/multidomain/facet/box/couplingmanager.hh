@@ -32,6 +32,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/multidomain/facet/couplingmanager.hh>
 
 namespace Dumux {
 

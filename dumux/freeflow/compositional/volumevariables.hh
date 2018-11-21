@@ -25,8 +25,8 @@
 #ifndef DUMUX_FREEFLOW_NC_VOLUMEVARIABLES_HH
 #define DUMUX_FREEFLOW_NC_VOLUMEVARIABLES_HH
 
+#include <array>
 #include <dune/common/exceptions.hh>
-
 #include <dumux/freeflow/volumevariables.hh>
 
 namespace Dumux {

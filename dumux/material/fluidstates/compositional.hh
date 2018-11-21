@@ -30,6 +30,7 @@
 #include <cmath>
 #include <type_traits>
 #include <cassert>
+#include <array>
 
 #include <dune/common/exceptions.hh>
 

@@ -26,6 +26,7 @@
 #ifndef DUMUX_FACETCOUPLING_CODIM_ONE_GRID_ADAPTER_HH
 #define DUMUX_FACETCOUPLING_CODIM_ONE_GRID_ADAPTER_HH
 
+#include <memory>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/geometry/referenceelements.hh>
 

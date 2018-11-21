@@ -29,6 +29,7 @@
 #include <iostream>
 #include <sstream>
 #include <typeinfo>
+#include <unordered_map>
 
 #include <dune/common/timer.hh>
 #include <dune/common/version.hh>

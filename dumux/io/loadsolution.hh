@@ -34,11 +34,14 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/indices.hh>
+#include <dune/grid/common/partitionset.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/typetraits/vector.hh>
 #include <dumux/io/vtk/vtkreader.hh>
+#include <dumux/discretization/method.hh>
+
 
 namespace Dumux {
 namespace Detail {

@@ -24,6 +24,7 @@
 #ifndef DUMUX_2P2C_FLUID_STATE_HH
 #define DUMUX_2P2C_FLUID_STATE_HH
 
+#include <cmath>
 #include <dune/common/deprecated.hh>
 
 namespace Dumux {

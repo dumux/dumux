@@ -19,6 +19,7 @@
 #ifndef DUMUX_VARIABLECLASS_ADAPTIVE_HH
 #define DUMUX_VARIABLECLASS_ADAPTIVE_HH
 
+#include <dune/grid/common/partitionset.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 #include <dumux/linear/vectorexchange.hh>
 #include "variableclass.hh"

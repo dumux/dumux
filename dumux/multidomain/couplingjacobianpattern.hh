@@ -26,6 +26,7 @@
 #define DUMUX_MUTLIDOMAIN_COUPLING_JACOBIAN_PATTERN_HH
 
 #include <type_traits>
+#include <dune/common/indices.hh>
 #include <dune/istl/matrixindexset.hh>
 #include <dumux/discretization/method.hh>
 

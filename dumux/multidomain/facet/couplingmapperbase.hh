@@ -26,8 +26,10 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
+#include <memory>
 
 #include <dune/common/indices.hh>
+#include <dune/common/exceptions.hh>
 
 namespace Dumux {
 

@@ -24,6 +24,7 @@
 #ifndef DUMUX_BINARY_COEFF_BRINE_CO2_HH
 #define DUMUX_BINARY_COEFF_BRINE_CO2_HH
 
+#include <dumux/common/parameters.hh>
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/co2.hh>

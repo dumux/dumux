@@ -25,6 +25,9 @@
 #ifndef DUMUX_COMMON_TYPETRAITS_UTILITY_HH
 #define DUMUX_COMMON_TYPETRAITS_UTILITY_HH
 
+#include <cstddef>
+#include <utility>
+
 namespace Dumux {
 
 /*

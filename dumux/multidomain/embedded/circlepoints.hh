@@ -29,6 +29,8 @@
 #include <vector>
 #include <cmath>
 
+#include <dune/common/exceptions.hh>
+
 namespace Dumux {
 namespace EmbeddedCoupling {
 
