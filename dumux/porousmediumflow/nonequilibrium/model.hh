@@ -30,8 +30,8 @@
 #include <dumux/common/dimensionlessnumbers.hh>
 #include <dumux/material/fluidstates/nonequilibrium.hh>
 
-#include <dumux/discretization/fourierslawnonequilibrium.hh>
-#include <dumux/discretization/fourierslawnonequilibrium.hh>
+#include <dumux/flux/fourierslawnonequilibrium.hh>
+#include <dumux/flux/fourierslawnonequilibrium.hh>
 #include <dumux/porousmediumflow/nonequilibrium/thermal/localresidual.hh>
 #include <dumux/porousmediumflow/nonequilibrium/localresidual.hh>
 

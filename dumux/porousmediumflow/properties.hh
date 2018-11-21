@@ -36,9 +36,9 @@
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 #include <dumux/porousmediumflow/velocityoutput.hh>
 
-#include <dumux/discretization/darcyslaw.hh>
-#include <dumux/discretization/fickslaw.hh>
-#include <dumux/discretization/fourierslaw.hh>
+#include <dumux/flux/darcyslaw.hh>
+#include <dumux/flux/fickslaw.hh>
+#include <dumux/flux/fourierslaw.hh>
 
 #include <dumux/material/solidstates/inertsolidstate.hh>
 #include <dumux/material/solidsystems/inertsolidphase.hh>

@@ -35,7 +35,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 
 #include "spatialparams.hh"
-#include <dumux/discretization/maxwellstefanslaw.hh>
+#include <dumux/flux/maxwellstefanslaw.hh>
 
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/material/fluidsystems/base.hh>

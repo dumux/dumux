@@ -63,7 +63,7 @@
 
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/fourierslaw.hh>
+#include <dumux/flux/fourierslaw.hh>
 
 namespace Dumux {
 

@@ -28,7 +28,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/darcyslaw.hh>
+#include <dumux/flux/darcyslaw.hh>
 
 namespace Dumux
 {

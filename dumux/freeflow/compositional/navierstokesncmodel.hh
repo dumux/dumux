@@ -56,8 +56,8 @@
 #include <dumux/freeflow/nonisothermal/model.hh>
 #include <dumux/freeflow/nonisothermal/indices.hh>
 #include <dumux/freeflow/nonisothermal/iofields.hh>
-#include <dumux/discretization/fickslaw.hh>
-#include <dumux/discretization/fourierslaw.hh>
+#include <dumux/flux/fickslaw.hh>
+#include <dumux/flux/fourierslaw.hh>
 
 #include "volumevariables.hh"
 #include "localresidual.hh"

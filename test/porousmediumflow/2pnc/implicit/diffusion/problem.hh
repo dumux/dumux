@@ -33,7 +33,7 @@
 #include <dumux/material/fluidsystems/h2on2.hh>
 
 #include "spatialparams.hh"
-#include <dumux/discretization/maxwellstefanslaw.hh>
+#include <dumux/flux/maxwellstefanslaw.hh>
 
 #ifndef DIFFUSIONTYPE // default to Fick's law if not set through CMake
 #define DIFFUSIONTYPE FicksLaw<TypeTag>

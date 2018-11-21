@@ -27,8 +27,8 @@
 #include <array>
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/fluxvariablesbase.hh>
-#include <dumux/discretization/upwindscheme.hh>
+#include <dumux/flux/fluxvariablesbase.hh>
+#include <dumux/flux/upwindscheme.hh>
 
 namespace Dumux {
 

@@ -32,7 +32,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 
-#include <dumux/discretization/maxwellstefanslaw.hh>
+#include <dumux/flux/maxwellstefanslaw.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
 #include <dumux/io/gnuplotinterface.hh>

@@ -24,7 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_EFFECTIVE_STRESS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_EFFECTIVE_STRESS_LAW_HH
 
-#include <dumux/discretization/effectivestresslaw.hh>
+#include <dumux/flux/effectivestresslaw.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
