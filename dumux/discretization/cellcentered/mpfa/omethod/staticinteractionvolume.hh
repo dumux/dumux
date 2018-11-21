@@ -260,15 +260,11 @@ public:
                                const NodalIndexSet& nodalIndexSet,
                                const FlipScvfIndexSet& flipScvfIndexSet)
     {
-        // the global index of the iv index set that is about to be created
-        const auto curGlobalIndex = ivIndexSetContainer.size();
-
-        // make the one index set for this node
-        ivIndexSetContainer.emplace_back(nodalIndexSet, flipScvfIndexSet);
-
-        // store the index mapping
-        for (const auto scvfIdx : nodalIndexSet.gridScvfIndices())
-            scvfIndexMap[scvfIdx] = curGlobalIndex;
+        // reuse the standard o-method's implementation of this
+        CCMpfaOInteractionVolume<Traits>::addIVIndexSets(ivIndexSetContainer,
+                                                         scvfIndexMap,
+                                                         nodalIndexSet,
+                                                         flipScvfIndexSet);
     }
 
 private:
