@@ -6,9 +6,9 @@ install(FILES
 adaptivegridrestart.hh
 container.hh
 defaultiofields.hh
-fieldnames.hh
 gnuplotinterface.hh
 loadsolution.hh
+name.hh
 ploteffectivediffusivitymodel.hh
 plotmateriallaw.hh
 plotmateriallaw3p.hh
@@ -16,6 +16,7 @@ plotthermalconductivitymodel.hh
 pointcloudvtkwriter.hh
 restart.hh
 staggeredvtkoutputmodule.hh
+velocityoutput.hh
 vtkfunction.hh
 vtkmultiwriter.hh
 vtknestedfunction.hh

@@ -14,6 +14,7 @@ fickslaw.hh
 fluxstencil.hh
 fluxvariablesbase.hh
 fluxvariablescaching.hh
+forchheimerslaw.hh
 fourierslaw.hh
 fourierslawnonequilibrium.hh
 fvgridvariables.hh

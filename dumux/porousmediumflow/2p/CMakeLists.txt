@@ -7,8 +7,8 @@ gridadaptindicator.hh
 griddatatransfer.hh
 incompressiblelocalresidual.hh
 indices.hh
+iofields.hh
 model.hh
 saturationreconstruction.hh
 volumevariables.hh
-vtkoutputfields.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p)
