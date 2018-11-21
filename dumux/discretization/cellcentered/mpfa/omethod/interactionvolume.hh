@@ -160,16 +160,11 @@ public:
         const auto numGlobalScvfs = indexSet.nodalIndexSet().numScvfs();
 
         // reserve memory for local entities
-        elements_.clear();
-        scvs_.clear();
-        scvfs_.clear();
-        localFaceData_.clear();
-        dirichletData_.clear();
-        elements_.reserve(numLocalScvs);
-        scvs_.reserve(numLocalScvs);
-        scvfs_.reserve(numFaces_);
-        dirichletData_.reserve(numFaces_);
-        localFaceData_.reserve(numGlobalScvfs);
+        elements_.clear();      elements_.reserve(numLocalScvs);
+        scvs_.clear();          scvs_.reserve(numLocalScvs);
+        scvfs_.clear();         scvfs_.reserve(numFaces_);
+        localFaceData_.clear(); localFaceData_.reserve(numGlobalScvfs);
+        dirichletData_.clear(); dirichletData_.reserve(numFaces_);
 
         // set up stuff related to sub-control volumes
         for (LocalIndexType scvIdxLocal = 0; scvIdxLocal < numLocalScvs; scvIdxLocal++)
@@ -193,19 +188,13 @@ public:
 
             // the neighboring scvs in local indices (order: 0 - inside scv, 1..n - outside scvs)
             const auto& neighborScvIndicesLocal = indexSet.neighboringLocalScvIndices(faceIdxLocal);
-
-            // create local face data object for this face
-            localFaceData_.emplace_back(faceIdxLocal, neighborScvIndicesLocal[0], scvf.index());
-
-            // we will need as many omegas as scvs around the face
             const auto numNeighborScvs = neighborScvIndicesLocal.size();
+            localFaceData_.emplace_back(faceIdxLocal, neighborScvIndicesLocal[0], scvf.index());
 
             // create iv-local scvf object
             if (scvf.boundary())
             {
-                const auto bcTypes = problem.boundaryTypes(elements_[neighborScvIndicesLocal[0]], scvf);
-
-                if (bcTypes.hasOnlyDirichlet())
+                if (problem.boundaryTypes(elements_[neighborScvIndicesLocal[0]], scvf).hasOnlyDirichlet())
                 {
                     scvfs_.emplace_back(scvf, neighborScvIndicesLocal, numKnowns_++, /*isDirichlet*/true);
                     dirichletData_.emplace_back(scvf.outsideScvIdx());
@@ -285,7 +274,8 @@ public:
 
     //! returns the number of interaction volumes living around a vertex
     template< class NI >
-    static constexpr std::size_t numIVAtVertex(const NI& nodalIndexSet) { return 1; }
+    static constexpr std::size_t numIVAtVertex(const NI& nodalIndexSet)
+    { return 1; }
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf
