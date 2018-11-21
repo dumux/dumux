@@ -119,7 +119,7 @@ public:
                 const auto& indexSet = fvGridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf);
                 fluxVarsCacheContainer.secondaryInteractionVolumes().emplace_back();
                 secondaryIv_ = &fluxVarsCacheContainer.secondaryInteractionVolumes().back();
-                secondaryIv_->setUpLocalScope(indexSet, problem(), fvGeometry);
+                secondaryIv_->bind(indexSet, problem(), fvGeometry);
 
                 // prepare the corresponding data handle
                 fluxVarsCacheContainer.secondaryDataHandles().emplace_back();
@@ -149,7 +149,7 @@ public:
                 const auto& indexSet = fvGridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf);
                 fluxVarsCacheContainer.primaryInteractionVolumes().emplace_back();
                 primaryIv_ = &fluxVarsCacheContainer.primaryInteractionVolumes().back();
-                primaryIv_->setUpLocalScope(indexSet, problem(), fvGeometry);
+                primaryIv_->bind(indexSet, problem(), fvGeometry);
 
                 // prepare the corresponding data handle
                 fluxVarsCacheContainer.primaryDataHandles().emplace_back();

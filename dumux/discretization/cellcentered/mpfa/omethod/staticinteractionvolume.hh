@@ -146,9 +146,9 @@ public:
 
     //! Sets up the local scope for a given iv index set
     template< class Problem, class FVElementGeometry >
-    void setUpLocalScope(const IndexSet& indexSet,
-                         const Problem& problem,
-                         const FVElementGeometry& fvGeometry)
+    void bind(const IndexSet& indexSet,
+              const Problem& problem,
+              const FVElementGeometry& fvGeometry)
     {
         // for the o-scheme, the stencil is equal to the scv
         // index set of the dual grid's nodal index set

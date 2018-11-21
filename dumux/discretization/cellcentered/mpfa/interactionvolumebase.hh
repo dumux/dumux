@@ -80,10 +80,10 @@ public:
 
     //! Prepares everything for the assembly
     template< class Problem, class FVElementGeometry >
-    void setUpLocalScope(const typename Traits::IndexSet& indexSet,
-                         const Problem& problem,
-                         const FVElementGeometry& fvGeometry)
-    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a setUpLocalScope() function"); }
+    void bind(const typename Traits::IndexSet& indexSet,
+              const Problem& problem,
+              const FVElementGeometry& fvGeometry)
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a bind() function"); }
 
     //! returns the number of "primary" scvfs of this interaction volume
     std::size_t numFaces() const
