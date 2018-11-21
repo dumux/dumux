@@ -350,7 +350,7 @@ private:
             if(facetIsNormal_(innerElementIntersection.indexInInside(), intersection_.indexInInside()))
             {
                 const int innerElementIntersectionIdx = innerElementIntersection.indexInInside();
-                setNormalPairInfo_(innerElementIntersectionIdx, element_, numPairInnerNormalIdx, 0);
+                setNormalPairFirstInfo_(innerElementIntersectionIdx, element_, numPairInnerNormalIdx);
                 numPairInnerNormalIdx++;
 
                 innerNormalFacePos_.reserve(numPairs);
@@ -372,7 +372,7 @@ private:
                 if(facetIsNormal_(directNeighborElementIntersection.indexInInside(), intersection_.indexInOutside()))
                 {
                     const int directNeighborElemIsIdx = directNeighborElementIntersection.indexInInside();
-                    setNormalPairInfo_(directNeighborElemIsIdx, directNeighborElement, numPairOuterNormalIdx, 1);
+                    setNormalPairSecondInfo_(directNeighborElemIsIdx, directNeighborElement, numPairOuterNormalIdx);
                     numPairOuterNormalIdx++;
                 }
             }
@@ -480,36 +480,30 @@ private:
         return element.template subEntity <1> (localFacetIdx);
     };
 
-    //! Sets the information about the normal faces
-    void setNormalPairInfo_(const int isIdx, const Element& element, const int numPairsIdx, const int innerOuterIdx)
+    //! Sets the information about the normal faces (within the element)
+    void setNormalPairFirstInfo_(const int isIdx, const Element& element, const int numPairsIdx)
     {
-        switch(innerOuterIdx)
-        {
-            case 0:
-            {
-                // store the inner normal dofIdx
-                auto& dofIdx = pairData_[numPairsIdx].normalPair.first;
-                dofIdx = gridView_.indexSet().subIndex(element, isIdx, codimIntersection);
+        // store the inner normal dofIdx
+        auto& dofIdx = pairData_[numPairsIdx].normalPair.first;
+        dofIdx = gridView_.indexSet().subIndex(element, isIdx, codimIntersection);
 
-                // store the local normal facet index
-                this->pairData_[numPairsIdx].localNormalFaceIdx = isIdx;
-            break;
-            }
-            case 1:
-            {
-                // store the dofIdx
-                auto& dofIdx = pairData_[numPairsIdx].normalPair.second;
-                dofIdx = gridView_.indexSet().subIndex(element, isIdx, codimIntersection);
+        // store the local normal facet index
+        this->pairData_[numPairsIdx].localNormalFaceIdx = isIdx;
+    }
 
-                // store the element distance
-                const auto& outerNormalFacet = getFacet_(isIdx, element);
-                const auto outerNormalFacetPos = outerNormalFacet.geometry().center();
-                const auto& innerNormalFacet = getFacet_(isIdx, element_);
-                const auto innerNormalFacetPos = innerNormalFacet.geometry().center();
-                this->pairData_[numPairsIdx].normalDistance = (innerNormalFacetPos - outerNormalFacetPos).two_norm();
-            break;
-            }
-        }
+    //! Sets the information about the normal faces (in the neighbor element)
+    void setNormalPairSecondInfo_(const int isIdx, const Element& element, const int numPairsIdx)
+    {
+        // store the dofIdx
+        auto& dofIdx = pairData_[numPairsIdx].normalPair.second;
+        dofIdx = gridView_.indexSet().subIndex(element, isIdx, codimIntersection);
+
+        // store the element distance
+        const auto& outerNormalFacet = getFacet_(isIdx, element);
+        const auto outerNormalFacetPos = outerNormalFacet.geometry().center();
+        const auto& innerNormalFacet = getFacet_(isIdx, element_);
+        const auto innerNormalFacetPos = innerNormalFacet.geometry().center();
+        this->pairData_[numPairsIdx].normalDistance = (innerNormalFacetPos - outerNormalFacetPos).two_norm();
     }
 
     //! Sets the information about the parallel distances
