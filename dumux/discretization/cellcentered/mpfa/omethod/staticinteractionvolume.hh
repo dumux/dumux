@@ -138,6 +138,9 @@ class CCMpfaOStaticInteractionVolume
     static constexpr int numScv = Traits::numScvs;
 
 public:
+    //! This does not work on surface grids
+    static_assert(int(GridView::dimension)==int(GridView::dimensionworld), "static iv does not work on surface grids");
+
     //! export the standard o-methods dirichlet data
     using DirichletData = typename CCMpfaOInteractionVolume< Traits >::DirichletData;
 
@@ -170,13 +173,10 @@ public:
         for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < numScvf; ++faceIdxLocal)
         {
             const auto& scvf = fvGeometry.scvf(indexSet.gridScvfIndex(faceIdxLocal));
+            assert(!scvf.boundary());
 
             // the neighboring scvs in local indices (order: 0 - inside scv, 1..n - outside scvs)
             const auto& neighborScvIndicesLocal = indexSet.neighboringLocalScvIndices(faceIdxLocal);
-
-            // this does not work for network grids or on boundaries
-            assert(!scvf.boundary());
-            assert(neighborScvIndicesLocal.size() == 2);
 
             // create iv-local scvf objects
             scvfs_[faceIdxLocal] = LocalScvfType(scvf, neighborScvIndicesLocal, faceIdxLocal, /*isDirichlet*/false);
