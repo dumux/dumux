@@ -24,6 +24,8 @@
 #ifndef DUMUX_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_PRIMARY_VARIABLE_SWITCH_HH
 
+#include <iostream>
+
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 #include <dumux/discretization/method.hh>

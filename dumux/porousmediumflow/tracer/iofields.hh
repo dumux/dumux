@@ -26,6 +26,7 @@
 
 #include <string>
 
+#include <dune/common/deprecated.hh>
 #include <dumux/io/name.hh>
 
 namespace Dumux {

@@ -30,6 +30,8 @@
 #ifndef DUMUX_MINERALIZATION_MODEL_HH
 #define DUMUX_MINERALIZATION_MODEL_HH
 
+#include <string>
+
 namespace Dumux {
 
 /*!

@@ -28,6 +28,7 @@
 
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/assembly/numericepsilon.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 

@@ -27,7 +27,13 @@
 #define DUMUX_MULTIDOMAIN_EMBEDDED_EXTENDEDSOURCESTENCIL_HH
 
 #include <vector>
+
+#include <dune/common/indices.hh>
+
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/numericdifferentiation.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 namespace EmbeddedCoupling {

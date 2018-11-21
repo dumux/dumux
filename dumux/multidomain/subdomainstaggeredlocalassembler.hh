@@ -27,6 +27,8 @@
 #define DUMUX_MULTIDOMAIN_STAGGERED_LOCAL_ASSEMBLER_HH
 
 #include <dune/common/reservedvector.hh>
+#include <dune/common/indices.hh>
+#include <dune/common/hybridutilities.hh>
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
 
 #include <dumux/common/reservedblockvector.hh>
@@ -36,6 +38,7 @@
 #include <dumux/common/typetraits/utility.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
+#include <dumux/discretization/staggered/elementsolution.hh>
 
 namespace Dumux {
 

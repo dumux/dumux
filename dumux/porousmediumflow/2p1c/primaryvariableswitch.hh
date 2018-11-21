@@ -26,6 +26,7 @@
 
 #include <iostream>
 
+#include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 
 namespace Dumux {

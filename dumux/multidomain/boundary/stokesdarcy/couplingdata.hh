@@ -27,6 +27,8 @@
 #ifndef DUMUX_STOKES_DARCY_COUPLINGDATA_HH
 #define DUMUX_STOKES_DARCY_COUPLINGDATA_HH
 
+#include <numeric>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 #include <dumux/multidomain/couplingmanager.hh>

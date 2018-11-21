@@ -146,11 +146,7 @@ public:
                                      int phaseIdx,
                                      bool isGasPhase)
     {
-        Valgrind::CheckDefined(fs.temperature(phaseIdx));
-        Valgrind::CheckDefined(fs.pressure(phaseIdx));
-
         Scalar Vm = 0;
-        Valgrind::SetUndefined(Vm);
 
         Scalar T = fs.temperature(phaseIdx);
         Scalar p = fs.pressure(phaseIdx);
@@ -213,7 +209,6 @@ public:
             }
         }
 
-        Valgrind::CheckDefined(Vm);
         using std::isfinite;
         assert(isfinite(Vm) && Vm > 0);
         return Vm;

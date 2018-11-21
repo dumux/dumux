@@ -44,6 +44,8 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
+#include <dumux/multidomain/embedded/couplingmanager1d3d.hh> // for coupling mode
+
 #include "spatialparams_tissue.hh"
 
 namespace Dumux {

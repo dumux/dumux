@@ -27,6 +27,8 @@
 #define DUMUX_MULTIDOMAIN_BOX_LOCAL_ASSEMBLER_HH
 
 #include <dune/common/reservedvector.hh>
+#include <dune/common/indices.hh>
+#include <dune/common/hybridutilities.hh>
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
 #include <dune/istl/matrixindexset.hh>
 

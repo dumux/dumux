@@ -25,6 +25,8 @@
 #define DUMUX_BASE_FLUID_SYSTEM_HH
 
 #include <string>
+
+#include <dune/common/exceptions.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 #include "nullparametercache.hh"
 

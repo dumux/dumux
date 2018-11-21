@@ -32,6 +32,7 @@
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
+#include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 
 namespace Dumux
 {

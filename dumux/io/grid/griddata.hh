@@ -32,6 +32,8 @@
 #include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/common/gridfactory.hh>
+#include <dune/grid/io/file/dgfparser/parser.hh>
+#include <dune/grid/io/file/dgfparser/gridptr.hh>
 
 // UGGrid specific includes
 #if HAVE_UG

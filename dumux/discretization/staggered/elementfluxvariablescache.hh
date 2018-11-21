@@ -29,6 +29,8 @@
 #include <iterator>
 #include <vector>
 
+#include <dune/common/exceptions.hh>
+
 namespace Dumux {
 
 /*!

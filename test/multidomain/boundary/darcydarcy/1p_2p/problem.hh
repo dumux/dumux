@@ -24,6 +24,7 @@
 #ifndef DUMUX_ONEP_SUB_TEST_PROBLEM_HH
 #define DUMUX_ONEP_SUB_TEST_PROBLEM_HH
 
+#include <dune/common/indices.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include "spatialparams.hh"
 

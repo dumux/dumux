@@ -23,9 +23,11 @@
 #ifndef DUMUX_GRIDADAPT_HH
 #define DUMUX_GRIDADAPT_HH
 
+#include <unordered_map>
+#include <dune/grid/common/partitionset.hh>
+
 #include "properties.hh"
 #include "gridadaptproperties.hh"
-#include <unordered_map>
 
 namespace Dumux
 {

@@ -23,6 +23,8 @@
 #ifndef DUMUX_FACETCOUPLING_MAPPER_HH
 #define DUMUX_FACETCOUPLING_MAPPER_HH
 
+#include <memory>
+
 #include <dune/common/indices.hh>
 #include <dumux/discretization/method.hh>
 

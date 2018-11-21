@@ -23,6 +23,7 @@
 #ifndef DUMUX_TWOP_CORNERPOINT_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TWOP_CORNERPOINT_TEST_SPATIAL_PARAMS_HH
 
+#if HAVE_OPM_GRID
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 
 #include <dumux/material/spatialparams/fv.hh>
@@ -201,5 +202,9 @@ private:
 };
 
 } // end namespace Dumux
+
+#else
+#warning "The opm-grid module is needed to use this class!"
+#endif
 
 #endif

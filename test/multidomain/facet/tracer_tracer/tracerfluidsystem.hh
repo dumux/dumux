@@ -23,6 +23,7 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_TRACER_FLUIDSYSTEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_FLUIDSYSTEM_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
 namespace Dumux {

@@ -26,6 +26,7 @@
 
 #include <memory>
 #include <algorithm>
+#include <map>
 
 #include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/grid/common/partitionset.hh>

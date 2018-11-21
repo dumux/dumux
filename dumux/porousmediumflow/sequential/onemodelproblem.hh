@@ -20,6 +20,7 @@
 #ifndef DUMUX_ONE_MODEL_PROBLEM_HH
 #define DUMUX_ONE_MODEL_PROBLEM_HH
 
+#include <dune/common/shared_ptr.hh>
 #include <dumux/common/properties/propertysystemmacros.hh>
 #include <dumux/porousmediumflow/sequential/properties.hh>
 #include <dumux/io/vtkmultiwriter.hh>

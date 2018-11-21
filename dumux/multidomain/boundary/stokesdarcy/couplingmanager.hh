@@ -34,6 +34,7 @@
 #include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/multidomain/staggeredcouplingmanager.hh>
+#include <dumux/discretization/staggered/elementsolution.hh>
 
 #include "couplingdata.hh"
 #include "couplingmapper.hh"

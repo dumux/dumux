@@ -1078,6 +1078,11 @@ typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>
 template <class RawComponent, bool useVaporPressure>
 unsigned TabulatedComponent<RawComponent, useVaporPressure>::nDensity_;
 
+// forward declaration
+template <class Component>
+struct IsAqueous;
+
+// we are aqueous if the raw compont is so
 template <class RawComponent, bool useVaporPressure>
 struct IsAqueous<TabulatedComponent<RawComponent, useVaporPressure>> : public IsAqueous<RawComponent> {};
 

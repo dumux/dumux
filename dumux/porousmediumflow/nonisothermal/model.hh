@@ -53,6 +53,7 @@
 #ifndef DUMUX_NONISOTHERMAL_MODEL_HH
 #define DUMUX_NONISOTHERMAL_MODEL_HH
 
+#include <string>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 
 namespace Dumux {

@@ -43,6 +43,7 @@
 #ifndef DUMUX_FREEFLOW_NI_MODEL_HH
 #define DUMUX_FREEFLOW_NI_MODEL_HH
 
+#include <string>
 #include "indices.hh"
 
 namespace Dumux {
