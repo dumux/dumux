@@ -21,6 +21,7 @@ granite.hh
 h2.hh
 h2o.hh
 heavyoil.hh
+ion.hh
 liquid.hh
 mesitylene.hh
 n2.hh

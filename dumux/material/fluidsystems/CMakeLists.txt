@@ -6,6 +6,7 @@ install(FILES
 2pimmiscible.hh
 3pimmiscible.hh
 base.hh
+brine.hh
 brineair.hh
 brineco2.hh
 h2oair.hh

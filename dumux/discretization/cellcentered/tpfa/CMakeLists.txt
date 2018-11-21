@@ -5,6 +5,7 @@ elementfluxvariablescache.hh
 elementvolumevariables.hh
 fickslaw.hh
 fluxvariablescachefiller.hh
+forchheimerslaw.hh
 fourierslaw.hh
 fvelementgeometry.hh
 fvgridgeometry.hh
