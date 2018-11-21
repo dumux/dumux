@@ -26,6 +26,7 @@
 #define DUMUX_ENERGY_VOLUME_VARIABLES_HH
 
 #include <type_traits>
+#include <dune/common/std/type_traits.hh>
 
 #include <dumux/material/solidsystems/inertsolidphase.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
@@ -34,35 +35,29 @@ namespace Dumux {
 
 #ifndef DOXYGEN
 namespace Detail {
-// helper struct detecting if the user-defined spatial params class has user-specified functions
+// helper structs and functions detecting if the user-defined spatial params class has user-specified functions
 // for solidHeatCapacity, solidDensity, and solidThermalConductivity.
-// for g++ > 5.3, this can be replaced by a lambda
-template<class E, class SCV, class ES, class SS>
-struct hasSolidHeatCapacity
-{
-    template<class SpatialParams>
-    auto operator()(const SpatialParams& a)
-    -> decltype(a.solidHeatCapacity(std::declval<E>(), std::declval<SCV>(), std::declval<ES>(), std::declval<SS>()))
-    {}
-};
 
-template<class E, class SCV, class ES, class SS>
-struct hasSolidDensity
-{
-    template<class SpatialParams>
-    auto operator()(const SpatialParams& a)
-    -> decltype(a.solidDensity(std::declval<E>(), std::declval<SCV>(), std::declval<ES>(), std::declval<SS>()))
-    {}
-};
+template <typename T, typename ...Ts>
+using SolidHeatCapacityDetector = decltype(std::declval<T>().solidHeatCapacity(std::declval<Ts>()...));
 
-template<class E, class SCV, class ES, class SS>
-struct hasSolidThermalConductivity
-{
-    template<class SpatialParams>
-    auto operator()(const SpatialParams& a)
-    -> decltype(a.solidThermalConductivity(std::declval<E>(), std::declval<SCV>(), std::declval<ES>(), std::declval<SS>()))
-    {}
-};
+template<class T, typename ...Args>
+static constexpr bool hasSolidHeatCapacity()
+{ return Dune::Std::is_detected<SolidHeatCapacityDetector, T, Args...>::value; }
+
+template <typename T, typename ...Ts>
+using SolidDensityDetector = decltype(std::declval<T>().solidDensity(std::declval<Ts>()...));
+
+template<class T, typename ...Args>
+static constexpr bool hasSolidDensity()
+{ return Dune::Std::is_detected<SolidDensityDetector, T, Args...>::value; }
+
+template <typename T, typename ...Ts>
+using SolidThermalConductivityDetector = decltype(std::declval<T>().solidThermalConductivity(std::declval<Ts>()...));
+
+template<class T, typename ...Args>
+static constexpr bool hasSolidThermalConductivity()
+{ return Dune::Std::is_detected<SolidThermalConductivityDetector, T, Args...>::value; }
 
 template<class SolidSystem>
 struct isInertSolidPhase : public std::false_type {};
@@ -319,15 +314,13 @@ private:
      * \param solidState the solid state
      * \note this gets selected if the user uses the solidsystem / solidstate interface
      */
-    template<class ElemSol, class Problem, class Element, class Scv>
-    auto solidHeatCapacity_(const ElemSol& elemSol,
-                            const Problem& problem,
-                            const Element& element,
-                            const Scv& scv,
-                            const SolidState& solidState)
-    -> typename std::enable_if_t<!decltype(
-            isValid(Detail::hasSolidHeatCapacity<Element, Scv, ElemSol, SolidState>())(problem.spatialParams())
-                                            )::value, Scalar>
+    template<class ElemSol, class Problem, class Element, class Scv,
+             std::enable_if_t<!Detail::hasSolidHeatCapacity<typename Problem::SpatialParams, Element, Scv, ElemSol, SolidState>(), int> = 0>
+    Scalar solidHeatCapacity_(const ElemSol& elemSol,
+                              const Problem& problem,
+                              const Element& element,
+                              const Scv& scv,
+                              const SolidState& solidState)
     {
         return SolidSystem::heatCapacity(solidState);
     }
@@ -341,15 +334,13 @@ private:
      * \param solidState the solid state
      * \note this gets selected if the user uses the solidsystem / solidstate interface
      */
-    template<class ElemSol, class Problem, class Element, class Scv>
-    auto solidDensity_(const ElemSol& elemSol,
-                       const Problem& problem,
-                       const Element& element,
-                       const Scv& scv,
-                       const SolidState& solidState)
-    -> typename std::enable_if_t<!decltype(
-            isValid(Detail::hasSolidDensity<Element, Scv, ElemSol, SolidState>())(problem.spatialParams())
-                                            )::value, Scalar>
+    template<class ElemSol, class Problem, class Element, class Scv,
+             std::enable_if_t<!Detail::hasSolidDensity<typename Problem::SpatialParams, Element, Scv, ElemSol, SolidState>(), int> = 0>
+    Scalar solidDensity_(const ElemSol& elemSol,
+                         const Problem& problem,
+                         const Element& element,
+                         const Scv& scv,
+                         const SolidState& solidState)
     {
         return SolidSystem::density(solidState);
     }
@@ -363,15 +354,13 @@ private:
      * \param solidState the solid state
      * \note this gets selected if the user uses the solidsystem / solidstate interface
      */
-    template<class ElemSol, class Problem, class Element, class Scv>
-    auto solidThermalConductivity_(const ElemSol& elemSol,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const Scv& scv,
-                                   const SolidState& solidState)
-    -> typename std::enable_if_t<!decltype(
-            isValid(Detail::hasSolidThermalConductivity<Element, Scv, ElemSol, SolidState>())(problem.spatialParams())
-                                            )::value, Scalar>
+    template<class ElemSol, class Problem, class Element, class Scv,
+             std::enable_if_t<!Detail::hasSolidThermalConductivity<typename Problem::SpatialParams, Element, Scv, ElemSol, SolidState>(), int> = 0>
+    Scalar solidThermalConductivity_(const ElemSol& elemSol,
+                                     const Problem& problem,
+                                     const Element& element,
+                                     const Scv& scv,
+                                     const SolidState& solidState)
     {
         return SolidSystem::thermalConductivity(solidState);
     }
@@ -394,15 +383,13 @@ private:
      * \note this gets selected if the user uses the simple spatial params interface in
      *       combination with an InertSolidPhase as solid system
      */
-    template<class ElemSol, class Problem, class Element, class Scv>
-    auto solidHeatCapacity_(const ElemSol& elemSol,
-                            const Problem& problem,
-                            const Element& element,
-                            const Scv& scv,
-                            const SolidState& solidState)
-    -> typename std::enable_if_t<decltype(
-            isValid(Detail::hasSolidHeatCapacity<Element, Scv, ElemSol, SolidState>())(problem.spatialParams())
-                                            )::value, Scalar>
+    template<class ElemSol, class Problem, class Element, class Scv,
+             std::enable_if_t<Detail::hasSolidHeatCapacity<typename Problem::SpatialParams, Element, Scv, ElemSol, SolidState>(), int> = 0>
+    Scalar solidHeatCapacity_(const ElemSol& elemSol,
+                              const Problem& problem,
+                              const Element& element,
+                              const Scv& scv,
+                              const SolidState& solidState)
     {
         static_assert(Detail::isInertSolidPhase<SolidSystem>::value,
             "solidHeatCapacity can only be overwritten in the spatial params when the solid system is a simple InertSolidPhase\n"
@@ -420,15 +407,13 @@ private:
      * \note this gets selected if the user uses the simple spatial params interface in
      *       combination with an InertSolidPhase as solid system
      */
-    template<class ElemSol, class Problem, class Element, class Scv>
-    auto solidDensity_(const ElemSol& elemSol,
-                       const Problem& problem,
-                       const Element& element,
-                       const Scv& scv,
-                       const SolidState& solidState)
-    -> typename std::enable_if_t<decltype(
-            isValid(Detail::hasSolidDensity<Element, Scv, ElemSol, SolidState>())(problem.spatialParams())
-                                            )::value, Scalar>
+    template<class ElemSol, class Problem, class Element, class Scv,
+             std::enable_if_t<Detail::hasSolidDensity<typename Problem::SpatialParams, Element, Scv, ElemSol, SolidState>(), int> = 0>
+    Scalar solidDensity_(const ElemSol& elemSol,
+                         const Problem& problem,
+                         const Element& element,
+                         const Scv& scv,
+                         const SolidState& solidState)
     {
         static_assert(Detail::isInertSolidPhase<SolidSystem>::value,
             "solidDensity can only be overwritten in the spatial params when the solid system is a simple InertSolidPhase\n"
@@ -446,15 +431,13 @@ private:
      * \note this gets selected if the user uses the simple spatial params interface in
      *       combination with an InertSolidPhase as solid system
      */
-    template<class ElemSol, class Problem, class Element, class Scv>
-    auto solidThermalConductivity_(const ElemSol& elemSol,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const Scv& scv,
-                                   const SolidState& solidState)
-    -> typename std::enable_if_t<decltype(
-            isValid(Detail::hasSolidThermalConductivity<Element, Scv, ElemSol, SolidState>())(problem.spatialParams())
-                                            )::value, Scalar>
+    template<class ElemSol, class Problem, class Element, class Scv,
+             std::enable_if_t<Detail::hasSolidThermalConductivity<typename Problem::SpatialParams, Element, Scv, ElemSol, SolidState>(), int> = 0>
+    Scalar solidThermalConductivity_(const ElemSol& elemSol,
+                                     const Problem& problem,
+                                     const Element& element,
+                                     const Scv& scv,
+                                     const SolidState& solidState)
     {
         static_assert(Detail::isInertSolidPhase<SolidSystem>::value,
             "solidThermalConductivity can only be overwritten in the spatial params when the solid system is a simple InertSolidPhase\n"
