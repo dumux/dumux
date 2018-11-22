@@ -32,7 +32,6 @@
 #include <dune/common/reservedvector.hh>
 
 #include <dumux/common/math.hh>
-
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 #include <dumux/discretization/cellcentered/mpfa/localfacedata.hh>
@@ -41,6 +40,7 @@
 #include "localassembler.hh"
 #include "localsubcontrolentities.hh"
 #include "interactionvolumeindexset.hh"
+#include "scvgeometryhelper.hh"
 
 namespace Dumux
 {
@@ -271,6 +271,11 @@ public:
     //! returns a reference to the information container on Dirichlet BCs within this iv
     const std::vector<DirichletData>& dirichletData() const
     { return dirichletData_; }
+
+    //! returns the geometry of the i-th local scv
+    template< class FVElementGeometry >
+    auto getScvGeometry(LocalIndexType ivLocalScvIdx, const FVElementGeometry& fvGeometry) const
+    { return CCMpfaOScvGeometryHelper<LocalScvType>::computeScvGeometry(ivLocalScvIdx, *this, fvGeometry); }
 
     //! returns the number of interaction volumes living around a vertex
     template< class NI >

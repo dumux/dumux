@@ -35,14 +35,15 @@
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 #include <dumux/discretization/cellcentered/mpfa/localfacedata.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 
 #include "localassembler.hh"
 #include "localsubcontrolentities.hh"
 #include "interactionvolumeindexset.hh"
+#include "interactionvolume.hh"
+#include "scvgeometryhelper.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 //! Forward declaration of the o-method's static interaction volume
 template< class Traits > class CCMpfaOStaticInteractionVolume;
 
@@ -243,6 +244,11 @@ public:
     //! Here, we return an empty container as this implementation cannot be used on boundaries.
     const std::array<DirichletData, 0>& dirichletData() const
     { return dirichletData_; }
+
+    //! returns the geometry of the i-th local scv
+    template< class FVElementGeometry >
+    auto getScvGeometry(LocalIndexType ivLocalScvIdx, const FVElementGeometry& fvGeometry) const
+    { return CCMpfaOScvGeometryHelper<LocalScvType>::computeScvGeometry(ivLocalScvIdx, *this, fvGeometry); }
 
     //! returns the number of interaction volumes living around a vertex
     template< class NI >

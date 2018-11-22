@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
+#include <dune/geometry/multilineargeometry.hh>
 
 namespace Dumux
 {
@@ -74,6 +75,10 @@ class CCMpfaInteractionVolumeBase
     using LocalScvType = typename T::LocalScvType;
     using LocalScvfType = typename T::LocalScvfType;
 
+    using ScvGeometry = Dune::MultiLinearGeometry<typename LocalScvType::ctype,
+                                                  LocalScvType::myDimension,
+                                                  LocalScvType::worldDimension>;
+
 public:
     //! state the traits type publicly
     using Traits = T;
@@ -100,6 +105,11 @@ public:
     //! returns the number of scvs embedded in this interaction volume
     std::size_t numScvs() const
     { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a numScvs() function"); }
+
+    //! returns the geometry of the i-th local scv
+    template< class FVElementGeometry >
+    ScvGeometry computeScvGeometry(LocalIndexType ivLocalScvIdx, const FVElementGeometry& fvGeometry)
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a computeScvGeometry() function"); }
 
     //! Returns a reference to the container with the local face data. The actual type of
     //! the container depends on the interaction volume implementation. At this point we throw
