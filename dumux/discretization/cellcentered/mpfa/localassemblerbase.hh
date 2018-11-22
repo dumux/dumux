@@ -137,6 +137,29 @@ class InteractionVolumeAssemblerBase
     }
 
     /*!
+     * \brief Assembles the vector of face unknowns within an interaction volume.
+     * \note  This requires the data handle to be fully assembled already.
+     *
+     * \param handle The data handle in which the vector is stored
+     * \param iv The interaction volume
+     */
+    template< class DataHandle, class IV >
+    static typename IV::Traits::MatVecTraits::FaceVector
+    assembleFaceUnkowns(const DataHandle& handle, const IV& iv)
+    {
+        typename IV::Traits::MatVecTraits::FaceVector u;
+        resizeVector_(u, iv.numFaces());
+
+        handle.AB().mv(handle.uj(), u);
+
+        // maybe add gravity terms
+        if (handle.deltaG().size() == iv.numUnknowns())
+            handle.AB().umv(handle.deltaG(), u);
+
+        return u;
+    }
+
+    /*!
      * \brief Assembles the gravitational flux contributions on the scvfs within an
      *        interaction volume.
      *
