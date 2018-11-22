@@ -182,15 +182,17 @@ public:
                 jacobianT1.mv(globalNormal, localNormal);
                 localNormal /= localNormal.two_norm();
 
-                // insantiate the flux variables
+                // instantiate the flux variables
                 FluxVariables fluxVars;
                 fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
                 // get the volume flux divided by the area of the
                 // subcontrolvolume face in the reference element
-                // TODO: Divide by extrusion factor!!?
                 Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
+                flux /= problem_.extrusionFactor(element,
+                                                 fvGeometry.scv(scvf.insideScvIdx()),
+                                                 elementSolution(element, elemVolVars, fvGeometry));
 
                 // transform the volume flux into a velocity vector
                 Velocity tmpVelocity = localNormal;
@@ -230,17 +232,19 @@ public:
 
             // first we extract the corner indices for each scv for the CIV method
             // for network grids there might be multiple intersection with the same geometryInInside
-            // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+            // we identify those by the indexInInside for now (assumes conforming grids at branching facets)
             // here we keep track of them
             std::vector<bool> handledScvf;
-            if (dim < dimWorld) handledScvf.resize(element.subEntities(1), false);
+            if (dim < dimWorld)
+                handledScvf.resize(element.subEntities(1), false);
 
             // find the local face indices of the scvfs (for conforming meshes)
             std::vector<unsigned int> scvfIndexInInside(fvGeometry.numScvf());
             int localScvfIdx = 0;
             for (const auto& intersection : intersections(fvGridGeometry_.gridView(), element))
             {
-                if (dim < dimWorld) if (handledScvf[intersection.indexInInside()]) continue;
+                if (dim < dimWorld && handledScvf[intersection.indexInInside()])
+                    continue;
 
                 if (intersection.neighbor() || intersection.boundary())
                 {
@@ -248,7 +252,8 @@ public:
                         scvfIndexInInside[localScvfIdx++] = intersection.indexInInside();
 
                     // for surface and network grids mark that we handled this face
-                    if (dim < dimWorld) handledScvf[intersection.indexInInside()] = true;
+                    if (dim < dimWorld)
+                        handledScvf[intersection.indexInInside()] = true;
                 }
             }
 

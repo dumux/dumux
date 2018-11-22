@@ -258,7 +258,7 @@ private:
         //! (1) Assemble all variable fields and add to writer
         //////////////////////////////////////////////////////////////
 
-        // instatiate the velocity output
+        // instantiate the velocity output
         using VelocityVector = typename VelocityOutput::VelocityVector;
         std::vector<VelocityVector> velocity(velocityOutput_->numPhases());
 
@@ -419,7 +419,7 @@ private:
         writer_->clear();
     }
 
-    //! Assembles the fields and adds them to the writer (conforming output)
+    //! Assembles the fields and adds them to the writer (nonconforming output)
     void writeNonConforming_(double time, Dune::VTK::OutputType type)
     {
         if(!isBox)
