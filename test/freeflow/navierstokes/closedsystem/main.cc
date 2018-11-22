@@ -21,67 +21,29 @@
  *
  * \brief Test for the staggered grid Stokes model in a closed domain
  */
- #include <config.h>
+#include <config.h>
 
- #include <ctime>
- #include <iostream>
+#include <ctime>
+#include <iostream>
 
- #include <dune/common/parallel/mpihelper.hh>
- #include <dune/common/timer.hh>
- #include <dune/grid/io/file/dgfparser/dgfexception.hh>
- #include <dune/grid/io/file/vtk.hh>
- #include <dune/istl/io.hh>
-
-#include "problem.hh"
-
-#include <dumux/common/properties.hh>
-#include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
-#include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
-
-#include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
+#include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/timer.hh>
+#include <dune/grid/io/file/dgfparser/dgfexception.hh>
+#include <dune/grid/io/file/vtk.hh>
+#include <dune/istl/io.hh>
 
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
-
-#include <dumux/discretization/method.hh>
-
-#include <dumux/io/staggeredvtkoutputmodule.hh>
+#include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/valgrind.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/staggeredvtkoutputmodule.hh>
+#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
-                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
-                                        "\t-Grid.File                      Name of the file containing the grid \n"
-                                        "\t                                definition in DGF format\n"
-                                        "\t-SpatialParams.LensLowerLeftX   x-coordinate of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensLowerLeftY   y-coordinate of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRightX  x-coordinate of the upper right corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRightY  y-coordinate of the upper right corner of the lens [m] \n"
-                                        "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
-                                        "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
-
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
+#include "problem.hh"
 
 int main(int argc, char** argv) try
 {
@@ -98,7 +60,7 @@ int main(int argc, char** argv) try
         DumuxMessage::print(/*firstCall=*/true);
 
     // parse command line arguments and input file
-    Parameters::init(argc, argv, usage);
+    Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
@@ -122,11 +84,9 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    const auto numDofsCellCenter = leafGridView.size(0);
-    const auto numDofsFace = leafGridView.size(1);
     SolutionVector x;
-    x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
-    x[FVGridGeometry::faceIdx()].resize(numDofsFace);
+    x[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
+    x[FVGridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 

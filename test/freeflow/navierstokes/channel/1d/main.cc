@@ -21,7 +21,6 @@
  *
  * \brief Test for a 1-D staggered grid Navier-Stokes model
  */
-
 #include <config.h>
 
 #include <ctime>
@@ -33,44 +32,18 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include <dumux/common/defaultusagemessage.hh>
-#include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
-
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/discretization/method.hh>
-#include <dumux/io/staggeredvtkoutputmodule.hh>
+#include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/valgrind.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include "problem.hh"
-
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
-                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n";
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
 
 int main(int argc, char** argv) try
 {
@@ -87,7 +60,7 @@ int main(int argc, char** argv) try
         DumuxMessage::print(/*firstCall=*/true);
 
     // parse command line arguments and input file
-    Parameters::init(argc, argv, usage);
+    Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
@@ -111,11 +84,9 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    const auto numDofsCellCenter = leafGridView.size(0);
-    const auto numDofsFace = leafGridView.size(1);
     SolutionVector x;
-    x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
-    x[FVGridGeometry::faceIdx()].resize(numDofsFace);
+    x[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
+    x[FVGridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
