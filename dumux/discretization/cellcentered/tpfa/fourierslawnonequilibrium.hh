@@ -24,14 +24,12 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FOURIERS_LAW_NONEQUILIBRIUM_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_FOURIERS_LAW_NONEQUILIBRIUM_HH
 
-#include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawNonEquilibriumImplementation;
@@ -50,24 +48,18 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cct
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using IndexType = typename GridView::IndexSet::IndexType;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVarsCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
 
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
-
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
-    enum {sPhaseIdx = FluidSystem::numPhases};
+    enum { sPhaseIdx = ModelTraits::numPhases() };
 
 public:
     //! state the discretization method this implementation belongs to
@@ -122,7 +114,7 @@ public:
         if (phaseIdx != sPhaseIdx)
         {
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-           if (numEnergyEqFluid < FluidSystem::numPhases)
+           if (numEnergyEqFluid < ModelTraits::numPhases())
             {
                 insideLambda += ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
             }
@@ -155,7 +147,7 @@ public:
         if (phaseIdx != sPhaseIdx)
         {
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-           if (numEnergyEqFluid < FluidSystem::numPhases)
+           if (numEnergyEqFluid < ModelTraits::numPhases())
             {
                 outsideLambda += ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
             }

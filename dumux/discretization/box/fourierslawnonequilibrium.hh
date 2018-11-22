@@ -46,26 +46,20 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using IndexType = typename GridView::IndexSet::IndexType;
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
-
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
 
     enum { numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>() };
-    enum {sPhaseIdx = FluidSystem::numPhases};
+    enum { sPhaseIdx = ModelTraits::numPhases() };
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
@@ -89,7 +83,7 @@ public:
         if (phaseIdx != sPhaseIdx)
         {
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-            if (numEnergyEqFluid < FluidSystem::numPhases)
+            if (numEnergyEqFluid < ModelTraits::numPhases())
             {
                 insideLambda += ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
                 outsideLambda += ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
