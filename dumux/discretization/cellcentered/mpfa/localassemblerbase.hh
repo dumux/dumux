@@ -282,7 +282,7 @@ protected:
     template< class Matrix,
               class size_type,
               std::enable_if_t<matrix_has_resize_method<Matrix>::value, int> = 0 >
-    void resizeMatrix_(Matrix& M, size_type rows, size_type cols)
+    static void resizeMatrix_(Matrix& M, size_type rows, size_type cols)
     {
         M.resize(rows, cols);
     }
@@ -291,14 +291,14 @@ protected:
     template< class Matrix,
               class size_type,
               std::enable_if_t<!matrix_has_resize_method<Matrix>::value, int> = 0 >
-    void resizeMatrix_(Matrix& M, size_type rows, size_type cols)
+    static void resizeMatrix_(Matrix& M, size_type rows, size_type cols)
     {}
 
     //! resizes a vector to the given size (specialization for dynamic matrix type)
     template< class Vector,
               class size_type,
               std::enable_if_t<vector_has_resize_method<Vector>::value, int> = 0 >
-    void resizeVector_(Vector& v, size_type size)
+    static void resizeVector_(Vector& v, size_type size)
     {
         v.resize(size);
     }
@@ -307,7 +307,7 @@ protected:
     template< class Vector,
               class size_type,
               std::enable_if_t<!vector_has_resize_method<Vector>::value, int> = 0 >
-    void resizeVector_(Vector& v, size_type rows)
+    static void resizeVector_(Vector& v, size_type rows)
     {}
 
 private:
