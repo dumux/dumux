@@ -161,12 +161,12 @@ public:
      * - Assign total concentration to the present phase
      *
      * \param fluidState The sequential fluid state
-     * \param Z1 Feed mass fraction \f$\mathrm{[-]}\f$
+     * \param Z0 Feed mass fraction: Mass of first component per total mass \f$\mathrm{[-]}\f$
      * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
      * \param presentPhaseIdx Subdomain Index = Indication which phase is present
      * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
-    static void concentrationFlash1p2c(FluidState1p2c& fluidState, const Scalar& Z1,const Dune::FieldVector<Scalar,numPhases>
+    static void concentrationFlash1p2c(FluidState1p2c& fluidState, const Scalar& Z0,const Dune::FieldVector<Scalar,numPhases>
                                        phasePressure,const int presentPhaseIdx, const Scalar& temperature)
     {
         // set the temperature, pressure
@@ -175,47 +175,15 @@ public:
         fluidState.setPressure(phase1Idx, phasePressure[phase1Idx]);
 
         fluidState.setPresentPhaseIdx(presentPhaseIdx);
-        fluidState.setMassFraction(presentPhaseIdx,comp0Idx, Z1);
+        fluidState.setMassFraction(presentPhaseIdx,comp0Idx, Z0);
 
-        // calculate mole fraction and average molar mass
-        Scalar xw_alpha= Z1 / FluidSystem::molarMass(comp0Idx);
-        xw_alpha /= ( Z1 / FluidSystem::molarMass(comp0Idx)
-                + (1.-Z1) / FluidSystem::molarMass(comp1Idx));
-        fluidState.setMoleFraction(presentPhaseIdx, comp0Idx, xw_alpha);
-
-//        if (presentPhaseIdx == phase0Idx)
-//        {
-//
-////            fluidState.setMassFraction(phase0Idx,comp0Idx, 0.;
-//
-//
-//
-//
-//
-////            fluidState.moleFractionWater_[phase1Idx] = 0.;
-//
-//            fluidState.setPresentPhaseIdx(presentPhaseIdx);
-//        }
-//        else if (presentPhaseIdx == phase1Idx)
-//        {
-//            fluidState.setMassFraction[phase0Idx] = 0.;
-//            fluidState.setMassFraction[phase1Idx] = Z1;
-//
-//            // interested in nComp => 1-X1
-//            fluidState.moleFractionWater_[phase1Idx] = ( Z1 / FluidSystem::molarMass(0) );   // = moles of compIdx
-//            fluidState.moleFractionWater_[phase1Idx] /= (Z1/ FluidSystem::molarMass(0)
-//                           + (1.-Z1) / FluidSystem::molarMass(1) );    // /= total moles in phase
-//            fluidState.moleFractionWater_[phase1Idx] = 0.;
-//
-//            fluidState.presentPhaseIdx_ = phase1Idx;
-//        }
-//        else
-//            Dune::dgrave << __FILE__ <<": Twophase conditions in single-phase flash!"
-//                << " Z1 is "<<Z1<< std::endl;
+        // transform mass to mole fractions
+        fluidState.setMoleFraction(presentPhaseIdx, comp0Idx, Z0 / FluidSystem::molarMass(comp0Idx)
+                / (Z0 / FluidSystem::molarMass(comp0Idx) + (1. - Z0) / FluidSystem::molarMass(comp1Idx)));
 
         fluidState.setAverageMolarMass(presentPhaseIdx,
-                fluidState.massFraction(presentPhaseIdx, comp0Idx)*FluidSystem::molarMass(comp0Idx)
-                +fluidState.massFraction(presentPhaseIdx, comp1Idx)*FluidSystem::molarMass(comp1Idx));
+                fluidState.massFraction(presentPhaseIdx, comp0Idx) * FluidSystem::molarMass(comp0Idx)
+                + fluidState.massFraction(presentPhaseIdx, comp1Idx) * FluidSystem::molarMass(comp1Idx));
 
         fluidState.setDensity(presentPhaseIdx, FluidSystem::density(fluidState, presentPhaseIdx));
         fluidState.setMolarDensity(presentPhaseIdx, FluidSystem::molarDensity(fluidState, presentPhaseIdx));
@@ -251,17 +219,13 @@ public:
         fluidState.setPressure(phase0Idx, phasePressure[phase0Idx]);
         fluidState.setPressure(phase1Idx, phasePressure[phase1Idx]);
 
-        //in contrast to the standard update() method, satflash() does not calculate nu.
-        fluidState.setNu(phase0Idx, NAN);
-        fluidState.setNu(phase1Idx, NAN);
-
         //mole equilibrium ratios K for in case wPhase is reference phase
-        double k1 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp0Idx);    // = p^wComp_vap
-        double k2 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp1Idx);    // = H^nComp_w
+        double k00 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp0Idx);
+        double k01 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp1Idx);
 
-        // get mole fraction from equilibrium konstants
-        fluidState.setMoleFraction(phase0Idx,comp0Idx, ((1. - k2) / (k1 -k2)));
-        fluidState.setMoleFraction(phase1Idx,comp0Idx, (fluidState.moleFraction(phase0Idx,comp0Idx) * k1));
+        // get mole fraction from equilibrium constants
+        fluidState.setMoleFraction(phase0Idx,comp0Idx, ((1. - k01) / (k00 - k01)));
+        fluidState.setMoleFraction(phase1Idx,comp0Idx, (fluidState.moleFraction(phase0Idx,comp0Idx) * k00));
 
         // transform mole to mass fractions
         fluidState.setMassFraction(phase0Idx, comp0Idx,

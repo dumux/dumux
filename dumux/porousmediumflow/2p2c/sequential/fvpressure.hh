@@ -919,23 +919,23 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     if(postTimeStep)
         cellData.reset();
 
-    // get the overall mass of component 1 Z1 = C^k / (C^1+C^2) [-]
-    Scalar Z1 = cellData.massConcentration(wCompIdx)
+    // get the overall mass of first component Z0 = C^0 / (C^+C^1) [-]
+    Scalar Z0 = cellData.massConcentration(wCompIdx)
             / (cellData.massConcentration(wCompIdx)
                     + cellData.massConcentration(nCompIdx));
 
     // make shure only physical quantities enter flash calculation
-    if(Z1 < 0. || Z1 > 1.)
+    if(Z0 < 0. || Z0 > 1.)
     {
-        Dune::dgrave << "Feed mass fraction unphysical: Z1 = " << Z1
+        Dune::dgrave << "Feed mass fraction unphysical: Z0 = " << Z0
                << " at global Idx " << eIdxGlobal
                << " , because totalConcentration(wCompIdx) = "
                << cellData.totalConcentration(wCompIdx)
                << " and totalConcentration(nCompIdx) = "
                << cellData.totalConcentration(nCompIdx)<< std::endl;
-        if(Z1 < 0.)
+        if(Z0 < 0.)
             {
-            Z1 = 0.;
+            Z0 = 0.;
             cellData.setTotalConcentration(wCompIdx, 0.);
             problem().transportModel().totalConcentration(wCompIdx, eIdxGlobal) = 0.;
             Dune::dgrave << "Regularize totalConcentration(wCompIdx) = "
@@ -943,7 +943,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             }
         else
             {
-            Z1 = 1.;
+            Z0 = 1.;
             cellData.setTotalConcentration(nCompIdx, 0.);
             problem().transportModel().totalConcentration(nCompIdx,eIdxGlobal) = 0.;
             Dune::dgrave << "Regularize totalConcentration(eIdxGlobal, nCompIdx) = "
@@ -973,7 +973,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
 
     //complete fluid state
     CompositionalFlash<Scalar, FluidSystem> flashSolver;
-    flashSolver.concentrationFlash2p2c(fluidState,  Z1, pressure, problem().spatialParams().porosity(elementI), temperature_);
+    flashSolver.concentrationFlash2p2c(fluidState,  Z0, pressure, problem().spatialParams().porosity(elementI), temperature_);
 
     // iterations part in case of enabled capillary pressure
     Scalar pc(0.), oldPc(0.);
@@ -1006,7 +1006,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             //store old pc
             oldPc = pc;
             //update with better pressures
-            flashSolver.concentrationFlash2p2c(fluidState, Z1, pressure,
+            flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure,
                     problem().spatialParams().porosity(elementI), problem().temperatureAtPos(globalPos));
             pc = MaterialLaw::pc(problem().spatialParams().materialLawParams(elementI),
                                 fluidState.saturation(wPhaseIdx));
