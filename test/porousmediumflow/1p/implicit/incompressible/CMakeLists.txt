@@ -1,14 +1,22 @@
 dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES grids)
+
+# using tpfa and analytical Jacobian
+add_executable(test_1p_incompressible_tpfa_anadiff EXCLUDE_FROM_ALL main.cc)
+target_compile_definitions(test_1p_incompressible_tpfa_anadiff PUBLIC "TYPETAG=OnePIncompressibleTpfa" "NUMDIFFMETHOD=DiffMethod::analytic")
+
+# using box and analytical Jacobian
+add_executable(test_1p_incompressible_box_anadiff EXCLUDE_FROM_ALL main.cc)
+target_compile_definitions(test_1p_incompressible_box_anadiff PUBLIC "TYPETAG=OnePIncompressibleBox" "NUMDIFFMETHOD=DiffMethod::analytic")
 
 # using tpfa and analytical Jacobian
 dune_add_test(NAME test_1p_incompressible_tpfa
-              SOURCES main.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa NUMDIFFMETHOD=DiffMethod::analytic
+              TARGET test_1p_incompressible_tpfa_anadiff
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa-00001.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa params.input -Problem.Name test_1p_incompressible_tpfa")
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_anadiff params.input -Problem.Name test_1p_incompressible_tpfa")
 
 # using tpfa, analytical Jacobian and quad precision
 dune_add_test(NAME test_1p_incompressible_tpfa_quad
@@ -34,14 +42,12 @@ dune_add_test(NAME test_1p_incompressible_mpfa
 
 # using box and analytical Jacobian
 dune_add_test(NAME test_1p_incompressible_box
-              SOURCES main.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox NUMDIFFMETHOD=DiffMethod::analytic
+              TARGET test_1p_incompressible_box_anadiff
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_box-00001.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_box params.input -Problem.Name test_1p_incompressible_box")
-
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_box_anadiff params.input -Problem.Name test_1p_incompressible_box")
 
 # using tpfa and numeric differentiation
 dune_add_test(NAME test_1p_incompressible_tpfa_numdiff
@@ -66,5 +72,39 @@ dune_add_test(NAME test_1p_incompressible_box_numdiff
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_box_numdiff params.input
                                                                                   -Problem.Name test_1p_incompressible_box_numdiff
                                                                                   -Assembly.NumericDifference.PriVarMagnitude 1e5")
+
+# using tpfa and analytical Jacobian with extrusion factor
+dune_add_test(NAME test_1p_incompressible_tpfa_extrude
+              TARGET test_1p_incompressible_tpfa_anadiff
+              COMMAND ./test_1p_incompressible_tpfa_anadiff
+              CMD_ARGS params.input -Problem.Name test_1p_incompressible_tpfa_extrude
+                                    -Problem.ExtrusionFactor 10
+                                    -Vtk.AddVelocity 1
+                                    -Problem.CheckIsConstantVelocity true
+                                    -Problem.EnableGravity false)
+
+# using box and analytical Jacobian with extrusion factor
+dune_add_test(NAME test_1p_incompressible_box_extrude
+              TARGET test_1p_incompressible_box_anadiff
+              COMMAND ./test_1p_incompressible_box_anadiff
+              CMD_ARGS params.input -Problem.Name test_1p_incompressible_box_extrude
+                                    -Problem.ExtrusionFactor 10
+                                    -Vtk.AddVelocity 1
+                                    -Problem.CheckIsConstantVelocity true
+                                    -Problem.EnableGravity false)
+
+# using box and analytical Jacobian with extrusion factor on distorted grid
+dune_add_test(NAME test_1p_incompressible_box_extrude_distorted
+              SOURCES main.cc
+              CMAKE_GUARD dune-uggrid_FOUND
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
+              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox NUMDIFFMETHOD=DiffMethod::analytic
+              COMMAND ./test_1p_incompressible_box_extrude_distorted
+              CMD_ARGS params.input -Problem.Name test_1p_incompressible_box_extrude_distorted
+                                    -Problem.ExtrusionFactor 10
+                                    -Vtk.AddVelocity 1
+                                    -Problem.CheckIsConstantVelocity true
+                                    -Problem.EnableGravity false
+                                    -Grid.File ./grids/randomlydistorted.dgf)
 
 set(CMAKE_BUILD_TYPE Release)

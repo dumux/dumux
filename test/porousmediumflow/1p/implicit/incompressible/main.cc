@@ -29,6 +29,7 @@
 // Support for quad precision has to be included before any other Dune module:
 #include <dumux/common/quad.hh>
 
+#include <dune/common/float_cmp.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
@@ -72,8 +73,8 @@ int main(int argc, char** argv) try
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
-
-    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    GridManager<Grid> gridManager;
     gridManager.init();
 
     // we compute on the leaf grid view
@@ -143,6 +144,46 @@ int main(int argc, char** argv) try
     vtkWriter.write(1.0);
 
     timer.stop();
+
+    const bool checkIsConstantVelocity = getParam<bool>("Problem.CheckIsConstantVelocity", false);
+    if(checkIsConstantVelocity)
+    {
+        // instantiate the velocity output
+        VelocityOutput velocityOutput(*gridVariables);
+        using VelocityVector = typename VelocityOutput::VelocityVector;
+        VelocityVector velocity;
+
+        constexpr bool isBox = FVGridGeometry::discMethod == Dumux::DiscretizationMethod::box;
+        constexpr int dimWorld = FVGridGeometry::GridView::dimensionworld;
+        const auto numCells = leafGridView.size(0);
+        const auto numDofs = fvGridGeometry->numDofs();
+        auto numVelocities = (isBox && dimWorld == 1) ? numCells : numDofs;
+
+        velocity.resize(numVelocities);
+
+        const auto exactVel = problem->velocity();
+
+        for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
+        {
+            const auto eIdx = fvGridGeometry->elementMapper().index(element);
+
+            auto fvGeometry = localView(*fvGridGeometry);
+            auto elemVolVars = localView(gridVariables->curGridVolVars());
+
+            fvGeometry.bind(element);
+            elemVolVars.bind(element, fvGeometry, x);
+
+            velocityOutput.calculateVelocity(velocity, elemVolVars, fvGeometry, element, 0);
+
+            using Scalar = Grid::ctype;
+            // the y-component of the velocity should be exactly reproduced
+            // the x-component should be zero
+            // use a relative comparison for the y-component and an absolute one for the x-component
+            if(Dune::FloatCmp::ne(velocity[eIdx][dimWorld-1], exactVel[dimWorld-1], /*eps*/1e-8) ||
+               Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(velocity[eIdx][0], exactVel[0], /*eps*/1e-10))
+                    DUNE_THROW(Dune::InvalidStateException, "Velocity is not exactly reproduced");
+        }
+    }
 
     const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
     if (mpiHelper.rank() == 0)

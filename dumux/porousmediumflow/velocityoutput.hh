@@ -243,8 +243,9 @@ public:
             int localScvfIdx = 0;
             for (const auto& intersection : intersections(fvGridGeometry_.gridView(), element))
             {
-                if (dim < dimWorld && handledScvf[intersection.indexInInside()])
-                    continue;
+                if (dim < dimWorld)
+                    if (handledScvf[intersection.indexInInside()])
+                        continue;
 
                 if (intersection.neighbor() || intersection.boundary())
                 {
