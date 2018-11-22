@@ -19,6 +19,9 @@
  *
  * \brief Test for the cake grid creator
  */
+
+#include<string>
+
 #include "config.h"
 #include <iostream>
 #include <dune/common/parallel/mpihelper.hh>
@@ -37,23 +40,32 @@
 #include <dune/alugrid/grid.hh>
 #endif
 
-namespace Dumux
-{
 
-namespace Properties
-{
-namespace TTag {
-struct GridCreatorCakeTest {};
-}
-// Set the grid type
+
+// The grid type
 #if HAVE_DUNE_ALUGRID
-template<class TypeTag>
-struct Grid<TypeTag, TTag::GridCreatorCakeTest> { using type = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>; };
+template<int dim>
+using Grid = Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming>;
 #elif HAVE_UG
-template<class TypeTag>
-struct Grid<TypeTag, TTag::GridCreatorCakeTest> { using type = Dune::UGGrid<3>; };
+template<int dim>
+using Grid = Dune::UGGrid<dim>;
 #endif
-}
+
+template<int dim>
+void testCakeGridCreator(const std::string& name)
+{
+    // using declarations
+    using GridManager = typename Dumux::CakeGridCreator<Grid<dim>>;
+    GridManager gridManager;
+
+    // make the grid
+    Dune::Timer timer;
+    gridManager.init();
+    std::cout << "Constructing " << dim << "-d cake grid with " << gridManager.grid().leafGridView().size(0) << " elements took "
+              << timer.elapsed() << " seconds.\n";
+    // construct a vtk output writer and attach the boundaryMakers
+    Dune::VTKWriter<typename Grid<dim>::LeafGridView> vtkWriter(gridManager.grid().leafGridView());
+    vtkWriter.write(name);
 }
 
 int main(int argc, char** argv) try
@@ -61,23 +73,15 @@ int main(int argc, char** argv) try
     // initialize MPI, finalize is done automatically on exit
     Dune::MPIHelper::instance(argc, argv);
 
-    // using declarations
-    using TypeTag = Dumux::Properties::TTag::GridCreatorCakeTest;
-    using Grid = Dumux::GetPropType<TypeTag, Dumux::Properties::Grid>;
-    using GridManager = typename Dumux::CakeGridCreator<Grid>;
-    GridManager gridManager;
-
     // first read parameters from input file
     Dumux::Parameters::init(argc, argv, "test_gridmanager_cake.input");
+    const auto name = Dumux::getParam<std::string>("Grid.Name");
 
-    // make the grid
-    Dune::Timer timer;
-    gridManager.init();
-    std::cout << "Constructing cake grid with " << gridManager.grid().leafGridView().size(0) << " elements took "
-              << timer.elapsed() << " seconds.\n";
-    // construct a vtk output writer and attach the boundaryMakers
-    Dune::VTKWriter<Grid::LeafGridView> vtkWriter(gridManager.grid().leafGridView());
-    vtkWriter.write("cake-00000");
+    // test 3-D
+    testCakeGridCreator<3>("cake-3d-" + name);
+
+    // test 2-D
+    testCakeGridCreator<2>("cake-2d-" + name);
 
     return 0;
 }
