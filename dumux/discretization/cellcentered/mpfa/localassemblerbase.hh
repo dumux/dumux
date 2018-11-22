@@ -26,9 +26,11 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_BASE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_BASE_HH
 
+#include <utility>
 #include <type_traits>
 
 #include <dune/common/exceptions.hh>
+#include <dumux/common/typetraits/isvalid.hh>
 
 namespace Dumux
 {
@@ -51,32 +53,29 @@ class InteractionVolumeAssemblerBase
     using FVElementGeometry = EG;
     using ElementVolumeVariables = EV;
 
-    typedef std::true_type yes;
-    typedef std::false_type no;
-
-    //! Determines whether or not a matrix has a resize() function
-    template<typename M>
-    struct matrix_has_resize_method
+    // Helper structs to detect if matrix has resize function
+    struct HasMatrixResize
     {
-    private:
-        // resize function is called with two indices for matrices
-        template<typename U> static auto test(int) -> decltype(std::declval<U>().resize(0, 0), yes());
-        template<typename> static no test(...);
-    public:
-        static constexpr bool value = std::is_same<decltype(test<M>(0)), yes>::value;
+        template<class M>
+        auto operator()(const M& m) -> decltype(std::declval<M>().resize(0, 0))
+        {}
     };
 
-    //! determines whether or not a vector has a resize() function
-    template<typename V>
-    struct vector_has_resize_method
+    // Helper structs to detect if vector has resize function
+    struct HasVectorResize
     {
-    private:
-        // resize function is called with one index for vectors
-        template<typename U> static auto test(int) -> decltype(std::declval<U>().resize(0), yes());
-        template<typename> static no test(...);
-    public:
-        static constexpr bool value = std::is_same<decltype(test<V>(0)), yes>::value;
+        template<class V>
+        auto operator()(const V& v) -> decltype(std::declval<V>().resize(0))
+        {}
     };
+
+    template<class Matrix>
+    static constexpr auto matrixHasResizeFunction()
+    { return decltype( isValid(HasMatrixResize())(std::declval<Matrix>()) )::value; }
+
+    template<class Vector>
+    static constexpr auto vectorHasResizeFunction()
+    { return decltype( isValid(HasVectorResize())(std::declval<Vector>()) )::value; }
 
  public:
     /*!
@@ -281,7 +280,7 @@ protected:
     //! resizes a matrix to the given sizes (specialization for dynamic matrix type)
     template< class Matrix,
               class size_type,
-              std::enable_if_t<matrix_has_resize_method<Matrix>::value, int> = 0 >
+              std::enable_if_t<matrixHasResizeFunction<Matrix>(), int> = 0 >
     static void resizeMatrix_(Matrix& M, size_type rows, size_type cols)
     {
         M.resize(rows, cols);
@@ -290,14 +289,14 @@ protected:
     //! resizes a matrix to the given sizes (specialization for static matrix type - do nothing)
     template< class Matrix,
               class size_type,
-              std::enable_if_t<!matrix_has_resize_method<Matrix>::value, int> = 0 >
+              std::enable_if_t<!matrixHasResizeFunction<Matrix>(), int> = 0 >
     static void resizeMatrix_(Matrix& M, size_type rows, size_type cols)
     {}
 
     //! resizes a vector to the given size (specialization for dynamic matrix type)
     template< class Vector,
               class size_type,
-              std::enable_if_t<vector_has_resize_method<Vector>::value, int> = 0 >
+              std::enable_if_t<vectorHasResizeFunction<Vector>(), int> = 0 >
     static void resizeVector_(Vector& v, size_type size)
     {
         v.resize(size);
@@ -306,7 +305,7 @@ protected:
     //! resizes a vector to the given size (specialization for static vector type - do nothing)
     template< class Vector,
               class size_type,
-              std::enable_if_t<!vector_has_resize_method<Vector>::value, int> = 0 >
+              std::enable_if_t<!vectorHasResizeFunction<Vector>(), int> = 0 >
     static void resizeVector_(Vector& v, size_type rows)
     {}
 
