@@ -145,7 +145,7 @@ public:
 
           // use helper class to obtain area & integration point
           ipGlobal_ = helper.getScvfIntegrationPoint(corners_, q);
-          area_ = helper.getScvfArea(corners_);
+          area_ = helper.computeScvfArea(corners_);
     }
 
     //! The area of the sub control volume face

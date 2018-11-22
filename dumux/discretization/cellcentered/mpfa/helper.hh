@@ -176,10 +176,8 @@ public:
      * \brief Calculates the area of an scvf.
      * \param scvfCorners Container with the corners of the scvf
      */
-    static CoordScalar getScvfArea(const ScvfCornerVector& scvfCorners)
+    static CoordScalar computeScvfArea(const ScvfCornerVector& scvfCorners)
     { return (scvfCorners[1]-scvfCorners[0]).two_norm(); }
-
-
 
     /*!
      * \brief Calculates the number of scvfs in a given element geometry type.
@@ -470,7 +468,7 @@ public:
      * \brief Calculates the area of an scvf.
      * \param scvfCorners Container with the corners of the scvf
      */
-    static CoordScalar getScvfArea(const ScvfCornerVector& scvfCorners)
+    static CoordScalar computeScvfArea(const ScvfCornerVector& scvfCorners)
     {
         // after Wolfram alpha quadrilateral area
         return 0.5*Dumux::crossProduct(scvfCorners[3]-scvfCorners[0], scvfCorners[2]-scvfCorners[1]).two_norm();
