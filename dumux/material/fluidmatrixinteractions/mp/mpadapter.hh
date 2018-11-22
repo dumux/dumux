@@ -24,8 +24,8 @@
  * Makes the capillary pressure-saturation relations
  * available under the M-phase API for material laws
  */
-#ifndef DUMUX_MP_2P_ADAPTER_HH
-#define DUMUX_MP_2P_ADAPTER_HH
+#ifndef DUMUX_MP_ADAPTER_HH
+#define DUMUX_MP_ADAPTER_HH
 
 #include <algorithm>
 #include <cassert>
