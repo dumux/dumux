@@ -160,6 +160,49 @@ class InteractionVolumeAssemblerBase
     }
 
     /*!
+     * \brief Assembles the solution gradients in the
+     *        sub-control volumes within an interaction volume.
+     * \note  This requires the data handle to be fully assembled already.
+     *
+     * \param handle The data handle in which the vector is stored
+     * \param iv The interaction volume
+     */
+    template< class DataHandle, class IV >
+    static std::vector< typename IV::Traits::LocalScvType::GlobalCoordinate >
+    assembleScvGradients(const DataHandle& handle, const IV& iv)
+    {
+        const auto u = assembleFaceUnkowns(handle, iv);
+
+        using LocalScv = typename IV::Traits::LocalScvType;
+        using Gradient = typename LocalScv::GlobalCoordinate;
+
+        std::vector<Gradient> result; result.reserve(iv.numScvs());
+        for (unsigned int scvIdx = 0; scvIdx < iv.numScvs(); ++scvIdx)
+        {
+            const auto& scv = iv.localScv(scvIdx);
+
+            Gradient gradU(0.0);
+            for (unsigned int dir = 0; dir < LocalScv::myDimension; ++dir)
+            {
+                auto nu = scv.nu(dir);
+
+                // obtain face pressure
+                const auto& scvf = iv.localScvf( scv.localScvfIndex(dir) );
+                const auto faceU = !scvf.isDirichlet() ? u[scvf.localDofIndex()]
+                                                       : handle.uj()[scvf.localDofIndex()];
+
+                nu *= faceU - handle.uj()[scv.localDofIndex()];
+                gradU += nu;
+            }
+
+            gradU /= scv.detX();
+            result.emplace_back( std::move(gradU) );
+        }
+
+        return result;
+    }
+
+    /*!
      * \brief Assembles the gravitational flux contributions on the scvfs within an
      *        interaction volume.
      *
