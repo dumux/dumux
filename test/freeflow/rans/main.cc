@@ -35,25 +35,19 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include "problem.hh"
-
-#include <dumux/common/properties.hh>
-#include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
+#include <dumux/assembly/staggeredfvassembler.hh>
+#include <dumux/assembly/diffmethod.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
-
+#include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/valgrind.hh>
+#include <dumux/io/gnuplotinterface.hh>
+#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-#include <dumux/assembly/staggeredfvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
-
-#include <dumux/discretization/method.hh>
-
-#include <dumux/io/gnuplotinterface.hh>
-#include <dumux/io/staggeredvtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include "problem.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -126,11 +120,9 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    const auto numDofsCellCenter = leafGridView.size(0);
-    const auto numDofsFace = leafGridView.size(1);
     SolutionVector x;
-    x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
-    x[FVGridGeometry::faceIdx()].resize(numDofsFace);
+    x[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
+    x[FVGridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
     problem->applyInitialSolution(x);
     problem->updateStaticWallProperties();
     problem->updateDynamicWallProperties(x);
