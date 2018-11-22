@@ -232,8 +232,6 @@ int main()
     fsRef.setSaturation(liquidPhaseIdx, 0.5);
     fsRef.setPressure(liquidPhaseIdx, 1e6);
 
-    fsRef.setWettingPhase(liquidPhaseIdx);
-
     // set the remaining parameters of the reference fluid state
     completeReferenceFluidState<Scalar, FluidSystem, MPAdapter>(fsRef, matParams, liquidPhaseIdx);
 
