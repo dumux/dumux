@@ -362,7 +362,7 @@ private:
         PhaseVector pc;
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
-        MPAdapter::capillaryPressures(pc, matParams, fs);
+        MPAdapter::capillaryPressures(pc, matParams, fs, liquidPhaseIdx);
         fs.setPressure(otherPhaseIdx,
                        fs.pressure(refPhaseIdx)
                        + (pc[otherPhaseIdx] - pc[refPhaseIdx]));

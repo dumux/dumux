@@ -50,11 +50,13 @@ public:
      * \param pc Container for capillary pressure in \f$\mathrm{[Pa]}\f$
      * \param params Array of parameters
      * \param fluidState Fluidstate
+     * \param wPhaseIdx the phase index of the wetting phase
      */
     template <class pcContainerT, class FluidState>
     static void capillaryPressures(pcContainerT &pc,
-                   const Params &params,
-                   const FluidState &fluidState)
+                                   const Params &params,
+                                   const FluidState &fluidState,
+                                   int wPhaseIdx = 0)
     {
         // non-wetting phase gets the capillary pressure added
         pc[nPhaseIdx] = 0;

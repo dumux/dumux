@@ -134,7 +134,7 @@ void completeReferenceFluidState(FluidState &fs,
 
     // calulate the capillary pressure
     PhaseVector pc;
-    MaterialLaw::capillaryPressures(pc, matParams, fs);
+    MaterialLaw::capillaryPressures(pc, matParams, fs, /*wPhaseIdx=*/0);
     fs.setPressure(otherPhaseIdx,
                    fs.pressure(refPhaseIdx)
                    + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
@@ -278,7 +278,7 @@ int main()
     // calulate the capillary pressure
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
     PhaseVector pc;
-    MPAdapter::capillaryPressures(pc, matParams2, fsRef);
+    MPAdapter::capillaryPressures(pc, matParams2, fsRef, /*wPhaseIdx=*/0);
     fsRef.setPressure(gasPhaseIdx,
                       fsRef.pressure(liquidPhaseIdx)
                       + (pc[gasPhaseIdx] - pc[liquidPhaseIdx]));

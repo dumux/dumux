@@ -424,7 +424,7 @@ private:
         //obtain pc according to saturation
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
-        MPAdapter::capillaryPressures(capPress, materialParams, equilibriumFluidState);
+        MPAdapter::capillaryPressures(capPress, materialParams, equilibriumFluidState, liquidPhaseIdx);
 
         Scalar p[numPhases];
         if (this->spatialParams().inPM_(globalPos)){

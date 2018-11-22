@@ -189,7 +189,7 @@ public:
         std::vector<Scalar> capPress(numPhases());
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
-        MPAdapter::capillaryPressures(capPress, materialParams, fluidState);
+        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
         // add to the pressure of the first fluid phase
 
         // depending on which pressure is stored in the primary variables
@@ -643,7 +643,7 @@ public:
         std::vector<Scalar> capPress(numPhases());
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
-        MPAdapter::capillaryPressures(capPress, materialParams, fluidState);
+        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
         // add to the pressure of the first fluid phase
 
         // depending on which pressure is stored in the primary variables
