@@ -100,16 +100,17 @@ void checkImmiscibleFlash(const FluidState &fsRef,
         }
     }
 
+    // create the flash
+    Dumux::ImmiscibleFlash<Scalar, FluidSystem> flash(/*wettingPhaseIdx=*/0);
     // initialize the fluid state for the flash calculation
-    using ImmiscibleFlash = Dumux::ImmiscibleFlash<Scalar, FluidSystem>;
     FluidState fsFlash;
 
     fsFlash.setTemperature(fsRef.temperature(/*phaseIdx=*/0));
 
     // run the flash calculation
     typename FluidSystem::ParameterCache paramCache;
-    ImmiscibleFlash::guessInitial(fsFlash, paramCache, globalMolarities);
-    ImmiscibleFlash::template solve<MaterialLaw>(fsFlash, paramCache, matParams, globalMolarities);
+    flash.guessInitial(fsFlash, paramCache, globalMolarities);
+    flash.template solve<MaterialLaw>(fsFlash, paramCache, matParams, globalMolarities);
 
     // compare the "flashed" fluid state with the reference one
     checkSame<Scalar>(fsRef, fsFlash);

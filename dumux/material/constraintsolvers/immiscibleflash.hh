@@ -81,15 +81,23 @@ public:
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
     /*!
+     * \brief Contruct a new flash
+     * \param wettingPhaseIdx the phase index of the wetting phase
+     */
+    explicit ImmiscibleFlash(int wettingPhaseIdx = 0)
+    : wettingPhaseIdx_(wettingPhaseIdx)
+    {}
+
+    /*!
      * \brief Guess initial values for all quantities.
      * \param fluidState Thermodynamic state of the fluids
      * \param paramCache  Container for cache parameters
      * \param globalMolarities
      */
     template <class FluidState>
-    static void guessInitial(FluidState &fluidState,
-                             ParameterCache &paramCache,
-                             const ComponentVector &globalMolarities)
+    void guessInitial(FluidState &fluidState,
+                      ParameterCache &paramCache,
+                      const ComponentVector &globalMolarities)
     {
         // the sum of all molarities
         Scalar sumMoles = 0;
@@ -116,10 +124,10 @@ public:
      * The phase's fugacities must already be set.
      */
     template <class MaterialLaw, class FluidState>
-    static void solve(FluidState &fluidState,
-                      ParameterCache &paramCache,
-                      const typename MaterialLaw::Params &matParams,
-                      const ComponentVector &globalMolarities)
+    void solve(FluidState &fluidState,
+               ParameterCache &paramCache,
+               const typename MaterialLaw::Params &matParams,
+               const ComponentVector &globalMolarities)
     {
 #if DUNE_VERSION_LT(DUNE_COMMON, 2, 7)
         Dune::FMatrixPrecision<Scalar>::set_singular_limit(1e-25);
@@ -235,7 +243,7 @@ public:
 
 protected:
     template <class FluidState>
-    static void printFluidState_(const FluidState &fs)
+    void printFluidState_(const FluidState &fs)
     {
         std::cout << "saturations: ";
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -264,12 +272,12 @@ protected:
     }
 
     template <class MaterialLaw, class FluidState>
-    static void linearize_(Matrix &J,
-                           Vector &b,
-                           FluidState &fluidState,
-                           ParameterCache &paramCache,
-                           const typename MaterialLaw::Params &matParams,
-                           const ComponentVector &globalMolarities)
+    void linearize_(Matrix &J,
+                    Vector &b,
+                    FluidState &fluidState,
+                    ParameterCache &paramCache,
+                    const typename MaterialLaw::Params &matParams,
+                    const ComponentVector &globalMolarities)
     {
         FluidState origFluidState(fluidState);
         ParameterCache origParamCache(paramCache);
@@ -314,10 +322,10 @@ protected:
     }
 
     template <class FluidState>
-    static void calculateDefect_(Vector &b,
-                                 const FluidState &fluidStateEval,
-                                 const FluidState &fluidState,
-                                 const ComponentVector &globalMolarities)
+    void calculateDefect_(Vector &b,
+                          const FluidState &fluidStateEval,
+                          const FluidState &fluidState,
+                          const ComponentVector &globalMolarities)
     {
         // global molarities are given
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
@@ -330,10 +338,10 @@ protected:
     }
 
     template <class MaterialLaw, class FluidState>
-    static Scalar update_(FluidState &fluidState,
-                          ParameterCache &paramCache,
-                          const typename MaterialLaw::Params &matParams,
-                          const Vector &deltaX)
+    Scalar update_(FluidState &fluidState,
+                   ParameterCache &paramCache,
+                   const typename MaterialLaw::Params &matParams,
+                   const Vector &deltaX)
     {
         Scalar relError = 0;
         for (int pvIdx = 0; pvIdx < numEq; ++ pvIdx) {
@@ -364,9 +372,9 @@ protected:
     }
 
     template <class MaterialLaw, class FluidState>
-    static void completeFluidState_(FluidState &fluidState,
-                                    ParameterCache &paramCache,
-                                    const typename MaterialLaw::Params &matParams)
+    void completeFluidState_(FluidState &fluidState,
+                             ParameterCache &paramCache,
+                             const typename MaterialLaw::Params &matParams)
     {
         // calculate the saturation of the last phase as a function of
         // the other saturations
@@ -410,15 +418,15 @@ protected:
         }
     }
 
-    static bool isPressureIdx_(int pvIdx)
+    bool isPressureIdx_(int pvIdx)
     { return pvIdx == 0; }
 
-    static bool isSaturationIdx_(int pvIdx)
+    bool isSaturationIdx_(int pvIdx)
     { return 1 <= pvIdx && pvIdx < numPhases; }
 
     // retrieves a quantity from the fluid state
     template <class FluidState>
-    static Scalar getQuantity_(const FluidState &fs, int pvIdx)
+    Scalar getQuantity_(const FluidState &fs, int pvIdx)
     {
         assert(pvIdx < numEq);
 
@@ -437,11 +445,11 @@ protected:
 
     // set a quantity in the fluid state
     template <class MaterialLaw, class FluidState>
-    static void setQuantity_(FluidState &fs,
-                             ParameterCache &paramCache,
-                             const typename MaterialLaw::Params &matParams,
-                             int pvIdx,
-                             Scalar value)
+    void setQuantity_(FluidState &fs,
+                      ParameterCache &paramCache,
+                      const typename MaterialLaw::Params &matParams,
+                      int pvIdx,
+                      Scalar value)
     {
         assert(0 <= pvIdx && pvIdx < numEq);
 
@@ -498,7 +506,7 @@ protected:
 
     // set a quantity in the fluid state
     template <class FluidState>
-    static void setQuantityRaw_(FluidState &fs, int pvIdx, Scalar value)
+    void setQuantityRaw_(FluidState &fs, int pvIdx, Scalar value)
     {
         assert(pvIdx < numEq);
 
@@ -521,7 +529,7 @@ protected:
     }
 
     template <class FluidState>
-    static Scalar quantityWeight_(const FluidState &fs, int pvIdx)
+    Scalar quantityWeight_(const FluidState &fs, int pvIdx)
     {
         // first pressure
         if (pvIdx < 1)
@@ -532,6 +540,10 @@ protected:
             return 1.0;
         }
     }
+
+private:
+    int wettingPhaseIdx_ = 0; //!< the phase index of the wetting phase
+
 };
 
 } // end namespace Dumux
