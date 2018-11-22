@@ -5,6 +5,7 @@ dune_symlink_to_source_files(FILES grids)
 dune_add_test(COMPILE_ONLY # since it currently fails miserably with very different results on different machines
               NAME test_mpnc_thermalnonequil_box
               SOURCES main.cc
+              LABELS mpnc
               COMPILE_DEFINITIONS TYPETAG=CombustionOneComponentBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
