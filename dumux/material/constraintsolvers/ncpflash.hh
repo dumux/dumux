@@ -514,7 +514,7 @@ protected:
         // and first pressure are already set because it is implicitly
         // solved for.)
         ComponentVector pc;
-        MaterialLaw::capillaryPressures(pc, matParams, fluidState, fluidState.wettingPhase());
+        MaterialLaw::capillaryPressures(pc, matParams, fluidState);
         for (int phaseIdx = 1; phaseIdx < numPhases; ++phaseIdx)
             fluidState.setPressure(phaseIdx,
                                    fluidState.pressure(0)
@@ -616,7 +616,7 @@ protected:
             // update all fluid pressures using the capillary pressure
             // law
             ComponentVector pc;
-            MaterialLaw::capillaryPressures(pc, matParams, fs, fs.wettingPhase());
+            MaterialLaw::capillaryPressures(pc, matParams, fs);
             for (int phaseIdx = 1; phaseIdx < numPhases; ++phaseIdx)
                 fs.setPressure(phaseIdx,
                                fs.pressure(0)

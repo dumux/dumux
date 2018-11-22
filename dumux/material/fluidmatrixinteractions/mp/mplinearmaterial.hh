@@ -61,13 +61,11 @@ public:
      * \param values Container for the return values
      * \param params Array of Parameters
      * \param state The fluid state
-     * \param wPhaseIdx index of the wetting phase
      */
     template <class ContainerT, class FluidState>
     static void capillaryPressures(ContainerT &values,
                                    const Params &params,
-                                   const FluidState &state,
-                                   const int wPhaseIdx)
+                                   const FluidState &state)
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             Scalar S = state.saturation(phaseIdx);
@@ -82,13 +80,11 @@ public:
      * \param values Container for the return values
      * \param params Array of Parameters
      * \param state The fluid state
-     * \param wPhaseIdx index of the wetting phase
      */
     template <class ContainerT, class FluidState>
     static void relativePermeabilities(ContainerT &values,
                                        const Params &params,
-                                       const FluidState &state,
-                                       const int wPhaseIdx)
+                                       const FluidState &state)
     {
         using std::max;
         using std::min;

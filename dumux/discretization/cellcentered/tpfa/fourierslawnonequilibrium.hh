@@ -184,9 +184,6 @@ public:
         }
         return tij;
     }
-
-private:
-
 };
 
 } // end namespace Dumux

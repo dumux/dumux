@@ -82,7 +82,7 @@ void checkSame(const FluidState &fsRef, const FluidState &fsFlash)
     }
 }
 
-template <class Scalar, class FluidSystem, class MaterialLaw, class MPAdapter, class FluidState>
+template <class Scalar, class FluidSystem, class MaterialLaw, class FluidState>
 void checkImmiscibleFlash(const FluidState &fsRef,
                           typename MaterialLaw::Params &matParams)
 {
@@ -109,14 +109,14 @@ void checkImmiscibleFlash(const FluidState &fsRef,
     // run the flash calculation
     typename FluidSystem::ParameterCache paramCache;
     ImmiscibleFlash::guessInitial(fsFlash, paramCache, globalMolarities);
-    ImmiscibleFlash::template solve<MPAdapter>(fsFlash, paramCache, matParams, globalMolarities);
+    ImmiscibleFlash::template solve<MaterialLaw>(fsFlash, paramCache, matParams, globalMolarities);
 
     // compare the "flashed" fluid state with the reference one
     checkSame<Scalar>(fsRef, fsFlash);
 }
 
 
-template <class Scalar, class FluidSystem, class MaterialLaw, class MPAdapter, class FluidState>
+template <class Scalar, class FluidSystem, class MaterialLaw, class FluidState>
 void completeReferenceFluidState(FluidState &fs,
                                  typename MaterialLaw::Params &matParams,
                                  int refPhaseIdx)
@@ -132,7 +132,7 @@ void completeReferenceFluidState(FluidState &fs,
 
     // calulate the capillary pressure
     PhaseVector pc;
-    MPAdapter::capillaryPressures(pc, matParams, fs, fs.wettingPhase());
+    MaterialLaw::capillaryPressures(pc, matParams, fs);
     fs.setPressure(otherPhaseIdx,
                    fs.pressure(refPhaseIdx)
                    + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
@@ -202,10 +202,10 @@ int main()
     fsRef.setPressure(liquidPhaseIdx, 1e6);
 
     // set the remaining parameters of the reference fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams, liquidPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem, MPAdapter>(fsRef, matParams, liquidPhaseIdx);
 
     // check the flash calculation
-    checkImmiscibleFlash<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams);
+    checkImmiscibleFlash<Scalar, FluidSystem, MPAdapter>(fsRef, matParams);
 
     ////////////////
     // only gas
@@ -217,10 +217,10 @@ int main()
     fsRef.setPressure(gasPhaseIdx, 1e6);
 
     // set the remaining parameters of the reference fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams, gasPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem, MPAdapter>(fsRef, matParams, gasPhaseIdx);
 
     // check the flash calculation
-    checkImmiscibleFlash<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams);
+    checkImmiscibleFlash<Scalar, FluidSystem, MPAdapter>(fsRef, matParams);
 
     ////////////////
     // both phases
@@ -234,10 +234,10 @@ int main()
     fsRef.setWettingPhase(liquidPhaseIdx);
 
     // set the remaining parameters of the reference fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams, liquidPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem, MPAdapter>(fsRef, matParams, liquidPhaseIdx);
 
     // check the flash calculation
-    checkImmiscibleFlash<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams);
+    checkImmiscibleFlash<Scalar, FluidSystem, MPAdapter>(fsRef, matParams);
 
     ////////////////
     // with capillary pressure
@@ -257,10 +257,10 @@ int main()
     fsRef.setPressure(liquidPhaseIdx, 1e6);
 
     // set the remaining parameters of the reference fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams2, liquidPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem, MPAdapter>(fsRef, matParams2, liquidPhaseIdx);
 
     // check the flash calculation
-    checkImmiscibleFlash<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams2);
+    checkImmiscibleFlash<Scalar, FluidSystem, MPAdapter>(fsRef, matParams2);
 
     return 0;
 }

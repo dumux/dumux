@@ -82,7 +82,7 @@ void checkSame(const FluidState &fsRef, const FluidState &fsFlash)
     }
 }
 
-template <class Scalar, class FluidSystem, class MaterialLaw, class MPAdapter, class FluidState>
+template <class Scalar, class FluidSystem, class MaterialLaw, class FluidState>
 void checkNcpFlash(const FluidState &fsRef,
                    typename MaterialLaw::Params &matParams)
 {
@@ -109,14 +109,14 @@ void checkNcpFlash(const FluidState &fsRef,
     // run the flash calculation
     typename FluidSystem::ParameterCache paramCache;
     NcpFlash::guessInitial(fsFlash, paramCache, globalMolarities);
-    NcpFlash::template solve<MPAdapter>(fsFlash, paramCache, matParams, globalMolarities);
+    NcpFlash::template solve<MaterialLaw>(fsFlash, paramCache, matParams, globalMolarities);
 
     // compare the "flashed" fluid state with the reference one
     checkSame<Scalar>(fsRef, fsFlash);
 }
 
 
-template <class Scalar, class FluidSystem, class MaterialLaw, class MPAdapter, class FluidState>
+template <class Scalar, class FluidSystem, class MaterialLaw, class FluidState>
 void completeReferenceFluidState(FluidState &fs,
                                  typename MaterialLaw::Params &matParams,
                                  int refPhaseIdx)
@@ -133,7 +133,7 @@ void completeReferenceFluidState(FluidState &fs,
 
     // calulate the capillary pressure
     PhaseVector pc;
-    MPAdapter::capillaryPressures(pc, matParams, fs, refPhaseIdx);
+    MaterialLaw::capillaryPressures(pc, matParams, fs);
     fs.setPressure(otherPhaseIdx,
                    fs.pressure(refPhaseIdx)
                    + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
@@ -212,10 +212,10 @@ int main()
     fsRef.setWettingPhase(wPhaseIdx);
 
     // "complete" the fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams, liquidPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem, MPAdapter>(fsRef, matParams, liquidPhaseIdx);
 
     // check the flash calculation
-    checkNcpFlash<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams);
+    checkNcpFlash<Scalar, FluidSystem, MPAdapter>(fsRef, matParams);
 
     ////////////////
     // only gas
@@ -232,10 +232,10 @@ int main()
     fsRef.setMoleFraction(gasPhaseIdx, H2OIdx, 0.001);
 
     // "complete" the fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams, gasPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem, MPAdapter>(fsRef, matParams, gasPhaseIdx);
 
     // check the flash calculation
-    checkNcpFlash<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams);
+    checkNcpFlash<Scalar, FluidSystem, MPAdapter>(fsRef, matParams);
 
     ////////////////
     // both phases
@@ -255,7 +255,7 @@ int main()
     MiscibleMultiPhaseComposition::solve(fsRef, paramCache);
 
     // check the flash calculation
-    checkNcpFlash<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams);
+    checkNcpFlash<Scalar, FluidSystem, MPAdapter>(fsRef, matParams);
 
     ////////////////
     // with capillary pressure
@@ -277,7 +277,7 @@ int main()
     // calulate the capillary pressure
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
     PhaseVector pc;
-    MPAdapter::capillaryPressures(pc, matParams2, fsRef, wPhaseIdx);
+    MPAdapter::capillaryPressures(pc, matParams2, fsRef);
     fsRef.setPressure(gasPhaseIdx,
                       fsRef.pressure(liquidPhaseIdx)
                       + (pc[gasPhaseIdx] - pc[liquidPhaseIdx]));
@@ -287,7 +287,7 @@ int main()
 
 
     // check the flash calculation
-    checkNcpFlash<Scalar, FluidSystem, MaterialLaw, MPAdapter>(fsRef, matParams2);
+    checkNcpFlash<Scalar, FluidSystem, MPAdapter>(fsRef, matParams2);
 
     return 0;
 }

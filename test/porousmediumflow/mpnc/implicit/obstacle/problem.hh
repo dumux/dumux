@@ -360,10 +360,9 @@ private:
         // calulate the capillary pressure
         const auto& matParams = this->spatialParams().materialLawParamsAtPos(globalPos);
         PhaseVector pc;
-        const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
-        MPAdapter::capillaryPressures(pc, matParams, fs, wPhaseIdx);
+        MPAdapter::capillaryPressures(pc, matParams, fs);
         fs.setPressure(otherPhaseIdx,
                        fs.pressure(refPhaseIdx)
                        + (pc[otherPhaseIdx] - pc[refPhaseIdx]));

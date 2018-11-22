@@ -106,14 +106,12 @@ public:
 
         //calculate the remaining quantities
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         // relative permeabilities
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
         MPAdapter::relativePermeabilities(relativePermeability_,
                                             materialParams,
-                                            fluidState_,
-                                            wPhaseIdx);
+                                            fluidState_);
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
         if (enableDiffusion)
@@ -184,13 +182,14 @@ public:
         /////////////
         // capillary pressure parameters
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        fluidState.setWettingPhase(wPhaseIdx);
         const auto& materialParams =
             problem.spatialParams().materialLawParams(element, scv, elemSol);
         // capillary pressures
         std::vector<Scalar> capPress(numPhases());
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
-        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
+        MPAdapter::capillaryPressures(capPress, materialParams, fluidState);
         // add to the pressure of the first fluid phase
 
         // depending on which pressure is stored in the primary variables
@@ -563,13 +562,11 @@ public:
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
         // relative permeabilities
-        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
         MPAdapter::relativePermeabilities(relativePermeability_,
                                           materialParams,
-                                          fluidState_,
-                                          wPhaseIdx);
+                                          fluidState_);
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
         if (enableDiffusion)
@@ -641,11 +638,12 @@ public:
         const auto& materialParams =
             problem.spatialParams().materialLawParams(element, scv, elemSol);
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        fluidState.setWettingPhase(wPhaseIdx);
         // capillary pressures
         std::vector<Scalar> capPress(numPhases());
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
-        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
+        MPAdapter::capillaryPressures(capPress, materialParams, fluidState);
         // add to the pressure of the first fluid phase
 
         // depending on which pressure is stored in the primary variables

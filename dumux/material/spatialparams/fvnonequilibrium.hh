@@ -45,7 +45,6 @@ class FVNonEquilibriumSpatialParams
 
 public:
     //! export the types used for interfacial area calculations
-
     using AwnSurfaceParams = Scalar;
     using AwsSurfaceParams = Scalar;
     using AnsSurfaceParams = Scalar;
