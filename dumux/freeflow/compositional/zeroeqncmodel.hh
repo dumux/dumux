@@ -32,7 +32,7 @@
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 #include <dumux/freeflow/nonisothermal/iofields.hh>
 #include <dumux/freeflow/rans/zeroeq/model.hh>
-
+#include "volumevariables.hh"
 #include "iofields.hh"
 
 namespace Dumux {
@@ -65,6 +65,10 @@ struct ZeroEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useM, r
 {
     //! The model does include a turbulence model
     static constexpr bool usesTurbulenceModel() { return true; }
+
+    //! return the type of turbulence model used
+    static constexpr auto turbulenceModel()
+    { return TurbulenceModel::zeroeq; }
 };
 
 //! The model traits of the isothermal model
@@ -114,7 +118,7 @@ struct IOFields<TypeTag, TTag::ZeroEqNC> { using type = FreeflowNCIOFields<RANSI
 // Create new type tags
 namespace TTag {
 //! The type tags for the single-phase, multi-component non-isothermal ZeroEq models
-struct ZeroEqNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
+struct ZeroEqNCNI { using InheritsFrom = std::tuple<ZeroEqNC, NavierStokesNCNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model
