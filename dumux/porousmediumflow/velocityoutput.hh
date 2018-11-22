@@ -216,7 +216,13 @@ public:
         }
         else
         {
-            if (fvGeometry.numScvf() > element.subEntities(1))
+            // For the number of scvfs per facet (mpfa) we simply obtain the number of
+            // corners of the first facet as prisms/pyramids are not supported here anyway
+            // -> for prisms/pyramids the number of scvfs would differ from facet to facet
+            static constexpr bool isMpfa = FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa;
+            const int numScvfsPerFace = isMpfa ? element.template subEntity<1>(0).geometry().corners() : 1;
+
+            if (fvGeometry.numScvf() != element.subEntities(1)*numScvfsPerFace)
                 DUNE_THROW(Dune::NotImplemented, "Velocity output for non-conforming grids");
 
             if (!geomType.isCube() && !geomType.isSimplex())
@@ -230,7 +236,7 @@ public:
             if (dim < dimWorld) handledScvf.resize(element.subEntities(1), false);
 
             // find the local face indices of the scvfs (for conforming meshes)
-            std::vector<unsigned int> scvfIndexInInside(element.subEntities(1));
+            std::vector<unsigned int> scvfIndexInInside(fvGeometry.numScvf());
             int localScvfIdx = 0;
             for (const auto& intersection : intersections(fvGridGeometry_.gridView(), element))
             {
@@ -238,7 +244,9 @@ public:
 
                 if (intersection.neighbor() || intersection.boundary())
                 {
-                    scvfIndexInInside[localScvfIdx++] = intersection.indexInInside();
+                    for (int i = 0; i < numScvfsPerFace; ++i)
+                        scvfIndexInInside[localScvfIdx++] = intersection.indexInInside();
+
                     // for surface and network grids mark that we handled this face
                     if (dim < dimWorld) handledScvf[intersection.indexInInside()] = true;
                 }
@@ -252,10 +260,10 @@ public:
                 {
                     FluxVariables fluxVars;
                     fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-                    scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-                    scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
-                                                                                            fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                            elementSolution(element, elemVolVars, fvGeometry));
+                    scvfFluxes[scvfIndexInInside[localScvfIdx]] += fluxVars.advectiveFlux(phaseIdx, upwindTerm)
+                                                                   /problem_.extrusionFactor(element,
+                                                                                             fvGeometry.scv(scvf.insideScvIdx()),
+                                                                                             elementSolution(element, elemVolVars, fvGeometry));
                 }
                 else
                 {
@@ -264,10 +272,10 @@ public:
                     {
                         FluxVariables fluxVars;
                         fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-                        scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-                        scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
-                                                                                                fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                                elementSolution(element, elemVolVars, fvGeometry));
+                        scvfFluxes[scvfIndexInInside[localScvfIdx]] += fluxVars.advectiveFlux(phaseIdx, upwindTerm)
+                                                                       /problem_.extrusionFactor(element,
+                                                                                                 fvGeometry.scv(scvf.insideScvIdx()),
+                                                                                                 elementSolution(element, elemVolVars, fvGeometry));
                     }
                 }
 
