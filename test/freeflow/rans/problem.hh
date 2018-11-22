@@ -253,6 +253,10 @@ public:
             values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
             values.setOutflow(Indices::dissipationEqIdx);
 #endif
+
+#if ONEEQ
+            values.setOutflow(Indices::viscosityTildeIdx);
+#endif
         }
         else // walls and inflow
         {
