@@ -127,7 +127,7 @@ class InteractionVolumeAssemblerBase
      * \tparam GetU Lambda to obtain the cell unknowns from grid indices
      *
      * \param handle The data handle in which the vector is stored
-     * \param iv The mpfa-o interaction volume
+     * \param iv The interaction volume
      * \param getU Lambda to obtain the desired cell/Dirichlet value from vol vars
      */
     template< class DataHandle, class IV, class GetU >
@@ -141,7 +141,7 @@ class InteractionVolumeAssemblerBase
      *        interaction volume.
      *
      * \param handle The data handle in which the vector is stored
-     * \param iv The mpfa-o interaction volume
+     * \param iv The interaction volume
      * \param getRho Lambda to obtain the density from volume variables
      */
     template< class DataHandle, class IV, class GetRho >
