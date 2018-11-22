@@ -29,6 +29,7 @@ dune_add_test(NAME test_1p2c_transport_mpfa
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_transport_mpfa-reference.vtu
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_transport_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_transport_mpfa-00009.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_transport_mpfa params.input -Problem.Name test_1p2c_transport_mpfa -Vtk.AddVelocity false")
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_transport_mpfa params.input -Problem.Name test_1p2c_transport_mpfa"
+                        --zeroThreshold {"velocity_liq \(m/s\)_1":1e-13})
