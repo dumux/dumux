@@ -53,7 +53,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
-#include <dumux/discretization/stationaryvelocityfield.hh>
+#include <dumux/flux/stationaryvelocityfield.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 #include <dumux/porousmediumflow/properties.hh>
 

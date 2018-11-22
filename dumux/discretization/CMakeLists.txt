@@ -5,27 +5,15 @@ add_subdirectory(staggered)
 install(FILES
 basefvgridgeometry.hh
 checkoverlapsize.hh
-darcyslaw.hh
-effectivestresslaw.hh
 elementsolution.hh
 evalgradients.hh
 evalsolution.hh
-fickslaw.hh
 fluxstencil.hh
-fluxvariablesbase.hh
-fluxvariablescaching.hh
-forchheimerslaw.hh
-fourierslaw.hh
-fourierslawnonequilibrium.hh
 fvgridvariables.hh
 fvproperties.hh
-hookeslaw.hh
 localview.hh
-maxwellstefanslaw.hh
 method.hh
 scvandscvfiterators.hh
-stationaryvelocityfield.hh
 subcontrolvolumebase.hh
 subcontrolvolumefacebase.hh
-upwindscheme.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization)

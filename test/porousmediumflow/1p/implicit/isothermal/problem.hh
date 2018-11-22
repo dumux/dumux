@@ -38,7 +38,7 @@
 #include "spatialparams.hh"
 
 #if FORCHHEIMER
-#include <dumux/discretization/forchheimerslaw.hh>
+#include <dumux/flux/forchheimerslaw.hh>
 #endif
 
 namespace Dumux {

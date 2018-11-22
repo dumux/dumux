@@ -32,7 +32,7 @@
 #include <dumux/common/properties/model.hh>
 
 #include <dumux/geomechanics/properties.hh>
-#include <dumux/discretization/hookeslaw.hh>
+#include <dumux/flux/hookeslaw.hh>
 
 #include "indices.hh"
 #include "localresidual.hh"

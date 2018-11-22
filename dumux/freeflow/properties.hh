@@ -28,7 +28,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
-#include <dumux/discretization/fourierslaw.hh>
+#include <dumux/flux/fourierslaw.hh>
 
 namespace Dumux {
 namespace Properties {

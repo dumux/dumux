@@ -28,7 +28,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 
-#include <dumux/discretization/fluxvariablesbase.hh>
+#include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {

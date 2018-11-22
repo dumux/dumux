@@ -32,7 +32,7 @@
 #include <dumux/common/math.hh>
 
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/fluxvariablescaching.hh>
+#include <dumux/flux/fluxvariablescaching.hh>
 
 namespace Dumux
 {

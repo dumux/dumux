@@ -27,7 +27,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/fluxvariablescaching.hh>
+#include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/discretization/box/fluxvariablescache.hh>
 
 namespace Dumux {

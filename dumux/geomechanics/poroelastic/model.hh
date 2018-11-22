@@ -32,8 +32,8 @@
 #include <dumux/geomechanics/elastic/indices.hh>
 #include <dumux/geomechanics/elastic/model.hh>
 
-#include <dumux/discretization/hookeslaw.hh>
-#include <dumux/discretization/effectivestresslaw.hh>
+#include <dumux/flux/hookeslaw.hh>
+#include <dumux/flux/effectivestresslaw.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
