@@ -65,7 +65,6 @@ class MpfaDimensionHelper<FVGridGeometry, /*dim*/2, /*dimWorld*/2>
 public:
     /*!
      * \brief Calculates the inner normal vectors to a given scv basis.
-     *
      * \param scvBasis The basis of an scv
      */
     template< class ScvBasis >
@@ -89,7 +88,6 @@ public:
     /*!
      * \brief Calculates the determinant of an scv basis.
      *        This is equal to the cross product for dim = dimWorld = 2
-     *
      * \param scvBasis The basis of an scv
      */
     template< class ScvBasis >
@@ -102,7 +100,6 @@ public:
     /*!
      * \brief Returns the global number of scvfs in the grid. Assumes the grid to be made up of only
      *        basic geometry types. Overlad this function if you want to use different geometry types.
-     *
      * \param gridView The grid view to be checked
      */
     static std::size_t getGlobalNumScvf(const GridView& gridView)
@@ -118,7 +115,6 @@ public:
 
     /*!
      * \brief Checks whether or not a given scv basis forms a right hand system.
-     *
      * \param scvBasis The basis of an scv
      */
     template< class ScvBasis >
@@ -172,15 +168,12 @@ public:
         assert(cornerIdx < 2 && "provided index exceeds the number of corners of facets in 2d");
 
         // create & return the scvf corner vector
-        if (cornerIdx == 0)
-            return ScvfCornerVector({p[0], p[1]});
-        else
-            return ScvfCornerVector({p[0], p[2]});
+        return cornerIdx == 0 ? ScvfCornerVector({p[0], p[1]})
+                              : ScvfCornerVector({p[0], p[2]});
     }
 
     /*!
      * \brief Calculates the area of an scvf.
-     *
      * \param scvfCorners Container with the corners of the scvf
      */
     static CoordScalar getScvfArea(const ScvfCornerVector& scvfCorners)
@@ -188,7 +181,6 @@ public:
 
     /*!
      * \brief Calculates the number of scvfs in a given element geometry type.
-     *
      * \param gt The element geometry type
      */
     static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
@@ -209,7 +201,7 @@ public:
  */
 template<class FVGridGeometry>
 class MpfaDimensionHelper<FVGridGeometry, /*dim*/2, /*dimWorld*/3>
-      : public MpfaDimensionHelper<FVGridGeometry, 2, 2>
+: public MpfaDimensionHelper<FVGridGeometry, 2, 2>
 {
     using GridView = typename FVGridGeometry::GridView;
     using CoordScalar = typename GridView::ctype;
@@ -217,18 +209,18 @@ public:
 
     /*!
      * \brief Calculates the inner normal vectors to a given scv basis.
-     *
      * \param scvBasis The basis of an scv
      */
     template< class ScvBasis >
     static ScvBasis calculateInnerNormals(const ScvBasis& scvBasis)
     {
         // compute vector normal to the basis plane
-        const auto normal = [&] () {
-                                        auto n = crossProduct<CoordScalar>(scvBasis[0], scvBasis[1]);
-                                        n /= n.two_norm();
-                                        return n;
-                                    } ();
+        const auto normal = [&scvBasis] ()
+        {
+            auto n = crossProduct<CoordScalar>(scvBasis[0], scvBasis[1]);
+            n /= n.two_norm();
+            return n;
+        } ();
 
         // compute inner normals using the normal vector
         ScvBasis innerNormals;
@@ -302,11 +294,7 @@ public:
         innerNormals[2] = crossProduct<CoordScalar>(scvBasis[0], scvBasis[1]);
 
         if (!isRightHandSystem(scvBasis))
-        {
-            innerNormals[0] *= -1.0;
-            innerNormals[1] *= -1.0;
-            innerNormals[2] *= -1.0;
-        }
+            std::for_each(innerNormals.begin(), innerNormals.end(), [] (auto& n) { n *= -1.0; });
 
         return innerNormals;
     }
@@ -349,7 +337,6 @@ public:
 
     /*!
      * \brief Checks whether or not a given scv basis forms a right hand system.
-     *
      * \param scvBasis The basis of an scv
      */
     template< class ScvBasis >
@@ -479,7 +466,6 @@ public:
 
     /*!
      * \brief Calculates the area of an scvf.
-     *
      * \param scvfCorners Container with the corners of the scvf
      */
     static CoordScalar getScvfArea(const ScvfCornerVector& scvfCorners)

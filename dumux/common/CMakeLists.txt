@@ -20,7 +20,6 @@ intersectionmapper.hh
 intrange.hh
 loggingparametertree.hh
 math.hh
-matrixvectorhelper.hh
 numericdifferentiation.hh
 optional.hh
 parameters.hh

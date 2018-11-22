@@ -78,7 +78,7 @@ public:
             // for scvfs touching the boundary there are no "outside" scvfs
             if (nodalIndexSet.scvfIsOnBoundary(i))
             {
-                scvfNeighborScvLocalIndices_.push_back({nodalIndexSet.insideScvIdxLocal(i)});
+                scvfNeighborScvLocalIndices_.push_back({nodalIndexSet.insideScvLocalIndex(i)});
                 nodeToIvScvf_[i] = ivToNodeScvf_.size();
                 isHandled[i] = true;
                 ivToNodeScvf_.push_back(i);
@@ -92,12 +92,12 @@ public:
             isHandled[i] = true;
 
             // construct local index sets
-            const auto& flipScvfIndices = flipScvfIndexSet[nodalIndexSet.scvfIdxGlobal(i)];
+            const auto& flipScvfIndices = flipScvfIndexSet[nodalIndexSet.gridScvfIndex(i)];
             const auto numFlipIndices = flipScvfIndices.size();
 
             ScvfNeighborLocalIndexSet neighborsLocal;
             neighborsLocal.resize(numFlipIndices + 1);
-            neighborsLocal[0] = nodalIndexSet.insideScvIdxLocal(i);
+            neighborsLocal[0] = nodalIndexSet.insideScvLocalIndex(i);
 
             // mappings for all flip scvf
             for (unsigned int j = 0; j < numFlipIndices; ++j)
@@ -105,9 +105,9 @@ public:
                 const auto outsideScvfIdx = flipScvfIndices[j];
                 for (unsigned int nodeLocalIdx = 0; nodeLocalIdx < nodalIndexSet.numScvfs(); ++nodeLocalIdx)
                 {
-                    if (nodalIndexSet.scvfIdxGlobal(nodeLocalIdx) == outsideScvfIdx)
+                    if (nodalIndexSet.gridScvfIndex(nodeLocalIdx) == outsideScvfIdx)
                     {
-                        neighborsLocal[j+1] = nodalIndexSet.insideScvIdxLocal(nodeLocalIdx);
+                        neighborsLocal[j+1] = nodalIndexSet.insideScvLocalIndex(nodeLocalIdx);
                         nodeToIvScvf_[nodeLocalIdx] = curIvLocalScvfIdx;
                         isHandled[nodeLocalIdx] = true;
                         break; // go to next outside scvf
@@ -126,8 +126,8 @@ public:
     { return nodalIndexSet_; }
 
     //! returns the global scv indices connected to this dual grid node
-    const NodalGridStencilType& globalScvIndices() const
-    { return nodalIndexSet_.globalScvIndices(); }
+    const NodalGridStencilType& gridScvIndices() const
+    { return nodalIndexSet_.gridScvIndices(); }
 
     //! returns the number of faces in the interaction volume
     std::size_t numFaces() const
@@ -137,18 +137,18 @@ public:
     std::size_t numScvs() const
     { return nodalIndexSet_.numScvs(); }
 
-    //! returns a global scvf idx for a given iv-local scvf index
-    GridIndexType scvfIdxGlobal(LocalIndexType ivLocalScvfIdx) const
+    //! returns a grid scvf idx for a given iv-local scvf index
+    GridIndexType gridScvfIndex(LocalIndexType ivLocalScvfIdx) const
     {
         assert(ivLocalScvfIdx < numFaces());
-        return nodalIndexSet_.scvfIdxGlobal( ivToNodeScvf_[ivLocalScvfIdx] );
+        return nodalIndexSet_.gridScvfIndex( ivToNodeScvf_[ivLocalScvfIdx] );
     }
 
     //! returns the iv-local scvf idx of the i-th scvf embedded in a local scv
-    LocalIndexType scvfIdxLocal(LocalIndexType scvIdxLocal, unsigned int i) const
+    LocalIndexType localScvfIndex(LocalIndexType scvIdxLocal, unsigned int i) const
     {
-        assert(nodalIndexSet_.scvfIdxLocal(scvIdxLocal, i) < nodeToIvScvf_.size());
-        return nodeToIvScvf_[ nodalIndexSet_.scvfIdxLocal(scvIdxLocal, i) ];
+        assert(nodalIndexSet_.localScvfIndex(scvIdxLocal, i) < nodeToIvScvf_.size());
+        return nodeToIvScvf_[ nodalIndexSet_.localScvfIndex(scvIdxLocal, i) ];
     }
 
     //! returns the local indices of the neighboring scvs of an scvf

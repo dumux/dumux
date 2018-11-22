@@ -73,8 +73,14 @@ public:
 template<class TypeTag>
 struct PrimaryInteractionVolume<TypeTag, TTag::CCMpfaModel>
 {
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+
+    // use the default traits
+    using Traits = CCMpfaODefaultInteractionVolumeTraits< NodalIndexSet, Scalar >;
 public:
-    using type = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
+    using type = CCMpfaOInteractionVolume< Traits >;
 };
 
 //! Per default, we use the dynamic mpfa-o interaction volume on boundaries

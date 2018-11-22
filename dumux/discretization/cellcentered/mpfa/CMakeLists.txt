@@ -19,7 +19,7 @@ gridvolumevariables.hh
 helper.hh
 interactionvolumebase.hh
 interactionvolumedatahandle.hh
-localassembler.hh
+localassemblerbase.hh
 localfacedata.hh
 methods.hh
 properties.hh

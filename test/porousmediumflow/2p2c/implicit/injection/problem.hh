@@ -26,6 +26,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/discretization/cellcentered/mpfa/omethod/staticinteractionvolume.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
@@ -90,6 +91,24 @@ template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::Injection> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::Injection> { static constexpr bool value = ENABLECACHING; };
+
+// use the static interaction volume around interior vertices in the mpfa test
+template<class TypeTag>
+struct PrimaryInteractionVolume<TypeTag, TTag::InjectionCCMpfa>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using NodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
+
+    // structured two-d grid
+    static constexpr int numIvScvs = 4;
+    static constexpr int numIvScvfs = 4;
+
+    // use the default traits
+    using Traits = CCMpfaODefaultStaticInteractionVolumeTraits< NodalIndexSet, Scalar, numIvScvs, numIvScvfs >;
+public:
+    using type = CCMpfaOStaticInteractionVolume< Traits >;
+};
 } // end namespace Properties
 
 /*!

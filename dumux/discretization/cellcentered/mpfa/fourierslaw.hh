@@ -48,6 +48,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -75,13 +78,11 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
           if (fvGeometry.fvGridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
               scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.secondaryInteractionVolume(),
                                                      fluxVarsCacheFiller.secondaryIvLocalFaceData(),
-                                                     fluxVarsCacheFiller.secondaryIvDataHandle(),
-                                                     scvf);
+                                                     fluxVarsCacheFiller.secondaryIvDataHandle());
           else
               scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.primaryInteractionVolume(),
                                                      fluxVarsCacheFiller.primaryIvLocalFaceData(),
-                                                     fluxVarsCacheFiller.primaryIvDataHandle(),
-                                                     scvf);
+                                                     fluxVarsCacheFiller.primaryIvDataHandle());
         }
     };
 
@@ -91,23 +92,18 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
         using DualGridNodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
         using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
 
-        using MpfaHelper = typename FVGridGeometry::MpfaHelper;
-        static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
+        static constexpr bool considerSecondaryIVs = FVGridGeometry::MpfaHelper::considerSecondaryIVs();
+        using PrimaryDataHandle = typename ElementFluxVarsCache::PrimaryIvDataHandle::HeatConductionHandle;
+        using SecondaryDataHandle = typename ElementFluxVarsCache::SecondaryIvDataHandle::HeatConductionHandle;
 
-        using PrimaryInteractionVolume = GetPropType<TypeTag, Properties::PrimaryInteractionVolume>;
-        using PrimaryIvLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
-        using PrimaryIvDataHandle = typename ElementFluxVarsCache::PrimaryIvDataHandle;
-        using PrimaryIvCellVector = typename PrimaryInteractionVolume::Traits::MatVecTraits::CellVector;
-        using PrimaryIvTij = typename PrimaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
+        //! sets the pointer to the data handle (overload for secondary data handles)
+        template< bool doSecondary = considerSecondaryIVs, std::enable_if_t<doSecondary, int> = 0 >
+        void setHandlePointer_(const SecondaryDataHandle& dataHandle)
+        { secondaryHandlePtr_ = &dataHandle; }
 
-        using SecondaryInteractionVolume = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
-        using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
-        using SecondaryIvDataHandle = typename ElementFluxVarsCache::SecondaryIvDataHandle;
-        using SecondaryIvCellVector = typename SecondaryInteractionVolume::Traits::MatVecTraits::CellVector;
-        using SecondaryIvTij = typename SecondaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
-
-        static constexpr int dim = GridView::dimension;
-        static constexpr int dimWorld = GridView::dimensionworld;
+        //! sets the pointer to the data handle (overload for primary data handles)
+        void setHandlePointer_(const PrimaryDataHandle& dataHandle)
+        { primaryHandlePtr_ = &dataHandle; }
 
     public:
         // export filler type
@@ -120,90 +116,36 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
          * \param iv The interaction volume this scvf is embedded in
          * \param localFaceData iv-local info on this scvf
          * \param dataHandle Transmissibility matrix & gravity data of this iv
-         * \param scvf The sub-control volume face
          */
-        void updateHeatConduction(const PrimaryInteractionVolume& iv,
-                                  const PrimaryIvLocalFaceData& localFaceData,
-                                  const PrimaryIvDataHandle& dataHandle,
-                                  const SubControlVolumeFace &scvf)
+         template<class IV, class LocalFaceData, class DataHandle>
+         void updateHeatConduction(const IV& iv,
+                                   const LocalFaceData& localFaceData,
+                                   const DataHandle& dataHandle)
         {
+            switchFluxSign_ = localFaceData.isOutsideFace();
             stencil_ = &iv.stencil();
-            switchFluxSign_ = localFaceData.isOutside();
-
-            // store pointer to the temperature vector of this iv
-            primaryTj_ = &dataHandle.temperatures();
-
-            const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
-            if (dim == dimWorld)
-                primaryTij_ = &dataHandle.heatConductionT()[ivLocalIdx];
-            else
-                primaryTij_ = localFaceData.isOutside() ? &dataHandle.heatConductionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
-                                                        : &dataHandle.heatConductionT()[ivLocalIdx];
+            setHandlePointer_(dataHandle.heatConductionHandle());
         }
-
-        /*!
-         * \brief Update cached objects (transmissibilities).
-         *        This is used for updates with secondary interaction volumes.
-         *
-         * \param iv The interaction volume this scvf is embedded in
-         * \param localFaceData iv-local info on this scvf
-         * \param dataHandle Transmissibility matrix & gravity data of this iv
-         * \param scvf The sub-control volume face
-         */
-        template< bool doSecondary = considerSecondaryIVs, std::enable_if_t<doSecondary, int > = 0 >
-        void updateHeatConduction(const SecondaryInteractionVolume& iv,
-                                  const SecondaryIvLocalFaceData& localFaceData,
-                                  const SecondaryIvDataHandle& dataHandle,
-                                  const SubControlVolumeFace &scvf)
-        {
-            stencil_ = &iv.stencil();
-            switchFluxSign_ = localFaceData.isOutside();
-
-            // store pointer to the temperature vector of this iv
-            secondaryTj_ = &dataHandle.temperatures();
-
-            const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
-            if (dim == dimWorld)
-                secondaryTij_ = &dataHandle.heatConductionT()[ivLocalIdx];
-            else
-                secondaryTij_ = localFaceData.isOutside() ? &dataHandle.heatConductionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
-                                                          : &dataHandle.heatConductionT()[ivLocalIdx];
-        }
-
-        //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions (primary type)
-        const PrimaryIvTij& heatConductionTijPrimaryIv() const { return *primaryTij_; }
-
-        //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions (secondary type)
-        const SecondaryIvTij& heatConductionTijSecondaryIv() const { return *secondaryTij_; }
 
         //! The stencil corresponding to the transmissibilities (primary type)
         const Stencil& heatConductionStencil() const { return *stencil_; }
 
-        //! The cell (& Dirichlet) temperatures within this interaction volume (primary type)
-        const PrimaryIvCellVector& temperaturesPrimaryIv() const { return *primaryTj_; }
+        //! The corresponding data handles
+        const PrimaryDataHandle& heatConductionPrimaryDataHandle() const { return *primaryHandlePtr_; }
+        const SecondaryDataHandle& heatConductionSecondaryDataHandle() const { return *secondaryHandlePtr_; }
 
-        //! The cell (& Dirichlet) temperatures within this interaction volume (secondary type)
-        const SecondaryIvCellVector& temperaturesSecondaryIv() const { return *secondaryTj_; }
-
-        //! In the interaction volume-local system of eq we have one unknown per face.
-        //! On scvfs on this face, but in "outside" (neighbor) elements of it, we have
-        //! to take the negative value of the fluxes due to the flipped normal vector.
-        //! This function returns whether or not this scvf is an "outside" face in the iv.
+        //! Returns whether or not this scvf is an "outside" face in the scope of the iv.
         bool heatConductionSwitchFluxSign() const { return switchFluxSign_; }
 
     private:
         bool switchFluxSign_;
 
+        //! pointers to the corresponding iv-data handles
+        const PrimaryDataHandle* primaryHandlePtr_;
+        const SecondaryDataHandle* secondaryHandlePtr_;
+
         //! The stencil, i.e. the grid indices j
         const Stencil* stencil_;
-
-        //! The transmissibilities such that f = Tij*Tj
-        const PrimaryIvTij* primaryTij_;
-        const SecondaryIvTij* secondaryTij_;
-
-        //! The interaction-volume wide temperature Tj
-        const PrimaryIvCellVector* primaryTj_;
-        const SecondaryIvCellVector* secondaryTj_;
     };
 
 public:
@@ -223,25 +165,34 @@ public:
     {
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
-        // compute Tij*tj
-        Scalar flux;
+        // forward to the private function taking the iv data handle
         if (fluxVarsCache.usesSecondaryIv())
-        {
-            const auto& tij = fluxVarsCache.heatConductionTijSecondaryIv();
-            const auto& Tj = fluxVarsCache.temperaturesSecondaryIv();
-            flux = tij*Tj;
-        }
+            return flux_(problem, fluxVarsCache, fluxVarsCache.heatConductionSecondaryDataHandle());
         else
-        {
-            const auto& tij = fluxVarsCache.heatConductionTijPrimaryIv();
-            const auto& Tj = fluxVarsCache.temperaturesPrimaryIv();
-            flux = tij*Tj;
-        }
+            return flux_(problem, fluxVarsCache, fluxVarsCache.heatConductionPrimaryDataHandle());
+    }
 
-        if (fluxVarsCache.heatConductionSwitchFluxSign())
-            flux *= -1.0;
+private:
+    template< class Problem, class FluxVarsCache, class DataHandle >
+    static Scalar flux_(const Problem& problem,
+                        const FluxVarsCache& cache,
+                        const DataHandle& dataHandle)
+    {
+        const bool switchSign = cache.advectionSwitchFluxSign();
 
-        return flux;
+        const auto localFaceIdx = cache.ivLocalFaceIndex();
+        const auto idxInOutside = cache.indexInOutsideFaces();
+        const auto& Tj = dataHandle.uj();
+        const auto& tij = dim == dimWorld ? dataHandle.T()[localFaceIdx]
+                                          : (!switchSign ? dataHandle.T()[localFaceIdx]
+                                                         : dataHandle.tijOutside()[localFaceIdx][idxInOutside]);
+        Scalar scvfFlux = tij*Tj;
+
+        // switch the sign if necessary
+        if (cache.advectionSwitchFluxSign())
+            scvfFlux *= -1.0;
+
+        return scvfFlux;
     }
 };
 
