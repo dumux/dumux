@@ -18,32 +18,33 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
+ * \ingroup Fluidmatrixinteractions
+ * \brief Description of a interfacial area between solid and fluid phase
  */
-#ifndef DUMUX_DISCRETIZATION_FOURIERS_LAW_NONEQUILIBRIUM_HH
-#define DUMUX_DISCRETIZATION_FOURIERS_LAW_NONEQUILIBRIUM_HH
-
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/method.hh>
+#ifndef FLUIDSOLID_INTERFACIALAREA_SHI_WANG_HH
+#define FLUIDSOLID_INTERFACIALAREA_SHI_WANG_HH
 
 namespace Dumux {
 
-// forward declaration
-template <class TypeTag, DiscretizationMethod discMethod>
-class FouriersLawNonEquilibriumImplementation
-{};
-
 /*!
- * \ingroup FouriersLaw
- * \brief Evaluates the heat conduction flux according to Fouriers's law
+ * \ingroup Fluidmatrixinteractions
+ * \brief Description of a interfacial area between solid and fluid phase
  */
-template <class TypeTag>
-using FouriersLawNonEquilibrium = FouriersLawNonEquilibriumImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+template<class Scalar>
+class FluidSolidInterfacialAreaShiWang
+{
+public:
+    /*!
+     * \brief Relation for the interfacial area between a fluid and a solid phase
+     * after Shi & Wang, Transport in porous media (2011)
+     *
+     * \return interfacial area
+     */
+    static Scalar fluidSolidInterfacialArea(const Scalar porosity,
+                                            const Scalar characteristicLength)
+    { return 6.0*(1.0-porosity)/characteristicLength; }
+};
 
 } // end namespace Dumux
-
-#include <dumux/discretization/cellcentered/tpfa/fourierslawnonequilibrium.hh>
-#include <dumux/discretization/box/fourierslawnonequilibrium.hh>
 
 #endif

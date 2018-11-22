@@ -61,11 +61,13 @@ public:
      * \param values Container for the return values
      * \param params Array of Parameters
      * \param state The fluid state
+     * \param wPhaseIdx the phase index of the wetting phase
      */
     template <class ContainerT, class FluidState>
     static void capillaryPressures(ContainerT &values,
                                    const Params &params,
-                                   const FluidState &state)
+                                   const FluidState &state,
+                                   int wPhaseIdx = 0)
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             Scalar S = state.saturation(phaseIdx);

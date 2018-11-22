@@ -26,10 +26,11 @@
 
 #include <dune/common/parametertreeparser.hh>
 
+#include <dumux/material/spatialparams/fvnonequilibrium.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/heatpipelaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
+#include <dumux/material/fluidmatrixinteractions/1pia/fluidsolidinterfacialareashiwang.hh>
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 
@@ -39,34 +40,30 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for the one component combustion problem
  *
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class CombustionSpatialParams
-: public FVSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                         GetPropType<TypeTag, Properties::Scalar>,
-                         CombustionSpatialParams<TypeTag>>
+: public FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
+                                       CombustionSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, CombustionSpatialParams<TypeTag>>;
+    using ThisType = CombustionSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
     enum {dimWorld = GridView::dimensionworld};
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using EffectiveLaw = HeatPipeLaw<Scalar>;
 
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-
 public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the material law type used
-    using MaterialLaw = TwoPAdapter<wPhaseIdx, EffToAbsLaw<EffectiveLaw>>;
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
+    using FluidSolidInterfacialAreaFormulation = FluidSolidInterfacialAreaShiWang<Scalar>;
 
     CombustionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
@@ -85,7 +82,6 @@ public:
         intrinsicPermeability_  =  (pow(characteristicLength_,2.0)  * pow(porosity_, 3.0)) / (150.0 * pow((1.0-porosity_),2.0)); // 1.69e-10 ; //
 
         factorEnergyTransfer_ = getParam<Scalar>("SpatialParams.PorousMedium.factorEnergyTransfer");
-        factorMassTransfer_ =getParam<Scalar>("SpatialParams.PorousMedium.factorMassTransfer");
         lengthPM_ = getParam<Scalar>("Grid.lengthPM");
 
         // residual saturations
@@ -161,25 +157,22 @@ public:
     }
 
     /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        return FluidSystem::phase0Idx;
+    }
+
+    /*!
      * \brief Return a reference to the material parameters of the material law.
      * \param globalPos The position in global coordinates. */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition & globalPos) const
     { return materialParams_ ; }
-
-    /*!\brief Return the characteristic length for the mass transfer.
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub controle volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub control volume */
-    template<class ElementSolution>
-    const Scalar characteristicLength(const Element & element,
-                                      const SubControlVolume &scv,
-                                      const ElementSolution &elemSol) const
-
-    { return characteristicLengthAtPos(scv.center()); }
-
 
     /*!\brief Return the characteristic length for the mass transfer.
      * \param globalPos The position in global coordinates.*/
@@ -187,43 +180,9 @@ public:
     { return characteristicLength_ ; }
 
     /*!\brief Return the pre factor the the energy transfer
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub controle volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub control volume */
-    template<class ElementSolution>
-    const Scalar factorEnergyTransfer(const Element &element,
-                                      const SubControlVolume &scv,
-                                      const ElementSolution &elemSol) const
-    { return factorEnergyTransferAtPos(scv.dofPosition()); }
-
-
-    /*!\brief Return the pre factor the the energy transfer
      * \param globalPos The position in global coordinates.*/
     const Scalar factorEnergyTransferAtPos(const  GlobalPosition & globalPos) const
     { return factorEnergyTransfer_; }
-
-
-    /*!\brief Return the pre factor the the mass transfer
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub controle volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub control volume */
-    template<class ElementSolution>
-    const Scalar factorMassTransfer(const Element &element,
-                                    const SubControlVolume &scv,
-                                    const ElementSolution &elemSol) const
-    { return factorMassTransferAtPos(scv.dofPosition()); }
-
-    /*!\brief Return the pre factor the the mass transfer
-     * \param globalPos The position in global coordinates.*/
-    const Scalar factorMassTransferAtPos(const  GlobalPosition & globalPos) const
-    { return factorMassTransfer_; }
-
 
     //! Return if the tested position (input) is a specific region (right end of porous medium) in the domain
     bool inOutFlow(const GlobalPosition & globalPos) const { return globalPos[0] > (lengthPM_ - eps_) ;    }
@@ -239,7 +198,6 @@ private:
     Scalar intrinsicPermeability_ ;
     Scalar porosity_ ;
     Scalar factorEnergyTransfer_ ;
-    Scalar factorMassTransfer_ ;
     Scalar characteristicLength_ ;
     MaterialLawParams materialParams_ ;
 

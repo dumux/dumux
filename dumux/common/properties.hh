@@ -267,12 +267,6 @@ template<class TypeTag, class MyTypeTag>
 struct NumEnergyEqSolid { using type = UndefinedProperty; };
 
 template<class TypeTag, class MyTypeTag>
-struct AwnSurface { using type = UndefinedProperty; };
-template<class TypeTag, class MyTypeTag>
-struct AwsSurface { using type = UndefinedProperty; };
-template<class TypeTag, class MyTypeTag>
-struct AnsSurface { using type = UndefinedProperty; };
-template<class TypeTag, class MyTypeTag>
 struct NusseltFormulation { using type = UndefinedProperty; };
 template<class TypeTag, class MyTypeTag>
 struct SherwoodFormulation { using type = UndefinedProperty; };

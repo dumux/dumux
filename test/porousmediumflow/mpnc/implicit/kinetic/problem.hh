@@ -118,43 +118,11 @@ struct SolidSystem<TypeTag, TTag::EvaporationAtmosphere>
 
 // Set the spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere> { using type = EvaporationAtmosphereSpatialParams<TypeTag>; };
-
-// Set the interfacial area relation: wetting -- non-wetting
-template<class TypeTag>
-struct AwnSurface<TypeTag, TTag::EvaporationAtmosphere>
+struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere>
 {
+    using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALaw = AwnSurfacePcMaxFct<Scalar>;
-public:
-    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
-};
-
-
-// Set the interfacial area relation: wetting -- solid
-template<class TypeTag>
-struct AwsSurface<TypeTag, TTag::EvaporationAtmosphere>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALaw = AwnSurfacePolynomial2ndOrder<Scalar>;
-public:
-    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
-};
-
-// Set the interfacial area relation: non-wetting -- solid
-template<class TypeTag>
-struct AnsSurface<TypeTag, TTag::EvaporationAtmosphere>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALaw = AwnSurfaceExpSwPcTo3<Scalar>;
-public:
-    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
+    using type = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar>;
 };
 } // end namespace Properties
 
@@ -452,11 +420,13 @@ private:
 
         const auto &materialParams =
             this->spatialParams().materialLawParamsAtPos(globalPos);
-        Scalar capPress[numPhases];
-
+        std::vector<Scalar> capPress(numPhases);
         //obtain pc according to saturation
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        MaterialLaw::capillaryPressures(capPress, materialParams, equilibriumFluidState);
+        using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
+
+        const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
+        MPAdapter::capillaryPressures(capPress, materialParams, equilibriumFluidState, wPhaseIdx);
 
         Scalar p[numPhases];
         if (this->spatialParams().inPM_(globalPos)){

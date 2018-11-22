@@ -74,8 +74,7 @@ struct SpatialParams<TypeTag, TTag::Obstacle>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using type = ObstacleSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+    using type = ObstacleSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Set fluid configuration
@@ -362,7 +361,10 @@ private:
         const auto& matParams = this->spatialParams().materialLawParamsAtPos(globalPos);
         PhaseVector pc;
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        MaterialLaw::capillaryPressures(pc, matParams, fs);
+        using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
+
+        const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
+        MPAdapter::capillaryPressures(pc, matParams, fs, wPhaseIdx);
         fs.setPressure(otherPhaseIdx,
                        fs.pressure(refPhaseIdx)
                        + (pc[otherPhaseIdx] - pc[refPhaseIdx]));

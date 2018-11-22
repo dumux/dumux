@@ -26,56 +26,56 @@
 #define DUMUX_EVAPORATION_ATMOSPHERE_SPATIALPARAMS_HH
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/material/spatialparams/fvnonequilibrium.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchtenoftemperature.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
-#include <dumux/material/fluidmatrixinteractions/mp/2poftadapter.hh>
 #include <dumux/common/parameters.hh>
+
+// material laws for interfacial area
+#include <dumux/material/fluidmatrixinteractions/2pia/efftoabslawia.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomial2ndorder.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepcmaxfct.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpswpcto3.hh>
 
 namespace Dumux {
 
 /**
  * \brief Definition of the spatial parameters for the evaporation atmosphere Problem (using a "poor man's coupling")
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class EvaporationAtmosphereSpatialParams
-: public FVSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                         GetPropType<TypeTag, Properties::Scalar>,
-                         EvaporationAtmosphereSpatialParams<TypeTag>>
+: public FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
+                                       EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, EvaporationAtmosphereSpatialParams<TypeTag>>;
+    using ThisType = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
     enum { dimWorld = GridView::dimensionworld };
-    enum { numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases() };
-
-    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-
-    enum { liquidPhaseIdx   = FluidSystem::liquidPhaseIdx };
 public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the material law type used
-    using MaterialLaw = TwoPAdapter<liquidPhaseIdx, EffToAbsLaw<RegularizedBrooksCorey<Scalar>>>;
-    //! export the types used for interfacial area calculations
-    using AwnSurface = GetPropType<TypeTag, Properties::AwnSurface>;
-    using AwsSurface = GetPropType<TypeTag, Properties::AwsSurface>;
-    using AnsSurface = GetPropType<TypeTag, Properties::AnsSurface>;
-
+    using MaterialLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
     //! convenience aliases of the law parameters
     using MaterialLawParams = typename MaterialLaw::Params;
+
+    //! export the types used for interfacial area calculations
+    using EffectiveIALawAws = AwnSurfacePolynomial2ndOrder<Scalar>;
+    using EffectiveIALawAwn = AwnSurfacePcMaxFct<Scalar>;
+    using EffectiveIALawAns = AwnSurfaceExpSwPcTo3<Scalar>;
+    using AwnSurface = EffToAbsLawIA<EffectiveIALawAwn, MaterialLawParams>;
+    using AwsSurface = EffToAbsLawIA<EffectiveIALawAws, MaterialLawParams>;
+    using AnsSurface = EffToAbsLawIA<EffectiveIALawAns, MaterialLawParams>;
+
     using AwnSurfaceParams = typename AwnSurface::Params;
     using AwsSurfaceParams = typename AwsSurface::Params;
     using AnsSurfaceParams = typename AnsSurface::Params;
@@ -126,28 +126,10 @@ public:
         materialParamsFF_.setLambda(42.);
         materialParamsFF_.setPe(0.);
 
-        {//scope it
-            // capillary pressure parameters
-            FluidState fluidState ;
-            Scalar S[numPhases] ;
-            Scalar capPress[numPhases];
-            //set saturation to inital values, this needs to be done in order for the fluidState to tell me pc
-            for (int phaseIdx = 0; phaseIdx < numPhases ; ++phaseIdx) {
-                // set saturation to zero for getting pcmax
-                S[phaseIdx] = 0. ;
-                Scalar TInitial  = getParam<Scalar>("InitialConditions.TInitial");
-                fluidState.setSaturation(phaseIdx, S[phaseIdx]);
-                fluidState.setTemperature(phaseIdx,TInitial);
-            }
-
-            //obtain pc according to saturation
-            MaterialLaw::capillaryPressures(capPress, materialParamsPM_, fluidState);
-            using std::abs;
-            pcMax_ = abs(capPress[0]);
-
-            // set pressures from capillary pressures
-            aWettingNonWettingSurfaceParams_.setPcMax(pcMax_);
-        }
+        // determine maximum capillary pressure for wetting-nonwetting surface
+        using TwoPLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
+        pcMax_ = TwoPLaw::pc(materialParamsPM_, /*sw = */0.0);
+        aWettingNonWettingSurfaceParams_.setPcMax(pcMax_);
 
         // wetting-non wetting: surface which goes to zero on the edges, but is a polynomial
         aWettingNonWettingSurfaceParams_.setA1(aWettingNonWettingA1_);
@@ -284,21 +266,6 @@ public:
                        const ElementSolution &elemSol) const
     { return aWettingNonWettingSurfaceParams_.pcMax() ; }
 
-
-    /*!\brief Return the characteristic length for the mass transfer.
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub controle volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub control volume */
-    template<class ElementSolution>
-    const Scalar characteristicLength(const Element & element,
-                                      const SubControlVolume &scv,
-                                      const ElementSolution &elemSol) const
-
-    { return characteristicLengthAtPos(scv.dofPosition()); }
-
     /*!\brief Return the characteristic length for the mass transfer.
      * \param globalPos The position in global coordinates.*/
     const Scalar characteristicLengthAtPos(const  GlobalPosition & globalPos) const
@@ -309,19 +276,6 @@ public:
             return characteristicLengthPM_ ;
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
-
-    /*!\brief Return the pre factor the the energy transfer
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub controle volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub control volume */
-    template<class ElementSolution>
-    const Scalar factorEnergyTransfer(const Element &element,
-                                      const SubControlVolume &scv,
-                                      const ElementSolution &elemSol) const
-    { return factorEnergyTransferAtPos(scv.dofPosition()); }
 
     /*!\brief Return the pre factor the the energy transfer
      * \param globalPos The position in global coordinates.*/
@@ -335,19 +289,6 @@ public:
     }
 
     /*!\brief Return the pre factor the the mass transfer
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub controle volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub control volume */
-    template<class ElementSolution>
-    const Scalar factorMassTransfer(const Element &element,
-                                      const SubControlVolume &scv,
-                                      const ElementSolution &elemSol) const
-    { return factorMassTransferAtPos(scv.dofPosition()); }
-
-    /*!\brief Return the pre factor the the mass transfer
      * \param globalPos The position in global coordinates.*/
     const Scalar factorMassTransferAtPos(const  GlobalPosition & globalPos) const
     {
@@ -356,6 +297,18 @@ public:
         else if (inPM_(globalPos))
             return factorMassTransfer_ ;
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
+    }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        return FluidSystem::phase0Idx;
     }
 
     /*!\brief Give back whether the tested position (input) is a specific region (porous medium part) in the domain

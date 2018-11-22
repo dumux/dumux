@@ -19,52 +19,54 @@
 /*!
  * \file
  * \ingroup Fluidmatrixinteractions
- * \brief Makes the twophase capillary pressure-saturation relations available under the M-phase API for material laws
+ * \brief Makes the capillary pressure-saturation relations available under the M-phase API for material laws
  *
- * Makes the twophase capillary pressure-saturation relations
+ * Makes the capillary pressure-saturation relations
  * available under the M-phase API for material laws
  */
-#ifndef DUMUX_MP_2P_ADAPTER_HH
-#define DUMUX_MP_2P_ADAPTER_HH
+#ifndef DUMUX_MP_ADAPTER_HH
+#define DUMUX_MP_ADAPTER_HH
 
 #include <algorithm>
+#include <cassert>
+#include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux
 {
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief Implements a brookscorey saturation-capillary pressure relation
- *
- * Implements a brookscorey saturation-capillary pressure relation for
- * M-phase fluid systems.
- *
- * \sa MpBrookscoreyMaterialParams
+ * \brief An adapter for mpnc to use the capillary pressure-saturation relationships
  */
-template <int wPhaseIdx, class TwoPLaw >
-class TwoPAdapter
+template <class MaterialLaw, int numPhases>
+class MPAdapter
 {
-    enum { nPhaseIdx = (wPhaseIdx == 0)?1:0 };
+    static_assert(AlwaysFalse<MaterialLaw>::value, "Adapter not implemented for the specified number of phases");
+};
 
+template <class MaterialLaw>
+class MPAdapter<MaterialLaw, 2 /*numPhases*/>
+{
 public:
-    using Params = typename TwoPLaw::Params;
-    enum { numPhases = 2 };
-
+    using Params = typename MaterialLaw::Params;
     /*!
      * \brief The capillary pressure-saturation curve.
      * \param values Container for the return values
      * \param params Array of parameters
      * \param state Fluidstate
+     * \param wPhaseIdx the phase index of the wetting phase
      */
     template <class ContainerT, class FluidState>
     static void capillaryPressures(ContainerT &values,
                                    const Params &params,
-                                   const FluidState &state)
+                                   const FluidState &state,
+                                   int wPhaseIdx)
     {
+        assert(values.size() == 2);
+        const int nPhaseIdx = 1 - wPhaseIdx;
         // non-wetting phase gets the capillary pressure added
         values[nPhaseIdx] = 0;
-
         // wetting phase does not get anything added
-        values[wPhaseIdx] = - TwoPLaw::pc(params, state.saturation(wPhaseIdx));
+        values[wPhaseIdx] = - MaterialLaw::pc(params, state.saturation(wPhaseIdx));
     }
 
     /*!
@@ -78,8 +80,11 @@ public:
                                        const Params &params,
                                        const FluidState &state)
     {
-        values[wPhaseIdx] = TwoPLaw::krw(params, state.saturation(wPhaseIdx));
-        values[nPhaseIdx] = TwoPLaw::krn(params, state.saturation(wPhaseIdx));
+        const int wPhaseIdx = state.wettingPhase();
+        assert(values.size() == 2);
+        const int nPhaseIdx = 1 - wPhaseIdx;
+        values[wPhaseIdx] = MaterialLaw::krw(params, state.saturation(wPhaseIdx));
+        values[nPhaseIdx] = MaterialLaw::krn(params, state.saturation(wPhaseIdx));
     }
 };
 }

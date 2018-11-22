@@ -66,8 +66,6 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
     enum { numPhases        = ModelTraits::numPhases() };
 
     enum { numComponents    = ModelTraits::numComponents() };
-    enum { phase0Idx        = FluidSystem::phase0Idx};
-    enum { phase1Idx        = FluidSystem::phase1Idx};
 
 public:
     //! The energy storage in the fluid phase with index phaseIdx
@@ -147,12 +145,10 @@ public:
                                    FluxVariables& fluxVars)
     {
         //in case we have one energy equation for more than one fluid phase we use an effective law in the nonequilibrium fourierslaw
-         flux[energyEq0Idx] += fluxVars.heatConductionFlux(0);
+        flux[energyEq0Idx] += fluxVars.heatConductionFlux(0);
          //heat conduction for the solid phases
-       for(int sPhaseIdx=0; sPhaseIdx<numEnergyEqSolid; ++sPhaseIdx)
-       {
+        for(int sPhaseIdx=0; sPhaseIdx<numEnergyEqSolid; ++sPhaseIdx)
             flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(numPhases + sPhaseIdx);
-       }
     }
 
     /*!
@@ -168,82 +164,25 @@ public:
     {
         //specialization for 2 fluid phases
         const auto& volVars = elemVolVars[scv];
-        const auto& fs = volVars.fluidState() ;
         const Scalar characteristicLength = volVars.characteristicLength()  ;
 
         //interfacial area
         // Shi & Wang, Transport in porous media (2011)
-        const Scalar as = 6.0 * (1.0-volVars.porosity()) / characteristicLength ;
+        const Scalar as = volVars.fluidSolidInterfacialArea();
 
         //temperature fluid is the same for both fluids
         const Scalar TFluid     = volVars.temperatureFluid(0);
         const Scalar TSolid     = volVars.temperatureSolid();
 
-        const Scalar satW       = fs.saturation(phase0Idx) ;
-        const Scalar satN       = fs.saturation(phase1Idx) ;
-
-        const Scalar eps = 1e-6 ;
         Scalar solidToFluidEnergyExchange ;
 
-        Scalar fluidConductivity ;
-            if (satW < 1.0 - eps)
-                fluidConductivity = volVars.fluidThermalConductivity(phase1Idx) ;
-            else if (satW >= 1.0 - eps)
-                fluidConductivity = volVars.fluidThermalConductivity(phase0Idx) ;
-            else
-                DUNE_THROW(Dune::NotImplemented,
-                        "wrong range");
+        const Scalar fluidConductivity = volVars.fluidThermalConductivity(0) ;
 
         const Scalar factorEnergyTransfer   = volVars.factorEnergyTransfer()  ;
 
         solidToFluidEnergyExchange = factorEnergyTransfer * (TSolid - TFluid) / characteristicLength * as * fluidConductivity ;
-        const Scalar epsRegul = 1e-3 ;
 
-        if (satW < (0 + eps) )
-        {
-                solidToFluidEnergyExchange *=  volVars.nusseltNumber(phase1Idx) ;
-        }
-        else if ( (satW >= 0 + eps) and (satW < 1.0-eps) )
-        {
-            solidToFluidEnergyExchange *=  (volVars.nusseltNumber(phase1Idx) * satN );
-            Scalar qBoil ;
-            if (satW<=epsRegul)
-            {// regularize
-                typedef Dumux::Spline<Scalar> Spline;
-                    Spline sp(0.0, epsRegul,                           // x1, x2
-                        QBoilFunc(volVars, 0.0), QBoilFunc(volVars, epsRegul),       // y1, y2
-                        0.0,dQBoil_dSw(volVars, epsRegul));    // m1, m2
-
-                qBoil = sp.eval(satW) ;
-            }
-
-            else if (satW>= (1.0-epsRegul) )
-            {// regularize
-                typedef Dumux::Spline<Scalar> Spline;
-                Spline sp(1.0-epsRegul, 1.0,    // x1, x2
-                        QBoilFunc(volVars, 1.0-epsRegul), 0.0,    // y1, y2
-                        dQBoil_dSw(volVars, 1.0-epsRegul), 0.0 );      // m1, m2
-
-                qBoil = sp.eval(satW) ;
-            }
-            else
-            {
-                qBoil = QBoilFunc(volVars, satW)  ;
-             }
-
-            solidToFluidEnergyExchange += qBoil;
-        }
-        else if (satW >= 1.0-eps)
-        {
-            solidToFluidEnergyExchange *=  volVars.nusseltNumber(phase0Idx) ;
-        }
-        else
-            DUNE_THROW(Dune::NotImplemented,
-                    "wrong range");
-
-        using std::isfinite;
-        if (!isfinite(solidToFluidEnergyExchange))
-            DUNE_THROW(NumericalProblem, "Calculated non-finite source, " << "TFluid="<< TFluid << " TSolid="<< TSolid);
+        solidToFluidEnergyExchange *=  volVars.nusseltNumber(0) ;
 
         for(int energyEqIdx =0; energyEqIdx<numEnergyEqFluid+numEnergyEqSolid; ++energyEqIdx)
         {
@@ -261,53 +200,6 @@ public:
             } // end switch
         }// end energyEqIdx
     }// end source
-
-
-  /*! \brief Calculate the energy transfer during boiling, i.e. latent heat
-   *
-   * \param volVars The volume variables
-   * \param satW The wetting phase saturation. Not taken from volVars, because we regularize.
-   */
-    static Scalar QBoilFunc(const VolumeVariables & volVars,
-                            const  Scalar satW)
-    {
-        // using saturation as input (instead of from volVars)
-        // in order to make regularization (evaluation at different points) easyer
-        const auto& fs = volVars.fluidState() ;
-        const Scalar g( 9.81 ) ;
-        const Scalar gamma(0.0589) ;
-        const Scalar TSolid     = volVars.temperatureSolid();
-        const Scalar characteristicLength   = volVars.characteristicLength()  ;
-        using std::pow;
-        const Scalar as = 6.0 * (1.0-volVars.porosity()) / characteristicLength ;
-        const Scalar mul = fs.viscosity(phase0Idx) ;
-        const Scalar deltahv = fs.enthalpy(phase1Idx) - fs.enthalpy(phase0Idx);
-        const Scalar deltaRho = fs.density(phase0Idx) - fs.density(phase1Idx) ;
-        const Scalar firstBracket = pow(g * deltaRho / gamma, 0.5);
-        const Scalar cp = FluidSystem::heatCapacity(fs, phase0Idx) ;
-        // This use of Tsat is only justified if the fluid is always boiling (tsat equals boiling conditions)
-        // If a different state is to be simulated, please use the actual fluid temperature instead.
-        const Scalar Tsat = FluidSystem::vaporTemperature(fs, phase1Idx ) ;
-        const Scalar deltaT = TSolid - Tsat ;
-        const Scalar secondBracket = pow( (cp *deltaT / (0.006 * deltahv)  ) , 3.0 ) ;
-        const Scalar Prl = volVars.prandtlNumber(phase0Idx) ;
-        const Scalar thirdBracket = pow( 1/Prl , (1.7/0.33) );
-        const Scalar QBoil = satW * as * mul * deltahv * firstBracket * secondBracket * thirdBracket ;
-            return QBoil;
-    }
-
-    /*! \brief Calculate the derivative of the energy transfer function during boiling. Needed for regularization.
-   *
-   * \param volVars The volume variables
-   * \param satW The wetting phase saturation. Not taken from volVars, because we regularize.
-   */
-    static Scalar dQBoil_dSw(const VolumeVariables & volVars,
-                                const Scalar satW)
-    {
-        // on the fly derive w.r.t. Sw.
-        // Only linearly depending on it (directly)
-        return (QBoilFunc(volVars, satW) / satW ) ;
-    }
 };
 
 template<class TypeTag>
@@ -476,16 +368,16 @@ public:
         //we only need to do this for when there is more than 1 fluid phase
         if (enableChemicalNonEquilibrium)
         {
-                // Here comes the catch: We are not doing energy conservation for the whole
-                // system, but rather for each individual phase.
-                //        -> Therefore the energy fluxes over each phase boundary need be
-                //           individually accounted for.
-                //        -> Each particle crossing a phase boundary does carry some mass and
-                //           thus energy!
-                //        -> Therefore, this contribution needs to be added.
-                //        -> the particle always brings the energy of the originating phase.
-                //        -> Energy advectivly transported into a phase = the moles of a component that go into a  phase
-                //           * molMass * enthalpy of the component in the *originating* phase
+            // Here comes the catch: We are not doing energy conservation for the whole
+            // system, but rather for each individual phase.
+            //        -> Therefore the energy fluxes over each phase boundary need be
+            //           individually accounted for.
+            //        -> Each particle crossing a phase boundary does carry some mass and
+            //           thus energy!
+            //        -> Therefore, this contribution needs to be added.
+            //        -> the particle always brings the energy of the originating phase.
+            //        -> Energy advectivly transported into a phase = the moles of a component that go into a  phase
+            //           * molMass * enthalpy of the component in the *originating* phase
 
             const auto& fluidState = volVars.fluidState();
 

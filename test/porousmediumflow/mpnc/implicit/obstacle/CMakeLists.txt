@@ -3,6 +3,7 @@ dune_symlink_to_source_files(FILES grids)
 
 dune_add_test(NAME test_mpnc_obstacle_box
               SOURCES main.cc
+              LABELS mpnc
               COMPILE_DEFINITIONS TYPETAG=ObstacleBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -12,6 +13,7 @@ dune_add_test(NAME test_mpnc_obstacle_box
 
 dune_add_test(NAME test_mpnc_obstacle_tpfa
               SOURCES main.cc
+              LABELS mpnc
               COMPILE_DEFINITIONS TYPETAG=ObstacleCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy

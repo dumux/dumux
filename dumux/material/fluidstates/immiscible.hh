@@ -65,6 +65,7 @@ public:
      * Generic access to fluid properties (No assumptions
      * on thermodynamic equilibrium required)
      *****************************************************/
+
     /*!
      * \brief Returns the saturation \f$S_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
      *
@@ -332,7 +333,6 @@ public:
      */
     void setViscosity(int phaseIdx, Scalar value)
     { viscosity_[phaseIdx] = value; }
-
 protected:
     //! zero-initialize all data members with braces syntax
     Scalar pressure_[numPhases] = {};

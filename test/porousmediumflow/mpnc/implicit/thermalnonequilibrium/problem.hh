@@ -44,6 +44,7 @@
 
 #include "spatialparams.hh"
 #include "combustionfluidsystem.hh"
+#include "combustionlocalresidual.hh"
 
 namespace Dumux {
 
@@ -72,6 +73,15 @@ struct Grid<TypeTag, TTag::CombustionOneComponent> { using type = Dune::OneDGrid
 template<class TypeTag>
 struct Problem<TypeTag, TTag::CombustionOneComponent>
 { using type = CombustionProblemOneComponent<TypeTag>; };
+
+// Set the spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::CombustionOneComponent>
+{
+    using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = CombustionSpatialParams<FVGridGeometry, Scalar>;
+};
 
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::CombustionOneComponent>
@@ -145,10 +155,9 @@ public:
     using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
 
-// Set the spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::CombustionOneComponent> { using type = CombustionSpatialParams<TypeTag>; };
-
+struct EnergyLocalResidual<TypeTag, TTag::CombustionOneComponent>
+{ using type = CombustionEnergyLocalResidual<TypeTag>; };
 }
 /*!
  * \ingroup MPNCTests
@@ -440,13 +449,16 @@ private:
         //////////////////////////////////////
         priVars[energyEq0Idx] = thisTemperature;
         priVars[energyEqSolidIdx] = thisTemperature;
-        Scalar capPress[numPhases];
+        std::vector<Scalar> capPress(numPhases);
 
         //obtain pc according to saturation
         const auto &materialParams =
         this->spatialParams().materialLawParamsAtPos(globalPos);
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-         MaterialLaw::capillaryPressures(capPress, materialParams, fluidState);
+        using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
+
+        const int wettingPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
+        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wettingPhaseIdx);
 
         Scalar p[numPhases];
 

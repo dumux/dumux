@@ -46,26 +46,20 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using IndexType = typename GridView::IndexSet::IndexType;
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
-
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
-    enum { numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases()} ;
+
     enum { numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>() };
-    enum {sPhaseIdx = FluidSystem::numPhases};
+    enum { sPhaseIdx = ModelTraits::numPhases() };
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
@@ -88,8 +82,9 @@ public:
        // effective diffusion tensors
         if (phaseIdx != sPhaseIdx)
         {
-           if (numEnergyEqFluid == 1)
-            {   //when only one energy equation for fluids is used, we need an effective law for that
+            //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
+            if (numEnergyEqFluid < ModelTraits::numPhases())
+            {
                 insideLambda += ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
                 outsideLambda += ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
             }
@@ -102,8 +97,8 @@ public:
         //solid phase
         else
         {
-            insideLambda += insideVolVars.solidThermalConductivity()*(1-insideVolVars.porosity());
-            outsideLambda +=outsideVolVars.solidThermalConductivity()*(1-outsideVolVars.porosity());
+            insideLambda += insideVolVars.solidThermalConductivity()*(1.0-insideVolVars.porosity());
+            outsideLambda += outsideVolVars.solidThermalConductivity()*(1.0-outsideVolVars.porosity());
         }
 
         // scale by extrusion factor
