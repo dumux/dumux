@@ -42,11 +42,12 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
         numComponents = FluidSystem::numComponents
     };
 
-    using Flash = Dumux::NcpFlash<Scalar, FluidSystem>;
     using MaterialLaw = Dumux::MpLinearMaterial<numPhases, Scalar>;
     using MaterialLawParams = typename MaterialLaw::Params;
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
+    // create a flash
+    Dumux::NcpFlash<Scalar, FluidSystem> flash(/*wettingPhaseIdx=*/0);
     const Scalar refPressure = 1.0135e5; // [Pa]
 
     // set the parameters for the capillary pressure law
@@ -93,7 +94,7 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
         // calculate the deviation from the standard pressure
         tmpMolarities = molarities;
         tmpMolarities /= alpha;
-        Flash::template solve<MaterialLaw>(surfaceFluidState, paramCache, matParams, tmpMolarities);
+        flash.template solve<MaterialLaw>(surfaceFluidState, paramCache, matParams, tmpMolarities);
         Scalar f = surfaceFluidState.pressure(gPhaseIdx) - refPressure;
 
         // calculate the derivative of the deviation from the standard
@@ -101,7 +102,7 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
         Scalar eps = alpha*1e-10;
         tmpMolarities = molarities;
         tmpMolarities /= alpha + eps;
-        Flash::template solve<MaterialLaw>(surfaceFluidState, paramCache, matParams, tmpMolarities);
+        flash.template solve<MaterialLaw>(surfaceFluidState, paramCache, matParams, tmpMolarities);
         Scalar fStar = surfaceFluidState.pressure(gPhaseIdx) - refPressure;
         Scalar fPrime = (fStar - f)/eps;
 
@@ -117,7 +118,7 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
     // calculate the final result
     tmpMolarities = molarities;
     tmpMolarities /= alpha;
-    Flash::template solve<MaterialLaw>(surfaceFluidState, paramCache, matParams, tmpMolarities);
+    flash.template solve<MaterialLaw>(surfaceFluidState, paramCache, matParams, tmpMolarities);
     return alpha;
 }
 
@@ -142,7 +143,6 @@ int main(int argc, char** argv)
         C20Idx = FluidSystem::C20Idx
     };
 
-    using Flash = Dumux::NcpFlash<Scalar, FluidSystem>;
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
     using FluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem>;
 
@@ -208,10 +208,11 @@ int main(int argc, char** argv)
     // volume factor.
     ////////////
 
+    Dumux::NcpFlash<Scalar, FluidSystem> flash(/*wettingPhaseIdx=*/0);
     FluidState flashFluidState, surfaceFluidState;
     flashFluidState.assign(fluidState);
-    Flash::guessInitial(flashFluidState, paramCache, molarities);
-    Flash::solve<MaterialLaw>(flashFluidState, paramCache, matParams, molarities);
+    flash.guessInitial(flashFluidState, paramCache, molarities);
+    flash.solve<MaterialLaw>(flashFluidState, paramCache, matParams, molarities);
 
     Scalar surfaceAlpha = 50;
     bringOilToSurface<Scalar, FluidSystem>(surfaceFluidState, surfaceAlpha, flashFluidState, /*guessInitial=*/true);
@@ -232,7 +233,7 @@ int main(int argc, char** argv)
         curMolarities /= alpha;
 
         // "flash" the modified reservoir oil
-        Flash::solve<MaterialLaw>(flashFluidState, paramCache, matParams, curMolarities);
+        flash.solve<MaterialLaw>(flashFluidState, paramCache, matParams, curMolarities);
 
         Scalar alphaSurface = bringOilToSurface<Scalar, FluidSystem>(surfaceFluidState,
                                                                      surfaceAlpha,

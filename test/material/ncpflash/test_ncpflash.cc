@@ -100,16 +100,17 @@ void checkNcpFlash(const FluidState &fsRef,
         }
     }
 
+    // make a new flash
+    Dumux::NcpFlash<Scalar, FluidSystem> flash(/*wettingPhaseIdx=*/0);
     // initialize the fluid state for the flash calculation
-    using NcpFlash = Dumux::NcpFlash<Scalar, FluidSystem>;
     FluidState fsFlash;
 
     fsFlash.setTemperature(fsRef.temperature(/*phaseIdx=*/0));
 
     // run the flash calculation
     typename FluidSystem::ParameterCache paramCache;
-    NcpFlash::guessInitial(fsFlash, paramCache, globalMolarities);
-    NcpFlash::template solve<MaterialLaw>(fsFlash, paramCache, matParams, globalMolarities);
+    flash.guessInitial(fsFlash, paramCache, globalMolarities);
+    flash.template solve<MaterialLaw>(fsFlash, paramCache, matParams, globalMolarities);
 
     // compare the "flashed" fluid state with the reference one
     checkSame<Scalar>(fsRef, fsFlash);
