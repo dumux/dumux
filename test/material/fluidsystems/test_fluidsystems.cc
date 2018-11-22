@@ -25,6 +25,7 @@
 #include <config.h>
 
 #include "checkfluidsystem.hh"
+#include <dumux/common/parameters.hh>
 
 // include all fluid systems in dumux-stable
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
@@ -146,6 +147,7 @@ int main()
     {   using H2OType = Components::SimpleH2O<Scalar>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
+        Parameters::init([](auto& params){ params["Brine.Salinity"] = "0.3"; });
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::SimpleH2O<Scalar>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
@@ -154,6 +156,7 @@ int main()
     {   using H2OType = Components::H2O<Scalar>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
+        Parameters::init([](auto& params){ params["Brine.Salinity"] = "0.3"; });
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::H2O<Scalar>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
@@ -162,6 +165,7 @@ int main()
     {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
+        Parameters::init([](auto& params){ params["Brine.Salinity"] = "0.3"; });
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
@@ -171,6 +175,7 @@ int main()
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true,
                                                     /*fastButSimplifiedRelations*/true> >;
+        Parameters::init([](auto& params){ params["Brine.Salinity"] = "0.3"; });
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,

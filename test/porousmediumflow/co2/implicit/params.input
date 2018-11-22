@@ -19,7 +19,7 @@ EnableGravity = true
 DepthBOR = 1200# [m] depth below ground surface
 InjectionRate = 1e-4 # [kg/sq/s]
 
-[FluidSystem]
+[Brine]
 Salinity = 1e-1
 
 [LinearSolver]

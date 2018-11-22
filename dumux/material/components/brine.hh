@@ -44,6 +44,7 @@ namespace Components {
  * \tparam Scalar The type used for scalar values
  * \tparam H2O Static polymorphism: the Brine class can access all properties of the H2O class
  * \note This is an implementation of brine as a pseudo-component with a constant salinity.
+ * \note the salinity is read from the input file and is a mandatory parameter
  */
 template <class Scalar,
           class H2O_Tabulated = Components::TabulatedComponent<Components::H2O<Scalar>>>
@@ -52,11 +53,9 @@ class Brine
 , public Components::Liquid<Scalar, Brine<Scalar, H2O_Tabulated> >
 , public Components::Gas<Scalar, Brine<Scalar, H2O_Tabulated> >
 {
+    using ThisType = Brine<Scalar, H2O_Tabulated>;
 public:
     using H2O = Components::TabulatedComponent<Dumux::Components::H2O<Scalar>>;
-
-    // The constant salinity
-    static Scalar constantSalinity;
 
     //! The ideal gas constant \f$\mathrm{[J/mol/K]}\f$
     static constexpr Scalar R = Constants<Scalar>::R;
@@ -68,14 +67,23 @@ public:
     { return "Brine"; }
 
     /*!
+     * \brief Return the constant salinity
+     */
+    static Scalar salinity()
+    {
+        static const Scalar salinity = getParam<Scalar>("Brine.Salinity");
+        return salinity;
+    }
+
+    /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of brine.
      * This assumes that the salt is pure NaCl.
      */
-   static constexpr Scalar molarMass()
+   static Scalar molarMass()
    {
        const Scalar M1 = H2O::molarMass();
        const Scalar M2 = Components::NaCl<Scalar>::molarMass(); // molar mass of NaCl [kg/mol]
-       return M1*M2/(M2 + constantSalinity*(M1 - M2));
+       return M1*M2/(M2 + ThisType::salinity()*(M1 - M2));
    };
 
     /*!
@@ -113,8 +121,8 @@ public:
         Scalar ps = H2O::vaporPressure(temperature); //Saturation vapor pressure for pure water
         Scalar pi = 0;
         using std::log;
-        if (constantSalinity < 0.26) // here we have hard coded the solubility limit for NaCl
-            pi = (R * temperature * log(1- constantSalinity)); // simplified version of Eq 2.29 in Vishal Jambhekar's Promo
+        if (ThisType::salinity() < 0.26) // here we have hard coded the solubility limit for NaCl
+            pi = (R * temperature * log(1- ThisType::salinity())); // simplified version of Eq 2.29 in Vishal Jambhekar's Promo
         else
             pi = (R * temperature * log(0.74));
         using std::exp;
@@ -164,7 +172,7 @@ public:
         /*Regularization*/
         using std::min;
         using std::max;
-        const Scalar salinity = min(max(constantSalinity,0.0), salSat);
+        const Scalar salinity = min(max(ThisType::salinity(),0.0), salSat);
 
         const Scalar hw = H2O::liquidEnthalpy(T, p)/1E3; /* kJ/kg */
 
@@ -303,7 +311,7 @@ public:
         using std::max;
         const Scalar TempC = temperature - 273.15;
         const Scalar pMPa = pressure/1.0E6;
-        const Scalar salinity = max(0.0, constantSalinity);
+        const Scalar salinity = max(0.0, ThisType::salinity());
 
         const Scalar rhow = H2O::liquidDensity(temperature, pressure);
 
@@ -402,7 +410,7 @@ public:
         // regularisation
         using std::max;
         temperature = max(temperature, 275.0);
-        const Scalar salinity = max(0.0, constantSalinity);
+        const Scalar salinity = max(0.0, ThisType::salinity());
 
         using std::pow;
         using std::exp;
@@ -428,12 +436,6 @@ public:
 
 template <class Scalar, class H2O>
 struct IsAqueous<Brine<Scalar, H2O>> : public std::true_type {};
-
-/*!
- * \brief Default value for the salinity of the brine (dimensionless).
- */
-template <class Scalar, class H2O>
-Scalar Brine<Scalar, H2O>::constantSalinity = 0.1;
 
 } // end namespace Components
 

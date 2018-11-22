@@ -30,6 +30,7 @@
 #include <vector>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/typetraits/typetraits.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/benzene.hh>
@@ -339,7 +340,10 @@ int main(int argc, char *argv[])
     else if (compName == "Benzene")
         plotStuff< Components::Benzene<double> >(openPlotWindow);
     else if (compName == "Brine")
+    {
+        Parameters::init([](auto& params){ params["Brine.Salinity"] = "0.1"; });
         plotStuff< Components::Brine<double> >(openPlotWindow);
+    }
     else if (compName == "Calcite")
         plotStuff< Components::Calcite<double> >(openPlotWindow);
     else if (compName == "CalciumIon")

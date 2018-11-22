@@ -337,10 +337,6 @@ public:
         std::cout << " - use constant salinity: " << std::boolalpha << Policy::useConstantSalinity() << "\n";
         std::cout << " - use CO2 gas density as gas mixture density: " << std::boolalpha << Policy::useCO2GasDensityAsGasMixtureDensity() << std::endl;
 
-        // maybe set salinity of the constant salinity brine
-        if (useConstantSalinity)
-            ConstantSalinityBrine::constantSalinity = getParam<Scalar>("FluidSystem.Salinity", 0.3);
-
         if (H2O::isTabulated)
             H2O::init(startTemp, endTemp, tempSteps, startPressure, endPressure, pressureSteps);
     }
@@ -474,7 +470,7 @@ public:
             // calulate the equilibrium composition for given T & p
             Scalar xlH2O, xgH2O;
             Scalar xlCO2, xgCO2;
-            const Scalar salinity = useConstantSalinity ? ConstantSalinityBrine::constantSalinity
+            const Scalar salinity = useConstantSalinity ? ConstantSalinityBrine::salinity()
                                                         : fluidState.massFraction(liquidPhaseIdx, NaClIdx);
             Brine_CO2::calculateMoleFractions(T, pl, salinity, /*knownGasPhaseIdx=*/-1, xlCO2, xgH2O);
 
@@ -524,7 +520,7 @@ public:
         Scalar xlCO2;
 
         // calulate the equilibrium composition for given T & p
-        const Scalar salinity = useConstantSalinity ? ConstantSalinityBrine::constantSalinity
+        const Scalar salinity = useConstantSalinity ? ConstantSalinityBrine::salinity()
                                                     : fluidState.massFraction(liquidPhaseIdx, NaClIdx);
         Brine_CO2::calculateMoleFractions(T, p, salinity, /*knowgasPhaseIdx=*/-1, xlCO2, xgH2O);
 
