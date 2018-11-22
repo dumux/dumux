@@ -387,7 +387,7 @@ template<class Scalar, class CO2Tables, bool verbose = true>
 class Brine_CO2_Old
 {
     using H2O = Dumux::Components::H2O<Scalar>;
-  using Brine = Dumux::Components::Brine<Scalar,H2O>;
+    using Brine = Dumux::Components::Brine<Scalar,H2O>;
     using CO2 = Dumux::Components::CO2<Scalar, CO2Tables>;
     using IdealGas = Dumux::IdealGas<Scalar>;
 
@@ -419,7 +419,7 @@ public:
         const Scalar Mw = H2O::molarMass(); /* molecular weight of water [kg/mol] */
         const Scalar Ms = 58.8e-3; /* molecular weight of NaCl  [kg/mol] */
 
-        const Scalar X_NaCl = Brine::salinity;
+        const Scalar X_NaCl = Brine::salinity();
         /* salinity: conversion from mass fraction to mole fraction */
         const Scalar x_NaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
 

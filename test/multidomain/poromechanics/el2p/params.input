@@ -29,6 +29,9 @@ MaxIterations = 2000
 [Component]
 SolidDensity = 2650
 
+[Brine]
+Salinity = 0.1
+
 [Newton]
 TargetSteps = 15
 MaxRelativeShift = 1e-6

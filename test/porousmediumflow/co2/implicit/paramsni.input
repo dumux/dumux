@@ -12,6 +12,8 @@ PressureLow = 1e5 # [Pa] low end for tabularization of fluid properties
 PressureHigh = 3e7 # [Pa] high end for tabularization of fluid properties
 TemperatureLow = 290.15 # [Pa] low end for tabularization of fluid properties
 TemperatureHigh = 330.15 # [Pa] high end for tabularization of fluid properties
+
+[Brine]
 Salinity = 0.1 # [-] salinity of brine
 
 [Problem]
