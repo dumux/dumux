@@ -284,7 +284,9 @@ private:
         PhaseVector pc;
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
-        MPAdapter::capillaryPressures(pc, matParams, fs, liquidPhaseIdx);
+
+        const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
+        MPAdapter::capillaryPressures(pc, matParams, fs, wPhaseIdx);
         fs.setPressure(liquidPhaseIdx,
                        fs.pressure(gasPhaseIdx) + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
 

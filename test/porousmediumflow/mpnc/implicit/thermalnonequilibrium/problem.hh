@@ -456,7 +456,9 @@ private:
         this->spatialParams().materialLawParamsAtPos(globalPos);
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
-        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
+
+        const int wettingPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
+        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wettingPhaseIdx);
 
         Scalar p[numPhases];
 
