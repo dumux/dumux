@@ -31,6 +31,7 @@
 #include <algorithm>
 
 #include <dune/common/dynvector.hh>
+#include <dune/common/float_cmp.hh>
 #include <dune/grid/common/gridfactory.hh>
 #include <dumux/common/parameters.hh>
 
@@ -273,6 +274,16 @@ public:
         std::vector<Scalar> dR = polarCoordinates[0];
         std::vector<Scalar> dA = polarCoordinates[1];
 
+        // For the special case of 36o°, the last element is connected with the first one.
+        // Thus, one needs to distinguish here between all other cases, were the normal procedure
+        // is applied for all elements until the last one  (= dA.size() - 1) and the 360° case,
+        // where it is only applied until the second to last element (dA.size() - 2).
+        int maxdA = dA.size() - 1;
+        if (Dune::FloatCmp::eq(polarCoordinates[1][polarCoordinates[1].size()-1], 360.0))
+        {
+            maxdA = dA.size() - 2;
+        }
+
         GridFactory gridFactory;
         constexpr auto type = Dune::GeometryTypes::cube(dim);
 
@@ -316,7 +327,7 @@ public:
             {
                 for (int l = 0; l < dZ.size() - 1; ++l)
                 {
-                    if (j < dA.size() - 2)
+                    if (j < maxdA)
                     {
                         for (int i = 0; i < dR.size() - 1; ++i)
                         {
@@ -400,7 +411,7 @@ public:
             unsigned int t = 0;
             for (int j = 0; j < dA.size() - 1; ++j)
             {
-                if (j < dA.size() - 2)
+                if (j < maxdA)
                 {
                     for (int i = 0; i < dR.size() - 1; ++i)
                     {

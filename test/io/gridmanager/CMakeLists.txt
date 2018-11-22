@@ -1,15 +1,31 @@
 add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
-dune_add_test(NAME test_gridmanager_cake
-              SOURCES test_gridmanager_cake.cc
+add_executable(test_gridmanager_cake EXCLUDE_FROM_ALL test_gridmanager_cake.cc)
+
+dune_add_test(NAME test_gridmanager_cake_360
+              TARGET test_gridmanager_cake
               LABELS unit
               CMAKE_GUARD "( dune-uggrid_FOUND OR dune-alugrid_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake"
-                       --files ${CMAKE_SOURCE_DIR}/test/references/cake-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/cake-00000.vtu)
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake -Grid.Name 360"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-3d-360.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_360-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-360.vtu)
+
+dune_add_test(NAME test_gridmanager_cake_210
+              TARGET test_gridmanager_cake
+              LABELS unit
+              CMAKE_GUARD "( dune-uggrid_FOUND OR dune-alugrid_FOUND )"
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake -Grid.Name 210 -Grid.Angular1 '0.0 210.0'"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_210-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-3d-210.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_210-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-210.vtu)
 
 dune_add_test(NAME test_gridmanager_subgrid
               SOURCES test_gridmanager_subgrid.cc
