@@ -179,11 +179,13 @@ public:
     static CoordScalar getScvfArea(const ScvfCornerVector& scvfCorners)
     { return (scvfCorners[1]-scvfCorners[0]).two_norm(); }
 
+
+
     /*!
      * \brief Calculates the number of scvfs in a given element geometry type.
      * \param gt The element geometry type
      */
-    static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
+    static constexpr std::size_t getNumLocalScvfs(const Dune::GeometryType& gt)
     {
         if (gt == Dune::GeometryTypes::triangle)
             return 6;
@@ -479,7 +481,7 @@ public:
      *
      * \param gt The element geometry type
      */
-    static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
+    static constexpr std::size_t getNumLocalScvfs(const Dune::GeometryType& gt)
     {
         if (gt == Dune::GeometryTypes::tetrahedron)
             return 12;
