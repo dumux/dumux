@@ -26,6 +26,7 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <typeinfo>
 #include <unordered_map>
@@ -95,11 +96,49 @@ public:
         if (gridFile.fail())
             DUNE_THROW(Dune::InvalidStateException, "Could not open the given .msh file. Make sure it exists");
 
-        // read file until we get to the list of nodes
+        // read file until we get to the list of physical names
         std::string line;
         std::getline(gridFile, line);
-        while (line.find("$Nodes") == std::string::npos)
+        while (line.find("$PhysicalNames") == std::string::npos && line.find("$Nodes") == std::string::npos )
             std::getline(gridFile, line);
+
+        // if physical names found
+        if( line.find("$PhysicalNames") != std::string::npos )
+        {
+            // read all vertices
+            std::getline(gridFile, line);
+            const auto numPhysicalNames = convertString<std::size_t>(line);
+
+            std::getline(gridFile, line);
+            std::size_t physicalNamesCount = 0;
+            while (line.find("$EndPhysicalNames")  == std::string::npos)
+            {
+                // drop first entry in line (physical name index) and read name
+                std::istringstream stream(line);
+                std::string buf; stream >> buf;
+                int physicalTag;
+                stream >> physicalTag;
+                std::string physicalName;
+                std::getline(stream, physicalName);
+                // trim space and literals
+                physicalName = physicalName.substr(2, physicalName.size()-3);
+                if (stream.fail()) DUNE_THROW(Dune::IOError, "Could not read physical name");
+
+                // insert vertex into container and move to next line
+                physicalNames_.insert( { physicalTag, physicalName } );
+                physicalNamesCount++;
+                std::getline(gridFile, line);
+            }
+
+            // we should always find as many physical names as the mesh file states
+            if (physicalNamesCount != numPhysicalNames)
+                DUNE_THROW(Dune::InvalidStateException, "Couldn't find as many physical names as stated in the .msh file");
+
+            // read file until we get to the list of nodes
+            std::getline(gridFile, line);
+            while (line.find("$Nodes") == std::string::npos)
+                std::getline(gridFile, line);
+        }
 
         // read all vertices
         std::getline(gridFile, line);
@@ -300,6 +339,14 @@ public:
         return boundaryMarkerMaps_[id];
     }
 
+    //! Returns the maps of physical names
+    std::map<int, std::string>& physicalNames(std::size_t id)
+    {
+        assert(id < numGrids && "Index exceeds number of grids provided");
+        // the map of physical tags to physical names is the same for all grids
+        return physicalNames_;
+    }
+
     //! Returns the maps of the embedded entities
     std::unordered_map< GridIndexType, std::vector<GridIndexType> >& embeddedEntityMap(std::size_t id)
     {
@@ -414,6 +461,9 @@ private:
     //! data on domain and boundary markers
     std::array< std::vector<int>, numGrids > elementMarkerMaps_;
     std::array< std::vector<int>, numGrids > boundaryMarkerMaps_;
+
+    //! physical names
+    std::map< int, std::string > physicalNames_;
 };
 
 } // end namespace Dumux

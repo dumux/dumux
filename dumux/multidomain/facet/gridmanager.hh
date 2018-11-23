@@ -132,6 +132,11 @@ public:
     bool wasInserted(const Intersection<id>& intersection) const
     { return std::get<id>(gridDataPtrTuple_)->wasInserted(intersection); }
 
+    //! Returns physical name of an element
+    template<std::size_t id>
+    std::string getPhysicalName(const typename Grid<id>::template Codim<0>::Entity& element) const
+    { return std::get<id>(gridDataPtrTuple_)->getPhysicalName(element); }
+
 private:
     //! store a shared pointer to a grid data object for each grid
     using GridDataPtrTuple = typename makeFromIndexedType<std::tuple, GridDataPtr, std::make_index_sequence<numGrids>>::type;
@@ -432,7 +437,9 @@ private:
                 typename GridDataWrapper::template GridData<id> gridData( gridPtr,
                                                                           factoryPtr,
                                                                           std::move(reader.elementMarkerMap(id)),
-                                                                          std::move(reader.boundaryMarkerMap(id)) );
+                                                                          std::move(reader.boundaryMarkerMap(id)),
+                                                                          {},
+                                                                          std::move(reader.physicalNames(id)) );
                 gridDataPtr_->template setGridData<id>( std::move(gridData) );
             }
 

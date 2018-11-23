@@ -74,12 +74,14 @@ class GridData
 public:
     //! constructor for gmsh grid data
     GridData(std::shared_ptr<Grid> grid, std::shared_ptr<Dune::GridFactory<Grid>> factory,
-             std::vector<int>&& elementMarkers, std::vector<int>&& boundaryMarkers, std::vector<int>&& faceMarkers = std::vector<int>{})
+             std::vector<int>&& elementMarkers, std::vector<int>&& boundaryMarkers, std::vector<int>&& faceMarkers = std::vector<int>{},
+             std::map< int, std::string >&& physicalNames = std::map< int, std::string >{})
     : gridPtr_(grid)
     , gridFactory_(factory)
     , elementMarkers_(elementMarkers)
     , boundaryMarkers_(boundaryMarkers)
     , faceMarkers_(faceMarkers)
+    , physicalNames_(physicalNames)
     , dataSourceType_(DataSourceType::gmsh)
     {}
 
@@ -218,6 +220,36 @@ public:
     }
 
     /*!
+     * \brief Return the physical name of an element.
+              Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
+     * \param element The element to be evaluated
+     */
+    std::string getPhysicalName(const Element& element) const
+    {
+        if (!gridPtr_)
+            DUNE_THROW(Dune::InvalidStateException, "Physical names are only available for gmsh grids.");
+
+        // physical names are only given for level 0 elements
+        auto level0element = element;
+        while (level0element.hasFather())
+            level0element = level0element.father();
+
+        // in the parallel case the data is load balanced and then accessed with indices of the index set
+        // for UGGrid element data is read on all processes since UGGrid can't communicate element data (yet)
+        int elementDomainMarker;
+        if (gridPtr_->comm().size() > 1 && !Detail::isUG<Grid>::value)
+            elementDomainMarker = elementMarkers_[gridPtr_->levelGridView(0).indexSet().index(level0element)];
+        else
+            elementDomainMarker = elementMarkers_[gridFactory_->insertionIndex(level0element)];
+
+        const auto it = physicalNames_.find(elementDomainMarker);
+        if( it != physicalNames_.end() )
+            return it->second;
+        else
+            return "";
+    }
+
+    /*!
      * \brief Create a data handle for communication of the data in parallel simulations
      * \note this data hande is the default
      */
@@ -304,6 +336,9 @@ private:
      * \brief Cell and vertex data obtained from VTK files
      */
     VTKReader::Data cellData_, pointData_;
+
+    //! Map from physical index to physical name
+    std::map< int, std::string > physicalNames_;
 
     // dgf grid data
     Dune::GridPtr<Grid> dgfGrid_;
