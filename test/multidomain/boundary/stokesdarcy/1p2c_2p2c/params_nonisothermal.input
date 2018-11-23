@@ -48,6 +48,11 @@ EnableGravity = true
 InterfaceDiffusionCoefficientAvg = FreeFlowOnly
 EnableInertiaTerms = false
 
+[Component]
+SolidHeatCapacity = 1.0
+SolidDensity = 1.0
+SolidThermalConductivity = 1.0
+
 [Vtk]
 AddVelocity = true
 WriteFaceData = false

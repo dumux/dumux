@@ -102,7 +102,7 @@ public:
      */
     static Scalar molarMass()
     {
-        static const Scalar molarMass = getParamFromGroup<Scalar>(std::to_string(id), "Component.MolarMass", 1.0);
+        static const Scalar molarMass = getParamFromGroup<Scalar>(std::to_string(id), "Component.MolarMass");
         return molarMass;
     }
 
@@ -114,7 +114,7 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        static const Scalar density = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidDensity", 1.0);
+        static const Scalar density = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidDensity");
         return density;
     }
 
@@ -139,7 +139,7 @@ public:
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
-        static const Scalar kinematicViscosity = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidKinematicViscosity", 1.0);
+        static const Scalar kinematicViscosity = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidKinematicViscosity");
         return kinematicViscosity * liquidDensity(temperature, pressure);
     }
 
@@ -151,7 +151,7 @@ public:
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
-        static const Scalar density = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasDensity", 1.0);
+        static const Scalar density = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasDensity");
         return density;
     }
 
@@ -177,7 +177,7 @@ public:
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
-        static const Scalar kinematicViscosity = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasKinematicViscosity", 1.0);
+        static const Scalar kinematicViscosity = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasKinematicViscosity");
         return kinematicViscosity * gasDensity(temperature, pressure);
     }
 
@@ -190,7 +190,7 @@ public:
      */
     static Scalar solidDensity(Scalar temperature)
     {
-        static const Scalar density = getParamFromGroup<Scalar>(std::to_string(id), "Component.SolidDensity", 1.0);
+        static const Scalar density = getParamFromGroup<Scalar>(std::to_string(id), "Component.SolidDensity");
         return density;
     }
 
@@ -201,7 +201,7 @@ public:
      */
     static Scalar solidThermalConductivity(Scalar temperature)
     {
-        static const Scalar solidThermalConductivity = getParamFromGroup<Scalar>(std::to_string(id), "Component.SolidThermalConductivity", 1.0);
+        static const Scalar solidThermalConductivity = getParamFromGroup<Scalar>(std::to_string(id), "Component.SolidThermalConductivity");
         return solidThermalConductivity;
     }
 
@@ -212,7 +212,7 @@ public:
      */
     static Scalar solidHeatCapacity(Scalar temperature)
     {
-        static const Scalar solidHeatCapacity = getParamFromGroup<Scalar>(std::to_string(id), "Component.SolidHeatCapacity", 1.0);
+        static const Scalar solidHeatCapacity = getParamFromGroup<Scalar>(std::to_string(id), "Component.SolidHeatCapacity");
         return solidHeatCapacity;
     }
 };

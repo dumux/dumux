@@ -9,8 +9,8 @@ EnableInertiaTerms = true
 PrintL2Error = true
 
 [Component]
-LiquidKinematicViscosity = 1.
-LiquidDensity = 1.
+LiquidKinematicViscosity = 1.0
+LiquidDensity = 1.0
 
 [Newton]
 MaxSteps = 10

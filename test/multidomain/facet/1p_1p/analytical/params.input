@@ -15,6 +15,10 @@ Problem.Name = bulk
 SpatialParams.Permeability = 1e4
 Problem.Name = lowdim
 
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
 [L2Error]
 QuadratureOrder = 1
 

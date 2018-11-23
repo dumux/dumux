@@ -14,5 +14,5 @@ MaxSteps = 8
 
 [Component]
 SolidDensity = 2650
-solidThermalConductivity = 2.8
-solidHeatCapacity = 850
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 850

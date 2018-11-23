@@ -7,5 +7,9 @@ Refinement = 3
 #Delta = 1e-6 # [-] if this is commented in, it is used
 EnableGravity = false
 
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
 [LinearSolver]
 PreconditionerIterations = 2

@@ -23,6 +23,8 @@ MaxIterations = 2000
 
 [Component]
 SolidDensity = 2700
+LiquidDensity  = 1.0
+LiquidKinematicViscosity = 1.0
 
 [Vtk]
 OutputName = test_md_poromechanics_el1p
