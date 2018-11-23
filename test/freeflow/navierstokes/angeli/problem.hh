@@ -104,13 +104,7 @@ public:
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
-
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
-
-        using CellArray = std::array<unsigned int, dimWorld>;
-        const auto numCells = getParam<CellArray>("Grid.Cells");
-
-        cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
     }
 
    /*!
@@ -326,13 +320,7 @@ public:
 
 private:
 
-    bool isLowerLeftCell_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < (this->fvGridGeometry().bBoxMin()[0] + 0.5*cellSizeX_ + eps_);
-    }
-
     Scalar eps_;
-    Scalar cellSizeX_;
 
     Scalar kinematicViscosity_;
     TimeLoopPtr timeLoop_;
