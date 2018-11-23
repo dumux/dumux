@@ -255,11 +255,6 @@ private:
         return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
     }
 
-    bool isWall(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > eps_ || globalPos[0] < this->fvGridGeometry().bBoxMax()[0] - eps_;
-    }
-
     Scalar eps_;
     Scalar inletVelocity_;
     TimeLoopPtr timeLoop_;
