@@ -35,7 +35,7 @@ dune_add_test(NAME test_co2ni_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_box-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/co2ni_box-00019.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_box-00019.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_box paramsni.input -Problem.Name test_co2ni_box"
                        --zeroThreshold {"porosity":1})
 
