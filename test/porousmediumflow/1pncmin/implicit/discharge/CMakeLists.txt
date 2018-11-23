@@ -1,8 +1,8 @@
 add_input_file_links()
 
-dune_add_test(NAME test_1pncminni_box
+dune_add_test(NAME test_1pncminni_discharge_box
               SOURCES main.cc
-              COMPILE_DEFINITIONS TYPETAG=ThermoChemBox
+              COMPILE_DEFINITIONS TYPETAG=DischargeBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pncminni_box-reference.vtu
@@ -17,4 +17,4 @@ problem.hh
 spatialparams.hh
 reaction.hh
 main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/1pncmin/implicit/nonisothermal)
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/1pncmin/implicit/discharge)

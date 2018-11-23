@@ -19,10 +19,10 @@
 /*!
  * \file
  * \ingroup OnePNCMinTests
- * \brief Definition of a problem for thermochemical heat storage using \f$ \textnormal{CaO},   \textnormal{Ca} \left( \textnormal{OH} \right)_2\f$.
+ * \brief Definition of a problem for Dischargeical heat storage using \f$ \textnormal{CaO},   \textnormal{Ca} \left( \textnormal{OH} \right)_2\f$.
  */
-#ifndef DUMUX_THERMOCHEM_PROBLEM_HH
-#define DUMUX_THERMOCHEM_PROBLEM_HH
+#ifndef DUMUX_DISCHARGE_PROBLEM_HH
+#define DUMUX_DISCHARGE_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
 
@@ -45,25 +45,25 @@
 namespace Dumux {
 
 template <class TypeTag>
-class ThermoChemProblem;
+class DischargeProblem;
 
 namespace Properties {
 // Create new type tags
 namespace TTag {
-struct ThermoChem { using InheritsFrom = std::tuple<OnePNCMinNI>; };
-struct ThermoChemBox { using InheritsFrom = std::tuple<ThermoChem, BoxModel>; };
+struct Discharge { using InheritsFrom = std::tuple<OnePNCMinNI>; };
+struct DischargeBox { using InheritsFrom = std::tuple<Discharge, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::ThermoChem> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::Discharge> { using type = Dune::YaspGrid<2>; };
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::ThermoChem> { using type = ThermoChemProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::Discharge> { using type = DischargeProblem<TypeTag>; };
 
 // The fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::ThermoChem>
+struct FluidSystem<TypeTag, TTag::Discharge>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using H2ON2 = FluidSystems::H2ON2<Scalar>;
@@ -72,7 +72,7 @@ struct FluidSystem<TypeTag, TTag::ThermoChem>
 };
 
 template<class TypeTag>
-struct SolidSystem<TypeTag, TTag::ThermoChem>
+struct SolidSystem<TypeTag, TTag::Discharge>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ComponentOne = Components::ModifiedCaO<Scalar>;
@@ -82,11 +82,11 @@ struct SolidSystem<TypeTag, TTag::ThermoChem>
 
 // // Enable velocity output
 // template<class TypeTag>
-// struct VtkAddVelocity<TypeTag, TTag::ThermoChem> { static constexpr bool value = false; };
+// struct VtkAddVelocity<TypeTag, TTag::Discharge> { static constexpr bool value = false; };
 
 // Set the spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::ThermoChem>
+struct SpatialParams<TypeTag, TTag::Discharge>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -95,7 +95,7 @@ struct SpatialParams<TypeTag, TTag::ThermoChem>
 
 // Define whether mole(true) or mass (false) fractions are used
 template<class TypeTag>
-struct UseMoles<TypeTag, TTag::ThermoChem> { static constexpr bool value = true; };
+struct UseMoles<TypeTag, TTag::Discharge> { static constexpr bool value = true; };
 }
 
 /*!
@@ -111,7 +111,7 @@ struct UseMoles<TypeTag, TTag::ThermoChem> { static constexpr bool value = true;
  * The test only runs for the box discretization.
  */
 template <class TypeTag>
-class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
+class DischargeProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -162,7 +162,7 @@ public:
      *
      * \param fvGridGeometry The finite volume grid geometry
      */
-    ThermoChemProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    DischargeProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
         name_      = getParam<std::string>("Problem.Name");

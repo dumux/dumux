@@ -67,8 +67,7 @@ public:
         /* (273.15 <= temperature && temperature <= 623.15 && pressure <= vaporPressure(temperature)) ||
            (623.15 < temperature && temperature <= 863.15 && pressure <= auxPressure(temperature)) ||
            (863.15 < temperature && temperature <= 1073.15 && pressure < 100e6); */
-        if ((temperature <= 623.15 && pressure <= 100e6) ||
-            (temperature > 623.15 && temperature <= 1073.15 && pressure <= 16.532e6 ))
+        if (temperature <= 1023.15 && pressure <= 100e6)
             return;
 
         DUNE_THROW(NumericalProblem,
