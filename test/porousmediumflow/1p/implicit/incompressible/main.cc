@@ -45,10 +45,38 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/pointcloudvtkwriter.hh>
+
+#include <dumux/discretization/method.hh>
+#include <dumux/discretization/cellcentered/mpfa/scvgradients.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
 #include "problem.hh"
+
+//! function to write out the scv-wise velocities (overload for mpfa)
+template<class FVGridGeometry, class GridVariables, class Sol,
+         std::enable_if_t<FVGridGeometry::discMethod == Dumux::DiscretizationMethod::ccmpfa, int> = 0>
+void writeMpfaVelocities(const FVGridGeometry& fvGridGeometry,
+                         const GridVariables& gridVariables,
+                         const Sol& x)
+{
+    using Scalar = typename GridVariables::Scalar;
+    using GlobalPos = typename FVGridGeometry::SubControlVolume::GlobalPosition;
+
+    const auto velocities = Dumux::CCMpfaScvGradients::computeVelocities(fvGridGeometry, gridVariables, x, /*phaseIdx*/0);
+    Dumux::PointCloudVtkWriter<Scalar, GlobalPos> writer(velocities.scvCenters);
+    writer.addPointData(velocities.scvGradients, "velocity (m/s)");
+    writer.write("mpfa_scv_velocities");
+}
+
+//! function to write out the scv-wise velocities (overload for NOT mpfa)
+template<class FVGridGeometry, class GridVariables, class Sol,
+         std::enable_if_t<FVGridGeometry::discMethod != Dumux::DiscretizationMethod::ccmpfa, int> = 0>
+void writeMpfaVelocities(const FVGridGeometry& fvGridGeometry,
+                         const GridVariables& gridVariables,
+                         const Sol& x)
+{}
 
 int main(int argc, char** argv) try
 {
@@ -190,6 +218,9 @@ int main(int argc, char** argv) try
         std::cout << "Simulation took " << timer.elapsed() << " seconds on "
                   << comm.size() << " processes.\n"
                   << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
+
+    // For the mpfa test, write out the gradients in the scv centers
+    writeMpfaVelocities(*fvGridGeometry, *gridVariables, x);
 
     if (mpiHelper.rank() == 0)
         Parameters::print();
