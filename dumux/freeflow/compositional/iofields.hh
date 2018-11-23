@@ -53,6 +53,9 @@ struct FreeflowNCIOFields
     {
         BaseOutputFields::initOutputModule(out);
 
+        // TODO only output molar density if we use mole fractions
+        out.addVolumeVariable([](const auto& v){ return v.molarDensity(); }, IOName::molarDensity());
+
         using FluidSystem = typename OutputModule::VolumeVariables::FluidSystem;
         for (int j = 0; j < FluidSystem::numComponents; ++j)
         {
