@@ -43,7 +43,7 @@
 
 #include <dumux/multidomain/staggeredtraits.hh>
 #include <dumux/multidomain/fvassembler.hh>
-#include <dumux/multidomain/privarswitchnewtonsolver.hh>
+#include <dumux/multidomain/newtonsolver.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
 
@@ -202,11 +202,8 @@ int main(int argc, char** argv) try
     using LinearSolver = UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
-    // the primary variable switches used by the sub models
-    using PriVarSwitchTuple = std::tuple<NoPrimaryVariableSwitch, NoPrimaryVariableSwitch, GetPropType<DarcyTypeTag, Properties::PrimaryVariableSwitch>>;
-
     // the non-linear solver
-    using NewtonSolver = MultiDomainPriVarSwitchNewtonSolver<Assembler, LinearSolver, CouplingManager, PriVarSwitchTuple>;
+    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
     // time loop
