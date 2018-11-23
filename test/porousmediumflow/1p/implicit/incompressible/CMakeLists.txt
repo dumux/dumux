@@ -5,6 +5,10 @@ dune_symlink_to_source_files(FILES grids)
 add_executable(test_1p_incompressible_tpfa_anadiff EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_1p_incompressible_tpfa_anadiff PUBLIC "TYPETAG=OnePIncompressibleTpfa" "NUMDIFFMETHOD=DiffMethod::analytic")
 
+# using mpfa and analytical Jacobian
+add_executable(test_1p_incompressible_mpfa_anadiff EXCLUDE_FROM_ALL main.cc)
+target_compile_definitions(test_1p_incompressible_mpfa_anadiff PUBLIC "TYPETAG=OnePIncompressibleMpfa" "NUMDIFFMETHOD=DiffMethod::analytic")
+
 # using box and analytical Jacobian
 add_executable(test_1p_incompressible_box_anadiff EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_1p_incompressible_box_anadiff PUBLIC "TYPETAG=OnePIncompressibleBox" "NUMDIFFMETHOD=DiffMethod::analytic")
@@ -32,13 +36,12 @@ dune_add_test(NAME test_1p_incompressible_tpfa_quad
 
 # using mpfa and analytical Jacobian
 dune_add_test(NAME test_1p_incompressible_mpfa
-              SOURCES main.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleMpfa NUMDIFFMETHOD=DiffMethod::analytic
+              TARGET test_1p_incompressible_mpfa_anadiff
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_mpfa-00001.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_mpfa params.input -Problem.Name test_1p_incompressible_mpfa")
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_mpfa_anadiff params.input -Problem.Name test_1p_incompressible_mpfa")
 
 # using box and analytical Jacobian
 dune_add_test(NAME test_1p_incompressible_box
@@ -83,6 +86,16 @@ dune_add_test(NAME test_1p_incompressible_tpfa_extrude
                                     -Problem.CheckIsConstantVelocity true
                                     -Problem.EnableGravity false)
 
+# using mpfa and analytical Jacobian with extrusion factor
+dune_add_test(NAME test_1p_incompressible_mpfa_extrude
+              TARGET test_1p_incompressible_mpfa_anadiff
+              COMMAND ./test_1p_incompressible_mpfa_anadiff
+              CMD_ARGS params.input -Problem.Name test_1p_incompressible_mpfa_extrude
+                                    -Problem.ExtrusionFactor 10
+                                    -Vtk.AddVelocity 1
+                                    -Problem.CheckIsConstantVelocity true
+                                    -Problem.EnableGravity false)
+
 # using box and analytical Jacobian with extrusion factor
 dune_add_test(NAME test_1p_incompressible_box_extrude
               TARGET test_1p_incompressible_box_anadiff
@@ -101,6 +114,20 @@ dune_add_test(NAME test_1p_incompressible_box_extrude_distorted
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox NUMDIFFMETHOD=DiffMethod::analytic
               COMMAND ./test_1p_incompressible_box_extrude_distorted
               CMD_ARGS params.input -Problem.Name test_1p_incompressible_box_extrude_distorted
+                                    -Problem.ExtrusionFactor 10
+                                    -Vtk.AddVelocity 1
+                                    -Problem.CheckIsConstantVelocity true
+                                    -Problem.EnableGravity false
+                                    -Grid.File ./grids/randomlydistorted.dgf)
+
+# using mpfa and analytical Jacobian with extrusion factor on distorted grid
+dune_add_test(NAME test_1p_incompressible_mpfa_extrude_distorted
+              SOURCES main.cc
+              CMAKE_GUARD dune-uggrid_FOUND
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
+              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleMpfa NUMDIFFMETHOD=DiffMethod::analytic
+              COMMAND ./test_1p_incompressible_mpfa_extrude_distorted
+              CMD_ARGS params.input -Problem.Name test_1p_incompressible_mpfa_extrude_distorted
                                     -Problem.ExtrusionFactor 10
                                     -Vtk.AddVelocity 1
                                     -Problem.CheckIsConstantVelocity true
