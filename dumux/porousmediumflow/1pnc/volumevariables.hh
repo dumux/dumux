@@ -99,11 +99,21 @@ public:
         // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
+
         paramCache.updatePhase(fluidState_, 0);
 
-        diffCoeff_[0] = 0.0; // the main component with itself doesn't have a binary diffusion coefficient
-        for (unsigned int compJIdx = 1; compJIdx < numFluidComps; ++compJIdx)
-            diffCoeff_[compJIdx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, 0, 0, compJIdx);
+        for (unsigned int compIIdx = 0; compIIdx < numFluidComps; ++compIIdx)
+        {
+            for (unsigned int compJIdx = 0; compJIdx < numFluidComps; ++compJIdx)
+            {
+                if(compIIdx != compJIdx)
+                    diffCoeff_[compIIdx][compJIdx] = FluidSystem::binaryDiffusionCoefficient(fluidState_,
+                                                                                paramCache,
+                                                                                0,
+                                                                                compIIdx,
+                                                                                compJIdx);
+            }
+        }
     }
 
     /*!
@@ -294,7 +304,7 @@ public:
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
         assert(compIdx < numFluidComps);
-        return diffCoeff_[compIdx];
+        return diffCoeff_[phaseIdx][compIdx];
     }
 
     /*!
@@ -330,8 +340,8 @@ protected:
     SolidState solidState_;
 
 private:
-    PermeabilityType permeability_; //!< Effective permeability within the control volume
-    Dune::FieldVector<Scalar, numFluidComps> diffCoeff_; //!< Binary diffusion coefficients
+    PermeabilityType permeability_;
+    std::array<std::array<Scalar, numFluidComps>, numFluidComps> diffCoeff_;
 };
 
 } // end namespace Dumux

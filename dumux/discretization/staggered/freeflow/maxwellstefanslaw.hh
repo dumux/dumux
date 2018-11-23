@@ -73,7 +73,6 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
     static_assert(ModelTraits::numPhases() == 1, "Only one phase allowed supported!");
 
     enum {
-        pressureIdx = Indices::pressureIdx,
         conti0EqIdx = Indices::conti0EqIdx,
     };
 
@@ -105,7 +104,24 @@ public:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         const auto rhoInside = insideVolVars.molarDensity();
-        const auto rhoOutside = scvf.boundary() ? insideVolVars.molarDensity() : outsideVolVars.molarDensity();
+        const auto rhoOutside = outsideVolVars.molarDensity();
+
+        //to implement outflow boundaries correctly we need to loop over all components but the main component as only for the transported ones we implement the outflow boundary. diffusion then is 0.
+        for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            if(compIdx == FluidSystem::getMainComponent(0))
+                continue;
+
+            // get equation index
+            const auto eqIdx = conti0EqIdx + compIdx;
+            if(scvf.boundary())
+            {
+               const auto bcTypes = problem.boundaryTypes(element, scvf);
+                 if((bcTypes.isOutflow(eqIdx)) || (bcTypes.isSymmetry()))
+                    return componentFlux;
+            }
+        }
+
         //calculate the mole fraction vectors
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
@@ -116,16 +132,6 @@ public:
 
             moleFracInside[compIdx] = xInside;
             moleFracOutside[compIdx] = xOutside;
-
-            // get equation index
-            const auto eqIdx = conti0EqIdx + compIdx;
-
-            if(scvf.boundary())
-            {
-               const auto bcTypes = problem.boundaryTypes(element, scvf);
-                 if(bcTypes.isOutflow(eqIdx) && eqIdx != pressureIdx)
-                    return componentFlux;
-            }
         }
 
         //now we have to do the tpfa: J_i = J_j which leads to: tij(xi -xj) = -rho Bi^-1 omegai(x*-xi) with x* = (omegai Bi^-1 + omegaj Bj^-1)^-1 (xi omegai Bi^-1 + xj omegaj Bj^-1) with i inside and j outside
@@ -138,28 +144,26 @@ public:
         const auto outsideScvIdx = scvf.outsideScvIdx();
         const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
 
-        const Scalar omegai = calculateOmega_(scvf,
-                                                insideScv,
-                                                1);
+        const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+
+        const Scalar omegai = calculateOmega_(insideDistance, insideVolVars.extrusionFactor());
 
         //if on boundary
         if (scvf.boundary())
         {
             moleFracOutside -= moleFracInside;
             reducedDiffusionMatrixInside.solve(reducedFlux, moleFracOutside);
-            reducedFlux *= omegai;
+            reducedFlux *= omegai*rhoInside;
         }
         else
         {
-            Scalar omegaj;
-            omegaj = -1.0*calculateOmega_(scvf,
-                                          outsideScv,
-                                          1);
+            const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+            const Scalar omegaj = calculateOmega_(outsideDistance, outsideVolVars.extrusionFactor());
 
             reducedDiffusionMatrixInside.invert();
             reducedDiffusionMatrixOutside.invert();
-            reducedDiffusionMatrixInside *= omegai;
-            reducedDiffusionMatrixOutside *= omegaj;
+            reducedDiffusionMatrixInside *= omegai*rhoInside;
+            reducedDiffusionMatrixOutside *= omegaj*rhoOutside;
 
             //in the helpervector we store the values for x*
             ReducedComponentVector helperVector(0.0);
@@ -181,7 +185,7 @@ public:
             reducedDiffusionMatrixInside.mv(helperVector, reducedFlux);
         }
 
-        reducedFlux *= -0.5*(rhoInside+rhoOutside)*scvf.area();
+        reducedFlux *= -scvf.area();
 
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
@@ -193,15 +197,10 @@ public:
     }
 
 private:
-   static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
-                                 const SubControlVolume &scv,
-                                 const Scalar extrusionFactor)
+    static Scalar calculateOmega_(const Scalar distance,
+                                  const Scalar extrusionFactor)
     {
-        auto distanceVector = scvf.ipGlobal();
-        distanceVector -= scv.center();
-        distanceVector /= distanceVector.two_norm2();
-
-        Scalar omega = (distanceVector * scvf.unitOuterNormal());
+        Scalar omega = 1/distance;
         omega *= extrusionFactor;
 
         return omega;
