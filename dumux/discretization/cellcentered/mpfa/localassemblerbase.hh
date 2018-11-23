@@ -163,7 +163,7 @@ class InteractionVolumeAssemblerBase
             resizeVector_(outsideG, iv.numFaces());
 
         // we require the CA matrix to have the correct size already
-        assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns());
+        assert(handle.CA().rows() == iv.numFaces() && handle.CA().cols() == iv.numUnknowns());
 
         //! For each face, we...
         //! - arithmetically average the phase densities
