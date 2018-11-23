@@ -22,8 +22,6 @@ dune_add_test(NAME test_1p2c_transport_tpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_transport_tpfa params.input -Problem.Name test_1p2c_transport_tpfa"
                         --zeroThreshold {"velocity_liq \(m/s\)_1":1e-15})
 
-#Note: The mpfa model does not support velocity output yet. We therefore deactivate it for the test and use a copy of the tpfa reference
-#      solution where the velocities have been removed.
 dune_add_test(NAME test_1p2c_transport_mpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCMpfa
