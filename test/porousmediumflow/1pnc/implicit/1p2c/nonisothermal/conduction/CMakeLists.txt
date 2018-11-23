@@ -29,6 +29,7 @@ dune_add_test(NAME test_1p2cni_conduction_mpfa
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionCCMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_conduction_mpfa-reference.vtu
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_conduction_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_conduction_mpfa-00005.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_conduction_mpfa params.input -Problem.Name test_1p2cni_conduction_mpfa -Vtk.AddVelocity false")
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_conduction_mpfa params.input -Problem.Name test_1p2cni_conduction_mpfa"
+                        --zeroThreshold {"velocity_liq \(m/s\)_0":1e-9})
