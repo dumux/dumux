@@ -754,6 +754,56 @@ trace(const Dune::DenseMatrix<MatrixType>& M)
 
 /*!
  * \ingroup Common
+ * \brief Returns the result of the projection of
+ *        a vector v with a Matrix M.
+ *
+ *        Note: We use DenseVector and DenseMatrix here so that
+ *        it can be used with the statically and dynamically
+ *        allocated Dune Vectors/Matrices. Size mismatch
+ *        assertions are done in the respective Dune classes.
+ *
+ * \param M The matrix
+ * \param v The vector
+ */
+template <class MAT, class V>
+typename Dune::DenseVector<V>::derived_type
+mv(const Dune::DenseMatrix<MAT>& M,
+   const Dune::DenseVector<V>& v)
+{
+    typename Dune::DenseVector<V>::derived_type res(v);
+    M.mv(v, res);
+    return res;
+}
+
+/*!
+ * \ingroup Common
+ * \brief Returns the result of a vector v multiplied by a scalar m.
+ *
+ *        Note: We use DenseVector and DenseMatrix here so that
+ *        it can be used with the statically and dynamically
+ *        allocated Dune Vectors/Matrices. Size mismatch
+ *        assertions are done in the respective Dune classes.
+ *
+ * \note We need the enable_if to make sure that only Scalars
+ *       fit here. Matrix types are forced to use the above
+ *       mv(DenseMatrix, DenseVector) instead.
+ *
+ * \param m The scale factor
+ * \param v The vector
+ */
+
+template <class FieldScalar, class V>
+typename std::enable_if_t<Dune::IsNumber<FieldScalar>::value,
+                          typename Dune::DenseVector<V>::derived_type>
+mv(const FieldScalar m, const Dune::DenseVector<V>& v)
+{
+    typename Dune::DenseVector<V>::derived_type res(v);
+    res *= m;
+    return res;
+}
+
+/*!
+ * \ingroup Common
  * \brief Evaluates the scalar product of a vector v2, projected by
  *        a matrix M, with a vector v1.
  *
@@ -772,9 +822,7 @@ vtmv(const Dune::DenseVector<V1>& v1,
      const Dune::DenseMatrix<MAT>& M,
      const Dune::DenseVector<V2>& v2)
 {
-    typename Dune::DenseVector<V2>::derived_type tmp(v2);
-    M.mv(v2, tmp);
-    return v1*tmp;
+    return v1*mv(M, v2);
 }
 
 /*!
