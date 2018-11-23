@@ -107,6 +107,22 @@ public:
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return (*gridFluxVarsCachePtr_)[scvf]; }
 
+    //! access to the stored interaction volumes
+    const std::vector<PrimaryInteractionVolume>& primaryInteractionVolumes() const
+    { return gridFluxVarsCachePtr_->primaryInteractionVolumes(); }
+
+    //! access to the stored data handles
+    const std::vector<PrimaryIvDataHandle>& primaryDataHandles() const
+    { return gridFluxVarsCachePtr_->primaryDataHandles(); }
+
+    //! access to the stored interaction volumes
+    const std::vector<SecondaryInteractionVolume>& secondaryInteractionVolumes() const
+    { return gridFluxVarsCachePtr_->secondaryInteractionVolumes(); }
+
+    //! access to the stored data handles
+    const std::vector<SecondaryIvDataHandle>& secondaryDataHandles() const
+    { return gridFluxVarsCachePtr_->secondaryDataHandles(); }
+
     //! The global object we are a restriction of
     const GridFluxVariablesCache& gridFluxVarsCache() const
     {  return *gridFluxVarsCachePtr_; }
