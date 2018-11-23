@@ -47,16 +47,16 @@ namespace Properties
 {
 // Create new type tags
 namespace TTag {
-struct DarcyOnePTwoCTypeTag { using InheritsFrom = std::tuple<OnePNC, CCTpfaModel>; };
+struct DarcyOnePTwoC { using InheritsFrom = std::tuple<OnePNC, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::DarcyOnePTwoCTypeTag> { using type = Dumux::DarcySubProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::DarcyOnePTwoC> { using type = Dumux::DarcySubProblem<TypeTag>; };
 
 // The fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::DarcyOnePTwoCTypeTag>
+struct FluidSystem<TypeTag, TTag::DarcyOnePTwoC>
 {
   using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
   static constexpr auto phaseIdx = H2OAir::liquidPhaseIdx; // simulate the water phase
@@ -65,27 +65,27 @@ struct FluidSystem<TypeTag, TTag::DarcyOnePTwoCTypeTag>
 
 // Use moles
 template<class TypeTag>
-struct UseMoles<TypeTag, TTag::DarcyOnePTwoCTypeTag> { static constexpr bool value = true; };
+struct UseMoles<TypeTag, TTag::DarcyOnePTwoC> { static constexpr bool value = true; };
 
 // Do not replace one equation with a total mass balance
 template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::DarcyOnePTwoCTypeTag> { static constexpr int value = 3; };
+struct ReplaceCompEqIdx<TypeTag, TTag::DarcyOnePTwoC> { static constexpr int value = 3; };
 
 //! Use a model with constant tortuosity for the effective diffusivity
-SET_TYPE_PROP(DarcyOnePTwoCTypeTag, EffectiveDiffusivityModel,
+SET_TYPE_PROP(DarcyOnePTwoC, EffectiveDiffusivityModel,
               DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>);
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DarcyOnePTwoCTypeTag> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::DarcyOnePTwoC> { using type = Dune::YaspGrid<2>; };
 
 // Set the diffusion type
 template<class TypeTag>
-struct MolecularDiffusionType<TypeTag, TTag::DarcyOnePTwoCTypeTag> { using type = DIFFUSIONTYPE; };
+struct MolecularDiffusionType<TypeTag, TTag::DarcyOnePTwoC> { using type = DIFFUSIONTYPE; };
 
 // Set the spatial paramaters type
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::DarcyOnePTwoCTypeTag>
+struct SpatialParams<TypeTag, TTag::DarcyOnePTwoC>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

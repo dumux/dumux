@@ -43,12 +43,12 @@ namespace Properties
 {
 // Create new type tags
 namespace TTag {
-struct StokesOnePTwoCTypeTag { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
+struct StokesOnePTwoC { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
 } // end namespace TTag
 
 // The fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::StokesOnePTwoCTypeTag>
+struct FluidSystem<TypeTag, TTag::StokesOnePTwoC>
 {
   using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
   static constexpr auto phaseIdx = H2OAir::liquidPhaseIdx; // simulate the water phase
@@ -57,30 +57,30 @@ struct FluidSystem<TypeTag, TTag::StokesOnePTwoCTypeTag>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::StokesOnePTwoCTypeTag> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+struct Grid<TypeTag, TTag::StokesOnePTwoC> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::StokesOnePTwoCTypeTag> { using type = Dumux::StokesSubProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::StokesOnePTwoC> { using type = Dumux::StokesSubProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::StokesOnePTwoCTypeTag> { static constexpr bool value = true; };
+struct EnableFVGridGeometryCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::StokesOnePTwoCTypeTag> { static constexpr bool value = true; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOnePTwoCTypeTag> { static constexpr bool value = true; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 
 // Use moles
 template<class TypeTag>
-struct UseMoles<TypeTag, TTag::StokesOnePTwoCTypeTag> { static constexpr bool value = true; };
+struct UseMoles<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 
 // Set the grid type
 template<class TypeTag>
-struct MolecularDiffusionType<TypeTag, TTag::StokesOnePTwoCTypeTag> { using type = DIFFUSIONTYPE; };
+struct MolecularDiffusionType<TypeTag, TTag::StokesOnePTwoC> { using type = DIFFUSIONTYPE; };
 
 // Do not replace one equation with a total mass balance
 template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::StokesOnePTwoCTypeTag> { static constexpr int value = 3; };
+struct ReplaceCompEqIdx<TypeTag, TTag::StokesOnePTwoC> { static constexpr int value = 3; };
 }
 
 /*!
