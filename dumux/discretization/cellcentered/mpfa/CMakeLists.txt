@@ -19,6 +19,7 @@ interactionvolumedatahandle.hh
 localassemblerbase.hh
 localfacedata.hh
 methods.hh
+scvgradients.hh
 subcontrolvolumeface.hh
 tensorlambdafactory.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/cellcentered/mpfa)
