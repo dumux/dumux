@@ -4,6 +4,7 @@ add_input_file_links()
 # conduction
 dune_add_test(NAME test_1p2c_nonequilibrium_box
               SOURCES main.cc
+              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCThermalNonequilibriumBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -14,6 +15,7 @@ dune_add_test(NAME test_1p2c_nonequilibrium_box
 
 dune_add_test(NAME test_1p2c_nonequilibrium_tpfa
               SOURCES main.cc
+              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCThermalNonequilibriumCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy

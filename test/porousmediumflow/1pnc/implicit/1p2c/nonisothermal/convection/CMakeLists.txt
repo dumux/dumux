@@ -4,6 +4,7 @@ add_input_file_links()
 # convection
 dune_add_test(NAME test_1p2cni_convection_box
               SOURCES main.cc
+              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -14,6 +15,7 @@ dune_add_test(NAME test_1p2cni_convection_box
 
 dune_add_test(NAME test_1p2cni_convection_tpfa
               SOURCES main.cc
+              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -24,6 +26,7 @@ dune_add_test(NAME test_1p2cni_convection_tpfa
 
 dune_add_test(NAME test_1p2cni_convection_mpfa
               SOURCES main.cc
+              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
