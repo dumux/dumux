@@ -8,5 +8,5 @@ dune_add_test(NAME test_1p2c_saltwaterintrusion_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_saltwaterintrusion_box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_saltwaterintrusion_box-00035.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_saltwaterintrusion_box-00033.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_saltwaterintrusion_box params.input -Problem.Name test_1p2c_saltwaterintrusion_box")

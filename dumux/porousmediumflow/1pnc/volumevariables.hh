@@ -69,7 +69,11 @@ public:
     using Indices = typename Traits::ModelTraits::Indices;
     //! export type of solid state
     using SolidState = typename Traits::SolidState;
+    //! export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
+
+    //! return whether moles or masses are balanced
+    static constexpr bool useMoles() { return Traits::ModelTraits::useMoles(); }
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -142,13 +146,21 @@ public:
         fluidState.setPressure(0, priVars[pressureIdx]);
 
         // Set fluid state mole fractions
-        Scalar sumMoleFracNotMainComp = 0;
-        for (int compIdx = 1; compIdx < numFluidComps; ++compIdx)
+        if (useMoles())
         {
-            fluidState.setMoleFraction(0, compIdx, priVars[compIdx]);
-            sumMoleFracNotMainComp += priVars[compIdx];
+            Scalar sumMoleFracNotMainComp = 0;
+            for (int compIdx = 1; compIdx < numFluidComps; ++compIdx)
+            {
+                fluidState.setMoleFraction(0, compIdx, priVars[compIdx]);
+                sumMoleFracNotMainComp += priVars[compIdx];
+            }
+            fluidState.setMoleFraction(0, 0, 1.0 - sumMoleFracNotMainComp);
         }
-        fluidState.setMoleFraction(0, 0, 1.0 - sumMoleFracNotMainComp);
+        else
+        {
+            for (int compIdx = 1; compIdx < numFluidComps; ++compIdx)
+                fluidState.setMassFraction(0, compIdx, priVars[compIdx]);
+        }
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);

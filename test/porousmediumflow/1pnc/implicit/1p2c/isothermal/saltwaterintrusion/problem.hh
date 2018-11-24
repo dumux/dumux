@@ -154,7 +154,7 @@ public:
 
         // salt water is in contact on the right boundary
         if (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
-            values[FluidSystem::NaClIdx] = 0.03;
+            values[FluidSystem::NaClIdx] = 0.035; // 3.5% salinity (sea water)
 
         return values;
     }
