@@ -210,37 +210,37 @@ public:
     Scalar saturation(int phaseIdx = 0) const
     { return 1.0; }
 
-     /*!
-      * \brief Return mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
-      *
-      * \param phaseIdx the index of the fluid phase
-      * \param compIdx the index of the component
-      *
-      * \note the phase index passed to this function is for compatibility reasons
-      *       with multiphasic models.
-      */
-     Scalar moleFraction(int phaseIdx, int compIdx) const
-     {
-         // make sure this is only called with admissible indices
-         assert(compIdx < numFluidComps);
-         return fluidState_.moleFraction(0, compIdx);
-     }
+    /*!
+     * \brief Return mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
+     *
+     * \param phaseIdx the index of the fluid phase
+     * \param compIdx the index of the component
+     *
+     * \note the phase index passed to this function is for compatibility reasons
+     *       with multiphasic models.
+     */
+    Scalar moleFraction(int phaseIdx, int compIdx) const
+    {
+        // make sure this is only called with admissible indices
+        assert(compIdx < numFluidComps);
+        return fluidState_.moleFraction(0, compIdx);
+    }
 
-     /*!
-      * \brief Returns the mass fraction of a component in the phase
-      *
-      * \param phaseIdx the index of the fluid phase
-      * \param compIdx the index of the component
-      *
-      * \note the phase index passed to this function is for compatibility reasons
-      *       with multiphasic models.
-      */
-     Scalar massFraction(int phaseIdx, int compIdx) const
-     {
-         // make sure this is only called with admissible indices
-         assert(compIdx < numFluidComps);
-         return fluidState_.massFraction(0, compIdx);
-     }
+    /*!
+     * \brief Returns the mass fraction of a component in the phase
+     *
+     * \param phaseIdx the index of the fluid phase
+     * \param compIdx the index of the component
+     *
+     * \note the phase index passed to this function is for compatibility reasons
+     *       with multiphasic models.
+     */
+    Scalar massFraction(int phaseIdx, int compIdx) const
+    {
+        // make sure this is only called with admissible indices
+        assert(compIdx < numFluidComps);
+        return fluidState_.massFraction(0, compIdx);
+    }
 
     /*!
      * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
@@ -318,16 +318,16 @@ public:
         return fluidState_.molarity(0, compIdx);
     }
 
-     /*!
-      * \brief Returns the mass fraction of a component in the phase
-      *
-      * \param compIdx the index of the component
-      */
-     Scalar massFraction(int compIdx) const
-     {
-         assert(compIdx < numFluidComps);
-         return this->fluidState_.massFraction(0, compIdx);
-     }
+    /*!
+     * \brief Returns the mass fraction of a component in the phase
+     *
+     * \param compIdx the index of the component
+     */
+    Scalar massFraction(int compIdx) const
+    {
+        assert(compIdx < numFluidComps);
+        return fluidState_.massFraction(0, compIdx);
+    }
 
     /*!
      * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
