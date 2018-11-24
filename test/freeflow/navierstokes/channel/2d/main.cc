@@ -188,7 +188,12 @@ int main(int argc, char** argv) try
     // In this case, we add half a cell-width to the x-position in order to make sure that
     // the cell faces lie on the surface. This assumes a regular cartesian grid.
     const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
-    const int numCellsX = getParam<std::vector<int>>("Grid.Cells")[0];
+    int numCellsX = getParam<std::vector<int>>("Grid.Cells")[0];
+
+    const unsigned int refinement = getParam<unsigned int>("Grid.Refinement", 0);
+
+    numCellsX *= (1<<refinement);
+
     const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
 
     const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin};

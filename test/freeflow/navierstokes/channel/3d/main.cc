@@ -182,7 +182,12 @@ int main(int argc, char** argv) try
 #endif
 
     const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
-    const int numCellsX = getParam<std::vector<int>>("Grid.Cells")[0];
+    int numCellsX = getParam<std::vector<int>>("Grid.Cells")[0];
+
+    const unsigned int refinement = getParam<unsigned int>("Grid.Refinement", 0);
+
+    numCellsX *= (1<<refinement);
+
     const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
 
 #if DIM_3D
