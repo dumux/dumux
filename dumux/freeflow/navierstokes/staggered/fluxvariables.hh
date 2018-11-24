@@ -101,7 +101,7 @@ public:
     {
         const Scalar velocity = elemFaceVars[scvf].velocitySelf();
         const bool insideIsUpstream = scvf.directionSign() == sign(velocity);
-        static const Scalar upWindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
+        static const Scalar upWindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
@@ -209,7 +209,7 @@ public:
             // Lamba function to evaluate the transported momentum, regarding an user-specified upwind weight.
             auto computeMomentum = [&insideVolVars, &problem](const Scalar upstreamVelocity, const Scalar downstreamVelocity)
             {
-                static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
+                static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
                 return (upwindWeight * upstreamVelocity + (1.0 - upwindWeight) * downstreamVelocity) * insideVolVars.density();
             };
 
@@ -401,7 +401,7 @@ private:
                                   const Scalar upstreamVelocity,
                                   const Scalar downstreamVelocity)
         {
-            static const Scalar upWindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
+            static const Scalar upWindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
             const Scalar density = upWindWeight * upstreamVolVars.density() + (1.0 - upWindWeight) * downstreamVolVars.density();
             const Scalar transportedVelocity =  upWindWeight * upstreamVelocity + (1.0 - upWindWeight) * downstreamVelocity;
             return transportedVelocity * density;

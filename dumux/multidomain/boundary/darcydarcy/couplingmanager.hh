@@ -214,7 +214,7 @@ public:
         }
 
         // upwind scheme
-        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
         auto upwindTerm = [phaseIdx](const auto& volVars){ return volVars.density(phaseIdx)*volVars.mobility(phaseIdx); };
         if (std::signbit(flux)) // if sign of flux is negative
             flux *= (upwindWeight*upwindTerm(outsideVolVars)

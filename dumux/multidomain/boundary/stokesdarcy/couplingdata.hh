@@ -343,7 +343,7 @@ public:
      */
     Scalar advectiveFlux(const Scalar insideQuantity, const Scalar outsideQuantity, const Scalar volumeFlow, bool insideIsUpstream) const
     {
-        const Scalar upwindWeight = 1.0; //TODO use Implicit.UpwindWeight or something like Coupling.UpwindWeight?
+        const Scalar upwindWeight = 1.0; //TODO use Flux.UpwindWeight or something like Coupling.UpwindWeight?
 
         if(insideIsUpstream)
             return (upwindWeight * insideQuantity + (1.0 - upwindWeight) * outsideQuantity) * volumeFlow;

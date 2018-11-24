@@ -494,7 +494,7 @@ private:
                              const UpwindTermFunction& upwindTerm,
                              const bool insideIsUpstream)
      {
-         static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
+         static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
 
          const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
          const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];

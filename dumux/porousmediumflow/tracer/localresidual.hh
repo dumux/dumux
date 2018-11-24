@@ -223,7 +223,7 @@ public:
         const auto volFlux = problem.spatialParams().volumeFlux(element, fvGeometry, curElemVolVars, scvf);
 
         // the upwind weight
-        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
 
         // get the inside and outside volvars
         const auto& insideVolVars = curElemVolVars[scvf.insideScvIdx()];
@@ -268,7 +268,7 @@ public:
         const auto volFlux = problem.spatialParams().volumeFlux(element, fvGeometry, curElemVolVars, scvf);
 
         // the upwind weight
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
 
         // get the inside and outside volvars
         const auto& insideVolVars = curElemVolVars[scvf.insideScvIdx()];

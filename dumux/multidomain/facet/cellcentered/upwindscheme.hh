@@ -54,7 +54,7 @@ public:
           const UpwindTermFunction& upwindTerm,
           Scalar flux, int phaseIdx)
     {
-        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
 
         // the volume variables of the inside sub-control volume
         const auto& scvf = fluxVars.scvFace();
@@ -147,7 +147,7 @@ public:
           const UpwindTermFunction& upwindTerm,
           Scalar flux, int phaseIdx)
     {
-        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
 
         const auto& scvf = fluxVars.scvFace();
         const auto& elemVolVars = fluxVars.elemVolVars();
