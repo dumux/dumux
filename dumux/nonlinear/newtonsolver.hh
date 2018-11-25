@@ -34,6 +34,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpicollectivecommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/std/type_traits.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/multitypeblockvector.hh>
 
@@ -49,6 +50,7 @@
 
 namespace Dumux {
 
+namespace Detail {
 //! helper struct detecting if an assembler supports partial reassembly
 struct supportsPartialReassembly
 {
@@ -58,6 +60,16 @@ struct supportsPartialReassembly
                                               std::declval<const PartialReassembler<Assembler>*>()))
     {}
 };
+
+//! helper aliases to extract a primary variable switch from the VolumeVariables (if defined, yields int otherwise)
+template<class Assembler>
+using GetPVSwitch = typename Assembler::GridVariables::VolumeVariables::PrimaryVariableSwitch;
+
+template<class Assembler>
+using PrimaryVariableSwitch = Dune::Std::detected_or<int, GetPVSwitch, Assembler>;
+
+}
+
 
 /*!
  * \ingroup Nonlinear
@@ -78,6 +90,9 @@ class NewtonSolver
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using SolutionVector = typename Assembler::ResidualType;
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
+
+    using PrimaryVariableSwitch = typename Detail::PrimaryVariableSwitch<Assembler>::type;
+    static constexpr bool hasPriVarsSwitch = Detail::PrimaryVariableSwitch<Assembler>::value_t::value;
 
 public:
 
@@ -108,6 +123,12 @@ public:
         // initialize the partial reassembler
         if (enablePartialReassembly_)
             partialReassembler_ = std::make_unique<Reassembler>(*assembler_);
+
+        if (hasPriVarsSwitch)
+        {
+            const int priVarSwitchVerbosity = getParamFromGroup<int>(paramGroup, "PrimaryVariableSwitch.Verbosity", 1);
+            priVarSwitch_ = std::make_unique<PrimaryVariableSwitch>(priVarSwitchVerbosity);
+        }
     }
 
     virtual ~NewtonSolver() {}
@@ -233,6 +254,7 @@ public:
     virtual void newtonBegin(const SolutionVector& u)
     {
         numSteps_ = 0;
+        resetPriVarSwitch_(u.size());
     }
 
     /*!
@@ -445,6 +467,8 @@ public:
     virtual void newtonEndStep(SolutionVector &uCurrentIter,
                                const SolutionVector &uLastIter)
     {
+        invokePriVarSwitch_(uCurrentIter);
+
         ++numSteps_;
 
         if (verbose_)
@@ -487,6 +511,11 @@ public:
      */
     virtual bool newtonConverged() const
     {
+        // in case the model has a priVar switch and some some primary variables
+        // actually switched their state in the last iteration, enforce another iteration
+        if (priVarsSwitchedInLastIteration_)
+            return false;
+
         if (enableShiftCriterion_ && !enableResidualCriterion_)
         {
             return shift_ <= shiftTolerance_;
@@ -620,6 +649,47 @@ protected:
 
     Assembler& assembler()
     { return *assembler_; }
+
+    template<bool enable = hasPriVarsSwitch, std::enable_if_t<!enable, int> = 0>
+    void resetPriVarSwitch_(const std::size_t numDofs)
+    {}
+
+    template<bool enable = hasPriVarsSwitch, std::enable_if_t<enable, int> = 0>
+    void resetPriVarSwitch_(const std::size_t numDofs)
+    {
+        priVarSwitch_->reset(numDofs);
+        priVarsSwitchedInLastIteration_ = false;
+    }
+
+    template<bool enable = hasPriVarsSwitch, std::enable_if_t<!enable, int> = 0>
+    void invokePriVarSwitch_(SolutionVector&)
+    {}
+
+    template<bool enable = hasPriVarsSwitch, std::enable_if_t<enable, int> = 0>
+    void invokePriVarSwitch_(SolutionVector& uCurrentIter)
+    {
+        // update the variable switch (returns true if the pri vars at at least one dof were switched)
+        // for disabled grid variable caching
+        const auto& fvGridGeometry = assembler_->fvGridGeometry();
+        const auto& problem = assembler_->problem();
+        auto& gridVariables = assembler_->gridVariables();
+
+        // invoke the primary variable switch
+        priVarsSwitchedInLastIteration_ = priVarSwitch_->update(uCurrentIter, gridVariables,
+                                                                problem, fvGridGeometry);
+
+        if (priVarsSwitchedInLastIteration_)
+        {
+            for (const auto& element : elements(fvGridGeometry.gridView()))
+            {
+                // if the volume variables are cached globally, we need to update those where the primary variables have been switched
+                priVarSwitch_->updateSwitchedVolVars(problem, element, fvGridGeometry, gridVariables, uCurrentIter);
+
+                // if the flux variables are cached globally, we need to update those where the primary variables have been switched
+                priVarSwitch_->updateSwitchedFluxVarsCache(problem, element, fvGridGeometry, gridVariables, uCurrentIter);
+            }
+        }
+    }
 
     //! optimal number of iterations we want to achieve
     int targetSteps_;
@@ -786,7 +856,7 @@ private:
     //! assembleLinearSystem_ for assemblers that support partial reassembly
     template<class A>
     auto assembleLinearSystem_(const A& assembler, const SolutionVector& uCurrentIter)
-    -> typename std::enable_if_t<decltype(isValid(supportsPartialReassembly())(assembler))::value, void>
+    -> typename std::enable_if_t<decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
     {
         assembler_->assembleJacobianAndResidual(uCurrentIter, partialReassembler_.get());
     }
@@ -794,7 +864,7 @@ private:
     //! assembleLinearSystem_ for assemblers that don't support partial reassembly
     template<class A>
     auto assembleLinearSystem_(const A& assembler, const SolutionVector& uCurrentIter)
-    -> typename std::enable_if_t<!decltype(isValid(supportsPartialReassembly())(assembler))::value, void>
+    -> typename std::enable_if_t<!decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
     {
         assembler_->assembleJacobianAndResidual(uCurrentIter);
     }
@@ -1155,6 +1225,11 @@ private:
     std::size_t totalWastedIter_ = 0; //! Newton steps in solves that didn't converge
     std::size_t totalSucceededIter_ = 0; //! Newton steps in solves that converged
     std::size_t numConverged_ = 0; //! total number of converged solves
+
+    //! the class handling the primary variable switch
+    std::unique_ptr<PrimaryVariableSwitch> priVarSwitch_;
+    //! if we switched primary variables in the last iteration
+    bool priVarsSwitchedInLastIteration_ = false;
 };
 
 } // end namespace Dumux
