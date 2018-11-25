@@ -34,7 +34,20 @@
 #include <dumux/material/constants.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
+#include "primaryvariableswitch.hh"
+
 namespace Dumux {
+
+namespace Detail {
+//! helper structs to conditionally use a primary variable switch or not
+struct VolVarsWithPVSwitch
+{
+    using PrimaryVariableSwitch = ExtendedRichardsPrimaryVariableSwitch;
+};
+
+struct VolVarsWithOutPVSwitch
+{};
+}
 
 /*!
  * \ingroup RichardsModel
@@ -47,6 +60,8 @@ template <class Traits>
 class RichardsVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
 , public EnergyVolumeVariables<Traits, RichardsVolumeVariables<Traits> >
+, public std::conditional_t<Traits::ModelTraits::enableMolecularDiffusion(),
+                            Detail::VolVarsWithPVSwitch, Detail::VolVarsWithOutPVSwitch>
 {
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, RichardsVolumeVariables<Traits> >;

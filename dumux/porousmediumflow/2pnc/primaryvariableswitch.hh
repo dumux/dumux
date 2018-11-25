@@ -35,11 +35,10 @@ namespace Dumux {
  * \ingroup TwoPNCModel
  * \brief The primary variable switch controlling the phase presence state variable
  */
-template<class TypeTag>
 class TwoPNCPrimaryVariableSwitch
-: public PrimaryVariableSwitch<TwoPNCPrimaryVariableSwitch<TypeTag>>
+: public PrimaryVariableSwitch<TwoPNCPrimaryVariableSwitch>
 {
-    using ParentType = PrimaryVariableSwitch<TwoPNCPrimaryVariableSwitch<TypeTag>>;
+    using ParentType = PrimaryVariableSwitch<TwoPNCPrimaryVariableSwitch>;
     friend ParentType;
 public:
     using ParentType::ParentType;

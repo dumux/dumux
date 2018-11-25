@@ -42,7 +42,7 @@
 #include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/privarswitchnewtonsolver.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
@@ -128,8 +128,7 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using PrimaryVariableSwitch = GetPropType<TypeTag, Properties::PrimaryVariableSwitch>;
-    using NewtonSolver = Dumux::PriVarSwitchNewtonSolver<Assembler, LinearSolver, PrimaryVariableSwitch>;
+    using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop

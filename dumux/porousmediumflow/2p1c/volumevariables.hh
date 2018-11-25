@@ -34,6 +34,8 @@
 #include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
+#include "primaryvariableswitch.hh"
+
 namespace Dumux {
 
 /*!
@@ -91,6 +93,8 @@ public:
     using SolidState = typename Traits::SolidState;
     //! export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
+    //! export the primary variable switch
+    using PrimaryVariableSwitch = TwoPOneCPrimaryVariableSwitch;
 
     //! return the two-phase formulation used here
     static constexpr TwoPFormulation priVarFormulation() { return formulation; }

@@ -76,7 +76,6 @@
 #include "localresidual.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
-#include "primaryvariableswitch.hh"
 
 namespace Dumux {
 
@@ -190,10 +189,6 @@ private:
 public:
     using type = TwoPOneCVolumeVariables<Traits>;
 };
-
-//! The primary variable switch for the 2p1cni model.
-template<class TypeTag>
-struct PrimaryVariableSwitch<TypeTag, TTag::TwoPOneCNI> { using type = TwoPOneCPrimaryVariableSwitch; };
 
 //! The primary variables vector for the 2p1cni model.
 template<class TypeTag>

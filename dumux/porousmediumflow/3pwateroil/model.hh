@@ -88,7 +88,6 @@
 #include "model.hh"
 #include "volumevariables.hh"
 #include "localresidual.hh"
-#include "primaryvariableswitch.hh"
 #include "iofields.hh"
 
 namespace Dumux {
@@ -180,10 +179,6 @@ struct LocalResidual<TypeTag, TTag::ThreePWaterOilNI> { using type = ThreePWater
 //! Set as default that no component mass balance is replaced by the total mass balance
 template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::ThreePWaterOilNI> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(); };
-
-//! The primary variable switch for the 3p3c model
-template<class TypeTag>
-struct PrimaryVariableSwitch<TypeTag, TTag::ThreePWaterOilNI> { using type = ThreePWaterOilPrimaryVariableSwitch<TypeTag>; };
 
 //! The primary variables vector for the 3p3c model
 template<class TypeTag>

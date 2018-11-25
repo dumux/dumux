@@ -102,7 +102,6 @@
 #include <dumux/porousmediumflow/2p/formulation.hh>
 
 #include "volumevariables.hh"
-#include "primaryvariableswitch.hh"
 #include "iofields.hh"
 #include "indices.hh"
 
@@ -181,9 +180,6 @@ private:
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
-
-template<class TypeTag>
-struct PrimaryVariableSwitch<TypeTag, TTag::TwoPNC> { using type = TwoPNCPrimaryVariableSwitch<TypeTag>; };         //!< The primary variable switch for the 2pnc model
 
 //! Set the volume variables property
 template<class TypeTag>
