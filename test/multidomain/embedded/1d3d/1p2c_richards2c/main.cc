@@ -339,10 +339,10 @@ int main(int argc, char** argv) try
     // the grid variables
     using BulkGridVariables = GetPropType<BulkTypeTag, Properties::GridVariables>;
     auto bulkGridVariables = std::make_shared<BulkGridVariables>(bulkProblem, bulkFvGridGeometry);
-    bulkGridVariables->init(sol[bulkIdx], oldSol[bulkIdx]);
+    bulkGridVariables->init(sol[bulkIdx]);
     using LowDimGridVariables = GetPropType<LowDimTypeTag, Properties::GridVariables>;
     auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
-    lowDimGridVariables->init(sol[lowDimIdx], oldSol[lowDimIdx]);
+    lowDimGridVariables->init(sol[lowDimIdx]);
 
     // get some time loop parameters
     using Scalar = Traits::Scalar;

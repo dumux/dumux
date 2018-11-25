@@ -140,7 +140,7 @@ int main(int argc, char** argv) try
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
-    gridVariables->init(x, xOld);
+    gridVariables->init(x);
 
     // instantiate indicator & data transfer, read parameters for indicator
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
