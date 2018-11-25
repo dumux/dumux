@@ -226,8 +226,8 @@ int main(int argc, char** argv) try
     auto gridVariables0 = std::make_shared<GridVariables0>(problem0, fvGridGeometry0);
     using GridVariables1 = GetPropType<SubTypeTag1, Properties::GridVariables>;
     auto gridVariables1 = std::make_shared<GridVariables1>(problem1, fvGridGeometry1);
-    gridVariables0->init(sol[domain0Idx], oldSol[domain0Idx]);
-    gridVariables1->init(sol[domain1Idx], oldSol[domain1Idx]);
+    gridVariables0->init(sol[domain0Idx]);
+    gridVariables1->init(sol[domain1Idx]);
 
     // get some time loop parameters
     using Scalar = Traits::Scalar;

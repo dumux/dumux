@@ -199,10 +199,10 @@ int main(int argc, char** argv) try
     // the grid variables
     using StokesGridVariables = GetPropType<StokesTypeTag, Properties::GridVariables>;
     auto stokesGridVariables = std::make_shared<StokesGridVariables>(stokesProblem, stokesFvGridGeometry);
-    stokesGridVariables->init(stokesSol, solStokesOld);
+    stokesGridVariables->init(stokesSol);
     using DarcyGridVariables = GetPropType<DarcyTypeTag, Properties::GridVariables>;
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyFvGridGeometry);
-    darcyGridVariables->init(sol[darcyIdx], solDarcyOld);
+    darcyGridVariables->init(sol[darcyIdx]);
 
     // get some time loop parameters
     using Scalar = GetPropType<StokesTypeTag, Properties::Scalar>;

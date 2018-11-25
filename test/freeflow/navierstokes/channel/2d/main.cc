@@ -150,7 +150,7 @@ int main(int argc, char** argv) try
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
-    gridVariables->init(x, xOld);
+    gridVariables->init(x);
 
     // initialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
