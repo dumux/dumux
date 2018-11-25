@@ -33,7 +33,6 @@
 #include <dumux/porousmediumflow/fluxvariables.hh>
 #include <dumux/porousmediumflow/fluxvariablescache.hh>
 #include <dumux/porousmediumflow/nonisothermal/localresidual.hh>
-#include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 #include <dumux/porousmediumflow/velocityoutput.hh>
 
 #include <dumux/flux/darcyslaw.hh>
@@ -92,10 +91,6 @@ struct VelocityOutput<TypeTag, TTag::PorousMediumFlow>
     using type = PorousMediumFlowVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>,
                                                 GetPropType<TypeTag, Properties::FluxVariables>>;
 };
-
-//! By default, we set an empty primary variables switch
-template<class TypeTag>
-struct PrimaryVariableSwitch<TypeTag, TTag::PorousMediumFlow> { using type = NoPrimaryVariableSwitch; };
 
 template<class TypeTag>
 struct EnableThermalNonEquilibrium<TypeTag, TTag::PorousMediumFlow> { static constexpr bool value = false; };

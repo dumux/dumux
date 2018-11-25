@@ -161,8 +161,6 @@ struct SolidSystem { using type = UndefinedProperty; };                         
 template<class TypeTag, class MyTypeTag>
 struct SolidState { using type = UndefinedProperty; };                           //!< The type of the solid state to use
 template<class TypeTag, class MyTypeTag>
-struct PrimaryVariableSwitch { using type = UndefinedProperty; };               //!< The primary variable switch needed for compositional models
-template<class TypeTag, class MyTypeTag>
 struct EffectiveDiffusivityModel { using type = UndefinedProperty; };           //!< The employed model for the computation of the effective diffusivity
 template<class TypeTag, class MyTypeTag>
 struct ThermalConductivityModel { using type = UndefinedProperty; };            //!< Model to be used for the calculation of the effective conductivity
