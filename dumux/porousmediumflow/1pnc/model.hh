@@ -99,17 +99,6 @@ struct OnePNCModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
     static constexpr bool enableEnergyBalance() { return false; }
-
-    template <class FluidSystem, class SolidSystem = void>
-    static std::string primaryVariableName(int pvIdx, int state = 0)
-    {
-        const std::string xString = useMoles() ? "x" : "X";
-        if (pvIdx == 0)
-            return "p";
-        else
-            return xString + "^" + FluidSystem::componentName(pvIdx)
-                   + "_" + FluidSystem::phaseName(0);
-    }
 };
 
 /*!

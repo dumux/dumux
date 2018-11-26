@@ -98,17 +98,6 @@ struct TwoPModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }
     static constexpr bool enableEnergyBalance() { return false; }
-
-    template <class FluidSystem, class SolidSystem = void>
-    static std::string primaryVariableName(int pvIdx, int state = 0)
-    {
-        if (priVarFormulation() == TwoPFormulation::p0s1)
-            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase0Idx)
-                              : IOName::saturation<FluidSystem>(FluidSystem::phase1Idx) ;
-        else
-            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase1Idx)
-                              : IOName::saturation<FluidSystem>(FluidSystem::phase0Idx);
-    }
 };
 
 /*!

@@ -89,17 +89,6 @@ struct ThreePModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }
     static constexpr bool enableEnergyBalance() { return false; }
-
-    template <class FluidSystem = void, class SolidSystem = void>
-    static std::string primaryVariableName(int pvIdx, int state = 0)
-    {
-        switch (pvIdx)
-        {
-            case 0: return "p_g";
-            case 1: return "S_w";
-            default: return "S_n";
-        }
-    }
 };
 
 /*!

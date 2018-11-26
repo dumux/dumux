@@ -102,17 +102,6 @@ struct TwoPOneCNIModelTraits
     static constexpr bool enableEnergyBalance() { return true; }
 
     static constexpr TwoPFormulation priVarFormulation() { return f; }
-
-    template <class FluidSystem = void, class SolidSystem = void>
-    static std::string primaryVariableName(int pvIdx, int state)
-    {
-        if (priVarFormulation() == TwoPFormulation::p0s1)
-            return (pvIdx == 0) ? "p_w" :
-                                  (state == Indices::twoPhases) ? "S_n" : "T";
-        else
-            return (pvIdx == 0) ? "p_n" :
-                                  (state == Indices::twoPhases) ? "S_w" : "T";
-    }
 };
 
 /*!

@@ -92,40 +92,6 @@
 
 namespace Dumux {
 
-/*!
- * \ingroup TwoPTwoCModel
- * \brief Specifies a number properties of two-phase two-component models.
- *
- * \tparam f The two-phase formulation used
- * \tparam useM Boolean to specify if moles or masses are balanced
- * \tparam replCompEqIdx the equation which is replaced by the total mass balance (none if replCompEqIdx >= numComponents)
- */
-template<TwoPFormulation formulation, bool useMol, int replCompEqIdx = 2>
-struct TwoPTwoCModelTraits : public TwoPNCModelTraits</*numComps=*/2, useMol, /*setMFracForFirstPhase=*/true, formulation, replCompEqIdx>
-{
-    template <class FluidSystem, class SolidSystem = void>
-    static std::string primaryVariableName(int pvIdx, int state)
-    {
-        static const std::string xString = useMol ? "x" : "X";
-        static const std::array<std::string, 3> p0s1SwitchedPvNames = {{
-            xString + "^" + FluidSystem::componentName(1) + "_" + FluidSystem::phaseName(0),
-            xString + "^" + FluidSystem::componentName(0) + "_" + FluidSystem::phaseName(1),
-            "S_n"}};
-        static const std::array<std::string, 3> p1s0SwitchedPvNames = {{
-            xString + "^" + FluidSystem::componentName(1) + "_" + FluidSystem::phaseName(0),
-            xString + "^" + FluidSystem::componentName(0) + "_" + FluidSystem::phaseName(1),
-            "S_w"}};
-
-        switch (formulation)
-        {
-        case TwoPFormulation::p0s1:
-            return pvIdx == 0 ? "p_w" : p0s1SwitchedPvNames[state-1];
-        case TwoPFormulation::p1s0:
-            return pvIdx == 0 ? "p_n" : p1s0SwitchedPvNames[state-1];
-        }
-    }
-};
-
 namespace Properties {
 
 //////////////////////////////////////////////////////////////////
@@ -153,9 +119,11 @@ private:
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
 
 public:
-    using type = TwoPTwoCModelTraits< getPropValue<TypeTag, Properties::Formulation>(),
-                                      getPropValue<TypeTag, Properties::UseMoles>(),
-                                      getPropValue<TypeTag, Properties::ReplaceCompEqIdx>() >;
+    using type = TwoPNCModelTraits<FluidSystem::numComponents,
+                                   getPropValue<TypeTag, Properties::UseMoles>(),
+                                   /*setMFracForFirstPhase=*/true,
+                                   getPropValue<TypeTag, Properties::Formulation>(),
+                                   getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 };
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::TwoPTwoC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; };

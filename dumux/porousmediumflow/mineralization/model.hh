@@ -53,15 +53,6 @@ struct MineralizationModelTraits : public NonMinTraits
     static constexpr int numInertSolidComps() { return numInertSC; }
     //! we additionally solve one equation per precipitating mineral phase
     static constexpr int numEq() { return NonMinTraits::numEq() + numSC - numInertSC; }
-
-    template <class FluidSystem, class SolidSystem>
-    static std::string primaryVariableName(int pvIdx, int state = 0)
-    {
-        if (pvIdx < NonMinTraits::numEq())
-            return NonMinTraits::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state);
-        else
-            return "precipitateVolumeFraction^" + SolidSystem::componentName(pvIdx -NonMinTraits::numEq());
-    }
 };
 } // end namespace Dumux
 

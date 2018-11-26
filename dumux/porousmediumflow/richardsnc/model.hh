@@ -114,17 +114,6 @@ struct RichardsNCModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
 
     static constexpr bool useMoles() { return useMol; }
-
-    template <class FluidSystem, class SolidSystem = void>
-    static std::string primaryVariableName(int pvIdx, int state = 0)
-    {
-        const std::string xString = useMoles() ? "x" : "X";
-        if (pvIdx == 0)
-            return IOName::pressure<FluidSystem>(0);
-        else
-            return xString + "^" + FluidSystem::componentName(pvIdx)
-                   + "_" + FluidSystem::phaseName(0);
-    }
 };
 
 namespace Properties {
