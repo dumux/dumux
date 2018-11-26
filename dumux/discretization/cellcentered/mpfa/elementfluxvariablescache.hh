@@ -273,15 +273,42 @@ public:
     //! access operators in the case of caching
     template<class SubControlVolumeFace>
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
+    { return !isEmbeddedInBoundaryIV_(scvf) ? (*gridFluxVarsCachePtr_)[scvf] : boundaryCacheData_[scvf]; }
+
+    //! access to the interaction volume an scvf is embedded in
+    template<class SubControlVolumeFace>
+    const PrimaryInteractionVolume& primaryInteractionVolume(const SubControlVolumeFace& scvf) const
     {
-        const auto& fvGridGeometry = gridFluxVarsCachePtr_->problem().fvGridGeometry();
-        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+        return isEmbeddedInBoundaryIV_(scvf)
+               ? boundaryCacheData_.ivDataStorage_.primaryInteractionVolumes[ (*this)[scvf].ivIndexInContainer() ]
+               : gridFluxVarsCachePtr_->primaryInteractionVolume(scvf);
+    }
 
-        bool touchesBoundary = fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()) ?
-                               gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs() > 0 :
-                               gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
+    //! access to the data handle of an interaction volume an scvf is embedded in
+    template<class SubControlVolumeFace>
+    const PrimaryIvDataHandle& primaryDataHandle(const SubControlVolumeFace& scvf) const
+    {
+        return isEmbeddedInBoundaryIV_(scvf)
+               ? boundaryCacheData_.ivDataStorage_.primaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]
+               : gridFluxVarsCachePtr_->primaryDataHandle(scvf);
+    }
 
-        return !touchesBoundary ? (*gridFluxVarsCachePtr_)[scvf] : boundaryCacheData_[scvf];
+    //! access to the interaction volume an scvf is embedded in
+    template<class SubControlVolumeFace>
+    const SecondaryInteractionVolume& secondaryInteractionVolume(const SubControlVolumeFace& scvf) const
+    {
+        return isEmbeddedInBoundaryIV_(scvf)
+               ? boundaryCacheData_.ivDataStorage_.secondaryInteractionVolumes[ (*this)[scvf].ivIndexInContainer() ]
+               : gridFluxVarsCachePtr_->secondaryInteractionVolume(scvf);
+    }
+
+    //! access to the data handle of an interaction volume an scvf is embedded in
+    template<class SubControlVolumeFace>
+    const SecondaryIvDataHandle& secondaryDataHandle(const SubControlVolumeFace& scvf) const
+    {
+        return isEmbeddedInBoundaryIV_(scvf)
+               ? boundaryCacheData_.ivDataStorage_.secondaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]
+               : gridFluxVarsCachePtr_->secondaryDataHandle(scvf);
     }
 
     //! The global object we are a restriction of
@@ -289,6 +316,18 @@ public:
     {  return *gridFluxVarsCachePtr_; }
 
 private:
+    //! returns true if an scvf is contained in an interaction volume that touches the boundary
+    template<class SubControlVolumeFace>
+    bool isEmbeddedInBoundaryIV_(const SubControlVolumeFace& scvf) const
+    {
+        const auto& fvGridGeometry = gridFluxVarsCachePtr_->problem().fvGridGeometry();
+        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+        if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+            return gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
+        else
+            return gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
+    }
+
     const GridFluxVariablesCache* gridFluxVarsCachePtr_;
 
     // we store those caches that touch the boundary locally here
