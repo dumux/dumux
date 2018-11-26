@@ -25,12 +25,14 @@
 #ifndef DUMUX_CC_MPFA_SCV_GRADIENTS_HH
 #define DUMUX_CC_MPFA_SCV_GRADIENTS_HH
 
-#include <pair>
 #include <vector>
+#include <utility>
 #include <type_traits>
 
 #include <dune/common/fvector.hh>
+
 #include <dumux/common/math.hh>
+#include <dumux/discretization/cellcentered/mpfa/localassemblerhelper.hh>
 
 namespace Dumux {
 
@@ -116,7 +118,6 @@ public:
                              unsigned int phaseIdx,
                              F& f)
     {
-        using Problem = std::decay_t<decltype(gridVariables.curGridVolVars().problem())>;
         using ElemVolVars = typename GridVariables::GridVolumeVariables::LocalView;
         using FVElementGeometry = typename FVGridGeometry::LocalView;
 
@@ -126,11 +127,8 @@ public:
                                    const FVElementGeometry& fvGeometry,
                                    const ElemVolVars& elemVolVars)
         {
-            using IV = std::decay_t<decltype(iv)>;
-            using LocalAssembler = typename IV::Traits::template LocalAssembler<Problem, FVElementGeometry, ElemVolVars>;
-
             handle.advectionHandle().setPhaseIndex(phaseIdx);
-            const auto grads = LocalAssembler::assembleScvGradients(handle.advectionHandle(), iv);
+            const auto grads = InteractionVolumeAssemblerHelper::assembleScvGradients(handle.advectionHandle(), iv);
             for (unsigned int i = 0; i < iv.numScvs(); ++i)
             {
                 const auto& volVars = elemVolVars[iv.localScv(i).gridScvIndex()];
