@@ -20,6 +20,7 @@ helper.hh
 interactionvolumebase.hh
 interactionvolumedatahandle.hh
 localassemblerbase.hh
+localassemblerhelper.hh
 localfacedata.hh
 methods.hh
 properties.hh
