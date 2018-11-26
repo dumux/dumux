@@ -129,6 +129,10 @@ public:
     const NodalGridStencilType& gridScvIndices() const
     { return nodalIndexSet_.gridScvIndices(); }
 
+    //! returns the global scvf indices embedded in this interaction volume
+    const NodalGridScvfStencilType& gridScvfIndices() const
+    { return nodalIndexSet_.gridScvfIndices(); }
+
     //! returns the number of faces in the interaction volume
     std::size_t numFaces() const
     { return numFaces_; }
