@@ -49,9 +49,9 @@ InterfaceDiffusionCoefficientAvg = FreeFlowOnly
 EnableInertiaTerms = false
 
 [Component]
-SolidHeatCapacity = 1.0
-SolidDensity = 1.0
-SolidThermalConductivity = 1.0
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790
 
 [Vtk]
 AddVelocity = true
