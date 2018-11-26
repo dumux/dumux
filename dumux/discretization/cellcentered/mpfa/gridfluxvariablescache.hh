@@ -167,9 +167,10 @@ public:
                 auto elemVolVars = localView(gridVolVars);
                 elemVolVars.bind(element, fvGeometry, sol);
 
-                // prepare all the caches of the scvfs inside the corresponding interaction volume
+                // Prepare all caches of the scvfs inside the corresponding interaction volume. Skip
+                // those ivs that are touching a boundary, we only store the data on interior ivs here.
                 for (const auto& scvf : scvfs(fvGeometry))
-                    if (!fluxVarsCache_[scvf.index()].isUpdated())
+                    if (!isEmbeddedInBoundaryIV_(scvf, fvGridGeometry) && !fluxVarsCache_[scvf.index()].isUpdated())
                         filler.fill(*this, fluxVarsCache_[scvf.index()], ivDataStorage_, element, fvGeometry, elemVolVars, scvf, forceUpdate);
             }
         }
@@ -201,7 +202,7 @@ public:
             for (const auto& scvf : scvfs(fvGeometry))
             {
                 auto& scvfCache = fluxVarsCache_[scvf.index()];
-                if (!scvfCache.isUpdated())
+                if (!isEmbeddedInBoundaryIV_(scvf, fvGridGeometry) && !scvfCache.isUpdated())
                     filler.fill(*this, scvfCache, ivDataStorage_, element, fvGeometry, elemVolVars, scvf);
             }
 
@@ -211,11 +212,9 @@ public:
                 for (const auto scvfIdx : dataJ.scvfsJ)
                 {
                     auto& scvfCache = fluxVarsCache_[scvfIdx];
-                    if (!scvfCache.isUpdated())
-                    {
-                        const auto& scvf = fvGeometry.scvf(scvfIdx);
+                    const auto& scvf = fvGeometry.scvf(scvfIdx);
+                    if (!isEmbeddedInBoundaryIV_(scvf, fvGridGeometry) && !scvfCache.isUpdated())
                         filler.fill(*this, scvfCache, ivDataStorage_, elementJ, fvGeometry, elemVolVars, scvf);
-                    }
                 }
             }
         }
@@ -255,6 +254,16 @@ public:
     { return *problemPtr_; }
 
 private:
+    //! returns true if an scvf is contained in an interaction volume that touches the boundary
+    template<class SubControlVolumeFace, class FVGridGeometry>
+    bool isEmbeddedInBoundaryIV_(const SubControlVolumeFace& scvf, const FVGridGeometry& fvGridGeometry) const
+    {
+        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+        if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+            return gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
+        else
+            return gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
+    }
 
     //! clear all containers
     void clear_()
