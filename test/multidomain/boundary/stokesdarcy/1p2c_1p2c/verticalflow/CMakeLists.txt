@@ -3,7 +3,7 @@ add_input_file_links()
 add_executable(test_md_boundary_darcy1p2c_stokes1p2c_vertical EXCLUDE_FROM_ALL main.cc)
 
 dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_vertical_diffusion
-              LABELS multidomain
+              LABELS multidomain freeflow
               TARGET test_md_boundary_darcy1p2c_stokes1p2c_vertical
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -17,7 +17,7 @@ dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_vertical_diffusion
                              -Vtk.OutputName test_md_boundary_darcy1p2c_stokes1p2c_vertical_diffusion")
 
 dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_vertical_advection
-              LABELS multidomain
+              LABELS multidomain freeflow
               TARGET test_md_boundary_darcy1p2c_stokes1p2c_vertical
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

@@ -1,7 +1,7 @@
 add_input_file_links()
 
 dune_add_test(NAME test_md_boundary_darcy2p2c_stokes1p2c_horizontal
-              LABELS multidomain
+              LABELS multidomain freeflow
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -15,7 +15,7 @@ dune_add_test(NAME test_md_boundary_darcy2p2c_stokes1p2c_horizontal
                              -Vtk.OutputName test_md_boundary_darcy2p2c_stokes1p2c_horizontal")
 
 dune_add_test(NAME test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal
-              LABELS multidomain
+              LABELS multidomain freeflow
               SOURCES main.cc
               COMPILE_DEFINITIONS NONISOTHERMAL=1
               CMAKE_GUARD HAVE_UMFPACK

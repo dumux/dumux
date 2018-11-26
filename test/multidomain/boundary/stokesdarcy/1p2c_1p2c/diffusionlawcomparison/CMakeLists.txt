@@ -1,7 +1,7 @@
 add_input_file_links()
 
 dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_maxwellstefan
-              LABELS multidomain
+              LABELS multidomain freeflow
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS DIFFUSIONTYPE=MaxwellStefansLaw<TypeTag>
@@ -15,7 +15,7 @@ dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_maxwellstefan
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_maxwellstefan params.input")
 
 dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_fickslaw
-              LABELS multidomain
+              LABELS multidomain freeflow
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS DIFFUSIONTYPE=FicksLaw<TypeTag>
