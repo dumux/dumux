@@ -29,19 +29,15 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 
 namespace Dumux {
+namespace Detail {
 
-namespace MDDetail {
-
-template<class Assembler, class IdType>
-using GridVariables = std::decay_t<decltype(std::declval<Assembler>().gridVariables(IdType()))>;
-
-template<class Assembler, class IdType>
-using GetPVSwitch = typename GridVariables<Assembler, IdType>::VolumeVariables::PrimaryVariableSwitch;
+template<class Assembler, class Index>
+using DetectPVSwitchMultiDomain = typename Assembler::template GridVariables<Index::value>::VolumeVariables::PrimaryVariableSwitch;
 
 template<class Assembler, std::size_t i>
-using PrimaryVariableSwitch = Dune::Std::detected_or<int, GetPVSwitch, Assembler, Dune::index_constant<i>>;
+using GetPVSwitchMultiDomain = Dune::Std::detected_or<int, DetectPVSwitchMultiDomain, Assembler, Dune::index_constant<i>>;
 
-}
+} // end namespace Detail
 
 /*!
  * \ingroup Nonlinear
@@ -57,15 +53,14 @@ class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Reas
     using SolutionVector = typename Assembler::ResidualType;
 
     template<std::size_t i>
-    using PrimaryVariableSwitch = typename MDDetail::PrimaryVariableSwitch<Assembler, i>::type;
+    using PrimaryVariableSwitch = typename Detail::GetPVSwitchMultiDomain<Assembler, i>::type;
+
+    template<std::size_t i>
+    using HasPriVarsSwitch = typename Detail::GetPVSwitchMultiDomain<Assembler, i>::value_t; // std::true_type or std::false_type
 
     template<std::size_t i>
     using PrivarSwitchPtr = std::unique_ptr<PrimaryVariableSwitch<i>>;
-
     using PriVarSwitchPtrTuple = typename Assembler::Traits::template MakeTuple<PrivarSwitchPtr>;
-
-    template<std::size_t i>
-    using HasPriVarsSwitch = typename MDDetail::PrimaryVariableSwitch<Assembler, i>::value_t;
 
 public:
 
@@ -114,7 +109,7 @@ public:
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<Assembler::Traits::numSubDomains>{}, [&](auto&& id)
         {
-            resetPriVarSwitch_(u[id].size(), id, HasPriVarsSwitch<id>());
+            resetPriVarSwitch_(u[id].size(), id, HasPriVarsSwitch<id>{});
         });
     }
 
@@ -143,7 +138,7 @@ public:
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<Assembler::Traits::numSubDomains>{}, [&](auto&& id)
         {
-            invokePriVarSwitch_(uCurrentIter[id], id, HasPriVarsSwitch<id>());
+            invokePriVarSwitch_(uCurrentIter[id], id, HasPriVarsSwitch<id>{});
         });
 
         ParentType::newtonEndStep(uCurrentIter, uLastIter);
@@ -152,11 +147,15 @@ public:
 
 private:
 
-
+    /*!
+     * \brief Reset the privar switch state, noop if there is no priVarSwitch
+     */
     template<std::size_t i>
-    void resetPriVarSwitch_(const std::size_t numDofs, Dune::index_constant<i> id, std::false_type)
-    {}
+    void resetPriVarSwitch_(const std::size_t numDofs, Dune::index_constant<i> id, std::false_type) {}
 
+    /*!
+     * \brief Switch primary variables if necessary
+     */
     template<std::size_t i>
     void resetPriVarSwitch_(const std::size_t numDofs, Dune::index_constant<i> id, std::true_type)
     {
@@ -165,10 +164,15 @@ private:
         priVarsSwitchedInLastIteration_[i] = false;
     }
 
+    /*!
+     * \brief Switch primary variables if necessary, noop if there is no priVarSwitch
+     */
     template<class SubSol, std::size_t i>
-    void invokePriVarSwitch_(SubSol&, Dune::index_constant<i> id, std::false_type)
-    {}
+    void invokePriVarSwitch_(SubSol&, Dune::index_constant<i> id, std::false_type) {}
 
+    /*!
+     * \brief Switch primary variables if necessary
+     */
     template<class SubSol, std::size_t i>
     void invokePriVarSwitch_(SubSol& uCurrentIter, Dune::index_constant<i> id, std::true_type)
     {
@@ -198,7 +202,7 @@ private:
         }
     }
 
-
+    //! the coupling manager
     std::shared_ptr<CouplingManager> couplingManager_;
 
     //! the class handling the primary variable switch

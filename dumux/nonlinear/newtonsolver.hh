@@ -29,6 +29,7 @@
 #include <cmath>
 #include <memory>
 #include <iostream>
+#include <type_traits>
 
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
@@ -49,8 +50,8 @@
 #include "newtonconvergencewriter.hh"
 
 namespace Dumux {
-
 namespace Detail {
+
 //! helper struct detecting if an assembler supports partial reassembly
 struct supportsPartialReassembly
 {
@@ -63,13 +64,12 @@ struct supportsPartialReassembly
 
 //! helper aliases to extract a primary variable switch from the VolumeVariables (if defined, yields int otherwise)
 template<class Assembler>
-using GetPVSwitch = typename Assembler::GridVariables::VolumeVariables::PrimaryVariableSwitch;
+using DetectPVSwitch = typename Assembler::GridVariables::VolumeVariables::PrimaryVariableSwitch;
 
 template<class Assembler>
-using PrimaryVariableSwitch = Dune::Std::detected_or<int, GetPVSwitch, Assembler>;
+using GetPVSwitch = Dune::Std::detected_or<int, DetectPVSwitch, Assembler>;
 
-}
-
+} // end namespace Detail
 
 /*!
  * \ingroup Nonlinear
@@ -91,8 +91,9 @@ class NewtonSolver
     using SolutionVector = typename Assembler::ResidualType;
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
 
-    using PrimaryVariableSwitch = typename Detail::PrimaryVariableSwitch<Assembler>::type;
-    static constexpr bool hasPriVarsSwitch = Detail::PrimaryVariableSwitch<Assembler>::value_t::value;
+    using PrimaryVariableSwitch = typename Detail::GetPVSwitch<Assembler>::type;
+    using HasPriVarsSwitch = typename Detail::GetPVSwitch<Assembler>::value_t; // std::true_type or std::false_type
+    static constexpr bool hasPriVarsSwitch() { return HasPriVarsSwitch::value; };
 
 public:
 
@@ -124,7 +125,7 @@ public:
         if (enablePartialReassembly_)
             partialReassembler_ = std::make_unique<Reassembler>(*assembler_);
 
-        if (hasPriVarsSwitch)
+        if (hasPriVarsSwitch())
         {
             const int priVarSwitchVerbosity = getParamFromGroup<int>(paramGroup, "PrimaryVariableSwitch.Verbosity", 1);
             priVarSwitch_ = std::make_unique<PrimaryVariableSwitch>(priVarSwitchVerbosity);
@@ -254,7 +255,7 @@ public:
     virtual void newtonBegin(const SolutionVector& u)
     {
         numSteps_ = 0;
-        resetPriVarSwitch_(u.size());
+        resetPriVarSwitch_(u.size(), HasPriVarsSwitch{});
     }
 
     /*!
@@ -467,7 +468,7 @@ public:
     virtual void newtonEndStep(SolutionVector &uCurrentIter,
                                const SolutionVector &uLastIter)
     {
-        invokePriVarSwitch_(uCurrentIter);
+        invokePriVarSwitch_(uCurrentIter, HasPriVarsSwitch{});
 
         ++numSteps_;
 
@@ -650,23 +651,29 @@ protected:
     Assembler& assembler()
     { return *assembler_; }
 
-    template<bool enable = hasPriVarsSwitch, std::enable_if_t<!enable, int> = 0>
-    void resetPriVarSwitch_(const std::size_t numDofs)
-    {}
+    /*!
+     * \brief Reset the privar switch state, noop if there is no priVarSwitch
+     */
+    void resetPriVarSwitch_(const std::size_t numDofs, std::false_type) {}
 
-    template<bool enable = hasPriVarsSwitch, std::enable_if_t<enable, int> = 0>
-    void resetPriVarSwitch_(const std::size_t numDofs)
+    /*!
+     * \brief Reset the privar switch state
+     */
+    void resetPriVarSwitch_(const std::size_t numDofs, std::true_type)
     {
         priVarSwitch_->reset(numDofs);
         priVarsSwitchedInLastIteration_ = false;
     }
 
-    template<bool enable = hasPriVarsSwitch, std::enable_if_t<!enable, int> = 0>
-    void invokePriVarSwitch_(SolutionVector&)
-    {}
+    /*!
+     * \brief Switch primary variables if necessary, noop if there is no priVarSwitch
+     */
+    void invokePriVarSwitch_(SolutionVector&, std::false_type) {}
 
-    template<bool enable = hasPriVarsSwitch, std::enable_if_t<enable, int> = 0>
-    void invokePriVarSwitch_(SolutionVector& uCurrentIter)
+    /*!
+     * \brief Switch primary variables if necessary
+     */
+    void invokePriVarSwitch_(SolutionVector& uCurrentIter, std::true_type)
     {
         // update the variable switch (returns true if the pri vars at at least one dof were switched)
         // for disabled grid variable caching
