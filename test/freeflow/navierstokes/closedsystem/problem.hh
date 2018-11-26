@@ -83,24 +83,22 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     ClosedSystemTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         lidVelocity_ = getParam<Scalar>("Problem.LidVelocity");
-
-        using CellArray = std::array<unsigned int, dimWorld>;
-        const CellArray numCells = getParam<CellArray>("Grid.Cells");
-        cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
-        cellSizeY_ = this->fvGridGeometry().bBoxMax()[1] / numCells[1];
     }
 
    /*!
@@ -163,14 +161,16 @@ public:
      * \param fvGeometry The finite-volume geometry
      * \param scv The sub control volume
      */
-    template<class Element, class FVElementGeometry, class SubControlVolume>
     bool isDirichletCell(const Element& element,
                          const FVElementGeometry& fvGeometry,
                          const SubControlVolume& scv,
                          int pvIdx) const
     {
+        auto isLowerLeftCell = [&](const SubControlVolume& scv)
+        { return scv.dofIndex() == 0; };
+
         // set a fixed pressure in one cell
-        return (isLowerLeftCell_(scv.center()) && pvIdx == Indices::pressureIdx);
+        return (isLowerLeftCell(scv) && pvIdx == Indices::pressureIdx);
     }
 
    /*!
@@ -210,15 +210,8 @@ public:
 
 private:
 
-    bool isLowerLeftCell_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < (0.5*cellSizeX_ + eps_) && globalPos[1] < (0.5*cellSizeY_ + eps_);
-    }
-
     Scalar eps_;
     Scalar lidVelocity_;
-    Scalar cellSizeX_;
-    Scalar cellSizeY_;
 };
 } //end namespace
 

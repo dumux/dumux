@@ -83,6 +83,8 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -105,11 +107,6 @@ public:
         Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
         lambda_ = 0.5 * reynoldsNumber
                         - std::sqrt(reynoldsNumber * reynoldsNumber * 0.25 + 4.0 * M_PI * M_PI);
-
-        using CellArray = std::array<unsigned int, dimWorld>;
-        const auto numCells = getParam<CellArray>("Grid.Cells");
-
-        cellSizeX_ = (this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0]) / numCells[0];
 
         createAnalyticalSolution_();
     }
@@ -191,15 +188,23 @@ public:
      * \param fvGeometry The finite-volume geometry
      * \param scv The sub control volume
      */
-    template<class Element, class FVElementGeometry, class SubControlVolume>
     bool isDirichletCell(const Element& element,
                          const FVElementGeometry& fvGeometry,
                          const SubControlVolume& scv,
                          int pvIdx) const
     {
         // set fixed pressure in all cells at the left boundary
-        auto isAtLeftBoundary = [&](const auto& globalPos) { return globalPos[0] < (this->fvGridGeometry().bBoxMin()[0] + 0.6*cellSizeX_ + eps_); };
-        return (isAtLeftBoundary(scv.center()) && pvIdx == Indices::pressureIdx);
+        auto isAtLeftBoundary = [&](const FVElementGeometry& fvGeometry)
+        {
+            if (fvGeometry.hasBoundaryScvf())
+            {
+                for (const auto& scvf : scvfs(fvGeometry))
+                    if (scvf.boundary() && scvf.center()[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
+                        return true;
+            }
+            return false;
+        };
+        return (isAtLeftBoundary(fvGeometry) && pvIdx == Indices::pressureIdx);
     }
 
    /*!
@@ -317,7 +322,6 @@ private:
     }
 
     Scalar eps_;
-    Scalar cellSizeX_;
 
     Scalar kinematicViscosity_;
     Scalar lambda_;
