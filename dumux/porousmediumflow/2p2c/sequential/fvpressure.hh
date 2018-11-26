@@ -919,7 +919,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     if(postTimeStep)
         cellData.reset();
 
-    // get the overall mass of first component Z0 = C^0 / (C^+C^1) [-]
+    // get the overall mass of first component Z0 = C^0 / (C^0+C^1) [-]
     Scalar Z0 = cellData.massConcentration(wCompIdx)
             / (cellData.massConcentration(wCompIdx)
                     + cellData.massConcentration(nCompIdx));
