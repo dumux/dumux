@@ -4,6 +4,7 @@ add_input_file_links()
 # conduction
 dune_add_test(NAME test_1p2cni_conduction_box
               SOURCES main.cc
+              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -14,6 +15,7 @@ dune_add_test(NAME test_1p2cni_conduction_box
 
 dune_add_test(NAME test_1p2cni_conduction_tpfa
               SOURCES main.cc
+              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -24,6 +26,7 @@ dune_add_test(NAME test_1p2cni_conduction_tpfa
 
 dune_add_test(NAME test_1p2cni_conduction_mpfa
               SOURCES main.cc
+              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionCCMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy

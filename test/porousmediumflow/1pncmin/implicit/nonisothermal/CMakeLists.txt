@@ -2,6 +2,7 @@ add_input_file_links()
 
 dune_add_test(NAME test_1pncminni_box
               SOURCES main.cc
+              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=ThermoChemBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
