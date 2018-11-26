@@ -8,11 +8,6 @@
           1.12406 1.06219 1.00058 0.939263 0.878327 0.817848 0.757919 0.698646 0.640142 0.582539 0.525978 0.470617
           0.416626 0.364194 0.313523 0.264835 0.218367 0.174376 0.133136 0.03125
         </DataArray>
-        <DataArray type="Float32" Name="rhoMolar" NumberOfComponents="1" format="ascii">
-          1 1 1 1 1 1 1 1 1 1 1 1
-          1 1 1 1 1 1 1 1 1 1 1 1
-          1 1 1 1 1 1 1 1
-        </DataArray>
         <DataArray type="Float32" Name="rho" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1

@@ -13,7 +13,7 @@ Cells = 21 6                # [-] number of cells in x,y-direction
 
 [Problem]
 Name = fuelcell
-EnableGravity = 0
+EnableGravity = false
 NTemperature = 3                # [-] number of temperature table entries
 NPressure = 200                 # [-] number of pressure table entries
 PressureLow = 1e5               # [Pa] lower pressure limit for tabularization
@@ -21,6 +21,11 @@ PressureHigh = 3e7              # [Pa] upper pressure limit for tabularization
 TemperatureLow = 312.15         # [K] lower temperature limit for tabularization
 TemperatureHigh = 314.15        # [K] upper temperature limit for tabularization
 InitialTemperature = 310        # [K] initial temperature for tabularization
+
+[Component]
+SolidHeatCapacity = 710          # [J/(kg K)] specific heat capacity of diffusion layer (Acosta)
+SolidDensity = 1430              # [kg/m^3] density of ELAT (Wöhr)
+SolidThermalConductivity = 15.6  # [W/(m*K)] thermal conductivity (Acosta)
 
 [ElectroChemistry]
 SpecificResistance = 0.25               # [Ohm*cm^2]

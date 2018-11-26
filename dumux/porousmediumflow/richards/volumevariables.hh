@@ -111,8 +111,11 @@ public:
             fluidState_.setPressure(FluidSystem::gasPhaseIdx, problem.nonWettingReferencePressure());
 
             // set molar densities
-            molarDensity_[FluidSystem::liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(FluidSystem::liquidPhaseIdx))/FluidSystem::H2O::molarMass();
-            molarDensity_[FluidSystem::gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonWettingReferencePressure());
+            if (enableWaterDiffusionInAir())
+            {
+                molarDensity_[FluidSystem::liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(FluidSystem::liquidPhaseIdx))/FluidSystem::H2O::molarMass();
+                molarDensity_[FluidSystem::gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonWettingReferencePressure());
+            }
 
             // density and viscosity
             typename FluidSystem::ParameterCache paramCache;
@@ -148,6 +151,19 @@ public:
         else if (phasePresence == Indices::liquidPhaseOnly)
         {
             completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
+
+            if (enableWaterDiffusionInAir())
+            {
+                molarDensity_[FluidSystem::liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(FluidSystem::liquidPhaseIdx))/FluidSystem::H2O::molarMass();
+                molarDensity_[FluidSystem::gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonWettingReferencePressure());
+                moleFraction_[FluidSystem::liquidPhaseIdx] = 1.0;
+                moleFraction_[FluidSystem::gasPhaseIdx] = 0.0;
+
+                // binary diffusion coefficients
+                typename FluidSystem::ParameterCache paramCache;
+                paramCache.updateAll(fluidState_);
+                diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, FluidSystem::gasPhaseIdx, FluidSystem::comp0Idx, FluidSystem::comp1Idx);
+            }
         }
 
         //////////
@@ -209,10 +225,7 @@ public:
                               FluidSystem::density(fluidState, paramCache, FluidSystem::liquidPhaseIdx));
         fluidState.setDensity(FluidSystem::gasPhaseIdx,
                               FluidSystem::density(fluidState, paramCache, FluidSystem::gasPhaseIdx));
-        fluidState.setMolarDensity(FluidSystem::liquidPhaseIdx,
-                                   FluidSystem::molarDensity(fluidState, paramCache, FluidSystem::liquidPhaseIdx));
-        fluidState.setMolarDensity(FluidSystem::gasPhaseIdx,
-                                   FluidSystem::molarDensity(fluidState, paramCache, FluidSystem::gasPhaseIdx));
+
         fluidState.setViscosity(FluidSystem::liquidPhaseIdx,
                                 FluidSystem::viscosity(fluidState, paramCache, FluidSystem::liquidPhaseIdx));
 

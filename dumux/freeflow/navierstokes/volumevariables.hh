@@ -94,9 +94,6 @@ public:
         Scalar value = FluidSystem::density(fluidState, paramCache, 0);
         fluidState.setDensity(0, value);
 
-        value = FluidSystem::molarDensity(fluidState, paramCache, 0);
-        fluidState.setMolarDensity(0, value);
-
         value = FluidSystem::viscosity(fluidState, paramCache, 0);
         fluidState.setViscosity(0, value);
 
@@ -128,15 +125,6 @@ public:
      */
     Scalar temperature() const
     { return fluidState_.temperature(); }
-
-    /*!
-     * \brief Returns the mass density of a given phase within the
-     *        control volume.
-     */
-    Scalar molarDensity(int phaseIdx = 0) const
-    {
-        return fluidState_.molarDensity(0);
-    }
 
     /*!
      * \brief Returns the molar mass of a given phase within the

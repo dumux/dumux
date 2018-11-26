@@ -13,6 +13,7 @@ EnableGravity = true
 
 [Component]
 LiquidDensity = 1000
+LiquidKinematicViscosity = 1.0
 
 [ Newton ]
 MaxSteps = 10

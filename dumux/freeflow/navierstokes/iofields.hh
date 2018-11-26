@@ -100,7 +100,6 @@ public:
     static void initOutputModule(OutputModule& out)
     {
         out.addVolumeVariable([](const auto& v){ return v.pressure(); }, IOName::pressure());
-        out.addVolumeVariable([](const auto& v){ return v.molarDensity(); }, IOName::molarDensity());
         out.addVolumeVariable([](const auto& v){ return v.density(); }, IOName::density());
 
         // add discretization-specific fields

@@ -6,7 +6,7 @@ dune_add_test(NAME test_3pwateroil_sagd_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                 CMD_ARGS --script fuzzy
             --files ${CMAKE_SOURCE_DIR}/test/references/test_3pwateroil_sagd_box-reference.vtu
-                   ${CMAKE_CURRENT_BINARY_DIR}/test_3pwateroil_sagd_box-00020.vtu
+                   ${CMAKE_CURRENT_BINARY_DIR}/test_3pwateroil_sagd_box-00011.vtu
             --command "${CMAKE_CURRENT_BINARY_DIR}/test_3pwateroil_sagd_box params.input -Problem.Name test_3pwateroil_sagd_box"
   )
 
