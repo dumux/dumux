@@ -275,7 +275,7 @@ private:
     static void globalDefaultParameters(Dune::ParameterTree& params)
     {
         // parameters in the implicit group
-        params["Implicit.UpwindWeight"] = "1.0";
+        params["Flux.UpwindWeight"] = "1.0";
         params["Implicit.EnableJacobianRecycling"] = "false";
 
         // parameters in the assembly group

@@ -27,5 +27,5 @@ NumericDifference.BaseEpsilon = 1e-8
 [Vtk]
 WriteFaceData = false
 
-[Implicit]
+[Flux]
 UpwindWeight = 0.5 # set to 0.5 for reproducing Ghia et al. (1982)
