@@ -158,6 +158,8 @@ public:
         }
         else
         {
+            // for mass fractions we only have to set numComponents-1 mass fractions
+            // the fluid state will internally compute the remaining mass fraction
             for (int compIdx = 1; compIdx < numFluidComps; ++compIdx)
                 fluidState.setMassFraction(0, compIdx, priVars[compIdx]);
         }
