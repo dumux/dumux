@@ -162,9 +162,6 @@ class InteractionVolumeAssemblerBase
         if (isSurfaceGrid)
             resizeVector_(outsideG, iv.numFaces());
 
-        // we require the CA matrix to have the correct size already
-        assert(handle.CA().rows() == iv.numFaces() && handle.CA().cols() == iv.numUnknowns());
-
         //! For each face, we...
         //! - arithmetically average the phase densities
         //! - compute the term \f$ \alpha := \mathbf{A} \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
