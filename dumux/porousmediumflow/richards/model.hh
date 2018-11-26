@@ -135,16 +135,6 @@ struct RichardsModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return enableDiff; }
     static constexpr bool enableEnergyBalance() { return false; }
-
-    template<class FluidSystem, class SolidSystem = void>
-    static std::string primaryVariableName(int pvIdx, int state)
-    {
-        if (state == Indices::gasPhaseOnly)
-            return "x^" + FluidSystem::componentName(FluidSystem::comp0Idx)
-                   + "_" + FluidSystem::phaseName(FluidSystem::phase1Idx);
-        else
-            return IOName::pressure<FluidSystem>(FluidSystem::phase0Idx);
-    }
 };
 
 /*!
