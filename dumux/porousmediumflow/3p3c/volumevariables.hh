@@ -33,6 +33,8 @@
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
+#include "primaryvariableswitch.hh"
+
 namespace Dumux {
 
 /*!
@@ -93,6 +95,8 @@ public:
     using SolidState = typename Traits::SolidState;
     //! export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
+    //! export the primary variable switch
+    using PrimaryVariableSwitch = ThreePThreeCPrimaryVariableSwitch;
 
     /*!
      * \brief Update all quantities for a given control volume

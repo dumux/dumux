@@ -152,7 +152,7 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = Dumux::RichardsNewtonSolver<TypeTag, Assembler, LinearSolver>;
+    using NewtonSolver = Dumux::RichardsNewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop

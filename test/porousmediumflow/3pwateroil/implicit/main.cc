@@ -37,7 +37,7 @@
 #include <dumux/common/timeloop.hh>
 
 #include <dumux/linear/amgbackend.hh>
-#include <dumux/nonlinear/privarswitchnewtonsolver.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -154,8 +154,7 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonSolver = PriVarSwitchNewtonSolver<Assembler, LinearSolver,
-                                                  GetPropType<TypeTag, Properties::PrimaryVariableSwitch>>;
+    using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop

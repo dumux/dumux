@@ -27,6 +27,7 @@
 #define DUMUX_MULTIDOMAIN_FV_ASSEMBLER_HH
 
 #include <type_traits>
+#include <tuple>
 
 #include <dune/common/hybridutilities.hh>
 #include <dune/istl/matrixindexset.hh>
@@ -66,6 +67,9 @@ public:
 
     template<std::size_t id>
     using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
+
+    template<std::size_t id>
+    using GridVariables = typename std::tuple_element_t<id, typename MDTraits::GridVariablesTuple>::element_type;
 
     using JacobianMatrix = typename MDTraits::JacobianMatrix;
     using SolutionVector = typename MDTraits::SolutionVector;
@@ -337,12 +341,12 @@ public:
 
     //! the grid variables of domain i
     template<std::size_t i>
-    auto& gridVariables(Dune::index_constant<i> domainId)
+    GridVariables<i>& gridVariables(Dune::index_constant<i> domainId)
     { return *std::get<domainId>(gridVariablesTuple_); }
 
     //! the grid variables of domain i
     template<std::size_t i>
-    const auto& gridVariables(Dune::index_constant<i> domainId) const
+    const GridVariables<i>& gridVariables(Dune::index_constant<i> domainId) const
     { return *std::get<domainId>(gridVariablesTuple_); }
 
     //! the coupling manager

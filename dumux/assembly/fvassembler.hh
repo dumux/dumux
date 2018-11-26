@@ -51,7 +51,6 @@ template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class FVAssembler
 {
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using Element = typename GridView::template Codim<0>::Entity;
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
@@ -69,6 +68,7 @@ public:
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
     using ResidualType = SolutionVector;
 

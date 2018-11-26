@@ -34,6 +34,8 @@
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
+#include "primaryvariableswitch.hh"
+
 namespace Dumux {
 
 /*!
@@ -91,6 +93,8 @@ public:
     using SolidState = typename Traits::SolidState;
     //! export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
+    //! export the type of the primary variable switch
+    using PrimaryVariableSwitch = TwoPTwoCCO2PrimaryVariableSwitch;
 
 
     //! return whether moles or masses are balanced

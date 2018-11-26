@@ -96,7 +96,6 @@
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "iofields.hh"
-#include "primaryvariableswitch.hh"
 #include "localresidual.hh"
 
 namespace Dumux {
@@ -197,10 +196,6 @@ struct FluidState<TypeTag, TTag::ThreePThreeC>{
 //! The local residual function of the conservation equations
 template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::ThreePThreeC> { using type = ThreePThreeCLocalResidual<TypeTag>; };
-
-//! The primary variable switch for the 3p3c model
-template<class TypeTag>
-struct PrimaryVariableSwitch<TypeTag, TTag::ThreePThreeC> { using type = ThreePThreeCPrimaryVariableSwitch; };
 
 //! The primary variables vector for the 3p3c model
 template<class TypeTag>

@@ -7,7 +7,6 @@ couplingjacobianpattern.hh
 couplingmanager.hh
 fvassembler.hh
 newtonsolver.hh
-privarswitchnewtonsolver.hh
 staggeredcouplingmanager.hh
 staggeredtraits.hh
 subdomainboxlocalassembler.hh

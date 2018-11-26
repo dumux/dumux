@@ -33,42 +33,11 @@ namespace Dumux {
  * \ingroup ThreePWaterOilModel
  * \brief The primary variable switch controlling the phase presence state variable
  */
-template<class TypeTag>
 class ThreePWaterOilPrimaryVariableSwitch
-: public PrimaryVariableSwitch<ThreePWaterOilPrimaryVariableSwitch<TypeTag>>
+: public PrimaryVariableSwitch<ThreePWaterOilPrimaryVariableSwitch>
 {
-    using ParentType = PrimaryVariableSwitch<ThreePWaterOilPrimaryVariableSwitch<TypeTag>>;
+    using ParentType = PrimaryVariableSwitch<ThreePWaterOilPrimaryVariableSwitch>;
     friend ParentType;
-
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-
-    enum {
-        switch1Idx = Indices::switch1Idx,
-        switch2Idx = Indices::switch2Idx,
-        pressureIdx = Indices::pressureIdx,
-
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
-        gPhaseIdx = FluidSystem::gPhaseIdx,
-
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
-
-        threePhases = Indices::threePhases,
-        wPhaseOnly  = Indices::wPhaseOnly,
-        gnPhaseOnly = Indices::gnPhaseOnly,
-        wnPhaseOnly = Indices::wnPhaseOnly,
-        gPhaseOnly  = Indices::gPhaseOnly,
-        wgPhaseOnly = Indices::wgPhaseOnly
-    };
 
 public:
     using ParentType::ParentType;
@@ -76,49 +45,53 @@ public:
 protected:
 
     // perform variable switch at a degree of freedom location
-    bool update_(PrimaryVariables& priVars,
+    template<class VolumeVariables, class GlobalPosition>
+    bool update_(typename VolumeVariables::PrimaryVariables& priVars,
                  const VolumeVariables& volVars,
-                 IndexType dofIdxGlobal,
+                 std::size_t dofIdxGlobal,
                  const GlobalPosition& globalPos)
     {
+        using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
+        using Scalar = typename PrimaryVariables::value_type;
+        using Indices = typename VolumeVariables::Indices;
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+
         // evaluate primary variable switch
         bool wouldSwitch = false;
         auto phasePresence = priVars.state();
         int newPhasePresence = phasePresence;
 
-        bool onlyGasPhaseCanDisappear = getPropValue<TypeTag, Properties::OnlyGasPhaseCanDisappear>();
-
-        if(onlyGasPhaseCanDisappear)
+        if(VolumeVariables::onlyGasPhaseCanDisappear())
         {
             // check if a primary var switch is necessary
-            if (phasePresence == threePhases)
+            if (phasePresence == Indices::threePhases)
             {
                 Scalar Smin = 0;
                 if (this->wasSwitched_[dofIdxGlobal])
                     Smin = -0.01;
 
-                if (volVars.saturation(gPhaseIdx) <= Smin)
+                if (volVars.saturation(FluidSystem::gPhaseIdx) <= Smin)
                 {
                     wouldSwitch = true;
                     // gas phase disappears
                     if (this->verbosity() > 1)
                         std::cout << "Gas phase disappears at dof " << dofIdxGlobal
                                 << ", coordinates: " << globalPos << ", sg: "
-                                << volVars.saturation(gPhaseIdx) << std::endl;
-                    newPhasePresence = wnPhaseOnly;
+                                << volVars.saturation(FluidSystem::gPhaseIdx) << std::endl;
+                    newPhasePresence = FluidSystem::gPhaseIdx;
 
-                    priVars[pressureIdx] = volVars.fluidState().pressure(wPhaseIdx);
-                    priVars[switch1Idx] = volVars.fluidState().temperature();
+                    priVars[Indices::pressureIdx] = volVars.fluidState().pressure(FluidSystem::wPhaseIdx);
+                    priVars[Indices::switch1Idx] = volVars.fluidState().temperature();
                 }
             }
-            else if (phasePresence == wnPhaseOnly)
+            else if (phasePresence == FluidSystem::gPhaseIdx)
             {
                 bool gasFlag = 0;
 
                 // calculate fractions of the partial pressures in the
                 // hypothetical gas phase
-                Scalar xwg = volVars.fluidState().moleFraction(gPhaseIdx, wCompIdx);
-                Scalar xng = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
+                Scalar xwg = volVars.fluidState().moleFraction(FluidSystem::gPhaseIdx, FluidSystem::wCompIdx);
+                Scalar xng = volVars.fluidState().moleFraction(FluidSystem::gPhaseIdx, FluidSystem::nCompIdx);
 
                 Scalar xgMax = 1.0;
                 if (xwg + xng > xgMax)
@@ -140,9 +113,9 @@ protected:
 
                 if (gasFlag == 1)
                 {
-                    newPhasePresence = threePhases;
-                    priVars[pressureIdx] = volVars.pressure(gPhaseIdx);
-                    priVars[switch1Idx] = volVars.saturation(wPhaseIdx);
+                    newPhasePresence = Indices::threePhases;
+                    priVars[Indices::pressureIdx] = volVars.pressure(FluidSystem::gPhaseIdx);
+                    priVars[Indices::switch1Idx] = volVars.saturation(FluidSystem::wPhaseIdx);
                 }
             }
         }
@@ -150,59 +123,59 @@ protected:
         else
         {
             // check if a primary var switch is necessary
-            if (phasePresence == threePhases)
+            if (phasePresence == Indices::threePhases)
             {
                 Scalar Smin = 0;
                 if (this->wasSwitched_[dofIdxGlobal])
                     Smin = -0.01;
 
-                if (volVars.saturation(gPhaseIdx) <= Smin)
+                if (volVars.saturation(FluidSystem::gPhaseIdx) <= Smin)
                 {
                     wouldSwitch = true;
                     // gas phase disappears
                     if (this->verbosity() > 1)
                         std::cout << "Gas phase disappears at dof " << dofIdxGlobal
                                 << ", coordinates: " << globalPos << ", sg: "
-                                << volVars.saturation(gPhaseIdx) << std::endl;
-                    newPhasePresence = wnPhaseOnly;
+                                << volVars.saturation(FluidSystem::gPhaseIdx) << std::endl;
+                    newPhasePresence = FluidSystem::gPhaseIdx;
 
-                    priVars[pressureIdx] = volVars.fluidState().pressure(wPhaseIdx);
-                    priVars[switch1Idx] = volVars.fluidState().temperature();
+                    priVars[Indices::pressureIdx] = volVars.fluidState().pressure(FluidSystem::wPhaseIdx);
+                    priVars[Indices::switch1Idx] = volVars.fluidState().temperature();
                 }
-                else if (volVars.saturation(wPhaseIdx) <= Smin)
+                else if (volVars.saturation(FluidSystem::wPhaseIdx) <= Smin)
                 {
                     wouldSwitch = true;
                     // water phase disappears
                     if (this->verbosity() > 1)
                         std::cout << "Water phase disappears at dof " << dofIdxGlobal
                                 << ", coordinates: " << globalPos << ", sw: "
-                                << volVars.saturation(wPhaseIdx) << std::endl;
-                    newPhasePresence = gnPhaseOnly;
+                                << volVars.saturation(FluidSystem::wPhaseIdx) << std::endl;
+                    newPhasePresence = Indices::gnPhaseOnly;
 
-                    priVars[switch1Idx] = volVars.fluidState().saturation(nPhaseIdx);
-                    priVars[switch2Idx] = volVars.fluidState().moleFraction(nPhaseIdx, wCompIdx);
+                    priVars[Indices::switch1Idx] = volVars.fluidState().saturation(FluidSystem::nPhaseIdx);
+                    priVars[Indices::switch2Idx] = volVars.fluidState().moleFraction(FluidSystem::nPhaseIdx, FluidSystem::wCompIdx);
                 }
-                else if (volVars.saturation(nPhaseIdx) <= Smin)
+                else if (volVars.saturation(FluidSystem::nPhaseIdx) <= Smin)
                 {
                     wouldSwitch = true;
                     // NAPL phase disappears
                     if (this->verbosity() > 1)
                         std::cout << "NAPL phase disappears at dof " << dofIdxGlobal
                                 << ", coordinates: " << globalPos << ", sn: "
-                                << volVars.saturation(nPhaseIdx) << std::endl;
-                    newPhasePresence = wgPhaseOnly;
+                                << volVars.saturation(FluidSystem::nPhaseIdx) << std::endl;
+                    newPhasePresence = Indices::wgPhaseOnly;
 
-                    priVars[switch2Idx] = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+                    priVars[Indices::switch2Idx] = volVars.fluidState().moleFraction(FluidSystem::wPhaseIdx, FluidSystem::nCompIdx);
                 }
             }
-            else if (phasePresence == wPhaseOnly)
+            else if (phasePresence == Indices::wPhaseOnly)
             {
                 bool gasFlag = 0;
                 bool nonwettingFlag = 0;
                 // calculate fractions of the partial pressures in the
                 // hypothetical gas phase
-                Scalar xwg = volVars.fluidState().moleFraction(gPhaseIdx, wCompIdx);
-                Scalar xng = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
+                Scalar xwg = volVars.fluidState().moleFraction(FluidSystem::gPhaseIdx, FluidSystem::wCompIdx);
+                Scalar xng = volVars.fluidState().moleFraction(FluidSystem::gPhaseIdx, FluidSystem::nCompIdx);
 
                 Scalar xgMax = 1.0;
                 if (xwg + xng > xgMax)
@@ -223,7 +196,7 @@ protected:
                 }
 
                 // calculate fractions in the hypothetical NAPL phase
-                Scalar xnn = volVars.fluidState().moleFraction(nPhaseIdx, nCompIdx);
+                Scalar xnn = volVars.fluidState().moleFraction(FluidSystem::nPhaseIdx, FluidSystem::nCompIdx);
                 /* take care:
                 for xnn in case wPhaseOnly we compute xnn=henry_mesitylene*x1w,
                 where a hypothetical gas pressure is assumed for the Henry
@@ -251,23 +224,23 @@ protected:
 
                 if ((gasFlag == 1) && (nonwettingFlag == 0))
                 {
-                    newPhasePresence = wgPhaseOnly;
-                    priVars[switch1Idx] = 0.9999;
-                    priVars[pressureIdx] = volVars.fluidState().pressure(gPhaseIdx);
+                    newPhasePresence = Indices::wgPhaseOnly;
+                    priVars[Indices::switch1Idx] = 0.9999;
+                    priVars[Indices::pressureIdx] = volVars.fluidState().pressure(FluidSystem::gPhaseIdx);
                 }
                 else if ((gasFlag == 1) && (nonwettingFlag == 1))
                 {
-                    newPhasePresence = threePhases;
-                    priVars[pressureIdx] = volVars.fluidState().pressure(gPhaseIdx);
-                    priVars[switch1Idx] = 0.999;
+                    newPhasePresence = Indices::threePhases;
+                    priVars[Indices::pressureIdx] = volVars.fluidState().pressure(FluidSystem::gPhaseIdx);
+                    priVars[Indices::switch1Idx] = 0.999;
                 }
                 else if ((gasFlag == 0) && (nonwettingFlag == 1))
                 {
-                    newPhasePresence = wnPhaseOnly;
-                    priVars[switch2Idx] = 0.0001;
+                    newPhasePresence = Indices::wnPhaseOnly;
+                    priVars[Indices::switch2Idx] = 0.0001;
                 }
             }
-            else if (phasePresence == gnPhaseOnly)
+            else if (phasePresence == Indices::gnPhaseOnly)
             {
                 bool nonwettingFlag = 0;
                 bool wettingFlag = 0;
@@ -276,20 +249,20 @@ protected:
                 if (this->wasSwitched_[dofIdxGlobal])
                     Smin = -0.01;
 
-                if (volVars.saturation(nPhaseIdx) <= Smin)
+                if (volVars.saturation(FluidSystem::nPhaseIdx) <= Smin)
                 {
                     wouldSwitch = true;
                     // NAPL phase disappears
                     if (this->verbosity() > 1)
                         std::cout << "NAPL phase disappears at dof " << dofIdxGlobal
                                 << ", coordinates: " << globalPos << ", sn: "
-                                << volVars.saturation(nPhaseIdx) << std::endl;
+                                << volVars.saturation(FluidSystem::nPhaseIdx) << std::endl;
                     nonwettingFlag = 1;
                 }
 
 
                 // calculate fractions of the hypothetical water phase
-                Scalar xww = volVars.fluidState().moleFraction(wPhaseIdx, wCompIdx);
+                Scalar xww = volVars.fluidState().moleFraction(FluidSystem::wPhaseIdx, FluidSystem::wCompIdx);
                 /*
                 take care:, xww, if no water is present, then take xww=xwg*pg/pwsat .
                 If this is larger than 1, then water appears
@@ -314,24 +287,24 @@ protected:
 
                 if ((wettingFlag == 1) && (nonwettingFlag == 0))
                 {
-                    newPhasePresence = threePhases;
-                    priVars[switch1Idx] = 0.0001;
-                    priVars[switch2Idx] = volVars.saturation(nPhaseIdx);
+                    newPhasePresence = Indices::threePhases;
+                    priVars[Indices::switch1Idx] = 0.0001;
+                    priVars[Indices::switch2Idx] = volVars.saturation(FluidSystem::nPhaseIdx);
                 }
                 else if ((wettingFlag == 1) && (nonwettingFlag == 1))
                 {
-                    newPhasePresence = wgPhaseOnly;
-                    priVars[switch1Idx] = 0.0001;
-                    priVars[switch2Idx] = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+                    newPhasePresence = Indices::wgPhaseOnly;
+                    priVars[Indices::switch1Idx] = 0.0001;
+                    priVars[Indices::switch2Idx] = volVars.fluidState().moleFraction(FluidSystem::wPhaseIdx, FluidSystem::nCompIdx);
                 }
                 else if ((wettingFlag == 0) && (nonwettingFlag == 1))
                 {
-                    newPhasePresence = gPhaseOnly;
-                    priVars[switch1Idx] = volVars.fluidState().temperature();
-                    priVars[switch2Idx] = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
+                    newPhasePresence = Indices::gPhaseOnly;
+                    priVars[Indices::switch1Idx] = volVars.fluidState().temperature();
+                    priVars[Indices::switch2Idx] = volVars.fluidState().moleFraction(FluidSystem::gPhaseIdx, FluidSystem::nCompIdx);
                 }
             }
-            else if (phasePresence == wnPhaseOnly)
+            else if (phasePresence == Indices::wnPhaseOnly)
             {
                 bool nonwettingFlag = 0;
                 bool gasFlag = 0;
@@ -340,21 +313,21 @@ protected:
                 if (this->wasSwitched_[dofIdxGlobal])
                     Smin = -0.01;
 
-                if (volVars.saturation(nPhaseIdx) <= Smin)
+                if (volVars.saturation(FluidSystem::nPhaseIdx) <= Smin)
                 {
                     wouldSwitch = true;
                     // NAPL phase disappears
                     if (this->verbosity() > 1)
                         std::cout << "NAPL phase disappears at dof " << dofIdxGlobal
                                 << ", coordinates: " << globalPos << ", sn: "
-                                << volVars.saturation(nPhaseIdx) << std::endl;
+                                << volVars.saturation(FluidSystem::nPhaseIdx) << std::endl;
                     nonwettingFlag = 1;
                 }
 
                 // calculate fractions of the partial pressures in the
                 // hypothetical gas phase
-                Scalar xwg = volVars.fluidState().moleFraction(gPhaseIdx, wCompIdx);
-                Scalar xng = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
+                Scalar xwg = volVars.fluidState().moleFraction(FluidSystem::gPhaseIdx, FluidSystem::wCompIdx);
+                Scalar xng = volVars.fluidState().moleFraction(FluidSystem::gPhaseIdx, FluidSystem::nCompIdx);
 
                 Scalar xgMax = 1.0;
                 if (xwg + xng > xgMax)
@@ -376,30 +349,30 @@ protected:
 
                 if ((gasFlag == 1) && (nonwettingFlag == 0))
                 {
-                    newPhasePresence = threePhases;
-                    priVars[pressureIdx] = volVars.pressure(gPhaseIdx);
-                    priVars[switch1Idx] = volVars.saturation(wPhaseIdx);
+                    newPhasePresence = Indices::threePhases;
+                    priVars[Indices::pressureIdx] = volVars.pressure(FluidSystem::gPhaseIdx);
+                    priVars[Indices::switch1Idx] = volVars.saturation(FluidSystem::wPhaseIdx);
                 }
                 else if ((gasFlag == 1) && (nonwettingFlag == 1))
                 {
-                    newPhasePresence = wgPhaseOnly;
-                    priVars[pressureIdx] = volVars.pressure(gPhaseIdx);
-                    priVars[switch1Idx] = volVars.temperature();
-                    priVars[switch2Idx] = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+                    newPhasePresence = Indices::wgPhaseOnly;
+                    priVars[Indices::pressureIdx] = volVars.pressure(FluidSystem::gPhaseIdx);
+                    priVars[Indices::switch1Idx] = volVars.temperature();
+                    priVars[Indices::switch2Idx] = volVars.fluidState().moleFraction(FluidSystem::wPhaseIdx, FluidSystem::nCompIdx);
                 }
                 else if ((gasFlag == 0) && (nonwettingFlag == 1))
                 {
-                    newPhasePresence = wPhaseOnly;
-                    priVars[switch2Idx] = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+                    newPhasePresence = Indices::wPhaseOnly;
+                    priVars[Indices::switch2Idx] = volVars.fluidState().moleFraction(FluidSystem::wPhaseIdx, FluidSystem::nCompIdx);
                 }
             }
-            else if (phasePresence == gPhaseOnly)
+            else if (phasePresence == Indices::gPhaseOnly)
             {
                 bool nonwettingFlag = 0;
                 bool wettingFlag = 0;
 
                 // calculate fractions in the hypothetical NAPL phase
-                Scalar xnn = volVars.fluidState().moleFraction(nPhaseIdx, nCompIdx);
+                Scalar xnn = volVars.fluidState().moleFraction(FluidSystem::nPhaseIdx, FluidSystem::nCompIdx);
                 /*
                 take care:, xnn, if no NAPL phase is there, take xnn=xng*pg/pcsat
                 if this is larger than 1, then NAPL appears
@@ -423,7 +396,7 @@ protected:
                     nonwettingFlag = 1;
                 }
                 // calculate fractions of the hypothetical water phase
-                Scalar xww = volVars.fluidState().moleFraction(wPhaseIdx, wCompIdx);
+                Scalar xww = volVars.fluidState().moleFraction(FluidSystem::wPhaseIdx, FluidSystem::wCompIdx);
                 /*
                 take care:, xww, if no water is present, then take xww=xwg*pg/pwsat .
                 If this is larger than 1, then water appears
@@ -447,31 +420,31 @@ protected:
                 }
                 if ((wettingFlag == 1) && (nonwettingFlag == 0))
                 {
-                    newPhasePresence = wgPhaseOnly;
-                    priVars[switch1Idx] = 0.0001;
-                    priVars[switch2Idx] = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+                    newPhasePresence = Indices::wgPhaseOnly;
+                    priVars[Indices::switch1Idx] = 0.0001;
+                    priVars[Indices::switch2Idx] = volVars.fluidState().moleFraction(FluidSystem::wPhaseIdx, FluidSystem::nCompIdx);
                 }
                 else if ((wettingFlag == 1) && (nonwettingFlag == 1))
                 {
-                    newPhasePresence = threePhases;
-                    priVars[switch1Idx] = 0.0001;
-                    priVars[switch2Idx] = 0.0001;
+                    newPhasePresence = Indices::threePhases;
+                    priVars[Indices::switch1Idx] = 0.0001;
+                    priVars[Indices::switch2Idx] = 0.0001;
                 }
                 else if ((wettingFlag == 0) && (nonwettingFlag == 1))
                 {
-                    newPhasePresence = gnPhaseOnly;
-                    priVars[switch2Idx]
-                        = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+                    newPhasePresence = Indices::gnPhaseOnly;
+                    priVars[Indices::switch2Idx]
+                        = volVars.fluidState().moleFraction(FluidSystem::wPhaseIdx, FluidSystem::nCompIdx);
                 }
             }
-            else if (phasePresence == wgPhaseOnly)
+            else if (phasePresence == Indices::wgPhaseOnly)
             {
                 bool nonwettingFlag = 0;
                 bool gasFlag = 0;
                 bool wettingFlag = 0;
 
                 // get the fractions in the hypothetical NAPL phase
-                Scalar xnn = volVars.fluidState().moleFraction(nPhaseIdx, nCompIdx);
+                Scalar xnn = volVars.fluidState().moleFraction(FluidSystem::nPhaseIdx, FluidSystem::nCompIdx);
 
                 // take care: if the NAPL phase is not present, take
                 // xnn=xng*pg/pcsat if this is larger than 1, then NAPL
@@ -498,14 +471,14 @@ protected:
                 if (this->wasSwitched_[dofIdxGlobal])
                     Smin = -0.01;
 
-                if (volVars.saturation(gPhaseIdx) <= Smin)
+                if (volVars.saturation(FluidSystem::gPhaseIdx) <= Smin)
                 {
                     wouldSwitch = true;
                     // gas phase disappears
                     if (this->verbosity() > 1)
                         std::cout << "Gas phase disappears at dof " << dofIdxGlobal
                                 << ", coordinates: " << globalPos << ", sg: "
-                                << volVars.saturation(gPhaseIdx) << std::endl;
+                                << volVars.saturation(FluidSystem::gPhaseIdx) << std::endl;
                     gasFlag = 1;
                 }
 
@@ -513,43 +486,43 @@ protected:
                 if (this->wasSwitched_[dofIdxGlobal])
                     Smin = -0.01;
 
-                if (volVars.saturation(wPhaseIdx) <= Smin)
+                if (volVars.saturation(FluidSystem::wPhaseIdx) <= Smin)
                 {
                     wouldSwitch = true;
                     // gas phase disappears
                     if (this->verbosity() > 1)
                         std::cout << "Water phase disappears at dof " << dofIdxGlobal
                                 << ", coordinates: " << globalPos << ", sw: "
-                                << volVars.saturation(wPhaseIdx) << std::endl;
+                                << volVars.saturation(FluidSystem::wPhaseIdx) << std::endl;
                     wettingFlag = 1;
                 }
 
                 if ((gasFlag == 0) && (nonwettingFlag == 1) && (wettingFlag == 1))
                 {
-                    newPhasePresence = gnPhaseOnly;
-                    priVars[switch1Idx] = 0.0001;
-                    priVars[switch2Idx] = volVars.fluidState().moleFraction(nPhaseIdx, wCompIdx);
+                    newPhasePresence = Indices::gnPhaseOnly;
+                    priVars[Indices::switch1Idx] = 0.0001;
+                    priVars[Indices::switch2Idx] = volVars.fluidState().moleFraction(FluidSystem::nPhaseIdx, FluidSystem::wCompIdx);
     ;
                 }
                 else if ((gasFlag == 0) && (nonwettingFlag == 1) && (wettingFlag == 0))
                 {
-                    newPhasePresence = threePhases;
-                    priVars[switch2Idx] = 0.0001;
+                    newPhasePresence = Indices::threePhases;
+                    priVars[Indices::switch2Idx] = 0.0001;
                 }
                 else if ((gasFlag == 1) && (nonwettingFlag == 0) && (wettingFlag == 0))
                 {
-                    newPhasePresence = wPhaseOnly;
-                    priVars[pressureIdx] = volVars.fluidState().pressure(wPhaseIdx);
-                    priVars[switch1Idx] = volVars.fluidState().temperature();
-                    priVars[switch2Idx] = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+                    newPhasePresence = Indices::wPhaseOnly;
+                    priVars[Indices::pressureIdx] = volVars.fluidState().pressure(FluidSystem::wPhaseIdx);
+                    priVars[Indices::switch1Idx] = volVars.fluidState().temperature();
+                    priVars[Indices::switch2Idx] = volVars.fluidState().moleFraction(FluidSystem::wPhaseIdx, FluidSystem::nCompIdx);
                 }
                 else if ((gasFlag == 0) && (nonwettingFlag == 0) && (wettingFlag == 1))
                 {
-                    newPhasePresence = gPhaseOnly;
-                    priVars[switch1Idx]
+                    newPhasePresence = Indices::gPhaseOnly;
+                    priVars[Indices::switch1Idx]
                         = volVars.fluidState().temperature();
-                    priVars[switch2Idx]
-                        = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
+                    priVars[Indices::switch2Idx]
+                        = volVars.fluidState().moleFraction(FluidSystem::gPhaseIdx, FluidSystem::nCompIdx);
                 }
             }
         }

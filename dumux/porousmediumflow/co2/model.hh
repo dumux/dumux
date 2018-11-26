@@ -26,7 +26,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p2c/model.hh>
-#include "primaryvariableswitch.hh"
 #include "volumevariables.hh"
 
 /*!
@@ -79,12 +78,6 @@ namespace TTag {
 struct TwoPTwoCCO2 { using InheritsFrom = std::tuple<TwoPTwoC>; };
 struct TwoPTwoCCO2NI { using InheritsFrom = std::tuple<TwoPTwoCNI>; };
 } // end namespace TTag
-
-//! the CO2 privarswitch and VolumeVariables properties
-template<class TypeTag>
-struct PrimaryVariableSwitch<TypeTag, TTag::TwoPTwoCCO2> { using type = TwoPTwoCCO2PrimaryVariableSwitch; };
-template<class TypeTag>
-struct PrimaryVariableSwitch<TypeTag, TTag::TwoPTwoCCO2NI> { using type = TwoPTwoCCO2PrimaryVariableSwitch; };
 
 //! the co2 volume variables use the same traits as the 2p2c model
 template<class TypeTag>

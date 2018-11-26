@@ -25,7 +25,7 @@
 #define DUMUX_RICHARDS_NEWTON_SOLVER_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/porousmediumflow/richards/privarswitchnewtonsolver.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/discretization/elementsolution.hh>
 
 namespace Dumux {
@@ -39,15 +39,15 @@ namespace Dumux {
  * \todo make this typetag independent by extracting anything model specific from assembler
  *       or from possible ModelTraits.
  */
-template <class TypeTag, class Assembler, class LinearSolver>
-class RichardsNewtonSolver : public RichardsPrivarSwitchNewtonSolver<TypeTag, Assembler, LinearSolver>
+template <class Assembler, class LinearSolver>
+class RichardsNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
 {
     using Scalar = typename Assembler::Scalar;
-    using ParentType = RichardsPrivarSwitchNewtonSolver<TypeTag, Assembler, LinearSolver>;
+    using ParentType = NewtonSolver<Assembler, LinearSolver>;
     using SolutionVector = typename Assembler::ResidualType;
 
     using MaterialLaw = typename Assembler::Problem::SpatialParams::MaterialLaw;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using Indices = typename Assembler::GridVariables::VolumeVariables::Indices;
     enum { pressureIdx = Indices::pressureIdx };
 
 public:

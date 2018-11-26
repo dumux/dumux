@@ -39,6 +39,8 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
+#include "primaryvariableswitch.hh"
+
 namespace Dumux {
 
 /*!
@@ -55,7 +57,6 @@ class ThreePWaterOilVolumeVariables
     using EnergyVolVars = EnergyVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
-    using Indices = typename ModelTraits::Indices;
     using FS = typename Traits::FluidSystem;
     static constexpr int numFluidComps = ParentType::numComponents();
 
@@ -69,19 +70,19 @@ class ThreePWaterOilVolumeVariables
         gPhaseIdx = FS::gPhaseIdx,
         nPhaseIdx = FS::nPhaseIdx,
 
-        switch1Idx = Indices::switch1Idx,
-        switch2Idx = Indices::switch2Idx,
-        pressureIdx = Indices::pressureIdx
+        switch1Idx = ModelTraits::Indices::switch1Idx,
+        switch2Idx = ModelTraits::Indices::switch2Idx,
+        pressureIdx = ModelTraits::Indices::pressureIdx
     };
 
     // present phases
     enum {
-        threePhases = Indices::threePhases,
-        wPhaseOnly  = Indices::wPhaseOnly,
-        gnPhaseOnly = Indices::gnPhaseOnly,
-        wnPhaseOnly = Indices::wnPhaseOnly,
-        gPhaseOnly  = Indices::gPhaseOnly,
-        wgPhaseOnly = Indices::wgPhaseOnly
+        threePhases = ModelTraits::Indices::threePhases,
+        wPhaseOnly  = ModelTraits::Indices::wPhaseOnly,
+        gnPhaseOnly = ModelTraits::Indices::gnPhaseOnly,
+        wnPhaseOnly = ModelTraits::Indices::wnPhaseOnly,
+        gPhaseOnly  = ModelTraits::Indices::gPhaseOnly,
+        wgPhaseOnly = ModelTraits::Indices::wgPhaseOnly
     };
 
 public:
@@ -89,10 +90,17 @@ public:
     using FluidState = typename Traits::FluidState;
     //! The type of the fluid system
     using FluidSystem = typename Traits::FluidSystem;
+    //! export the indices
+    using Indices = typename ModelTraits::Indices;
     //! export type of solid state
     using SolidState = typename Traits::SolidState;
     //! export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
+    //! export the primary variable switch
+    using PrimaryVariableSwitch = ThreePWaterOilPrimaryVariableSwitch;
+    //! state if only the gas phase is allowed to disappear
+    static constexpr bool onlyGasPhaseCanDisappear()
+    { return Traits::ModelTraits::onlyGasPhaseCanDisappear(); }
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
@@ -107,13 +115,11 @@ public:
         const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
 
-        bool onlyGasPhaseCanDisappear = Traits::ModelTraits::onlyGasPhaseCanDisappear();
-
         // capillary pressure parameters
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
-        if(!onlyGasPhaseCanDisappear)
+        if(!onlyGasPhaseCanDisappear())
         {
             /* first the saturations */
             if (phasePresence == threePhases)

@@ -41,6 +41,8 @@
 
 #include <dumux/porousmediumflow/2p/formulation.hh>
 
+#include "primaryvariableswitch.hh"
+
 namespace Dumux {
 
 /*!
@@ -98,6 +100,8 @@ public:
     using SolidState = typename Traits::SolidState;
     //! export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
+    //! export the primary variable switch
+    using PrimaryVariableSwitch = TwoPNCPrimaryVariableSwitch;
 
     //! return whether moles or masses are balanced
     static constexpr bool useMoles() { return Traits::ModelTraits::useMoles(); }

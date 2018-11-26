@@ -113,7 +113,6 @@
 #include "volumevariables.hh"
 #include "iofields.hh"
 #include "localresidual.hh"
-#include "primaryvariableswitch.hh"
 
 namespace Dumux {
 
@@ -238,10 +237,6 @@ private:
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
-
-//! The primary variable switch for the richards model
-template<class TypeTag>
-struct PrimaryVariableSwitch<TypeTag, TTag::Richards> { using type = ExtendedRichardsPrimaryVariableSwitch; };
 
 /*!
  *\brief The fluid system used by the model.

@@ -43,12 +43,11 @@ public:
     template<typename... Args>
     NoPrimaryVariableSwitch(Args&&...) {}
 
-    template<typename... Args> void init(Args&&...) {}
+    template<typename... Args> void reset(Args&&...) {}
     template<typename... Args> bool wasSwitched(Args&&...) const { return false; }
     template<typename... Args> bool update(Args&&...) { return false; }
     template<typename... Args> void updateSwitchedVolVars(Args&&...) {}
     template<typename... Args> void updateSwitchedFluxVarsCache(Args&&...) {}
-    template<typename... Args> bool update_(Args&&...) {return false; }
 };
 
 /*!
@@ -59,16 +58,20 @@ template<class Implementation>
 class PrimaryVariableSwitch
 {
 public:
-    PrimaryVariableSwitch(const std::size_t& numDofs, int verbosity = 1)
+    PrimaryVariableSwitch(int verbosity = 1)
     : verbosity_(verbosity)
-    {
-        wasSwitched_.resize(numDofs, false);
-    }
+    {}
 
     //! If the primary variables were recently switched
     bool wasSwitched(std::size_t dofIdxGlobal) const
     {
         return wasSwitched_[dofIdxGlobal];
+    }
+
+    //! Reset all flags
+    void reset(const std::size_t numDofs)
+    {
+        wasSwitched_.resize(numDofs, false);
     }
 
     /*!
