@@ -291,20 +291,23 @@ public:
             // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this normal face.
             const auto& normalFace = fvGeometry.scvf(eIdx, scvf.pairData()[localSubFaceIdx].localNormalFaceIdx);
 
-            // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
-            // the sub faces's center.
-            auto localSubFaceCenter = scvf.pairData(localSubFaceIdx).virtualOuterParallelFaceDofPos - normalFace.center();
-            localSubFaceCenter *= 0.5;
-            localSubFaceCenter += normalFace.center();
-            const auto localSubFace = makeGhostFace_(normalFace, localSubFaceCenter);
-
-            // Retrieve the boundary types that correspond to the sub face.
-            const auto bcTypes = problem.boundaryTypes(element, localSubFace);
+            bool lateralFaceHasDirichletPressure = false; // check for Dirichlet boundary condition for the pressure
+            bool lateralFaceHasBJS = false; // check for Beavers-Joseph-Saffman boundary condition
 
             // Check if there is face/element parallel to our face of interest where the dof lives on. If there is no parallel neighbor,
             // we are on a boundary where we have to check for boundary conditions.
             if(!scvf.hasParallelNeighbor(localSubFaceIdx))
             {
+                // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
+                // the sub faces's center.
+                auto localSubFaceCenter = scvf.pairData(localSubFaceIdx).virtualOuterParallelFaceDofPos - normalFace.center();
+                localSubFaceCenter *= 0.5;
+                localSubFaceCenter += normalFace.center();
+                const auto localSubFace = makeGhostFace_(normalFace, localSubFaceCenter);
+
+                // Retrieve the boundary types that correspond to the sub face.
+                const auto bcTypes = problem.boundaryTypes(element, localSubFace);
+
                 // Check if we have a symmetry boundary condition. If yes, the tangential part of the momentum flux can be neglected
                 // and we may skip any further calculations for the given sub face.
                 if(bcTypes.isSymmetry())
@@ -321,13 +324,23 @@ public:
                 // Handle wall-function fluxes (only required for RANS models)
                 if (incorporateWallFunction_(normalFlux, problem, element, fvGeometry, scvf, normalFace, localSubFace, elemVolVars, elemFaceVars))
                     continue;
+
+                // Check if we have a Beavers-Joseph-Saffman condition or a Dirichlet condition for the velocity or a Dirichlet condition for the pressure.
+                // Then the parallel velocity at the boundary is calculated accordingly for the advective part and the diffusive part of the normal momentum flux.
+                if (bcTypes.isDirichlet(Indices::pressureIdx))
+                    lateralFaceHasDirichletPressure = true;
+                else if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
+                    lateralFaceHasBJS = true;
+                else if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())) == false)
+                    DUNE_THROW(Dune::InvalidStateException,  "Something went wrong with the boundary conditions "
+                           "for the momentum equations at global position " << localSubFaceCenter);
             }
 
             // If there is no symmetry or Neumann boundary condition for the given sub face, proceed to calculate the tangential momentum flux.
             if (problem.enableInertiaTerms())
-                normalFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, bcTypes);
+                normalFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, lateralFaceHasDirichletPressure, lateralFaceHasBJS);
 
-            normalFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, bcTypes);
+            normalFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, lateralFaceHasDirichletPressure, lateralFaceHasBJS);
         }
         return normalFlux;
     }
@@ -362,7 +375,8 @@ private:
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const FaceVariables& faceVars,
                                                                     const int localSubFaceIdx,
-                                                                    const BoundaryTypes& bcTypes)
+                                                                    const bool lateralFaceHasDirichletPressure,
+                                                                    const bool lateralFaceHasBJS)
     {
         // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
         // of interest is located.
@@ -378,12 +392,18 @@ private:
         // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
         auto getParallelVelocityFromBoundary = [&]()
         {
-            const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
+            // If there is a Dirichlet condition for the pressure we assume zero gradient for the velocity,
+            // so the velocity at the boundary equal to that on the scvf.
+            if (lateralFaceHasDirichletPressure)
+                return velocitySelf;
 
             // Check if we have a Beavers-Joseph-Saffman condition.
             // If yes, the parallel velocity at the boundary is calculated accordingly.
-            if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
+            if (lateralFaceHasBJS)
                 return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, velocitySelf);
+
+            const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
+
             return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
         };
 
@@ -446,7 +466,8 @@ private:
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const FaceVariables& faceVars,
                                                                     const int localSubFaceIdx,
-                                                                    const BoundaryTypes& bcTypes)
+                                                                    const bool lateralFaceHasDirichletPressure,
+                                                                    const bool lateralFaceHasBJS)
     {
         FacePrimaryVariables normalDiffusiveFlux(0.0);
 
@@ -489,39 +510,35 @@ private:
             }
         }
 
-        // For the parallel derivative, get the velocities at the current (own) scvf
-        // and at the parallel one at the neighboring scvf.
-        const Scalar innerParallelVelocity = faceVars.velocitySelf();
-
-        // Lambda to conveniently get the outer parallel velocity for normal faces that are on the boundary
-        // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
-        auto getParallelVelocityFromBoundary = [&]()
+        // If we have a Dirichlet condition for the pressure we assume to have zero parallel gradient
+        // so we can skip the computation.
+        if (!lateralFaceHasDirichletPressure)
         {
-            const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
+            // For the parallel derivative, get the velocities at the current (own) scvf
+            // and at the parallel one at the neighboring scvf.
+            const Scalar innerParallelVelocity = faceVars.velocitySelf();
 
-            // Check if we have a Beavers-Joseph-Saffman condition.
-            // If yes, the parallel velocity at the boundary is calculated accordingly.
-            if(bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
-                return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, innerParallelVelocity);
-
-            else if(bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
+            // Lambda to conveniently get the outer parallel velocity for normal faces that are on the boundary
+            // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
+            auto getParallelVelocityFromBoundary = [&]()
+            {
+                const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
+                if (lateralFaceHasBJS)
+                    return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, innerParallelVelocity);
                 return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
+            };
 
-            //bcTypes.isDirichlet(Indices::pressureIdx) is assumed to be true now
-            else
-                return innerParallelVelocity;
-        };
+            const Scalar outerParallelVelocity = scvf.hasParallelNeighbor(localSubFaceIdx)
+                                                 ? faceVars.velocityParallel(localSubFaceIdx)
+                                                 : getParallelVelocityFromBoundary();
 
-        const Scalar outerParallelVelocity = scvf.hasParallelNeighbor(localSubFaceIdx)
-                                             ? faceVars.velocityParallel(localSubFaceIdx)
-                                             : getParallelVelocityFromBoundary();
+            // The velocity gradient already accounts for the orientation
+            // of the staggered face's outer normal vector.
+            const Scalar parallelGradient = (outerParallelVelocity - innerParallelVelocity)
+                                            / scvf.pairData(localSubFaceIdx).parallelDistance;
 
-        // The velocity gradient already accounts for the orientation
-        // of the staggered face's outer normal vector.
-        const Scalar parallelGradient = (outerParallelVelocity - innerParallelVelocity)
-                                        / scvf.pairData(localSubFaceIdx).parallelDistance;
-
-        normalDiffusiveFlux -= muAvg * parallelGradient;
+            normalDiffusiveFlux -= muAvg * parallelGradient;
+        }
 
         // Account for the area of the staggered normal face (0.5 of the coinciding scfv).
         return normalDiffusiveFlux * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);
