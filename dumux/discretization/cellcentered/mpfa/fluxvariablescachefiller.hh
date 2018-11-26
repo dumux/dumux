@@ -84,17 +84,19 @@ public:
     /*!
      * \brief function to fill the flux variables caches
      *
-     * \param fluxVarsCacheContainer Either the element or global flux variables cache
+     * \param fluxVarsCacheStorage Class that holds the scvf flux vars caches
      * \param scvfFluxVarsCache The flux var cache to be updated corresponding to the given scvf
+     * \param ivDataStorage Class that stores the interaction volumes & handles
      * \param element The finite element
      * \param fvGeometry The finite volume geometry
      * \param elemVolVars The element volume variables (primary/secondary variables)
      * \param scvf The corresponding sub-control volume face
      * \param forceUpdateAll if true, forces all caches to be updated (even the solution-independent ones)
      */
-    template<class FluxVariablesCacheContainer>
-    void fill(FluxVariablesCacheContainer& fluxVarsCacheContainer,
+    template<class FluxVarsCacheStorage, class IVDataStorage>
+    void fill(FluxVarsCacheStorage& fluxVarsCacheStorage,
               FluxVariablesCache& scvfFluxVarsCache,
+              IVDataStorage& ivDataStorage,
               const Element& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars,
@@ -113,29 +115,29 @@ public:
             if (forceUpdateAll)
             {
                 // the local index of the interaction volume to be created in its container
-                const auto ivIndexInContainer = fluxVarsCacheContainer.secondaryInteractionVolumes().size();
+                const auto ivIndexInContainer = ivDataStorage.secondaryInteractionVolumes.size();
 
                 // prepare the locally cached boundary interaction volume
                 const auto& indexSet = fvGridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf);
-                fluxVarsCacheContainer.secondaryInteractionVolumes().emplace_back();
-                secondaryIv_ = &fluxVarsCacheContainer.secondaryInteractionVolumes().back();
+                ivDataStorage.secondaryInteractionVolumes.emplace_back();
+                secondaryIv_ = &ivDataStorage.secondaryInteractionVolumes.back();
                 secondaryIv_->bind(indexSet, problem(), fvGeometry);
 
                 // prepare the corresponding data handle
-                fluxVarsCacheContainer.secondaryDataHandles().emplace_back();
-                secondaryIvDataHandle_ = &fluxVarsCacheContainer.secondaryDataHandles().back();
+                ivDataStorage.secondaryDataHandles.emplace_back();
+                secondaryIvDataHandle_ = &ivDataStorage.secondaryDataHandles.back();
 
                 // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_(fluxVarsCacheContainer, *secondaryIv_, *secondaryIvDataHandle_, ivIndexInContainer, true);
+                fillCachesInInteractionVolume_(fluxVarsCacheStorage, *secondaryIv_, *secondaryIvDataHandle_, ivIndexInContainer, true);
             }
             else
             {
                 const auto ivIndexInContainer = scvfFluxVarsCache.ivIndexInContainer();
-                secondaryIv_ = &fluxVarsCacheContainer.secondaryInteractionVolumes()[ivIndexInContainer];
-                secondaryIvDataHandle_ = &fluxVarsCacheContainer.secondaryDataHandles()[ivIndexInContainer];
+                secondaryIv_ = &ivDataStorage.secondaryInteractionVolumes[ivIndexInContainer];
+                secondaryIvDataHandle_ = &ivDataStorage.secondaryDataHandles[ivIndexInContainer];
 
                 // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_(fluxVarsCacheContainer, *secondaryIv_, *secondaryIvDataHandle_, ivIndexInContainer);
+                fillCachesInInteractionVolume_(fluxVarsCacheStorage, *secondaryIv_, *secondaryIvDataHandle_, ivIndexInContainer);
             }
         }
         else
@@ -143,29 +145,29 @@ public:
             if (forceUpdateAll)
             {
                 // the local index of the interaction volume to be created in its container
-                const auto ivIndexInContainer = fluxVarsCacheContainer.primaryInteractionVolumes().size();
+                const auto ivIndexInContainer = ivDataStorage.primaryInteractionVolumes.size();
 
                 // prepare the locally cached boundary interaction volume
                 const auto& indexSet = fvGridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf);
-                fluxVarsCacheContainer.primaryInteractionVolumes().emplace_back();
-                primaryIv_ = &fluxVarsCacheContainer.primaryInteractionVolumes().back();
+                ivDataStorage.primaryInteractionVolumes.emplace_back();
+                primaryIv_ = &ivDataStorage.primaryInteractionVolumes.back();
                 primaryIv_->bind(indexSet, problem(), fvGeometry);
 
                 // prepare the corresponding data handle
-                fluxVarsCacheContainer.primaryDataHandles().emplace_back();
-                primaryIvDataHandle_ = &fluxVarsCacheContainer.primaryDataHandles().back();
+                ivDataStorage.primaryDataHandles.emplace_back();
+                primaryIvDataHandle_ = &ivDataStorage.primaryDataHandles.back();
 
                 // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_(fluxVarsCacheContainer, *primaryIv_, *primaryIvDataHandle_, ivIndexInContainer, true);
+                fillCachesInInteractionVolume_(fluxVarsCacheStorage, *primaryIv_, *primaryIvDataHandle_, ivIndexInContainer, true);
             }
             else
             {
                 const auto ivIndexInContainer = scvfFluxVarsCache.ivIndexInContainer();
-                primaryIv_ = &fluxVarsCacheContainer.primaryInteractionVolumes()[ivIndexInContainer];
-                primaryIvDataHandle_ = &fluxVarsCacheContainer.primaryDataHandles()[ivIndexInContainer];
+                primaryIv_ = &ivDataStorage.primaryInteractionVolumes[ivIndexInContainer];
+                primaryIvDataHandle_ = &ivDataStorage.primaryDataHandles[ivIndexInContainer];
 
                 // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_(fluxVarsCacheContainer, *primaryIv_, *primaryIvDataHandle_, ivIndexInContainer);
+                fillCachesInInteractionVolume_(fluxVarsCacheStorage, *primaryIv_, *primaryIvDataHandle_, ivIndexInContainer);
             }
         }
     }
@@ -202,8 +204,8 @@ private:
     const ElementVolumeVariables& elemVolVars() const { return *elemVolVarsPtr_; }
 
     //! Method to fill the flux var caches within an interaction volume
-    template<class FluxVarsCacheContainer, class InteractionVolume, class DataHandle>
-    void fillCachesInInteractionVolume_(FluxVarsCacheContainer& fluxVarsCacheContainer,
+    template<class FluxVarsCacheStorage, class InteractionVolume, class DataHandle>
+    void fillCachesInInteractionVolume_(FluxVarsCacheStorage& fluxVarsCacheStorage,
                                         InteractionVolume& iv,
                                         DataHandle& handle,
                                         unsigned int ivIndexInContainer,
@@ -226,7 +228,7 @@ private:
             // obtain the scvf
             const auto& scvfJ = fvGeometry().scvf(d.gridScvfIndex());
             ivScvfs[i] = &scvfJ;
-            ivFluxVarCaches[i] = &fluxVarsCacheContainer[scvfJ];
+            ivFluxVarCaches[i] = &fluxVarsCacheStorage[scvfJ];
             ivFluxVarCaches[i]->setIvIndexInContainer(ivIndexInContainer);
             ivFluxVarCaches[i]->setUpdateStatus(true);
             ivFluxVarCaches[i]->setSecondaryIvUsage(isSecondary);

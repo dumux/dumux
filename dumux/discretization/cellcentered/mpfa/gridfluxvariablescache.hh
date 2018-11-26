@@ -118,8 +118,11 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
+public:
     //! The constructor
-    CCMpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    CCMpfaGridFluxVariablesCache(const Problem& problem)
+    : problemPtr_(&problem)
+    {}
 
     //! When global caching is enabled, precompute transmissibilities for all scv faces
     template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
@@ -140,10 +143,10 @@ public:
                 const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
                 const auto numPrimaryIvs = gridIvIndexSets.numPrimaryInteractionVolumes();
                 const auto numSecondaryIVs = gridIvIndexSets.numSecondaryInteractionVolumes();
-                primaryInteractionVolumes_.reserve(numPrimaryIvs);
-                secondaryInteractionVolumes_.reserve(numSecondaryIVs);
-                primaryIvDataHandles_.reserve(numPrimaryIvs);
-                secondaryIvDataHandles_.reserve(numSecondaryIVs);
+                ivDataStorage_.primaryInteractionVolumes.reserve(numPrimaryIvs);
+                ivDataStorage_.secondaryInteractionVolumes.reserve(numSecondaryIVs);
+                ivDataStorage_.primaryDataHandles.reserve(numPrimaryIvs);
+                ivDataStorage_.secondaryDataHandles.reserve(numSecondaryIVs);
 
                 // reserve memory estimate for caches, interaction volumes and corresponding data
                 fluxVarsCache_.resize(fvGridGeometry.numScvf());
@@ -167,7 +170,7 @@ public:
                 // prepare all the caches of the scvfs inside the corresponding interaction volume
                 for (const auto& scvf : scvfs(fvGeometry))
                     if (!fluxVarsCache_[scvf.index()].isUpdated())
-                        filler.fill(*this, fluxVarsCache_[scvf.index()], element, fvGeometry, elemVolVars, scvf, forceUpdate);
+                        filler.fill(*this, fluxVarsCache_[scvf.index()], ivDataStorage_, element, fvGeometry, elemVolVars, scvf, forceUpdate);
             }
         }
     }
@@ -199,7 +202,7 @@ public:
             {
                 auto& scvfCache = fluxVarsCache_[scvf.index()];
                 if (!scvfCache.isUpdated())
-                    filler.fill(*this, scvfCache, element, fvGeometry, elemVolVars, scvf);
+                    filler.fill(*this, scvfCache, ivDataStorage_, element, fvGeometry, elemVolVars, scvf);
             }
 
             for (const auto& dataJ : assemblyMapI)
@@ -211,7 +214,7 @@ public:
                     if (!scvfCache.isUpdated())
                     {
                         const auto& scvf = fvGeometry.scvf(scvfIdx);
-                        filler.fill(*this, scvfCache, elementJ, fvGeometry, elemVolVars, scvf);
+                        filler.fill(*this, scvfCache, ivDataStorage_, elementJ, fvGeometry, elemVolVars, scvf);
                     }
                 }
             }
@@ -228,37 +231,25 @@ public:
     FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
     { return fluxVarsCache_[scvf.index()]; }
 
-    //! access to the stored interaction volumes
-    const std::vector<PrimaryInteractionVolume>& primaryInteractionVolumes() const
-    { return primaryInteractionVolumes_; }
+    //! access to the interaction volume an scvf is embedded in
+    template<class SubControlVolumeFace>
+    const PrimaryInteractionVolume& primaryInteractionVolume(const SubControlVolumeFace& scvf) const
+    { return ivDataStorage_.primaryInteractionVolumes[ (*this)[scvf].ivIndexInContainer() ]; }
 
-    //! access to the stored interaction volumes
-    std::vector<PrimaryInteractionVolume>& primaryInteractionVolumes()
-    { return primaryInteractionVolumes_; }
+    //! access to the data handle of an interaction volume an scvf is embedded in
+    template<class SubControlVolumeFace>
+    const PrimaryIvDataHandle& primaryDataHandle(const SubControlVolumeFace& scvf) const
+    { return ivDataStorage_.primaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]; }
 
-    //! access to the stored data handles
-    const std::vector<PrimaryIvDataHandle>& primaryDataHandles() const
-    { return primaryIvDataHandles_; }
+    //! access to the interaction volume an scvf is embedded in
+    template<class SubControlVolumeFace>
+    const SecondaryInteractionVolume& secondaryInteractionVolume(const SubControlVolumeFace& scvf) const
+    { return ivDataStorage_.secondaryInteractionVolumes[ (*this)[scvf].ivIndexInContainer() ]; }
 
-    //! access to the stored data handles
-    std::vector<PrimaryIvDataHandle>& primaryDataHandles()
-    { return primaryIvDataHandles_; }
-
-    //! access to the stored interaction volumes
-    const std::vector<SecondaryInteractionVolume>& secondaryInteractionVolumes() const
-    { return secondaryInteractionVolumes_; }
-
-    //! access to the stored interaction volumes
-    std::vector<SecondaryInteractionVolume>& secondaryInteractionVolumes()
-    { return secondaryInteractionVolumes_; }
-
-    //! access to the stored data handles
-    const std::vector<SecondaryIvDataHandle>& secondaryDataHandles() const
-    { return secondaryIvDataHandles_; }
-
-    //! access to the stored data handles
-    std::vector<SecondaryIvDataHandle>& secondaryDataHandles()
-    { return secondaryIvDataHandles_; }
+    //! access to the data handle of an interaction volume an scvf is embedded in
+    template<class SubControlVolumeFace>
+    const SecondaryIvDataHandle& secondaryDataHandle(const SubControlVolumeFace& scvf) const
+    { return ivDataStorage_.secondaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]; }
 
     const Problem& problem() const
     { return *problemPtr_; }
@@ -269,20 +260,21 @@ private:
     void clear_()
     {
         fluxVarsCache_.clear();
-        primaryInteractionVolumes_.clear();
-        secondaryInteractionVolumes_.clear();
-        primaryIvDataHandles_.clear();
-        secondaryIvDataHandles_.clear();
+        ivDataStorage_.primaryInteractionVolumes.clear();
+        ivDataStorage_.secondaryInteractionVolumes.clear();
+        ivDataStorage_.primaryDataHandles.clear();
+        ivDataStorage_.secondaryDataHandles.clear();
     }
 
     const Problem* problemPtr_;
     std::vector<FluxVariablesCache> fluxVarsCache_;
 
-    // store the interaction volumes and handles
-    std::vector<PrimaryInteractionVolume> primaryInteractionVolumes_;
-    std::vector<SecondaryInteractionVolume> secondaryInteractionVolumes_;
-    std::vector<PrimaryIvDataHandle> primaryIvDataHandles_;
-    std::vector<SecondaryIvDataHandle> secondaryIvDataHandles_;
+    // stored interaction volumes and handles
+    using IVDataStorage = InteractionVolumeDataStorage<PrimaryInteractionVolume,
+                                                       PrimaryIvDataHandle,
+                                                       SecondaryInteractionVolume,
+                                                       SecondaryIvDataHandle>;
+    IVDataStorage ivDataStorage_;
 };
 
 /*!
