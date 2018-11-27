@@ -24,6 +24,7 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 #define DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 
+#include <dune/common/float_cmp.hh>
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/parameters.hh>
@@ -306,7 +307,7 @@ public:
                         // check if we have Neumann no flow, we can just use 0
                         const auto neumannFlux = problem_.neumann(element, fvGeometry, elemVolVars, scvf);
                         using NumEqVector = std::decay_t<decltype(neumannFlux)>;
-                        if (Dune::FloatCmp::eq<NumEqVector>, Dune::FloatCmp::CmpStyle::absolute>(neumannFlux, NumEqVector(0.0), 1e-30))
+                        if (Dune::FloatCmp::eq<NumEqVector, Dune::FloatCmp::CmpStyle::absolute>(neumannFlux, NumEqVector(0.0), 1e-30))
                             scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;
                         // cubes
                         else if (dim == 1 || geomType.isCube())
