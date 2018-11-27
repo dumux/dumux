@@ -32,7 +32,7 @@
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
 namespace Dumux {
-namespace Detail {
+namespace CCMpfa {
 
     /*!
      * \ingroup CCMpfaDiscretization
@@ -178,7 +178,7 @@ namespace Detail {
                                           gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet() );
         }
     }
-} // end namespace Detail
+} // end namespace CCMpfa
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -235,12 +235,12 @@ public:
         clear();
 
         // maybe prepare boundary volume variables
-        const auto maxNumBoundaryVolVars = Detail::maxNumBoundaryVolVars(fvGeometry);
+        const auto maxNumBoundaryVolVars = CCMpfa::maxNumBoundaryVolVars(fvGeometry);
         if (maxNumBoundaryVolVars > 0)
         {
             boundaryVolVars_.reserve(maxNumBoundaryVolVars);
             boundaryVolVarIndices_.reserve(maxNumBoundaryVolVars);
-            Detail::addBoundaryVolVars(boundaryVolVars_, boundaryVolVarIndices_, gridVolVars().problem(), element, fvGeometry);
+            CCMpfa::addBoundaryVolVars(boundaryVolVars_, boundaryVolVarIndices_, gridVolVars().problem(), element, fvGeometry);
         }
     }
 
@@ -314,7 +314,7 @@ public:
         const auto numVolVars = assemblyMapI.size() + 1;
 
         // resize local containers to the required size (for internal elements)
-        const auto maxNumBoundaryVolVars = Detail::maxNumBoundaryVolVars(fvGeometry);
+        const auto maxNumBoundaryVolVars = CCMpfa::maxNumBoundaryVolVars(fvGeometry);
         volumeVariables_.reserve(numVolVars+maxNumBoundaryVolVars);
         volVarIndices_.reserve(numVolVars+maxNumBoundaryVolVars);
 
@@ -345,7 +345,7 @@ public:
 
         // maybe prepare boundary volume variables
         if (maxNumBoundaryVolVars > 0)
-            Detail::addBoundaryVolVars(volumeVariables_, volVarIndices_, problem, element, fvGeometry);
+            CCMpfa::addBoundaryVolVars(volumeVariables_, volVarIndices_, problem, element, fvGeometry);
 
         // //! TODO Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
         // //! on additional DOFs not included in the discretization schemes' occupation pattern
