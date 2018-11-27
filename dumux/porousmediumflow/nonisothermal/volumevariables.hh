@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup
+ * \ingroup NIModel
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.
  */
