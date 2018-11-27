@@ -85,7 +85,7 @@ public:
 
         // maybe add gravity terms
         if (handle.deltaG().size() == iv.numUnknowns())
-            handle.AB().umv(handle.deltaG(), u);
+            handle.A().umv(handle.deltaG(), u);
 
         return u;
     }
