@@ -32,7 +32,7 @@
 #include <dumux/common/parameters.hh>
 
 namespace Dumux {
-namespace Detail {
+namespace CCMpfaDataHandleBases {
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -56,7 +56,7 @@ namespace Detail {
  * \tparam size2 second size specifier for the arrays
  */
 template<class MVT, int size1, int size2>
-class MatrixDataHandleBase
+class SystemMatricesHandle
 {
     using AMatrix = typename MVT::AMatrix;
     using BMatrix = typename MVT::BMatrix;
@@ -106,15 +106,15 @@ protected:
 
 /*!
  * \ingroup CCMpfaDiscretization
- * \brief Common base class to all handles. Stores arrays of the
- *        vectors of known cell/Dirichlet values within the interaction volume.
+ * \brief Common base class to all handles. Stores arrays of the vectors
+ *        involved in the interaction volume-local systems of equations.
  *
  * \tparam MVT The matrix/vector traits collecting type information used by the iv
  * \tparam size1 first size specifier for the arrays
  * \tparam size2 second size specifier for the arrays
  */
 template<class MVT, int size1, int size2>
-class VectorDataHandleBase
+class SystemVectorsHandle
 {
     using CellVector = typename MVT::CellVector;
 
@@ -136,7 +136,7 @@ protected:
     std::array< std::array<CellVector, size2>, size1 > u_;
 };
 
-} // end namespace Detail
+} // end namespace CCMpfaDataHandleBases
 
 //! Empty data handle class
 class EmptyDataHandle {};
@@ -144,16 +144,16 @@ class EmptyDataHandle {};
 //! Data handle for quantities related to advection
 template<class MatVecTraits, class PhysicsTraits, bool EnableAdvection>
 class AdvectionDataHandle
-: public Detail::MatrixDataHandleBase<MatVecTraits, 1, 1>
-, public Detail::VectorDataHandleBase<MatVecTraits, PhysicsTraits::numPhases, 1>
+: public CCMpfaDataHandleBases::SystemMatricesHandle<MatVecTraits, 1, 1>
+, public CCMpfaDataHandleBases::SystemVectorsHandle<MatVecTraits, PhysicsTraits::numPhases, 1>
 {
     // we only have one local system for all phases since we
     // solve them w.r.t. permeability tensor (unique for all phases)
-    using Base1 = Detail::MatrixDataHandleBase<MatVecTraits, 1, 1>;
+    using Base1 = CCMpfaDataHandleBases::SystemMatricesHandle<MatVecTraits, 1, 1>;
 
     // we do have cell/Dirichlet values for all phases though!
     static constexpr int numPhases = PhysicsTraits::numPhases;
-    using Base2 = Detail::VectorDataHandleBase<MatVecTraits, numPhases, 1>;
+    using Base2 = CCMpfaDataHandleBases::SystemVectorsHandle<MatVecTraits, numPhases, 1>;
 
     using UnknownVector = typename MatVecTraits::AMatrix::row_type;
     using FaceVector = typename MatVecTraits::FaceVector;
@@ -185,13 +185,13 @@ private:
 //! Data handle for quantities related to diffusion
 template<class MatVecTraits, class PhysicsTraits, bool EnableDiffusion>
 class DiffusionDataHandle
-: public Detail::MatrixDataHandleBase<MatVecTraits, PhysicsTraits::numPhases, PhysicsTraits::numComponents>
-, public Detail::VectorDataHandleBase<MatVecTraits, PhysicsTraits::numPhases, PhysicsTraits::numComponents>
+: public CCMpfaDataHandleBases::SystemMatricesHandle<MatVecTraits, PhysicsTraits::numPhases, PhysicsTraits::numComponents>
+, public CCMpfaDataHandleBases::SystemVectorsHandle<MatVecTraits, PhysicsTraits::numPhases, PhysicsTraits::numComponents>
 {
     static constexpr int numPhases = PhysicsTraits::numPhases;
     static constexpr int numComponents = PhysicsTraits::numComponents;
-    using Base1 = Detail::MatrixDataHandleBase<MatVecTraits, numPhases, numComponents>;
-    using Base2 = Detail::VectorDataHandleBase<MatVecTraits, numPhases, numComponents>;
+    using Base1 = CCMpfaDataHandleBases::SystemMatricesHandle<MatVecTraits, numPhases, numComponents>;
+    using Base2 = CCMpfaDataHandleBases::SystemVectorsHandle<MatVecTraits, numPhases, numComponents>;
 
 public:
     //! diffusion caches need to set phase and component index
@@ -204,8 +204,8 @@ public:
 //! Data handle for quantities related to heat conduction
 template<class MatVecTraits, class PhysicsTraits, bool enableHeatConduction>
 class HeatConductionDataHandle
-: public Detail::MatrixDataHandleBase<MatVecTraits, 1, 1>
-, public Detail::VectorDataHandleBase<MatVecTraits, 1, 1>
+: public CCMpfaDataHandleBases::SystemMatricesHandle<MatVecTraits, 1, 1>
+, public CCMpfaDataHandleBases::SystemVectorsHandle<MatVecTraits, 1, 1>
 {};
 
 //! Process-dependent data handles when related process is disabled
