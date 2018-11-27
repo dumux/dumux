@@ -30,6 +30,7 @@
 #include <memory>
 #include <type_traits>
 #include <unordered_map>
+#include <string>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/exceptions.hh>
@@ -59,9 +60,15 @@ public:
      * \brief The contructor creates a tinyxml2::XMLDocument from file
      */
     explicit VTKReader(const std::string& fileName)
+    : fileName_(fileName)
     {
-        fileName_ = Dune::MPIHelper::getCollectiveCommunication().size() > 1 ?
-                        getProcessFileName_(fileName) : fileName;
+        const auto pos = fileName_.rfind('.');
+        if (pos != std::string::npos)
+        {
+            const auto extension = fileName_.substr(pos + 1);
+            if (extension.find("p") == 0)
+                fileName_ = getProcessFileName_(fileName_);
+        }
 
         const auto eResult = doc_.LoadFile(fileName_.c_str());
         if (eResult != tinyxml2::XML_SUCCESS)
