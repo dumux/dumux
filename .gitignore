@@ -24,6 +24,7 @@ Testing
 *.out
 *.tdo
 *.toc
+*.synctex.gz
 
 # always consider files containing source code regardless of their name
 !*.cc
