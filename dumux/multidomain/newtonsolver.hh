@@ -109,7 +109,7 @@ public:
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<Assembler::Traits::numSubDomains>{}, [&](auto&& id)
         {
-            resetPriVarSwitch_(u[id].size(), id, HasPriVarsSwitch<id>{});
+            this->resetPriVarSwitch_(u[id].size(), id, HasPriVarsSwitch<std::decay_t<decltype(id)>::value>{});
         });
     }
 
@@ -138,7 +138,7 @@ public:
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<Assembler::Traits::numSubDomains>{}, [&](auto&& id)
         {
-            invokePriVarSwitch_(uCurrentIter[id], id, HasPriVarsSwitch<id>{});
+            this->invokePriVarSwitch_(uCurrentIter[id], id, HasPriVarsSwitch<std::decay_t<decltype(id)>::value>{});
         });
 
         ParentType::newtonEndStep(uCurrentIter, uLastIter);
