@@ -154,7 +154,7 @@ public:
     {
         BoundaryTypes values;
 
-        if(isInlet(globalPos))
+        if(isInlet_(globalPos))
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
@@ -162,7 +162,7 @@ public:
             values.setDirichlet(Indices::temperatureIdx);
 #endif
         }
-        else if(isOutlet(globalPos))
+        else if(isOutlet_(globalPos))
         {
             values.setDirichlet(Indices::pressureIdx);
 #if NONISOTHERMAL
@@ -191,7 +191,7 @@ public:
     {
         PrimaryVariables values = initialAtPos(globalPos);
 
-        if(isInlet(globalPos))
+        if(isInlet_(globalPos))
         {
             values[Indices::velocityXIdx] = inletVelocity_;
 #if NONISOTHERMAL
@@ -245,12 +245,12 @@ public:
 
 private:
 
-    bool isInlet(const GlobalPosition& globalPos) const
+    bool isInlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] < eps_;
     }
 
-    bool isOutlet(const GlobalPosition& globalPos) const
+    bool isOutlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
     }
