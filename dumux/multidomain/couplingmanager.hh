@@ -130,6 +130,7 @@ public:
 
 
     /*!
+     * \ingroup MultiDomain
      * \brief updates all data and variables that are necessary to evaluate the residual of the element of domain i
      *        this is called whenever one of the primary variables that the element residual depends on changes in domain j
      *
@@ -188,6 +189,7 @@ public:
     // \}
 
     /*!
+     * \ingroup MultiDomain
      * \brief evaluates the element residual of a coupled element of domain i which depends on the variables
      *        at the degree of freedom with index dofIdxGlobalJ of domain j
      *

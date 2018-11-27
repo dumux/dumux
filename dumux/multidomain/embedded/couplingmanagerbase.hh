@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup EmbeddedCoupling
  * \brief Coupling manager for low-dimensional domains embedded in the bulk
  *        domain. Point sources on each integration point are computed by an AABB tree.
@@ -68,7 +67,6 @@ public:
 };
 
 /*!
- * \ingroup MultiDomain
  * \ingroup EmbeddedCoupling
  * \brief Manages the coupling between bulk elements and lower dimensional elements
  *        Point sources on each integration point are computed by an AABB tree.

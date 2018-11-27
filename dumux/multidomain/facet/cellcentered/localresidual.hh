@@ -18,8 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Assembly
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Calculates the element-wise residual for cell-centered discretization schemes
  *        in models where coupling occurs across the element facets. This extra implementation
@@ -35,8 +33,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup Assembly
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Calculates the element-wise residual for cell-centered discretization schemes
  *        in models where coupling occurs across the element facets. We only overwrite the

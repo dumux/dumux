@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup EmbeddedCoupling
  * \brief Helper function to compute points on a circle
  */
@@ -35,7 +34,6 @@ namespace Dumux {
 namespace EmbeddedCoupling {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup EmbeddedCoupling
  * \brief returns a vector of points on a circle
  * \param center the circle center

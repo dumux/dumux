@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup EmbeddedCoupling
  * \brief Coupling manager for embedded fractures
  */
@@ -31,7 +30,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup EmbeddedCoupling
  * \brief Coupling manager for embedded fractures
  * \note we just use the default coupling manager

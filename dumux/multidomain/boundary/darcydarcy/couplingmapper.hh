@@ -18,10 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup DarcyDarcyCoupling
- * \copydoc Dumux::BoundaryCouplingMapper
+ * \copydoc Dumux::DarcyDarcyBoundaryCouplingMapper
  */
 
 #ifndef DUMUX_MULTIDOMAIN_DARCYDARCY_BOUNDARY_COUPLINGMAPPER_HH
@@ -42,8 +40,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup DarcyDarcyCoupling
  * \brief the default mapper for conforming equal dimension boundary coupling between two domains (box or cc)
  * \todo how to extend to arbitrary number of domains?

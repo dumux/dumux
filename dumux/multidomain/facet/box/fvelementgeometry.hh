@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup BoxDiscretization
  * \brief \copydoc Dumux::BoxFacetCouplingFVElementGeometry
  */
 #ifndef DUMUX_FACETCOUPLING_BOX_FV_ELEMENT_GEOMETRY_HH
@@ -36,9 +34,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup BoxDiscretization
  * \brief Base class for the element-local finite volume geometry for box models
  *        in the context of models considering coupling of different domains across the
  *        bulk grid facets. This builds up the sub control volumes and sub control volume
