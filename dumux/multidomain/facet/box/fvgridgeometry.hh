@@ -96,6 +96,7 @@ class BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>
     using ThisType = BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
     using GridIndexType = typename GV::IndexSet::IndexType;
+    using LocalIndexType = unsigned int;
 
     using Element = typename GV::template Codim<0>::Entity;
     using CoordScalar = typename GV::ctype;
@@ -201,7 +202,6 @@ public:
             // construct the sub control volumes
             scvs_[eIdx].clear();
             scvs_[eIdx].reserve(elementGeometry.corners());
-            using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
                 scvs_[eIdx].emplace_back(geometryHelper,
                                          scvLocalIdx,
@@ -298,24 +298,24 @@ public:
     { return scvfs_[eIdx]; }
 
     //! If a d.o.f. is on the boundary
-    bool dofOnBoundary(unsigned int dofIdx) const
+    bool dofOnBoundary(GridIndexType dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
 
     //! If a d.o.f. is on an interior boundary
-    bool dofOnInteriorBoundary(unsigned int dofIdx) const
+    bool dofOnInteriorBoundary(GridIndexType dofIdx) const
     { return interiorBoundaryDofIndices_[dofIdx]; }
 
     //! Periodic boundaries are not supported for the box facet coupling scheme
-    bool dofOnPeriodicBoundary(std::size_t dofIdx) const
+    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
     { return false; }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box facet coupling scheme"); }
 
     //! Returns the map between dofs across periodic boundaries
-    std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
-    { return std::unordered_map<std::size_t, std::size_t>(); }
+    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
+    { return std::unordered_map<GridIndexType, GridIndexType>(); }
 
 private:
     const FeCache feCache_;
@@ -347,6 +347,7 @@ class BoxFacetCouplingFVGridGeometry<Scalar, GV, false, Traits>
     using ThisType = BoxFacetCouplingFVGridGeometry<Scalar, GV, false, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
     using GridIndexType = typename GV::IndexSet::IndexType;
+    using LocalIndexType = unsigned int;
 
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
@@ -451,7 +452,6 @@ public:
                 const auto idxInInside = intersection.indexInInside();
                 const auto boundary = intersection.boundary();
 
-                using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
                 std::vector<LocalIndexType> vIndicesLocal(numFaceCorners);
                 for (int i = 0; i < numFaceCorners; ++i)
                     vIndicesLocal[i] = static_cast<LocalIndexType>(referenceElement.subEntity(idxInInside, 1, i, dim));
@@ -506,16 +506,16 @@ public:
     { return facetIsOnInteriorBoundary_[ facetMapper_.subIndex(element, intersection.indexInInside(), 1) ]; }
 
     //! Periodic boundaries are not supported for the box facet coupling scheme
-    bool dofOnPeriodicBoundary(std::size_t dofIdx) const
+    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
     { return false; }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the facet coupling scheme"); }
 
     //! Returns the map between dofs across periodic boundaries
-    std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
-    { return std::unordered_map<std::size_t, std::size_t>(); }
+    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
+    { return std::unordered_map<GridIndexType, GridIndexType>(); }
 
 private:
     const FeCache feCache_;

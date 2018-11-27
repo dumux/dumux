@@ -69,14 +69,15 @@ public:
 
     //! Constructor
     BoxFacetCouplingFVElementGeometry(const FVGridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry) {}
+    : fvGridGeometryPtr_(&fvGridGeometry)
+    {}
 
     //! Get a sub control volume with a local scv index
-    const SubControlVolume& scv(GridIndexType scvIdx) const
+    const SubControlVolume& scv(unsigned int scvIdx) const
     { return fvGridGeometry().scvs(eIdx_)[scvIdx]; }
 
     //! Get a sub control volume face with a local scvf index
-    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(unsigned int scvfIdx) const
     { return fvGridGeometry().scvfs(eIdx_)[scvfIdx]; }
 
     //! iterator range for sub control volumes. Iterates over
@@ -175,14 +176,15 @@ public:
 
     //! Constructor
     BoxFacetCouplingFVElementGeometry(const FVGridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry) {}
+    : fvGridGeometryPtr_(&fvGridGeometry)
+    {}
 
     //! Get a sub control volume with a local scv index
-    const SubControlVolume& scv(GridIndexType scvIdx) const
+    const SubControlVolume& scv(unsigned int scvIdx) const
     { return scvs_[scvIdx]; }
 
     //! Get a sub control volume face with a local scvf index
-    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(unsigned int scvfIdx) const
     { return scvfs_[scvfIdx]; }
 
     //! iterator range for sub control volumes. Iterates over
