@@ -92,7 +92,7 @@ public:
         if (!fvGeometry.hasBoundaryScvf())
             return;
 
-        clear();
+        clear_();
         boundaryVolVarIndices_.reserve(fvGeometry.numScvf());
         boundaryVolumeVariables_.reserve(fvGeometry.numScvf());
 
@@ -132,14 +132,14 @@ public:
     const GridVolumeVariables& gridVolVars() const
     { return *gridVolVarsPtr_; }
 
+private:
     //! Clear all local storage
-    void clear()
+    void clear_()
     {
         boundaryVolVarIndices_.clear();
         boundaryVolumeVariables_.clear();
     }
 
-private:
     const GridVolumeVariables* gridVolVarsPtr_;
 
     //! map a global scv index to the local storage index
@@ -179,7 +179,7 @@ public:
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
-        clear();
+        clear_();
 
         const auto& problem = gridVolVars().problem();
         const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
@@ -268,7 +268,7 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
-        clear();
+        clear_();
 
         const auto eIdx = fvGeometry.fvGridGeometry().elementMapper().index(element);
         volumeVariables_.resize(1);
@@ -305,13 +305,14 @@ public:
     const GridVolumeVariables& gridVolVars() const
     { return *gridVolVarsPtr_; }
 
+private:
     //! Clear all local storage
-    void clear()
+    void clear_()
     {
         volVarIndices_.clear();
         volumeVariables_.clear();
     }
-private:
+
     const GridVolumeVariables* gridVolVarsPtr_;
 
     //! map a global scv index to the local storage index
