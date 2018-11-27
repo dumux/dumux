@@ -254,7 +254,7 @@ public:
                     scvfs_.emplace_back(intersection,
                                         intersection.geometry(),
                                         scvfIdx,
-                                        ScvfGridIndexStorage({eIdx, this->gridView().size(0) + numBoundaryScvf_++}),
+                                        ScvfGridIndexStorage({eIdx, static_cast<GridIndexType>(this->gridView().size(0) + numBoundaryScvf_++)}),
                                         true);
                     scvfsIndexSet.push_back(scvfIdx++);
 
@@ -514,7 +514,7 @@ public:
                 else if (intersection.boundary())
                 {
                     scvfsIndexSet.push_back(numScvf_++);
-                    neighborVolVarIndexSet.emplace_back(NeighborVolVarIndices({numScvs_ + GridIndexType(numBoundaryScvf_++)}));
+                    neighborVolVarIndexSet.emplace_back(NeighborVolVarIndices({static_cast<GridIndexType>(numScvs_ + numBoundaryScvf_++)}));
                 }
             }
 
