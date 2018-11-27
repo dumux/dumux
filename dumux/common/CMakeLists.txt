@@ -16,6 +16,7 @@ entitymap.hh
 exceptions.hh
 fixedlengthspline_.hh
 fvproblem.hh
+indextraits.hh
 intersectionmapper.hh
 intrange.hh
 loggingparametertree.hh
