@@ -81,7 +81,6 @@ class VtkOutputModule
     using VolVarsVector = Dune::FieldVector<Scalar, dimWorld>;
 
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
-    static constexpr int dofCodim = isBox ? dim : 0;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; };
     struct VolVarVectorDataInfo { std::function<VolVarsVector(const VV&)> get; std::string name; };
@@ -258,7 +257,7 @@ private:
         //! (1) Assemble all variable fields and add to writer
         //////////////////////////////////////////////////////////////
 
-        // instatiate the velocity output
+        // instantiate the velocity output
         using VelocityVector = typename VelocityOutput::VelocityVector;
         std::vector<VelocityVector> velocity(velocityOutput_->numPhases());
 
@@ -278,7 +277,7 @@ private:
             || addProcessRank)
         {
             const auto numCells = fvGridGeometry().gridView().size(0);
-            const auto numDofs = numDofs_();
+            const auto numDofs = fvGridGeometry().numDofs();
 
             // get fields for all volume variables
             if (!volVarScalarDataInfo_.empty())
@@ -419,7 +418,7 @@ private:
         writer_->clear();
     }
 
-    //! Assembles the fields and adds them to the writer (conforming output)
+    //! Assembles the fields and adds them to the writer (nonconforming output)
     void writeNonConforming_(double time, Dune::VTK::OutputType type)
     {
         if(!isBox)
@@ -457,7 +456,7 @@ private:
             || addProcessRank)
         {
             const auto numCells = fvGridGeometry().gridView().size(0);
-            const auto numDofs = numDofs_();
+            const auto numDofs = fvGridGeometry().numDofs();
 
             // get fields for all volume variables
             if (!volVarScalarDataInfo_.empty())
@@ -598,9 +597,6 @@ private:
     //! Deduces the number of components of the value type of a vector of values
     template<class Vector, typename std::enable_if_t<!IsIndexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
     std::size_t getNumberOfComponents_(const Vector& v) { return 1; }
-
-    //! return the number of dofs, we only support vertex and cell data
-    std::size_t numDofs_() const { return dofCodim == dim ? fvGridGeometry().vertexMapper().size() : fvGridGeometry().elementMapper().size(); }
 
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;

@@ -24,6 +24,9 @@
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/common/quad.hh>
@@ -39,6 +42,10 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "spatialparams.hh"
+
+#ifndef GRIDTYPE // default to yasp grid if not provided by CMake
+#define GRIDTYPE Dune::YaspGrid<2>
+#endif
 
 namespace Dumux
 {
@@ -58,7 +65,7 @@ struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressibl
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePIncompressible> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::OnePIncompressible> { using type = GRIDTYPE; };
 
 // Set the problem type
 template<class TypeTag>
@@ -118,13 +125,26 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
 
 public:
     OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    : ParentType(fvGridGeometry), velocity_(0.0)
+    {
+        extrusionFactor_ = getParam<Scalar>("Problem.ExtrusionFactor");
+        Scalar permeability = getParam<Scalar>("SpatialParams.Permeability");
+        dp_dy_ = -1.0e+5;
+
+        const bool checkIsConstantVelocity = getParam<bool>("Problem.CheckIsConstantVelocity", false);
+        if(checkIsConstantVelocity)
+        {
+            velocity_[dimWorld-1] = -permeability * dp_dy_;
+            velocity_[dimWorld-1] /= FluidSystem::viscosity(temperature(), 1.0e5);
+        }
+    }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -158,7 +178,8 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0);
-        values[0] = 1.0e+5*(2.0 - globalPos[dimWorld-1]);
+        values[0] = 1.0e+5 + dp_dy_*(globalPos[dimWorld-1] - this->fvGridGeometry().bBoxMax()[dimWorld-1]);
+
         return values;
     }
 
@@ -173,6 +194,33 @@ public:
     {
         return 283.15; // 10°C
     }
+
+    /*!
+     * \brief Return how much the domain is extruded at a given position.
+     *
+     * This means the factor by which a lower-dimensional
+     * entity needs to be expanded to get a full dimensional cell.
+     */
+    Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
+    {
+        return extrusionFactor_;
+    }
+
+    /*!
+     * \brief Returns the velocity
+     *
+     * The velocity is given for the case of a linear pressure solution
+     * with constant permeablity and without gravity
+     */
+    const GlobalPosition velocity() const
+    {
+        return velocity_;
+    }
+
+private:
+    Scalar extrusionFactor_;
+    Scalar dp_dy_;
+    GlobalPosition velocity_;
 };
 
 } // end namespace Dumux

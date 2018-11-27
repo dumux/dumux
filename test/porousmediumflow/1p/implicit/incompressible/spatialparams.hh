@@ -59,6 +59,8 @@ public:
 
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
+
+        checkIsConstantVelocity_ = getParam<bool>("Problem.CheckIsConstantVelocity",false);
     }
 
     /*!
@@ -74,7 +76,7 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
-        if (isInLens_(scv.dofPosition()))
+        if (isInLens_(scv.dofPosition()) && !checkIsConstantVelocity_)
             return permeabilityLens_;
         else
             return permeability_;
@@ -104,6 +106,8 @@ private:
     Scalar permeability_, permeabilityLens_;
 
     static constexpr Scalar eps_ = 1.5e-7;
+
+    bool checkIsConstantVelocity_;
 };
 
 } // end namespace Dumux

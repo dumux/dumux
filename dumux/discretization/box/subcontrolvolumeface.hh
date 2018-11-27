@@ -195,7 +195,7 @@ public:
         return scvIndices_[1];
     }
 
-    //! The global index of this sub control volume face
+    //! The local index of this sub control volume face
     GridIndexType index() const
     {
         return scvfIndex_;
