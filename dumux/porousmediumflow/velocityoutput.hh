@@ -303,8 +303,12 @@ public:
                     auto bcTypes = problemBoundaryTypes_(element, scvf);
                     if (bcTypes.hasNeumann())
                     {
+                        // check if we have Neumann no flow, we can just use 0
+                        const auto neumannFlux = problem_.neumann(element, fvGeometry, elemVolVars, scvf);
+                        if (Dune::FloatCmp::eq<std::decay_t<decltype(neumannFlux)>, Dune::FloatCmp::CmpStyle::absolute>(neumannFlux, 0.0, 1e-30))
+                            scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;
                         // cubes
-                        if (dim == 1 || geomType.isCube())
+                        else if (dim == 1 || geomType.isCube())
                         {
                             const auto fIdx = scvfIndexInInside[localScvfIdx];
                             const auto fIdxOpposite = fIdx%2 ? fIdx-1 : fIdx+1;
