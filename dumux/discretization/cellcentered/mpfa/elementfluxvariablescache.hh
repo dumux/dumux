@@ -142,7 +142,7 @@ public:
     : gridFluxVarsCachePtr_(&global)
     {}
 
-    //! Specialization for the global caching being enabled - do nothing here
+    //! Bind the flux var caches for scvfs inside the element only
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
@@ -234,7 +234,7 @@ public:
         }
     }
 
-    //! Specialization for the global caching being enabled - do nothing here
+    //! Bind the flux var caches for an individual scvf
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bindScvf(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
