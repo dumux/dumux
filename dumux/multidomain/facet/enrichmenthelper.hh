@@ -19,7 +19,6 @@
 
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief copydoc Dumux::VertexEnrichmentHelper
  */
@@ -42,7 +41,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Specialization of the enrichment helper class for 2d grids.
  *        In this case, we look for two-dimensional bulk grid elements that

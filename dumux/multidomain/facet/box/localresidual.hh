@@ -18,8 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Assembly
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Calculates the element-wise residual for the box scheme with
  *        coupling to a lower-dimensional domain occurring across the element facets.
@@ -35,9 +33,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup Assembly
- * \ingroup MultiDomain
- * \ingroup FacetCoupling
  * \brief The element-wise residual for the box scheme
  * \tparam TypeTag the TypeTag
  */

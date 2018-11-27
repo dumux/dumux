@@ -19,7 +19,6 @@
 
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief copydoc Dumux::CodimOneGridAdapter
  */
@@ -33,7 +32,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Adapter that  allows retrieving information on a d-dimensional grid for
  *        entities of a (d-1)-dimensional grid. This lower-dimensional grid is

@@ -18,8 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \copydoc Dumux::StokesDarcyCouplingData
  */
@@ -36,8 +34,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief This structs holds a set of options which allow to modify the Stokes-Darcy coupling mechanism during runtime.
  */
@@ -73,8 +69,6 @@ struct StokesDarcyCouplingOptions
 };
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief This structs helps to check if the two sub models use the same fluidsystem.
  *        Specialization for the case of using an adapter only for the free-flow model.
@@ -89,8 +83,6 @@ struct IsSameFluidSystem
 };
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief This structs helps to check if the two sub models use the same fluidsystem.
  * \tparam FS The fluidsystem
@@ -107,8 +99,6 @@ template <class TypeTag, DiscretizationMethod discMethod>
 class FicksLawImplementation;
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief This structs indicates that Fick's law is not used for diffusion.
  * \tparam DiffLaw The diffusion law.
@@ -117,8 +107,6 @@ template<class DiffLaw>
 struct IsFicksLaw : public std::false_type {};
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief This structs indicates that Fick's law is used for diffusion.
  * \tparam DiffLaw The diffusion law.
@@ -127,8 +115,6 @@ template<class T, DiscretizationMethod discMethod>
 struct IsFicksLaw<FicksLawImplementation<T, discMethod>> : public std::true_type {};
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief Helper struct to choose the correct index for phases and components. This is need if the porous-medium-flow model
           features more fluid phases than the free-flow model.
@@ -141,8 +127,6 @@ template<std::size_t stokesIdx, std::size_t darcyIdx, class FFFS, bool hasAdapte
 struct IndexHelper;
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief Helper struct to choose the correct index for phases and components. This is need if the porous-medium-flow model
           features more fluid phases than the free-flow model. Specialization for the case that no adapter is used.
@@ -169,8 +153,6 @@ struct IndexHelper<stokesIdx, darcyIdx, FFFS, false>
 };
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief Helper struct to choose the correct index for phases and components. This is need if the porous-medium-flow model
           features more fluid phases than the free-flow model. Specialization for the case that a adapter is used.
@@ -210,7 +192,6 @@ template<class MDTraits, class CouplingManager, bool enableEnergyBalance, bool i
 class StokesDarcyCouplingDataImplementation;
 
 /*!
-* \ingroup MultiDomain
 * \ingroup BoundaryCoupling
 * \brief Data for the coupling of a Darcy model (cell-centered finite volume)
 *        with a (Navier-)Stokes model (staggerd grid).
@@ -221,8 +202,6 @@ using StokesDarcyCouplingData = StokesDarcyCouplingDataImplementation<MDTraits, 
                                                                       (GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::numComponents() > 1)>;
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief A base class which provides some common methods used for Stokes-Darcy coupling.
  */
@@ -458,8 +437,6 @@ private:
 };
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief Coupling data specialization for non-compositional models.
  */
@@ -622,8 +599,6 @@ private:
 };
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief Coupling data specialization for compositional models.
  */

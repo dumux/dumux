@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup BoxDiscretization
  * \brief Base class for a sub control volume face of the box method
  *        in the context of of models considering coupling of different
  *        domains across the bulk grid facets.
@@ -41,9 +39,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup BoxDiscretization
  * \brief Class for a sub control volume face in the box method, i.e a part of the boundary
  *        of a sub control volume we compute fluxes on. This is a specialization for models
  *        considering coupling of different domains across the bulk grid facets.

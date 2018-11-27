@@ -18,8 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \copydoc Dumux::StokesDarcyCouplingManager
  */
@@ -42,8 +40,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief Coupling manager for Stokes and Darcy domains with equal dimension.
  */

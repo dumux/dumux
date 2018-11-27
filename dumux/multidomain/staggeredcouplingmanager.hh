@@ -19,7 +19,6 @@
 /*!
  * \file
  * \ingroup MultiDomain
- * \ingroup StaggeredDiscretization
  * \brief The interface of the coupling manager for multi domain problems
  */
 
@@ -67,7 +66,7 @@ public:
     static constexpr auto faceIdx = Dune::index_constant<1>();
 
     /*!
-     * \copydoc ParentType::updateCouplingContext
+     * \copydoc CouplingManager::updateCouplingContext
      */
     template<std::size_t i, std::size_t j, class LocalAssemblerI, class PriVarsJ>
     void updateCouplingContext(Dune::index_constant<i> domainI,
@@ -161,6 +160,7 @@ public:
     }
 
      /*!
+      * \ingroup MultiDomain
       * \brief evaluates the face residual of a coupled face of domain i which depends on the variables
       *        at the degree of freedom with index dofIdxGlobalJ of domain j
       *

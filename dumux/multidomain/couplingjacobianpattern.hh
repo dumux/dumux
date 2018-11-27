@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Assembly
  * \ingroup MultiDomain
  * \brief Helper function to generate Jacobian pattern for multi domain models
  */
@@ -33,7 +32,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup Assembly
  * \ingroup MultiDomain
  * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
  *        for cell-centered schemes
@@ -72,7 +70,6 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
 }
 
 /*!
- * \ingroup Assembly
  * \ingroup MultiDomain
  * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
  *        for the box scheme
@@ -114,7 +111,6 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
 }
 
 /*!
- * \ingroup Assembly
  * \ingroup MultiDomain
  * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
  *        for the staggered scheme (degrees of freedom on cell centers)
@@ -141,7 +137,6 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
 }
 
 /*!
- * \ingroup Assembly
  * \ingroup MultiDomain
  * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
  *        for the staggered scheme (degrees of freedom on faces)
