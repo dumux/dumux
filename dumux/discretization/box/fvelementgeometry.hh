@@ -29,6 +29,7 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
@@ -52,7 +53,8 @@ class BoxFVElementGeometry<GG, true>
     using GridView = typename GG::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    using LocalIndexType = unsigned int;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
@@ -156,7 +158,7 @@ private:
     const Element* elementPtr_;
     const FVGridGeometry* fvGridGeometryPtr_;
 
-    typename GridView::IndexSet::IndexType eIdx_;
+    GridIndexType eIdx_;
 };
 
 //! specialization in case the FVElementGeometries are not stored
@@ -166,7 +168,8 @@ class BoxFVElementGeometry<GG, false>
     using GridView = typename GG::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    using LocalIndexType = unsigned int;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
@@ -347,7 +350,7 @@ private:
 
     //! The bound element
     const Element* elementPtr_;
-    typename GridView::IndexSet::IndexType eIdx_;
+    GridIndexType eIdx_;
 
     //! The global geometry this is a restriction of
     const FVGridGeometry* fvGridGeometryPtr_;

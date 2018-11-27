@@ -28,7 +28,9 @@
 
 #include <algorithm>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/defaultmappertraits.hh>
+
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
@@ -89,7 +91,7 @@ class CCTpfaFVGridGeometry<GV, true, Traits>
     using ThisType = CCTpfaFVGridGeometry<GV, true, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
-    using GridIndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using Element = typename GV::template Codim<0>::Entity;
 
     static const int dim = GV::dimension;
@@ -366,7 +368,7 @@ class CCTpfaFVGridGeometry<GV, false, Traits>
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
 
-    using GridIndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using Element = typename GV::template Codim<0>::Entity;
 
     static const int dim = GV::dimension;
@@ -512,7 +514,7 @@ public:
                 else if (intersection.boundary())
                 {
                     scvfsIndexSet.push_back(numScvf_++);
-                    neighborVolVarIndexSet.emplace_back(NeighborVolVarIndices({numScvs_ + numBoundaryScvf_++}));
+                    neighborVolVarIndexSet.emplace_back(NeighborVolVarIndices({numScvs_ + GridIndexType(numBoundaryScvf_++)}));
                 }
             }
 

@@ -32,6 +32,7 @@
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
@@ -83,7 +84,8 @@ class BoxFVGridGeometry<Scalar, GV, true, Traits>
 {
     using ThisType = BoxFVGridGeometry<Scalar, GV, true, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
-    using IndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
     using Element = typename GV::template Codim<0>::Entity;
     using CoordScalar = typename GV::ctype;
@@ -182,7 +184,6 @@ public:
 
             // construct the sub control volumes
             scvs_[eIdx].resize(elementGeometry.corners());
-            using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
             {
                 const auto dofIdxGlobal = this->vertexMapper().subIndex(element, scvLocalIdx, dim);
@@ -297,31 +298,31 @@ public:
     { return feCache_; }
 
     //! Get the local scvs for an element
-    const std::vector<SubControlVolume>& scvs(IndexType eIdx) const
+    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
     { return scvs_[eIdx]; }
 
     //! Get the local scvfs for an element
-    const std::vector<SubControlVolumeFace>& scvfs(IndexType eIdx) const
+    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
     { return scvfs_[eIdx]; }
 
     //! If a vertex / d.o.f. is on the boundary
-    bool dofOnBoundary(unsigned int dofIdx) const
+    bool dofOnBoundary(GridIndexType dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
 
     //! If a vertex / d.o.f. is on a periodic boundary
-    bool dofOnPeriodicBoundary(std::size_t dofIdx) const
+    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
     { return periodicVertexMap_.count(dofIdx); }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
     { return periodicVertexMap_.at(dofIdx); }
 
     //! Returns the map between dofs across periodic boundaries
-    const std::unordered_map<std::size_t, std::size_t>& periodicVertexMap() const
+    const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
     { return periodicVertexMap_; }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
-    bool hasBoundaryScvf(std::size_t  eIdx) const
+    bool hasBoundaryScvf(GridIndexType eIdx) const
     { return hasBoundaryScvf_[eIdx]; }
 
 private:
@@ -340,7 +341,7 @@ private:
     std::vector<bool> hasBoundaryScvf_;
 
     // a map for periodic boundary vertices
-    std::unordered_map<std::size_t, std::size_t> periodicVertexMap_;
+    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap_;
 };
 
 /*!
@@ -356,7 +357,7 @@ class BoxFVGridGeometry<Scalar, GV, false, Traits>
 {
     using ThisType = BoxFVGridGeometry<Scalar, GV, false, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
-    using IndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
 
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
@@ -501,19 +502,19 @@ public:
     { return feCache_; }
 
     //! If a vertex / d.o.f. is on the boundary
-    bool dofOnBoundary(std::size_t dofIdx) const
+    bool dofOnBoundary(GridIndexType dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
 
     //! If a vertex / d.o.f. is on a periodic boundary
-    bool dofOnPeriodicBoundary(std::size_t dofIdx) const
+    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
     { return periodicVertexMap_.count(dofIdx); }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
     { return periodicVertexMap_.at(dofIdx); }
 
     //! Returns the map between dofs across periodic boundaries
-    const std::unordered_map<std::size_t, std::size_t>& periodicVertexMap() const
+    const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
     { return periodicVertexMap_; }
 
 private:
@@ -530,7 +531,7 @@ private:
     std::vector<bool> boundaryDofIndices_;
 
     // a map for periodic boundary vertices
-    std::unordered_map<std::size_t, std::size_t> periodicVertexMap_;
+    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap_;
 };
 
 } // end namespace Dumux

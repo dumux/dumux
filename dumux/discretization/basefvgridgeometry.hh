@@ -27,6 +27,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/common/entitymap.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/geometry/boundingboxtree.hh>
 #include <dumux/common/geometry/geometricentityset.hh>
 
@@ -52,7 +53,7 @@ class BaseFVGridGeometry
     static constexpr int dim = GV::dimension;
     static constexpr int dimWorld = GV::dimensionworld;
 
-    using IndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using Element = typename GV::template Codim<0>::Entity;
     using SubControlVolume = typename Traits::SubControlVolume;
 
@@ -161,7 +162,7 @@ public:
     { return elementMap()[scv.elementIndex()]; }
 
     //! Get an element from a global element index
-    Element element(IndexType eIdx) const
+    Element element(GridIndexType eIdx) const
     { return elementMap()[eIdx]; }
 
     /*!

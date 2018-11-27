@@ -32,6 +32,8 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/reservedvector.hh>
+
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/fluxstencil.hh>
 
 namespace Dumux {
@@ -51,13 +53,13 @@ class CCSimpleConnectivityMap
 {
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
     static constexpr int maxElemStencilSize = FVGridGeometry::maxElementStencilSize;
 
     struct DataJ
     {
-        IndexType globalJ;
+        GridIndexType globalJ;
         typename FluxStencil::ScvfStencilIForJ scvfsJ;
         // A list of additional scvfs is needed for compatibility
         // reasons with more complex connectivity maps (see mpfa)
@@ -79,7 +81,7 @@ public:
         map_.resize(fvGridGeometry.gridView().size(0));
 
         // container to store for each element J the elements I which have J in their flux stencil
-        Dune::ReservedVector<std::pair<IndexType, DataJ>, maxElemStencilSize> dataJForI;
+        Dune::ReservedVector<std::pair<GridIndexType, DataJ>, maxElemStencilSize> dataJForI;
 
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {
@@ -125,7 +127,7 @@ public:
         }
     }
 
-    const std::vector<DataJ>& operator[] (const IndexType globalI) const
+    const std::vector<DataJ>& operator[] (const GridIndexType globalI) const
     { return map_[globalI]; }
 
 private:

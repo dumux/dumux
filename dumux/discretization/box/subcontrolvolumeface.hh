@@ -29,6 +29,7 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/boundaryflag.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
@@ -68,8 +69,8 @@ struct BoxDefaultScvfGeometryTraits
         };
     };
 
-    using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-    using LocalIndexType = unsigned int;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Scalar = typename Grid::ctype;
     using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar>>;
     using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;

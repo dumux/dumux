@@ -28,8 +28,9 @@
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
 
-#include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/common/optional.hh>
+#include <dumux/common/indextraits.hh>
+#include <dumux/discretization/subcontrolvolumefacebase.hh>
 
 #include <typeinfo>
 
@@ -97,8 +98,8 @@ template<class GridView>
 struct StaggeredDefaultScvfGeometryTraits
 {
     using Geometry = typename GridView::template Codim<1>::Geometry;
-    using GridIndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = unsigned int;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Scalar = typename GridView::ctype;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 };
@@ -117,6 +118,7 @@ class StaggeredSubControlVolumeFace
     using ParentType = SubControlVolumeFaceBase<ThisType, T>;
     using Geometry = typename T::Geometry;
     using GridIndexType = typename T::GridIndexType;
+    using LocalIndexType = typename T::LocalIndexType;
 
     using Scalar = typename T::Scalar;
     static const int dim = Geometry::mydimension;
@@ -231,7 +233,7 @@ public:
     }
 
     //! The local index of this sub control volume face
-    GridIndexType localFaceIdx() const
+    LocalIndexType localFaceIdx() const
     {
         return localFaceIdx_;
     }
@@ -246,8 +248,8 @@ private:
     std::vector<GridIndexType> scvIndices_;
     bool boundary_;
 
-    int dofIdx_;
-    int localFaceIdx_;
+    GridIndexType dofIdx_;
+    LocalIndexType localFaceIdx_;
 };
 
 } // end namespace Dumux

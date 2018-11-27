@@ -27,6 +27,7 @@
 
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/assembly/numericepsilon.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -53,8 +54,9 @@ class StaggeredCouplingManagerBase: public CouplingManager<MDTraits>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView<0>::template Codim<0>::Entity;
 
-    using CouplingStencils = std::unordered_map<std::size_t, std::vector<std::size_t> >;
-    using CouplingStencil = CouplingStencils::mapped_type;
+    using GridIndexType = typename IndexTraits< GridView<0> >::GridIndex;
+    using CouplingStencils = std::unordered_map<GridIndexType, std::vector<GridIndexType> >;
+    using CouplingStencil = typename CouplingStencils::mapped_type;
 
 public:
 
