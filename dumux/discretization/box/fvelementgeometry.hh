@@ -276,7 +276,6 @@ private:
 
     void makeElementGeometries(const Element& element)
     {
-        auto eIdx = fvGridGeometry().elementMapper().index(element);
         hasBoundaryScvf_ = false;
 
         // get the element geometry
@@ -296,7 +295,7 @@ private:
             // add scv to the local container
             scvs_[scvLocalIdx] = SubControlVolume(geometryHelper,
                                                   scvLocalIdx,
-                                                  eIdx,
+                                                  eIdx_,
                                                   dofIdxGlobal);
         }
 
