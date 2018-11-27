@@ -294,7 +294,7 @@ private:
     MCMGMapper vertexMapper_;                 //! unmodified vertex mapper
     bool hasEnrichedVertices_;                //! keeps track of if vertices are enriched
     std::vector<bool> isEnriched_;            //! keeps track which vertices are enriched
-    std::vector< std::vector<IT> > indexMap_; //! contains the new dof indices
+    std::vector< std::vector<GIType> > indexMap_; //! contains the new dof indices
 };
 
 } // end namespace Dumux

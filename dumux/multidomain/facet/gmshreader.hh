@@ -35,6 +35,8 @@
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
 
+#include <dumux/common/indextraits.hh>
+
 namespace Dumux {
 
 /*!
@@ -61,7 +63,7 @@ class FacetCouplingGmshReader
     static constexpr int bulkDim = BulkGrid::dimension;
     static constexpr int bulkDimWorld = BulkGrid::dimensionworld;
     using ctype = typename BulkGrid::ctype;
-    using GridIndexType = typename BulkGrid::LeafGridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits< typename BulkGrid::LeafGridView >::GridIndex;
     using GlobalPosition = Dune::FieldVector<ctype, bulkDimWorld>;
 
     // determine minimum dimension for which a grid is created

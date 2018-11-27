@@ -39,6 +39,7 @@
 
 #include <dumux/io/grid/griddata.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/typetraits/utility.hh>
 
 #include "gmshreader.hh"
@@ -162,7 +163,7 @@ class FacetCouplingEmbeddings
     template<std::size_t id> using GridFactory = typename Dune::GridFactory<Grid<id>>;
 
     //! we use the bulk grid's index type here
-    using GIType = typename Grid<0>::LeafGridView::IndexSet::IndexType;
+    using GIType = typename IndexTraits< typename Grid<0>::LeafGridView >::GridIndex;
     //! the map type to store embedment data
     using EmbedmentMap = std::unordered_map<GIType, std::vector<GIType>>;
 

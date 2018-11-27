@@ -29,6 +29,7 @@
 
 #include <dune/common/indices.hh>
 #include <dune/common/exceptions.hh>
+#include <dumux/common/indextraits.hh>
 
 namespace Dumux {
 
@@ -49,11 +50,11 @@ template< class BulkFVG,
 class FacetCouplingMapperBase
 {
     using BulkGridView = typename BulkFVG::GridView;
-    using BulkIndexType = typename BulkGridView::IndexSet::IndexType;
+    using BulkIndexType = typename IndexTraits<BulkGridView>::GridIndex;
 
     using LowDimGridView = typename LowDimFVG::GridView;
     using LowDimElement = typename LowDimGridView::template Codim<0>::Entity;
-    using LowDimIndexType = typename LowDimGridView::IndexSet::IndexType;
+    using LowDimIndexType = typename IndexTraits<LowDimGridView>::GridIndex;
 
     // make sure the grid geometry combination makes sense
     static constexpr int bulkDim = BulkGridView::dimension;
@@ -205,12 +206,12 @@ protected:
 
     //! Creates a container with the nodal dofs within an element
     template< class FVGridGeometry>
-    std::vector< typename FVGridGeometry::GridView::IndexSet::IndexType >
+    std::vector< typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex >
     extractNodalDofs_(const typename FVGridGeometry::GridView::template Codim<0>::Entity& element,
                       const FVGridGeometry& fvGridGeometry)
     {
         static constexpr int dim = FVGridGeometry::GridView::dimension;
-        using GridIndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
+        using GridIndexType = typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex;
 
         const auto numCorners = element.subEntities(dim);
         std::vector< GridIndexType > nodalDofs(numCorners);
@@ -232,10 +233,10 @@ private:
 
     //! Creates the map from element insertion index to grid element index
     template< class Embeddings, class FVGridGeometry>
-    std::vector< typename FVGridGeometry::GridView::IndexSet::IndexType >
+    std::vector< typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex >
     makeInsertionToGridIndexMap_(std::shared_ptr<const Embeddings> embeddings, const FVGridGeometry& fvGridGeometry) const
     {
-        using GridIndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
+        using GridIndexType = typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex;
 
         std::vector< GridIndexType > map(fvGridGeometry.gridView().size(0));
         for (const auto& e : elements(fvGridGeometry.gridView()))

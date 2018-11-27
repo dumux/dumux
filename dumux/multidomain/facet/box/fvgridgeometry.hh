@@ -33,6 +33,7 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
@@ -95,8 +96,8 @@ class BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>
 {
     using ThisType = BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
-    using GridIndexType = typename GV::IndexSet::IndexType;
-    using LocalIndexType = unsigned int;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
     using Element = typename GV::template Codim<0>::Entity;
     using CoordScalar = typename GV::ctype;
@@ -346,8 +347,8 @@ class BoxFacetCouplingFVGridGeometry<Scalar, GV, false, Traits>
 {
     using ThisType = BoxFacetCouplingFVGridGeometry<Scalar, GV, false, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
-    using GridIndexType = typename GV::IndexSet::IndexType;
-    using LocalIndexType = unsigned int;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;

@@ -28,6 +28,7 @@
 #include <cassert>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/multidomain/couplingmanager.hh>
@@ -73,7 +74,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::SubControlVolumeFace;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
-    template<std::size_t id> using GridIndexType = typename GridView<id>::IndexSet::IndexType;
+    template<std::size_t id> using GridIndexType = typename IndexTraits< GridView<id> >::GridIndex;
 
     template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using GridVolumeVariables = typename GridVariables<id>::GridVolumeVariables;

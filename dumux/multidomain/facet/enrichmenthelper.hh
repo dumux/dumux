@@ -37,6 +37,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/indextraits.hh>
 
 namespace Dumux {
 
@@ -63,7 +64,7 @@ class VertexEnrichmentHelper
     using Intersection = typename GridView::Intersection;
     using ReferenceElements = typename Dune::ReferenceElements<typename GridView::ctype, dim>;
     using MCMGMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-    using GridIndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
