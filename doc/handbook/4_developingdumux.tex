@@ -25,6 +25,13 @@ You can subscribe to the mailing list via
 \url{https://listserv.uni-stuttgart.de/mailman/listinfo/dumux}, then you
 will be informed about upcoming releases or events.
 
+\subsection{Coding Guidelines}
+Writing code in a readable manner is very important, especially
+for future code developers (e.g. for adding features, debugging, etc.).
+For the style guide and instructions how to contribute to \Dumux visit
+\url{https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md}.
+
+
 \subsection{Tips and Tricks}
 \Dumux users and developers at the LH2 are also referred to the internal Wiki for
 more information.
@@ -98,9 +105,3 @@ To check one header file for all necessary includes to compile the contained cod
 Include the option \texttt{-DENABLE\_HEADERCHECK=1} in your opts file and run \texttt{dunecontrol}.
 Then go to the top level in your build-directory and type \texttt{make headercheck} to check all headers
 or press 'tab' to use the auto-completion to search for a specific header.
-
-\paragraph{Naming conventions}
-General guidelines for naming conventions are specified in Section \ref{sc_guidelines}.
-However, in order to avoid ambiguity a list of proposed names for variables, types,
-functions etc is provided where users and mainly \Dumux developers can refer for
-standards (check \texttt{dumux-devel/\allowbreak doc/\allowbreak naminglist/\allowbreak naming-conventions.odt}).
