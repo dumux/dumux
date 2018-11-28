@@ -1,0 +1,18 @@
+[Problem]
+EnableGravity = false
+Name = mildanisotropy
+ConsiderNeumannBC = true
+
+[Grid]
+UpperRight = 1 1
+Cells = 10 10
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[L2Norm]
+Order = 1
+
+[IO]
+WriteVtk = true
