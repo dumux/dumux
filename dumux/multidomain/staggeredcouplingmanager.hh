@@ -66,7 +66,7 @@ public:
     static constexpr auto faceIdx = Dune::index_constant<1>();
 
     /*!
-     * \copydoc CouplingManager::updateCouplingContext
+     * \copydoc Dumux::CouplingManager::updateCouplingContext()
      */
     template<std::size_t i, std::size_t j, class LocalAssemblerI, class PriVarsJ>
     void updateCouplingContext(Dune::index_constant<i> domainI,
@@ -144,7 +144,7 @@ public:
     }
 
     /*!
-     * \copydoc ParentType::evalCouplingResidual
+     * \copydoc Dumux::CouplingManager::evalCouplingResidual()
      *
      * \note this is a specialization for calculating the coupled residual for cellcentered dofs
      *       w.r.t. staggered face dof changes

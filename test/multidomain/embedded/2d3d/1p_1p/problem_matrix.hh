@@ -211,7 +211,7 @@ public:
      * solution dependent and requires some quantities that
      * are specific to the fully-implicit method.
      *
-     * \param pointSource A single point source
+     * \param source A single point source
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element

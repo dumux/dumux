@@ -85,7 +85,6 @@ public:
     /*!
      * \brief Return the intrinsic permeability for the current sub-control volume in [m^2].
      *
-     * \param ipGlobal The integration point
      * \note Kx has units [m^4/(Pa*s)] so we have to divide by the cross-section area
      *       and multiply with a characteristic viscosity
      */
@@ -101,7 +100,7 @@ public:
     /*!
      * \brief Return the radius of the circular pipe for the current sub-control volume in [m].
      *
-     * \param the index of the element
+     * \param eIdxGlobal the index of the element
      */
     Scalar radius(std::size_t eIdxGlobal) const
     {
@@ -111,7 +110,7 @@ public:
     /*!
      * \brief The radial permeability
      *
-     * \param the index of the element
+     * \param eIdxGlobal the index of the element
      */
     Scalar Kr(std::size_t eIdxGlobal) const
     {

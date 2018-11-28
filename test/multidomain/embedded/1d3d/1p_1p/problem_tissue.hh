@@ -229,7 +229,7 @@ public:
      * solution dependent and requires some quantities that
      * are specific to the fully-implicit method.
      *
-     * \param pointSource A single point source
+     * \param source A single point source
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
@@ -351,7 +351,6 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The position for which the initial condition should be evaluated
      *
      * For this method, the \a values parameter stores primary

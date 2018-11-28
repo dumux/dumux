@@ -17,7 +17,7 @@
 /*!
  * \file
  * \ingroup FacetCoupling
- * \copydoc Dumux::FacetCouplingGmshReader.
+ * \copydoc Dumux::FacetCouplingGmshReader
  */
 #ifndef DUMUX_FACETCOUPLING_GMSH_READER_HH
 #define DUMUX_FACETCOUPLING_GMSH_READER_HH

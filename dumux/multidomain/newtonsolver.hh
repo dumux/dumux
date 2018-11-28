@@ -129,7 +129,6 @@ public:
     /*!
      * \brief Indicates that one Newton iteration was finished.
      *
-     * \param assembler The jacobian assembler
      * \param uCurrentIter The solution after the current Newton iteration
      * \param uLastIter The solution at the beginning of the current Newton iteration
      */
