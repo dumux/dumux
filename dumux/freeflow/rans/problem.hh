@@ -334,7 +334,7 @@ public:
                         if (normalFace.center()[normalNormDim] < cellCenter_[elementIdx][normalNormDim])
                             neighborIdx = neighborIdx_[elementIdx][normalNormDim][1];
 
-                        bjsVelocityAverage[normalNormDim] += ParentType::bjsVelocity(scvf, normalFace, localSubFaceIdx, velocity_[elementIdx][velIdx]);
+                        bjsVelocityAverage[normalNormDim] += ParentType::bjsVelocity(element, scvf, normalFace, localSubFaceIdx, velocity_[elementIdx][velIdx]);
                         if (bjsNumFaces[normalNormDim] > 0 && neighborIdx != bjsNeighbor[normalNormDim])
                             DUNE_THROW(Dune::InvalidStateException, "Two different neighborIdx should not occur");
                         bjsNeighbor[normalNormDim] = neighborIdx;

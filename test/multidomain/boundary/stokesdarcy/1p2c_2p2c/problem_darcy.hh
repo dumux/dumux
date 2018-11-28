@@ -262,14 +262,14 @@ public:
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
         {
 #if !NONISOTHERMAL
-            values = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, scvf, diffCoeffAvgType_);
+            values = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scvf, diffCoeffAvgType_);
 #else
-            const auto massFlux = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, scvf, diffCoeffAvgType_);
+            const auto massFlux = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scvf, diffCoeffAvgType_);
 
             for(int i = 0; i< massFlux.size(); ++i)
                 values[i] = massFlux[i];
 
-            values[Indices::energyEqIdx] = couplingManager().couplingData().energyCouplingCondition(fvGeometry, elemVolVars, scvf, diffCoeffAvgType_);
+            values[Indices::energyEqIdx] = couplingManager().couplingData().energyCouplingCondition(element, fvGeometry, elemVolVars, scvf, diffCoeffAvgType_);
 #endif
         }
 

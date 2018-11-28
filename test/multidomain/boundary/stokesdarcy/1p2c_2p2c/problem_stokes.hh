@@ -266,14 +266,14 @@ public:
 
         if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
-            values[Indices::momentumYBalanceIdx] = couplingManager().couplingData().momentumCouplingCondition(fvGeometry, elemVolVars, elemFaceVars, scvf);
+            values[Indices::momentumYBalanceIdx] = couplingManager().couplingData().momentumCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
 
-            const auto massFlux = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, elemFaceVars, scvf, diffCoeffAvgType_);
+            const auto massFlux = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf, diffCoeffAvgType_);
             values[Indices::conti0EqIdx] = massFlux[0];
             values[Indices::conti0EqIdx + 1] = massFlux[1];
 
 #if NONISOTHERMAL
-            values[Indices::energyEqIdx] = couplingManager().couplingData().energyCouplingCondition(fvGeometry, elemVolVars, elemFaceVars, scvf, diffCoeffAvgType_);
+            values[Indices::energyEqIdx] = couplingManager().couplingData().energyCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf, diffCoeffAvgType_);
 #endif
 
         }
@@ -343,9 +343,9 @@ public:
     /*!
      * \brief Returns the intrinsic permeability of required as input parameter for the Beavers-Joseph-Saffman boundary condition
      */
-    Scalar permeability(const SubControlVolumeFace& scvf) const
+    Scalar permeability(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        return couplingManager().couplingData().darcyPermeability(scvf);
+        return couplingManager().couplingData().darcyPermeability(element, scvf);
     }
 
     /*!

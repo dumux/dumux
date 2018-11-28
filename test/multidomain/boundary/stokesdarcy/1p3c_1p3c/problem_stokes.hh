@@ -227,9 +227,9 @@ public:
 
         if(couplingManager().isCoupledEntity(couplingManager().stokesIdx, scvf))
         {
-            values[Indices::momentumYBalanceIdx] = couplingManager().couplingData().momentumCouplingCondition(fvGeometry, elemVolVars, elemFaceVars, scvf);
+            values[Indices::momentumYBalanceIdx] = couplingManager().couplingData().momentumCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
 
-            const auto tmp = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, elemFaceVars, scvf, DiffusionCoefficientAveragingType::harmonic);
+            const auto tmp = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf, DiffusionCoefficientAveragingType::harmonic);
             values[Indices::conti0EqIdx] = tmp[0];
             values[Indices::conti0EqIdx + 1] = tmp[1];
             values[Indices::conti0EqIdx + 2] = tmp[2];
@@ -267,9 +267,9 @@ public:
     /*!
      * \brief Returns the intrinsic permeability of required as input parameter for the Beavers-Joseph-Saffman boundary condition
      */
-    Scalar permeability(const SubControlVolumeFace& scvf) const
+    Scalar permeability(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        return couplingManager().couplingData().darcyPermeability(scvf);
+        return couplingManager().couplingData().darcyPermeability(element, scvf);
     }
 
     /*!
