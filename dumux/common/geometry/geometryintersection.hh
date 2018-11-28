@@ -338,7 +338,7 @@ public:
      *  \note Algorithm based on the one from "Real-Time Collision Detection" by Christer Ericson,
      *        published by Morgan Kaufmann Publishers, (c) 2005 Elsevier Inc. (Chapter 5.3.6)
      * \param geo1/geo2 The geometries to intersect
-     * \param intersection If the geometries collide intersection holds the corner points of
+     * \param is If the geometries collide, is holds the corner points of
      *        the intersection object in global coordinates.
      */
     template<int dimIntersection>

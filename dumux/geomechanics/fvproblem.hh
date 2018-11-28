@@ -114,7 +114,7 @@ public:
      * \param element The current element
      * \param fvGeometry The local finite volume geometry
      * \param elemVolVars Primary/Secondary variables inside the element
-     * \param FluxVarsCache Contains data on shape functions at the integration point
+     * \param fluxVarsCache Contains data on shape functions at the integration point
      */
     template< class ElemVolVars, class FluxVarsCache, int n = numFP, std::enable_if_t<(n > 0), int> = 0 >
     Scalar effectivePorePressure(const Element& element,

@@ -35,7 +35,7 @@ namespace Dumux {
  * \brief  Helper function to create a PrimaryVariables object from CellCenterPrimaryVariables
  * \tparam PrimaryVariables The type of the desired primary variables object
  * \tparam CellCenterPrimaryVariables The type of the cell center (input) primary variables object
- * \param cellCenterPrimaryVariables The cell center (input) primary variables object
+ * \param cellCenterPriVars The cell center (input) primary variables object
  */
 template<class PrimaryVariables, class CellCenterPrimaryVariables>
 PrimaryVariables makePriVarsFromCellCenterPriVars(const CellCenterPrimaryVariables& cellCenterPriVars)
@@ -71,7 +71,7 @@ auto elementSolution(PrimaryVariables&& priVars)
  * \brief  Helper function to create an elementSolution from cell center primary variables
  * \tparam PrimaryVariables The type of the desired primary variables object
  * \tparam CellCenterPrimaryVariables The type of the cell center (input) primary variables object
- * \param cellCenterPrimaryVariables The cell center (input) primary variables object
+ * \param cellCenterPriVars The cell center (input) primary variables object
  */
 template<class PrimaryVariables, class CellCenterPrimaryVariables>
 StaggeredElementSolution<PrimaryVariables> makeElementSolutionFromCellCenterPrivars(const CellCenterPrimaryVariables& cellCenterPriVars)
