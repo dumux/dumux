@@ -120,39 +120,50 @@ public:
         // otherwise use the default name (executable name + .input)
         if (parameterFileName == "")
         {
-            if (mpiHelper.size() > 1)
-                std::cout << "Rank " << mpiHelper.rank() << ": ";
-            std::cout << "No parameter file given. "
-                      << "Defaulting to '"
-                      << argv[0]
-                      << ".input' for input file.\n";
+            parameterFileName = [&](){
+                std::string defaultName = std::string(argv[0]) + ".input";
+                std::ifstream pFile(defaultName.c_str());
+                if (pFile.is_open())
+                    return defaultName;
 
-            parameterFileName = std::string(argv[0]) + ".input";
+                defaultName = "params.input";
+                pFile = std::ifstream(defaultName.c_str());
+                if (pFile.is_open())
+                    return defaultName;
+                else
+                    return std::string("");
+            }();
+
+            // if no parameter file was given and also no default names where found, continue without
+            if (parameterFileName == "")
+            {
+                if (mpiHelper.size() > 1)
+                    std::cout << "Rank " << mpiHelper.rank() << ": ";
+                std::cout << "No parameter file found. Continuing without parameter file.\n";
+
+                return;
+            }
+            else
+            {
+                if (mpiHelper.size() > 1)
+                    std::cout << "Rank " << mpiHelper.rank() << ": ";
+                std::cout << "No parameter file given. "
+                          << "Defaulting to '"
+                          << parameterFileName
+                          << "' for input file.\n";
+            }
         }
 
-        // open and check whether the parameter file exists.
-        std::ifstream parameterFile(parameterFileName.c_str());
-        if (!parameterFile.is_open())
-        {
-            if (mpiHelper.size() > 1)
-                std::cout << "Rank " << mpiHelper.rank() << ": ";
-            std::cout << " -> Could not open file '"
-                      << parameterFileName
-                      << "'. <- \n\n";
+        if (mpiHelper.size() > 1)
+            std::cout << "Rank " << mpiHelper.rank() << ": ";
+        std::cout << "Reading parameters from file " << parameterFileName << ".\n";
 
-            usage(argv[0], defaultUsageMessage(argv[0]));
-
-            DUNE_THROW(ParameterException, "Error opening input file " << parameterFileName << ".");
-        }
-        else
-        {
-            // read parameters from the file without overwriting the command line params
-            // because the command line arguments have precedence
-            Dune::ParameterTreeParser::readINITree(parameterFileName,
-                                                   paramTree(),
-                                                   /*overwrite=*/false);
-        }
-        parameterFile.close();
+        // read parameters from the file without overwriting the command line params
+        // because the command line arguments have precedence
+        // let Dune do the error checking if the file exists
+        Dune::ParameterTreeParser::readINITree(parameterFileName,
+                                               paramTree(),
+                                               /*overwrite=*/false);
     }
 
     /*!
