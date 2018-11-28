@@ -39,23 +39,12 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/typetraits/vector.hh>
+#include <dumux/common/typetraits/state.hh>
 #include <dumux/io/vtk/vtkreader.hh>
 #include <dumux/discretization/method.hh>
 
 
 namespace Dumux {
-namespace Detail {
-
-//! helper struct detecting if a PrimaryVariables object has a state() function
-struct hasState
-{
-    template<class PrimaryVariables>
-    auto operator()(PrimaryVariables&& priVars)
-    -> decltype(priVars.state())
-    {}
-};
-
-} // end namespace Detail
 
 /*!
  * \ingroup InputOutput
