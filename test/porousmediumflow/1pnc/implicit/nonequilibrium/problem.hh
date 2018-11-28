@@ -93,7 +93,7 @@ struct UseMoles<TypeTag, TTag::OnePTwoCThermalNonequilibrium> { static constexpr
  * \brief Definition of a problem, for the 1pnc problem:
  *
  * The model domain is 1 m times 1 m with a discretization length of 0.05 m
- * and homogeneous soil properties (\f$ \mathrm{K=10e-11, \Phi=0.4).
+ * and homogeneous soil properties (\f$ \mathrm{K=10e-11, \Phi=0.4}\f$).
  * Initially the domain is filled with water and a small nitrogen fraction
  *
  * At the right side warmer water is injected via a Neumann boundary and at the left side
@@ -224,8 +224,6 @@ public:
      * potentially solution dependent and requires some quantities that
      * are specific to the fully-implicit method.
      *
-     * \param values The neumann values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
