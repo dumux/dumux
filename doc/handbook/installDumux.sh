@@ -11,22 +11,22 @@ echo "*************************************************"
 # the core modules
 for MOD in common geometry grid localfunctions istl; do
     if [ ! -d "dune-$MOD" ]; then
-        git clone -b releases/2.5 https://gitlab.dune-project.org/core/dune-$MOD.git
+        git clone -b releases/2.6 https://gitlab.dune-project.org/core/dune-$MOD.git
     else
         echo "Skip cloning dune-$MOD because the folder already exists."
         cd dune-$MOD
-        git checkout releases/2.5
+        git checkout releases/2.6
         cd ..
     fi
 done
 
 # dumux
 if [ ! -d "dumux" ]; then
-    git clone -b 3.0.0-alpha https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+    git clone -b releases/3.0 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 else
     echo "Skip cloning dumux because the folder already exists."
     cd dumux
-    git checkout 3.0.0-alpha
+    git checkout releases/3.0
     cd ..
 fi
 
@@ -42,7 +42,7 @@ echo "(2/2) Configure dune modules and dumux. Build the
 dune libaries. This may take several minutes."
 echo "*************************************************"
 # run build
-./dune-common/bin/dunecontrol --opts=dumux/myoptim.opts all
+./dune-common/bin/dunecontrol --opts=dumux/optim.opts all
 #
 if [ $? -ne 0 ]; then
     echo "*************************************************"
