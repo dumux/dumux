@@ -25,6 +25,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <fstream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
@@ -32,7 +33,9 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/partial.hh>
 #include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -137,17 +140,11 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    // control the injection period
-    const Scalar injectionBegin = getParam<Scalar>("Stokes.Problem.InjectionBegin");
-    const Scalar injectionEnd = getParam<Scalar>("Stokes.Problem.InjectionEnd");
-
-    if(injectionBegin > 0.0)
-        timeLoop->setCheckPoint({injectionBegin, injectionEnd});
-    else
-        timeLoop->setCheckPoint({injectionEnd});
+    stokesProblem->setTimeLoop(timeLoop);
+    darcyProblem->setTimeLoop(timeLoop);
 
     // the solution vector
     Traits::SolutionVector sol;
@@ -155,20 +152,12 @@ int main(int argc, char** argv) try
     sol[stokesFaceIdx].resize(stokesFvGridGeometry->numFaceDofs());
     sol[darcyIdx].resize(darcyFvGridGeometry->numDofs());
 
-    const auto& cellCenterSol = sol[stokesCellCenterIdx];
-    const auto& faceSol = sol[stokesFaceIdx];
+    // get a solution vector storing references to the two Stokes solution vectors
+    auto stokesSol = partial(sol, stokesCellCenterIdx, stokesFaceIdx);
 
     // apply initial solution for instationary problems
-    GetPropType<StokesTypeTag, Properties::SolutionVector> stokesSol;
-    std::get<0>(stokesSol) = cellCenterSol;
-    std::get<1>(stokesSol) = faceSol;
     stokesProblem->applyInitialSolution(stokesSol);
-    auto solStokesOld = stokesSol;
-    sol[stokesCellCenterIdx] = stokesSol[stokesCellCenterIdx];
-    sol[stokesFaceIdx] = stokesSol[stokesFaceIdx];
-
     darcyProblem->applyInitialSolution(sol[darcyIdx]);
-    auto solDarcyOld = sol[darcyIdx];
 
     auto solOld = sol;
 
@@ -183,7 +172,7 @@ int main(int argc, char** argv) try
     darcyGridVariables->init(sol[darcyIdx]);
 
     // intialize the vtk output module
-    StaggeredVtkOutputModule<StokesGridVariables, GetPropType<StokesTypeTag, Properties::SolutionVector>> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
+    StaggeredVtkOutputModule<StokesGridVariables, decltype(stokesSol)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
     GetPropType<StokesTypeTag, Properties::IOFields>::initOutputModule(stokesVtkWriter);
     stokesVtkWriter.write(0.0);
 
@@ -213,19 +202,11 @@ int main(int argc, char** argv) try
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
-    constexpr auto eps = 1e-6;
-
     // time loop
     timeLoop->start(); do
     {
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(solOld);
-
-
-        if(timeLoop->time() > injectionBegin - eps && timeLoop->time() < injectionEnd + eps)
-            stokesProblem->setInjectionState(true);
-        else
-            stokesProblem->setInjectionState(false);
 
         // solve the non-linear system with time step control
         nonLinearSolver.solve(sol, *timeLoop);
