@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SpatialParameters
- * \brief base class for spatialparameters dealing with thermal and chemical nonequilibrium
+ * \brief Base class for spatial parameters dealing with thermal and chemical non-equilibrium
  *
  */
 #ifndef DUMUX_FV_SPATIALPARAMS_NONEQUILIBRIUM_HH
@@ -30,7 +30,7 @@
 namespace Dumux {
 
 /**
- * \brief Definition of the spatial parameters for nonequilibrium
+ * \brief Definition of the spatial parameters for non-equilibrium
  */
 template<class FVGridGeometry, class Scalar, class Implementation>
 class FVNonEquilibriumSpatialParams
@@ -53,13 +53,12 @@ public:
     : ParentType(fvGridGeometry)
     {  }
 
-    /*!\brief Return the characteristic length for the mass transfer.
+    /*!
+     * \brief Return the characteristic length for the mass transfer.
      *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub controle volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub control volume */
+     * The position is determined based on the coordinate of
+     * the vertex belonging to the considered sub control volume.
+     */
     template<class ElementSolution>
     const Scalar characteristicLength(const Element & element,
                                       const SubControlVolume &scv,
@@ -67,8 +66,11 @@ public:
 
     { return this->asImp_().characteristicLengthAtPos(scv.dofPosition()); }
 
-    /*!\brief Return the characteristic length for the mass transfer.
-     * \param globalPos The position in global coordinates.*/
+    /*!
+     * \brief Return the characteristic length for the mass transfer.
+     *
+     * \param globalPos The position in global coordinates.
+     */
     const Scalar characteristicLengthAtPos(const GlobalPosition & globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
@@ -76,21 +78,23 @@ public:
                    "a characteristicLengthAtPos() method.");
     }
 
-    /*!\brief Return the pre factor the the energy transfer
+    /*!
+     * \brief Return the pre-factor the the energy transfer
      *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub controle volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub control volume */
+     * The position is determined based on the coordinate of
+     * the vertex belonging to the considered sub control volume.
+     */
     template<class ElementSolution>
     const Scalar factorEnergyTransfer(const Element &element,
                                       const SubControlVolume &scv,
                                       const ElementSolution &elemSol) const
     { return this->asImp_().factorEnergyTransferAtPos(scv.dofPosition()); }
 
-    /*!\brief Return the pre factor the the energy transfer
-     * \param globalPos The position in global coordinates.*/
+    /*!
+     * \brief Return the pre factor the the energy transfer
+     *
+     * \param globalPos The position in global coordinates.
+     */
     const Scalar factorEnergyTransferAtPos(const  GlobalPosition & globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
@@ -98,13 +102,12 @@ public:
                    "a factorEnergyTransferAtPos() method.");
     }
 
-    /*!\brief Return the pre factor the the mass transfer
+    /*!
+     * \brief Return the pre-factor the the mass transfer
      *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub controle volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub control volume */
+     * The position is determined based on the coordinate of
+     * the vertex belonging to the considered sub control volume.
+     */
     template<class ElementSolution>
     const Scalar factorMassTransfer(const Element &element,
                                       const SubControlVolume &scv,
@@ -112,8 +115,11 @@ public:
     { return this->asImp_().factorMassTransferAtPos(scv.dofPosition()); }
 
 
-    /*!\brief Return the pre factor the the mass transfer
-     * \param globalPos The position in global coordinates.*/
+    /*!
+     * \brief Return the pre-factor the the mass transfer
+     *
+     * \param globalPos The position in global coordinates.
+     */
     const Scalar factorMassTransferAtPos(const  GlobalPosition & globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,

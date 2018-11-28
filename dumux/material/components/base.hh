@@ -134,7 +134,7 @@ public:
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of the component at a given
      *        temperature in \f$\mathrm{[K]}\f$.
      *
-     * \param T temperature of the component in \f$\mathrm{[K]}\f$
+     * \param t temperature of the component in \f$\mathrm{[K]}\f$
      */
     template<class C = Component>
     static Scalar vaporPressure(Scalar t)

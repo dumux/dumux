@@ -20,7 +20,8 @@
  * \file
  * \ingroup Binarycoefficients
  * \brief Various relations for molecular diffusion coefficients.
- * \copydetails fullerMethod
+ *
+ * \copydetails Dumux::fullerMethod()
  */
 #ifndef DUMUX_FULLERMETHOD_HH
 #define DUMUX_FULLERMETHOD_HH

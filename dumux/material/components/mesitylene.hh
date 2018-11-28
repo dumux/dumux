@@ -238,6 +238,7 @@ public:
      * source : Reid et al. (1987, Modified Racket technique (chap. 3-11, eq. 3-11.9)) \cite reid1987
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
     {

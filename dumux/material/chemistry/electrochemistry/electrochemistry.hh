@@ -83,6 +83,7 @@ public:
      *
      * \param values The primary variable vector
      * \param currentDensity The current density
+     * \param paramGroup The group containing the needed parameters
      *
      * For this method, the \a values parameter stores source values
      */
@@ -91,7 +92,7 @@ public:
                                const std::string& paramGroup = "")
     {
         // correction to account for actually relevant reaction area
-        // current density has to be devided by the half length of the box
+        // current density has to be divided by the half length of the box
         // \todo Do we have multiply with the electrochemically active surface area (ECSA) here instead?
         static Scalar gridYMax = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.UpperRight")[1];
         static Scalar nCellsY = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.Cells")[1];
@@ -105,7 +106,7 @@ public:
 
         static Scalar transportNumberH2O = getParam<Scalar>("ElectroChemistry.TransportNumberH20");
 
-        //calculation of flux terms with faraday equation
+        //calculation of flux terms with Faraday equation
         values[contiH2OEqIdx] = currentDensity/(2*Constant::F);                  //reaction term in reaction layer
         values[contiH2OEqIdx] += currentDensity/Constant::F*transportNumberH2O;  //osmotic term in membrane
         values[contiO2EqIdx]  = -currentDensity/(4*Constant::F);                 //O2-equation

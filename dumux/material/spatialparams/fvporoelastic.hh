@@ -237,7 +237,7 @@ public:
      * \param element The current element
      * \param fvGeometry The local finite volume geometry
      * \param elemVolVars Primary/Secondary variables inside the element
-     * \param FluxVarsCache Contains data on shape functions at the integration point
+     * \param fluxVarsCache Contains data on shape functions at the integration point
      * \return lame parameters
      */
     template<class ElemVolVars, class FluxVarsCache>
@@ -260,7 +260,7 @@ public:
     }
 
     /*!
-     * \brief Returns the biot coefficient in an element
+     * \brief Returns the Biot coefficient in an element
      * \note  This is possibly solution dependent and is evaluated
      *        for an integration point inside the element. Therefore,
      *        a flux variables cache object is passed to this function
@@ -269,8 +269,8 @@ public:
      * \param element The current element
      * \param fvGeometry The local finite volume geometry
      * \param elemVolVars Primary/Secondary variables inside the element
-     * \param FluxVarsCache Contains data on shape functions at the integration point
-     * \return biot coefficient
+     * \param fluxVarsCache Contains data on shape functions at the integration point
+     * \return Biot coefficient
      */
     template<class ElemVolVars, class FluxVarsCache>
     Scalar biotCoefficient(const Element& element,
