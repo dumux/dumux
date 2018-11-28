@@ -1,0 +1,59 @@
+\section{Parallel Computation}
+\label{sec:parallelcomputation}
+
+\Dumux also support parallel computation. The parallel version needs an external MPI libary.
+
+Posibilities are OpenMPI MPICH and IntelMPI.
+
+Depending on the grid manager METIS or ParMETIS can also be used for paritioning.
+
+
+In the following show  how to prepare a model an run it in parallel whith
+the imcompressible 2p model.
+
+dumux/test/porousmediumflow/2p/implicit/incompressible
+ 
+
+\subsection{prepareing the model}
+
+If the parallel AMGBackend is not allready set in your application
+you should from the sequential solver backend to the parallel amg  backend 
+in your application.
+
+First include the header files for the parallel AMGBackend
+#include <dumux/linear/amgbackend.hh>
+
+and remove the header files of the sequential backend
+
+#include <dumux/linear/seqsolverbackend.hh>
+
+
+Second, hange the linear solver to the AMG solver 
+from the AMGBackend
+
+using LinearSolver = Dumux::AMGBackend<TypeTag>;
+
+and recompile your application.
+
+\subsection{Start parallel computation}
+The parallel simulation is starte with mpirun followed by -np and
+the number of cores that should be used and the executable. 
+
+mpirun -np n_cores executable
+
+On HPC cluster you usually have to use  qeuing system like (e.g. slurm). 
+
+
+
+\subsection{Handling Parallel Results}
+The results sould not differ between parallel an serial execution. As in
+the serial case you get vtu-files as output. However you have an additional
+variable "process rank" that shows the processor rank of each MPI partition.
+
+
+
+
+
+
+
+
