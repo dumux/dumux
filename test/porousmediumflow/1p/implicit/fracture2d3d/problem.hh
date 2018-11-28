@@ -181,8 +181,7 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
-     * \param vertex The vertex for which the boundary type is set
+     * \param globalPos The global position
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
@@ -200,8 +199,6 @@ public:
      * \brief Evaluates the boundary conditions for a Dirichlet
      *        boundary segment
      *
-     * \param values Stores the Dirichlet values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
@@ -220,8 +217,6 @@ public:
     /*!
      * \brief Evaluates the initial values for a control volume
      *
-     * \param values Stores the initial values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const

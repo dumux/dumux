@@ -110,7 +110,7 @@ public:
     /*!
      * \brief This method allows the generation of a statistical field using gstat
      *
-     * \param gridView The GridView used by the problem
+     * \param gg The finite-volume grid Geometry used by the problem
      */
     void initRandomField(const FVGridGeometry& gg)
     {

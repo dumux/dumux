@@ -234,7 +234,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -253,7 +252,6 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The center of the finite volume which ought to be set.
      *
      * For this method, the \a values parameter stores primary variables.
@@ -267,14 +265,10 @@ public:
      * \brief Evaluates the boundary conditions for a Neumann
      *        boundary segment in dependency on the current solution.
      *
-     * \param values Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local index of the sub-control volume
-     * \param boundaryFaceIdx The index of the boundary face
      * \param elemVolVars All volume variables for the element
+     * \param scvf The sub-control volume face
      *
      * This method is used for cases, when the Neumann condition depends on the
      * solution and requires some quantities that are specific to the fully-implicit method.
@@ -283,12 +277,12 @@ public:
      */
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolvars,
+                        const ElementVolumeVariables& elemVolVars,
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
         const auto globalPos = scvf.ipGlobal();
-        const auto& volVars = elemVolvars[scvf.insideScvIdx()];
+        const auto& volVars = elemVolVars[scvf.insideScvIdx()];
 
         if(globalPos[0] < eps_)
         {
@@ -308,7 +302,6 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The position for which the initial condition should be evaluated
      *
      * For this method, the \a values parameter stores primary
