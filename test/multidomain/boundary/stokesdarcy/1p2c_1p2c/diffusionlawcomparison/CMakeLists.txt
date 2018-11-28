@@ -8,11 +8,12 @@ dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_maxwellstefan
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p2c_stokes1p2c_comparison_stokes-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_comparison_stokes-00020.vtu
+                                    ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_comparison_ms_stokes-00020.vtu
                                     ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p2c_stokes1p2c_comparison_darcy-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_comparison_darcy-00020.vtu
+                                    ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_comparison_ms_darcy-00020.vtu
 
-                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_maxwellstefan params.input")
+                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_maxwellstefan params.input
+                                        -Problem.Name test_md_boundary_darcy1p2c_stokes1p2c_comparison_ms")
 
 dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_fickslaw
               LABELS multidomain freeflow 1pnc
@@ -22,8 +23,9 @@ dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_fickslaw
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p2c_stokes1p2c_comparison_stokes-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_comparison_stokes-00020.vtu
+                                    ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_comparison_f_stokes-00020.vtu
                                     ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p2c_stokes1p2c_comparison_darcy-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_comparison_darcy-00020.vtu
+                                    ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_comparison_f_darcy-00020.vtu
 
-                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_fickslaw params.input")
+                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_fickslaw params.input
+                                        -Problem.Name test_md_boundary_darcy1p2c_stokes1p2c_comparison_f")
