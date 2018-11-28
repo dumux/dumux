@@ -77,8 +77,7 @@ struct FluidSystem<TypeTag, TTag::InfiltrationThreePThreeC>
 }
 
 /*!
- * \ingroup ThreePThreeCModel
- * \ingroup ImplicitTestProblems
+ * \ingroup ThreePThreeCTests
  * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
  *        the unsaturated and the saturated groundwater zone.
  *
@@ -147,8 +146,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     InfiltrationThreePThreeCProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -175,7 +173,7 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * \param globalPos The position
+     * \param globalPos The global position
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
@@ -195,7 +193,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -214,7 +211,6 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The position for which the bc type should be evaluated
      *
      * For this method, the \a values parameter stores primary variables.
@@ -226,12 +222,7 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values The neumann values for the conservation equations
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local vertex index
-     * \param boundaryFaceIdx The index of the boundary face
+     * \param globalPos The position for which the bc type should be evaluated
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
@@ -263,7 +254,6 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The position for which the initial condition should be evaluated
      *
      * For this method, the \a values parameter stores primary

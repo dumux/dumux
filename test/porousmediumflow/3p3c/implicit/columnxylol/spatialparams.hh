@@ -60,7 +60,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     ColumnSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)

@@ -35,8 +35,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup ImplicitTestProblems
- * \ingroup ThreePModel
+ * \ingroup ThreePTests
  *
  * \brief Definition of the spatial parameters for the infiltration problem
  */
@@ -67,7 +66,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     InfiltrationThreePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)

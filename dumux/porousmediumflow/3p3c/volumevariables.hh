@@ -106,7 +106,7 @@ public:
      *                be simulated
      * \param element An element which contains part of the control volume
      * \param scv The sub control volume
-    */
+     */
     template<class ElemSol, class Problem, class Element, class Scv>
     void update(const ElemSol &elemSol,
                 const Problem &problem,

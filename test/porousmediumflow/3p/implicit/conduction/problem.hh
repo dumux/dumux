@@ -260,8 +260,6 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * \param globalPos The position of the integration point of the boundary segment.
      *
      * For this method, the \a values parameter stores the mass flux

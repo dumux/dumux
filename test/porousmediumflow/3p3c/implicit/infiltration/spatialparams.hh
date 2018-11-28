@@ -36,8 +36,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePThreeCModel
- * \ingroup ImplicitTestProblems
+ * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the infiltration problem
  */
 template<class FVGridGeometry, class Scalar>
@@ -64,7 +63,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     InfiltrationThreePThreeCSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -114,9 +113,7 @@ public:
     /*!
      * \brief Returns the porosity \f$[-]\f$
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The position for which the porosity is evaluated
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
@@ -127,7 +124,7 @@ public:
     /*!
      * \brief return the parameter object for the material law which depends on the position
      *
-     *  \param globalPos The global position
+     * \param globalPos The position for which the material law should be evaluated
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {

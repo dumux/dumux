@@ -35,8 +35,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePThreeCModel
- * \ingroup ImplicitTestProblems
+ * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the kuevette problem
  */
 template<class FVGridGeometry, class Scalar>
@@ -64,7 +63,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     KuevetteSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -124,9 +123,7 @@ public:
     /*!
      * \brief Define the porosity \f$[-]\f$ of the spatial parameters
      *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
+     * \param globalPos The position for which the bc type should be evaluated
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {

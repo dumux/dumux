@@ -68,7 +68,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     SagdSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
