@@ -232,7 +232,8 @@ private:
             ivFluxVarCaches[i]->setSecondaryIvUsage(isSecondary);
             ivFluxVarCaches[i]->setIvLocalFaceIndex(d.ivLocalScvfIndex());
             if (dim < dimWorld)
-                ivFluxVarCaches[i]->setIndexInOutsideFaces(d.scvfLocalOutsideScvfIndex());
+                if (d.isOutsideFace())
+                    ivFluxVarCaches[i]->setIndexInOutsideFaces(d.scvfLocalOutsideScvfIndex());
             i++;
         }
 
