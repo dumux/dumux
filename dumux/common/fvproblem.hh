@@ -571,6 +571,7 @@ private:
     {
         const auto numDofs = fvGridGeometry_->vertexMapper().size();
         const auto numVert = fvGridGeometry_->gridView().size(dim);
+        sol.resize(numDofs);
 
         // if there are more dofs than vertices (enriched nodal dofs), we have to
         // call initial for all dofs at the nodes, coming from all neighboring elements.
@@ -609,6 +610,7 @@ private:
      */
     void applyInitialSolutionImpl_(SolutionVector& sol, /*isBox=*/std::false_type) const
     {
+        sol.resize(fvGridGeometry_->numDofs());
         for (const auto& element : elements(fvGridGeometry_->gridView()))
         {
             const auto dofIdxGlobal = fvGridGeometry_->elementMapper().index(element);

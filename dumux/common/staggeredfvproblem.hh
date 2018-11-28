@@ -164,6 +164,9 @@ public:
     */
     void applyInitialSolution(SolutionVector& sol) const
     {
+        sol[cellCenterIdx].resize(this->fvGridGeometry().numCellCenterDofs());
+        sol[faceIdx].resize(this->fvGridGeometry().numFaceDofs());
+
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             auto fvGeometry = localView(this->fvGridGeometry());
