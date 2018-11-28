@@ -110,7 +110,7 @@ public:
      *        that couple with / influence the element residual of the given element of domain i
      *
      * \param domainI the domain index of domain i
-     * \param elementI the coupled element of domain í
+     * \param element the coupled element of domain í
      * \param domainJ the domain index of domain j
      */
     template<std::size_t i, std::size_t j>

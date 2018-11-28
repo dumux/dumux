@@ -186,7 +186,7 @@ public:
      * \brief Evaluate the boundary conditions for a Neumann control volume.
      *
      * \param element The element for which the Neumann boundary condition is set
-     * \param fvGeomentry The fvGeometry
+     * \param fvGeometry The fvGeometry
      * \param elemVolVars The element volume variables
      * \param scvf The boundary sub control volume face
      *
@@ -217,7 +217,7 @@ public:
      *        sub-control-volume.
      *
      * \param element The element for which the source term is set
-     * \param fvGeomentry The fvGeometry
+     * \param fvGeometry The fvGeometry
      * \param elemVolVars The element volume variables
      * \param scv The subcontrolvolume
      */
@@ -232,8 +232,6 @@ public:
 
     /*!
      * \brief Evaluate the initial value for a control volume.
-     *
-     * \param element The element
      *
      * For this method, the \a priVars parameter stores primary
      * variables.

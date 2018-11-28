@@ -157,7 +157,7 @@ public:
      * \param facetProblem The problem to be solved on the (2d) facet domain
      * \param edgeProblem The problem to be solved on the (1d) edge domain
      * \param couplingMapper The mapper object containing the connectivity between the domains
-     * \tparam curSol The current solution
+     * \param curSol The current solution
      */
     void init(std::shared_ptr< Problem<bulkId> > bulkProblem,
               std::shared_ptr< Problem<facetId> > facetProblem,

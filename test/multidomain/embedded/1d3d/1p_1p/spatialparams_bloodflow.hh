@@ -67,7 +67,7 @@ public:
     /*!
      * \brief Return the radius of the circular pipe for the current sub-control volume in [m].
      *
-     * \param the index of the element
+     * \param eIdxGlobal the index of the element
      */
     Scalar radius(unsigned int eIdxGlobal) const
     {

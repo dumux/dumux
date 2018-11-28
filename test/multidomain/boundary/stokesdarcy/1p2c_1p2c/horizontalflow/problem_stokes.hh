@@ -198,9 +198,6 @@ public:
 
     /*!
      * \brief Evaluate the boundary conditions for a Dirichlet control volume.
-     *
-     * \param element The element
-     * \param scvf The sub control volume face
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
@@ -218,7 +215,7 @@ public:
      * \brief Evaluate the boundary conditions for a Neumann control volume.
      *
      * \param element The element for which the Neumann boundary condition is set
-     * \param fvGeomentry The fvGeometry
+     * \param fvGeometry The fvGeometry
      * \param elemVolVars The element volume variables
      * \param elemFaceVars The element face variables
      * \param scvf The boundary sub control volume face

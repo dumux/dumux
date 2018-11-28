@@ -154,7 +154,7 @@ public:
      * \param facetGridView The grid view of a (dim-1)-dimensional grid conforming
      *                      with the facets of this grid view, indicating on which facets
      *                      nodal dofs should be enriched.
-     * \param CodimOneGridAdapter Adapter class that allows access to information on the d-
+     * \param codimOneGridAdapter Adapter class that allows access to information on the d-
      *                            dimensional grid for entities of the (d-1)-dimensional grid
      * \param verbose Verbosity level for vertex enrichment
      */
@@ -409,7 +409,7 @@ public:
      * \param facetGridView The grid view of a (dim-1)-dimensional grid conforming
      *                      with the facets of this grid view, indicating on which facets
      *                      nodal dofs should be enriched.
-     * \param CodimOneGridAdapter Adapter class that allows access to information on the d-
+     * \param codimOneGridAdapter Adapter class that allows access to information on the d-
      *                            dimensional grid for entities of the (d-1)-dimensional grid
      * \param verbose Verbosity level
      */

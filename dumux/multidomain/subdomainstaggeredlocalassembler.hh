@@ -197,7 +197,7 @@ public:
      *        of the local residual for the current element.
      *
      * \param elemVolVars The element volume variables
-     * \param elemVolVars The element face variables
+     * \param elemFaceVars The element face variables
      */
     CellCenterResidualValue evalLocalFluxAndSourceResidualForCellCenter(const ElementVolumeVariables& elemVolVars, const ElementFaceVariables& elemFaceVars) const
     {
