@@ -93,8 +93,7 @@ struct Scalar<TypeTag, TTag::Obstacle> { using type = double; };
 
 
 /*!
- * \ingroup MPNCModel
- * \ingroup ImplicitTestProblems
+ * \ingroup MPNCTests
  * \brief Problem where liquid water is injected -- by means of a
  *        Dirichlet condition on the lower right of the domain -- which has to go
  *        around an obstacle with \f$10^3\f$ lower permeability.
@@ -160,8 +159,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     ObstacleProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
@@ -196,8 +194,6 @@ public:
 
     /*!
      * \brief Returns the temperature \f$ K \f$
-     *
-     * \param globalPos The global position
      */
     Scalar temperature() const
     { return temperature_; }
@@ -247,20 +243,17 @@ public:
      * \brief Evaluates the boundary conditions for a Neumann
      *        boundary segment.
      *
-     * \param values Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local index of the sub-control volume
-     * \param boundaryFaceIdx The index of the boundary face
+     * \param elemVolVars The volume variables of the element
+     * \param scvf The sub control volume face
      *
      * Negative values mean influx.
      */
     NumEqVector neumann(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace& scvf) const
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolumeFace& scvf) const
     {
         return NumEqVector(0.0);
     }
@@ -276,19 +269,17 @@ public:
      * \brief Evaluate the source term for all balance equations within a given
      *        sub-control-volume.
      *
-     * \param values Stores the solution for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param elemVolVars The volume variables of the element
+     * \param scv The sub-control volume
      *
      * Positive values mean that mass is created, negative ones mean that it vanishes.
      */
-    //! \copydoc Dumux::ImplicitProblem::source()
     NumEqVector source(const Element &element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume &scv) const
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
     {
        return NumEqVector(0.0);
     }
@@ -296,7 +287,6 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The center of the finite volume which ought to be set.
      *
      * For this method, the \a values parameter stores primary

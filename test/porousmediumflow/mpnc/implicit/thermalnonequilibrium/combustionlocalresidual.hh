@@ -69,6 +69,10 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      *
+     * \param source The source term
+     * \param element An element which contains part of the control volume
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars The volume variables of the current element
      * \param scv The sub-control volume over which we integrate the source term
      */
     static void computeSourceEnergy(NumEqVector& source,

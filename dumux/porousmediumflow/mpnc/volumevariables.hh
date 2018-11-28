@@ -149,6 +149,7 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      * \param fluidState A container with the current (physical) state of the fluid
+     * \param solidState A container with the current (physical) state of the solid
      */
 
     template<class ElemSol, class Problem, class Element, class Scv>
@@ -596,7 +597,7 @@ public:
 
     }
 
- /*!
+    /*!
      * \brief Set complete fluid state
      *
      * \param elemSol A vector containing all primary variables connected to the element
@@ -605,8 +606,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      * \param fluidState A container with the current (physical) state of the fluid
+     * \param solidState A container with the current (physical) state of the solid
      */
-
     template<class ElemSol, class Problem, class Element, class Scv>
     void completeFluidState(const ElemSol& elemSol,
                             const Problem& problem,
@@ -693,14 +694,13 @@ public:
         }
    }
 
-        /*!
+    /*!
      * \brief Update composition of all phases in the mutable
      *        parameters from the primary variables.
      *
      *        \param actualFluidState Container for all the secondary variables concerning the fluids
      *        \param paramCache Container for cache parameters
      *        \param priVars The primary Variables
-     *        \param *hint the volume variables, usable for initial guess of composition
      */
     void updateMoleFraction(FluidState & actualFluidState,
                             ParameterCache & paramCache,
