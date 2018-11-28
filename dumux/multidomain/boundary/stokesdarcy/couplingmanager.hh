@@ -55,27 +55,27 @@ class StokesDarcyCouplingManager
     using ParentType = StaggeredCouplingManagerBase<MDTraits, StokesDarcyCouplingManager<MDTraits>>;
 
 public:
-    static constexpr auto stokesCellCenterIdx = typename MDTraits::template DomainIdx<0>();
-    static constexpr auto stokesFaceIdx = typename MDTraits::template DomainIdx<1>();
-    static constexpr auto cellCenterIdx = typename MDTraits::template DomainIdx<0>();
-    static constexpr auto faceIdx = typename MDTraits::template DomainIdx<1>();
+    static constexpr auto stokesCellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
+    static constexpr auto cellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto faceIdx = typename MDTraits::template SubDomain<1>::Index();
     static constexpr auto stokesIdx = stokesCellCenterIdx;
-    static constexpr auto darcyIdx = typename MDTraits::template DomainIdx<2>();
+    static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
 
 private:
 
     using SolutionVector = typename MDTraits::SolutionVector;
 
     // obtain the type tags of the sub problems
-    using StokesTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
-    using DarcyTypeTag = typename MDTraits::template SubDomainTypeTag<2>;
+    using StokesTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
+    using DarcyTypeTag = typename MDTraits::template SubDomain<2>::TypeTag;
 
     using CouplingStencils = std::unordered_map<std::size_t, std::vector<std::size_t> >;
     using CouplingStencil = CouplingStencils::mapped_type;
 
     // the sub domain type tags
     template<std::size_t id>
-    using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
     static constexpr bool isCompositional = GetPropType<SubDomainTypeTag<0>, Properties::ModelTraits>::numComponents() > 1;
 
@@ -91,7 +91,7 @@ private:
     template<std::size_t id> using ElementFluxVariablesCache = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFluxVariablesCache>::LocalView;
     template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
-    template<std::size_t id> using PrimaryVariables = typename MDTraits::template PrimaryVariables<id>;
+    template<std::size_t id> using PrimaryVariables = typename MDTraits::template SubDomain<id>::PrimaryVariables;
     template<std::size_t id> using SubControlVolumeFace  = typename FVElementGeometry<id>::SubControlVolumeFace;
 
     using CellCenterSolutionVector = GetPropType<StokesTypeTag, Properties::CellCenterSolutionVector>;

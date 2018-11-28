@@ -43,6 +43,92 @@
 #include "traits.hh"
 
 namespace Dumux {
+namespace Detail {
+namespace Staggered {
+
+//////////////////////////////////////////////////////////
+template<template<std::size_t> class SubDomainTypeTag, std::size_t i>
+struct SubDomainFVGridGeometryImpl
+{ using type = GetPropType<SubDomainTypeTag<i>, Properties::FVGridGeometry>; };
+
+template<template<std::size_t> class SubDomainTypeTag>
+struct SubDomainFVGridGeometryImpl<SubDomainTypeTag, 0>
+{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::FVGridGeometry>::CellCenterFVGridGeometryType; };
+
+template<template<std::size_t> class SubDomainTypeTag>
+struct SubDomainFVGridGeometryImpl<SubDomainTypeTag, 1>
+{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::FVGridGeometry>::FaceFVGridGeometryType; };
+//////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////
+template<template<std::size_t> class SubDomainTypeTag, std::size_t i>
+struct SubDomainGridVariablesImpl
+{ using type = GetPropType<SubDomainTypeTag<i>, Properties::GridVariables>; };
+
+template<template<std::size_t> class SubDomainTypeTag>
+struct SubDomainGridVariablesImpl<SubDomainTypeTag, 0>
+{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridVariables>::CellCenterGridVariablesType; };
+
+template<template<std::size_t> class SubDomainTypeTag>
+struct SubDomainGridVariablesImpl<SubDomainTypeTag, 1>
+{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridVariables>::FaceGridVariablesType; };
+//////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////
+template<template<std::size_t> class SubDomainTypeTag, std::size_t i>
+struct SubDomainPrimaryVariablesImpl
+{ using type = GetPropType<SubDomainTypeTag<i>, Properties::PrimaryVariables>; };
+
+template<template<std::size_t> class SubDomainTypeTag>
+struct SubDomainPrimaryVariablesImpl<SubDomainTypeTag, 0>
+{ using type = GetPropType<SubDomainTypeTag<0>, Properties::CellCenterPrimaryVariables>; };
+
+template<template<std::size_t> class SubDomainTypeTag>
+struct SubDomainPrimaryVariablesImpl<SubDomainTypeTag, 1>
+{ using type = GetPropType<SubDomainTypeTag<0>, Properties::FacePrimaryVariables>; };
+//////////////////////////////////////////////////////////
+
+template<class Scalar, int numEq>
+struct JacobianTypeImpl
+{
+    private:
+        using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
+    public:
+        using type = typename Dune::BCRSMatrix<MatrixBlock>;
+};
+
+//////////////////////////////////////////////////////////
+template<template<std::size_t> class SubDomainTypeTag, std::size_t i>
+struct SubDomainJacobianMatrixImpl
+{ using type = GetPropType<SubDomainTypeTag<i>, Properties::JacobianMatrix>; };
+
+template<template<std::size_t> class SubDomainTypeTag>
+struct SubDomainJacobianMatrixImpl<SubDomainTypeTag, 0>
+{ using type = typename JacobianTypeImpl<GetPropType<SubDomainTypeTag<0>, Properties::Scalar>,
+                                         getPropValue<SubDomainTypeTag<0>, Properties::NumEqCellCenter>()>::type; };
+
+template<template<std::size_t> class SubDomainTypeTag>
+struct SubDomainJacobianMatrixImpl<SubDomainTypeTag, 1>
+{ using type = typename JacobianTypeImpl<GetPropType<SubDomainTypeTag<1>, Properties::Scalar>,
+                                         getPropValue<SubDomainTypeTag<0>, Properties::NumEqFace>()>::type; };
+//////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////
+template<template<std::size_t> class SubDomainTypeTag, std::size_t i>
+struct SubDomainSolutionVectorImpl
+{ using type = GetPropType<SubDomainTypeTag<i>, Properties::SolutionVector>; };
+
+template<template<std::size_t> class SubDomainTypeTag>
+struct SubDomainSolutionVectorImpl<SubDomainTypeTag, 0>
+{ using type = GetPropType<SubDomainTypeTag<0>, Properties::CellCenterSolutionVector>; };
+
+template<template<std::size_t> class SubDomainTypeTag>
+struct SubDomainSolutionVectorImpl<SubDomainTypeTag, 1>
+{ using type = GetPropType<SubDomainTypeTag<0>, Properties::FaceSolutionVector>; };
+//////////////////////////////////////////////////////////
+
+} // end namespace Staggered
+} // end namespace Detail
 
 /*
  * \ingroup MultiDomain
@@ -73,95 +159,83 @@ namespace Dumux {
 template<typename... SubDomainTypeTags>
 struct StaggeredMultiDomainTraits
 {
+    //! the number of subdomains
     static constexpr std::size_t numSubDomains = sizeof...(SubDomainTypeTags);
+
+private:
 
     //! the type tag of a sub domain problem
     template<std::size_t id>
     using SubDomainTypeTag = typename std::tuple_element_t<id, std::tuple<SubDomainTypeTags...>>;
 
-    //! the static domain indices
-    template<std::size_t id>
-    using DomainIdx = Dune::index_constant<id>;
-
-private:
+    //! helper alias to construct derived multidomain types like tuples
     using Indices = std::make_index_sequence<numSubDomains>;
 
-    template<std::size_t id>
-    using SolutionSubVector = std::conditional_t<(id < 2),
-                                                 std::conditional_t<(id == 0),
-                                                                    GetPropType<SubDomainTypeTag<0>, Properties::CellCenterSolutionVector>,
-                                                                    GetPropType<SubDomainTypeTag<0>, Properties::FaceSolutionVector>>,
-                                                 GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>>;
-
+    //! the scalar type of each sub domain
     template<std::size_t id>
     using SubDomainScalar = GetPropType<SubDomainTypeTag<id>, Properties::Scalar>;
 
     template<std::size_t id>
-    using SubDomainProblem = std::shared_ptr<const GetPropType<SubDomainTypeTag<id>, Properties::Problem>>;
+    using SubDomainJacobianMatrix = typename Detail::Staggered::SubDomainJacobianMatrixImpl<SubDomainTypeTag, id>::type;
 
     template<std::size_t id>
-    using SubDomainFVGridGeometry = std::shared_ptr<std::conditional_t<(id < 2),
-                                                                       std::conditional_t<(id == 0),
-                                                                                          typename GetPropType<SubDomainTypeTag<0>, Properties::FVGridGeometry>::CellCenterFVGridGeometryType,
-                                                                                          typename GetPropType<SubDomainTypeTag<0>, Properties::FVGridGeometry>::FaceFVGridGeometryType>,
-                                                                       GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>>>;
-
-    template<std::size_t id>
-    using SubDomainGridVariables = std::shared_ptr<std::conditional_t<(id < 2),
-                                                                      std::conditional_t<(id == 0),
-                                                                                         typename GetPropType<SubDomainTypeTag<0>, Properties::GridVariables>::CellCenterGridVariablesType,
-                                                                                         typename GetPropType<SubDomainTypeTag<0>, Properties::GridVariables>::FaceGridVariablesType>,
-                                                                      GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>>>;
-
-    template<class Scalar, int numEq>
-    struct JacobianType
-    {
-        private:
-            using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
-        public:
-            using type = typename Dune::BCRSMatrix<MatrixBlock>;
-    };
-
-
-    template<std::size_t id>
-    using JacobianDiagBlock = std::conditional_t<(id < 2),
-                                                 std::conditional_t<(id == 0),
-                                                                    typename JacobianType<GetPropType<SubDomainTypeTag<0>, Properties::Scalar>, getPropValue<SubDomainTypeTag<0>, Properties::NumEqCellCenter>()>::type,
-                                                                    typename JacobianType<GetPropType<SubDomainTypeTag<0>, Properties::Scalar>, getPropValue<SubDomainTypeTag<0>, Properties::NumEqFace>()>::type>,
-                                                 GetPropType<SubDomainTypeTag<id>, Properties::JacobianMatrix>>;
+    using SubDomainSolutionVector = typename Detail::Staggered::SubDomainSolutionVectorImpl<SubDomainTypeTag, id>::type;
 
 public:
+
+    /*
+     * \brief sub domain types
+     */
+    //\{
+
+    template<std::size_t id>
+    struct SubDomain
+    {
+        using Index = Dune::index_constant<id>;
+        using TypeTag = SubDomainTypeTag<id>;
+        using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+        using FVGridGeometry = typename Detail::Staggered::SubDomainFVGridGeometryImpl<SubDomainTypeTag, id>::type;
+        using GridVariables = typename Detail::Staggered::SubDomainGridVariablesImpl<SubDomainTypeTag, id>::type;
+        using SolutionVector = typename Detail::Staggered::SubDomainSolutionVectorImpl<SubDomainTypeTag, id>::type;
+        using PrimaryVariables = typename Detail::Staggered::SubDomainPrimaryVariablesImpl<SubDomainTypeTag, id>::type;
+    };
+
+    //\}
+
+    /*
+     * \brief multi domain types
+     */
+    //\{
 
     //! the scalar type
     using Scalar = typename makeFromIndexedType<std::common_type_t, SubDomainScalar, Indices>::type;
 
     //! the solution vector type
-    using SolutionVector = typename makeFromIndexedType<Dune::MultiTypeBlockVector, SolutionSubVector, Indices>::type;
-
-    template<std::size_t id>
-    using PrimaryVariables = std::conditional_t<(id < 2),
-                                                 std::conditional_t<(id == 0), GetPropType<SubDomainTypeTag<0>, Properties::CellCenterPrimaryVariables>,
-                                                                               GetPropType<SubDomainTypeTag<0>, Properties::FacePrimaryVariables>>,
-                                                 GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>>;
-
-    template<typename... MatrixBlocks>
-    using createMatrixType = typename Detail::createMultiTypeBlockMatrixType<Scalar, MatrixBlocks...>::type::type;
+    using SolutionVector = typename makeFromIndexedType<Dune::MultiTypeBlockVector, SubDomainSolutionVector, Indices>::type;
 
     //! the jacobian type
-    using JacobianMatrix = typename makeFromIndexedType<createMatrixType, JacobianDiagBlock, Indices>::type;
+    using JacobianMatrix = typename Detail::MultiDomainMatrixType<SubDomainJacobianMatrix, Indices, Scalar>::type;
 
-    //! the tuple of problems
-    using ProblemTuple = typename makeFromIndexedType<std::tuple, SubDomainProblem, Indices>::type;
+    //\}
 
-    //! the tuple of fv grid geometries
-    using FVGridGeometryTuple = typename makeFromIndexedType<std::tuple, SubDomainFVGridGeometry, Indices>::type;
+    /*
+     * \brief helper aliases to contruct derived tuple types
+     */
+    //\{
 
-    //! the tuple of grid variables
-    using GridVariablesTuple = typename makeFromIndexedType<std::tuple, SubDomainGridVariables, Indices>::type;
-
-    //! convenience alias to create tuple from type
+    //! helper alias to create tuple<...> from indexed type
     template<template<std::size_t> class T>
-    using MakeTuple = typename makeFromIndexedType<std::tuple, T, Indices>::type;
+    using Tuple = typename makeFromIndexedType<std::tuple, T, Indices>::type;
+
+    //! helper alias to create tuple<std::shared_ptr<...>> from indexed type
+    template<template<std::size_t> class T>
+    using TupleOfSharedPtr = typename Detail::MultiDomainTupleSharedPtr<T, Indices>::type;
+
+    //! helper alias to create tuple<std::shared_ptr<const ...>> from indexed type
+    template<template<std::size_t> class T>
+    using TupleOfSharedPtrConst = typename Detail::MultiDomainTupleSharedPtrConst<T, Indices>::type;
+
+    //\}
 };
 
 } //end namespace Dumux

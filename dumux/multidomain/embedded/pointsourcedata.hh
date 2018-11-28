@@ -47,8 +47,8 @@ class PointSourceData
     using ShapeValues = typename std::vector<Dune::FieldVector<Scalar, 1> >;
 
     // obtain the type tags of the sub problems
-    using BulkTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
-    using LowDimTypeTag = typename MDTraits::template SubDomainTypeTag<1>;
+    using BulkTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
+    using LowDimTypeTag = typename MDTraits::template SubDomain<1>::TypeTag;
 
     using BulkPrimaryVariables = GetPropType<BulkTypeTag, Properties::PrimaryVariables>;
     using LowDimPrimaryVariables = GetPropType<LowDimTypeTag, Properties::PrimaryVariables>;
@@ -155,8 +155,8 @@ class PointSourceDataCircleAverage : public PointSourceData<MDTraits>
     using ShapeValues = typename std::vector<Dune::FieldVector<Scalar, 1> >;
 
     // obtain the type tags of the sub problems
-    using BulkTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
-    using LowDimTypeTag = typename MDTraits::template SubDomainTypeTag<1>;
+    using BulkTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
+    using LowDimTypeTag = typename MDTraits::template SubDomain<1>::TypeTag;
 
     using BulkPrimaryVariables = GetPropType<BulkTypeTag, Properties::PrimaryVariables>;
     using LowDimPrimaryVariables = GetPropType<LowDimTypeTag, Properties::PrimaryVariables>;

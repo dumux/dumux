@@ -195,8 +195,8 @@ int main(int argc, char** argv) try
 
     // the mixed dimension type traits
     using Traits = MultiDomainTraits<SubTypeTag0, SubTypeTag1>;
-    constexpr auto domain0Idx = Traits::template DomainIdx<0>();
-    constexpr auto domain1Idx = Traits::template DomainIdx<1>();
+    constexpr auto domain0Idx = Traits::template SubDomain<0>::Index();
+    constexpr auto domain1Idx = Traits::template SubDomain<1>::Index();
 
     // the coupling manager
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;

@@ -246,8 +246,8 @@ int main(int argc, char** argv) try
     using SolutionVector = typename MDTraits::SolutionVector;
     SolutionVector x;
 
-    static const auto bulkId = typename MDTraits::template DomainIdx<0>();
-    static const auto lowDimId = typename MDTraits::template DomainIdx<1>();
+    static const auto bulkId = typename MDTraits::template SubDomain<0>::Index();
+    static const auto lowDimId = typename MDTraits::template SubDomain<1>::Index();
     x[bulkId].resize(bulkFvGridGeometry->numDofs());
     x[lowDimId].resize(lowDimFvGridGeometry->numDofs());
     bulkProblem->applyInitialSolution(x[bulkId]);

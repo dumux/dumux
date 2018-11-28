@@ -60,7 +60,7 @@ class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Reas
 
     template<std::size_t i>
     using PrivarSwitchPtr = std::unique_ptr<PrimaryVariableSwitch<i>>;
-    using PriVarSwitchPtrTuple = typename Assembler::Traits::template MakeTuple<PrivarSwitchPtr>;
+    using PriVarSwitchPtrTuple = typename Assembler::Traits::template Tuple<PrivarSwitchPtr>;
 
 public:
 

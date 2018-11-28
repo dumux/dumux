@@ -53,14 +53,14 @@ class DarcyDarcyBoundaryCouplingMapper
 {
     using Scalar = typename MDTraits::Scalar;
 
-    template<std::size_t i> using FVGridGeometry = typename MDTraits::template SubDomainFVGridGeometry<i>;
+    template<std::size_t i> using FVGridGeometry = typename MDTraits::template SubDomain<i>::FVGridGeometry;
     template<std::size_t i> using SubControlVolumeFace = typename FVGridGeometry<i>::SubControlVolumeFace;
     template<std::size_t i> using GridView = typename FVGridGeometry<i>::GridView;
     template<std::size_t i> using Element = typename GridView<i>::template Codim<0>::Entity;
 
     template<std::size_t i>
     static constexpr auto domainIdx()
-    { return typename MDTraits::template DomainIdx<i>{}; }
+    { return typename MDTraits::template SubDomain<i>::Index{}; }
 
     template<std::size_t i>
     static constexpr bool isCCTpfa()

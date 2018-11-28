@@ -55,13 +55,13 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     using ParentType = CouplingManager< MDTraits >;
 
     // convenience aliases and instances of the two domain ids
-    using BulkIdType = typename MDTraits::template DomainIdx<bulkDomainId>;
-    using LowDimIdType = typename MDTraits::template DomainIdx<lowDimDomainId>;
+    using BulkIdType = typename MDTraits::template SubDomain<bulkDomainId>::Index;
+    using LowDimIdType = typename MDTraits::template SubDomain<lowDimDomainId>::Index;
     static constexpr auto bulkId = BulkIdType();
     static constexpr auto lowDimId = LowDimIdType();
 
     // the sub-domain type tags
-    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
     // further types specific to the sub-problems
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;

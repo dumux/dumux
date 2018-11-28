@@ -51,7 +51,7 @@ template<class MDTraits>
 struct DefaultPointSourceTraits
 {
 private:
-    template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<i>;
+    template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomain<i>::TypeTag;
     template<std::size_t i> using FVGridGeometry = GetPropType<SubDomainTypeTag<i>, Properties::FVGridGeometry>;
     template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
 public:
@@ -79,14 +79,14 @@ class EmbeddedCouplingManagerBase
 {
     using ParentType = CouplingManager<MDTraits>;
     using Scalar = typename MDTraits::Scalar;
-    static constexpr auto bulkIdx = typename MDTraits::template DomainIdx<0>();
-    static constexpr auto lowDimIdx = typename MDTraits::template DomainIdx<1>();
+    static constexpr auto bulkIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto lowDimIdx = typename MDTraits::template SubDomain<1>::Index();
     using SolutionVector = typename MDTraits::SolutionVector;
     using PointSourceData = typename PSTraits::PointSourceData;
 
     // the sub domain type tags
     template<std::size_t id> using PointSource = typename PSTraits::template PointSource<id>;
-    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
     template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;

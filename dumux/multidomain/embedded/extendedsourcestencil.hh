@@ -50,13 +50,13 @@ class ExtendedSourceStencil
     using MDTraits = typename CouplingManager::MultiDomainTraits;
     using Scalar = typename MDTraits::Scalar;
 
-    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
-    static constexpr auto bulkIdx = typename MDTraits::template DomainIdx<0>();
-    static constexpr auto lowDimIdx = typename MDTraits::template DomainIdx<1>();
+    static constexpr auto bulkIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto lowDimIdx = typename MDTraits::template SubDomain<1>::Index();
 
     template<std::size_t id>
     static constexpr bool isBox()

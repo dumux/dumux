@@ -58,18 +58,25 @@ template<class MDTraits, class CMType, DiffMethod diffMethod, bool useImplicitAs
 class MultiDomainFVAssembler
 {
     template<std::size_t id>
-    using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
 public:
     using Traits = MDTraits;
 
     using Scalar = typename MDTraits::Scalar;
 
+    //! TODO get rid of this GetPropType
     template<std::size_t id>
     using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
 
     template<std::size_t id>
-    using GridVariables = typename std::tuple_element_t<id, typename MDTraits::GridVariablesTuple>::element_type;
+    using GridVariables = typename MDTraits::template SubDomain<id>::GridVariables;
+
+    template<std::size_t id>
+    using FVGridGeometry = typename MDTraits::template SubDomain<id>::FVGridGeometry;
+
+    template<std::size_t id>
+    using Problem = typename MDTraits::template SubDomain<id>::Problem;
 
     using JacobianMatrix = typename MDTraits::JacobianMatrix;
     using SolutionVector = typename MDTraits::SolutionVector;
@@ -85,9 +92,9 @@ public:
 
 private:
 
-    using ProblemTuple = typename MDTraits::ProblemTuple;
-    using FVGridGeometryTuple = typename MDTraits::FVGridGeometryTuple;
-    using GridVariablesTuple = typename MDTraits::GridVariablesTuple;
+    using ProblemTuple = typename MDTraits::template TupleOfSharedPtrConst<Problem>;
+    using FVGridGeometryTuple = typename MDTraits::template TupleOfSharedPtrConst<FVGridGeometry>;
+    using GridVariablesTuple = typename MDTraits::template TupleOfSharedPtr<GridVariables>;
 
     using TimeLoop = TimeLoopBase<Scalar>;
     using ThisType = MultiDomainFVAssembler<MDTraits, CouplingManager, diffMethod, isImplicit()>;
@@ -118,9 +125,6 @@ private:
     {
         using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
-
-    template<std::size_t id>
-    using FVGridGeometry = typename std::tuple_element<id, FVGridGeometryTuple>::type::element_type;
 
     template<std::size_t id>
     using SubDomainAssembler = typename SubDomainAssemblerType<FVGridGeometry<id>::discMethod, id>::type;

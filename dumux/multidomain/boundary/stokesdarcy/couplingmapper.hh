@@ -54,18 +54,18 @@ class StokesDarcyCouplingMapper
     using Scalar = typename MDTraits::Scalar;
 
 public:
-    static constexpr auto stokesCellCenterIdx = typename MDTraits::template DomainIdx<0>();
-    static constexpr auto stokesFaceIdx = typename MDTraits::template DomainIdx<1>();
-    static constexpr auto cellCenterIdx = typename MDTraits::template DomainIdx<0>();
-    static constexpr auto faceIdx = typename MDTraits::template DomainIdx<1>();
+    static constexpr auto stokesCellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
+    static constexpr auto cellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto faceIdx = typename MDTraits::template SubDomain<1>::Index();
     static constexpr auto stokesIdx = stokesCellCenterIdx;
-    static constexpr auto darcyIdx = typename MDTraits::template DomainIdx<2>();
+    static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
 
 
 private:
     // obtain the type tags of the sub problems
-    using StokesTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
-    using DarcyTypeTag = typename MDTraits::template SubDomainTypeTag<2>;
+    using StokesTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
+    using DarcyTypeTag = typename MDTraits::template SubDomain<2>::TypeTag;
 
     struct ElementMapInfo
     {
@@ -76,7 +76,7 @@ private:
 
     // the sub domain type tags
     template<std::size_t id>
-    using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     using CouplingManager = GetPropType<StokesTypeTag, Properties::CouplingManager>;
 
     static_assert(GetPropType<SubDomainTypeTag<stokesIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::staggered,
