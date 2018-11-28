@@ -175,7 +175,7 @@ public:
     {
         BoundaryTypes values;
 
-        if(isInlet(globalPos))
+        if(isInlet_(globalPos))
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
@@ -184,7 +184,7 @@ public:
             values.setDirichlet(Indices::temperatureIdx);
 #endif
         }
-        else if(isOutlet(globalPos))
+        else if(isOutlet_(globalPos))
         {
             values.setDirichlet(Indices::pressureIdx);
             values.setOutflow(transportEqIdx);
@@ -218,7 +218,7 @@ public:
         PrimaryVariables values = initialAtPos(globalPos);
 
         // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
-        if(isInlet(globalPos))
+        if(isInlet_(globalPos))
         {
             if(time() >= 10.0 || inletVelocity_  < eps_)
             {
@@ -312,12 +312,12 @@ public:
 
 private:
 
-    bool isInlet(const GlobalPosition& globalPos) const
+    bool isInlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] < eps_;
     }
 
-    bool isOutlet(const GlobalPosition& globalPos) const
+    bool isOutlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
     }

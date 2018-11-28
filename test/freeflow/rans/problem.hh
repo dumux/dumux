@@ -241,7 +241,7 @@ public:
     {
         BoundaryTypes values;
 
-        if(isOutlet(globalPos))
+        if(isOutlet_(globalPos))
         {
             values.setDirichlet(Indices::pressureIdx);
 
@@ -406,12 +406,12 @@ public:
     }
 
 private:
-    bool isInlet(const GlobalPosition& globalPos) const
+    bool isInlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
     }
 
-    bool isOutlet(const GlobalPosition& globalPos) const
+    bool isOutlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
     }
