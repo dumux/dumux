@@ -187,18 +187,19 @@ public:
      * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Darcy information)
      */
     template<std::size_t i, class Assembler, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
-    void bindCouplingContext(Dune::index_constant<i> domainI, const Element<stokesCellCenterIdx>& element, const Assembler& assembler)
+    void bindCouplingContext(Dune::index_constant<i> domainI, const Element<stokesCellCenterIdx>& element, const Assembler& assembler) const
     { bindCouplingContext(domainI, element); }
 
     /*!
      * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Darcy information)
      */
     template<std::size_t i, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
-    void bindCouplingContext(Dune::index_constant<i> domainI, const Element<stokesCellCenterIdx>& element)
+    void bindCouplingContext(Dune::index_constant<i> domainI, const Element<stokesCellCenterIdx>& element) const
     {
         stokesCouplingContext_.clear();
 
         const auto stokesElementIdx = this->problem(stokesIdx).fvGridGeometry().elementMapper().index(element);
+        boundStokesElemIdx_ = stokesElementIdx;
 
         // do nothing if the element is not coupled to the other domain
         if(!couplingMapper_.stokesElementToDarcyElementMap().count(stokesElementIdx))
@@ -227,17 +228,18 @@ public:
      * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Stokes information)
      */
     template<class Assembler>
-    void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element, const Assembler& assembler)
+    void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element, const Assembler& assembler) const
     { bindCouplingContext(domainI, element); }
 
     /*!
      * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Stokes information)
      */
-    void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element)
+    void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element) const
     {
         darcyCouplingContext_.clear();
 
         const auto darcyElementIdx = this->problem(darcyIdx).fvGridGeometry().elementMapper().index(element);
+        boundDarcyElemIdx_ = darcyElementIdx;
 
         // do nothing if the element is not coupled to the other domain
         if(!couplingMapper_.darcyElementToStokesElementMap().count(darcyElementIdx))
@@ -378,8 +380,11 @@ public:
     /*!
      * \brief Access the coupling context needed for the Stokes domain
      */
-    const auto& stokesCouplingContext(const SubControlVolumeFace<stokesIdx>& scvf) const
+    const auto& stokesCouplingContext(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
+        if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
+            bindCouplingContext(stokesIdx, element);
+
         for(const auto& context : stokesCouplingContext_)
         {
             if(scvf.index() == context.stokesScvfIdx)
@@ -392,8 +397,11 @@ public:
     /*!
      * \brief Access the coupling context needed for the Darcy domain
      */
-    const auto& darcyCouplingContext(const SubControlVolumeFace<darcyIdx>& scvf) const
+    const auto& darcyCouplingContext(const Element<darcyIdx>& element, const SubControlVolumeFace<darcyIdx>& scvf) const
     {
+        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != scvf.insideScvIdx())
+            bindCouplingContext(darcyIdx, element);
+
         for(const auto& context : darcyCouplingContext_)
         {
             if(scvf.index() == context.darcyScvfIdx)
@@ -544,8 +552,11 @@ private:
     ////////////////////////////////////////////////////////////////////////////
     //! The coupling context
     ////////////////////////////////////////////////////////////////////////////
-    std::vector<StationaryStokesCouplingContext> stokesCouplingContext_;
-    std::vector<StationaryDarcyCouplingContext> darcyCouplingContext_;
+    mutable std::vector<StationaryStokesCouplingContext> stokesCouplingContext_;
+    mutable std::vector<StationaryDarcyCouplingContext> darcyCouplingContext_;
+
+    mutable std::size_t boundStokesElemIdx_;
+    mutable std::size_t boundDarcyElemIdx_;
 
     CouplingMapper couplingMapper_;
 };

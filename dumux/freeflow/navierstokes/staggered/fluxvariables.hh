@@ -400,7 +400,7 @@ private:
             // Check if we have a Beavers-Joseph-Saffman condition.
             // If yes, the parallel velocity at the boundary is calculated accordingly.
             if (lateralFaceHasBJS)
-                return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, velocitySelf);
+                return problem.bjsVelocity(element, scvf, normalFace, localSubFaceIdx, velocitySelf);
 
             const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
 
@@ -524,7 +524,7 @@ private:
             {
                 const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
                 if (lateralFaceHasBJS)
-                    return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, innerParallelVelocity);
+                    return problem.bjsVelocity(element, scvf, normalFace, localSubFaceIdx, innerParallelVelocity);
                 return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
             };
 

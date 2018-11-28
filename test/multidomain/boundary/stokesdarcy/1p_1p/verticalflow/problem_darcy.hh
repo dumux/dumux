@@ -213,7 +213,7 @@ public:
         NumEqVector values(0.0);
 
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
-            values[pressureIdx] = couplingManager().couplingData().massCouplingCondition(fvGeometry, elemVolVars, scvf);
+            values[pressureIdx] = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scvf);
 
         return values;
     }

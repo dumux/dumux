@@ -188,7 +188,7 @@ public:
      *
      * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
      */
-    Scalar permeability(const SubControlVolumeFace& scvf) const
+    Scalar permeability(const Element& element, const SubControlVolumeFace& scvf) const
     {
         DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the permeability must be returned in the acutal problem");
     }
@@ -204,7 +204,8 @@ public:
     }
 
     //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph-Saffman condition is used
-    const Scalar bjsVelocity(const SubControlVolumeFace& scvf,
+    const Scalar bjsVelocity(const Element& element,
+                             const SubControlVolumeFace& scvf,
                              const SubControlVolumeFace& normalFace,
                              const Scalar& localSubFaceIdx,
                              const Scalar& velocitySelf) const
@@ -213,7 +214,7 @@ public:
         // du/dy = (u_center - u_boundary) / deltaY
         // u_boundary = u_center / (alpha/sqrt(K)*deltaY + 1)
         using std::sqrt;
-        const Scalar K = asImp_().permeability(normalFace);
+        const Scalar K = asImp_().permeability(element, normalFace);
         const Scalar alpha = asImp_().alphaBJ(normalFace);
         return velocitySelf / (alpha / sqrt(K) * scvf.pairData(localSubFaceIdx).parallelDistance + 1.0);
     }
