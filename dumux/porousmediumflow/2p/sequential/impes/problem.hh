@@ -72,7 +72,7 @@ public:
      * \brief Constructs an IMPESProblem2P object
      *
      * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param grid The grid
      */
     IMPESProblem2P(TimeManager& timeManager, Grid& grid)
         : IMPESProblem2P(timeManager, grid, grid.leafGridView())
@@ -91,7 +91,7 @@ public:
      * \brief Constructs an IMPESProblem2P object
      *
      * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param grid The grid
      * \param spatialParams SpatialParams instantiation
      */
     IMPESProblem2P(TimeManager& timeManager, Grid& grid, SpatialParams& spatialParams)

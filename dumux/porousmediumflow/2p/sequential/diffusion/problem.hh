@@ -70,7 +70,7 @@ public:
      * \brief Constructs a DiffusionProblem2P object
      *
      * \param timeManager the time manager
-     * \param gridView The grid view
+     * \param grid The grid
      */
     DiffusionProblem2P(TimeManager& timeManager, Grid& grid)
     : ParentType(timeManager, grid), gravity_(0)
@@ -86,7 +86,7 @@ public:
      * \brief Constructs a DiffusionProblem2P object
      *
      * \param timeManager the time manager
-     * \param gridView The grid view
+     * \param grid The grid
      * \param spatialParams SpatialParams instantiation
      */
     DiffusionProblem2P(TimeManager& timeManager, Grid& grid, SpatialParams& spatialParams)
@@ -103,7 +103,7 @@ public:
     /*!
      * \brief Constructs a DiffusionProblem2P object
      *
-     * \param gridView The grid view
+     * \param grid The grid
      */
     DiffusionProblem2P(Grid& grid)
     : ParentType(grid, false), gravity_(0)
@@ -118,7 +118,7 @@ public:
     /*!
      * \brief Constructs a DiffusionProblem2P object
      *
-     * \param gridView The grid view
+     * \param grid The grid
      * \param spatialParams SpatialParams instantiation
      */
     DiffusionProblem2P(Grid& grid, SpatialParams& spatialParams)
