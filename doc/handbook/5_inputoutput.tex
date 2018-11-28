@@ -1,13 +1,15 @@
-\section{Grid Handling}
-\label{sec:gridhandling}
+\section{Input and Output}
+\label{sec:inputandoutput}
 
-This section summarizes some ideas about grid generation and grid formats that can be used by \Dumux. In general,
+This section summarizes some ideas about grid generation and grid formats that can be used by \Dumux
+for input and output formats.
+In general,
 \Dumux can read grids from file, or, construct grids inside the code. All grids are constructed inside a so called \texttt{GridCreator} which is a \Dumux property.
 Note that some \texttt{GridCreator}s are already available in \Dumux, so e.g.
 construction of a structured grid is fairly easy. We will subsequently introduce the supported file formats, the standard grid creator and its capabilities,
 and briefly mention how to customize and deal with common other grid formats.
 
-\subsection{Supported file formats}
+\subsection{Supported grid file formats}
 \Dumux can read grids from file using the Dune Grid Format (DGF) or the Gmsh mesh format.
 
 \subsubsection{Dune Grid Format}
@@ -135,3 +137,21 @@ in dumux-devel at dumux-devel/util/gridconverters/Documentation\_ICEM\_CFD\_crea
 
 % \subsubsection{Cornerpoint grids}
 % TODO
+
+\subsection{Output formats}
+The default output format for \Dumux is the vtk-file format. Additionally it is possible 
+to generate plots with the gnuplotinterface.
+
+\subsubsection{VTK file format}
+Dumux allows to write out simulation results via the vtkwirter.
+For every print out step, a single *.vtu file is created. For parallel simulations one file
+per printoutstep is generated for each processor. 
+Time step information and files are stored in a *.pvd file.
+The *.pvd file groups the singel *.vtu file and contains additionaly the timestep information.
+Also it is the main file for the visualiazion with paraview.
+The vtk-file format is also supported by other common visualisation programms like Visit and Tecplot. 
+
+\subsubsection{Gnuplotinterface}
+\Dumux provides some Gnuplot interface, which can be used to plot results and generate directly an 
+image file (e.g. png), if gnuplot is installed. An example can be found in test/io/gnuplotinterface.  
+
