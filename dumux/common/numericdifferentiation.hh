@@ -41,6 +41,7 @@ public:
     /*!
      * \brief Computes the epsilon used for numeric differentiation
      * \param value The value of the variable with respect to which we are differentiating
+     * \param baseEps The step width which we are using for differentiation
      */
     template<class Scalar>
     static Scalar epsilon(const Scalar value, const Scalar baseEps = 1e-10)

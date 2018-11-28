@@ -446,8 +446,10 @@ public:
      *   the tolerance
      * - Mark all neighbors of 'red' elements also 'red'
      *
+     * \param assembler the assembler
+     * \param distanceFromLastLinearization The distance from the last linearization
      * \param threshold Reassemble only if the distance from the last
-     * linearization is above this value.
+     *        linearization is above this value.
      */
     void computeColors(const Assembler& assembler,
                        const std::vector<Scalar>& distanceFromLastLinearization,

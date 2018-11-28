@@ -499,7 +499,6 @@ namespace InterpolationPolicy { struct Linear; }
  * \brief a generic function to interpolate given a set of parameters and an interpolation point
  * \param params the parameters used for interpolation (depends on the policy used)
  * \param ip the interpolation point
- * \param policy the interpolation policy
  */
 template <class Policy = InterpolationPolicy::Linear, class Scalar, class Parameter>
 Scalar interpolate(Scalar ip, Parameter&& params)
@@ -520,7 +519,7 @@ struct Linear
     /*!
      * \brief interpolate linearly between two given values
      * \param ip the interpolation point in [0,1]
-     * \param array with the lower and upper bound
+     * \param params array with the lower and upper bound
      */
     template<class Scalar>
     static constexpr Scalar interpolate(Scalar ip, const std::array<Scalar, 2>& params)

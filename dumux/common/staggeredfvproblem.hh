@@ -87,6 +87,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param scv The sub control volume
+     * \param pvIdx The primary variable index
      */
     bool isDirichletCell(const Element& element,
                          const FVElementGeometry& fvGeometry,
@@ -129,6 +130,9 @@ public:
      *
      * This is the method for the case where the Neumann condition is
      * potentially solution dependent
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
      * \param elemFaceVars All face variables for the element
      * \param scvf The sub control volume face
      *

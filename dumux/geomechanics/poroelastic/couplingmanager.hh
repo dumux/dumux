@@ -21,7 +21,7 @@
  * \ingroup MultiDomain
  * \ingroup PoroElastic
  * \ingroup PorousMediumFlow
- * \brief \copydoc Dumux::PMFlowFlowPoroMechanicsCouplingManager
+ * \brief Coupling manager for porous medium flow problems coupled to a poro-mechanical problem
  */
 
 #ifndef DUMUX_POROMECHANICS_COUPLING_MANAGER_HH
@@ -42,7 +42,9 @@ namespace Dumux {
  * \ingroup MultiDomain
  * \ingroup PoroElastic
  * \ingroup PorousMediumFlow
- * \brief Coupling manager for porous medium flow problems coupled to a poro-mechanical
+ * \brief Coupling manager for porous medium flow problems coupled to a poro-mechanical problem
+ *
+ *        Coupling manager for porous medium flow problems coupled to a poro-mechanical
  *        problem both defined on the same grid. Coupling occurs via the change of porosity
  *        and permeability due to mechanical deformations and the influence of the pore
  *        pressure on the effecive stresses acting on the porous medium.
