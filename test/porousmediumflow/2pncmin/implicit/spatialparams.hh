@@ -118,6 +118,7 @@ public:
      *
      *  \param element The finite volume element
      *  \param scv The sub-control volume
+     *  \param elemSol The element solution
      *
      *  Solution dependent permeability function
      */

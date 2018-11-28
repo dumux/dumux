@@ -83,7 +83,6 @@ struct UseMoles<TypeTag, TTag::WaterAir> { static constexpr bool value = true; }
 
 /*!
  * \ingroup TwoPTwoCModel
- * \ingroup ImplicitTestProblems
  * \brief Non-isothermal gas injection problem where a gas (e.g. air)
  *        is injected into a fully water saturated medium. During
  *        buoyancy driven upward migration the gas passes a high
@@ -164,8 +163,7 @@ public:
     /*!
      * \brief The constructor.
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     WaterAirProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -209,7 +207,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -274,7 +271,6 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The position for which the initial condition should be evaluated
      *
      * For this method, the \a values parameter stores primary

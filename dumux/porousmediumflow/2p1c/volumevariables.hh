@@ -155,7 +155,17 @@ public:
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 
-    //! Update the fluidstate
+    /*!
+     * \brief Set complete fluid state
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     * \param fluidState A container with the current (physical) state of the fluid
+     * \param solidState A container with the current (physical) state of the solid
+     */
     template<class ElemSol, class Problem, class Element, class Scv>
     void completeFluidState(const ElemSol& elemSol,
                             const Problem& problem,

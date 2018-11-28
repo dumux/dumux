@@ -36,7 +36,6 @@ namespace Dumux {
 
 /**
  * \ingroup MPNCModel
- * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial params properties for the obstacle problem
  *
  */
@@ -103,7 +102,7 @@ public:
     /*!
      * \brief Define the porosity \f$[-]\f$ of the soil
      *
-     * \param pos The global position of the sub-control volume.
+     * \param globalPos The global position of the sub-control volume.
      * \return the material parameters object
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
@@ -114,7 +113,7 @@ public:
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
-     * \param pos The global position of the sub-control volume.
+     * \param globalPos The global position of the sub-control volume.
      * \return the material parameters object
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
@@ -129,7 +128,7 @@ public:
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
      * \return the wetting phase index
-     * \param globalPos The position of the center of the element
+     * \param globalPos The global position of the sub-control volume.
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
@@ -139,6 +138,7 @@ private:
     /*!
      * \brief Returns whether a given global position is in the
      *        fine-permeability region or not.
+     * \param pos The global position of the sub-control volume.
      */
     static bool isFineMaterial_(const GlobalPosition &pos)
     {

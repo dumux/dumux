@@ -37,7 +37,6 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPTwoCModel
- * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the water-air problem
  */
 template<class FVGridGeometry, class Scalar>
@@ -68,7 +67,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     WaterAirSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {

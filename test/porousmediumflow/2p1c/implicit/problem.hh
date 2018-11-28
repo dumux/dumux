@@ -88,7 +88,7 @@ struct UseBlockingOfSpuriousFlow<TypeTag, TTag::InjectionProblem> { static const
  * \ingroup TwoPOneCTests
  * \brief Non-isothermal 2D problem where steam is injected on the lower left side of the domain.
  *
- * This problem uses the \ref TwoPOneC model.
+ * This problem uses the \ref TwoPOneCModel .
  *
  *  */
 template <class TypeTag>
@@ -190,8 +190,6 @@ public:
      * potentially solution dependent and requires some quantities that
      * are specific to the fully-implicit method.
      *
-     * \param values The neumann values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
