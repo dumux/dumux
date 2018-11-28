@@ -31,7 +31,7 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "./../spatialparams.hh"
+#include "spatialparams.hh"
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -101,6 +101,9 @@ public:
     : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+
+        // determine whether to simulate a vertical or horizontal flow configuration
+        verticalFlow_ = problemName_.find("vertical") != std::string::npos;
     }
 
     /*!
@@ -111,26 +114,10 @@ public:
         return problemName_;
     }
 
-
-    /*!
-     * \name Simulation steering
-     */
-    // \{
-
-    /*!
-     * \brief Returns true if a restart file should be written to
-     *        disk.
-     */
-    bool shouldWriteRestartFile() const
-    { return false; }
-
     /*!
      * \name Problem parameters
      */
     // \{
-
-    bool shouldWriteOutput() const // define output
-    { return true; }
 
     /*!
      * \brief Return the temperature within the domain in [K].
@@ -160,6 +147,12 @@ public:
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
             values.setAllCouplingNeumann();
 
+        if (verticalFlow_)
+        {
+            if (onLowerBoundary_(scvf.center()))
+            values.setAllDirichlet();
+        }
+
         return values;
     }
 
@@ -173,10 +166,7 @@ public:
      */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
-        PrimaryVariables values(0.0);
-        values = initial(element);
-
-        return values;
+        return initial(element);
     }
 
     /*!
@@ -247,21 +237,14 @@ public:
     { return *couplingManager_; }
 
 private:
-    bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_; }
-
-    bool onRightBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_; }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_; }
 
-    bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
-
     Scalar eps_;
     std::shared_ptr<CouplingManager> couplingManager_;
     std::string problemName_;
+    bool verticalFlow_;
 };
 } //end namespace
 

@@ -32,6 +32,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/partial.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
@@ -133,19 +134,8 @@ int main(int argc, char** argv) try
     sol[stokesFaceIdx].resize(stokesFvGridGeometry->numFaceDofs());
     sol[darcyIdx].resize(darcyFvGridGeometry->numDofs());
 
-    const auto& cellCenterSol = sol[stokesCellCenterIdx];
-    const auto& faceSol = sol[stokesFaceIdx];
-
-    // apply initial solution for instationary problems
-    GetPropType<StokesTypeTag, Properties::SolutionVector> stokesSol;
-    std::get<0>(stokesSol) = cellCenterSol;
-    std::get<1>(stokesSol) = faceSol;
-    stokesProblem->applyInitialSolution(stokesSol);
-    sol[stokesCellCenterIdx] = stokesSol[stokesCellCenterIdx];
-    sol[stokesFaceIdx] = stokesSol[stokesFaceIdx];
-
-    darcyProblem->applyInitialSolution(sol[darcyIdx]);
-
+    // get a solution vector storing references to the two Stokes solution vectors
+    auto stokesSol = partial(sol, stokesCellCenterIdx, stokesFaceIdx);
 
     couplingManager->init(stokesProblem, darcyProblem, sol);
 
@@ -158,11 +148,11 @@ int main(int argc, char** argv) try
     darcyGridVariables->init(sol[darcyIdx]);
 
     // intialize the vtk output module
-    StaggeredVtkOutputModule<StokesGridVariables, GetPropType<StokesTypeTag, Properties::SolutionVector>> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
+    StaggeredVtkOutputModule<StokesGridVariables, decltype(stokesSol)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
     GetPropType<StokesTypeTag, Properties::IOFields>::initOutputModule(stokesVtkWriter);
     stokesVtkWriter.write(0.0);
 
-    VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx], darcyProblem->name());
+    VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx],  darcyProblem->name());
     using DarcyVelocityOutput = GetPropType<DarcyTypeTag, Properties::VelocityOutput>;
     darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
     GetPropType<DarcyTypeTag, Properties::IOFields>::initOutputModule(darcyVtkWriter);
