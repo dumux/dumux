@@ -7,7 +7,6 @@ set(TEX_INPUTS
   3_tutorial.tex
   3_furtherpractice.tex
   4_assemblinglinearsystem.tex
-  4_guidelines.tex
   4_developingdumux.tex
   4_externaltools.tex
   4_newfoldersetup.tex
