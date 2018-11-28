@@ -76,6 +76,7 @@ public:
      *
      * \param fluidState A container with the current (physical) state of the fluid
      * \param paramCache A container for iterative calculation of fluid composition
+     * \param knownPhaseIdx The index of the phase with known properties
      */
     template <class FluidState, class ParameterCache>
     static void solve(FluidState &fluidState,
@@ -86,7 +87,7 @@ public:
         // currently this solver can only handle fluid systems which
         // assume ideal mixtures of all fluids. TODO: relax this
         // (requires solving a non-linear system of equations, i.e. using
-        // newton method.)
+        // Newton method.)
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             assert(FluidSystem::isIdealMixture(phaseIdx));
 
@@ -136,7 +137,7 @@ public:
 
         // set the additional equations for the numComponents-numMajorComponents
         // this is only relevant if numphases != numcomponents e.g. in a 2pnc system
-        // Components, of which the molefractions are known, set to molefraction(knownCompIdx)=xKnown
+        // Components, of which the mole fractions are known, set to molefraction(knownCompIdx)=xKnown
         for(int knownCompIdx = 0; knownCompIdx < numComponents-numMajorComponents; ++knownCompIdx)
         {
             int rowIdx = numComponents + numPhases + knownCompIdx;

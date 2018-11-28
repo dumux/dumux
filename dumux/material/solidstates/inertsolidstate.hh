@@ -109,9 +109,8 @@ public:
      *****************************************************/
 
     /*!
-     * \brief Retrieve all parameters from an arbitrary fluid
-     *        state.
-     * \param fs InertSolidState
+     * \brief Retrieve all parameters from an arbitrary fluid state.
+     * \param sst The inert solid state
      *
      * \note If the other fluid state object is inconsistent with the
      *       thermodynamic equilibrium, the result of this method is

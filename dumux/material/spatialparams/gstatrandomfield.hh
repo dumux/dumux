@@ -64,6 +64,7 @@ public:
      * \brief Constructor
      *
      * \param gridView the used gridView
+     * \param elementMapper	Maps elements of the given grid view
      */
     GstatRandomField(const GridView& gridView, const ElementMapper& elementMapper)
     : gridView_(gridView)

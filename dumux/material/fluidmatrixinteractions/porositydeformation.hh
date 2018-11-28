@@ -51,6 +51,7 @@ public:
      * \param globalPos The global position (in the element)
      * \param refPoro The solid matrix porosity without deformation
      * \param minPoro A minimum porosity value
+     * \param maxPoro A maximum porosity value
      *
      * \note Han and Dusseault (2003, doi 10.1016/S0920-4105(03)00047-0)
      *       provide a derivation for \f$\text{d} \phi = -(1 - \phi ) \text{d} \epsilon_v\f$.
@@ -70,7 +71,7 @@ public:
                                    Scalar minPoro = 0.0,
                                    Scalar maxPoro = 1.0)
     {
-        // compute divergence of diplacement at the given position
+        // compute divergence of displacement at the given position
         Scalar divU = 0.0;
         const auto gradU = evalGradients(element, element.geometry(), fvGridGeometry, elemSol, globalPos);
         for (int dir = 0; dir < FVGridGeom::GridView::dimension; ++dir)
