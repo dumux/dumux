@@ -39,6 +39,7 @@ void runTest()
     std::get<2>(m) = c;
 
     auto p = partial(m, _0, _2);
+    p = partial(m, std::make_tuple(_0, _2));
 
     if (!std::is_same<T<Block1&, Block2&>, std::decay_t<decltype(p)>>::value)
         DUNE_THROW(Dune::Exception, "Dumux::partial() returned wrong type: " << Dune::className(p));
