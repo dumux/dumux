@@ -66,6 +66,11 @@ inline static unsigned int directionIndex(Vector&& vector)
  * \ingroup StaggeredDiscretization
  * \brief Helper class constructing the dual grid finite volume geometries
  *        for the free flow staggered discretization method.
+ *
+ * A visualization of the variables that are in this document can be found in the following image:
+ *
+ * \image html staggeredgeometry.png
+ *
  */
 template<class GridView>
 class FreeFlowStaggeredGeometryHelper
