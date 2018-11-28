@@ -160,8 +160,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param fvGridGeometry The fvGridGeometry
      */
     InjectionProblem2PNI(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -195,8 +194,6 @@ public:
     /*!
      * \brief Returns the source term
      *
-     * \param values Stores the source values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param globalPos The global position
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
@@ -217,7 +214,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment
      *
-     * \param values Stores the value of the boundary type
      * \param globalPos The global position
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -235,8 +231,6 @@ public:
      * \brief Evaluates the boundary conditions for a Dirichlet
      *        boundary segment
      *
-     * \param values Stores the Dirichlet values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
      PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
@@ -253,8 +247,6 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * \param globalPos The global position
      *
      * The \a values store the mass flux of each phase normal to the boundary.
@@ -297,8 +289,6 @@ public:
     /*!
      * \brief Evaluates the initial values for a control volume
      *
-     * \param values Stores the initial values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const

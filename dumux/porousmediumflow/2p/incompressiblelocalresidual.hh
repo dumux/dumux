@@ -140,12 +140,13 @@ public:
      * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
-     * \param partialDerivatives The partial derivatives
+     * \param derivativeMatrices The partial derivatives
      * \param problem The problem
      * \param element The element
      * \param fvGeometry The finite volume element geometry
-     * \param curVolVars The current volume variables
-     * \param scv The sub control volume
+     * \param curElemVolVars The current element volume variables
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param scvf The sub control volume face
      */
     template<class PartialDerivativeMatrices, class T = TypeTag>
     std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa, void>
@@ -258,12 +259,13 @@ public:
      * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
-     * \param partialDerivatives The partial derivatives
+     * \param A The Jacobian Matrix
      * \param problem The problem
      * \param element The element
      * \param fvGeometry The finite volume element geometry
-     * \param curVolVars The current volume variables
-     * \param scv The sub control volume
+     * \param curElemVolVars The current element volume variables
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param scvf The sub control volume face
      */
     template<class JacobianMatrix, class T = TypeTag>
     std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box, void>
@@ -420,6 +422,7 @@ public:
      * \param derivativeMatrices The matrices containing the derivatives
      * \param problem The problem
      * \param element The element
+     * \param fvGeometry The finite volume element geometry
      * \param curElemVolVars The current element volume variables
      * \param elemFluxVarsCache The element flux variables cache
      * \param scvf The sub control volume face
@@ -498,6 +501,7 @@ public:
      * \param derivativeMatrices The matrices containing the derivatives
      * \param problem The problem
      * \param element The element
+     * \param fvGeometry The finite volume element geometry
      * \param curElemVolVars The current element volume variables
      * \param elemFluxVarsCache The element flux variables cache
      * \param scvf The sub control volume face

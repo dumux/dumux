@@ -48,8 +48,8 @@ public:
     /*!
      * \brief Update the scv -> dofparameter map
      *
-     * \param The finite volume grid geometry
-     * \param SpatialParams Class encapsulating the spatial parameters
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param spatialParams Class encapsulating the spatial parameters
      * \param x The current state of the solution vector
      */
     template<class FVGridGeometry, class SolutionVector>
