@@ -47,7 +47,7 @@ public:
      * \brief Returns the volume fraction of the precipitate (solid phase)
      *        for the given phaseIdx
      *
-     * \param phaseIdx the index of the solid phase
+     * \param sCompIdx the index of the solid component
      */
     Scalar solidVolumeFraction(int sCompIdx) const
     { return this->solidState_.volumeFraction(sCompIdx); }
@@ -55,7 +55,7 @@ public:
     /*!
      * \brief Returns the density of the phase for all fluid and solid phases
      *
-     * \param phaseIdx the index of the fluid phase
+     * \param sCompIdx the index of the solid component
      */
     Scalar solidComponentDensity(int sCompIdx) const
     {
@@ -65,7 +65,7 @@ public:
     /*!
      * \brief Returns the density of the phase for all fluid and solid phases
      *
-     * \param phaseIdx the index of the fluid phase
+     * \param sCompIdx the index of the solid component
      */
     Scalar solidComponentMolarDensity(int sCompIdx) const
     {
