@@ -33,8 +33,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup RichardsModel
- * \ingroup ImplicitTestProblems
+ * \ingroup RichardsTests
  * \brief The spatial parameters for the RichardsLensProblem
  */
 template<class FVGridGeometry, class Scalar>
@@ -107,7 +106,9 @@ public:
      * This method is not actually required by the Richards model, but provided
      * for the convenience of the RichardsLensProblem
      *
-     * \param globalPos A global coordinate vector
+     * \param element The current finite element
+     * \param scv The sub-control volume
+     * \param elemSol The current element solution
      */
     template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,

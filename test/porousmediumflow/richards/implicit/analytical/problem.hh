@@ -127,8 +127,7 @@ public:
     /*!
      * \brief Constructor
      *
-     * \param timeManager The Dumux TimeManager for simulation management.
-     * \param gridView The grid view on the spatial domain of the problem
+     * \param fvGridGeometry The finite volume grid geometry
      */
     RichardsAnalyticalProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -167,12 +166,6 @@ public:
      *        fluid phase within a finite volume
      *
      * This problem assumes a constant reference pressure of 1 bar.
-     *
-     * \param element The DUNE Codim<0> entity which intersects with
-     *                the finite volume in question
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The sub control volume index inside the finite
-     *               volume geometry
      */
     Scalar nonWettingReferencePressure() const
     { return pnRef_; }
@@ -186,7 +179,6 @@ public:
      * Richards.m which uses Matlab's Symbolic Toolbox to calclate
      * the source term.
      *
-     * \param values Storage for all primary variables of the source term
      * \param globalPos The position for which the source term is set
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
@@ -223,7 +215,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the boundary type is set
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -243,7 +234,6 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The position for which the Dirichlet value is set
      *
      * For this method, the \a values parameter stores primary variables.
@@ -270,7 +260,6 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      *
-     * \param values The neumann values for the conservation equations
      * \param globalPos The position for which the Neumann value is set
      */
     NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
@@ -290,7 +279,6 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      *
-     * \param values Storage for all primary variables of the initial condition
      * \param globalPos The position for which the boundary type is set
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
@@ -313,8 +301,8 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     void analyticalSolution(PrimaryVariables &values,
-                   const Scalar time,
-                   const GlobalPosition &globalPos) const
+                            const Scalar time,
+                            const GlobalPosition &globalPos) const
     {
 
         const Scalar pwTop = 98942.8;
@@ -329,10 +317,12 @@ public:
     /*!
      * \brief Calculate the L2 error between the solution given by
      *        dirichletAtPos and the numerical approximation.
+     *
+     * \param curSol The current solution vector
      * \note Works for cell-centered FV only because the numerical
      *       approximation is only evaluated in the cell center (once).
      *       To extend this function to the box method the evaluation
-     *       has to be exted to box' subvolumes.
+     *       has to be extended to box' subvolumes.
      */
     Scalar calculateL2Error(const SolutionVector& curSol)
     {
