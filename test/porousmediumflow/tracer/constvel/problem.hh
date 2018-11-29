@@ -139,13 +139,13 @@ public:
     }
 
     /*!
-     * \copydoc Base::isCompressible
+     * \copydoc Dumux::FluidSystems::Base::isCompressible
      */
     static constexpr bool isCompressible(int phaseIdx)
     { return false; }
 
      /*!
-     * \copydoc Base::viscosityIsConstant
+     * \copydoc  Dumux::FluidSystems::Base::viscosityIsConstant
      */
     static constexpr bool viscosityIsConstant(int phaseIdx)
     { return true; }
@@ -158,8 +158,7 @@ struct FluidSystem<TypeTag, TTag::TracerTest> { using type = TracerFluidSystem<T
 
 
 /*!
- * \ingroup TracerModel
- * \ingroup ImplicitTestProblems
+ * \ingroup TracerTests
  *
  * \brief Definition of a problem, for the tracer problem:
  * A lens of contaminant tracer is diluted by diffusion and a base groundwater flow

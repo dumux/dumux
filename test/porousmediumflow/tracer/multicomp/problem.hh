@@ -195,7 +195,7 @@ struct FluidSystem<TypeTag, TTag::MaxwellStefanTest> { using type = H2N2CO2Fluid
 /*!
  * \ingroup TracerTest
  * \brief Definition of a problem, for the MaxwellStefan problem *
- * This problem uses the \ref MaxwellStefanModel model.
+ * This problem uses the MaxwellStefan equations.
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_boxmaxwellstefan -ParameterFile ./test_boxmaxwellstefan.input</tt> or

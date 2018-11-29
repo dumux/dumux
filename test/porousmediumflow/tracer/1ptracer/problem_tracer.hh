@@ -133,8 +133,7 @@ struct FluidSystem<TypeTag, TTag::TracerTest> { using type = TracerFluidSystem<T
 
 
 /*!
- * \ingroup TracerModel
- * \ingroup ImplicitTestProblems
+ * \ingroup TracerTests
  *
  * \brief Definition of a problem, for the tracer problem:
  * A lens of contaminant tracer is diluted by diffusion and a base groundwater flow
