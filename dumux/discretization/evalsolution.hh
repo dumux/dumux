@@ -38,37 +38,37 @@ namespace Dumux {
 // The following function declarations are required because of the default
 // parameters together with the friend declarations further below.
 template<class Element, class FVElementGeometry, class PrimaryVariables>
-auto evalSolution(const Element& element,
-                  const typename Element::Geometry& geometry,
-                  const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
-                  const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                  const typename Element::Geometry::GlobalCoordinate& globalPos,
-                  bool ignoreState = false);
+PrimaryVariables evalSolution(const Element& element,
+                              const typename Element::Geometry& geometry,
+                              const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+                              const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                              const typename Element::Geometry::GlobalCoordinate& globalPos,
+                              bool ignoreState = false);
 
 template<class Element, class FVElementGeometry, class PrimaryVariables>
-auto evalSolution(const Element& element,
-                  const typename Element::Geometry& geometry,
-                  const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                  const typename Element::Geometry::GlobalCoordinate& globalPos,
-                  bool ignoreState = false);
+PrimaryVariables evalSolution(const Element& element,
+                              const typename Element::Geometry& geometry,
+                              const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                              const typename Element::Geometry::GlobalCoordinate& globalPos,
+                              bool ignoreState = false);
 
 class SolutionEvaluator
 {
     // declare the free functions `evalSolution` as friends
     template<class Element, class FVElementGeometry, class PrimaryVariables>
-    friend auto evalSolution(const Element&,
-                             const typename Element::Geometry&,
-                             const typename FVElementGeometry::FVGridGeometry&,
-                             const BoxElementSolution<FVElementGeometry, PrimaryVariables>&,
-                             const typename Element::Geometry::GlobalCoordinate&,
-                             bool ignoreState);
+    friend PrimaryVariables evalSolution(const Element&,
+                                         const typename Element::Geometry&,
+                                         const typename FVElementGeometry::FVGridGeometry&,
+                                         const BoxElementSolution<FVElementGeometry, PrimaryVariables>&,
+                                         const typename Element::Geometry::GlobalCoordinate&,
+                                         bool ignoreState);
 
     template<class Element, class FVElementGeometry, class PrimaryVariables>
-    friend auto evalSolution(const Element&,
-                             const typename Element::Geometry&,
-                             const BoxElementSolution<FVElementGeometry, PrimaryVariables>&,
-                             const typename Element::Geometry::GlobalCoordinate&,
-                             bool ignoreState);
+    friend PrimaryVariables evalSolution(const Element&,
+                                         const typename Element::Geometry&,
+                                         const BoxElementSolution<FVElementGeometry, PrimaryVariables>&,
+                                         const typename Element::Geometry::GlobalCoordinate&,
+                                         bool ignoreState);
 
     /*!
      * \brief Interpolates a given box element solution at a given global position.
@@ -347,12 +347,12 @@ bool SolutionEvaluator::warnedAboutUsingMinDist = false;
  * \param ignoreState If true, the state of primary variables is ignored
  */
 template<class Element, class FVElementGeometry, class PrimaryVariables>
-auto evalSolution(const Element& element,
-                  const typename Element::Geometry& geometry,
-                  const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
-                  const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                  const typename Element::Geometry::GlobalCoordinate& globalPos,
-                  bool ignoreState)
+PrimaryVariables evalSolution(const Element& element,
+                              const typename Element::Geometry& geometry,
+                              const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+                              const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                              const typename Element::Geometry::GlobalCoordinate& globalPos,
+                              bool ignoreState)
 {
     return SolutionEvaluator::eval_(element, geometry, fvGridGeometry, elemSol, globalPos, ignoreState);
 }
@@ -372,11 +372,11 @@ auto evalSolution(const Element& element,
  * \param ignoreState If true, the state of primary variables is ignored
  */
 template<class Element, class FVElementGeometry, class PrimaryVariables>
-auto evalSolution(const Element& element,
-                  const typename Element::Geometry& geometry,
-                  const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                  const typename Element::Geometry::GlobalCoordinate& globalPos,
-                  bool ignoreState)
+PrimaryVariables evalSolution(const Element& element,
+                              const typename Element::Geometry& geometry,
+                              const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                              const typename Element::Geometry::GlobalCoordinate& globalPos,
+                              bool ignoreState)
 {
     return SolutionEvaluator::eval_(element, geometry, elemSol, globalPos, ignoreState);
 }
