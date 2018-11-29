@@ -35,7 +35,16 @@ namespace Dumux {
  * \ingroup ConstraintSolver
  * \brief Flash calculation routines for compositional sequential models
  *
- *        Routines for isothermal and isobaric 2p2c and 1p2c flash.
+ * Routines for isothermal and isobaric 2p2c and 1p2c flash, assuming an ideal mixture.
+ * The flash assumes that the fugacities of a component \f$ \kappa \f$ in each phase
+ * are the same. The fugacity is defined as:
+ *
+ * \f$ f^\kappa = \Phi^\kappa_\alpha(T_\alpha, p_\alpha)  p_\alpha x^\kappa_\alpha\; \f$,
+ *
+ * where \f$ Phi^\kappa_\alpha \f$ is a fixed fugacity coefficient independent of the phase's composition
+ * (ideal mixture), \f$ T_\alpha \f$ is a fixed temperature, and \f$ p_\alpha \f$ a fixed phase pressure.
+ * From the equality of fugacities, the mole (and mass) fractions \f$ x^\kappa_\alpha \f$
+ * in equilibrium are calculated.
  */
 template <class Scalar, class FluidSystem>
 class CompositionalFlash
@@ -60,14 +69,19 @@ public:
  * \name Concentration flash for a given feed fraction
  */
 //@{
-    /*!
-     * \brief 2p2c Flash for constant p & t if concentrations (feed mass fraction) is given.
+    /*! \brief 2p2c Flash for constant p & T if concentration (feed mass fraction) is given.
+     *
+     * This flash uses the Rachford-Rice equation:
+     * Rachford Jr, H. H., & Rice, J. D. (1952).
+     * Procedure for use of electronic digital computers in calculating flash vaporization
+     * hydrocarbon equilibrium. Journal of Petroleum Technology, 4(10), 19-3.
      *
      * Routine goes as follows:
      * - determination of the equilibrium constants from the fluid system
      * - determination of maximum solubilities (mole fractions) according to phase pressures
-     * - comparison with phase mass fraction Nu to determine phase presence => actual mole and mass fractions
-     * - round off fluid properties
+     * - comparison with phase mass fraction Nu (from Rachford-Rice equation)
+     *   to determine phase presence => actual mole and mass fractions
+     * - complete fluid state
      * \param fluidState The sequential fluid State
      * \param Z0 Feed mass fraction: Mass of first component per total mass \f$\mathrm{[-]}\f$
      * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
@@ -87,14 +101,14 @@ public:
         fluidState.setPressure(phase1Idx, phasePressure[phase1Idx]);
 
         // mole equilibrium ratios k for in case first phase is reference phase
-        Scalar k00 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp0Idx) * fluidState.pressure(phase0Idx)
+        Scalar k10 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp0Idx) * fluidState.pressure(phase0Idx)
                 / (FluidSystem::fugacityCoefficient(fluidState, phase1Idx, comp0Idx) * fluidState.pressure(phase1Idx));
-        Scalar k01 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp1Idx) * fluidState.pressure(phase0Idx)
+        Scalar k11 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp1Idx) * fluidState.pressure(phase0Idx)
                 / (FluidSystem::fugacityCoefficient(fluidState, phase1Idx, comp1Idx) * fluidState.pressure(phase1Idx));
 
         // get mole fraction from equilibrium constants
-        fluidState.setMoleFraction(phase0Idx,comp0Idx, ((1. - k01) / (k00 - k01)));
-        fluidState.setMoleFraction(phase1Idx,comp0Idx, (fluidState.moleFraction(phase0Idx,comp0Idx) * k00));
+        fluidState.setMoleFraction(phase0Idx, comp0Idx, ((1. - k11) / (k10 - k11)));
+        fluidState.setMoleFraction(phase1Idx, comp0Idx, (fluidState.moleFraction(phase0Idx,comp0Idx) * k10));
 
         // transform mole to mass fractions
         fluidState.setMassFraction(phase0Idx, comp0Idx,
@@ -106,8 +120,12 @@ public:
                 / ( fluidState.moleFraction(phase1Idx, comp0Idx) * FluidSystem::molarMass(comp0Idx)
                     + (1.-fluidState.moleFraction(phase1Idx, comp0Idx)) * FluidSystem::molarMass(comp1Idx) )));
 
+        // mass equilibrium ratios K for in case first phase is reference phase
+        Scalar K10 = fluidState.massFraction(phase1Idx, comp0Idx)/fluidState.massFraction(phase0Idx, comp0Idx);
+        Scalar K11 = (1.0 - fluidState.massFraction(phase1Idx, comp0Idx))/(1.0 - fluidState.massFraction(phase0Idx, comp0Idx));
+
         // phase mass fraction Nu (ratio of phase mass to total phase mass) of first phase
-        Scalar Nu0 = 1. + ((Z0 * (k00 - 1.)) + ((1. - Z0) * (k01 - 1.)))/((k01 - 1.) * (k00 - 1.));
+        Scalar Nu0 = 1. + ((Z0 * (K10 - 1.)) + ((1. - Z0) * (K11 - 1.)))/((K11 - 1.) * (K10 - 1.));
 
         // check phase presence
         if (Nu0 > 0. && Nu0 < 1.) // two phases present
@@ -157,8 +175,9 @@ public:
      * \brief The simplest possible update routine for 1p2c "flash" calculations
      *
      * Routine goes as follows:
-     * - Check if we are in single phase condition
-     * - Assign total concentration to the present phase
+     * - check if we are in single phase condition
+     * - assign total concentration to the present phase
+     * - complete fluid state
      *
      * \param fluidState The sequential fluid state
      * \param Z0 Feed mass fraction: Mass of first component per total mass \f$\mathrm{[-]}\f$
@@ -194,13 +213,12 @@ public:
  * \name Saturation flash for a given saturation (e.g. at boundary)
  */
 //@{
-    /*!
-     * \brief A flash routine for 2p2c systems if the saturation instead of total concentration is known.
+    /*! \brief 2p2c flash for constant p & T if the saturation instead of concentration (feed mass fraction) is known.
      *
      * Routine goes as follows:
      * - determination of the equilibrium constants from the fluid system
      * - determination of maximum solubilities (mole fractions) according to phase pressures
-     * - round off fluid properties
+     * - complete fluid state
      * \param fluidState The sequential fluid state
      * \param saturation Saturation of phase 1 \f$\mathrm{[-]}\f$
      * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
@@ -219,13 +237,15 @@ public:
         fluidState.setPressure(phase0Idx, phasePressure[phase0Idx]);
         fluidState.setPressure(phase1Idx, phasePressure[phase1Idx]);
 
-        //mole equilibrium ratios K for in case wPhase is reference phase
-        double k00 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp0Idx);
-        double k01 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp1Idx);
+        // mole equilibrium ratios k for in case first phase is reference phase
+        Scalar k10 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp0Idx) * fluidState.pressure(phase0Idx)
+                / (FluidSystem::fugacityCoefficient(fluidState, phase1Idx, comp0Idx) * fluidState.pressure(phase1Idx));
+        Scalar k11 = FluidSystem::fugacityCoefficient(fluidState, phase0Idx, comp1Idx) * fluidState.pressure(phase0Idx)
+                / (FluidSystem::fugacityCoefficient(fluidState, phase1Idx, comp1Idx) * fluidState.pressure(phase1Idx));
 
         // get mole fraction from equilibrium constants
-        fluidState.setMoleFraction(phase0Idx,comp0Idx, ((1. - k01) / (k00 - k01)));
-        fluidState.setMoleFraction(phase1Idx,comp0Idx, (fluidState.moleFraction(phase0Idx,comp0Idx) * k00));
+        fluidState.setMoleFraction(phase0Idx,comp0Idx, ((1. - k11) / (k10 - k11)));
+        fluidState.setMoleFraction(phase1Idx,comp0Idx, (fluidState.moleFraction(phase0Idx,comp0Idx) * k10));
 
         // transform mole to mass fractions
         fluidState.setMassFraction(phase0Idx, comp0Idx,
