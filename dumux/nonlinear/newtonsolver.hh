@@ -252,10 +252,10 @@ public:
      *
      * \param u The initial solution
      */
-    virtual void newtonBegin(const SolutionVector& u)
+    virtual void newtonBegin(SolutionVector& u)
     {
         numSteps_ = 0;
-        resetPriVarSwitch_(u.size(), HasPriVarsSwitch{});
+        initPriVarSwitch_(u, HasPriVarsSwitch{});
     }
 
     /*!
@@ -652,17 +652,22 @@ protected:
     { return *assembler_; }
 
     /*!
-     * \brief Reset the privar switch state, noop if there is no priVarSwitch
+     * \brief Initialize the privar switch, noop if there is no priVarSwitch
      */
-    void resetPriVarSwitch_(const std::size_t numDofs, std::false_type) {}
+    void initPriVarSwitch_(SolutionVector&, std::false_type) {}
 
     /*!
-     * \brief Reset the privar switch state
+     * \brief Initialize the privar switch
      */
-    void resetPriVarSwitch_(const std::size_t numDofs, std::true_type)
+    void initPriVarSwitch_(SolutionVector& sol, std::true_type)
     {
-        priVarSwitch_->reset(numDofs);
+        priVarSwitch_->reset(sol.size());
         priVarsSwitchedInLastIteration_ = false;
+
+        const auto& problem = assembler_->problem();
+        const auto& fvGridGeometry = assembler_->fvGridGeometry();
+        auto& gridVariables = assembler_->gridVariables();
+        priVarSwitch_->updateBoundary(problem, fvGridGeometry, gridVariables, sol);
     }
 
     /*!

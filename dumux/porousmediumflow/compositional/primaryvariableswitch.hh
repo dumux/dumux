@@ -168,14 +168,14 @@ public:
      * \brief Update the fluxVars cache for dof whose primary variables were
               switched. Required when flux variables are cached globally (not for box method).
      */
-     template<class Problem, class GridVariables, class SolutionVector,
-              std::enable_if_t<(GridVariables::GridFluxVariablesCache::cachingEnabled &&
-                                GridVariables::GridGeometry::discMethod != DiscretizationMethod::box), int> = 0>
-     void updateSwitchedFluxVarsCache(const Problem& problem,
-                                const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
-                                const typename GridVariables::GridGeometry& fvGridGeometry,
-                                GridVariables& gridVariables,
-                                const SolutionVector& sol)
+    template<class Problem, class GridVariables, class SolutionVector,
+             std::enable_if_t<(GridVariables::GridFluxVariablesCache::cachingEnabled &&
+                               GridVariables::GridGeometry::discMethod != DiscretizationMethod::box), int> = 0>
+    void updateSwitchedFluxVarsCache(const Problem& problem,
+                                     const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                     const typename GridVariables::GridGeometry& fvGridGeometry,
+                                     GridVariables& gridVariables,
+                                     const SolutionVector& sol)
     {
         // update the flux variables if global caching is enabled
         const auto dofIdxGlobal = fvGridGeometry.dofMapper().index(element);
@@ -191,9 +191,81 @@ public:
         }
     }
 
-     //! brief Do nothing when volume variables are not cached globally.
-     template<class Problem, class GridVariables, class SolutionVector,
-              std::enable_if_t<!GridVariables::GridVolumeVariables::cachingEnabled, int> = 0>
+    /*!
+     * \brief Update the the primary variables state at the boundary.
+     *        Required when a Dirichlet BC differes from the initial conditon (only for box method).
+     */
+    template<class Problem, class GridVariables, class SolutionVector,
+             std::enable_if_t<(GridVariables::GridGeometry::discMethod == DiscretizationMethod::box), int> = 0>
+    void updateBoundary(const Problem& problem,
+                        const typename GridVariables::GridGeometry& fvGridGeometry,
+                        GridVariables& gridVariables,
+                        SolutionVector& sol)
+    {
+        std::vector<bool> stateChanged(sol.size(), false);
+
+        for (const auto& element : elements(fvGridGeometry.gridView()))
+        {
+            auto fvGeometry = localView(fvGridGeometry);
+            fvGeometry.bindElement(element);
+
+            // skip if the element is not at a boundary
+            if (!fvGeometry.hasBoundaryScvf())
+                continue;
+
+            auto elemVolVars = localView(gridVariables.curGridVolVars());
+            elemVolVars.bindElement(element, fvGeometry, sol);
+
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                // this implies that state is set equal for all scvs associated with the dof
+                const auto dofIdx = scv.dofIndex();
+                if (!fvGridGeometry.dofOnBoundary(dofIdx) || stateChanged[dofIdx])
+                    continue;
+
+                const auto bcTypes = problem.boundaryTypes(element, scv);
+                if (bcTypes.hasDirichlet())
+                {
+                    const auto dirichletValues = problem.dirichlet(element, scv);
+
+                    if (sol[dofIdx].state() != dirichletValues.state())
+                    {
+                        // make sure the solution vector has the right state (given by the Dirichlet BC)
+                        sol[dofIdx].setState(dirichletValues.state());
+                        stateChanged[dofIdx] = true;
+
+                        // overwrite initial with Dirichlet values
+                        for (int eqIdx = 0; eqIdx < SolutionVector::block_type::dimension; ++eqIdx)
+                        {
+                            if (bcTypes.isDirichlet(eqIdx))
+                            {
+                                const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                                sol[dofIdx][pvIdx] = dirichletValues[pvIdx];
+                            }
+                        }
+                    }
+                }
+            }
+
+            // update the volVars if caching is enabled
+            if (GridVariables::GridVolumeVariables::cachingEnabled)
+            {
+                const auto curElemSol = elementSolution(element, sol, fvGridGeometry);
+                for (const auto& scv : scvs(fvGeometry))
+                {
+                    if (stateChanged[scv.dofIndex()])
+                    {
+                        auto& volVars = getVolVarAccess(gridVariables.curGridVolVars(), elemVolVars, scv);
+                        volVars.update(curElemSol, problem, element, scv);
+                    }
+                }
+            }
+        }
+    }
+
+    //! brief Do nothing when volume variables are not cached globally.
+    template<class Problem, class GridVariables, class SolutionVector,
+             std::enable_if_t<!GridVariables::GridVolumeVariables::cachingEnabled, int> = 0>
     void updateSwitchedVolVars(const Problem& problem,
                                const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
                                const typename GridVariables::GridGeometry& fvGridGeometry,
@@ -210,9 +282,18 @@ public:
                                GridVariables& gridVariables,
                                const SolutionVector& sol) const {}
 
-    //!
+    //! brief Do nothing when the box method is not used.
+    template<class Problem, class GridVariables, class SolutionVector,
+             std::enable_if_t<(GridVariables::GridGeometry::discMethod != DiscretizationMethod::box), int> = 0>
+    void updateBoundary(const Problem& problem,
+                        const typename GridVariables::GridGeometry& fvGridGeometry,
+                        GridVariables& gridVariables,
+                        SolutionVector& sol) const {}
+
+    //! The verbosity level
     int verbosity() const
     { return verbosity_; }
+
 protected:
 
     //! return actual implementation (static polymorphism)
