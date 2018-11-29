@@ -69,7 +69,13 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      *
-     * \param scv The sub-control volume over which we integrate the source term
+     * \param problem The object specifying the problem which ought to be simulated
+     * \param element An element which contains part of the control volume
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars The volume variables of the current element
+     * \param scvf The sub control volume face to compute the flux on
+     * \param elemFluxVarsCache The cache related to flux compuation
+     *
      * \note This is the default implementation for all models as sources are computed
      *       in the user interface of the problem
      *
@@ -193,8 +199,9 @@ public:
     /*!
      * \brief Calculate the storage for all mass balance equations
      *
-     *    \param storage The mass of the component within the sub-control volume
-     *    \param volVars The volume variables
+     * \param problem The object specifying the problem which ought to be simulated
+     * \param scv The sub-control volume
+     * \param volVars The volume variables
      */
     NumEqVector computeStorage(const Problem& problem,
                                const SubControlVolume& scv,
@@ -224,9 +231,12 @@ public:
     /*!
      * \brief Calculate the storage for all mass balance equations
      *
-     *        \param flux The flux over the SCV (sub-control-volume) face for each component
-     *        \param fluxVars The flux Variables
-     *        \param elemVolVars The volume variables of the current element
+     * \param problem The object specifying the problem which ought to be simulated
+     * \param element An element which contains part of the control volume
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars The volume variables of the current element
+     * \param scvf The sub control volume face to compute the flux on
+     * \param elemFluxVarsCache The cache related to flux compuation
      */
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
@@ -269,7 +279,15 @@ public:
         return flux;
     }
 
-
+    /*!
+     * \brief Calculate the source term of the equation
+     *
+     * \param problem The source term
+     * \param element An element which contains part of the control volume
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars The volume variables of the current element
+     * \param scv The sub-control volume over which we integrate the source term
+     */
     NumEqVector computeSource(const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
