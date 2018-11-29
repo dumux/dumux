@@ -237,7 +237,6 @@ public:
     /*!
      * \brief Returns the temperature in fluid / solid phase(s)
      *        the sub-control volume.
-     * \param phaseIdx The local index of the phases
      */
     Scalar temperatureSolid() const
     { return asImp_().solidState().temperature(); }
