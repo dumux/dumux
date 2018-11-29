@@ -95,6 +95,15 @@ public:
                              const Scalar &porosity,
                              const Scalar &temperature)
     {
+#ifndef NDEBUG
+        // this solver can only handle fluid systems which
+        // assume ideal mixtures of all fluids.
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            assert(FluidSystem::isIdealMixture(phaseIdx));
+
+        }
+#endif
+
         // set the temperature, pressure
         fluidState.setTemperature(temperature);
         fluidState.setPressure(phase0Idx, phasePressure[phase0Idx]);
@@ -232,6 +241,15 @@ public:
             const Scalar &porosity,
             const Scalar &temperature)
     {
+#ifndef NDEBUG
+        // this solver can only handle fluid systems which
+        // assume ideal mixtures of all fluids.
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            assert(FluidSystem::isIdealMixture(phaseIdx));
+
+        }
+#endif
+
         // set the temperature, pressure
         fluidState.setTemperature(temperature);
         fluidState.setPressure(phase0Idx, phasePressure[phase0Idx]);
