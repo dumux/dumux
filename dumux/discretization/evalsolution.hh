@@ -35,92 +35,236 @@
 
 namespace Dumux {
 
-/*!
- * \brief Interpolates a given box element solution at a given global position.
- *        Uses the finite element cache of the grid geometry.
- * \ingroup Discretization
- *
- * Specialization for primary variables without state. Always does an
- * interpolation using the shape functions.
- *
- * \return the interpolated primary variables
- * \param element The element
- * \param geometry The element geometry
- * \param fvGridGeometry The finite volume grid geometry
- * \param elemSol The primary variables at the dofs of the element
- * \param globalPos The global position
- */
+// The following function declarations are required because of the default
+// parameters together with the friend declarations further below.
 template<class Element, class FVElementGeometry, class PrimaryVariables>
 auto evalSolution(const Element& element,
                   const typename Element::Geometry& geometry,
                   const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
                   const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                  const typename Element::Geometry::GlobalCoordinate& globalPos)
--> typename std::enable_if_t<!decltype(isValid(Detail::hasState())(elemSol[0]))::value, PrimaryVariables>
+                  const typename Element::Geometry::GlobalCoordinate& globalPos,
+                  bool ignoreState = false);
+
+template<class Element, class FVElementGeometry, class PrimaryVariables>
+auto evalSolution(const Element& element,
+                  const typename Element::Geometry& geometry,
+                  const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                  const typename Element::Geometry::GlobalCoordinate& globalPos,
+                  bool ignoreState = false);
+
+class SolutionEvaluator
 {
-    using Scalar = typename PrimaryVariables::value_type;
+    // declare the free functions `evalSolution` as friends
+    template<class Element, class FVElementGeometry, class PrimaryVariables>
+    friend auto evalSolution(const Element&,
+                             const typename Element::Geometry&,
+                             const typename FVElementGeometry::FVGridGeometry&,
+                             const BoxElementSolution<FVElementGeometry, PrimaryVariables>&,
+                             const typename Element::Geometry::GlobalCoordinate&,
+                             bool ignoreState);
 
-    // interpolate the solution
-    const auto& localBasis = fvGridGeometry.feCache().get(geometry.type()).localBasis();
+    template<class Element, class FVElementGeometry, class PrimaryVariables>
+    friend auto evalSolution(const Element&,
+                             const typename Element::Geometry&,
+                             const BoxElementSolution<FVElementGeometry, PrimaryVariables>&,
+                             const typename Element::Geometry::GlobalCoordinate&,
+                             bool ignoreState);
 
-    // evaluate the shape functions at the scv center
-    const auto localPos = geometry.local(globalPos);
-    std::vector< Dune::FieldVector<Scalar, 1> > shapeValues;
-    localBasis.evaluateFunction(localPos, shapeValues);
-
-    PrimaryVariables result(0.0);
-    for (int i = 0; i < geometry.corners(); ++i)
+    /*!
+     * \brief Interpolates a given box element solution at a given global position.
+     *        Uses the finite element cache of the grid geometry.
+     *
+     * Specialization for primary variables without state. Always does an
+     * interpolation using the shape functions.
+     *
+     * \return the interpolated primary variables
+     * \param element The element
+     * \param geometry The element geometry
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param elemSol The primary variables at the dofs of the element
+     * \param globalPos The global position
+     * \param ignoreState If true, the state of primary variables is ignored
+     */
+    template<class Element, class FVElementGeometry, class PrimaryVariables>
+    static auto eval_(const Element& element,
+                      const typename Element::Geometry& geometry,
+                      const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+                      const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                      const typename Element::Geometry::GlobalCoordinate& globalPos,
+                      bool ignoreState)
+    -> typename std::enable_if_t<!decltype(isValid(Detail::hasState())(elemSol[0]))::value, PrimaryVariables>
     {
-        auto value = elemSol[i];
-        value *= shapeValues[i][0];
-        result += value;
+        return evalIgnoringState_(element, geometry, fvGridGeometry, elemSol, globalPos);
     }
 
-    return result;
-}
-
-/*!
- * \brief Interpolates a given box element solution at a given global position.
- *        Uses the finite element cache of the grid geometry.
- * \ingroup Discretization
- *
- * Specialization for primary variables with state. Does an interpolation using
- * the shape functions if states at all vertices are equal. Otherwise, it takes
- * the state and value from the vertex closest to the evaluation point.
- *
- * \return the interpolated primary variables
- * \param element The element
- * \param geometry The element geometry
- * \param fvGridGeometry The finite volume grid geometry
- * \param elemSol The primary variables at the dofs of the element
- * \param globalPos The global position
- */
-template<class Element, class FVElementGeometry, class PrimaryVariables>
-auto evalSolution(const Element& element,
-                  const typename Element::Geometry& geometry,
-                  const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
-                  const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                  const typename Element::Geometry::GlobalCoordinate& globalPos)
--> typename std::enable_if_t<decltype(isValid(Detail::hasState())(elemSol[0]))::value, PrimaryVariables>
-{
-    // determine if all states are the same at all vertices
-    bool allStatesEqual = true;
-    auto firstState = elemSol[0].state();
-    for (int i = 1; i < geometry.corners(); ++i)
+    /*!
+     * \brief Interpolates a given box element solution at a given global position.
+     *        Uses the finite element cache of the grid geometry.
+     *
+     * Specialization for primary variables with state. Does an interpolation using
+     * the shape functions if states at all vertices are equal. Otherwise, it takes
+     * the state and value from the vertex closest to the evaluation point.
+     *
+     * \return the interpolated primary variables
+     * \param element The element
+     * \param geometry The element geometry
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param elemSol The primary variables at the dofs of the element
+     * \param globalPos The global position
+     * \param ignoreState If true, the state of primary variables is ignored
+     */
+    template<class Element, class FVElementGeometry, class PrimaryVariables>
+    static auto eval_(const Element& element,
+                      const typename Element::Geometry& geometry,
+                      const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+                      const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                      const typename Element::Geometry::GlobalCoordinate& globalPos,
+                      bool ignoreState)
+    -> typename std::enable_if_t<decltype(isValid(Detail::hasState())(elemSol[0]))::value, PrimaryVariables>
     {
-        if (elemSol[i].state() != firstState)
+        // determine if all states are the same at all vertices
+        bool allStatesEqual = true;
+        if (!ignoreState)
         {
-            allStatesEqual = false;
-            break;
+            auto firstState = elemSol[0].state();
+            for (int i = 1; i < geometry.corners(); ++i)
+            {
+                if (elemSol[i].state() != firstState)
+                {
+                    allStatesEqual = false;
+                    break;
+                }
+            }
+        }
+
+        if (allStatesEqual)
+        {
+            auto result = evalIgnoringState_(element, geometry, fvGridGeometry, elemSol, globalPos);
+
+            if (!ignoreState)
+                result.setState(elemSol[0].state());
+
+            return result;
+        }
+        else
+        {
+            if (!warnedAboutUsingMinDist)
+            {
+                std::cout << "Warning: Using nearest-neighbor interpolation in evalSolution"
+                          << "\nbecause not all states are equal and ignoreState is false!"
+                          << std::endl;
+                warnedAboutUsingMinDist = true;
+            }
+
+            auto minDistanceIdx = indexOfMinDistVertex_(geometry, globalPos);
+
+            return elemSol[minDistanceIdx];
         }
     }
 
-    if (allStatesEqual)
+    /*!
+     * \brief Interpolates a given box element solution at a given global position.
+     *
+     * Overload of the above evalSolution() function without a given fvGridGeometry.
+     * The local basis is computed on the fly. Specialization for primary variables
+     * without state. Always does an interpolation using the shape functions.
+     *
+     * \return the interpolated primary variables
+     * \param element The element
+     * \param geometry The element geometry
+     * \param elemSol The primary variables at the dofs of the element
+     * \param globalPos The global position
+     * \param ignoreState If true, the state of primary variables is ignored
+     */
+    template<class Element, class FVElementGeometry, class PrimaryVariables>
+    static auto eval_(const Element& element,
+                      const typename Element::Geometry& geometry,
+                      const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                      const typename Element::Geometry::GlobalCoordinate& globalPos,
+                      bool ignoreState)
+    -> typename std::enable_if_t<!decltype(isValid(Detail::hasState())(elemSol[0]))::value, PrimaryVariables>
     {
-        // evaluate the shape functions at the given position
-        const auto& localBasis = fvGridGeometry.feCache().get(geometry.type()).localBasis();
-        const auto localPos = geometry.local(globalPos);
+        return evalIgnoringState_(element, geometry, elemSol, globalPos);
+    }
+
+    /*!
+     * \brief Interpolates a given box element solution at a given global position.
+     *
+     * Overload of the above evalSolution() function without a given fvGridGeometry.
+     * The local basis is computed on the fly. Specialization for primary variables
+     * with state. Does an interpolation using the shape functions if states at all
+     * vertices are equal. Otherwise, it takes the state and value from the vertex
+     * closest to the evaluation point.
+     *
+     * \return the interpolated primary variables
+     * \param element The element
+     * \param geometry The element geometry
+     * \param elemSol The primary variables at the dofs of the element
+     * \param globalPos The global position
+     * \param ignoreState If true, the state of primary variables is ignored
+     */
+    template<class Element, class FVElementGeometry, class PrimaryVariables>
+    static auto eval_(const Element& element,
+                      const typename Element::Geometry& geometry,
+                      const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                      const typename Element::Geometry::GlobalCoordinate& globalPos,
+                      bool ignoreState)
+    -> typename std::enable_if_t<decltype(isValid(Detail::hasState())(elemSol[0]))::value, PrimaryVariables>
+    {
+        // determine if all states are the same at all vertices
+        bool allStatesEqual = true;
+        if (!ignoreState)
+        {
+            auto firstState = elemSol[0].state();
+            for (int i = 1; i < geometry.corners(); ++i)
+            {
+                if (elemSol[i].state() != firstState)
+                {
+                    allStatesEqual = false;
+                    break;
+                }
+            }
+        }
+
+        if (allStatesEqual)
+        {
+            auto result = evalIgnoringState_(element, geometry, elemSol, globalPos);
+
+            if (!ignoreState)
+                result.setState(elemSol[0].state());
+
+            return result;
+        }
+        else
+        {
+            if (!warnedAboutUsingMinDist)
+            {
+                std::cout << "Warning: Using nearest-neighbor interpolation in evalSolution"
+                          << "\nbecause not all states are equal and ignoreState is false!"
+                          << std::endl;
+                warnedAboutUsingMinDist = true;
+            }
+
+            auto minDistanceIdx = indexOfMinDistVertex_(geometry, globalPos);
+
+            return elemSol[minDistanceIdx];
+        }
+    }
+
+    template<class Element, class FVElementGeometry, class PrimaryVariables>
+    static PrimaryVariables evalIgnoringState_(const Element& element,
+                                               const typename Element::Geometry& geometry,
+                                               const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+                                               const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                                               const typename Element::Geometry::GlobalCoordinate& globalPos)
+    {
         using Scalar = typename PrimaryVariables::value_type;
+
+        // interpolate the solution
+        const auto& localBasis = fvGridGeometry.feCache().get(geometry.type()).localBasis();
+
+        // evaluate the shape functions at the scv center
+        const auto localPos = geometry.local(globalPos);
         std::vector< Dune::FieldVector<Scalar, 1> > shapeValues;
         localBasis.evaluateFunction(localPos, shapeValues);
 
@@ -134,107 +278,12 @@ auto evalSolution(const Element& element,
 
         return result;
     }
-    else
-    {
-        // calculate the distances from the evaluation point to the vertices
-        using ctype = typename Element::Geometry::ctype;
-        std::vector<ctype> distances(geometry.corners());
-        for (int i = 0; i < geometry.corners(); ++i)
-            distances[i] = (geometry.corner(i) - globalPos).two_norm2();
 
-        // determine the minimum distance and corresponding vertex
-        auto minDistanceIt = std::min_element(distances.begin(), distances.end());
-        auto minDistanceIdx = std::distance(distances.begin(), minDistanceIt);
-
-        return elemSol[minDistanceIdx];
-    }
-}
-
-/*!
- * \ingroup Discretization
- * \brief Interpolates a given box element solution at a given global position.
- *
- * Overload of the above evalSolution() function without a given fvGridGeometry.
- * The local basis is computed on the fly. Specialization for primary variables
- * without state. Always does an interpolation using the shape functions.
- *
- * \return the interpolated primary variables
- * \param element The element
- * \param geometry The element geometry
- * \param elemSol The primary variables at the dofs of the element
- * \param globalPos The global position
- */
-template<class Element, class FVElementGeometry, class PrimaryVariables>
-auto evalSolution(const Element& element,
-                  const typename Element::Geometry& geometry,
-                  const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                  const typename Element::Geometry::GlobalCoordinate& globalPos)
--> typename std::enable_if_t<!decltype(isValid(Detail::hasState())(elemSol[0]))::value, PrimaryVariables>
-{
-    using Scalar = typename PrimaryVariables::value_type;
-    using CoordScalar = typename Element::Geometry::GlobalCoordinate::value_type;
-    static constexpr int dim = Element::Geometry::mydimension;
-
-    //! The box scheme always uses linear Ansatz functions
-    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
-    using ShapeValue = typename FeCache::FiniteElementType::Traits::LocalBasisType::Traits::RangeType;
-
-    // obtain local finite element basis
-    FeCache feCache;
-    const auto& localBasis = feCache.get(geometry.type()).localBasis();
-
-    // evaluate the shape functions at the scv center
-    const auto localPos = geometry.local(globalPos);
-    std::vector< ShapeValue > shapeValues;
-    localBasis.evaluateFunction(localPos, shapeValues);
-
-    PrimaryVariables result(0.0);
-    for (int i = 0; i < geometry.corners(); ++i)
-    {
-        auto value = elemSol[i];
-        value *= shapeValues[i][0];
-        result += value;
-    }
-
-    return result;
-}
-
-/*!
- * \ingroup Discretization
- * \brief Interpolates a given box element solution at a given global position.
- *
- * Overload of the above evalSolution() function without a given fvGridGeometry.
- * The local basis is computed on the fly. Specialization for primary variables
- * with state. Does an interpolation using the shape functions if states at all
- * vertices are equal. Otherwise, it takes the state and value from the vertex
- * closest to the evaluation point.
- *
- * \return the interpolated primary variables
- * \param element The element
- * \param geometry The element geometry
- * \param elemSol The primary variables at the dofs of the element
- * \param globalPos The global position
- */
-template<class Element, class FVElementGeometry, class PrimaryVariables>
-auto evalSolution(const Element& element,
-                  const typename Element::Geometry& geometry,
-                  const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                  const typename Element::Geometry::GlobalCoordinate& globalPos)
--> typename std::enable_if_t<decltype(isValid(Detail::hasState())(elemSol[0]))::value, PrimaryVariables>
-{
-    // determine if all states are the same at all vertices
-    bool allStatesEqual = true;
-    auto firstState = elemSol[0].state();
-    for (int i = 1; i < geometry.corners(); ++i)
-    {
-        if (elemSol[i].state() != firstState)
-        {
-            allStatesEqual = false;
-            break;
-        }
-    }
-
-    if (allStatesEqual)
+    template<class Element, class FVElementGeometry, class PrimaryVariables>
+    static PrimaryVariables evalIgnoringState_(const Element& element,
+                                               const typename Element::Geometry& geometry,
+                                               const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                                               const typename Element::Geometry::GlobalCoordinate& globalPos)
     {
         using Scalar = typename PrimaryVariables::value_type;
         using CoordScalar = typename Element::Geometry::GlobalCoordinate::value_type;
@@ -263,20 +312,73 @@ auto evalSolution(const Element& element,
 
         return result;
     }
-    else
+
+    template<class Geometry>
+    static auto indexOfMinDistVertex_(const Geometry& geometry,
+                                      const typename Geometry::GlobalCoordinate& globalPos)
     {
         // calculate the distances from the evaluation point to the vertices
-        using ctype = typename Element::Geometry::ctype;
-        std::vector<ctype> distances(geometry.corners());
+        std::vector<typename Geometry::ctype> distances(geometry.corners());
         for (int i = 0; i < geometry.corners(); ++i)
             distances[i] = (geometry.corner(i) - globalPos).two_norm2();
 
         // determine the minimum distance and corresponding vertex
         auto minDistanceIt = std::min_element(distances.begin(), distances.end());
-        auto minDistanceIdx = std::distance(distances.begin(), minDistanceIt);
-
-        return elemSol[minDistanceIdx];
+        return std::distance(distances.begin(), minDistanceIt);
     }
+
+public:
+    static bool warnedAboutUsingMinDist;
+};
+
+bool SolutionEvaluator::warnedAboutUsingMinDist = false;
+
+/*!
+ * \brief Interpolates a given box element solution at a given global position.
+ *        Uses the finite element cache of the grid geometry.
+ * \ingroup Discretization
+ *
+ * \return the interpolated primary variables
+ * \param element The element
+ * \param geometry The element geometry
+ * \param fvGridGeometry The finite volume grid geometry
+ * \param elemSol The primary variables at the dofs of the element
+ * \param globalPos The global position
+ * \param ignoreState If true, the state of primary variables is ignored
+ */
+template<class Element, class FVElementGeometry, class PrimaryVariables>
+auto evalSolution(const Element& element,
+                  const typename Element::Geometry& geometry,
+                  const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+                  const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                  const typename Element::Geometry::GlobalCoordinate& globalPos,
+                  bool ignoreState)
+{
+    return SolutionEvaluator::eval_(element, geometry, fvGridGeometry, elemSol, globalPos, ignoreState);
+}
+
+/*!
+ * \ingroup Discretization
+ * \brief Interpolates a given box element solution at a given global position.
+ *
+ * Overload of the above evalSolution() function without a given fvGridGeometry.
+ * The local basis is computed on the fly.
+ *
+ * \return the interpolated primary variables
+ * \param element The element
+ * \param geometry The element geometry
+ * \param elemSol The primary variables at the dofs of the element
+ * \param globalPos The global position
+ * \param ignoreState If true, the state of primary variables is ignored
+ */
+template<class Element, class FVElementGeometry, class PrimaryVariables>
+auto evalSolution(const Element& element,
+                  const typename Element::Geometry& geometry,
+                  const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                  const typename Element::Geometry::GlobalCoordinate& globalPos,
+                  bool ignoreState)
+{
+    return SolutionEvaluator::eval_(element, geometry, elemSol, globalPos, ignoreState);
 }
 
 /*!
@@ -289,13 +391,15 @@ auto evalSolution(const Element& element,
  * \param fvGridGeometry The finite volume grid geometry
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
+ * \param ignoreState If true, the state of primary variables is ignored
  */
 template<class Element, class FVElementGeometry, class PrimaryVariables>
 PrimaryVariables evalSolution(const Element& element,
                               const typename Element::Geometry& geometry,
                               const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
                               const CCElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                              const typename Element::Geometry::GlobalCoordinate& globalPos)
+                              const typename Element::Geometry::GlobalCoordinate& globalPos,
+                              bool ignoreState = false)
 {
     return elemSol[0];
 }
@@ -311,12 +415,14 @@ PrimaryVariables evalSolution(const Element& element,
  * \param geometry The element geometry
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
+ * \param ignoreState If true, the state of primary variables is ignored
  */
 template< class Element, class FVElementGeometry, class PrimaryVariables>
 PrimaryVariables evalSolution(const Element& element,
                               const typename Element::Geometry& geometry,
                               const CCElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                              const typename Element::Geometry::GlobalCoordinate& globalPos)
+                              const typename Element::Geometry::GlobalCoordinate& globalPos,
+                              bool ignoreState = false)
 {
     return elemSol[0];
 }
