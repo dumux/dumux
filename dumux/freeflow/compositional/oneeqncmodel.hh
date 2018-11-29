@@ -22,7 +22,7 @@
  *
  * \brief A single-phase, multi-component one-equation model
  *
- * \copydoc Dumux::FreeflowNCModel
+ * \copydoc dumux/freeflow/compositional/navierstokesncmodel.hh
  */
 
 #ifndef DUMUX_ONEEQ_NC_MODEL_HH

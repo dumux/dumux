@@ -183,6 +183,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param scv The sub control volume
+     * \param pvIdx The primary variable index in the solution vector
      */
     bool isDirichletCell(const Element& element,
                          const typename FVGridGeometry::LocalView& fvGeometry,
@@ -212,6 +213,7 @@ public:
      * \brief Return the analytical solution of the problem at a given position
      *
      * \param globalPos The global position
+     * \param time The current simulation time
      */
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, const Scalar time) const
     {

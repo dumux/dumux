@@ -177,23 +177,23 @@ public:
         return stressTensorScalarProduct_;
     }
 
-    //! \brief Returns the \$f \alpha \$f value
+    //! \brief Returns the \f$ \alpha \f$ value
     const Scalar alpha() const
     { return 0.52; }
 
-    //! \brief Returns the \$f \sigma_k \$f constant
+    //! \brief Returns the \f$ \sigma_k \f$ constant
     const Scalar sigmaK() const
     { return 0.6; }
 
-    //! \brief Returns the \$f \sigma_{\omega} \$f constant
+    //! \brief Returns the \f$ \sigma_{\omega} \f$ constant
     const Scalar sigmaOmega() const
     { return 0.5; }
 
-    //! \brief Returns the \$f \beta_k \$f constant
+    //! \brief Returns the \f$ \beta_k \f$ constant
     const Scalar betaK() const
     { return 0.09; }
 
-    //! \brief Returns the \$f \beta_\omega \$f constant
+    //! \brief Returns the \f$ \beta_\omega \f$ constant
     const Scalar betaOmega() const
     { return betaOmega_; }
 

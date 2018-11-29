@@ -66,8 +66,7 @@
  * \f[ f_1 = 1 \f]
  * \f[ f_2 = 1 - 0.22 \exp \left( - \left( \frac{\mathit{Re}_\text{t}}{6} \right)^2 \right) \f]
  * \f[ f_\mu = 1 - \exp \left( -0.0115 y^+ \right) \f]
- * \f[ \mathit{Re}_\text{t} = \frac{k^2}{\nu \tilde{\varepsilon}} \f]
- * .
+ * \f[ \mathit{Re}_\text{t} = \frac{k^2}{\nu \tilde{\varepsilon}} \f].
  *
  * Finally, the model is closed with the following constants:
  * \f[ \sigma_\text{k} = 1.00 \f]

@@ -172,23 +172,23 @@ public:
         return isMatchingPoint_;
     }
 
-    //! \brief Returns the \$f C_\mu \$f constant
+    //! \brief Returns the \f$ C_{\mu} \f$ constant
     const Scalar cMu() const
     { return cMu_; }
 
-    //! \brief Returns the \$f \sigma_\textrm{k} \$f constant
+    //! \brief Returns the \f$ \sigma_{\textrm{k}} \f$ constant
     const Scalar sigmaK() const
     { return 1.0; }
 
-    //! \brief Returns the \$f \sigma_\varepsilon \$f constant
+    //! \brief Returns the \f$ \sigma_{\varepsilon} \f$ constant
     const Scalar sigmaEpsilon() const
     { return 1.3; }
 
-    //! \brief Returns the \$f C_{1\varepsilon}  \$f constant
+    //! \brief Returns the \f$ C_{1\varepsilon}  \f$ constant
     const Scalar cOneEpsilon() const
     { return 1.44; }
 
-    //! \brief Returns the \$f C_{2\varepsilon} \$f constant
+    //! \brief Returns the \f$ C_{2\varepsilon} \f$ constant
     const Scalar cTwoEpsilon() const
     { return 1.92; }
 

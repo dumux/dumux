@@ -123,7 +123,6 @@ public:
    /*!
      * \brief Return the sources within the domain.
      *
-     * \param values Stores the source values, acts as return value
      * \param globalPos The global position
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
@@ -140,7 +139,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The position of the center of the finite volume
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -160,6 +158,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param scv The sub control volume
+     * \param pvIdx The primary variable index in the solution vector
      */
     bool isDirichletCell(const Element& element,
                          const FVElementGeometry& fvGeometry,

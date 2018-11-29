@@ -22,7 +22,7 @@
  *
  * \brief A single-phase, multi-component Reynolds-Averaged Navier-Stokes 0-Eq. model
  *
- * \copydoc Dumux::FreeflowNCModel
+ * \copydoc dumux/freeflow/compositional/navierstokesncmodel.hh
  */
 
 #ifndef DUMUX_ZEROEQ_NC_MODEL_HH

@@ -21,7 +21,7 @@
  * \ingroup NavierStokesTests
  * \brief Test for the 1-D Navier-Stokes model with an analytical solution
  *
- * \copydoc NavierStokesAnalyticProblem
+ * \copydoc Dumux::NavierStokesAnalyticProblem
  */
 #ifndef DUMUX_DONEA_TEST_PROBLEM_HH
 #define DUMUX_DONEA_TEST_PROBLEM_HH
@@ -223,6 +223,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param scv The sub control volume
+     * \param pvIdx The primary variable index in the solution vector
      */
     bool isDirichletCell(const Element& element,
                          const typename FVGridGeometry::LocalView& fvGeometry,

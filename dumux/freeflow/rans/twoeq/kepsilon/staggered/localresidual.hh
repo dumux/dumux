@@ -19,7 +19,7 @@
  /*!
   * \file
   * \ingroup KepsilonModel
-  * \copydoc Dumux::KepsilonResidualImpl
+  * \copydoc Dumux::KEpsilonResidualImpl
   */
 #ifndef DUMUX_STAGGERED_KEPSILON_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_KEPSILON_LOCAL_RESIDUAL_HH
