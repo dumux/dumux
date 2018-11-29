@@ -265,6 +265,8 @@ public:
      *
      * \param polarCoordinates Vector containing radial, angular and axial coordinates (in this order)
      * \param indices Indices specifing the radial, angular and axial direction (in this order)
+     * \param modelParamGroup name of the model parameter group
+     * \param verbose if the output should be verbose
      */
     std::unique_ptr<Grid> createCakeGrid(std::array<std::vector<Scalar>, dim> &polarCoordinates,
                                          Dune::FieldVector<int, dim> &indices,

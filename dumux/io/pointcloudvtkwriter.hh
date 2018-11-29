@@ -86,7 +86,7 @@ class PointCloudVtkWriter
         /*!
         * \brief Allows random acces to data
         *
-        * \param dofIdx The index
+        * \param idx The index
         */
         auto& operator() (const int idx) const  { return data_[idx]; }
 
@@ -161,8 +161,17 @@ public:
      /*!
      * \brief Create an output file in parallel
      *
-     * \param name The base name
-     * \param type The output type
+     * \param name 			Base name of the output files.  This should not
+       *                   	contain any directory part and not filename
+       *                   	extensions.  It will be used both for each processes
+       *                   	piece as well as the parallel collection file
+     * \param path  		Directory where to put the parallel collection
+       *                    (.pvtu/.pvtp) file.  If it is relative, it is taken
+       *                    relative to the current directory
+     * \param extendpath 	Directory where to put the piece file (.vtu/.vtp) of
+       *                   	this process.  If it is relative, it is taken
+       *                   	relative to the directory denoted by path
+     * \param type			How to encode the data in the file
      */
     void pwrite(const std::string & name,  const std::string & path, const std::string & extendpath,
                 Dune::VTK::OutputType type = Dune::VTK::ascii)
@@ -175,7 +184,6 @@ public:
      *
      * \param v The vector containing the data
      * \param name The name of the data set
-     * \param ncomps The number of components of the data set
      */
     void addPointData(const std::vector<Scalar>& v, const std::string &name)
     {
@@ -188,7 +196,6 @@ public:
      *
      * \param v The vector containing the data
      * \param name The name of the data set
-     * \param ncomps The number of components of the data set
      */
     void addPointData(const std::vector<DimVector>& v, const std::string &name)
     {
@@ -315,6 +322,7 @@ private:
      /*!
      * \brief Writes the coordinates to the file
      *
+     * \param file The output file
      * \param positions Container to store the positions
      */
     void writeCoordinates_(std::ostream& file, const std::vector<GlobalPosition>& positions)
@@ -348,6 +356,7 @@ private:
      /*!
      * \brief Writes data to the file
      *
+     * \param file The output file
      * \param data The data container which hold the data itself, as well as the name of the data set and the number of its components
      */
     template<class T>
@@ -373,6 +382,7 @@ private:
      /*!
      * \brief Writes a scalar to the file
      *
+     * \param file The output file
      * \param s The scalar
      */
     void writeToFile_(std::ostream& file, const Scalar& s)
@@ -383,6 +393,7 @@ private:
      /*!
      * \brief Writes a vector to the file
      *
+     * \param file The output file
      * \param g The vector
      */
     void writeToFile_(std::ostream& file, const DimVector& g)
