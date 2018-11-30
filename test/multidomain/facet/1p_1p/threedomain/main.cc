@@ -42,12 +42,14 @@
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/fvgridgeometry.hh>
+#include <dumux/multidomain/fvproblem.hh>
+#include <dumux/multidomain/fvgridvariables.hh>
 
 #include <dumux/multidomain/facet/gridmanager.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/couplingmanager.hh>
-
-#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/multidomain/io/vtkoutputmodule.hh>
 
 // obtain/define some types to be used below in the property definitions and in main
 class TestTraits
@@ -92,16 +94,17 @@ int main(int argc, char** argv) try
     // initialize parameter tree
     Parameters::init(argc, argv);
 
-    // try to create a grid (from the given grid file or the input file)
-    using BulkProblemTypeTag = Properties::TTag::OnePBulkTpfa;
-    using FacetProblemTypeTag = Properties::TTag::OnePFacetTpfa;
-    using EdgeProblemTypeTag = Properties::TTag::OnePEdgeTpfa;
-    using BulkGrid = GetPropType<BulkProblemTypeTag, Properties::Grid>;
-    using FacetGrid = GetPropType<FacetProblemTypeTag, Properties::Grid>;
-    using EdgeGrid = GetPropType<EdgeProblemTypeTag, Properties::Grid>;
+    // the multidomain traits and some indices
+    using Traits = typename TestTraits::MDTraits;
+    static const auto bulkId = Traits::template SubDomain<0>::Index{};
+    static const auto facetId = Traits::template SubDomain<1>::Index{};
+    static const auto edgeId = Traits::template SubDomain<2>::Index{};
 
-    using GridManager = FacetCouplingGridManager<BulkGrid, FacetGrid, EdgeGrid>;
-    GridManager gridManager;
+    // try to create a grid (from the given grid file or the input file)
+    FacetCouplingGridManager<Traits::template SubDomain<bulkId>::Grid,
+                             Traits::template SubDomain<facetId>::Grid,
+                             Traits::template SubDomain<edgeId>::Grid> gridManager;
+
     gridManager.init();
     gridManager.loadBalance();
 
@@ -110,94 +113,59 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid views
-    const auto& bulkGridView = gridManager.template grid<0>().leafGridView();
-    const auto& facetGridView = gridManager.template grid<1>().leafGridView();
-    const auto& edgeGridView = gridManager.template grid<2>().leafGridView();
+    const auto& bulkGridView = gridManager.template grid<bulkId>().leafGridView();
+    const auto& facetGridView = gridManager.template grid<facetId>().leafGridView();
+    const auto& edgeGridView = gridManager.template grid<edgeId>().leafGridView();
 
     // create the finite volume grid geometries
-    using BulkFVGridGeometry = GetPropType<BulkProblemTypeTag, Properties::FVGridGeometry>;
-    using FacetFVGridGeometry = GetPropType<FacetProblemTypeTag, Properties::FVGridGeometry>;
-    using EdgeFVGridGeometry = GetPropType<EdgeProblemTypeTag, Properties::FVGridGeometry>;
-    auto bulkFvGridGeometry = std::make_shared<BulkFVGridGeometry>(bulkGridView);
-    auto facetFvGridGeometry = std::make_shared<FacetFVGridGeometry>(facetGridView);
-    auto edgeFvGridGeometry = std::make_shared<EdgeFVGridGeometry>(edgeGridView);
-    bulkFvGridGeometry->update();
-    facetFvGridGeometry->update();
-    edgeFvGridGeometry->update();
+    MultiDomainFVGridGeometry<Traits> fvGridGeometry(std::make_tuple(bulkGridView, facetGridView, edgeGridView));
+    fvGridGeometry.update();
 
     // the coupling manager
     using CouplingManager = typename TestTraits::CouplingManager;
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // the problems (boundary conditions)
-    using BulkProblem = GetPropType<BulkProblemTypeTag, Properties::Problem>;
-    using FacetProblem = GetPropType<FacetProblemTypeTag, Properties::Problem>;
-    using EdgeProblem = GetPropType<EdgeProblemTypeTag, Properties::Problem>;
-    auto bulkSpatialParams = std::make_shared<typename BulkProblem::SpatialParams>(bulkFvGridGeometry, "Bulk");
-    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, bulkSpatialParams, couplingManager, "Bulk");
-    auto facetSpatialParams = std::make_shared<typename FacetProblem::SpatialParams>(facetFvGridGeometry, "Facet");
-    auto facetProblem = std::make_shared<FacetProblem>(facetFvGridGeometry, facetSpatialParams, couplingManager, "Facet");
-    auto edgeSpatialParams = std::make_shared<typename EdgeProblem::SpatialParams>(edgeFvGridGeometry, "Edge");
-    auto edgeProblem = std::make_shared<EdgeProblem>(edgeFvGridGeometry, edgeSpatialParams, couplingManager, "Edge");
+    MultiDomainFVProblem<Traits> problem;
+
+    using BulkProblem = MultiDomainFVProblem<Traits>::template Type<bulkId>;
+    using FacetProblem = MultiDomainFVProblem<Traits>::template Type<facetId>;
+    using EdgeProblem = MultiDomainFVProblem<Traits>::template Type<edgeId>;
+
+    auto bulkSpatialParams = std::make_shared<typename BulkProblem::SpatialParams>(fvGridGeometry.get(bulkId), "Bulk");
+    auto facetSpatialParams = std::make_shared<typename FacetProblem::SpatialParams>(fvGridGeometry.get(facetId), "Facet");
+    auto edgeSpatialParams = std::make_shared<typename EdgeProblem::SpatialParams>(fvGridGeometry.get(edgeId), "Edge");
+
+    problem.set(std::make_shared<BulkProblem>(fvGridGeometry.get(bulkId), bulkSpatialParams, couplingManager, "Bulk"), bulkId);
+    problem.set(std::make_shared<FacetProblem>(fvGridGeometry.get(facetId), facetSpatialParams, couplingManager, "Facet"), facetId);
+    problem.set(std::make_shared<EdgeProblem>(fvGridGeometry.get(edgeId), edgeSpatialParams, couplingManager, "Edge"), edgeId);
 
     // the solution vector
-    using Traits = typename TestTraits::MDTraits;
-    using SolutionVector = typename Traits::SolutionVector;
-    SolutionVector x;
-
-    static const auto bulkId = Traits::template SubDomain<0>::Index();
-    static const auto facetId = Traits::template SubDomain<1>::Index();
-    static const auto edgeId = Traits::template SubDomain<2>::Index();
-    bulkProblem->applyInitialSolution(x[bulkId]);
-    facetProblem->applyInitialSolution(x[facetId]);
-    edgeProblem->applyInitialSolution(x[edgeId]);
+    typename Traits::SolutionVector x;
+    problem.applyInitialSolution(x);
 
     // the coupling mapper
     using CouplingMapper = typename TestTraits::CouplingMapper;
     auto couplingMapper = std::make_shared<CouplingMapper>();
-    couplingMapper->update(*bulkFvGridGeometry, *facetFvGridGeometry, *edgeFvGridGeometry, gridManager.getEmbeddings());
+    couplingMapper->update(fvGridGeometry[bulkId], fvGridGeometry[facetId], fvGridGeometry[edgeId], gridManager.getEmbeddings());
 
     // initialize the coupling manager
-    couplingManager->init(bulkProblem, facetProblem, edgeProblem, couplingMapper, x);
+    couplingManager->init(problem.get(bulkId), problem.get(facetId), problem.get(edgeId), couplingMapper, x);
 
     // the grid variables
-    using BulkGridVariables = GetPropType<BulkProblemTypeTag, Properties::GridVariables>;
-    using FacetGridVariables = GetPropType<FacetProblemTypeTag, Properties::GridVariables>;
-    using EdgeGridVariables = GetPropType<EdgeProblemTypeTag, Properties::GridVariables>;
-    auto bulkGridVariables = std::make_shared<BulkGridVariables>(bulkProblem, bulkFvGridGeometry);
-    auto facetGridVariables = std::make_shared<FacetGridVariables>(facetProblem, facetFvGridGeometry);
-    auto edgeGridVariables = std::make_shared<EdgeGridVariables>(edgeProblem, edgeFvGridGeometry);
-    bulkGridVariables->init(x[bulkId]);
-    facetGridVariables->init(x[facetId]);
-    edgeGridVariables->init(x[edgeId]);
+    using GridVariables = MultiDomainFVGridVariables<Traits>;
+    GridVariables gridVars(fvGridGeometry.getTuple(), problem.getTuple());
+    gridVars.init(x);
 
     // intialize the vtk output module
-    using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
-    using FacetSolutionVector = std::decay_t<decltype(x[facetId])>;
-    using EdgeSolutionVector = std::decay_t<decltype(x[edgeId])>;
-
-    // intialize the vtk output module
-    VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkProblem->name());
-    VtkOutputModule<FacetGridVariables, FacetSolutionVector> facetVtkWriter(*facetGridVariables, x[facetId],  facetProblem->name());
-    VtkOutputModule<EdgeGridVariables, EdgeSolutionVector> edgeVtkWriter(*edgeGridVariables, x[edgeId], edgeProblem->name());
-
-    // Add model specific output fields
-    using BulkIOFields = GetPropType<BulkProblemTypeTag, Properties::IOFields>;
-    using FacetIOFields = GetPropType<FacetProblemTypeTag, Properties::IOFields>;
-    using EdgeIOFields = GetPropType<EdgeProblemTypeTag, Properties::IOFields>;
-    BulkIOFields::initOutputModule(bulkVtkWriter);
-    FacetIOFields::initOutputModule(facetVtkWriter);
-    EdgeIOFields::initOutputModule(edgeVtkWriter);
-    bulkVtkWriter.write(0.0);
-    facetVtkWriter.write(0.0);
-    edgeVtkWriter.write(0.0);
+    const std::array<std::string, 3> vtkOutputNames{{problem[bulkId].name(), problem[facetId].name(), problem[edgeId].name()}};
+    MultiDomainVtkOutputModule<Traits> vtkWriter(gridVars.getTuple(), x, vtkOutputNames);
+    vtkWriter.initDefaultOutputFields();
+    vtkWriter.write(0.0);
 
     // the assembler
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
-    auto assembler = std::make_shared<Assembler>( std::make_tuple(bulkProblem, facetProblem, edgeProblem),
-                                                  std::make_tuple(bulkFvGridGeometry, facetFvGridGeometry, edgeFvGridGeometry),
-                                                  std::make_tuple(bulkGridVariables, facetGridVariables, edgeGridVariables),
-                                                  couplingManager);
+    auto assembler = std::make_shared<Assembler>( problem.getTuple(), fvGridGeometry.getTuple(), gridVars.getTuple(), couplingManager);
 
     // the linear solver
     using LinearSolver = ILU0BiCGSTABBackend;
@@ -211,14 +179,10 @@ int main(int argc, char** argv) try
     newtonSolver->solve(x);
 
     // update grid variables for output
-    bulkGridVariables->update(x[bulkId]);
-    facetGridVariables->update(x[facetId]);
-    edgeGridVariables->update(x[edgeId]);
+    gridVars.update(x);
 
     // write vtk output
-    bulkVtkWriter.write(1.0);
-    facetVtkWriter.write(1.0);
-    edgeVtkWriter.write(1.0);
+    vtkWriter.write(1.0);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
