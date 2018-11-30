@@ -138,5 +138,6 @@ public:
 // Here, we have to include all available implementations
 #include <dumux/multidomain/facet/box/couplingmapper.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/couplingmapper.hh>
+#include <dumux/multidomain/facet/cellcentered/mpfa/couplingmapper.hh>
 
 #endif // DUMUX_FACETCOUPLING_COUPLING_MAPPER_HH
