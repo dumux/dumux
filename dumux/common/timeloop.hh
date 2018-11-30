@@ -186,6 +186,7 @@ public:
     {
         using std::min;
         computeMaxTimeStepSize_();
+        previousTimeStepSize_ = timeStepSize_;
         timeStepSize_ = min(dt, maxTimeStepSize_);
     }
 
@@ -235,14 +236,18 @@ public:
      * if the end time is reached.
      */
     bool finished() const
-    { return finished_ || time_ >= endTime_; }
+    {
+        return finished_ || endTime_-time_ < 1e-10*time_;
+    }
 
     /*!
      * \brief Returns true if the simulation is finished after the
      *        time level is incremented by the current time step size.
      */
     bool willBeFinished() const
-    { return finished_ || time_ + timeStepSize_ >= endTime_; }
+    {
+        return finished() || endTime_-time_-timeStepSize_ < 1e-10*timeStepSize_;
+    }
 
     /*!
      * \brief The current maximum time step size
@@ -267,6 +272,7 @@ public:
                       << "Wall time: " << cpuTime_
                       << ", time: " << time_
                       << ", time step size: " << timeStepSize_
+                      << ", previous time step size: " << previousTimeStepSize_
                       << std::endl;
         }
 
