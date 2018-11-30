@@ -102,14 +102,14 @@ public:
      *
      * \param u The initial solution
      */
-    void newtonBegin(const SolutionVector &u) override
+    void newtonBegin(SolutionVector& u) override
     {
         ParentType::newtonBegin(u);
 
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<Assembler::Traits::numSubDomains>{}, [&](auto&& id)
         {
-            this->resetPriVarSwitch_(u[id].size(), id, HasPriVarsSwitch<std::decay_t<decltype(id)>::value>{});
+            this->initPriVarSwitch_(u, id, HasPriVarsSwitch<std::decay_t<decltype(id)>::value>{});
         });
     }
 
@@ -151,17 +151,24 @@ private:
      * \brief Reset the privar switch state, noop if there is no priVarSwitch
      */
     template<std::size_t i>
-    void resetPriVarSwitch_(const std::size_t numDofs, Dune::index_constant<i> id, std::false_type) {}
+    void initPriVarSwitch_(SolutionVector&, Dune::index_constant<i> id, std::false_type) {}
 
     /*!
      * \brief Switch primary variables if necessary
      */
     template<std::size_t i>
-    void resetPriVarSwitch_(const std::size_t numDofs, Dune::index_constant<i> id, std::true_type)
+    void initPriVarSwitch_(SolutionVector& sol, Dune::index_constant<i> id, std::true_type)
     {
         using namespace Dune::Hybrid;
-        elementAt(priVarSwitches_, id)->reset(numDofs);
+        auto& priVarSwitch = *elementAt(priVarSwitches_, id);
+
+        priVarSwitch.reset(sol[id].size());
         priVarsSwitchedInLastIteration_[i] = false;
+
+        const auto& problem = this->assembler().problem(id);
+        const auto& fvGridGeometry = this->assembler().fvGridGeometry(id);
+        auto& gridVariables = this->assembler().gridVariables(id);
+        priVarSwitch.updateBoundary(problem, fvGridGeometry, gridVariables, sol);
     }
 
     /*!

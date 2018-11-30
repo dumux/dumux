@@ -175,6 +175,7 @@ public:
         FluidSystem::init();
 
         name_ = getParam<std::string>("Problem.Name");
+        useDirichlet_ = name_.find("buoyancy") != std::string::npos;
 
         //stating in the console whether mole or mass fractions are used
         if(useMoles)
@@ -220,6 +221,12 @@ public:
         else
             bcTypes.setAllNeumann();
 
+        if (useDirichlet_)
+        {
+            if (isInjectionArea_(globalPos))
+                bcTypes.setAllDirichlet();
+        }
+
         return bcTypes;
     }
 
@@ -230,7 +237,19 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        return initial_(globalPos);
+        PrimaryVariables priVars = initial_(globalPos);
+
+        if (useDirichlet_)
+        {
+            if (isInjectionArea_(globalPos))
+            {
+                priVars.setState(Indices::bothPhases);
+                priVars[switchIdx] = 0.2;
+                return priVars;
+            }
+        }
+
+        return priVars;
     }
 
     /*!
@@ -247,7 +266,7 @@ public:
         NumEqVector values(0.0);
 
         // we inject pure gasious nitrogen at the initial condition temperature and pressure  from the bottom (negative values mean injection)
-        if (globalPos[0] > 14.8 - eps_ && globalPos[0] < 25.2 + eps_ && globalPos[1] < eps_)
+        if (isInjectionArea_(globalPos))
         {
             values[contiN2EqIdx] = useMoles ? -1e-3/FluidSystem::molarMass(N2Idx) : -1e-3; // kg/(m^2*s) or mole/(m^2*s)
 
@@ -307,9 +326,15 @@ private:
     Scalar initialTemperatureProfile_(const GlobalPosition &globalPos) const
     { return 283.0 + (maxDepth_ - globalPos[1])*0.03; }
 
+    bool isInjectionArea_(const GlobalPosition& globalPos) const
+    {
+        return globalPos[0] > 14.8 - eps_ && globalPos[0] < 25.2 + eps_ && globalPos[1] < eps_;
+    }
+
     Scalar maxDepth_;
     static constexpr Scalar eps_ = 1e-2;
     std::string name_;
+    bool useDirichlet_;
 };
 
 } //end namespace Dumux
