@@ -49,7 +49,7 @@ class ThreePVolumeVariables
     using PermeabilityType = typename Traits::PermeabilityType;
     using Indices = typename Traits::ModelTraits::Indices;
     using FS = typename Traits::FluidSystem;
-    static constexpr int numFluidComps = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
 
     enum {
         wPhaseIdx = FS::wPhaseIdx,
@@ -95,7 +95,7 @@ public:
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
          // mobilities
-        for (int phaseIdx = 0; phaseIdx < ParentType::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < ParentType::numFluidPhases(); ++phaseIdx)
         {
             mobility_[phaseIdx] = MaterialLaw::kr(materialParams, phaseIdx,
                                  fluidState_.saturation(wPhaseIdx),
@@ -169,7 +169,7 @@ public:
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
 
-        for (int phaseIdx = 0; phaseIdx < ParentType::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < ParentType::numFluidPhases(); ++phaseIdx)
         {
             // compute and set the viscosity
             const Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
@@ -270,7 +270,7 @@ protected:
 
 private:
     PermeabilityType permeability_;
-    Scalar mobility_[ParentType::numPhases()];
+    Scalar mobility_[ParentType::numFluidPhases()];
 };
 
 } // end namespace Dumux

@@ -53,7 +53,7 @@ class ImmiscibleLocalResidual : public GetPropType<TypeTag, Properties::BaseLoca
     using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
     static constexpr int conti0EqIdx = ModelTraits::Indices::conti0EqIdx; //!< first index for the mass balance
 
 public:

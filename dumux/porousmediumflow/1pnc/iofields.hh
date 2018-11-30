@@ -52,11 +52,11 @@ public:
         out.addVolumeVariable([](const auto& volVars){ return volVars.pressure(0) - 1e5; },
                               "delp");
 
-        for (int i = 0; i < VolumeVariables::numComponents(); ++i)
+        for (int i = 0; i < VolumeVariables::numFluidComponents(); ++i)
            out.addVolumeVariable([i](const auto& volVars){ return volVars.moleFraction(0, i); },
                                      IOName::moleFraction<FluidSystem>(0, i));
 
-        for (int i = 0; i < VolumeVariables::numComponents(); ++i)
+        for (int i = 0; i < VolumeVariables::numFluidComponents(); ++i)
            out.addVolumeVariable([i](const auto& volVars){ return volVars.massFraction(0, i); },
                                      IOName::massFraction<FluidSystem>(0, i));
     }

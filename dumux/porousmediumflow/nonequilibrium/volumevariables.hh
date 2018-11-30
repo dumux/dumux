@@ -80,6 +80,10 @@ class NonEquilibriumVolumeVariablesImplementation< Traits,
 
     using DimLessNum = DimensionlessNumbers<Scalar>;
 
+    using NumFluidPhasesArray = std::array<Scalar, ModelTraits::numFluidPhases()>;
+    using InterfacialAreasArray =  std::array<std::array<Scalar, ModelTraits::numFluidPhases()+numEnergyEqSolid>,
+                                              ModelTraits::numFluidPhases()+numEnergyEqSolid>;
+
 public:
      using FluidState = typename Traits::FluidState;
      using Indices = typename ModelTraits::Indices;
@@ -130,7 +134,7 @@ public:
 
         // set the dimensionless numbers and obtain respective quantities
         const unsigned int vIdxGlobal = scv.dofIndex();
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
         {
             const auto darcyMagVelocity     = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, vIdxGlobal);
             const auto dynamicViscosity     = fluidState.viscosity(phaseIdx);
@@ -239,14 +243,14 @@ public:
 
 private:
     //! dimensionless numbers
-    Scalar reynoldsNumber_[ModelTraits::numPhases()];
-    Scalar prandtlNumber_[ModelTraits::numPhases()];
-    Scalar nusseltNumber_[ModelTraits::numPhases()];
+    NumFluidPhasesArray reynoldsNumber_;
+    NumFluidPhasesArray prandtlNumber_;
+    NumFluidPhasesArray nusseltNumber_;
 
     Scalar characteristicLength_;
     Scalar factorEnergyTransfer_;
     Scalar solidSurface_ ;
-    Scalar interfacialArea_[ModelTraits::numPhases()+numEnergyEqSolid][ModelTraits::numPhases()+numEnergyEqSolid];
+    InterfacialAreasArray interfacialArea_;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -271,6 +275,8 @@ class NonEquilibriumVolumeVariablesImplementation< Traits,
     static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
 
     using DimLessNum = DimensionlessNumbers<Scalar>;
+
+    using NumFluidPhasesArray = std::array<Scalar, ModelTraits::numFluidPhases()>;
 
 public:
      using FluidState = typename Traits::FluidState;
@@ -322,7 +328,7 @@ public:
 
         // set the dimensionless numbers and obtain respective quantities
         const unsigned int vIdxGlobal = scv.dofIndex();
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
         {
             const auto darcyMagVelocity     = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, vIdxGlobal);
             const auto dynamicViscosity     = fluidState.viscosity(phaseIdx);
@@ -381,9 +387,9 @@ public:
 
 private:
     //! dimensionless numbers
-    Scalar reynoldsNumber_[ModelTraits::numPhases()];
-    Scalar prandtlNumber_[ModelTraits::numPhases()];
-    Scalar nusseltNumber_[ModelTraits::numPhases()];
+    NumFluidPhasesArray reynoldsNumber_;
+    NumFluidPhasesArray prandtlNumber_;
+    NumFluidPhasesArray nusseltNumber_;
 
     Scalar characteristicLength_;
     Scalar factorEnergyTransfer_;
@@ -416,6 +422,9 @@ class NonEquilibriumVolumeVariablesImplementation< Traits,
     static constexpr auto nCompIdx = FS::comp1Idx;
 
     using DimLessNum = DimensionlessNumbers<Scalar>;
+
+    using NumFluidPhasesArray = std::array<Scalar, ModelTraits::numFluidPhases()>;
+
 public:
     /*!
      * \brief Update all quantities for a given control volume
@@ -464,7 +473,7 @@ public:
 
         // set the dimensionless numbers and obtain respective quantities.
         const auto globalVertexIdx = problem.fvGridGeometry().vertexMapper().subIndex(element, scv, Element::Geometry::mydimension);
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
         {
             const auto darcyMagVelocity     = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
             const auto dynamicViscosity     = fluidState.viscosity(phaseIdx);
@@ -544,9 +553,9 @@ private:
     Scalar factorMassTransfer_;
     Scalar solidSurface_ ;
     Scalar interfacialArea_ ;
-    Scalar sherwoodNumber_[ModelTraits::numPhases()] ;
-    Scalar schmidtNumber_[ModelTraits::numPhases()] ;
-    Scalar reynoldsNumber_[ModelTraits::numPhases()] ;
+    NumFluidPhasesArray sherwoodNumber_;
+    NumFluidPhasesArray schmidtNumber_;
+    NumFluidPhasesArray reynoldsNumber_;
 };
 
 // Specialization where everything is in non-equilibrium.
@@ -577,6 +586,10 @@ class NonEquilibriumVolumeVariablesImplementation< Traits,
 
     using DimLessNum = DimensionlessNumbers<Scalar>;
     static_assert((numEnergyEqFluid > 1), "This model only deals with energy transfer between two fluids and one solid phase");
+
+    using NumFluidPhasesArray = std::array<Scalar, ModelTraits::numFluidPhases()>;
+    using InterfacialAreasArray =  std::array<std::array<Scalar, ModelTraits::numFluidPhases()+numEnergyEqSolid>,
+                                              ModelTraits::numFluidPhases()+numEnergyEqSolid>;
 
 public:
     /*!
@@ -627,7 +640,7 @@ public:
 
         const auto vIdxGlobal = scv.dofIndex();
         using FluidSystem = typename Traits::FluidSystem;
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
         {
             const auto darcyMagVelocity    = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, vIdxGlobal);
             const auto dynamicViscosity    = fluidState.viscosity(phaseIdx);
@@ -753,16 +766,16 @@ public:
 
 private:
     //! dimensionless numbers
-    Scalar reynoldsNumber_[ModelTraits::numPhases()];
-    Scalar prandtlNumber_[ModelTraits::numPhases()];
-    Scalar nusseltNumber_[ModelTraits::numPhases()];
-    Scalar schmidtNumber_[ModelTraits::numPhases()];
-    Scalar sherwoodNumber_[ModelTraits::numPhases()];
+    NumFluidPhasesArray reynoldsNumber_;
+    NumFluidPhasesArray prandtlNumber_;
+    NumFluidPhasesArray nusseltNumber_;
+    NumFluidPhasesArray schmidtNumber_;
+    NumFluidPhasesArray sherwoodNumber_;
     Scalar characteristicLength_;
     Scalar factorEnergyTransfer_;
     Scalar factorMassTransfer_;
     Scalar solidSurface_ ;
-    Scalar interfacialArea_[ModelTraits::numPhases()+numEnergyEqSolid][ModelTraits::numPhases()+numEnergyEqSolid];
+    InterfacialAreasArray interfacialArea_;
 };
 
 } // namespace Dumux

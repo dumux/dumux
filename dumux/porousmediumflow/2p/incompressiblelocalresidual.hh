@@ -64,7 +64,7 @@ class TwoPIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
-    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
     static constexpr int pressureIdx = ModelTraits::Indices::pressureIdx;
     static constexpr int saturationIdx = ModelTraits::Indices::saturationIdx;
     static constexpr int conti0EqIdx = ModelTraits::Indices::conti0EqIdx;
@@ -97,7 +97,7 @@ public:
                       "2p/incompressiblelocalresidual.hh: Only incompressible fluids are allowed!");
         static_assert(!FluidSystem::isCompressible(1),
                       "2p/incompressiblelocalresidual.hh: Only incompressible fluids are allowed!");
-        static_assert(ModelTraits::numPhases() == 2,
+        static_assert(ModelTraits::numFluidPhases() == 2,
                       "2p/incompressiblelocalresidual.hh: Only two-phase models are allowed!");
         static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
@@ -106,7 +106,7 @@ public:
         const auto poreVolume = scv.volume()*curVolVars.porosity();
         static const std::array<Scalar, numPhases> rhos = { curVolVars.density(0), curVolVars.density(1) };
 
-        for (int pIdx = 0; pIdx < ModelTraits::numPhases(); ++pIdx)
+        for (int pIdx = 0; pIdx < ModelTraits::numFluidPhases(); ++pIdx)
         {
             // partial derivative of wetting phase storage term w.r.t. p_w
             partialDerivatives[conti0EqIdx+pIdx][pressureIdx] += 0.0;
@@ -165,7 +165,7 @@ public:
                       "2p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
         static_assert(FluidSystem::viscosityIsConstant(1),
                       "2p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
-        static_assert(ModelTraits::numPhases() == 2,
+        static_assert(ModelTraits::numFluidPhases() == 2,
                       "2p/incompressiblelocalresidual.hh: Only two-phase models are allowed!");
         static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
@@ -283,7 +283,7 @@ public:
                       "2p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
         static_assert(FluidSystem::viscosityIsConstant(1),
                       "2p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
-        static_assert(ModelTraits::numPhases() == 2,
+        static_assert(ModelTraits::numFluidPhases() == 2,
                       "2p/incompressiblelocalresidual.hh: Only two-phase models are allowed!");
         static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p0-s1 formulation!");

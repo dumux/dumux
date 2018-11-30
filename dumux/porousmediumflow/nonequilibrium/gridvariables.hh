@@ -51,10 +51,10 @@ class NonEquilibriumGridVariables
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
 
-    enum { dim = GridView::dimension }; // Grid and world dimension
-    enum { dimWorld = GridView::dimensionworld };
+    static constexpr auto dim = GridView::dimension; // Grid and world dimension
+    static constexpr auto dimWorld = GridView::dimensionworld;
 
-    static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases();
+    static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
 
 public:

@@ -119,7 +119,7 @@ private:
     using MTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr auto dim = MTraits::dim();
-    static constexpr auto nComp = MTraits::numComponents();
+    static constexpr auto nComp = MTraits::numFluidComponents();
     static constexpr auto numEq = MTraits::numEq();
 
     using BaseTurbulentProblem = std::conditional_t<(std::is_same<typename MTraits::Indices, KOmegaIndices<dim, nComp>>::value ||

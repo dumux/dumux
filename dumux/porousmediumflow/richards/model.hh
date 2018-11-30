@@ -128,8 +128,8 @@ struct RichardsModelTraits
     using Indices = RichardsIndices;
 
     static constexpr int numEq() { return 1; }
-    static constexpr int numPhases() { return 2; }
-    static constexpr int numComponents() { return 1; }
+    static constexpr int numFluidPhases() { return 2; }
+    static constexpr int numFluidComponents() { return 1; }
 
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return enableDiff; }

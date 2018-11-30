@@ -47,9 +47,7 @@ class CombustionEnergyLocalResidual
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
@@ -58,12 +56,9 @@ class CombustionEnergyLocalResidual
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
-    enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
-    enum { energyEq0Idx = Indices::energyEq0Idx };
-    enum { energyEqSolidIdx = Indices::energyEqSolidIdx};
-
-    enum { numComponents    = ModelTraits::numComponents() };
+    static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
+    static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
+    static constexpr auto energyEq0Idx = Indices::energyEq0Idx;
 
 public:
     /*!

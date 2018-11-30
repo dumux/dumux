@@ -56,7 +56,7 @@ class FreeflowNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
 public:
-    static constexpr auto numComponents = ModelTraits::numComponents();
+    static constexpr auto numComponents = ModelTraits::numFluidComponents();
     static constexpr bool useMoles = ModelTraits::useMoles();
     using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
 

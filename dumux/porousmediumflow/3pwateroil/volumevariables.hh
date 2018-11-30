@@ -58,10 +58,10 @@ class ThreePWaterOilVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
     using FS = typename Traits::FluidSystem;
-    static constexpr int numFluidComps = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
 
     enum {
-        numPs = ParentType::numPhases(),
+        numPs = ParentType::numFluidPhases(),
 
         wCompIdx = FS::wCompIdx,
         nCompIdx = FS::nCompIdx,

@@ -67,14 +67,14 @@ public:
         // update parent type sets primary variables
         ParentType::update(elemSol, problem, element, scv);
 
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, ParentType::numComponents());
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, ParentType::numFluidComponents());
         // dispersivity_ = problem.spatialParams().dispersivity(element, scv, elemSol);
 
         // the spatial params special to the tracer model
         fluidDensity_ = problem.spatialParams().fluidDensity(element, scv);
         fluidMolarMass_ = problem.spatialParams().fluidMolarMass(element, scv);
 
-        for (int compIdx = 0; compIdx < ParentType::numComponents(); ++compIdx)
+        for (int compIdx = 0; compIdx < ParentType::numFluidComponents(); ++compIdx)
         {
             moleOrMassFraction_[compIdx] = this->priVars()[compIdx];
             diffCoeff_[compIdx] = FluidSystem::binaryDiffusionCoefficient(compIdx, problem, element, scv);
@@ -180,8 +180,8 @@ protected:
     SolidState solidState_;
     Scalar fluidDensity_, fluidMolarMass_;
     // DispersivityType dispersivity_;
-    std::array<Scalar, ParentType::numComponents()> diffCoeff_;
-    std::array<Scalar, ParentType::numComponents()> moleOrMassFraction_;
+    std::array<Scalar, ParentType::numFluidComponents()> diffCoeff_;
+    std::array<Scalar, ParentType::numFluidComponents()> moleOrMassFraction_;
 };
 
 } // end namespace Dumux

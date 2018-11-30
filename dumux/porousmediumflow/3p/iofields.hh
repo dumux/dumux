@@ -43,7 +43,7 @@ public:
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
         // register standardized output fields
-        for (int phaseIdx = 0; phaseIdx < VolumeVariables::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < VolumeVariables::numFluidPhases(); ++phaseIdx)
         {
             out.addVolumeVariable([phaseIdx](const auto& v){ return v.saturation(phaseIdx); },
                                   IOName::saturation<FluidSystem>(phaseIdx));

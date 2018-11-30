@@ -57,9 +57,9 @@ class EvaporationAtmosphereSpatialParams
     using ThisType = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar>;
     using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum { dimWorld = GridView::dimensionworld };
+    static constexpr auto dimWorld = GridView::dimensionworld;
 public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;

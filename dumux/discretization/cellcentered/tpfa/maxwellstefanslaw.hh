@@ -52,21 +52,18 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::cctpfa >
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using IndexType = typename GridView::IndexSet::IndexType;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    static const int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases();
-    static const int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents();
+    static const int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
+    static const int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
 
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;

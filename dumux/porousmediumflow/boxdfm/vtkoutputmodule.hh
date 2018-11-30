@@ -176,7 +176,7 @@ private:
             }
 
             if (this->velocityOutput().enableOutput())
-                for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numPhases(); ++phaseIdx)
+                for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
                     velocity[phaseIdx].resize(numDofs);
 
             // maybe allocate space for the process rank
@@ -228,7 +228,7 @@ private:
 
                 // velocity output
                 if (this->velocityOutput().enableOutput())
-                    for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numPhases(); ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
                         this->velocityOutput().calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
 
                 //! the rank
@@ -258,7 +258,7 @@ private:
             // the velocity field
             if (this->velocityOutput().enableOutput())
             {
-                for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numPhases(); ++phaseIdx)
+                for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
                     this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().vertexMapper(), velocity[phaseIdx],
                                                                 "velocity_" + std::string(this->velocityOutput().phaseName(phaseIdx)) + " (m/s)",
                                                                 /*numComp*/dimWorld, /*codim*/dim).get() );
@@ -345,7 +345,7 @@ private:
             }
 
             if (this->velocityOutput().enableOutput())
-                for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numPhases(); ++phaseIdx)
+                for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
                     velocity[phaseIdx].resize(numDofs);
 
             // maybe allocate space for the process rank
@@ -406,7 +406,7 @@ private:
 
                 // velocity output
                 if (this->velocityOutput().enableOutput())
-                    for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numPhases(); ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
                         this->velocityOutput().calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
 
                 //! the rank
@@ -442,7 +442,7 @@ private:
             // the velocity field
             if (this->velocityOutput().enableOutput())
             {
-                for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numPhases(); ++phaseIdx)
+                for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
                     this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().vertexMapper(), velocity[phaseIdx],
                                                                 "velocity_" + std::string(this->velocityOutput().phaseName(phaseIdx)) + " (m/s)",
                                                                 /*numComp*/dimWorld, /*codim*/dim).get() );

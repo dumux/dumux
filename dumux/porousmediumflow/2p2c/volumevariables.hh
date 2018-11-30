@@ -54,7 +54,7 @@ class TwoPTwoCVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
 
-    static constexpr int numFluidComps = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
     // component indices
     enum
     {
@@ -104,8 +104,8 @@ public:
 
     // check for permissive combinations
     static_assert(useMoles() || (!useMoles() && useConstraintSolver), "if !UseMoles, UseConstraintSolver has to be set to true");
-    static_assert(ModelTraits::numPhases() == 2, "NumPhases set in the model is not two!");
-    static_assert(ModelTraits::numComponents() == 2, "NumComponents set in the model is not two!");
+    static_assert(ModelTraits::numFluidPhases() == 2, "NumPhases set in the model is not two!");
+    static_assert(ModelTraits::numFluidComponents() == 2, "NumComponents set in the model is not two!");
     static_assert((formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0), "Chosen TwoPFormulation not supported!");
 
     // The computations in the explicit composition update most probably assume a liquid-gas interface with
@@ -230,10 +230,10 @@ public:
         // If constraint solver is not used, get the phase pressures and set the fugacity coefficients here
         if(!useConstraintSolver)
         {
-            for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++ phaseIdx)
+            for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++ phaseIdx)
             {
                 assert(FluidSystem::isIdealMixture(phaseIdx));
-                for (int compIdx = 0; compIdx < ModelTraits::numComponents(); ++ compIdx) {
+                for (int compIdx = 0; compIdx < ModelTraits::numFluidComponents(); ++ compIdx) {
                     Scalar phi = FluidSystem::fugacityCoefficient(fluidState, paramCache, phaseIdx, compIdx);
                     fluidState.setFugacityCoefficient(phaseIdx, compIdx, phi);
                 }
@@ -371,7 +371,7 @@ public:
             }
         }
 
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
         {
             // set the viscosity and desity here if constraintsolver is not used
             if(!useConstraintSolver)
@@ -534,10 +534,10 @@ private:
     PermeabilityType permeability_; //!< Effective permeability within the control volume
 
     //!< Relative permeability within the control volume
-    std::array<Scalar, ModelTraits::numPhases()> relativePermeability_;
+    std::array<Scalar, ModelTraits::numFluidPhases()> relativePermeability_;
 
     //!< Binary diffusion coefficients for the phases
-    std::array<Scalar, ModelTraits::numPhases()> diffCoeff_;
+    std::array<Scalar, ModelTraits::numFluidPhases()> diffCoeff_;
 };
 
 } // end namespace Dumux

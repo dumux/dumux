@@ -63,7 +63,7 @@ template<class ET, bool chem, bool therm, int numEF, int numES, NusseltFormulati
 struct NonEquilibriumModelTraits : public ET
 {
     static constexpr int numEq() { return numEnergyEqFluid()+numEnergyEqSolid()+numTransportEq()+ET::numConstraintEq(); }
-    static constexpr int numTransportEq() { return chem ? ET::numPhases()*ET::numComponents() : ET::numComponents(); }
+    static constexpr int numTransportEq() { return chem ? ET::numFluidPhases()*ET::numFluidComponents() : ET::numFluidComponents(); }
 
     static constexpr int numEnergyEqFluid() { return therm ? numEF : 0; }
     static constexpr int numEnergyEqSolid() { return therm ? numES : 0; }
@@ -120,7 +120,7 @@ struct EnableChemicalNonEquilibrium<TypeTag, TTag::NonEquilibrium> { static cons
 template<class TypeTag>
 struct NumEnergyEqSolid<TypeTag, TTag::NonEquilibrium> { static constexpr int value = 1; };
 template<class TypeTag>
-struct NumEnergyEqFluid<TypeTag, TTag::NonEquilibrium> { static constexpr int value = GetPropType<TypeTag, Properties::EquilibriumModelTraits>::numPhases(); };
+struct NumEnergyEqFluid<TypeTag, TTag::NonEquilibrium> { static constexpr int value = GetPropType<TypeTag, Properties::EquilibriumModelTraits>::numFluidPhases(); };
 
 template<class TypeTag>
 struct EnergyLocalResidual<TypeTag, TTag::NonEquilibrium> { using type = EnergyLocalResidualNonEquilibrium<TypeTag, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>; };

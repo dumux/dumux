@@ -96,7 +96,7 @@ public:
         minPc_ = MaterialLaw::endPointPc(materialParams);
         pn_ = problem.nonWettingReferencePressure();
         //porosity
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, ParentType::numComponents());
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, ParentType::numFluidComponents());
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
@@ -107,7 +107,7 @@ public:
         paramCache.updatePhase(fluidState_, 0);
 
         const int compIIdx = 0;
-        for (unsigned int compJIdx = 0; compJIdx < ParentType::numComponents(); ++compJIdx)
+        for (unsigned int compJIdx = 0; compJIdx < ParentType::numFluidComponents(); ++compJIdx)
             if(compIIdx != compJIdx)
                 setDiffusionCoefficient_(compJIdx,
                                          FluidSystem::binaryDiffusionCoefficient(fluidState_,
@@ -160,7 +160,7 @@ public:
         if(useMoles)
         {
             Scalar sumSecondaryFractions = 0.0;
-            for (int compIdx = 1; compIdx < ParentType::numComponents(); ++compIdx)
+            for (int compIdx = 1; compIdx < ParentType::numFluidComponents(); ++compIdx)
             {
                 fluidState.setMoleFraction(0, compIdx, priVars[compIdx]);
                 sumSecondaryFractions += priVars[compIdx];
@@ -169,7 +169,7 @@ public:
         }
         else
         {
-            for (int compIdx = 1; compIdx < ParentType::numComponents(); ++compIdx)
+            for (int compIdx = 1; compIdx < ParentType::numFluidComponents(); ++compIdx)
                 fluidState.setMassFraction(0, compIdx, priVars[compIdx]);
         }
 
@@ -398,7 +398,7 @@ private:
     void setDiffusionCoefficient_(int compIdx, Scalar d)
     { diffCoefficient_[compIdx-1] = d; }
 
-    std::array<Scalar, ParentType::numComponents()-1> diffCoefficient_;
+    std::array<Scalar, ParentType::numFluidComponents()-1> diffCoefficient_;
 
     Scalar relativePermeabilityWetting_; //!< the relative permeability of the wetting phase
     SolidState solidState_;

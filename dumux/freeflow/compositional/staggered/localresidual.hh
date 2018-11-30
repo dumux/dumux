@@ -53,14 +53,9 @@ class FreeflowNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using Indices = typename ModelTraits::Indices;
 
-    using CellCenterResidual = CellCenterPrimaryVariables;
-
-
-    static constexpr int numComponents =ModelTraits::numComponents();
+    static constexpr int numComponents = ModelTraits::numFluidComponents();
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
-    static constexpr auto cellCenterOffset = ParentType::cellCenterOffset;
 
     using EnergyLocalResidual = typename ParentType::EnergyLocalResidual;
 

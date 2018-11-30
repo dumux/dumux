@@ -102,8 +102,8 @@ struct ThreePWaterOilModelTraits
     using Indices = ThreePWaterOilIndices;
 
     static constexpr int numEq() { return 2; }
-    static constexpr int numPhases() { return 3; }
-    static constexpr int numComponents() { return 2; }
+    static constexpr int numFluidPhases() { return 3; }
+    static constexpr int numFluidComponents() { return 2; }
 
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
@@ -178,7 +178,7 @@ struct LocalResidual<TypeTag, TTag::ThreePWaterOilNI> { using type = ThreePWater
 
 //! Set as default that no component mass balance is replaced by the total mass balance
 template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::ThreePWaterOilNI> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numComponents(); };
+struct ReplaceCompEqIdx<TypeTag, TTag::ThreePWaterOilNI> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents(); };
 
 //! The primary variables vector for the 3p3c model
 template<class TypeTag>

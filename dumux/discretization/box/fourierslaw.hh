@@ -43,26 +43,14 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::box>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using IndexType = typename GridView::IndexSet::IndexType;
 
     using Element = typename GridView::template Codim<0>::Entity;
-
-    enum { dim = GridView::dimension} ;
-    enum { dimWorld = GridView::dimensionworld} ;
-    enum { numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases()} ;
-
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
     static Scalar flux(const Problem& problem,
@@ -93,7 +81,7 @@ public:
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
         // compute the temperature gradient with the shape functions
-        Dune::FieldVector<Scalar, dimWorld> gradTemp(0.0);
+        Dune::FieldVector<Scalar, GridView::dimensionworld> gradTemp(0.0);
         for (auto&& scv : scvs(fvGeometry))
             gradTemp.axpy(elemVolVars[scv].temperature(), fluxVarsCache.gradN(scv.indexInElement()));
 

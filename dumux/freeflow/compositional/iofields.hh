@@ -78,7 +78,7 @@ struct FreeflowNCIOFields
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
         // priVars: v_0, ..., v_dim-1, p, x_0, ..., x_numComp-1, otherPv ..., T
-        if (pvIdx > ModelTraits::dim() && pvIdx < ModelTraits::dim() + ModelTraits::numComponents())
+        if (pvIdx > ModelTraits::dim() && pvIdx < ModelTraits::dim() + ModelTraits::numFluidComponents())
             return ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(0, pvIdx - ModelTraits::dim())
                                            : IOName::massFraction<FluidSystem>(0, pvIdx - ModelTraits::dim());
         else

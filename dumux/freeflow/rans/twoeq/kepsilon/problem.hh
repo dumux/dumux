@@ -73,7 +73,7 @@ class KEpsilonProblem : public RANSProblem<TypeTag>
     using Indices = typename ModelTraits::Indices;
 
     static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
-    static constexpr bool isCompositional = ModelTraits::numComponents() > 1;
+    static constexpr bool isCompositional = ModelTraits::numFluidComponents() > 1;
 
     // account for the offset of the cell center privars within the PrimaryVariables container
     static constexpr auto cellCenterOffset = ModelTraits::numEq() - CellCenterPrimaryVariables::dimension;
@@ -384,7 +384,7 @@ public:
         unsigned int elementIdx = asImp_().fvGridGeometry().elementMapper().index(element);
 
         // component mass fluxes
-        for (int compIdx = 0; compIdx < ModelTraits::numComponents(); ++compIdx)
+        for (int compIdx = 0; compIdx < ModelTraits::numFluidComponents(); ++compIdx)
         {
             if (ModelTraits::replaceCompEqIdx() == compIdx)
                 continue;
@@ -404,7 +404,7 @@ public:
                     + pFunction(schmidtNumber, asImp_().turbulentSchmidtNumber()));
         }
 
-        if (ModelTraits::replaceCompEqIdx() < ModelTraits::numComponents())
+        if (ModelTraits::replaceCompEqIdx() < ModelTraits::numFluidComponents())
         {
             wallFunctionFlux[ModelTraits::replaceCompEqIdx()] =
                 -std::accumulate(wallFunctionFlux.begin(), wallFunctionFlux.end(), 0.0);

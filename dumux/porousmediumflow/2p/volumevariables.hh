@@ -49,7 +49,7 @@ class TwoPVolumeVariables
     using Indices = typename ModelTraits::Indices;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using FS = typename Traits::FluidSystem;
-    static constexpr int numFluidComps = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
     enum
     {
         pressureIdx = Indices::pressureIdx,
@@ -180,7 +180,7 @@ public:
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
 
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx) {
             // compute and set the viscosity
             Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
             fluidState.setViscosity(phaseIdx, mu);
@@ -290,7 +290,7 @@ private:
     Scalar pc_;
     Scalar porosity_;
     PermeabilityType permeability_;
-    Scalar mobility_[ModelTraits::numPhases()];
+    Scalar mobility_[ModelTraits::numFluidPhases()];
 };
 
 } // end namespace Dumux

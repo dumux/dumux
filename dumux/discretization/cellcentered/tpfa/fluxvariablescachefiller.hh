@@ -145,8 +145,8 @@ private:
         using DiffusionFiller = typename DiffusionType::Cache::Filler;
         using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-        static constexpr int numPhases = ModelTraits::numPhases();
-        static constexpr int numComponents = ModelTraits::numComponents();
+        static constexpr int numPhases = ModelTraits::numFluidPhases();
+        static constexpr int numComponents = ModelTraits::numFluidComponents();
 
         // forward to the filler of the diffusive quantities
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)

@@ -61,10 +61,10 @@ class TwoPNCVolumeVariables
     using PermeabilityType = typename Traits::PermeabilityType;
     using FS = typename Traits::FluidSystem;
     using ModelTraits = typename Traits::ModelTraits;
-    static constexpr int numFluidComps = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
     enum
     {
-        numMajorComponents = ModelTraits::numPhases(),
+        numMajorComponents = ModelTraits::numFluidPhases(),
 
         // phase indices
         phase0Idx = FS::phase0Idx,
@@ -110,7 +110,7 @@ public:
 
     // check for permissive specifications
     static_assert(useMoles(), "use moles has to be set true in the 2pnc model");
-    static_assert(ModelTraits::numPhases() == 2, "NumPhases set in the model is not two!");
+    static_assert(ModelTraits::numFluidPhases() == 2, "NumPhases set in the model is not two!");
     static_assert((formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0), "Chosen TwoPFormulation not supported!");
 
     /*!
@@ -152,7 +152,7 @@ public:
         mobility_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx))/fluidState_.viscosity(nPhaseIdx);
 
         // binary diffusion coefficients
-        for (unsigned int compJIdx = 0; compJIdx < ModelTraits::numComponents(); ++compJIdx)
+        for (unsigned int compJIdx = 0; compJIdx <  ModelTraits::numFluidComponents(); ++compJIdx)
         {
             if(compJIdx != comp0Idx)
                 setDiffusionCoefficient_( phase0Idx, compJIdx,
@@ -261,7 +261,7 @@ public:
             // can be used by the MiscibleMultiPhaseComposition constraint solver
 
             const int knownPhaseIdx = setFirstPhaseMoleFractions ? phase0Idx : phase1Idx;
-            for (int compIdx = numMajorComponents; compIdx < ModelTraits::numComponents(); ++compIdx)
+            for (int compIdx = numMajorComponents; compIdx <  ModelTraits::numFluidComponents(); ++compIdx)
                 fluidState.setMoleFraction(knownPhaseIdx, compIdx, priVars[compIdx]);
 
             MiscibleMultiPhaseComposition::solve(fluidState,
@@ -271,12 +271,12 @@ public:
         else if (phasePresence == secondPhaseOnly)
         {
 
-            Dune::FieldVector<Scalar, ModelTraits::numComponents()> moleFrac;
+            Dune::FieldVector<Scalar,  ModelTraits::numFluidComponents()> moleFrac;
 
             moleFrac[comp0Idx] = priVars[switchIdx];
             Scalar sumMoleFracOtherComponents = moleFrac[comp0Idx];
 
-            for (int compIdx = numMajorComponents; compIdx < ModelTraits::numComponents(); ++compIdx)
+            for (int compIdx = numMajorComponents; compIdx <  ModelTraits::numFluidComponents(); ++compIdx)
             {
                 moleFrac[compIdx] = priVars[compIdx];
                 sumMoleFracOtherComponents += moleFrac[compIdx];
@@ -285,7 +285,7 @@ public:
             moleFrac[comp1Idx] = 1 - sumMoleFracOtherComponents;
 
             // Set fluid state mole fractions
-            for (int compIdx = 0; compIdx < ModelTraits::numComponents(); ++compIdx)
+            for (int compIdx = 0; compIdx <  ModelTraits::numFluidComponents(); ++compIdx)
                 fluidState.setMoleFraction(phase1Idx, compIdx, moleFrac[compIdx]);
 
             // calculate the composition of the remaining phases (as
@@ -299,11 +299,11 @@ public:
         {
             // only the first phase is present, i.e. first phase composition
             // is stored explicitly. extract _mass_ fractions in the second phase
-            Dune::FieldVector<Scalar, ModelTraits::numComponents()> moleFrac;
+            Dune::FieldVector<Scalar,  ModelTraits::numFluidComponents()> moleFrac;
 
             moleFrac[comp1Idx] = priVars[switchIdx];
             Scalar sumMoleFracOtherComponents = moleFrac[comp1Idx];
-            for (int compIdx = numMajorComponents; compIdx < ModelTraits::numComponents(); ++compIdx)
+            for (int compIdx = numMajorComponents; compIdx <  ModelTraits::numFluidComponents(); ++compIdx)
             {
                 moleFrac[compIdx] = priVars[compIdx];
 
@@ -313,7 +313,7 @@ public:
             moleFrac[comp0Idx] = 1 - sumMoleFracOtherComponents;
 
             // convert mass to mole fractions and set the fluid state
-            for (int compIdx = 0; compIdx < ModelTraits::numComponents(); ++compIdx)
+            for (int compIdx = 0; compIdx <  ModelTraits::numFluidComponents(); ++compIdx)
                 fluidState.setMoleFraction(phase0Idx, compIdx, moleFrac[compIdx]);
 
             // calculate the composition of the remaining phases (as
@@ -324,7 +324,7 @@ public:
                                              phase0Idx);
         }
         paramCache.updateAll(fluidState);
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
         {
             Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
             Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
@@ -385,7 +385,7 @@ public:
      */
     Scalar molarDensity(int phaseIdx) const
     {
-        if (phaseIdx < ModelTraits::numPhases())
+        if (phaseIdx < ModelTraits::numFluidPhases())
             return fluidState_.molarDensity(phaseIdx);
 
         else
@@ -489,8 +489,8 @@ private:
     Scalar pc_;                     //!< The capillary pressure
     Scalar porosity_;               //!< Effective porosity within the control volume
     PermeabilityType permeability_; //!> Effective permeability within the control volume
-    Scalar mobility_[ModelTraits::numPhases()]; //!< Effective mobility within the control volume
-    std::array<std::array<Scalar, ModelTraits::numComponents()-1>, ModelTraits::numPhases()> diffCoefficient_;
+    Scalar mobility_[ModelTraits::numFluidPhases()]; //!< Effective mobility within the control volume
+    std::array<std::array<Scalar,  ModelTraits::numFluidComponents()-1>, ModelTraits::numFluidPhases()> diffCoefficient_;
 
 };
 

@@ -59,7 +59,7 @@ class ThreePThreeCVolumeVariables
 
     using ModelTraits = typename Traits::ModelTraits;
     using Idx = typename ModelTraits::Indices;
-    static constexpr int numFluidComps = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
     enum {
         wCompIdx = FS::wCompIdx,
         gCompIdx = FS::gCompIdx,
@@ -196,10 +196,10 @@ public:
         // depend on composition!
         typename FluidSystem::ParameterCache paramCache;
         // assert(FluidSystem::isIdealGas(gPhaseIdx));
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++ phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++ phaseIdx) {
             assert(FluidSystem::isIdealMixture(phaseIdx));
 
-            for (int compIdx = 0; compIdx < ModelTraits::numComponents(); ++ compIdx) {
+            for (int compIdx = 0; compIdx < ModelTraits::numFluidComponents(); ++ compIdx) {
                 Scalar phi = FluidSystem::fugacityCoefficient(fluidState_, paramCache, phaseIdx, compIdx);
                 fluidState_.setFugacityCoefficient(phaseIdx, compIdx, phi);
             }
@@ -529,7 +529,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
         }
 
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx) {
             // Mobilities
             const Scalar mu =
                 FluidSystem::viscosity(fluidState_,
@@ -571,7 +571,7 @@ public:
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
         // compute and set the enthalpy
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
         {
             Scalar h = EnergyVolVars::enthalpy(fluidState_, paramCache, phaseIdx);
             fluidState_.setEnthalpy(phaseIdx, h);
@@ -711,11 +711,11 @@ protected:
 private:
     Scalar sw_, sg_, sn_, pg_, pw_, pn_;
 
-    Scalar moleFrac_[ModelTraits::numPhases()][ModelTraits::numComponents()];
-    Scalar massFrac_[ModelTraits::numPhases()][ModelTraits::numComponents()];
+    Scalar moleFrac_[ModelTraits::numFluidPhases()][ModelTraits::numFluidComponents()];
+    Scalar massFrac_[ModelTraits::numFluidPhases()][ModelTraits::numFluidComponents()];
 
     PermeabilityType permeability_; //!< Effective permeability within the control volume
-    Scalar mobility_[ModelTraits::numPhases()];  //!< Effective mobility within the control volume
+    Scalar mobility_[ModelTraits::numFluidPhases()];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
 
     void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
@@ -730,7 +730,7 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
     }
 
-    std::array<std::array<Scalar, ModelTraits::numComponents()-1>, ModelTraits::numPhases()> diffCoefficient_;
+    std::array<std::array<Scalar, ModelTraits::numFluidComponents()-1>, ModelTraits::numFluidPhases()> diffCoefficient_;
 };
 
 } // end namespace Dumux

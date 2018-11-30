@@ -41,8 +41,8 @@ struct IvDataHandlePhysicsTraits
     static constexpr bool enableMolecularDiffusion = ModelTraits::enableMolecularDiffusion();
     static constexpr bool enableHeatConduction = ModelTraits::enableEnergyBalance();
 
-    static constexpr int numPhases = ModelTraits::numPhases();
-    static constexpr int numComponents = ModelTraits::numComponents();
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
+    static constexpr int numComponents = ModelTraits::numFluidComponents();
 };
 
 /*!

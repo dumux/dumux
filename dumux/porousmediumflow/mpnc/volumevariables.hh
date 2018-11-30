@@ -67,7 +67,7 @@ class MPNCVolumeVariablesImplementation<Traits, false>
     static constexpr bool enableDiffusion = ModelTraits::enableMolecularDiffusion();
 
     using Indices = typename ModelTraits::Indices;
-    using ComponentVector = Dune::FieldVector<Scalar, ModelTraits::numComponents()>;
+    using ComponentVector = Dune::FieldVector<Scalar, ModelTraits::numFluidComponents()>;
     using CompositionFromFugacities = Dumux::CompositionFromFugacities<Scalar, typename Traits::FluidSystem>;
 
 public:
@@ -81,9 +81,9 @@ public:
     using SolidSystem = typename Traits::SolidSystem;
 
     //! return number of phases considered by the model
-    static constexpr int numPhases() { return ModelTraits::numPhases(); }
+    static constexpr int numFluidPhases() { return ModelTraits::numFluidPhases(); }
     //! return number of components considered by the model
-     static constexpr int numFluidComps = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -108,7 +108,7 @@ public:
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         // relative permeabilities
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
+        using MPAdapter = MPAdapter<MaterialLaw, numFluidPhases()>;
         MPAdapter::relativePermeabilities(relativePermeability_,
                                             materialParams,
                                             fluidState_);
@@ -116,7 +116,7 @@ public:
         paramCache.updateAll(fluidState_);
         if (enableDiffusion)
         {
-            for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx)
+            for (int phaseIdx = 0; phaseIdx < numFluidPhases(); ++phaseIdx)
             {
                 int compIIdx = phaseIdx;
                 for (unsigned int compJIdx = 0; compJIdx < numFluidComps; ++compJIdx)
@@ -170,12 +170,12 @@ public:
         /////////////
         auto&& priVars = elemSol[scv.localDofIndex()];
         Scalar sumSat = 0;
-        for (int phaseIdx = 0; phaseIdx < numPhases() - 1; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numFluidPhases() - 1; ++phaseIdx) {
             sumSat += priVars[Indices::s0Idx + phaseIdx];
             fluidState.setSaturation(phaseIdx, priVars[Indices::s0Idx + phaseIdx]);
         }
         Valgrind::CheckDefined(sumSat);
-        fluidState.setSaturation(numPhases() - 1, 1.0 - sumSat);
+        fluidState.setSaturation(numFluidPhases() - 1, 1.0 - sumSat);
 
         /////////////
         // set the phase pressures
@@ -186,9 +186,9 @@ public:
         const auto& materialParams =
             problem.spatialParams().materialLawParams(element, scv, elemSol);
         // capillary pressures
-        std::vector<Scalar> capPress(numPhases());
+        std::vector<Scalar> capPress(numFluidPhases());
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
+        using MPAdapter = MPAdapter<MaterialLaw, numFluidPhases()>;
         MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
         // add to the pressure of the first fluid phase
 
@@ -197,15 +197,15 @@ public:
             // This means that the pressures are sorted from the most wetting to the least wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pw
             const Scalar pw = priVars[Indices::p0Idx];
-            for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx)
+            for (int phaseIdx = 0; phaseIdx < numFluidPhases(); ++phaseIdx)
                 fluidState.setPressure(phaseIdx, pw - capPress[0] + capPress[phaseIdx]);
         }
         else if(pressureFormulation == MpNcPressureFormulation::leastWettingFirst){
             // This means that the pressures are sorted from the least wetting to the most wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pn
             const Scalar pn = priVars[Indices::p0Idx];
-            for (int phaseIdx = numPhases()-1; phaseIdx >= 0; --phaseIdx)
-                fluidState.setPressure(phaseIdx, pn - capPress[numPhases()-1] + capPress[phaseIdx]);
+            for (int phaseIdx = numFluidPhases()-1; phaseIdx >= 0; --phaseIdx)
+                fluidState.setPressure(phaseIdx, pn - capPress[numFluidPhases()-1] + capPress[phaseIdx]);
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "MPNCVolumeVariables do not support the chosen pressure formulation");
@@ -222,7 +222,7 @@ public:
             fug[compIdx] = priVars[Indices::fug0Idx + compIdx];
 
         // calculate phase compositions
-        for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numFluidPhases(); ++phaseIdx) {
             // initial guess
             for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
                 Scalar x_ij = 1.0/numFluidComps;
@@ -239,7 +239,7 @@ public:
         }
 
         // dynamic viscosities
-        for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numFluidPhases(); ++phaseIdx) {
             // viscosities
             Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
             fluidState.setViscosity(phaseIdx, mu);
@@ -490,9 +490,9 @@ protected:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
     }
 
-    std::array<std::array<Scalar, numFluidComps-1>, numPhases()> diffCoefficient_;
+    std::array<std::array<Scalar, numFluidComps-1>, numFluidPhases()> diffCoefficient_;
     Scalar porosity_; //!< Effective porosity within the control volume
-    std::array<Scalar, ModelTraits::numPhases()> relativePermeability_; //!< Effective relative permeability within the control volume
+    std::array<Scalar, ModelTraits::numFluidPhases()> relativePermeability_; //!< Effective relative permeability within the control volume
     PermeabilityType permeability_;
 
     //! Mass fractions of each component within each phase
@@ -519,7 +519,7 @@ class MPNCVolumeVariablesImplementation<Traits, true>
     static constexpr bool enableDiffusion = ModelTraits::enableMolecularDiffusion();
 
     using Indices = typename ModelTraits::Indices;
-    using ComponentVector = Dune::FieldVector<Scalar, ModelTraits::numComponents()>;
+    using ComponentVector = Dune::FieldVector<Scalar,  ModelTraits::numFluidComponents()>;
     using CompositionFromFugacities = Dumux::CompositionFromFugacities<Scalar, typename Traits::FluidSystem>;
 
     using ParameterCache = typename Traits::FluidSystem::ParameterCache;
@@ -534,9 +534,9 @@ public:
     using SolidSystem = typename Traits::SolidSystem;
 
     //! return number of phases considered by the model
-    static constexpr int numPhases() { return ModelTraits::numPhases(); }
+    static constexpr int numFluidPhases() { return ModelTraits::numFluidPhases(); }
     //! return number of components considered by the model
-    static constexpr int numFluidComps = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
     using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
     /*!
@@ -563,7 +563,7 @@ public:
 
         // relative permeabilities
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
+        using MPAdapter = MPAdapter<MaterialLaw, numFluidPhases()>;
         MPAdapter::relativePermeabilities(relativePermeability_,
                                           materialParams,
                                           fluidState_);
@@ -571,7 +571,7 @@ public:
         paramCache.updateAll(fluidState_);
         if (enableDiffusion)
         {
-            for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx)
+            for (int phaseIdx = 0; phaseIdx < numFluidPhases(); ++phaseIdx)
             {
                 int compIIdx = phaseIdx;
                 for (unsigned int compJIdx = 0; compJIdx < numFluidComps; ++compJIdx)
@@ -624,12 +624,12 @@ public:
         /////////////
         auto&& priVars = elemSol[scv.localDofIndex()];
         Scalar sumSat = 0;
-        for (int phaseIdx = 0; phaseIdx < numPhases() - 1; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numFluidPhases() - 1; ++phaseIdx) {
             sumSat += priVars[Indices::s0Idx + phaseIdx];
             fluidState.setSaturation(phaseIdx, priVars[Indices::s0Idx + phaseIdx]);
         }
         Valgrind::CheckDefined(sumSat);
-        fluidState.setSaturation(numPhases() - 1, 1.0 - sumSat);
+        fluidState.setSaturation(numFluidPhases() - 1, 1.0 - sumSat);
 
         /////////////
         // set the phase pressures
@@ -640,9 +640,9 @@ public:
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         fluidState.setWettingPhase(wPhaseIdx);
         // capillary pressures
-        std::vector<Scalar> capPress(numPhases());
+        std::vector<Scalar> capPress(numFluidPhases());
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numPhases()>;
+        using MPAdapter = MPAdapter<MaterialLaw, numFluidPhases()>;
         MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
         // add to the pressure of the first fluid phase
 
@@ -651,15 +651,15 @@ public:
             // This means that the pressures are sorted from the most wetting to the least wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pw
             const Scalar pw = priVars[Indices::p0Idx];
-            for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx)
+            for (int phaseIdx = 0; phaseIdx < numFluidPhases(); ++phaseIdx)
                 fluidState.setPressure(phaseIdx, pw - capPress[0] + capPress[phaseIdx]);
         }
         else if(pressureFormulation == MpNcPressureFormulation::leastWettingFirst){
             // This means that the pressures are sorted from the least wetting to the most wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pn
             const Scalar pn = priVars[Indices::p0Idx];
-            for (int phaseIdx = numPhases()-1; phaseIdx >= 0; --phaseIdx)
-                fluidState.setPressure(phaseIdx, pn - capPress[numPhases()-1] + capPress[phaseIdx]);
+            for (int phaseIdx = numFluidPhases()-1; phaseIdx >= 0; --phaseIdx)
+                fluidState.setPressure(phaseIdx, pn - capPress[numFluidPhases()-1] + capPress[phaseIdx]);
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "MPNCVolumeVariables do not support the chosen pressure formulation");
@@ -682,7 +682,7 @@ public:
 
 
         // dynamic viscosities
-        for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numFluidPhases(); ++phaseIdx) {
             // viscosities
             Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
             fluidState.setViscosity(phaseIdx, mu);
@@ -707,7 +707,7 @@ public:
                             const typename Traits::PrimaryVariables& priVars)
     {
         // setting the mole fractions of the fluid state
-        for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx)
+        for(int phaseIdx=0; phaseIdx<numFluidPhases(); ++phaseIdx)
         {
                 // set the component mole fractions
                 for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
@@ -721,7 +721,7 @@ public:
 
 //          // For using the ... other way of calculating equilibrium
 //          THIS IS ONLY FOR silencing Valgrind but is not used in this model
-        for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx)
+        for(int phaseIdx=0; phaseIdx<numFluidPhases(); ++phaseIdx)
             for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
                 const Scalar phi = FluidSystem::fugacityCoefficient(actualFluidState,
                                                                         paramCache,
@@ -738,14 +738,14 @@ public:
                                     paramCache) ;
 
         // Setting the equilibrium composition (in a kinetic model not necessarily the same as the actual mole fraction)
-        for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx){
+        for(int phaseIdx=0; phaseIdx<numFluidPhases(); ++phaseIdx){
             for (int compIdx=0; compIdx< numFluidComps; ++ compIdx){
                 xEquil_[phaseIdx][compIdx] = equilFluidState.moleFraction(phaseIdx, compIdx);
             }
         }
 
         // compute densities of all phases
-        for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx){
+        for(int phaseIdx=0; phaseIdx<numFluidPhases(); ++phaseIdx){
             const Scalar rho = FluidSystem::density(actualFluidState, paramCache, phaseIdx);
             actualFluidState.setDensity(phaseIdx, rho);
             const Scalar rhoMolar = FluidSystem::molarDensity(actualFluidState, paramCache, phaseIdx);
@@ -1003,10 +1003,10 @@ protected:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
     }
 
-    std::array<std::array<Scalar, numFluidComps-1>, numPhases()> diffCoefficient_;
-    std::array<Scalar, ModelTraits::numPhases()> relativePermeability_; //!< Effective relative permeability within the control volume
+    std::array<std::array<Scalar, numFluidComps-1>, numFluidPhases()> diffCoefficient_;
+    std::array<Scalar, ModelTraits::numFluidPhases()> relativePermeability_; //!< Effective relative permeability within the control volume
     PermeabilityType permeability_;
-    Scalar xEquil_[numPhases()][numFluidComps];
+    std::array<std::array<Scalar, numFluidComps>, numFluidPhases()> xEquil_;
 
     //! Mass fractions of each component within each phase
     FluidState fluidState_;

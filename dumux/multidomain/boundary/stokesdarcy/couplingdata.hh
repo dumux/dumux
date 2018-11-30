@@ -218,7 +218,7 @@ class StokesDarcyCouplingDataImplementation;
 template<class MDTraits, class CouplingManager>
 using StokesDarcyCouplingData = StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager,
                                                                       GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::enableEnergyBalance(),
-                                                                      (GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::numComponents() > 1)>;
+                                                                      (GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::numFluidComponents() > 1)>;
 
 /*!
  * \ingroup MultiDomain
@@ -247,7 +247,7 @@ class StokesDarcyCouplingDataImplementationBase
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
-    static constexpr bool adapterUsed = ModelTraits<darcyIdx>::numPhases() > 1;
+    static constexpr bool adapterUsed = ModelTraits<darcyIdx>::numFluidPhases() > 1;
     using IndexHelper = Dumux::IndexHelper<stokesIdx, darcyIdx, FluidSystem<stokesIdx>, adapterUsed>;
 
     static constexpr int enableEnergyBalance = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::ModelTraits>::enableEnergyBalance();
@@ -306,7 +306,7 @@ public:
                                      const ElementFaceVariables& stokesElemFaceVars,
                                      const SubControlVolumeFace<stokesIdx>& scvf) const
     {
-        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numPhases();
+        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
 
         Scalar momentumFlux(0.0);
         const auto& stokesContext = couplingManager_.stokesCouplingContext(element, scvf);
@@ -488,7 +488,7 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     template<std::size_t id> using ElementFaceVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFaceVariables>::LocalView;
     template<std::size_t id> using VolumeVariables  = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
 
-    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numComponents() == GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numPhases(),
+    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidComponents() == GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases(),
                   "Darcy Model must not be compositional");
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
@@ -653,11 +653,11 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     template<std::size_t id> using VolumeVariables  = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
     template<std::size_t id> using FluidSystem  = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
 
-    static constexpr auto numComponents = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::ModelTraits>::numComponents();
+    static constexpr auto numComponents = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::ModelTraits>::numFluidComponents();
     static constexpr auto replaceCompEqIdx = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::ModelTraits>::replaceCompEqIdx();
     static constexpr bool useMoles = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::ModelTraits>::useMoles();
 
-    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numComponents() == numComponents, "Submodels must use same number of components");
+    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidComponents() == numComponents, "Submodels must use same number of components");
     static_assert(getPropValue<SubDomainTypeTag<darcyIdx>, Properties::UseMoles>() == useMoles, "Both models must either use moles or not");
     static_assert(getPropValue<SubDomainTypeTag<darcyIdx>, Properties::ReplaceCompEqIdx>() == replaceCompEqIdx, "Both models must use the same replaceCompEqIdx");
     using NumEqVector = Dune::FieldVector<Scalar, numComponents>;

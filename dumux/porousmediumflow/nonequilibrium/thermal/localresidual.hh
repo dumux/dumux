@@ -58,14 +58,13 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
-    enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
-    enum { energyEq0Idx = Indices::energyEq0Idx };
-    enum { energyEqSolidIdx = Indices::energyEqSolidIdx};
+    static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
+    static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
+    static constexpr auto energyEq0Idx = Indices::energyEq0Idx;
+    static constexpr auto energyEqSolidIdx = Indices::energyEqSolidIdx;
 
-    enum { numPhases        = ModelTraits::numPhases() };
-
-    enum { numComponents    = ModelTraits::numComponents() };
+    static constexpr auto numPhases  = ModelTraits::numFluidPhases();
+    static constexpr auto numComponents = ModelTraits::numFluidComponents();
 
 public:
     //! The energy storage in the fluid phase with index phaseIdx
@@ -222,14 +221,14 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2 /*numEnergyEqFluid*/>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    enum { numPhases        = ModelTraits::numPhases() };
+    enum { numPhases        = ModelTraits::numFluidPhases() };
     enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
     enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
     enum { energyEq0Idx = Indices::energyEq0Idx };
     enum { energyEqSolidIdx = Indices::energyEqSolidIdx};
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
-    enum { numComponents    = ModelTraits::numComponents() };
+    enum { numComponents    = ModelTraits::numFluidComponents() };
     enum { phase0Idx        = FluidSystem::phase0Idx};
     enum { phase1Idx        = FluidSystem::phase1Idx};
     enum { sPhaseIdx        = numPhases};

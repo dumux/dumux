@@ -55,13 +55,8 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum { dim = GridView::dimension} ;
-    enum { dimWorld = GridView::dimensionworld} ;
-
-    enum { numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>() };
-    enum { sPhaseIdx = ModelTraits::numPhases() };
-
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    static constexpr auto numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr auto sPhaseIdx = ModelTraits::numFluidPhases();
 
 public:
     static Scalar flux(const Problem& problem,
@@ -83,7 +78,7 @@ public:
         if (phaseIdx != sPhaseIdx)
         {
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-            if (numEnergyEqFluid < ModelTraits::numPhases())
+            if (numEnergyEqFluid < ModelTraits::numFluidPhases())
             {
                 insideLambda += ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
                 outsideLambda += ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
@@ -111,7 +106,7 @@ public:
         // evaluate gradTemp at integration point
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
-        Dune::FieldVector<Scalar, dimWorld> gradTemp(0.0);
+        Dune::FieldVector<Scalar, GridView::dimensionworld> gradTemp(0.0);
         for (auto&& scv : scvs(fvGeometry))
         {
             // compute the temperature gradient with the shape functions

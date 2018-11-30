@@ -42,7 +42,7 @@ public:
         using VolumeVariables = typename OutputModule::VolumeVariables;
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
-        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+        for (int i = 0; i < VolumeVariables::numFluidPhases(); ++i)
         {
             out.addVolumeVariable([i](const auto& v){ return v.saturation(i); },
                                   IOName::saturation<FluidSystem>(i));
@@ -53,12 +53,12 @@ public:
             out.addVolumeVariable([i](const auto& v){ return v.mobility(i); },
                                   IOName::mobility<FluidSystem>(i));
 
-            for (int j = 0; j < VolumeVariables::numComponents(); ++j)
+            for (int j = 0; j < VolumeVariables::numFluidComponents(); ++j)
                 out.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },
                                       IOName::moleFraction<FluidSystem>(i, j));
         }
 
-        for (int j = 0; j < VolumeVariables::numComponents(); ++j)
+        for (int j = 0; j < VolumeVariables::numFluidComponents(); ++j)
         out.addVolumeVariable([j](const auto& v){ return v.fugacity(j); },
                               "fugacity^"+ FluidSystem::componentName(j));
 

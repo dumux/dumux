@@ -84,10 +84,10 @@ struct NavierStokesModelTraits
     static constexpr int numEq() { return dimension+1; }
 
     //! The number of phases is 1
-    static constexpr int numPhases() { return 1; }
+    static constexpr int numFluidPhases() { return 1; }
 
     //! The number of components is 1
-    static constexpr int numComponents() { return 1; }
+    static constexpr int numFluidComponents() { return 1; }
 
     //! Enable advection
     static constexpr bool enableAdvection() { return true; }
@@ -191,8 +191,8 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
-    static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
-    static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
+    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
     static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;

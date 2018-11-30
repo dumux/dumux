@@ -116,18 +116,15 @@ class MPNCComparisonProblem
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
 
-    // world dimension
-    enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases()};
-    enum {numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numComponents()};
-    enum {gasPhaseIdx = FluidSystem::gasPhaseIdx};
-    enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
-    enum {wCompIdx = FluidSystem::H2OIdx};
-    enum {nCompIdx = FluidSystem::N2Idx};
-    enum {fug0Idx = Indices::fug0Idx};
-    enum {s0Idx = Indices::s0Idx};
-    enum {p0Idx = Indices::p0Idx};
-
+    static constexpr auto numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
+    static constexpr auto numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
+    static constexpr auto gasPhaseIdx = FluidSystem::gasPhaseIdx;
+    static constexpr auto liquidPhaseIdx = FluidSystem::liquidPhaseIdx;
+    static constexpr auto wCompIdx = FluidSystem::H2OIdx;
+    static constexpr auto nCompIdx = FluidSystem::N2Idx;
+    static constexpr auto fug0Idx = Indices::fug0Idx;
+    static constexpr auto s0Idx = Indices::s0Idx;
+    static constexpr auto p0Idx = Indices::p0Idx;
 
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;

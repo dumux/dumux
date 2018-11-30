@@ -260,7 +260,7 @@ private:
 
         // instantiate the velocity output
         using VelocityVector = typename VelocityOutput::VelocityVector;
-        std::vector<VelocityVector> velocity(velocityOutput_->numPhases());
+        std::vector<VelocityVector> velocity(velocityOutput_->numFluidPhases());
 
         // process rank
         static bool addProcessRank = getParamFromGroup<bool>(paramGroup_, "Vtk.AddProcessRank");
@@ -288,7 +288,7 @@ private:
 
             if (velocityOutput_->enableOutput())
             {
-                for (int phaseIdx = 0; phaseIdx < velocityOutput_->numPhases(); ++phaseIdx)
+                for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                 {
                     if(isBox && dim == 1)
                         velocity[phaseIdx].resize(numCells);
@@ -340,7 +340,7 @@ private:
 
                 // velocity output
                 if (velocityOutput_->enableOutput())
-                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numPhases(); ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         velocityOutput_->calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
 
                 //! the rank
@@ -377,7 +377,7 @@ private:
             {
                 if (isBox && dim > 1)
                 {
-                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numPhases(); ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         sequenceWriter_.addVertexData( Field(fvGridGeometry().gridView(), fvGridGeometry().vertexMapper(), velocity[phaseIdx],
                                                              "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                                                              /*numComp*/dimWorld, /*codim*/dim).get() );
@@ -385,7 +385,7 @@ private:
                 // cell-centered models
                 else
                 {
-                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numPhases(); ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         sequenceWriter_.addCellData( Field(fvGridGeometry().gridView(), fvGridGeometry().elementMapper(), velocity[phaseIdx],
                                                            "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                                                            /*numComp*/dimWorld, /*codim*/0).get() );
@@ -437,7 +437,7 @@ private:
                       << " There will be no velocity output."
                       << " Use the addVelocityOutput member function of the VTK output module." << std::endl;
         using VelocityVector = typename VelocityOutput::VelocityVector;
-        std::vector<VelocityVector> velocity(velocityOutput_->numPhases());
+        std::vector<VelocityVector> velocity(velocityOutput_->numFluidPhases());
 
         // process rank
         static bool addProcessRank = getParamFromGroup<bool>(paramGroup_, "Vtk.AddProcessRank");
@@ -467,7 +467,7 @@ private:
 
             if (velocityOutput_->enableOutput())
             {
-                for (int phaseIdx = 0; phaseIdx < velocityOutput_->numPhases(); ++phaseIdx)
+                for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                 {
                     if(isBox && dim == 1)
                         velocity[phaseIdx].resize(numCells);
@@ -525,7 +525,7 @@ private:
 
                 // velocity output
                 if (velocityOutput_->enableOutput())
-                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numPhases(); ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         velocityOutput_->calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
 
                 //! the rank
@@ -551,14 +551,14 @@ private:
             {
                 // node-wise velocities
                 if (dim > 1)
-                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numPhases(); ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         sequenceWriter_.addVertexData( Field(fvGridGeometry().gridView(), fvGridGeometry().vertexMapper(), velocity[phaseIdx],
                                                              "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                                                              /*numComp*/dimWorld, /*codim*/dim).get() );
 
                 // cell-wise velocities
                 else
-                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numPhases(); ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         sequenceWriter_.addCellData( Field(fvGridGeometry().gridView(), fvGridGeometry().elementMapper(), velocity[phaseIdx],
                                                            "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                                                            /*numComp*/dimWorld, /*codim*/0).get() );

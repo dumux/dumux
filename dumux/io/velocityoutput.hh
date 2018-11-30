@@ -62,7 +62,7 @@ public:
     virtual std::string phaseName(int phaseIdx) const { return "none"; }
 
     //! returns the number of phases
-    virtual int numPhases() const { return 0; }
+    virtual int numFluidPhases() const { return 0; }
 
     //! Calculate the velocities for the scvs in the element
     //! We assume the local containers to be bound to the complete stencil

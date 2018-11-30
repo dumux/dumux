@@ -64,8 +64,8 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    static const int numPhases = ModelTraits::numPhases();
-    static const int numComponents = ModelTraits::numComponents();
+    static const int numPhases = ModelTraits::numFluidPhases();
+    static const int numComponents = ModelTraits::numFluidComponents();
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;

@@ -53,7 +53,7 @@ class TwoPTwoCCO2VolumeVariables
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
-    static constexpr int numFluidComps = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
 
     // component indices
     enum
@@ -103,8 +103,8 @@ public:
     static constexpr TwoPFormulation priVarFormulation() { return formulation; }
 
     // check for permissive combinations
-    static_assert(ModelTraits::numPhases() == 2, "NumPhases set in the model is not two!");
-    static_assert(ModelTraits::numComponents() == 2, "NumComponents set in the model is not two!");
+    static_assert(ModelTraits::numFluidPhases() == 2, "NumPhases set in the model is not two!");
+    static_assert(ModelTraits::numFluidComponents() == 2, "NumComponents set in the model is not two!");
     static_assert((formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0), "Chosen TwoPFormulation not supported!");
 
     /*!
@@ -291,7 +291,7 @@ public:
             }
         }
 
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
         {
             // set the viscosity and desity here if constraintsolver is not used
             paramCache.updateComposition(fluidState, phaseIdx);
@@ -451,10 +451,10 @@ private:
     PermeabilityType permeability_; //!< Effective permeability within the control volume
 
     //!< Relative permeability within the control volume
-    std::array<Scalar, ModelTraits::numPhases()> relativePermeability_;
+    std::array<Scalar, ModelTraits::numFluidPhases()> relativePermeability_;
 
     //!< Binary diffusion coefficients for the phases
-    std::array<Scalar, ModelTraits::numPhases()> diffCoeff_;
+    std::array<Scalar, ModelTraits::numFluidPhases()> diffCoeff_;
 };
 
 } // end namespace Dumux
