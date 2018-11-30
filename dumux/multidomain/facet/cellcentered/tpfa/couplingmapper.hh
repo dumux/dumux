@@ -77,6 +77,7 @@ public:
             using LowDimIndexType = typename IndexTraits<typename LowDimFVG::GridView>::GridIndex;
             using BulkIndexType = typename IndexTraits<typename BulkFVG::GridView>::GridIndex;
 
+            const auto lowDimGeometry = lowDimElement.geometry();
             const auto lowDimElemIdx = lowDimFvGridGeometry.elementMapper().index(lowDimElement);
             auto& lowDimData = this->couplingMap_(facetGridId, bulkGridId)[lowDimElemIdx];
 
@@ -109,9 +110,8 @@ public:
                     // otherwise, do float comparison of element and scvf center
                     else
                     {
-                        const auto lowDimGeom = lowDimElement.geometry();
-                        const auto eps = lowDimGeom.volume()*1e-8;
-                        const auto diffVec = lowDimGeom.center()-scvf.center();
+                        const auto eps = lowDimGeometry.volume()*1e-8;
+                        const auto diffVec = lowDimGeometry.center()-scvf.center();
 
                         using std::abs;
                         if ( std::all_of(diffVec.begin(), diffVec.end(), [eps] (auto coord) { return abs(coord) < eps; }) )
