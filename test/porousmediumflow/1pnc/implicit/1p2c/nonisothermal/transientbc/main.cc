@@ -128,7 +128,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = UMFPackBackend;
+    using LinearSolver = ILU0BiCGSTABBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
