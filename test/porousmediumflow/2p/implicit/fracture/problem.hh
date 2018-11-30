@@ -37,9 +37,9 @@
 #include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
-#include <dumux/discretization/cellcentered/mpfa/properties.hh>
-#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/ccmpfa.hh>
+#include <dumux/discretization/box.hh>
 
 #include "spatialparams.hh"
 

@@ -43,7 +43,7 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 
 #include <dumux/multidomain/traits.hh>

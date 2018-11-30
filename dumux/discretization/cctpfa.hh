@@ -17,85 +17,83 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
  * \file
- *
- * \brief Defines a type tag and some properties for models using the box scheme.
+ * \ingroup Discretization
+ * \brief Properties for all models using cell-centered finite volume scheme with TPFA
+ * \note Inherit from these properties to use a cell-centered finite volume scheme with TPFA
  */
 
-#ifndef DUMUX_BOX_PROPERTIES_HH
-#define DUMUX_BOX_PROPERTIES_HH
-
-#include <dune/common/fvector.hh>
-#include <dune/geometry/multilineargeometry.hh>
+#ifndef DUMUX_DISCRETIZATION_CC_TPFA_HH
+#define DUMUX_DISCRETIZATION_CC_TPFA_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
 
-#include <dumux/assembly/boxlocalresidual.hh>
+#include <dumux/assembly/cclocalresidual.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
 
-#include <dumux/discretization/box/elementsolution.hh>
-#include <dumux/discretization/box/elementboundarytypes.hh>
-#include <dumux/discretization/box/gridfluxvariablescache.hh>
-#include <dumux/discretization/box/gridvolumevariables.hh>
-#include <dumux/discretization/box/fvgridgeometry.hh>
+#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
+#include <dumux/discretization/cellcentered/elementboundarytypes.hh>
+#include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
+#include <dumux/discretization/cellcentered/tpfa/gridvolumevariables.hh>
+#include <dumux/discretization/cellcentered/tpfa/gridfluxvariablescache.hh>
+#include <dumux/discretization/cellcentered/tpfa/fluxvariablescachefiller.hh>
+#include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 
 namespace Dumux {
 namespace Properties {
 
-//! Type tag for the box scheme.
+//! Type tag for the cell-centered tpfa scheme.
 // Create new type tags
 namespace TTag {
-struct BoxModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
+struct CCTpfaModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
 } // end namespace TTag
 
 //! Set the default for the global finite volume geometry
 template<class TypeTag>
-struct FVGridGeometry<TypeTag, TTag::BoxModel>
+struct FVGridGeometry<TypeTag, TTag::CCTpfaModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = BoxFVGridGeometry<Scalar, GridView, enableCache>;
+    using type = CCTpfaFVGridGeometry<GridView, enableCache>;
 };
 
 //! The grid volume variables vector class
 template<class TypeTag>
-struct GridVolumeVariables<TypeTag, TTag::BoxModel>
+struct GridVolumeVariables<TypeTag, TTag::CCTpfaModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 public:
-    using type = BoxGridVolumeVariables<Problem, VolumeVariables, enableCache>;
+    using type = CCTpfaGridVolumeVariables<Problem, VolumeVariables, enableCache>;
 };
 
 //! The grid flux variables cache vector class
 template<class TypeTag>
-struct GridFluxVariablesCache<TypeTag, TTag::BoxModel>
+struct GridFluxVariablesCache<TypeTag, TTag::CCTpfaModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    using FluxVariablesCacheFiller = CCTpfaFluxVariablesCacheFiller<TypeTag>;
 public:
-    using type = BoxGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
+    using type = CCTpfaGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
 };
 
 //! Set the default for the ElementBoundaryTypes
 template<class TypeTag>
-struct ElementBoundaryTypes<TypeTag, TTag::BoxModel> { using type = BoxElementBoundaryTypes<GetPropType<TypeTag, Properties::BoundaryTypes>>; };
+struct ElementBoundaryTypes<TypeTag, TTag::CCTpfaModel> { using type = CCElementBoundaryTypes; };
 
-//! Set the BaseLocalResidual to BoxLocalResidual
+//! Set the BaseLocalResidual to CCLocalResidual
 template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::BoxModel> { using type = BoxLocalResidual<TypeTag>; };
-
+struct BaseLocalResidual<TypeTag, TTag::CCTpfaModel> { using type = CCLocalResidual<TypeTag>; };
 } // namespace Properties
 } // namespace Dumux
 

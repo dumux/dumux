@@ -17,16 +17,15 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup StaggeredDiscretization
  * \file
- *
+ * \ingroup Discretization
  * \brief Defines a type tag and some properties for models using the staggered scheme.
           This scheme features degrees of freedom at the elements' centers and intersections (faces).
  * TODO: detailed documentation and figures
  */
 
-#ifndef DUMUX_STAGGERD_PROPERTIES_HH
-#define DUMUX_STAGGERD_PROPERTIES_HH
+#ifndef DUMUX_DISCRETIZATION_STAGGERD_HH
+#define DUMUX_DISCRETIZATION_STAGGERD_HH
 
 #include <dumux/common/properties.hh>
 

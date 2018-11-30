@@ -30,9 +30,9 @@
 #endif
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
-#include <dumux/discretization/cellcentered/mpfa/properties.hh>
-#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/ccmpfa.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/evalgradients.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>

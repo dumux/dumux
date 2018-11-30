@@ -26,7 +26,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cctpfa.hh>
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 
 #include <dumux/porousmediumflow/2p2c/model.hh>

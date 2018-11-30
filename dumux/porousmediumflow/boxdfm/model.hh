@@ -26,7 +26,7 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_BOXDFM_MODEL_HH
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_MODEL_HH
 
-#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/box.hh>
 
 #include "fvgridgeometry.hh"
 #include "fluxvariablescache.hh"

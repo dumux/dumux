@@ -39,8 +39,8 @@
 #include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/discretization/box/properties.hh>
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box.hh>
+#include <dumux/discretization/cctpfa.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/components/n2.hh>

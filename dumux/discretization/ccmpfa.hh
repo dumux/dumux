@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CCMpfaDiscretization
+ * \ingroup Discretization
  * \brief Properties for all models using cell-centered finite volume scheme with mpfa
  * \note Inherit from these properties to use a cell-centered finite volume scheme with mpfa
  */
-#ifndef DUMUX_CC_MPFA_PROPERTIES_HH
-#define DUMUX_CC_MPFA_PROPERTIES_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_HH
 
 #include <dune/common/reservedvector.hh>
 

@@ -26,8 +26,8 @@
 
 #include <dune/common/parametertreeparser.hh>
 
-#include <dumux/discretization/box/properties.hh>
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box.hh>
+#include <dumux/discretization/cctpfa.hh>
 
 #include <dumux/porousmediumflow/2p2c/model.hh>
 #include <dumux/porousmediumflow/problem.hh>

@@ -34,8 +34,8 @@
 #include <dune/grid/uggrid.hh>
 #endif
 
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
-#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
