@@ -148,6 +148,7 @@ class SolutionEvaluator
         }
         else
         {
+            static bool warnedAboutUsingMinDist = false;
             if (!warnedAboutUsingMinDist)
             {
                 std::cout << "Warning: Using nearest-neighbor interpolation in evalSolution"
@@ -237,6 +238,7 @@ class SolutionEvaluator
         }
         else
         {
+            static bool warnedAboutUsingMinDist = false;
             if (!warnedAboutUsingMinDist)
             {
                 std::cout << "Warning: Using nearest-neighbor interpolation in evalSolution"
@@ -326,12 +328,7 @@ class SolutionEvaluator
         auto minDistanceIt = std::min_element(distances.begin(), distances.end());
         return std::distance(distances.begin(), minDistanceIt);
     }
-
-public:
-    static bool warnedAboutUsingMinDist;
 };
-
-bool SolutionEvaluator::warnedAboutUsingMinDist = false;
 
 /*!
  * \brief Interpolates a given box element solution at a given global position.
