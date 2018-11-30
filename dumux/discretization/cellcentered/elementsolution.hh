@@ -81,6 +81,10 @@ public:
         priVars_ = sol[fvGridGeometry.elementMapper().index(element)];
     }
 
+    //! return the size of the element solution
+    constexpr std::size_t size() const
+    { return 1; }
+
     //! bracket operator const access
     template<typename IndexType>
     const PrimaryVariables& operator [](IndexType i) const

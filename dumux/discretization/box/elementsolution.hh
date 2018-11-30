@@ -88,6 +88,10 @@ public:
             priVars_[scv.localDofIndex()] = sol[scv.dofIndex()];
     }
 
+    //! return the size of the element solution
+    std::size_t size() const
+    { return priVars_.size(); }
+
     //! bracket operator const access
     template<typename IndexType>
     const PrimaryVariables& operator [](IndexType i) const

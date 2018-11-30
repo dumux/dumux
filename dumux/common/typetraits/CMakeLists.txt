@@ -1,6 +1,7 @@
 install(FILES
 isvalid.hh
 matrix.hh
+state.hh
 typetraits.hh
 utility.hh
 vector.hh

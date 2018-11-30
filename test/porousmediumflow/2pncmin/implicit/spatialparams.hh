@@ -126,18 +126,14 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
-        auto priVars = evalSolution(element, element.geometry(), elemSol, scv.center());
+        auto priVars = evalSolution(element, element.geometry(), elemSol, scv.center(), /*ignoreState=*/true);
 
-        Scalar sumPrecipitates = 0.0;
-        sumPrecipitates += priVars[3 /*numComp*/];
+        Scalar sumPrecipitates = priVars[/*numComp*/3];
 
-         using std::max;
-         const auto poro =  max(/*minPoro*/1e-5, referencePorosity_ - sumPrecipitates);
-         return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
+        using std::max;
+        const auto poro = max(/*minPoro*/1e-5, referencePorosity_ - sumPrecipitates);
+        return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
     }
-
-//     Scalar solidity(const SubControlVolume &scv) const
-//     { return 1.0 - porosityAtPos(scv.center()); }
 
     Scalar solubilityLimit() const
     { return solubilityLimit_; }
