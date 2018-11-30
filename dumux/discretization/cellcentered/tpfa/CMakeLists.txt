@@ -7,6 +7,7 @@ fickslaw.hh
 fluxvariablescachefiller.hh
 forchheimerslaw.hh
 fourierslaw.hh
+fourierslawnonequilibrium.hh
 fvelementgeometry.hh
 fvgridgeometry.hh
 gridfluxvariablescache.hh
