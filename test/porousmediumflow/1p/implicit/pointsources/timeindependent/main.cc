@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePTests
  * \brief test for the one-phase model with point sources
  */
 #include <config.h>

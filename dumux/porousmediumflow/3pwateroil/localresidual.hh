@@ -83,9 +83,9 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      *
-     *  \param storage The mass of the component within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
-     *  \param usePrevSol Evaluate function with solution of current or previous time step
+     *  \param problem The problem
+     *  \param scv The sub-control-volume
+     *  \param volVars The volume variables
      */
      NumEqVector computeStorage(const Problem& problem,
                                 const SubControlVolume& scv,
@@ -125,10 +125,12 @@ public:
      * \brief Evaluates the total flux of all conservation quantities
      *        over a face of a sub-control volume.
      *
-     * \param flux The flux over the SCV (sub-control-volume) face for each component
-     * \param fIdx The index of the SCV face
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     *        are calculated for interior SCV faces or boundary faces, default=false
+     * \param problem The problem
+     * \param element The element
+     * \param fvGeometry The finite volume element geometry
+     * \param elemVolVars The element volume variables
+     * \param scvf The sub control volume face
+     * \param elemFluxVarsCache The element flux variables cache
      */
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,

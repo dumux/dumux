@@ -41,7 +41,7 @@
 namespace Dumux {
 /*!
  * \ingroup TwoPTwoCTests
- * \briefProblem where air is injected in a unsaturated porous medium. This test compares a   mpnc problem with a 2p2c problem
+ * \brief Problem where air is injected in a unsaturated porous medium. This test compares a mpnc problem with a 2p2c problem
  */
 template <class TypeTag>
 class TwoPTwoCComparisonProblem;
@@ -126,8 +126,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     TwoPTwoCComparisonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
@@ -163,7 +162,6 @@ public:
     /*!
      * \brief Returns the temperature \f$ K \f$
      *
-     * \param globalPos The global position
      */
     Scalar temperature() const
     { return temperature_; }
@@ -200,13 +198,10 @@ public:
      * \brief Evaluates the boundary conditions for a Neumann
      *        boundary segment.
      *
-     * \param values Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local index of the sub-control volume
-     * \param boundaryFaceIdx The index of the boundary face
+     * \param elemVolVars The element volume variables
+     * \param scvf The sub-control volume face
      *
      * Negative values mean influx.
      */
@@ -229,7 +224,6 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The center of the finite volume which ought to be set.
      *
      * For this method, the \a values parameter stores primary

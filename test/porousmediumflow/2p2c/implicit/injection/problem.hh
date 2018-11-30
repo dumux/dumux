@@ -127,7 +127,7 @@ public:
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
  * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is true.
  *
- * This problem uses the \ref TwoPTwoCModel.
+ * This problem uses the \ref TwoPTwoCModel .
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_box2p2c</tt> or
@@ -186,8 +186,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     InjectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -247,7 +246,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment
      *
-     * \param values Stores the value of the boundary type
      * \param globalPos The global position
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -264,8 +262,6 @@ public:
      * \brief Evaluates the boundary conditions for a Dirichlet
      *        boundary segment
      *
-     * \param values Stores the Dirichlet values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
@@ -277,14 +273,10 @@ public:
      * \brief Evaluates the boundary conditions for a Neumann
      *        boundary segment in dependency on the current solution.
      *
-     * \param values Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local index of the sub-control volume
-     * \param boundaryFaceIdx The index of the boundary face
      * \param elemVolVars All volume variables for the element
+     * \param scvf The sub control volume face
      *
      * This method is used for cases, when the Neumann condition depends on the
      * solution and requires some quantities that are specific to the fully-implicit method.
@@ -320,8 +312,6 @@ public:
     /*!
      * \brief Evaluates the initial values for a control volume
      *
-     * \param values Stores the initial values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
@@ -335,8 +325,6 @@ private:
      *
      * The internal method for the initial condition
      *
-     * \param values Stores the initial values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables initial_(const GlobalPosition &globalPos) const

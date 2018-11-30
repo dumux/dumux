@@ -41,7 +41,7 @@ namespace Dumux
  *
  * \param scvf The sub-control volume face
  * \param scv The neighboring sub-control volume
- * \param K The tensor living in the neighboring scv
+ * \param T The tensor living in the neighboring scv
  * \param extrusionFactor The extrusion factor of the scv
  */
 template< class SubControlVolumeFace, class SubControlVolume, class Tensor >

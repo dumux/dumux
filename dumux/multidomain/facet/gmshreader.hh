@@ -16,9 +16,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \copydoc Dumux::FacetCouplingGmshReader.
+ * \copydoc Dumux::FacetCouplingGmshReader
  */
 #ifndef DUMUX_FACETCOUPLING_GMSH_READER_HH
 #define DUMUX_FACETCOUPLING_GMSH_READER_HH
@@ -38,8 +37,7 @@
 
 namespace Dumux {
 
-/*
- * \ingroup MultiDomain
+/*!
  * \ingroup FacetCoupling
  * \brief Reads gmsh files where (n-1)-dimensional grids are defined on the faces
  *        or edges of n-dimensional grids.

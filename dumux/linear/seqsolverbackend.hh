@@ -866,8 +866,8 @@ public:
     /*! \brief Constructor.
 
        Constructor gets all parameters to operate the prec.
-       \param A The (multi type block) matrix to operate on.
-       \param w The relaxation factor.
+       \param m The (multi type block) matrix to operate on
+       \param w The relaxation factor
      */
     BlockDiagILU0Preconditioner(const M& m, double w = 1.0)
     : BlockDiagILU0Preconditioner(m, w, std::make_index_sequence<M::size()>{})
@@ -878,13 +878,13 @@ public:
     /*!
        \brief Prepare the preconditioner.
 
-       \copydoc Preconditioner::pre(X&,Y&)
+       \copydoc Dune::Preconditioner::pre(X&,Y&)
      */
     void pre (X& v, Y& d) final {}
 
     /*!
      * \brief Apply the preconditoner.
-     * \copydoc Preconditioner::apply(X&,const Y&)
+     * \copydoc Dune::Preconditioner::apply(X&,const Y&)
      */
     void apply (X& v, const Y& d) final
     {
@@ -897,7 +897,7 @@ public:
 
     /*!
      * \brief Clean up.
-     * \copydoc Preconditioner::post(X&)
+     * \copydoc Dune::Preconditioner::post(X&)
      */
     void post (X&) final {}
 
@@ -994,8 +994,9 @@ public:
     /*! \brief Constructor.
 
        Constructor gets all parameters to operate the prec.
-       \param A The (multi type block) matrix to operate on.
-       \param w The relaxation factor.
+       \param lop The linear operator
+       \param c The criterion
+       \param sa The smoother arguments
      */
     template<class LOP, class Criterion, class SmootherArgs>
     BlockDiagAMGPreconditioner(const LOP& lop, const Criterion& c, const SmootherArgs& sa)
@@ -1007,7 +1008,7 @@ public:
     /*!
        \brief Prepare the preconditioner.
 
-       \copydoc Preconditioner::pre(X&,Y&)
+       \copydoc Dune::Preconditioner::pre(X&,Y&)
      */
     void pre (X& v, Y& d) final
     {
@@ -1020,7 +1021,7 @@ public:
 
     /*!
      * \brief Apply the preconditoner.
-     * \copydoc Preconditioner::apply(X&,const Y&)
+     * \copydoc Dune::Preconditioner::apply(X&,const Y&)
      */
     void apply (X& v, const Y& d) final
     {
@@ -1033,7 +1034,7 @@ public:
 
     /*!
      * \brief Clean up.
-     * \copydoc Preconditioner::post(X&)
+     * \copydoc Dune::Preconditioner::post(X&)
      */
     void post (X& v) final
     {

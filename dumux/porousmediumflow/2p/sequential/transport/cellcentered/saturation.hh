@@ -184,7 +184,7 @@ public:
 
     /*!
      * \brief Writes the current values of the primary transport variable
-     * \into the <tt>transportedQuantity</tt>-vector (comes as function argument)
+     *  into the <tt>transportedQuantity</tt>-vector (comes as function argument)
      *
      * \copydetails FVTransport::getTransportedQuantity(TransportSolutionType&)
      */

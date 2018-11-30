@@ -145,14 +145,14 @@ public:
         return stressTensorScalarProduct_;
     }
 
-    //! \brief Returns the \$f Re_\textrm{T} \$f value
+    //! \brief Returns the \f$ Re_\textrm{T} \f$ value
     const Scalar reT() const
     {
         return turbulentKineticEnergy() * turbulentKineticEnergy()
                / RANSParentType::kinematicViscosity() / dissipationTilde();
     }
 
-    //! \brief Returns the \$f Re_\textrm{y} \$f value
+    //! \brief Returns the \f$ Re_\textrm{y} \f$ value
     const Scalar reY() const
     {
         using std::sqrt;
@@ -160,34 +160,34 @@ public:
                / RANSParentType::kinematicViscosity();
     }
 
-    //! \brief Returns the \$f C_\mu \$f constant
+    //! \brief Returns the \f$ C_\mu \f$ constant
     const Scalar cMu() const
     { return 0.09; }
 
-    //! \brief Returns the \$f \sigma_\textrm{k} \$f constant
+    //! \brief Returns the \f$ \sigma_\textrm{k} \f$ constant
     const Scalar sigmaK() const
     { return 1.0; }
 
-    //! \brief Returns the \$f \sigma_\varepsilon \$f constant
+    //! \brief Returns the \f$ \sigma_\varepsilon \f$ constant
     const Scalar sigmaEpsilon() const
     { return 1.3; }
 
-    //! \brief Returns the \$f C_{1\tilde{\varepsilon}}  \$f constant
+    //! \brief Returns the \f$ C_{1\tilde{\varepsilon}}  \f$ constant
     const Scalar cOneEpsilon() const
     { return 1.35; }
 
-    //! \brief Returns the \$f C_{2\tilde{\varepsilon}} \$f constant
+    //! \brief Returns the \f$ C_{2\tilde{\varepsilon}} \f$ constant
     const Scalar cTwoEpsilon() const
     { return 1.8; }
 
-    //! \brief Returns the \$f D \$f value
+    //! \brief Returns the \f$ D \f$ value
     const Scalar dValue() const
     {
         return 2.0 * RANSParentType::kinematicViscosity() * turbulentKineticEnergy()
                / RANSParentType::wallDistance() / RANSParentType::wallDistance();
     }
 
-    //! \brief Returns the \$f f_\mu \$f value
+    //! \brief Returns the \f$ f_\mu \f$ value
     const Scalar fMu() const
     {
         using std::exp;
@@ -195,18 +195,18 @@ public:
         return 1.0 - exp(-0.0115 * RANSParentType::yPlus());
     }
 
-    //! \brief Returns the \$f f_1 \$f value
+    //! \brief Returns the \f$ f_1 \f$ value
     const Scalar fOne() const
     { return 1.0; }
 
-    //! \brief Returns the \$f f_2 \$f value
+    //! \brief Returns the \f$ f_2 \f$ value
     const Scalar fTwo() const
     {
         using std::exp;
         return 1.0 - 0.22 * exp(-1.0 * (reT() * reT() / 6.0 / 6.0));
     }
 
-    //! \brief Returns the \$f E \$f value
+    //! \brief Returns the \f$ E \f$ value
     const Scalar eValue() const
     {
         using std::exp;

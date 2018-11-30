@@ -139,7 +139,7 @@ public:
 
     // Function which calculates the boundary flux update
     void getFluxOnBoundary(ComponentVector&, EntryType&,
-                            const Intersection&, const CellData&);
+                           const Intersection&, const CellData&);
 
     void evalBoundary(GlobalPosition,const Intersection&,FluidState &, PhaseVector &);
 
@@ -863,9 +863,9 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
  */
 template<class TypeTag>
 void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
-                                                    Dune::FieldVector<Scalar, 2>& timestepFlux,
-                                                    const Intersection& intersection,
-                                                    const CellData& cellDataI)
+                                                 Dune::FieldVector<Scalar, 2>& timestepFlux,
+                                                 const Intersection& intersection,
+                                                 const CellData& cellDataI)
 {
     using std::max;
     // cell information

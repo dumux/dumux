@@ -71,7 +71,7 @@ public:
      * \brief The standard constructor
      *
      * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param grid The grid
      */
     IMPETProblem2P2C(TimeManager &timeManager, Grid& grid)
         : ParentType(timeManager, grid)
@@ -83,7 +83,7 @@ public:
      * the problem) and does not create one in the base class.
      *
      * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param grid The grid
      * \param spatialParams SpatialParams instantiation
      */
     IMPETProblem2P2C(TimeManager &timeManager, Grid& grid, SpatialParams &spatialParams)

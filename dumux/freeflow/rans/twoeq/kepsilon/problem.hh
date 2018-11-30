@@ -451,7 +451,7 @@ public:
                * (1.0 + 0.28 * exp(-0.007 * molecularNumber / turbulentNumber));
     }
 
-    //! \brief Returns the \$f C_{\mu} \$f constant
+    //! \brief Returns the \f$ C_{\mu} \f$ constant
     const Scalar cMu() const
     {
         return 0.09;

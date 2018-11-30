@@ -88,8 +88,7 @@ struct SpatialParams<TypeTag, TTag::RichardsLens>
 } // end namespace Dumux
 
 /*!
- * \ingroup RichardsModel
- * \ingroup ImplicitTestProblems
+ * \ingroup RichardsTests
  *
  * \brief A water infiltration problem with a low-permeability lens
  *        embedded into a high-permeability domain which uses the
@@ -142,8 +141,7 @@ public:
     /*!
      * \brief Constructor
      *
-     * \param timeManager The Dumux TimeManager for simulation management.
-     * \param gridView The grid view on the spatial domain of the problem
+     * \param fvGridGeometry The finite volume grid geometry
      */
     RichardsLensProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)

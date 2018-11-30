@@ -14,7 +14,6 @@ INPUT                 += @srcdir@/mainpage.txt \
                          @srcdir@/modules.txt \
                          @top_srcdir@/dumux \
                          @top_srcdir@/test \
-                         @top_srcdir@/tutorial \
                          @srcdir@/extradoc/parameterlist.txt \
                          @srcdir@/extradoc/featurelist.txt
 

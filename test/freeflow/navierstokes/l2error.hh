@@ -44,6 +44,7 @@ public:
     /*!
       * \brief Calculate the L2 error between the analytical solution and the numerical approximation.
       *
+      * \param problem The object specifying the problem which ought to be simulated
       * \param curSol Vector containing the current solution
       */
     template<class Problem, class SolutionVector>

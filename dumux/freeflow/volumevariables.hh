@@ -150,12 +150,11 @@ public:
     /*!
      * \brief Update all quantities for a given control volume
      *
-     * \param priVars A vector containing the primary variables for the control volume
+     * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
      *                be simulated
      * \param element An element which contains part of the control volume
-     * \param fvGeometry The finite volume geometry for the element
-     * \param scvIdx Local index of the sub control volume which is inside the element
+     * \param scv The sub control volume which is inside the element
      */
     template<class ElemSol, class Problem, class Element, class Scv>
     void update(const ElemSol &elemSol,

@@ -91,7 +91,7 @@ public:
      * \brief The constructor
      *
      * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param grid The grid
      */
     TransportProblem2P(TimeManager& timeManager, Grid& grid)
         : ParentType(timeManager, grid),
@@ -110,7 +110,7 @@ public:
      * \brief The constructor
      *
      * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param grid The grid
      * \param spatialParams SpatialParams instantiation
      */
     TransportProblem2P(TimeManager& timeManager, Grid& grid, SpatialParams& spatialParams)

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup
+ * \ingroup NIModel
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.
  */
@@ -237,7 +237,6 @@ public:
     /*!
      * \brief Returns the temperature in fluid / solid phase(s)
      *        the sub-control volume.
-     * \param phaseIdx The local index of the phases
      */
     Scalar temperatureSolid() const
     { return asImp_().solidState().temperature(); }

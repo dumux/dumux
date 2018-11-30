@@ -45,7 +45,7 @@ public:
      *       Reconstruction is only done when using the box method
      *       and enableReconstruction = true.
      *
-     * \param SpatialParams Class encapsulating the spatial parameters
+     * \param spatialParams Class encapsulating the spatial parameters
      * \param element The finite element the scv is embedded in
      * \param scv The sub-control volume for which the saturation is computed
      * \param elemSol The solution at all dofs inside this element
@@ -69,7 +69,7 @@ public:
     /*!
      * \brief Compute the non-wetting phase saturation in an scv
      *
-     * \param SpatialParams Class encapsulating the spatial parameters
+     * \param spatialParams Class encapsulating the spatial parameters
      * \param element The finite element the scv is embedded in
      * \param scv The sub-control volume for which the saturation is computed
      * \param elemSol The solution at all dofs inside this element

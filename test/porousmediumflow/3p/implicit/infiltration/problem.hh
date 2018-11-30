@@ -95,8 +95,7 @@ struct SpatialParams<TypeTag, TTag::InfiltrationThreeP>
 }// end namespace Properties
 
 /*!
- * \ingroup ThreePModel
- * \ingroup ImplicitTestProblems
+ * \ingroup ThreePTests
  * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
  *        the unsaturated and the saturated groundwater zone.
  *
@@ -155,8 +154,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     InfiltrationThreePProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -188,7 +186,7 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * \param globalPos The position
+     * \param globalPos The global position
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
@@ -208,7 +206,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -228,7 +225,6 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The position for which the bc type should be evaluated
      *
      * For this method, the \a values parameter stores primary variables.
@@ -243,8 +239,6 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * \param globalPos The position of the integration point of the boundary segment.
      *
      * For this method, the \a values parameter stores the mass flux
@@ -278,7 +272,6 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The position for which the initial condition should be evaluated
      *
      * For this method, the \a values parameter stores primary

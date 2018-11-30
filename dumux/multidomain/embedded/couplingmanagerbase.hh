@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup EmbeddedCoupling
  * \brief Coupling manager for low-dimensional domains embedded in the bulk
  *        domain. Point sources on each integration point are computed by an AABB tree.
@@ -68,7 +67,6 @@ public:
 };
 
 /*!
- * \ingroup MultiDomain
  * \ingroup EmbeddedCoupling
  * \brief Manages the coupling between bulk elements and lower dimensional elements
  *        Point sources on each integration point are computed by an AABB tree.
@@ -162,7 +160,7 @@ public:
      *        that couple with / influence the element residual of the given element of domain i
      *
      * \param domainI the domain index of domain i
-     * \param elementI the coupled element of domain í
+     * \param element the coupled element of domain í
      * \param domainJ the domain index of domain j
      *
      * \note  The element residual definition depends on the discretization scheme of domain i

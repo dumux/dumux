@@ -208,9 +208,9 @@ private:
  */
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& sourceEntry,
-                                            const Element& elementI,
-                                            const CellData& cellDataI,
-                                            const bool first)
+                                        const Element& elementI,
+                                        const CellData& cellDataI,
+                                        const bool first)
 {
     sourceEntry=0.;
     // cell volume & perimeter, assume linear map here
@@ -256,9 +256,9 @@ void FVPressure2P2C<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& sourceEntr
  */
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEntry,
-                                            const Element& elementI,
-                                            const CellData& cellDataI,
-                                            const bool first)
+                                         const Element& elementI,
+                                         const CellData& cellDataI,
+                                         const bool first)
 {
     storageEntry = 0.;
     // cell index
@@ -327,7 +327,7 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
 
 
 //! Get flux at an interface between two cells
-/** for first == true, the flux is calculated in traditional fractional-flow forn as in FVPressure2P.
+/*! for first == true, the flux is calculated in traditional fractional-flow forn as in FVPressure2P.
  * for first == false, the flux thorugh \f$ \gamma \f$  is calculated via a volume balance formulation
  *  \f[ - A_{\gamma} \mathbf{n}^T_{\gamma} \mathbf{K}  \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha}
      \mathbf{d}_{ij}  \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}^T \mathbf{d}_{ij} \right)
@@ -347,7 +347,9 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
  */
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
-        const Intersection& intersection, const CellData& cellDataI, const bool first)
+                                      const Intersection& intersection,
+                                      const CellData& cellDataI,
+                                      const bool first)
 {
     entries = 0.;
     auto elementI = intersection.inside();

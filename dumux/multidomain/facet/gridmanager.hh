@@ -16,7 +16,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Contains the grid manager class that creates the grids in the context
  *        of hybrid-dimensional coupled models, where the (n-1)-dimensional
@@ -73,7 +72,6 @@ namespace Detail {
 }
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Grid data object to store element and boundary segment markers
  *        for all grids of the hierarchy.
@@ -140,7 +138,6 @@ private:
 };
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Contains the embeddings between grids with codimension one
  *        among the grid hierarchy. All these embedments are given in
@@ -274,7 +271,6 @@ private:
 };
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Creates the grids in the context of hybrid-dimensional coupled models,
  *        where the (n-1)-dimensional domains live on the element facets of the

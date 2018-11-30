@@ -79,8 +79,7 @@ struct SpatialParams<TypeTag, TTag::RichardsNIConduction>
 } // end namespace Properties
 
 /*!
- * \ingroup RichardsModel
- * \ingroup ImplicitTestProblems
+ * \ingroup RichardsTests
  *
  * \brief Test for the RichardsModel in combination with the NI model for a conduction problem:
  * The simulation domain is a tube where with an elevated temperature on the left hand side.
@@ -241,7 +240,6 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The position for which the bc type should be evaluated
      *
      * For this method, the \a values parameter stores primary variables.
@@ -261,6 +259,8 @@ public:
     /*!
      * \brief Evaluate the boundary conditions for a Neumann
      *        boundary segment.
+     *
+     * \param globalPos The global position where we evaluate
      *
      * For this method, the \a priVars parameter stores the mass flux
      * in normal direction of each component. Negative values mean
@@ -284,12 +284,6 @@ public:
      *        fluid phase within a finite volume
      *
      * This problem assumes a constant reference pressure of 1 bar.
-     *
-     * \param element The DUNE Codim<0> entity which intersects with
-     *                the finite volume in question
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The sub control volume index inside the finite
-     *               volume geometry
      */
      Scalar nonWettingReferencePressure() const
     { return 1e5; };
@@ -297,7 +291,6 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The position for which the initial condition should be evaluated
      *
      * For this method, the \a values parameter stores primary

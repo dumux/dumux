@@ -128,7 +128,7 @@ public:
      *
      * \param eg Geometry of the element the facet is embedded in
      * \param refElement Reference element of the element the facet is embedded in
-     * \param indexInInside The local index of the facet in the element
+     * \param indexInElement The local index of the facet in the element
      * \param numCorners The number of corners on the facet
      */
     template<class ElementGeometry, class ReferenceElement>
@@ -156,7 +156,7 @@ public:
      * \brief Returns the corners of the sub control volume face constructed
      *        in a corner (vertex) of an intersection.
      *
-     * \param scvfCornerPositions Container with all scvf corners of the intersection
+     * \param p Container with all scvf corners of the intersection
      * \param numIntersectionCorners Number of corners of the intersection (required in 3d)
      * \param cornerIdx Local vertex index on the intersection
      */
@@ -411,7 +411,7 @@ public:
      * \brief Returns the corners of the sub control volume face constructed
      *        in a corner (vertex) of an intersection.
      *
-     * \param scvfCornerPositions Container with all scvf corners of the intersection
+     * \param p Container with all scvf corners of the intersection
      * \param numIntersectionCorners Number of corners of the intersection
      * \param cornerIdx Local vertex index on the intersection
      */

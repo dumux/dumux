@@ -92,8 +92,6 @@ public:
     /*!
      * \brief Construct the backend for the sequential case only
      *
-     * \param gridView the grid view on which we are performing the multi-grid
-     * \param dofMapper an index mapper for dof entities
      * \param paramGroup the parameter group for parameter lookup
      */
     ParallelAMGBackend(const std::string& paramGroup = "")

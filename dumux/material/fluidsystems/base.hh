@@ -128,7 +128,6 @@ public:
     /*!
      * \brief Calculate the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase
      * \param fluidState The fluid state
-     * \param paramCache mutable parameters
      * \param phaseIdx Index of the fluid phase
      */
     template <class FluidState>

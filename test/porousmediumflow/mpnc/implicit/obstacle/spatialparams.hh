@@ -33,8 +33,7 @@
 namespace Dumux {
 
 /**
- * \ingroup MPNCModel
- * \ingroup ImplicitTestProblems
+ * \ingroup MPNCTests
  * \brief Definition of the spatial params properties for the obstacle problem
  *
  */
@@ -99,10 +98,7 @@ public:
     /*!
      * \brief Define the porosity \f$[-]\f$ of the soil
      *
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
@@ -110,7 +106,7 @@ public:
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
-     * \param pos The global position of the sub-control volume.
+     * \param globalPos The global position of the sub-control volume.
      * \return the material parameters object
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const

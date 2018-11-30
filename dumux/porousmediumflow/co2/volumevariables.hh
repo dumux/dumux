@@ -149,13 +149,15 @@ public:
 
     /*!
      * \brief Complete the fluid state
+     *
      * \note TODO: This is a lot of copy paste from the 2p2c: factor out code!
      *
      * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The problem
-     * \param element The element
-     * \param scv The sub control volume
-     * \param fluidState The fluid state
+     * \param problem The object specifying the problem which ought to be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     * \param fluidState A container with the current (physical) state of the fluid
+     * \param solidState A container with the current (physical) state of the solid
      *
      * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */

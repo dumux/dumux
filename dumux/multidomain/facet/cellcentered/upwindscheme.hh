@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Modified upwind scheme for models using cell-centered schemes
  *        with coupling across element facets.
@@ -33,7 +32,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief The upwind scheme used for the advective fluxes.
  *        This is a modified scheme for models involving coupling

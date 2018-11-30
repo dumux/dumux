@@ -186,7 +186,6 @@ public:
      *          \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar solidDensity(Scalar temperature)
     {
@@ -197,7 +196,6 @@ public:
     /*!
      * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a solid.
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar solidThermalConductivity(Scalar temperature)
     {
@@ -208,7 +206,6 @@ public:
     /*!
      * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a solid.
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar solidHeatCapacity(Scalar temperature)
     {

@@ -61,6 +61,7 @@ public:
      *
      * \param values The primary variable vector
      * \param currentDensity The current density
+     * \param paramGroup The group containing the needed parameters
      *
      * For this method, the \a values parameter stores source values
      */

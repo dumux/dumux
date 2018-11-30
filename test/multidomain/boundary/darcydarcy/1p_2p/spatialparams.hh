@@ -85,11 +85,8 @@ public:
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law.
-     *        In this test, we use element-wise distributed material parameters.
      *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
+     * In this test, we use element-wise distributed material parameters.
      * \return the material parameters object
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const

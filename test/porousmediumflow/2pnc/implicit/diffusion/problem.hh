@@ -125,8 +125,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     TwoPNCDiffusionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -177,7 +176,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment
      *
-     * \param values Stores the value of the boundary type
      * \param globalPos The global position
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -191,8 +189,6 @@ public:
      * \brief Evaluates the boundary conditions for a Dirichlet
      *        boundary segment
      *
-     * \param values Stores the Dirichlet values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
@@ -215,8 +211,9 @@ public:
      * For this method, the \a priVars parameter stores the mass flux
      * in normal direction of each component. Negative values mean
      * influx.
+     * \param globalPos The global position
      *
-     * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
+     * \note The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
      */
     NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
     {
@@ -234,8 +231,6 @@ public:
     /*!
      * \brief Evaluates the initial values for a control volume
      *
-     * \param values Stores the initial values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
@@ -251,8 +246,6 @@ private:
      *
      * The internal method for the initial condition
      *
-     * \param values Stores the initial values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables initial_(const GlobalPosition &globalPos) const

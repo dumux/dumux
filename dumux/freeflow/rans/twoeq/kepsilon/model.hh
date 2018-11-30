@@ -26,7 +26,7 @@
  *
  * The k-epsilon models calculate the eddy viscosity with two additional PDEs,
  * one for the turbulent kinetic energy (k) and for the dissipation (\f$ \varepsilon \f$).
- * The model uses the one proposed by Launder and Sharma \cite Launder1994a.
+ * The model uses the one proposed by Launder and Sharma \cite{Launder1994a}.
  *
  * The turbulent kinetic energy balance is:
  * \f[

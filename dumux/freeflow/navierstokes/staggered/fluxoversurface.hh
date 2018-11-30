@@ -147,9 +147,6 @@ public:
 
     /*!
      * \brief The constructor
-     *
-     * \param assembler The assembler
-     * \param sol The solution vector
      */
     FluxOverSurface(const Problem& problem,
                     const GridVariables& gridVariables,

@@ -16,7 +16,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \copydoc Dumux::FacetCouplingMapperBase
  */
@@ -34,7 +33,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Base class for the coupling mapper that sets up and stores
  *        the coupling maps between two domains of dimension d and (d-1).
@@ -169,7 +167,7 @@ protected:
      * \param bulkFvGridGeometry The finite-volume grid geometry of the bulk grid
      * \param lowDimFvGridGeometry The finite-volume grid geometry of the lower-dimensional grid
      * \param embeddings Class that contains the embedments and allows obtaining entity insertion indices
-     * \param AddCouplingEntryPolicy Policy for adding coupling entries starting from a lower-dimensional
+     * \param addCouplingEntryPolicy Policy for adding coupling entries starting from a lower-dimensional
      *                               element and corresponding adjoined higher-dimensional entity indices
      */
     template< class Embeddings, typename AddCouplingEntryPolicy >

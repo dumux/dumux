@@ -242,20 +242,20 @@
       * \defgroup PorousmediumflowTests Porous-Medium Flow Tests
       * \brief Single and multi-phase tests for flow and transport in porous materials
       */
-          /*!
+         /*!
           * \ingroup PorousmediumflowTests
-           * \defgroup OnePTests 1p (one phase) benchmarks and tests
+          * \defgroup OnePTests 1p (one phase) benchmarks and tests
           * \brief Various tests using a OnePModel. The files are listed below.
           */
          /*!
           * \ingroup PorousmediumflowTests
-           * \defgroup OnePNCTests 1pnc (one phase, multi-component) benchmarks and tests
-           * \brief Various tests using a OnePNCModel. The files are listed below.
-           */
+          * \defgroup OnePNCTests 1pnc (one phase, multi-component) benchmarks and tests
+          * \brief Various tests using a OnePNCModel. The files are listed below.
+          */
          /*!
           * \ingroup PorousmediumflowTests
           * \defgroup OnePNCMinTests 1pncmin (one phase, multi-component mineralization) benchmarks and tests
-         * \brief Various tests using the OnePNCMinModel. The files are listed below.
+          * \brief Various tests using the OnePNCMinModel. The files are listed below.
           */
          /*!
           * \ingroup PorousmediumflowTests
@@ -265,7 +265,7 @@
          /*!
           * \ingroup PorousmediumflowTests
           * \defgroup TwoPOneCTests 2p1c (two phase, one component) benchmarks and tests
-           * \brief Various tests using the TwoPOneCModel. The files are listed below.
+          * \brief Various tests using the TwoPOneCModel. The files are listed below.
           */
          /*!
           * \ingroup PorousmediumflowTests
@@ -297,7 +297,7 @@
           * \defgroup ThreePWaterOilTests 3pwateroil (three phase, water oil) benchmarks and tests
           * \brief A SAGD test problem using the ThreePWaterOilModel. The files are listed below.
           */
-        /*!
+         /*!
           * \ingroup PorousmediumflowTests
           * \defgroup CO2Tests CO2 (two phase, two component) benchmarks and tests
           * \brief A CO2 injection test problem using the TwoPTwoCModel and heterogeneous spatial parameters. The files are listed below.
@@ -305,7 +305,7 @@
          /*!
           * \ingroup PorousmediumflowTests
           * \defgroup MPNCTests MPNC (multi-phase, multi-component) benchmarks and tests
-         * \brief Various tests using the MPNCModel. The files are listed below.
+          * \brief Various tests using the MPNCModel. The files are listed below.
           */
          /*!
           * \ingroup PorousmediumflowTests
@@ -327,12 +327,12 @@
       * \defgroup FreeflowTests Free Flow Tests
       * \brief Varios tests for single-phase Navier-Stokes / Stokes tests
       */
-           /*!
+         /*!
           * \ingroup FreeflowTests
           * \defgroup NavierStokesTests Single-phase Navier-Stokes tests
           * \brief Various tests using a Single-phase Navier-Stokes flow. The files are listed below.
           */
-           /*!
+         /*!
           * \ingroup FreeflowTests
           * \defgroup NavierStokesNCTests Single-phase Navier-Stokes nc tests
           * \brief Various tests using a Single-phase Navier-Stokes flow. The files are listed below.
@@ -373,7 +373,11 @@
      * \defgroup StaggeredDiscretization Staggered FV scheme
      * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets.
      */
-
+/* ***************** Flux ******************/
+     /*!
+      * \defgroup Flux
+      * \brief All flux related things available in DuMu<sup>x</sup>
+      */
 /* ***************** Material ******************/
 /*!
  * \defgroup Material Material and Fluid Framework
@@ -517,7 +521,7 @@
  * \defgroup Common Common
  * \brief Common classes, functions, properties and concepts
  */
-     /*!
+      /*!
        * \ingroup Common
        * \defgroup Properties Properties
        * \brief Basic properties of all models in DuMu<sup>x</sup>
@@ -570,3 +574,13 @@
       * \defgroup BoundaryCoupling Boundary coupling mode
       * \brief Couples problems of different or equal dimension that touch at the domain boundary. Examples are equal-dimension multi-physics problems like Darcy-Stokes coupling or PNM (pore network model)-Darcy coupling.
       */
+        /*!
+         * \ingroup BoundaryCoupling
+         * \defgroup DarcyDarcyCoupling Darcy-Darcy domain coupling
+         * \brief Couples domains with equal-dimension multi-physics problems in a Darcy-Darcy coupling.
+         */
+        /*!
+         * \ingroup BoundaryCoupling
+         * \defgroup StokesDarcyCoupling Stokes-Darcy domain coupling
+         * \brief Couples domains with equal-dimension multi-physics problems in a Stokes-Darcy coupling.
+         */

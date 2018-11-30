@@ -96,7 +96,10 @@ public:
     /*!
      * \brief Returns the porosity \f$[-]\f$
      *
-     * \param globalPos The global position
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return The porosity
      */
     template<class ElementSolution>
     Scalar porosity(const Element& element,

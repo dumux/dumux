@@ -127,7 +127,7 @@ struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere>
 } // end namespace Properties
 
 /*!
- * \ingroup MpNcBoxproblems
+ * \ingroup MPNCTests
  *
  * \brief Problem that simulates the coupled heat and mass transfer processes resulting form the evaporation of liquid water from
  *        a porous medium sub-domain into a gas filled "quasi-freeflow" sub-domain.
@@ -183,8 +183,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
     EvaporationAtmosphereProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
@@ -236,7 +235,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param bTypes The boundarytypes types for the conservation equations
      * \param globalPos The global position
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -257,8 +255,6 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
-     * \param priVars Stores the Dirichlet values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      *
      */
@@ -271,13 +267,10 @@ public:
      * \brief Evaluates the boundary conditions for a Neumann
      *        boundary segment in dependency on the current solution.
      *
-     * \param priVars Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local index of the sub-control volume
-     * \param boundaryFaceIdx The index of the boundary face
+     * \param elemVolVars The volume variables of the element
+     * \param scvf The sub-control volume face
      *
      * This method is used for cases, when the Neumann condition depends on the
      * solution and requires some quantities that are specific to the fully-implicit method.
@@ -285,9 +278,9 @@ public:
      * Negative values indicate an inflow.
      */
     NumEqVector neumann(const Element &element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace& scvf) const
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
         const auto& globalPos = fvGeometry.scv(scvf.insideScvIdx()).dofPosition();
@@ -354,8 +347,6 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param priVars Stores the initial solution for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
@@ -367,18 +358,17 @@ public:
      * \brief Evaluate the source term for all balance equations within a given
      *        sub-control-volume.
      *
-     * \param priVars Stores the solution for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param elemVolVars The volume variables of the element
+     * \param scv The sub-control volume
      *
-     *      Positive values mean that mass is created, negative ones mean that it vanishes.
+     * Positive values mean that mass is created, negative ones mean that it vanishes.
      */
     NumEqVector source(const Element &element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume &scv) const
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
     {
         NumEqVector values(0.0);
         return values;

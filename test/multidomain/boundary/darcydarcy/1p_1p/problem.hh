@@ -132,7 +132,6 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The center of the finite volume which ought to be set.
      *
      * For this method, the \a values parameter stores primary variables.

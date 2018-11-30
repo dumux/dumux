@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup EmbeddedCoupling
  * \brief An integration point source class,
  *        i.e. sources located at a single point in space
@@ -36,7 +35,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup EmbeddedCoupling
  * \brief An integration point source class with an identifier to attach data
  *        and a quadrature weight and integration element

@@ -114,7 +114,7 @@ public:
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure brine
      *        at a given temperature. Here, it is assumed to be equal to that of pure water.
      *
-     * \param T temperature of component in \f$\mathrm{[K]}\f$
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
     static Scalar vaporPressure(Scalar temperature)
     {

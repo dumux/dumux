@@ -78,9 +78,7 @@ public:
     /*!
      * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position where we evaluate
      */
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
@@ -90,9 +88,7 @@ public:
     /*!
      * \brief Define the porosity \f$\mathrm{[-]}\f$.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
+     * \param globalPos The global position where we evaluate
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
@@ -102,9 +98,7 @@ public:
         /*!
      * \brief return the parameter object for the Brooks-Corey material law which depends on the position
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position where we evaluate
      */
      const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
     {

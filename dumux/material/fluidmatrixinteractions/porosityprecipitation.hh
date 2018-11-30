@@ -33,15 +33,15 @@ namespace Dumux {
  * \brief Calculates the porosity depending on the volume fractions of precipitated minerals.
  *
  * \tparam Scalar The type used for scalar values
- * \numComp The number of components in the fluid phases
- * \numSolidPhases The number of precipitating solid phases
+ * \param numComp The number of components in the fluid phases
+ * \param numSolidPhases The number of precipitating solid phases
  */
 template<class Scalar, int numComp, int numSolidPhases>
 class PorosityPrecipitation
 {
 public:
     /*!
-     * \brief calculates the porosity in a sub-control volume
+     * \brief Calculates the porosity in a sub-control volume
      * \param element element
      * \param elemSol the element solution
      * \param scv sub control volume

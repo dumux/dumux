@@ -324,7 +324,7 @@ public:
      *        return its specific enthalpy \f$\mathrm{[J/kg]}\f$.
      *
      * \param fluidState The fluid state
-     * \param compIdx The index of the component to consider
+     * \param phaseIdx The index of the phase to consider
      *
      * Equations given in:
      * - Palliser & McKibbin (1998) \cite palliser1998 <BR>
@@ -410,7 +410,6 @@ public:
      *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
      *        \f$\mathrm{i}\f$ and \f$\mathrm{j}\f$ in this phase.
      * \param fluidState The fluid state
-     * \param paramCache mutable parameters
      * \param phaseIdx Index of the fluid phase
      * \param compIIdx Index of the component i
      * \param compJIdx Index of the component j

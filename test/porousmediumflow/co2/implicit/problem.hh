@@ -134,8 +134,7 @@ struct UseMoles<TypeTag, TTag::HeterogeneousNI> { static constexpr bool value = 
 } // end namespace Properties
 
 /*!
- * \ingroup CO2Model
- * \ingroup ImplicitTestProblems
+ * \ingroup CO2Tests
  * \brief Definition of a problem, where CO2 is injected in a reservoir.
  *
  * The domain is sized 200m times 100m and consists of four layers, a
@@ -220,8 +219,8 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param spatialParams The spatial params
      */
     template<class SpatialParams>
     HeterogeneousProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, std::shared_ptr<SpatialParams> spatialParams)
@@ -331,7 +330,7 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * \param globalPos The position
+     * \param globalPos The global position
      *
      * This problem assumes a geothermal gradient with
      * a surface temperature of 10 degrees Celsius.
@@ -385,7 +384,7 @@ public:
      * \brief Evaluates the boundary conditions for a Dirichlet
      *        boundary segment
      *
-     * \param returns the Dirichlet values for the conservation equations in
+     * \return the Dirichlet values for the conservation equations in
      *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
@@ -400,8 +399,6 @@ public:
      * potentially solution dependent and requires some quantities that
      * are specific to the fully-implicit method.
      *
-     * \param values The neumann values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
@@ -413,7 +410,7 @@ public:
      */
     NumEqVector neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolvars,
+                          const ElementVolumeVariables& elemVolVars,
                           const SubControlVolumeFace& scvf) const
     {
         const auto boundaryId = scvf.boundaryFlag();
@@ -443,7 +440,7 @@ public:
     /*!
      * \brief Evaluates the initial values at a position
      *
-     * \returns the initial values for the conservation equations in
+     * \return the initial values for the conservation equations in
      *           \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
@@ -460,8 +457,6 @@ private:
      *
      * The internal method for the initial condition
      *
-     * \param values Stores the initial values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables initial_(const GlobalPosition &globalPos) const

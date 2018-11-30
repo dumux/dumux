@@ -87,6 +87,7 @@ public:
 
     /*!
     * \brief Returns the advective flux over a sub control volume face.
+    * \param problem The object specifying the problem which ought to be simulated
     * \param elemVolVars All volume variables for the element
     * \param elemFaceVars The face variables
     * \param scvf The sub control volume face

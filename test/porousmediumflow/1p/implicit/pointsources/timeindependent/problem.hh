@@ -152,7 +152,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The position of the center of the finite volume
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -166,7 +165,6 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The center of the finite volume which ought to be set.
      *
      * For this method, the \a values parameter stores primary variables.

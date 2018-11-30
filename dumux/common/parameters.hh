@@ -78,7 +78,7 @@ public:
      * \brief Initialize the parameter tree
      * \param argc number of command line argument (forwarded from main)
      * \param argv command line argument (forwarded from main)
-     * \param a function that sets parameters of the default runtim parameter tree
+     * \param defaultParams a function that sets parameters of the default runtime parameter tree
      * \param parameterFileName the file name of the input file
      * \param usage the usage function to print if the help option was passed on the command line
      * \note the default parameter tree is initialized in the following way

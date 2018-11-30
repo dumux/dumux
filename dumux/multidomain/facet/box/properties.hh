@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Properties (and default properties) for all models using the box
  *        scheme together with coupling across the grid element facets

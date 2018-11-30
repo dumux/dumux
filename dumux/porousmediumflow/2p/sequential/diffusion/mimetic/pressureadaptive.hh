@@ -173,7 +173,8 @@ public:
     /*!
      * \brief Initializes the model
      *
-     * \copydetails ParentType::initialize()
+     * Function initializes the sparse matrix to solve the global system of
+     * equations and sets/calculates the initial pressure
      *
      * \param solveTwice indicates if more than one iteration is allowed to get an initial pressure solution
      */

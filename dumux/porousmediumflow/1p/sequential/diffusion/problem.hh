@@ -71,7 +71,7 @@ public:
      * \brief Constructs a DiffusionProblem1P object
      *
      * \param timeManager the time manager
-     * \param gridView The grid view
+     * \param grid The grid
      */
     DiffusionProblem1P(TimeManager& timeManager, Grid& grid)
     : ParentType(timeManager, grid), gravity_(0)
@@ -86,7 +86,7 @@ public:
      * \brief Constructs a DiffusionProblem1P object
      *
      * \param timeManager the time manager
-     * \param gridView The grid view
+     * \param grid The grid
      * \param spatialParams SpatialParams instantiation
      */
     DiffusionProblem1P(TimeManager& timeManager, Grid& grid, SpatialParams &spatialParams)
@@ -101,7 +101,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gridView The grid view
+     * \param grid The grid
      */
     DiffusionProblem1P(Grid& grid)
     : ParentType(grid, false), gravity_(0)
@@ -115,7 +115,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gridView The grid view
+     * \param grid The grid
      * \param spatialParams SpatialParams instantiation
      */
     DiffusionProblem1P(Grid& grid, SpatialParams& spatialParams)

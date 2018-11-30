@@ -93,7 +93,7 @@ private:
 public:
     /*! \brief Constructs an object of type IMPETProblemProblem
      * \param timeManager The time manager
-     * \param gridView gridview to the grid.
+     * \param grid The grid
      */
     IMPETProblem(TimeManager &timeManager, Grid& grid)
         : IMPETProblem(timeManager, grid, grid.leafGridView())

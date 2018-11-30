@@ -52,7 +52,8 @@
 /*!
  * \brief Provides an interface for customizing error messages associated with
  *        reading in parameters.
- * \ingroup OnePTests
+ * \ingroup ThreePWaterOilTests
+ * \param progName  The name of the program, that was tried to be started.
  * \param errorMsg  The error message that was issued by the start function.
  *                  Comprises the thing that went wrong and a general help message.
  */

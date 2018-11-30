@@ -303,7 +303,6 @@ public:
     /*!
      * \brief Assemble the linear system of equations \f$\mathbf{A}x - b = 0\f$.
      *
-     * \param assembler The jacobian assembler
      * \param uCurrentIter The current iteration's solution vector
      */
     virtual void assembleLinearSystem(const SolutionVector& uCurrentIter)
@@ -323,10 +322,7 @@ public:
      * If the linear solver doesn't accept multitype matrices we copy the matrix
      * into a 1x1 block BCRS matrix for solving.
      *
-     * \param ls the linear solver
-     * \param A The matrix of the linear system of equations
-     * \param x The vector which solves the linear system
-     * \param b The right hand side of the linear system
+     * \param deltaU The difference between the current and the next solution
      */
     void solveLinearSystem(SolutionVector& deltaU)
     {
@@ -385,7 +381,6 @@ public:
      * subtract deltaU from uLastIter, i.e.
      * \f[ u^{k+1} = u^k - \Delta u^k \f]
      *
-     * \param assembler The assembler (needed for global residual evaluation)
      * \param uCurrentIter The solution vector after the current iteration
      * \param uLastIter The solution vector after the last iteration
      * \param deltaU The delta as calculated from solving the linear
@@ -461,7 +456,6 @@ public:
     /*!
      * \brief Indicates that one Newton iteration was finished.
      *
-     * \param assembler The jacobian assembler
      * \param uCurrentIter The solution after the current Newton iteration
      * \param uLastIter The solution at the beginning of the current Newton iteration
      */

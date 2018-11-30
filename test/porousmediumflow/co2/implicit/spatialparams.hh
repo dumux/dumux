@@ -37,8 +37,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup CO2Model
- * \ingroup ImplicitTestProblems
+ * \ingroup CO2Tests
  * \brief Definition of the spatial parameters for the heterogeneous
  *        problem which uses the non-isothermal or isothermal CO2
  *        fully implicit model.
@@ -68,7 +67,8 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridData The grid data
      */
     HeterogeneousSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                                std::shared_ptr<const GridData<Grid>> gridData)
@@ -115,6 +115,7 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
+     *
      * \return instrinsic permeability
      */
     template<class ElementSolution>
@@ -131,7 +132,7 @@ public:
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$
      * \note  It is possibly solution dependent.
      *
-     * \param eIdx the element index
+     * \param eIdx The element index
      */
     PermeabilityType permeability(std::size_t eIdx) const
     {

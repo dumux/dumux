@@ -96,8 +96,8 @@ public:
      * linear dependency on temperature. We thus simply scale the
      * experimentally obtained diffusion coefficient of Ferrell and
      * Himmelblau by the temperature.<br>
-     * This function use an interpolation of the data by \cite Whitherspoon1965
-     * \url http://dx.doi.org/10.1021/j100895a017
+     * This function use an interpolation of the data by \cite{Whitherspoon1965}
+     * \url{http://dx.doi.org/10.1021/j100895a017}
      */
     template <class Scalar>
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)

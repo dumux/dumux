@@ -299,7 +299,7 @@ public:
     /*!
      * \brief Apply the Forchheimer coefficient for inertial forces
      *        calculation.
-     * \param scv The sub-control volume face where the
+     * \param scvf The sub-control volume face where the
      *           intrinsic velocity ought to be calculated.
      */
     Scalar forchCoeff(const SubControlVolumeFace &scvf) const

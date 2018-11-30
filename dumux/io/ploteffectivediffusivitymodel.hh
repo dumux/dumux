@@ -50,7 +50,7 @@ public:
      * \brief Add a effective diffusion factor-saturation data set to the plot
      *
      * \param gnuplot The gnuplot interface
-     * \param params The material law parameters
+     * \param porosity The porosity
      * \param lowerSat Minimum x-value for data set
      * \param upperSat Maximum x-value for data set
      * \param curveName Name of the data set

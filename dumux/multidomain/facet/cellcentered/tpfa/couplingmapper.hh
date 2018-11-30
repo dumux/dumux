@@ -16,7 +16,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \copydoc Dumux::FacetCouplingMapper
  */
@@ -32,7 +31,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Base class for the coupling mapper that sets up and stores
  *        the coupling maps between two domains of dimension d and (d-1).

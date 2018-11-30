@@ -16,7 +16,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \copydoc Dumux::FacetCouplingMapper
  */
@@ -31,7 +30,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Implementation for the coupling mapper that sets up and stores
  *        the coupling maps between two domains of dimension d and (d-1).
@@ -54,7 +52,6 @@ template< class BulkFVG,
 class FacetCouplingMapper;
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Specialization of the mapper class for the case of
  *        three domains with the grid dimensions d, (d-1) & (d-2).

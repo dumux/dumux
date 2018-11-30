@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \copydoc Dumux::BoxFacetCouplingDarcysLaw
  */
@@ -38,7 +37,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Darcy's law for the box scheme scheme in the context of coupled models
  *        where coupling occurs across the facets of the bulk domain elements

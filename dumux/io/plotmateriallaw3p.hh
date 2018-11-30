@@ -52,6 +52,7 @@ public:
     /*!
      * \brief Plot the capillary pressure-saturation curve for all  phases
      *
+     * \param gnuplot The gnuplot interface
      * \param params The material law parameters
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
@@ -71,6 +72,7 @@ public:
     /*!
      * \brief Plot the capillary pressure-saturation curve for the water-gas interphase
      *
+     * \param gnuplot The gnuplot interface
      * \param params The material law parameters
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
@@ -112,6 +114,7 @@ public:
     /*!
      * \brief Plot the capillary pressure-saturation curve for the water-NAPL interface
      *
+     * \param gnuplot The gnuplot interface
      * \param params The material law parameters
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
@@ -153,6 +156,7 @@ public:
     /*!
      * \brief Plot the capillary pressure-saturation curve for the gas-NAPL interface
      *
+     * \param gnuplot The gnuplot interface
      * \param params The material law parameters
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
@@ -195,6 +199,7 @@ public:
     /*!
      * \brief Plot the relative permeabilities
      *
+     * \param gnuplot The gnuplot interface
      * \param params The material law parameters
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
@@ -246,6 +251,7 @@ public:
     /*!
      * \brief Plot the transition (2P/3P) function
      *
+     * \param gnuplot The gnuplot interface
      * \param params The material law parameters
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value

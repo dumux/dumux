@@ -209,11 +209,13 @@ public:
     /*!\brief Return a reference to the container object for the
      *        parametrization of the surface between wetting and non-Wetting phase.
      *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
+     * The position is determined based on the coordinate of
+     * the vertex belonging to the considered sub control volume.
+     *
+     * \param element The finite element
+     * \param scv The sub-control volume
+     * \param elemSol The element solution
+     */
     template<class ElementSolution>
     const AwnSurfaceParams& aWettingNonWettingSurfaceParams(const Element &element,
                                                             const SubControlVolume &scv,
@@ -232,9 +234,10 @@ public:
      *
      *        The position is determined based on the coordinate of
      *        the vertex belonging to the considered sub control volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
+     * \param element The finite element
+     * \param scv The sub-control volume
+     * \param elemSol The element solution
+     */
     template<class ElementSolution>
     const AnsSurfaceParams& aNonWettingSolidSurfaceParams(const Element &element,
                                                           const SubControlVolume &scv,
@@ -257,9 +260,10 @@ public:
      *        where the interfacial area is zero.
      *        Technically this value is obtained as the capillary pressure of saturation zero.
      *        This value of course only exists for the case of a regularized pc-Sw relation.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
+     * \param element The finite element
+     * \param scv The sub-control volume
+     * \param elemSol The element solution
+     */
     template<class ElementSolution>
     const Scalar pcMax(const Element &element,
                        const SubControlVolume &scv,

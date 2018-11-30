@@ -18,10 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup DarcyDarcyCoupling
- * \copydoc Dumux::BoundaryCouplingMapper
+ * \copydoc Dumux::DarcyDarcyBoundaryCouplingMapper
  */
 
 #ifndef DUMUX_MULTIDOMAIN_DARCYDARCY_BOUNDARY_COUPLINGMAPPER_HH
@@ -42,8 +40,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
  * \ingroup DarcyDarcyCoupling
  * \brief the default mapper for conforming equal dimension boundary coupling between two domains (box or cc)
  * \todo how to extend to arbitrary number of domains?
@@ -166,7 +162,7 @@ public:
      *        that couple with / influence the element residual of the given element of domain i
      *
      * \param domainI the domain index of domain i
-     * \param elementI the coupled element of domain í
+     * \param eIdxI the index of the coupled element of domain í
      * \param domainJ the domain index of domain j
      *
      * \note  The element residual definition depends on the discretization scheme of domain i

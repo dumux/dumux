@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup BoxDiscretization
  * \brief Base class for the finite volume grid geometry for box models in the
  *        context of models considering coupling of different domains across the
  *        bulk grid facets. This builds up the sub control volumes and sub control
@@ -47,9 +45,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup BoxDiscretization
  * \brief The default traits for the finite volume grid geometry
  *        of the box scheme with coupling occuring across the element facets.
  *        Defines the scv and scvf types and the mapper types.
@@ -74,9 +70,7 @@ struct BoxFacetCouplingDefaultGridGeometryTraits
 };
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup BoxDiscretization
  * \brief Base class for the finite volume geometry vector for box schemes in the context
  *        of coupled models where the coupling occurs across the element facets. This builds
  *        up the sub control volumes and sub control volume faces.
@@ -89,9 +83,7 @@ template<class Scalar,
 class BoxFacetCouplingFVGridGeometry;
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup BoxDiscretization
  * \brief Base class for the finite volume geometry vector for box schemes in the context
  *        of coupled models where the coupling occurs across the element facets. This builds
  *        up the sub control volumes and sub control volume faces.
@@ -162,7 +154,7 @@ public:
      * \param facetGridView The grid view of a (dim-1)-dimensional grid conforming
      *                      with the facets of this grid view, indicating on which facets
      *                      nodal dofs should be enriched.
-     * \param CodimOneGridAdapter Adapter class that allows access to information on the d-
+     * \param codimOneGridAdapter Adapter class that allows access to information on the d-
      *                            dimensional grid for entities of the (d-1)-dimensional grid
      * \param verbose Verbosity level for vertex enrichment
      */
@@ -342,9 +334,7 @@ private:
 };
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup BoxDiscretization
  * \brief Base class for the finite volume geometry vector for box schemes
  *        This builds up the sub control volumes and sub control volume faces
  * \note For caching disabled we store only some essential index maps to build up local systems on-demand in
@@ -419,7 +409,7 @@ public:
      * \param facetGridView The grid view of a (dim-1)-dimensional grid conforming
      *                      with the facets of this grid view, indicating on which facets
      *                      nodal dofs should be enriched.
-     * \param CodimOneGridAdapter Adapter class that allows access to information on the d-
+     * \param codimOneGridAdapter Adapter class that allows access to information on the d-
      *                            dimensional grid for entities of the (d-1)-dimensional grid
      * \param verbose Verbosity level
      */

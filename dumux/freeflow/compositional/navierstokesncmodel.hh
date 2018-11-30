@@ -20,7 +20,7 @@
  * \file
  * \ingroup FreeflowNCModel
  *
- * \copydoc Dumux::NavierStokesModel
+ * \copydoc dumux/freeflow/navierstokes/model.hh
  *
  * The system is closed by a <B> component mass/mole balance equation </B> for each component \f$\kappa\f$:
  * \f[

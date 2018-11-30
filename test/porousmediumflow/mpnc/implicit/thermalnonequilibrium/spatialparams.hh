@@ -132,6 +132,7 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
+     * \param compIdx The index of the component
      * \return the porosity
      */
     template<class SolidSystem, class ElementSolution>

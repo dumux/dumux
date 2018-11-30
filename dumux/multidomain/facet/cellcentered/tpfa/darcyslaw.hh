@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \copydoc Dumux::CCTpfaFacetCouplingDarcysLaw
  */
@@ -46,7 +45,6 @@ template<class ScalarType, class FVGridGeometry, bool isNetwork>
 class CCTpfaFacetCouplingDarcysLawImpl;
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief The cache corresponding to tpfa Darcy's Law with facet coupling
  * \note We distinguish between network and non-network grids here. Specializations
@@ -56,7 +54,6 @@ template<class AdvectionType, class FVGridGeometry, bool isNetwork>
 class CCTpfaFacetCouplingDarcysLawCache;
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Darcy's law for cell-centered finite volume schemes with two-point flux approximation
  *        in the context of coupled models where the coupling occurs across the facets of the bulk
@@ -68,7 +65,6 @@ using CCTpfaFacetCouplingDarcysLaw =
                                                                       int(FVGridGeometry::GridView::dimensionworld) ) >;
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for non-network grids.
  */
@@ -125,7 +121,6 @@ private:
 };
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
  */
@@ -303,7 +298,6 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
 };
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for network grids
  */
@@ -360,7 +354,6 @@ private:
 };
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim<dimWorld
  */

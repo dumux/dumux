@@ -202,6 +202,7 @@ public:
      * \param element The current element.
      * \param scv The subcontrol volume.
      * \param fluidState The fluid state to fill.
+     * \param solidState The solid state to fill.
      */
     template<class ElemSol, class Problem, class Element, class Scv>
     void completeFluidState(const ElemSol& elemSol,

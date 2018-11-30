@@ -71,7 +71,7 @@ public:
      * \param spatialParams spatial parameters
      * \param element element (to be passed to spatialParams)
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
-     * \param scvIdx scvIdx (to be passed to spatialParams)
+     * \param scv The sub control volume
      *
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
      *

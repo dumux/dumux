@@ -138,7 +138,7 @@ public:
         }
     }
 
-    //! \brief Returns the \$f \beta_{\omega} \$f constant
+    //! \brief Returns the \f$ \beta_{\omega} \f$ constant
     const Scalar betaOmega() const
     {
         return 0.0708;
