@@ -74,7 +74,6 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
 
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
@@ -137,7 +136,7 @@ public:
     { return enableInertiaTerms_; }
 
     //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
-    template <class G = FVGridGeometry>
+    template <class SolutionVector, class G = FVGridGeometry>
     typename std::enable_if<G::discMethod == DiscretizationMethod::staggered, void>::type
     applyInitialFaceSolution(SolutionVector& sol,
                              const SubControlVolumeFace& scvf,

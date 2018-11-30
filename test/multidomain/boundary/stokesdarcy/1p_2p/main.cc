@@ -25,6 +25,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <fstream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
@@ -33,6 +34,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -175,20 +177,9 @@ int main(int argc, char** argv) try
     sol[stokesFaceIdx].resize(stokesFvGridGeometry->numFaceDofs());
     sol[darcyIdx].resize(darcyFvGridGeometry->numDofs());
 
-    const auto& cellCenterSol = sol[stokesCellCenterIdx];
-    const auto& faceSol = sol[stokesFaceIdx];
-
     // apply initial solution for instationary problems
-    GetPropType<StokesTypeTag, Properties::SolutionVector> stokesSol;
-    std::get<0>(stokesSol) = cellCenterSol;
-    std::get<1>(stokesSol) = faceSol;
-    stokesProblem->applyInitialSolution(stokesSol);
-    auto solStokesOld = stokesSol;
-    sol[stokesCellCenterIdx] = stokesSol[stokesCellCenterIdx];
-    sol[stokesFaceIdx] = stokesSol[stokesFaceIdx];
-
+    stokesProblem->applyInitialSolution(sol);
     darcyProblem->applyInitialSolution(sol[darcyIdx]);
-    auto solDarcyOld = sol[darcyIdx];
 
     auto solOld = sol;
 
@@ -197,7 +188,7 @@ int main(int argc, char** argv) try
     // the grid variables
     using StokesGridVariables = GetPropType<StokesTypeTag, Properties::GridVariables>;
     auto stokesGridVariables = std::make_shared<StokesGridVariables>(stokesProblem, stokesFvGridGeometry);
-    stokesGridVariables->init(stokesSol);
+    stokesGridVariables->init(sol);
     using DarcyGridVariables = GetPropType<DarcyTypeTag, Properties::GridVariables>;
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyFvGridGeometry);
     darcyGridVariables->init(sol[darcyIdx]);
@@ -209,7 +200,7 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
-    StaggeredVtkOutputModule<StokesGridVariables, GetPropType<StokesTypeTag, Properties::SolutionVector>> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
+    StaggeredVtkOutputModule<StokesGridVariables, Traits::SolutionVector> stokesVtkWriter(*stokesGridVariables, sol, stokesProblem->name());
     GetPropType<StokesTypeTag, Properties::IOFields>::initOutputModule(stokesVtkWriter);
     stokesVtkWriter.write(0.0);
 

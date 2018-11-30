@@ -25,6 +25,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <fstream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
@@ -32,7 +33,9 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/partial.hh>
 #include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -121,15 +124,7 @@ int main(int argc, char** argv) try
     constexpr auto stokesFaceIdx = CouplingManager::stokesFaceIdx;
     constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
-    // get some time loop parameters
-    using Scalar = GetPropType<StokesTypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    const bool isDiffusionProblem = getParam<bool>("Problem.OnlyDiffusion", false);
-
-    // the problem (initial and boundary conditions)
+    // the problems (initial and boundary conditions)
     using StokesProblem = GetPropType<StokesTypeTag, Properties::Problem>;
     auto stokesProblem = std::make_shared<StokesProblem>(stokesFvGridGeometry, couplingManager);
     using DarcyProblem = GetPropType<DarcyTypeTag, Properties::Problem>;
@@ -138,17 +133,18 @@ int main(int argc, char** argv) try
     // initialize the fluidsystem (tabulation)
     GetPropType<StokesTypeTag, Properties::FluidSystem>::init();
 
+    // get some time loop parameters
+    using Scalar = GetPropType<StokesTypeTag, Properties::Scalar>;
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
     // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    if(!isDiffusionProblem)
-        timeLoop->setPeriodicCheckPoint(tEnd/30.0);
-    // else
-        // timeLoop->setCheckPoint({1e10, 1.1e10, 1.2e10});
-    // TODO This does not work due to an issue with Dune's eq()
-
     stokesProblem->setTimeLoop(timeLoop);
+    darcyProblem->setTimeLoop(timeLoop);
 
     // the solution vector
     Traits::SolutionVector sol;
@@ -156,20 +152,12 @@ int main(int argc, char** argv) try
     sol[stokesFaceIdx].resize(stokesFvGridGeometry->numFaceDofs());
     sol[darcyIdx].resize(darcyFvGridGeometry->numDofs());
 
-    const auto& cellCenterSol = sol[stokesCellCenterIdx];
-    const auto& faceSol = sol[stokesFaceIdx];
+    // get a solution vector storing references to the two Stokes solution vectors
+    auto stokesSol = partial(sol, stokesCellCenterIdx, stokesFaceIdx);
 
     // apply initial solution for instationary problems
-    GetPropType<StokesTypeTag, Properties::SolutionVector> stokesSol;
-    std::get<0>(stokesSol) = cellCenterSol;
-    std::get<1>(stokesSol) = faceSol;
     stokesProblem->applyInitialSolution(stokesSol);
-    auto solStokesOld = stokesSol;
-    sol[stokesCellCenterIdx] = stokesSol[stokesCellCenterIdx];
-    sol[stokesFaceIdx] = stokesSol[stokesFaceIdx];
-
     darcyProblem->applyInitialSolution(sol[darcyIdx]);
-    auto solDarcyOld = sol[darcyIdx];
 
     auto solOld = sol;
 
@@ -184,7 +172,7 @@ int main(int argc, char** argv) try
     darcyGridVariables->init(sol[darcyIdx]);
 
     // intialize the vtk output module
-    StaggeredVtkOutputModule<StokesGridVariables, GetPropType<StokesTypeTag, Properties::SolutionVector>> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
+    StaggeredVtkOutputModule<StokesGridVariables, decltype(stokesSol)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
     GetPropType<StokesTypeTag, Properties::IOFields>::initOutputModule(stokesVtkWriter);
     stokesVtkWriter.write(0.0);
 
@@ -220,13 +208,6 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(solOld);
 
-        // revert the concentration gradient after some time
-        if(isDiffusionProblem && timeLoop->time() > 1e10)
-        {
-            darcyProblem->setBottomMoleFraction(1e-3);
-            stokesProblem->setTopMoleFraction(0.0);
-        }
-
         // solve the non-linear system with time step control
         nonLinearSolver.solve(sol, *timeLoop);
 
@@ -239,7 +220,6 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // write vtk output
-//        vtkWriter.write(timeLoop->time());
         stokesVtkWriter.write(timeLoop->time());
         darcyVtkWriter.write(timeLoop->time());
 

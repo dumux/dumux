@@ -32,6 +32,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/partial.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/fvassembler.hh>
@@ -54,16 +55,16 @@ namespace Dumux {
 namespace Properties {
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::StokesOnePTwoC>
+struct CouplingManager<TypeTag, TTag::StokesOneP>
 {
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyOnePTwoC>;
+    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyOneP>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::DarcyOnePTwoC>
+struct CouplingManager<TypeTag, TTag::DarcyOneP>
 {
-    using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOnePTwoC, Properties::TTag::StokesOnePTwoC, TypeTag>;
+    using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOneP, Properties::TTag::StokesOneP, TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
@@ -85,8 +86,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using StokesTypeTag = Properties::TTag::StokesOnePTwoC;
-    using DarcyTypeTag = Properties::TTag::DarcyOnePTwoC;
+    using StokesTypeTag = Properties::TTag::StokesOneP;
+    using DarcyTypeTag = Properties::TTag::DarcyOneP;
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains
@@ -121,33 +122,11 @@ int main(int argc, char** argv) try
     constexpr auto stokesFaceIdx = CouplingManager::stokesFaceIdx;
     constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
-    // the problems (initial and boundary conditions)
+    // the problem (initial and boundary conditions)
     using StokesProblem = GetPropType<StokesTypeTag, Properties::Problem>;
     auto stokesProblem = std::make_shared<StokesProblem>(stokesFvGridGeometry, couplingManager);
     using DarcyProblem = GetPropType<DarcyTypeTag, Properties::Problem>;
     auto darcyProblem = std::make_shared<DarcyProblem>(darcyFvGridGeometry, couplingManager);
-
-    // initialize the fluidsystem (tabulation)
-    GetPropType<StokesTypeTag, Properties::FluidSystem>::init();
-
-    // get some time loop parameters
-    using Scalar = GetPropType<StokesTypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
-
-    // control the injection period
-    const Scalar injectionBegin = getParam<Scalar>("Stokes.Problem.InjectionBegin");
-    const Scalar injectionEnd = getParam<Scalar>("Stokes.Problem.InjectionEnd");
-
-    if(injectionBegin > 0.0)
-        timeLoop->setCheckPoint({injectionBegin, injectionEnd});
-    else
-        timeLoop->setCheckPoint({injectionEnd});
 
     // the solution vector
     Traits::SolutionVector sol;
@@ -155,22 +134,8 @@ int main(int argc, char** argv) try
     sol[stokesFaceIdx].resize(stokesFvGridGeometry->numFaceDofs());
     sol[darcyIdx].resize(darcyFvGridGeometry->numDofs());
 
-    const auto& cellCenterSol = sol[stokesCellCenterIdx];
-    const auto& faceSol = sol[stokesFaceIdx];
-
-    // apply initial solution for instationary problems
-    GetPropType<StokesTypeTag, Properties::SolutionVector> stokesSol;
-    std::get<0>(stokesSol) = cellCenterSol;
-    std::get<1>(stokesSol) = faceSol;
-    stokesProblem->applyInitialSolution(stokesSol);
-    auto solStokesOld = stokesSol;
-    sol[stokesCellCenterIdx] = stokesSol[stokesCellCenterIdx];
-    sol[stokesFaceIdx] = stokesSol[stokesFaceIdx];
-
-    darcyProblem->applyInitialSolution(sol[darcyIdx]);
-    auto solDarcyOld = sol[darcyIdx];
-
-    auto solOld = sol;
+    // get a solution vector storing references to the two Stokes solution vectors
+    auto stokesSol = partial(sol, stokesCellCenterIdx, stokesFaceIdx);
 
     couplingManager->init(stokesProblem, darcyProblem, sol);
 
@@ -183,17 +148,17 @@ int main(int argc, char** argv) try
     darcyGridVariables->init(sol[darcyIdx]);
 
     // intialize the vtk output module
-    StaggeredVtkOutputModule<StokesGridVariables, GetPropType<StokesTypeTag, Properties::SolutionVector>> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
+    StaggeredVtkOutputModule<StokesGridVariables, decltype(stokesSol)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
     GetPropType<StokesTypeTag, Properties::IOFields>::initOutputModule(stokesVtkWriter);
     stokesVtkWriter.write(0.0);
 
-    VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx], darcyProblem->name());
+    VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx],  darcyProblem->name());
     using DarcyVelocityOutput = GetPropType<DarcyTypeTag, Properties::VelocityOutput>;
     darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
     GetPropType<DarcyTypeTag, Properties::IOFields>::initOutputModule(darcyVtkWriter);
     darcyVtkWriter.write(0.0);
 
-    // the assembler with time loop for instationary problem
+    // the assembler for a stationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(stokesProblem, stokesProblem, darcyProblem),
                                                  std::make_tuple(stokesFvGridGeometry->cellCenterFVGridGeometryPtr(),
@@ -202,8 +167,7 @@ int main(int argc, char** argv) try
                                                  std::make_tuple(stokesGridVariables->cellCenterGridVariablesPtr(),
                                                                  stokesGridVariables->faceGridVariablesPtr(),
                                                                  darcyGridVariables),
-                                                 couplingManager,
-                                                 timeLoop);
+                                                 couplingManager);
 
     // the linear solver
     using LinearSolver = UMFPackBackend;
@@ -213,45 +177,12 @@ int main(int argc, char** argv) try
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
-    constexpr auto eps = 1e-6;
+    // solve the non-linear system
+    nonLinearSolver.solve(sol);
 
-    // time loop
-    timeLoop->start(); do
-    {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(solOld);
-
-
-        if(timeLoop->time() > injectionBegin - eps && timeLoop->time() < injectionEnd + eps)
-            stokesProblem->setInjectionState(true);
-        else
-            stokesProblem->setInjectionState(false);
-
-        // solve the non-linear system with time step control
-        nonLinearSolver.solve(sol, *timeLoop);
-
-        // make the new solution the old solution
-        solOld = sol;
-        stokesGridVariables->advanceTimeStep();
-        darcyGridVariables->advanceTimeStep();
-
-        // advance to the time loop to the next step
-        timeLoop->advanceTimeStep();
-
-        // write vtk output
-        stokesVtkWriter.write(timeLoop->time());
-        darcyVtkWriter.write(timeLoop->time());
-
-        // report statistics of this time step
-        timeLoop->reportTimeStep();
-
-        // set new dt as suggested by newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
-
-    } while (!timeLoop->finished());
-
-    timeLoop->finalize(stokesGridView.comm());
-    timeLoop->finalize(darcyGridView.comm());
+    // write vtk output
+    stokesVtkWriter.write(1.0);
+    darcyVtkWriter.write(1.0);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

@@ -103,8 +103,10 @@ public:
     StokesSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6), couplingManager_(couplingManager)
     {
-        deltaP_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference");
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+
+        // determine whether to simulate a vertical or horizontal flow configuration
+        verticalFlow_ = problemName_.find("vertical") != std::string::npos;
     }
 
     /*!
@@ -119,9 +121,6 @@ public:
      * \name Problem parameters
      */
     // \{
-
-    bool shouldWriteRestartFile() const
-    { return false; }
 
    /*!
      * \brief Return the temperature within the domain in [K].
@@ -159,12 +158,33 @@ public:
 
         const auto& globalPos = scvf.dofPosition();
 
-        if(onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
-            values.setDirichlet(Indices::pressureIdx);
-        else
+        if (verticalFlow_)
         {
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
+            // inflow
+            if(onUpperBoundary_(globalPos))
+            {
+                values.setDirichlet(Indices::velocityXIdx);
+                values.setDirichlet(Indices::velocityYIdx);
+            }
+
+            // left/right wall
+            if (onRightBoundary_(globalPos) || (onLeftBoundary_(globalPos)))
+            {
+                values.setDirichlet(Indices::velocityXIdx);
+                values.setDirichlet(Indices::velocityYIdx);
+            }
+        }
+        else // horizontal flow
+        {
+            // inlet / outlet
+            if(onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
+                values.setDirichlet(Indices::pressureIdx);
+            else // wall
+            {
+                values.setDirichlet(Indices::velocityXIdx);
+                values.setDirichlet(Indices::velocityYIdx);
+            }
+
         }
 
         if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
@@ -185,10 +205,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values(0.0);
-        values = initialAtPos(globalPos);
-
-        return values;
+        return initialAtPos(globalPos);
     }
 
     /*!
@@ -233,12 +250,21 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
 
-        if(onLeftBoundary_(globalPos))
-            values[Indices::pressureIdx] = deltaP_;
+        if (verticalFlow_)
+        {
+            static const Scalar inletVelocity = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Velocity");
+            values[Indices::velocityYIdx] = inletVelocity * globalPos[0] * (this->fvGridGeometry().bBoxMax()[0] - globalPos[0]);
+        }
+        else // horizontal flow
+        {
+            static const Scalar deltaP = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference");
+            if(onLeftBoundary_(globalPos))
+                values[Indices::pressureIdx] = deltaP;
+        }
 
         return values;
     }
@@ -275,8 +301,8 @@ private:
     { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
 
     Scalar eps_;
-    Scalar deltaP_;
     std::string problemName_;
+    bool verticalFlow_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };

@@ -57,7 +57,6 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -162,6 +161,7 @@ public:
      * \brief Applies the initial solution for all degrees of freedom of the grid.
      *
     */
+    template<class SolutionVector>
     void applyInitialSolution(SolutionVector& sol) const
     {
         sol[cellCenterIdx].resize(this->fvGridGeometry().numCellCenterDofs());
@@ -192,6 +192,7 @@ public:
 
 
     //! Applys the initial cell center solution
+    template<class SolutionVector>
     void applyInitialCellCenterSolution(SolutionVector& sol,
                                         const SubControlVolume& scv,
                                         const PrimaryVariables& initSol) const
@@ -205,6 +206,7 @@ public:
     }
 
     //! Applys the initial face solution
+    template<class SolutionVector>
     void applyInitialFaceSolution(SolutionVector& sol,
                                   const SubControlVolumeFace& scvf,
                                   const PrimaryVariables& initSol) const

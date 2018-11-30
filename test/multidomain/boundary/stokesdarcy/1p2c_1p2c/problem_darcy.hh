@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief TODO docme
+ * \brief A simple Darcy test problem (cell-centered finite volume method).
  */
 #ifndef DUMUX_DARCY_SUBPROBLEM_HH
 #define DUMUX_DARCY_SUBPROBLEM_HH
@@ -31,7 +31,7 @@
 #include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "./../spatialparams.hh"
+#include "spatialparams.hh"
 
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
@@ -93,43 +93,32 @@ template <class TypeTag>
 class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridView = typename FVGridGeometry::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-
-    // copy some indices for convenience
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    enum {
-        // grid and world dimension
-        dim = GridView::dimension,
-        dimworld = GridView::dimensionworld,
-
-        // primary variable indices
-        conti0EqIdx = Indices::conti0EqIdx,
-        pressureIdx = Indices::pressureIdx,
-    };
-
     using Element = typename GridView::template Codim<0>::Entity;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+    using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
 
 public:
     DarcySubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                    std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager), xBottom_(0.0)
+    : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
     {
-        pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure", 0.0);
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+
+        // determine whether to simulate a vertical or horizontal flow configuration
+        verticalFlow_ = problemName_.find("vertical") != std::string::npos;
     }
 
     /*!
@@ -141,27 +130,6 @@ public:
     }
 
     /*!
-     * \name Simulation steering
-     */
-    // \{
-
-    /*!
-     * \brief Returns true if a restart file should be written to
-     *        disk.
-     */
-    bool shouldWriteRestartFile() const
-    { return false; }
-
-    /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    bool shouldWriteOutput() const // define output
-    { return true; }
-
-
-    /*!
      * \brief Return the temperature within the domain in [K].
      *
      */
@@ -169,7 +137,7 @@ public:
     { return 273.15 + 10; } // 10°C
     // \}
 
-     /*!
+    /*!
      * \name Boundary conditions
      */
     // \{
@@ -181,42 +149,59 @@ public:
       * \param element The element
       * \param scvf The boundary sub control volume face
       */
-    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolumeFace &scvf) const
+    BoundaryTypes boundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     {
         BoundaryTypes values;
-        values.setAllNeumann(); // left/right wall, top
+        values.setAllNeumann();
 
-       if(onLowerBoundary_(scvf.center()))
-           values.setAllDirichlet();
-
-        if(couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+        if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
             values.setAllCouplingNeumann();
+
+        if (verticalFlow_)
+        {
+            if (onLowerBoundary_(scvf.center()))
+                values.setAllDirichlet();
+        }
 
         return values;
     }
 
-        /*!
+    /*!
      * \brief Evaluate the boundary conditions for a Dirichlet control volume.
      *
      * \param element The element for which the Dirichlet boundary condition is set
      * \param scvf The boundary subcontrolvolumeface
      *
-     * For this method, the \a values parameter stores primary variables.
      */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
         PrimaryVariables values(0.0);
         values = initial(element);
 
-        if(onLowerBoundary_(scvf.center()))
-            values[Indices::conti0EqIdx + 1] = xBottom_;
+        if (verticalFlow_)
+        {
+            // Check if this a pure diffusion problem.
+            static const bool isDiffusionProblem = problemName_.find("diffusion") != std::string::npos;
+
+            Scalar bottomMoleFraction = 0.0;
+
+            if (isDiffusionProblem)
+            {
+                // For the diffusion problem, change the top mole fraction after some time
+                // in order to revert the concentration gradient.
+                if (time() >= 1e10)
+                    bottomMoleFraction = 1e-3;
+            }
+
+            if(onLowerBoundary_(scvf.center()))
+                values[Indices::conti0EqIdx + 1] = bottomMoleFraction;
+        }
 
         return values;
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann
-     *        control volume.
+     * \brief Evaluate the boundary conditions for a Neumann control volume.
      *
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeomentry The fvGeometry
@@ -225,6 +210,7 @@ public:
      *
      * For this method, the \a values variable stores primary variables.
      */
+    template<class ElementVolumeVariables>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
@@ -232,7 +218,7 @@ public:
     {
         NumEqVector values(0.0);
 
-        if(couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+        if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
             values = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scvf);
 
         return values;
@@ -253,6 +239,7 @@ public:
      * \param elemVolVars The element volume variables
      * \param scv The subcontrolvolume
      */
+    template<class ElementVolumeVariables>
     NumEqVector source(const Element &element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
@@ -272,24 +259,28 @@ public:
     PrimaryVariables initial(const Element &element) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = pressure_;
+        values[Indices::pressureIdx] = 1e5;
 
         return values;
     }
 
     // \}
 
-    /*!
-     * \brief Get the coupling manager
-     */
+    //! Get the coupling manager
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
     /*!
-     * \brief Set the fixed value of the mole fraction at the bottom of the domain
+     * \brief Sets the time loop pointer
      */
-    void setBottomMoleFraction(const Scalar x)
-    { xBottom_ = x; }
+    void setTimeLoop(TimeLoopPtr timeLoop)
+    { timeLoop_ = timeLoop; }
+
+    /*!
+     * \brief Returns the time
+     */
+    Scalar time() const
+    { return timeLoop_->time(); }
 
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
@@ -305,10 +296,10 @@ private:
     { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
 
     Scalar eps_;
-    std::shared_ptr<CouplingManager> couplingManager_;
-    Scalar xBottom_;
-    Scalar pressure_;
     std::string problemName_;
+    bool verticalFlow_;
+    std::shared_ptr<CouplingManager> couplingManager_;
+    TimeLoopPtr timeLoop_;
 };
 } //end namespace
 
