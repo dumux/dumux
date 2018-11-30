@@ -23,6 +23,7 @@ math.hh
 numericdifferentiation.hh
 optional.hh
 parameters.hh
+partial.hh
 pointsource.hh
 properties.hh
 quad.hh

@@ -2,6 +2,7 @@ install(FILES
 fv.hh
 fv1p.hh
 fvelastic.hh
+fvnonequilibrium.hh
 fvporoelastic.hh
 gstatrandomfield.hh
 sequentialfv.hh
