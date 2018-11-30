@@ -7,7 +7,9 @@ install(FILES
 couplingjacobianpattern.hh
 couplingmanager.hh
 fvassembler.hh
+fvgridgeometry.hh
 fvgridvariables.hh
+fvproblem.hh
 newtonsolver.hh
 staggeredcouplingmanager.hh
 staggeredtraits.hh
