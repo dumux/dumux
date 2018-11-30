@@ -42,12 +42,12 @@ class StaggeredCouplingManagerBase: public CouplingManager<MDTraits>
 {
     using ParentType = CouplingManager<MDTraits>;
     template<std::size_t id>
-    using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
 
-    using StaggeredSubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
+    using StaggeredSubDomainTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
 
-    template<std::size_t id> using FVGridGeometry = typename std::tuple_element_t<id, typename MDTraits::FVGridGeometryTuple>::element_type;
+    template<std::size_t id> using FVGridGeometry = typename MDTraits::template SubDomain<id>::FVGridGeometry;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
 
     using FVElementGeometry = typename FVGridGeometry<0>::LocalView;
@@ -205,8 +205,8 @@ public:
     decltype(auto) numericEpsilon(Dune::index_constant<i>,
                                   const std::string& paramGroup) const
     {
-        constexpr std::size_t numEqCellCenter = Traits::template PrimaryVariables<cellCenterIdx>::dimension;
-        constexpr std::size_t numEqFace = Traits::template PrimaryVariables<faceIdx>::dimension;
+        constexpr std::size_t numEqCellCenter = Traits::template SubDomain<cellCenterIdx>::PrimaryVariables::dimension;
+        constexpr std::size_t numEqFace = Traits::template SubDomain<faceIdx>::PrimaryVariables::dimension;
         constexpr bool isCellCenter = FVGridGeometry<i>::isCellCenter();
         constexpr std::size_t numEq = isCellCenter ? numEqCellCenter : numEqFace;
         constexpr auto prefix = isCellCenter ? "CellCenter" : "Face";

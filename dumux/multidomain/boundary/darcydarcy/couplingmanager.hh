@@ -58,13 +58,13 @@ class DarcyDarcyBoundaryCouplingManager
     using Scalar = typename MDTraits::Scalar;
     using SolutionVector = typename MDTraits::SolutionVector;
 
-    template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<i>;
+    template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomain<i>::TypeTag;
     template<std::size_t i> using Problem = GetPropType<SubDomainTypeTag<i>, Properties::Problem>;
     template<std::size_t i> using PrimaryVariables = GetPropType<SubDomainTypeTag<i>, Properties::PrimaryVariables>;
     template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
     template<std::size_t i> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<i>, Properties::GridVolumeVariables>::LocalView;
     template<std::size_t i> using VolumeVariables = typename GetPropType<SubDomainTypeTag<i>, Properties::GridVolumeVariables>::VolumeVariables;
-    template<std::size_t i> using FVGridGeometry = typename MDTraits::template SubDomainFVGridGeometry<i>;
+    template<std::size_t i> using FVGridGeometry = typename MDTraits::template SubDomain<i>::FVGridGeometry;
     template<std::size_t i> using FVElementGeometry = typename FVGridGeometry<i>::LocalView;
     template<std::size_t i> using SubControlVolumeFace = typename FVGridGeometry<i>::SubControlVolumeFace;
     template<std::size_t i> using SubControlVolume = typename FVGridGeometry<i>::SubControlVolume;
@@ -73,7 +73,7 @@ class DarcyDarcyBoundaryCouplingManager
 
     template<std::size_t i>
     static constexpr auto domainIdx()
-    { return typename MDTraits::template DomainIdx<i>{}; }
+    { return typename MDTraits::template SubDomain<i>::Index{}; }
 
     template<std::size_t i>
     static constexpr bool isCCTpfa()

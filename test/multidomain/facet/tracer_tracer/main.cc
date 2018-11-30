@@ -250,8 +250,8 @@ int main(int argc, char** argv) try
     using OnePMDTraits = typename OnePTestTraits::MDTraits;
     using SolutionVector = typename OnePMDTraits::SolutionVector;
     using JacobianMatrix = typename OnePMDTraits::JacobianMatrix;
-    static const auto bulkId = typename OnePMDTraits::template DomainIdx<0>();
-    static const auto lowDimId = typename OnePMDTraits::template DomainIdx<1>();
+    static const auto bulkId = typename OnePMDTraits::template SubDomain<0>::Index();
+    static const auto lowDimId = typename OnePMDTraits::template SubDomain<1>::Index();
 
     ////////////////////////////////////////////////////////////
     // run stationary, simgle-phase problem on this grid

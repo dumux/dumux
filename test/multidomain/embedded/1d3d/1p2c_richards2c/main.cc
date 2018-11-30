@@ -214,8 +214,8 @@ int main(int argc, char** argv) try
 
     // the mixed dimension type traits
     using Traits = MultiDomainTraits<BulkTypeTag, LowDimTypeTag>;
-    constexpr auto bulkIdx = Traits::template DomainIdx<0>();
-    constexpr auto lowDimIdx = Traits::template DomainIdx<1>();
+    constexpr auto bulkIdx = Traits::template SubDomain<0>::Index();
+    constexpr auto lowDimIdx = Traits::template SubDomain<1>::Index();
 
     // the coupling manager
     using CouplingManager = GetPropType<BulkTypeTag, Properties::CouplingManager>;

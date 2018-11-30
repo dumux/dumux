@@ -90,7 +90,7 @@ template< class MDTraits,
           class CouplingMapper,
           std::size_t bulkDomainId = 0,
           std::size_t lowDimDomainId = 1,
-          DiscretizationMethod bulkDM = GetPropType<typename MDTraits::template SubDomainTypeTag<bulkDomainId>, Properties::FVGridGeometry>::discMethod >
+          DiscretizationMethod bulkDM = GetPropType<typename MDTraits::template SubDomain<bulkDomainId>::TypeTag, Properties::FVGridGeometry>::discMethod >
 class FacetCouplingManager;
 
 /*!
@@ -119,15 +119,15 @@ class FacetCouplingThreeDomainManager
     using FacetEdgeManager = FacetCouplingManager<MDTraits, CouplingMapper, facetDomainId, edgeDomainId>;
 
     // convenience aliases and instances of the domain ids
-    using BulkIdType = typename MDTraits::template DomainIdx<bulkDomainId>;
-    using FacetIdType = typename MDTraits::template DomainIdx<facetDomainId>;
-    using EdgeIdType = typename MDTraits::template DomainIdx<edgeDomainId>;
+    using BulkIdType = typename MDTraits::template SubDomain<bulkDomainId>::Index;
+    using FacetIdType = typename MDTraits::template SubDomain<facetDomainId>::Index;
+    using EdgeIdType = typename MDTraits::template SubDomain<edgeDomainId>::Index;
     static constexpr auto bulkId = BulkIdType();
     static constexpr auto facetId = FacetIdType();
     static constexpr auto edgeId = EdgeIdType();
 
     // the sub-domain type tags
-    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
     // further types specific to the sub-problems
     template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;

@@ -217,8 +217,8 @@ class StokesDarcyCouplingDataImplementation;
 */
 template<class MDTraits, class CouplingManager>
 using StokesDarcyCouplingData = StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager,
-                                                                      GetPropType<typename MDTraits::template SubDomainTypeTag<0>, Properties::ModelTraits>::enableEnergyBalance(),
-                                                                      (GetPropType<typename MDTraits::template SubDomainTypeTag<0>, Properties::ModelTraits>::numComponents() > 1)>;
+                                                                      GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::enableEnergyBalance(),
+                                                                      (GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::numComponents() > 1)>;
 
 /*!
  * \ingroup MultiDomain
@@ -231,7 +231,7 @@ class StokesDarcyCouplingDataImplementationBase
 {
     using Scalar = typename MDTraits::Scalar;
 
-    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using Element = typename FVGridGeometry<id>::GridView::template Codim<0>::Entity;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
@@ -469,14 +469,14 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 {
     using ParentType = StokesDarcyCouplingDataImplementationBase<MDTraits, CouplingManager>;
     using Scalar = typename MDTraits::Scalar;
-    static constexpr auto stokesIdx = typename MDTraits::template DomainIdx<0>();
-    static constexpr auto darcyIdx = typename MDTraits::template DomainIdx<2>();
+    static constexpr auto stokesIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
     static constexpr auto stokesCellCenterIdx = stokesIdx;
-    static constexpr auto stokesFaceIdx = typename MDTraits::template DomainIdx<1>();
+    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
 
     // the sub domain type tags
     template<std::size_t id>
-    using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
     template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using Element = typename FVGridGeometry<id>::GridView::template Codim<0>::Entity;
@@ -633,14 +633,14 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 {
     using ParentType = StokesDarcyCouplingDataImplementationBase<MDTraits, CouplingManager>;
     using Scalar = typename MDTraits::Scalar;
-    static constexpr auto stokesIdx = typename MDTraits::template DomainIdx<0>();
-    static constexpr auto darcyIdx = typename MDTraits::template DomainIdx<2>();
+    static constexpr auto stokesIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
     static constexpr auto stokesCellCenterIdx = stokesIdx;
-    static constexpr auto stokesFaceIdx = typename MDTraits::template DomainIdx<1>();
+    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
 
     // the sub domain type tags
     template<std::size_t id>
-    using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
     template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using Element = typename FVGridGeometry<id>::GridView::template Codim<0>::Entity;

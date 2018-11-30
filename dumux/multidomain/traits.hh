@@ -28,6 +28,7 @@
 #include <type_traits>
 #include <tuple>
 #include <utility>
+#include <memory>
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/indices.hh>
@@ -83,6 +84,36 @@ public:
     using type = typename makeMatrix<Indices>::type;
 };
 
+//! helper alias to create a tuple of shared_ptr<...> from an indexed type
+template<template<std::size_t> class T, class Indices>
+struct MultiDomainTupleSharedPtr
+{
+    template<std::size_t i>
+    using PtrType = std::shared_ptr<T<i>>;
+
+    using type = typename makeFromIndexedType<std::tuple, PtrType, Indices>::type;
+};
+
+//! helper alias to create a tuple of shared_ptr<const ...> from an indexed type
+template<template<std::size_t> class T, class Indices>
+struct MultiDomainTupleSharedPtrConst
+{
+    template<std::size_t i>
+    using PtrType = std::shared_ptr<const T<i>>;
+
+    using type = typename makeFromIndexedType<std::tuple, PtrType, Indices>::type;
+};
+
+//! helper alias to create the JacobianMatrix type
+template<template<std::size_t> class SubDomainDiagBlocks, class Indices, class Scalar>
+struct MultiDomainMatrixType
+{
+    template<typename... MatrixBlocks>
+    using M = typename createMultiTypeBlockMatrixType<Scalar, MatrixBlocks...>::type::type;
+
+    using type = typename makeFromIndexedType<M, SubDomainDiagBlocks, Indices>::type;
+};
+
 } // end namespace Detail
 
 /*
@@ -113,67 +144,86 @@ public:
 template<typename... SubDomainTypeTags>
 struct MultiDomainTraits
 {
+    //! the number of subdomains
     static constexpr std::size_t numSubDomains = sizeof...(SubDomainTypeTags);
+
+private:
 
     //! the type tag of a sub domain problem
     template<std::size_t id>
     using SubDomainTypeTag = typename std::tuple_element_t<id, std::tuple<SubDomainTypeTags...>>;
 
-    //! the static domain indices
-    template<std::size_t id>
-    using DomainIdx = Dune::index_constant<id>;
-
-    //! the sub domain geometry
-    template<std::size_t id>
-    using SubDomainFVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
-
-private:
+    //! helper alias to construct derived multidomain types like tuples
     using Indices = std::make_index_sequence<numSubDomains>;
 
-    template<std::size_t id>
-    using SolutionSubVector = GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>;
-
+    //! the scalar type of each sub domain
     template<std::size_t id>
     using SubDomainScalar = GetPropType<SubDomainTypeTag<id>, Properties::Scalar>;
 
+    //! the jacobian type of each sub domain
     template<std::size_t id>
-    using SubDomainProblem = std::shared_ptr<const GetPropType<SubDomainTypeTag<id>, Properties::Problem>>;
+    using SubDomainJacobianMatrix = GetPropType<SubDomainTypeTag<id>, Properties::JacobianMatrix>;
 
+    //! the solution type of each sub domain
     template<std::size_t id>
-    using SubDomainFVGridGeometryPtr = std::shared_ptr<const GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>>;
-
-    template<std::size_t id>
-    using SubDomainGridVariables = std::shared_ptr<GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>>;
-
-    template<std::size_t id>
-    using JacobianDiagBlock = GetPropType<SubDomainTypeTag<id>, Properties::JacobianMatrix>;
+    using SubDomainSolutionVector = GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>;
 
 public:
+
+    /*
+     * \brief sub domain types
+     */
+    //\{
+
+    template<std::size_t id>
+    struct SubDomain
+    {
+        using Index = Dune::index_constant<id>;
+        using TypeTag = SubDomainTypeTag<id>;
+        using Grid = GetPropType<SubDomainTypeTag<id>, Properties::Grid>;
+        using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
+        using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+        using GridVariables =GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
+        using IOFields = GetPropType<SubDomainTypeTag<id>, Properties::IOFields>;
+        using SolutionVector = GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>;
+    };
+
+    //\}
+
+    /*
+     * \brief multi domain types
+     */
+    //\{
 
     //! the scalar type
     using Scalar = typename makeFromIndexedType<std::common_type_t, SubDomainScalar, Indices>::type;
 
     //! the solution vector type
-    using SolutionVector = typename makeFromIndexedType<Dune::MultiTypeBlockVector, SolutionSubVector, Indices>::type;
-
-    template<typename... MatrixBlocks>
-    using createMatrixType = typename Detail::createMultiTypeBlockMatrixType<Scalar, MatrixBlocks...>::type::type;
+    using SolutionVector = typename makeFromIndexedType<Dune::MultiTypeBlockVector, SubDomainSolutionVector, Indices>::type;
 
     //! the jacobian type
-    using JacobianMatrix = typename makeFromIndexedType<createMatrixType, JacobianDiagBlock, Indices>::type;
+    using JacobianMatrix = typename Detail::MultiDomainMatrixType<SubDomainJacobianMatrix, Indices, Scalar>::type;
 
-    //! the tuple of problems
-    using ProblemTuple = typename makeFromIndexedType<std::tuple, SubDomainProblem, Indices>::type;
+    //\}
 
-    //! the tuple of fv grid geometries
-    using FVGridGeometryTuple = typename makeFromIndexedType<std::tuple, SubDomainFVGridGeometryPtr, Indices>::type;
+    /*
+     * \brief helper aliases to contruct derived tuple types
+     */
+    //\{
 
-    //! the tuple of grid variables
-    using GridVariablesTuple = typename makeFromIndexedType<std::tuple, SubDomainGridVariables, Indices>::type;
-
-    //! convenience alias to create tuple from type
+    //! helper alias to create tuple<...> from indexed type
     template<template<std::size_t> class T>
-    using MakeTuple = typename makeFromIndexedType<std::tuple, T, Indices>::type;
+    using Tuple = typename makeFromIndexedType<std::tuple, T, Indices>::type;
+
+    //! helper alias to create tuple<std::shared_ptr<...>> from indexed type
+    template<template<std::size_t> class T>
+    using TupleOfSharedPtr = typename Detail::MultiDomainTupleSharedPtr<T, Indices>::type;
+
+    //! helper alias to create tuple<std::shared_ptr<const ...>> from indexed type
+    template<template<std::size_t> class T>
+    using TupleOfSharedPtrConst = typename Detail::MultiDomainTupleSharedPtrConst<T, Indices>::type;
+
+    //\}
 };
 
 } //end namespace Dumux

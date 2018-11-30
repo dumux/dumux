@@ -58,7 +58,7 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
     using ParentType = CouplingManager< MDTraits >;
 
     // the sub-domain type tags
-    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
     // further types specific to the sub-problems
     template<std::size_t id> using Scalar = GetPropType<SubDomainTypeTag<id>, Properties::Scalar>;

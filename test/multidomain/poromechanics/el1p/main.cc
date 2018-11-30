@@ -130,8 +130,8 @@ int main(int argc, char** argv) try
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
 
-    static const auto onePId = Traits::template DomainIdx<0>();
-    static const auto poroMechId = Traits::template DomainIdx<1>();
+    static const auto onePId = Traits::template SubDomain<0>::Index();
+    static const auto poroMechId = Traits::template SubDomain<1>::Index();
     x[onePId].resize(onePFvGridGeometry->numDofs());
     x[poroMechId].resize(poroMechFvGridGeometry->numDofs());
     onePProblem->applyInitialSolution(x[onePId]);

@@ -145,12 +145,9 @@ int main(int argc, char** argv) try
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
 
-    static const auto bulkId = Traits::template DomainIdx<0>();
-    static const auto facetId = Traits::template DomainIdx<1>();
-    static const auto edgeId = Traits::template DomainIdx<2>();
-    x[bulkId].resize(bulkFvGridGeometry->numDofs());
-    x[facetId].resize(facetFvGridGeometry->numDofs());
-    x[edgeId].resize(edgeFvGridGeometry->numDofs());
+    static const auto bulkId = Traits::template SubDomain<0>::Index();
+    static const auto facetId = Traits::template SubDomain<1>::Index();
+    static const auto edgeId = Traits::template SubDomain<2>::Index();
     bulkProblem->applyInitialSolution(x[bulkId]);
     facetProblem->applyInitialSolution(x[facetId]);
     edgeProblem->applyInitialSolution(x[edgeId]);
