@@ -30,6 +30,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/couplingmapperbase.hh>
+#include <dumux/multidomain/facet/codimonegridadapter.hh>
 
 namespace Dumux {
 
@@ -80,6 +81,26 @@ public:
                 const LowDimFVG& lowDimFvGridGeometry,
                 std::shared_ptr<const Embeddings> embeddings)
     {
+        // forward to update function with instantiated vertex adapter
+        using GridAdapter = CodimOneGridAdapter<Embeddings, bulkGridId, facetGridId>;
+        update(bulkFvGridGeometry, lowDimFvGridGeometry, embeddings, GridAdapter(embeddings));
+    }
+
+    /*!
+     * \brief Update coupling maps. This is the standard
+     *        interface required by any mapper implementation.
+     *
+     * \param bulkFvGridGeometry The finite-volume grid geometry of the bulk grid
+     * \param lowDimFvGridGeometry The finite-volume grid geometry of the lower-dimensional grid
+     * \param embeddings Class that contains the embedments among the grids and entity insertion indices
+     * \param codimOneGridAdapter Allows direct access to data on the bulk grid for lowdim grid entities
+     */
+    template< class Embeddings, class CodimOneGridAdapter >
+    void update(const BulkFVG& bulkFvGridGeometry,
+                const LowDimFVG& lowDimFvGridGeometry,
+                std::shared_ptr<const Embeddings> embeddings,
+                const CodimOneGridAdapter& codimOneGridAdapter)
+    {
         // define the policy how to add map entries for given lowdim element and adjoined entity indices
         auto addCouplingEntryPolicy = [&] (auto&& adjoinedEntityIndices,
                                            const LowDimElement& lowDimElement,
@@ -88,6 +109,13 @@ public:
         {
             const auto lowDimElemIdx = lowDimFvGridGeometry.elementMapper().index(lowDimElement);
             auto& lowDimData = this->couplingMap_(facetGridId, bulkGridId)[lowDimElemIdx];
+
+            // determine corner indices (in bulk grid indices)
+            const auto& lowDimGeometry = lowDimElement.geometry();
+            const auto numElementCorners = lowDimElement.subEntities(lowDimDim);
+            std::vector<BulkIndexType> elemCornerIndices(numElementCorners);
+            for (int i = 0; i < numElementCorners; ++i)
+                elemCornerIndices[i] = codimOneGridAdapter.bulkGridVertexIndex(lowDimElement.template subEntity<lowDimDim>(i));
 
             // Find the scvfs in the adjoined entities coinciding with the low dim element
             for (auto bulkElemIdx : adjoinedEntityIndices)
@@ -111,9 +139,8 @@ public:
                     // otherwise, do float comparison of element and scvf facet corner
                     else
                     {
-                        const auto lowDimGeom = lowDimElement.geometry();
-                        const auto eps = lowDimGeom.volume()*1e-8;
-                        const auto diffVec = lowDimGeom.center()-scvf.facetCorner();
+                        const auto eps = lowDimGeometry.volume()*1e-8;
+                        const auto diffVec = lowDimGeometry.center()-scvf.facetCorner();
 
                         if ( Dune::FloatCmp::eq<GlobalPosition, Dune::FloatCmp::CmpStyle::absolute>(diffVec, GlobalPosition(0.0), eps) )
                             embeddedScvfIndices.push_back(scvf.index());
@@ -121,7 +148,7 @@ public:
                 }
 
                 // Error tracking. The boundary scvf detection might has to be improved for very fine grids!?
-                if ( embeddedScvfIndices.size() != lowDimElement.subEntities(lowDimDim) )
+                if ( embeddedScvfIndices.size() != numElementCorners )
                     DUNE_THROW(Dune::InvalidStateException, "Could not find all coupling scvfs in embedment");
 
                 // add each dof in the low dim element to coupling stencil of the bulk element and vice versa
@@ -135,8 +162,22 @@ public:
                     for (auto scvfIdx : embeddedScvfIndices)
                         addCouplingsFromIV_(bulkFvGridGeometry, fvGeometry.scvf(scvfIdx), fvGeometry, lowDimElemIdx, dofIdx);
 
+                // sort the scvfs according to the corners of the low dim element if box is used
+                // that allows identifying which scvf flux enters which low dim scv later
+                if (LowDimFVG::discMethod == DiscretizationMethod::box)
+                {
+                    const auto copy = embeddedScvfIndices;
+
+                    for (unsigned int i = 0; i < numElementCorners; ++i)
+                    {
+                        const auto& scvf = fvGeometry.scvf(copy[i]);
+                        auto it = std::find(elemCornerIndices.begin(), elemCornerIndices.end(), scvf.vertexIndex());
+                        assert(it != elemCornerIndices.end());
+                        embeddedScvfIndices[ std::distance(elemCornerIndices.begin(), it) ] = copy[i];
+                    }
+                }
+
                 // add info on which scvfs coincide with which low dim element
-                // TODO order the scvfs according to low dim element corners first !!!
                 auto& elemToScvfMap = bulkData.elementToScvfMap[lowDimElemIdx];
                 elemToScvfMap.insert(elemToScvfMap.end(), embeddedScvfIndices.begin(), embeddedScvfIndices.end());
 
