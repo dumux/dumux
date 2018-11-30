@@ -203,6 +203,7 @@ public:
                         SolutionVector& sol)
     {
         std::vector<bool> stateChanged(sol.size(), false);
+        std::size_t countChanged = 0;
 
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {
@@ -230,9 +231,16 @@ public:
 
                     if (sol[dofIdx].state() != dirichletValues.state())
                     {
+                        if (verbosity() > 1)
+                            std::cout << "Changing primary variable state at boundary (" << sol[dofIdx].state()
+                                      << ") to the one given by the Dirichlet condition (" << dirichletValues.state() << ") at dof " << dofIdx
+                                      << ", coordinates: " << scv.dofPosition()
+                                      << std::endl;
+
                         // make sure the solution vector has the right state (given by the Dirichlet BC)
                         sol[dofIdx].setState(dirichletValues.state());
                         stateChanged[dofIdx] = true;
+                        ++countChanged;
 
                         // overwrite initial with Dirichlet values
                         for (int eqIdx = 0; eqIdx < SolutionVector::block_type::dimension; ++eqIdx)
@@ -248,7 +256,7 @@ public:
             }
 
             // update the volVars if caching is enabled
-            if (GridVariables::GridVolumeVariables::cachingEnabled)
+            if (GridVariables::GridVolumeVariables::cachingEnabled && countChanged > 0)
             {
                 const auto curElemSol = elementSolution(element, sol, fvGridGeometry);
                 for (const auto& scv : scvs(fvGeometry))
@@ -261,6 +269,10 @@ public:
                 }
             }
         }
+
+        if (verbosity_ > 0 && countChanged > 0)
+            std::cout << "Changed primary variable states and solution values at boundary to Dirichlet states and values at " << countChanged << " dof locations on processor "
+                      << fvGridGeometry.gridView().comm().rank() << "." << std::endl;
     }
 
     //! brief Do nothing when volume variables are not cached globally.
