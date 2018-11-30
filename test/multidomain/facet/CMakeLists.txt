@@ -35,6 +35,24 @@ dune_add_test(NAME test_facetcouplingmapper_tpfa_ug
              COMMAND ./test_facetcouplingmapper_tpfa_ug
              CMD_ARGS test_gridmanager.input)
 
+dune_add_test(NAME test_facetcouplingmapper_mpfa_alu
+              LABELS multidomain
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
+              COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::conforming>
+              COMPILE_DEFINITIONS USEMPFAINBULK=true
+              SOURCES test_facetcouplingmapper.cc
+              COMMAND ./test_facetcouplingmapper_mpfa_alu
+              CMD_ARGS test_gridmanager.input)
+
+dune_add_test(NAME test_facetcouplingmapper_mpfa_ug
+              LABELS multidomain
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
+              COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::UGGrid<3>
+              COMPILE_DEFINITIONS USEMPFAINBULK=true
+              SOURCES test_facetcouplingmapper.cc
+              COMMAND ./test_facetcouplingmapper_mpfa_ug
+              CMD_ARGS test_gridmanager.input)
+
 dune_add_test(NAME test_facetcouplingmapper_box_alu
               LABELS multidomain
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
