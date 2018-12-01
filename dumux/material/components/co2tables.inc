@@ -6151,7 +6151,7 @@ const double TabulatedDensityTraits::vals[60][500] =
     }
 };
 
-typedef Dumux::TabulatedCO2Properties< TabulatedDensityTraits > TabulatedDensity;
+typedef TabulatedCO2Properties< TabulatedDensityTraits > TabulatedDensity;
 
 struct TabulatedEnthalpyTraits {
     typedef double Scalar;
