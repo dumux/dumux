@@ -27,19 +27,18 @@
 #include <cassert>
 #include <dumux/material/components/co2tablereader.hh>
 
-namespace Dumux
-{
-namespace El2P
-{
-/*!
-* \brief Class providing the tabulated values of CO2 for density and enthalpy
-*/
+namespace Dumux {
+namespace El2P {
+
+// Class providing the tabulated values of CO2 for density and enthalpy
 // the real work is done by some external program which provides
 // ready-to-use tables.
 
+#ifndef DOXYGEN // hide tables from doxygen
 #include "co2values.inc"
+#endif
 
-}
-}
+} // end namespace El2P
+} // end namespace Dumux
 
 #endif

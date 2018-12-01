@@ -43,10 +43,12 @@
 
 #include <dumux/io/name.hh>
 
-// include the default tables for CO2
-#include <dumux/material/components/co2tables.inc>
-
 namespace Dumux {
+
+// include the default tables for CO2
+#ifndef DOXYGEN // hide tables from doxygen
+#include <dumux/material/components/co2tables.inc>
+#endif
 
 namespace FluidSystems {
 namespace Detail {

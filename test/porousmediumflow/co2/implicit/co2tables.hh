@@ -28,16 +28,15 @@
 #include <dumux/material/components/co2tablereader.hh>
 
 namespace Dumux {
-/**
- * \ingroup CO2Tests
- * \brief Provides the class with the tabulated values of CO2 density
- *        and enthalpy
- */
+
+// Provides the class with the tabulated values of CO2 density and enthalpy
 namespace HeterogeneousCO2Tables {
 
+#ifndef DOXYGEN // hide from doxygen
 // the real work is done by some external program which provides
 // ready-to-use tables.
 #include "co2values.inc"
+#endif
 
 } // end namespace HeterogeneousCO2Tables
 } // end namespace Dumux
