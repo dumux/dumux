@@ -10,7 +10,8 @@
  *
  * ./extractproperties 280 400 60 100000 100000000 500
  */
-
+ 
+namespace Dumux {
 
 struct TabulatedDensityTraits {
     typedef double Scalar;
@@ -12290,7 +12291,7 @@ const double TabulatedEnthalpyTraits::vals[60][500] =
     }
 };
 
-typedef Dumux::TabulatedCO2Properties< TabulatedEnthalpyTraits > TabulatedEnthalpy;
+typedef TabulatedCO2Properties< TabulatedEnthalpyTraits > TabulatedEnthalpy;
 
 
 // this class collects all the tabulated quantities in one convenient place
@@ -12301,4 +12302,6 @@ struct CO2Tables {
 
 const TabulatedEnthalpy CO2Tables::tabulatedEnthalpy;
 const TabulatedDensity CO2Tables::tabulatedDensity;
+
+} // end namespace Dumux
 
