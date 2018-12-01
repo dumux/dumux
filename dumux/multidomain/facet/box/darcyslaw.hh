@@ -32,7 +32,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/box/darcyslaw.hh>
+#include <dumux/flux/box/darcyslaw.hh>
 
 namespace Dumux {
 
