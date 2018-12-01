@@ -43,10 +43,10 @@
 
 #include <dumux/io/name.hh>
 
+namespace Dumux {
+
 // include the default tables for CO2
 #include <dumux/material/components/co2tables.inc>
-
-namespace Dumux {
 
 namespace FluidSystems {
 namespace Detail {
