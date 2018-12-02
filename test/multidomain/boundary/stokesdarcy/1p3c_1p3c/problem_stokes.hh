@@ -33,6 +33,9 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 
+// for StokesDarcyCouplingOptions
+#include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
+
 namespace Dumux
 {
 template <class TypeTag>

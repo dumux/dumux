@@ -29,8 +29,11 @@
 #include <map>
 
 #include <dune/common/parallel/collectivecommunication.hh>
+#include <dune/geometry/dimension.hh>
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/common/datahandleif.hh>
+
+
 
 // UGGrid specific includes
 #if HAVE_UG

@@ -29,6 +29,7 @@
 #include <type_traits>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/reservedvector.hh>
 
 namespace Dumux
 {

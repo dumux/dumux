@@ -27,6 +27,8 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_BOXDFM_GRID_FVGEOMETRY_HH
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_GRID_FVGEOMETRY_HH
 
+#include <unordered_map>
+
 #include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 #include <dune/geometry/multilineargeometry.hh>

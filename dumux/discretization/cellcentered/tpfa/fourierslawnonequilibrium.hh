@@ -27,6 +27,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
+#include <dumux/flux/fluxvariablescaching.hh>
 
 namespace Dumux {
 

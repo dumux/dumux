@@ -38,6 +38,13 @@
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 
+// for StokesDarcyCouplingOptions
+#include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
+
+#ifndef DIFFUSIONTYPE
+#define DIFFUSIONTYPE FicksLaw<TypeTag>
+#endif
+
 namespace Dumux
 {
 template <class TypeTag>
