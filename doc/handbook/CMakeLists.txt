@@ -1,3 +1,12 @@
+if(${DUNE_COMMON_VERSION} VERSION_GREATER_EQUAL "2.7")
+# use latexmk
+dune_add_latex_document(
+  SOURCE 0_dumux-handbook.tex
+  FATHER_TARGET doc
+  INSTALL ${CMAKE_INSTALL_DOCDIR}/doc/handbook)
+
+else()
+# use UseLATEX.cmake
 set(TEX_INPUTS
   0_dumux-handbook.tex
   0_listingstyle.tex
@@ -40,3 +49,4 @@ dune_add_latex_document(0_dumux-handbook.tex
 
 create_doc_install(${CMAKE_CURRENT_BINARY_DIR}/0_dumux-handbook.pdf
   ${CMAKE_INSTALL_DOCDIR} 0_dumux-handbook)
+endif()
