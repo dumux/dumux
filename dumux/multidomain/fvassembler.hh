@@ -355,6 +355,10 @@ public:
     const SolutionVector& prevSol() const
     { return *prevSol_; }
 
+    //! the solution of the previous-previous time step
+    const SolutionVector& prevPrevSol() const
+    { return *prevPrevSol_; }
+
     /*!
      * \brief Set time loop for instationary problems
      * \note calling this turns this into a stationary assembler
@@ -368,6 +372,13 @@ public:
      */
     void setPreviousSolution(const SolutionVector& u)
     { prevSol_ = &u; }
+
+    /*!
+     * \brief Sets the solution from which to start the time integration. Has to be
+     *        called prior to assembly for time-dependent problems.
+     */
+    void setPreviousPreviousSolution(const SolutionVector& u)
+    { prevPrevSol_ = &u; }
 
     /*!
      * \brief Whether we are assembling a stationary or instationary problem
@@ -494,6 +505,9 @@ private:
 
     //! an observing pointer to the previous solution for instationary problems
     const SolutionVector* prevSol_ = nullptr;
+
+    //! an observing pointer to the previous-previous solution for instationary problems
+    const SolutionVector* prevPrevSol_ = nullptr;
 
     //! if this assembler is assembling an instationary problem
     bool isStationaryProblem_;

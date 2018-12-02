@@ -78,6 +78,16 @@ public:
      *        the end of the simulation.
      */
     virtual Scalar timeStepSize() const = 0;
+
+    /*!
+     * \brief Returns the size of the previous time step \f$\mathrm{[s]}\f$.
+     */
+    virtual Scalar previousTimeStepSize() const = 0;
+
+    /*!
+     * \brief Returns true if the time discretization is made with the BDF2 method
+     */
+    virtual bool usingBdf2() const = 0;
 };
 
 //! The default time loop for instationary simulations
@@ -100,6 +110,7 @@ public:
         maxTimeStepSize_ = std::numeric_limits<Scalar>::max();
         timeStepIdx_ = 0;
         finished_ = false;
+        usingBdf2_ = false;
     }
 
     /*!
@@ -209,7 +220,7 @@ public:
     /*!
      * \brief Returns the size of the previous time step \f$\mathrm{[s]}\f$.
      */
-    Scalar previousTimeStepSize() const
+    Scalar previousTimeStepSize() const override
     { return previousTimeStepSize_; }
 
     /*!
@@ -256,6 +267,23 @@ public:
      */
     Scalar maxTimeStepSize() const
     { return maxTimeStepSize_; }
+
+    /*!
+     * \brief Returns true if the time discretization at the current time step has
+     * to be made with the BDF2 method. At the first timestep returns always @c false.
+     */
+    bool usingBdf2() const override
+    {
+        return usingBdf2_ && timeStepIdx_ != 0;
+    }
+
+    /*!
+     * \brief Set @c true to use the BDF2 method
+     */
+    void setBdf2(bool usingBdf2 = true)
+    {
+        usingBdf2_ = usingBdf2;
+    }
 
     /*!
      * \brief State info on cpu time.
@@ -340,6 +368,7 @@ private:
     int timeStepIdx_;
     bool finished_;
     bool verbose_;
+    bool usingBdf2_;
 };
 
 //! A time loop with a check point mechanism

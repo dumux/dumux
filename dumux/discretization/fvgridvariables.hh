@@ -65,6 +65,7 @@ public:
     : fvGridGeometry_(fvGridGeometry)
     , curGridVolVars_(*problem)
     , prevGridVolVars_(*problem)
+    , prevPrevGridVolVars_(*problem)
     , gridFluxVarsCache_(*problem)
     {}
 
@@ -89,7 +90,10 @@ public:
         // for instationary problems also update the variables
         // for the previous time step to the new grid
         if (!problemIsStationary_)
+        {
+            prevPrevGridVolVars_ = prevGridVolVars_;
             prevGridVolVars_ = curGridVolVars_;
+        }
     }
 
     //! initialize all variables (stationary case)
@@ -115,6 +119,10 @@ public:
 
         // update the old time step vol vars with the initial solution
         prevGridVolVars_.update(*fvGridGeometry_, initSol);
+
+        // update the oldest time step vol vars with the initial solution
+        // At the first time step they will not be used.
+        prevPrevGridVolVars_ = prevGridVolVars_;
     }
 
     /*!
@@ -124,6 +132,7 @@ public:
     void advanceTimeStep()
     {
         assert(!problemIsStationary_);
+        prevPrevGridVolVars_ = prevGridVolVars_;
         prevGridVolVars_ = curGridVolVars_;
     }
 
@@ -164,6 +173,14 @@ public:
     GridVolumeVariables& prevGridVolVars()
     { return prevGridVolVars_; }
 
+    //! return the volume variables of the previous-previous time step (for instationary problems)
+    const GridVolumeVariables& prevPrevGridVolVars() const
+    { return prevPrevGridVolVars_; }
+
+    //! return the volume variables of the previous-previous time step (for instationary problems)
+    GridVolumeVariables& prevPrevGridVolVars()
+    { return prevPrevGridVolVars_; }
+
     //! return the finite volume grid geometry
     const GridGeometry& fvGridGeometry() const
     { return *fvGridGeometry_; }
@@ -175,6 +192,7 @@ protected:
 private:
     GridVolumeVariables curGridVolVars_; //!< the current volume variables (primary and secondary variables)
     GridVolumeVariables prevGridVolVars_; //!< the previous time step's volume variables (primary and secondary variables)
+    GridVolumeVariables prevPrevGridVolVars_; //!< the previous-previous time step's volume variables (primary and secondary variables)
 
     GridFluxVariablesCache gridFluxVarsCache_; //!< the flux variables cache
 
