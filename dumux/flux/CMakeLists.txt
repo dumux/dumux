@@ -1,3 +1,8 @@
+add_subdirectory(box)
+add_subdirectory(ccmpfa)
+add_subdirectory(cctpfa)
+add_subdirectory(staggered)
+
 install(FILES
 darcyslaw.hh
 effectivestresslaw.hh
