@@ -28,6 +28,7 @@
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/exceptions.hh>
 
 #include <dumux/common/math.hh>
 
@@ -142,7 +143,12 @@ public:
     static_assert(int(GridView::dimension)==int(GridView::dimensionworld), "static iv does not work on surface grids");
 
     //! export the standard o-methods dirichlet data
-    using DirichletData = typename CCMpfaOInteractionVolume< Traits >::DirichletData;
+    //! this is fake Dirichlet data as this implementation cannot be used on boundaries
+    struct DirichletData
+    {
+        GridIndexType volVarIndex() const
+        { DUNE_THROW(Dune::InvalidStateException, "Static interaction volume cannot be used on bounaries!"); }
+    };
 
     //! publicly state the mpfa-scheme this interaction volume is associated with
     static constexpr MpfaMethods MpfaMethod = MpfaMethods::oMethod;
@@ -269,7 +275,7 @@ public:
 
 private:
     // pointer to cell stencil (in iv index set)
-    const Stencil* stencil_;
+    const Stencil * stencil_ = nullptr;
 
     // Variables defining the local scope
     std::array<Element, numScv> elements_;
