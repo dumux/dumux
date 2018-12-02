@@ -50,6 +50,6 @@ using DarcysLaw = DarcysLawImplementation<TypeTag, GetPropType<TypeTag, Properti
 
 #include <dumux/flux/box/darcyslaw.hh>
 #include <dumux/flux/cctpfa/darcyslaw.hh>
-#include <dumux/discretization/cellcentered/mpfa/darcyslaw.hh>
+#include <dumux/flux/ccmpfa/darcyslaw.hh>
 
 #endif
