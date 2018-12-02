@@ -60,23 +60,66 @@ public:
 
     //! Constructor
     CCTpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
-    : gridVolVarsPtr_(&gridVolVars) {}
+    : gridVolVarsPtr_(&gridVolVars)
+    , numScv_(gridVolVars.problem().fvGridGeometry().numScv())
+    {}
 
     //! operator for the access with an scv
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return gridVolVars().volVars(scv.dofIndex()); }
+    {
+        if (scv.dofIndex() < numScv_)
+            return gridVolVars().volVars(scv.dofIndex());
+        else
+            return boundaryVolumeVariables_[getLocalIdx_(scv.dofIndex())];
+    }
 
     //! operator for the access with an index
     const VolumeVariables& operator [](const std::size_t scvIdx) const
-    { return gridVolVars().volVars(scvIdx); }
+    {
+        if (scvIdx < numScv_)
+            return gridVolVars().volVars(scvIdx);
+        else
+            return boundaryVolumeVariables_[getLocalIdx_(scvIdx)];
+    }
 
-    //! precompute all volume variables in a stencil of an element - do nothing volVars: are cached
+    //! precompute all boundary volume variables in a stencil of an element, the remaining ones are cached
     template<class FVElementGeometry, class SolutionVector>
     void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
-    {}
+    {
+        if (!fvGeometry.hasBoundaryScvf())
+            return;
+
+        clear_();
+        boundaryVolVarIndices_.reserve(fvGeometry.numScvf());
+        boundaryVolumeVariables_.reserve(fvGeometry.numScvf());
+
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (!scvf.boundary())
+                continue;
+
+            // check if boundary is a pure dirichlet boundary
+            const auto& problem = gridVolVars().problem();
+            const auto bcTypes = problem.boundaryTypes(element, scvf);
+            if (bcTypes.hasOnlyDirichlet())
+            {
+                const auto dirichletPriVars = elementSolution<FVElementGeometry>(problem.dirichlet(element, scvf));
+                auto&& scvI = fvGeometry.scv(scvf.insideScvIdx());
+
+                VolumeVariables volVars;
+                volVars.update(dirichletPriVars,
+                               problem,
+                               element,
+                               scvI);
+
+                boundaryVolumeVariables_.emplace_back(std::move(volVars));
+                boundaryVolVarIndices_.push_back(scvf.outsideScvIdx());
+            }
+        }
+    }
 
     //! precompute the volume variables of an element - do nothing: volVars are cached
     template<class FVElementGeometry, class SolutionVector>
@@ -90,7 +133,26 @@ public:
     { return *gridVolVarsPtr_; }
 
 private:
+    //! Clear all local storage
+    void clear_()
+    {
+        boundaryVolVarIndices_.clear();
+        boundaryVolumeVariables_.clear();
+    }
+
     const GridVolumeVariables* gridVolVarsPtr_;
+
+    //! map a global scv index to the local storage index
+    int getLocalIdx_(const int volVarIdx) const
+    {
+        auto it = std::find(boundaryVolVarIndices_.begin(), boundaryVolVarIndices_.end(), volVarIdx);
+        assert(it != boundaryVolVarIndices_.end() && "Could not find the current volume variables for volVarIdx!");
+        return std::distance(boundaryVolVarIndices_.begin(), it);
+    }
+
+    std::vector<std::size_t> boundaryVolVarIndices_;
+    std::vector<VolumeVariables> boundaryVolumeVariables_;
+    const std::size_t numScv_;
 };
 
 /*!
@@ -117,7 +179,7 @@ public:
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
-        clear();
+        clear_();
 
         const auto& problem = gridVolVars().problem();
         const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
@@ -206,7 +268,7 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
-        clear();
+        clear_();
 
         const auto eIdx = fvGeometry.fvGridGeometry().elementMapper().index(element);
         volumeVariables_.resize(1);
@@ -243,13 +305,14 @@ public:
     const GridVolumeVariables& gridVolVars() const
     { return *gridVolVarsPtr_; }
 
+private:
     //! Clear all local storage
-    void clear()
+    void clear_()
     {
         volVarIndices_.clear();
         volumeVariables_.clear();
     }
-private:
+
     const GridVolumeVariables* gridVolVarsPtr_;
 
     //! map a global scv index to the local storage index

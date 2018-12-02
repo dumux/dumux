@@ -32,6 +32,153 @@
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
 namespace Dumux {
+namespace CCMpfa {
+
+    /*!
+     * \ingroup CCMpfaDiscretization
+     * \brief Computes how many boundary vol vars come into play for flux calculations
+     *        on an element (for a given element finite volume geometry). This number here
+     *        is probably always higher than the actually needed number of volume variables.
+     *        However, we want to make sure it is high enough so that enough memory is reserved
+     *        in the element volume variables below.
+     * \todo TODO What about non-symmetric schemes? Is there a better way for estimating this?
+     *
+     * \param fvGeometry the element finite volume geometry
+     */
+    template<class FVElementGeometry>
+    std::size_t maxNumBoundaryVolVars(const FVElementGeometry& fvGeometry)
+    {
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+
+        std::size_t numBoundaryVolVars = 0;
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+                numBoundaryVolVars += gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
+            else
+                numBoundaryVolVars += gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
+        }
+
+        return numBoundaryVolVars;
+    }
+
+    /*!
+     * \ingroup CCMpfaDiscretization
+     * \brief Adds the boundary volume variables found within a given nodal index set
+     *        into the provided containers and stores the indices associated with them.
+     * \note  It only adds those boundary vol vars that do not live on scvfs that are
+     *        inside the bound element. These have to be added separately
+     *
+     * \param volVars       The container where the volume variables are stored
+     * \param volVarIndices The container where the volume variable indices are stored
+     * \param problem       The problem containing the Dirichlet boundary conditions
+     * \param fvGeometry    The element finite volume geometry
+     * \param nodalIndexSet The dual grid index set around a node
+     */
+    template<class VolumeVariables, class IndexType, class Problem, class FVElemGeom, class NodalIndexSet>
+    void addBoundaryVolVarsAtNode(std::vector<VolumeVariables>& volVars,
+                                  std::vector<IndexType>& volVarIndices,
+                                  const Problem& problem,
+                                  const typename FVElemGeom::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+                                  const FVElemGeom& fvGeometry,
+                                  const NodalIndexSet& nodalIndexSet)
+    {
+        if (nodalIndexSet.numBoundaryScvfs() == 0)
+            return;
+
+        // index of the element the fvGeometry was bound to
+        const auto boundElemIdx = fvGeometry.fvGridGeometry().elementMapper().index(element);
+
+        // check each scvf in the index set for boundary presence
+        for (auto scvfIdx : nodalIndexSet.gridScvfIndices())
+        {
+            const auto& ivScvf = fvGeometry.scvf(scvfIdx);
+
+            // only proceed for scvfs on the boundary and not in the bound element
+            if (!ivScvf.boundary() || ivScvf.insideScvIdx() == boundElemIdx)
+                continue;
+
+            const auto insideScvIdx = ivScvf.insideScvIdx();
+            const auto insideElement = fvGeometry.fvGridGeometry().element(insideScvIdx);
+            const auto bcTypes = problem.boundaryTypes(insideElement, ivScvf);
+
+            // Only proceed on dirichlet boundaries. On Neumann
+            // boundaries the "outside" vol vars cannot be properly defined.
+            if (bcTypes.hasOnlyDirichlet())
+            {
+                VolumeVariables dirichletVolVars;
+                dirichletVolVars.update(elementSolution<FVElemGeom>(problem.dirichlet(insideElement, ivScvf)),
+                                        problem,
+                                        insideElement,
+                                        fvGeometry.scv(insideScvIdx));
+
+                volVars.emplace_back(std::move(dirichletVolVars));
+                volVarIndices.push_back(ivScvf.outsideScvIdx());
+            }
+        }
+    }
+
+    /*!
+     * \ingroup CCMpfaDiscretization
+     * \brief Adds the boundary volume variables found within the stencil to the
+     *        provided containers and stores the indices associated with them.
+     *
+     * \param volVars       The container where the volume variables are stored
+     * \param volVarIndices The container where the volume variable indices are stored
+     * \param problem       The problem containing the Dirichlet boundary conditions
+     * \param element        The element to which the finite volume geometry was bound
+     * \param fvGeometry    The element finite volume geometry
+     */
+    template<class VolumeVariables, class IndexType, class Problem, class FVElemGeom>
+    void addBoundaryVolVars(std::vector<VolumeVariables>& volVars,
+                            std::vector<IndexType>& volVarIndices,
+                            const Problem& problem,
+                            const typename FVElemGeom::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+                            const FVElemGeom& fvGeometry)
+    {
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+
+        // treat the BCs inside the element
+        if (fvGeometry.hasBoundaryScvf())
+        {
+            const auto boundElemIdx = fvGridGeometry.elementMapper().index(element);
+            const auto& scvI = fvGeometry.scv(boundElemIdx);
+
+            for (const auto& scvf : scvfs(fvGeometry))
+            {
+                if (!scvf.boundary())
+                    continue;
+
+                // Only proceed on dirichlet boundaries. On Neumann
+                // boundaries the "outside" vol vars cannot be properly defined.
+                if (problem.boundaryTypes(element, scvf).hasOnlyDirichlet())
+                {
+                    VolumeVariables dirichletVolVars;
+                    dirichletVolVars.update(elementSolution<FVElemGeom>(problem.dirichlet(element, scvf)),
+                                            problem,
+                                            element,
+                                            scvI);
+
+                    volVars.emplace_back(std::move(dirichletVolVars));
+                    volVarIndices.push_back(scvf.outsideScvIdx());
+                }
+            }
+        }
+
+        // Update boundary volume variables in the neighbors
+        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+                addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
+                                          gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet() );
+            else
+                addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
+                                          gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet() );
+        }
+    }
+} // end namespace CCMpfa
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -60,23 +207,42 @@ public:
 
     //! Constructor
     CCMpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
-    : gridVolVarsPtr_(&gridVolVars) {}
+    : gridVolVarsPtr_(&gridVolVars)
+    , numScv_(gridVolVars.problem().fvGridGeometry().numScv())
+    {}
 
     //! operator for the access with an scv
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return gridVolVars().volVars(scv.dofIndex()); }
+    {
+        return scv.dofIndex() < numScv_ ? gridVolVars().volVars(scv.dofIndex())
+                                        : boundaryVolVars_[getLocalIdx_(scv.dofIndex())];
+    }
 
     //! operator for the access with an index
     const VolumeVariables& operator [](const std::size_t scvIdx) const
-    { return gridVolVars().volVars(scvIdx); }
+    {
+        return scvIdx < numScv_ ? gridVolVars().volVars(scvIdx)
+                                : boundaryVolVars_[getLocalIdx_(scvIdx)];
+    }
 
-    //! precompute all volume variables in a stencil of an element - do nothing volVars: are cached
+    //! precompute all volume variables in a stencil of an element - bind Dirichlet vol vars in the stencil
     template<class FVElementGeometry, class SolutionVector>
     void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
-    {}
+    {
+        clear();
+
+        // maybe prepare boundary volume variables
+        const auto maxNumBoundaryVolVars = CCMpfa::maxNumBoundaryVolVars(fvGeometry);
+        if (maxNumBoundaryVolVars > 0)
+        {
+            boundaryVolVars_.reserve(maxNumBoundaryVolVars);
+            boundaryVolVarIndices_.reserve(maxNumBoundaryVolVars);
+            CCMpfa::addBoundaryVolVars(boundaryVolVars_, boundaryVolVarIndices_, gridVolVars().problem(), element, fvGeometry);
+        }
+    }
 
     //! precompute the volume variables of an element - do nothing: volVars are cached
     template<class FVElementGeometry, class SolutionVector>
@@ -85,12 +251,31 @@ public:
                      const SolutionVector& sol)
     {}
 
+    //! Clear all local storage
+    void clear()
+    {
+        boundaryVolVarIndices_.clear();
+        boundaryVolVars_.clear();
+    }
+
     //! The global volume variables object we are a restriction of
     const GridVolumeVariables& gridVolVars() const
     { return *gridVolVarsPtr_; }
 
 private:
+    //! map a global scv index to the local storage index
+    int getLocalIdx_(const int volVarIdx) const
+    {
+        auto it = std::find(boundaryVolVarIndices_.begin(), boundaryVolVarIndices_.end(), volVarIdx);
+        assert(it != boundaryVolVarIndices_.end() && "Could not find the current volume variables for volVarIdx!");
+        return std::distance(boundaryVolVarIndices_.begin(), it);
+    }
+
     const GridVolumeVariables* gridVolVarsPtr_;
+
+    std::size_t numScv_;
+    std::vector<std::size_t> boundaryVolVarIndices_;
+    std::vector<VolumeVariables> boundaryVolVars_;
 };
 
 
@@ -122,7 +307,6 @@ public:
 
         const auto& problem = gridVolVars().problem();
         const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
-        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
 
         // stencil information
         const auto globalI = fvGridGeometry.elementMapper().index(element);
@@ -130,86 +314,38 @@ public:
         const auto numVolVars = assemblyMapI.size() + 1;
 
         // resize local containers to the required size (for internal elements)
-        volumeVariables_.resize(numVolVars);
-        volVarIndices_.resize(numVolVars);
-        unsigned int localIdx = 0;
+        const auto maxNumBoundaryVolVars = CCMpfa::maxNumBoundaryVolVars(fvGeometry);
+        volumeVariables_.reserve(numVolVars+maxNumBoundaryVolVars);
+        volVarIndices_.reserve(numVolVars+maxNumBoundaryVolVars);
 
-        // update the volume variables of the element at hand
+        VolumeVariables volVars;
         const auto& scvI = fvGeometry.scv(globalI);
-        volumeVariables_[localIdx].update(elementSolution(element, sol, fvGridGeometry),
-                                          problem,
-                                          element,
-                                          scvI);
-        volVarIndices_[localIdx] = scvI.dofIndex();
-        ++localIdx;
+        volVars.update(elementSolution(element, sol, fvGridGeometry),
+                       problem,
+                       element,
+                       scvI);
+
+        volVarIndices_.push_back(scvI.dofIndex());
+        volumeVariables_.emplace_back(std::move(volVars));
 
         // Update the volume variables of the neighboring elements
         for (auto&& dataJ : assemblyMapI)
         {
             const auto& elementJ = fvGridGeometry.element(dataJ.globalJ);
             const auto& scvJ = fvGeometry.scv(dataJ.globalJ);
-            volumeVariables_[localIdx].update(elementSolution(elementJ, sol, fvGridGeometry),
-                                              problem,
-                                              elementJ,
-                                              scvJ);
-            volVarIndices_[localIdx] = scvJ.dofIndex();
-            ++localIdx;
+            VolumeVariables volVarsJ;
+            volVarsJ.update(elementSolution(elementJ, sol, fvGridGeometry),
+                            problem,
+                            elementJ,
+                            scvJ);
+
+            volVarIndices_.push_back(scvJ.dofIndex());
+            volumeVariables_.emplace_back(std::move(volVarsJ));
         }
 
         // maybe prepare boundary volume variables
-        const auto maxNumBoundaryVolVars = maxNumBoundaryVolVars_(fvGeometry);
         if (maxNumBoundaryVolVars > 0)
-        {
-            volumeVariables_.reserve(numVolVars+maxNumBoundaryVolVars);
-            volVarIndices_.reserve(numVolVars+maxNumBoundaryVolVars);
-
-            if (fvGeometry.hasBoundaryScvf())
-            {
-                // treat the BCs inside the element
-                for (const auto& scvf : scvfs(fvGeometry))
-                {
-                    // if we are not on a boundary, skip to the next scvf
-                    if (!scvf.boundary())
-                        continue;
-
-                    const auto bcTypes = problem.boundaryTypes(element, scvf);
-
-                    // Only proceed on dirichlet boundaries. Fluxes across Neumann
-                    // boundaries are never computed - the user-defined flux is taken.
-                    if (bcTypes.hasOnlyDirichlet())
-                    {
-                        // boundary volume variables
-                        VolumeVariables dirichletVolVars;
-                        dirichletVolVars.update(elementSolution<FVElementGeometry>(problem.dirichlet(element, scvf)),
-                                                problem,
-                                                element,
-                                                scvI);
-
-                        volumeVariables_.emplace_back(std::move(dirichletVolVars));
-                        volVarIndices_.push_back(scvf.outsideScvIdx());
-                    }
-                }
-            }
-
-            // Update boundary volume variables in the neighbors
-            for (const auto& scvf : scvfs(fvGeometry))
-            {
-                if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-                {
-                    const auto& nodalIndexSet = gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet();
-                    // if present, insert boundary vol vars
-                    if (nodalIndexSet.numBoundaryScvfs() > 0)
-                        addBoundaryVolVars_(problem, fvGeometry, nodalIndexSet);
-                }
-                else
-                {
-                    const auto& nodalIndexSet = gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet();
-                    // if present, insert boundary vol vars
-                    if (nodalIndexSet.numBoundaryScvfs() > 0)
-                        addBoundaryVolVars_(problem, fvGeometry, nodalIndexSet);
-                }
-            }
-        }
+            CCMpfa::addBoundaryVolVars(volumeVariables_, volVarIndices_, problem, element, fvGeometry);
 
         // //! TODO Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
         // //! on additional DOFs not included in the discretization schemes' occupation pattern
@@ -288,63 +424,6 @@ public:
 
 private:
     const GridVolumeVariables* gridVolVarsPtr_;
-
-    // Computes how many boundary vol vars come into play for flux calculations
-    // on this element. This number here is probably always higher than the actually
-    // needed number of volume variables. However, memory is not an issue for the global
-    // caching being deactivated and we want to make sure we reserve enough memory here.
-    // TODO: What about non-symmetric schemes? Is there a better way for estimating this?
-    template<class FVElementGeometry>
-    std::size_t maxNumBoundaryVolVars_(const FVElementGeometry& fvGeometry)
-    {
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
-        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
-
-        std::size_t numBoundaryVolVars = 0;
-        for (const auto& scvf : scvfs(fvGeometry))
-        {
-            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-                numBoundaryVolVars += gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
-            else
-                numBoundaryVolVars += gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
-        }
-
-        return numBoundaryVolVars;
-    }
-
-    //! adds the volume variables from a given nodal index set to the local containers
-    template<class Problem, class FVElementGeometry, class NodalIndexSet>
-    void addBoundaryVolVars_(const Problem& problem, const FVElementGeometry& fvGeometry, const NodalIndexSet& nodalIndexSet)
-    {
-        // check each scvf in the index set for boundary presence
-        for (auto scvfIdx : nodalIndexSet.gridScvfIndices())
-        {
-            const auto& ivScvf = fvGeometry.scvf(scvfIdx);
-
-            // only proceed for scvfs on the boundary and not in the inside element
-            if (!ivScvf.boundary() || ivScvf.insideScvIdx() == volVarIndices_[0])
-                continue;
-
-            const auto insideScvIdx = ivScvf.insideScvIdx();
-            const auto insideElement = fvGeometry.fvGridGeometry().element(insideScvIdx);
-            const auto bcTypes = problem.boundaryTypes(insideElement, ivScvf);
-
-            // Only proceed on dirichlet boundaries. Fluxes across Neumann
-            // boundaries are never computed - the user-defined flux is taken.
-            if (bcTypes.hasOnlyDirichlet())
-            {
-                VolumeVariables dirichletVolVars;
-                const auto& ivScv = fvGeometry.scv(insideScvIdx);
-                dirichletVolVars.update(elementSolution<FVElementGeometry>(problem.dirichlet(insideElement, ivScvf)),
-                                        problem,
-                                        insideElement,
-                                        ivScv);
-
-                volumeVariables_.emplace_back(std::move(dirichletVolVars));
-                volVarIndices_.push_back(ivScvf.outsideScvIdx());
-            }
-        }
-    }
 
     //! map a global scv index to the local storage index
     int getLocalIdx_(const int volVarIdx) const

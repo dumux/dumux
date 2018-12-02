@@ -1,0 +1,22 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 3e4 # [s]
+MaxTimeStepSize = 1e3
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 20 1
+Cells = 80 1
+
+[Problem]
+Name = 1p2cnitransientbc # name passed to the output routines
+OutputInterval = 5 # every 5th timestep an output file is written
+EnableGravity = 0 # disable gravity
+
+[LinearSolver]
+ResidualReduction = 1e-20
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790

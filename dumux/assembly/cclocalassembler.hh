@@ -236,10 +236,9 @@ public:
                 // update the volume variables and the flux var cache
                 elemSol[0][pvIdx] = priVar;
                 curVolVars.update(elemSol, this->problem(), element, scv);
+                elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
                 if (enableGridFluxVarsCache)
                     gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
-                else
-                    elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 // calculate the residual with the deflected primary variables (except for ghosts)
                 if (!this->elementIsGhost()) partialDerivsTmp[0] = this->evalLocalResidual()[0];

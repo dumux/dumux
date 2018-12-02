@@ -85,10 +85,7 @@ public:
     template<class FVElementGeometry, class ElementVolumeVariables>
     void update(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                 const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars)
-    {
-        DUNE_THROW(Dune::InvalidStateException, "In case of enabled caching, the grid flux variables cache must not to be updated");
-    }
+                const ElementVolumeVariables& elemVolVars) {}
 
     //! access operators in the case of caching
     template<class SubControlVolumeFace>
