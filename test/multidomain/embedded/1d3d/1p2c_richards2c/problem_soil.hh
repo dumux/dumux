@@ -57,8 +57,13 @@ struct Soil { using InheritsFrom = std::tuple<RichardsNC, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the grid type
+#if HAVE_UG
 template<class TypeTag>
 struct Grid<TypeTag, TTag::Soil> { using type = Dune::UGGrid<3>; };
+#else
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Soil> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<double, 3>>; };
+#endif
 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };

@@ -26,6 +26,8 @@
 
 #include <cmath>
 
+#include <dumux/common/parameters.hh>
+
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>

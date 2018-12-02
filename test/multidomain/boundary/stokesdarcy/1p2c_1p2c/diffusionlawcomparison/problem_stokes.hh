@@ -34,6 +34,13 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 
+// for StokesDarcyCouplingOptions
+#include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
+
+#ifndef DIFFUSIONTYPE
+#define DIFFUSIONTYPE FicksLaw<TypeTag>
+#endif
+
 namespace Dumux
 {
 template <class TypeTag>

@@ -29,6 +29,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 
 namespace Dumux {

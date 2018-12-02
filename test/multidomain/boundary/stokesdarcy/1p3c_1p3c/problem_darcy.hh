@@ -32,18 +32,21 @@
 #include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
+#include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
+
+// for StokesDarcyCouplingOptions
+#include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
+
 #include "../1p2c_1p2c/spatialparams.hh"
 #include "h2n2co2fluidsystem.hh"
 
-#include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
+namespace Dumux {
 
-namespace Dumux
-{
 template <class TypeTag>
 class DarcySubProblem;
 
-namespace Properties
-{
+namespace Properties {
+
 // Create new type tags
 namespace TTag {
 struct DarcyOnePThreeC { using InheritsFrom = std::tuple<OnePNC, CCTpfaModel>; };

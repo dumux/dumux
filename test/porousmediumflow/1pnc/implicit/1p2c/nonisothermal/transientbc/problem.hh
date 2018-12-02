@@ -93,6 +93,10 @@ struct SpatialParams<TypeTag, TTag::OnePTwoCNITransientBC>
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::OnePTwoCNITransientBC> { static constexpr bool value = true; };
 
+#ifndef ENABLECACHING
+#define ENABLECACHING false
+#endif
+
 // Switch on/off caching
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::OnePTwoCNITransientBC> { static constexpr bool value = ENABLECACHING; };
