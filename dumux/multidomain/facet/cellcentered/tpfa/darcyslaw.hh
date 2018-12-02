@@ -36,7 +36,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
-#include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>
+#include <dumux/flux/cctpfa/darcyslaw.hh>
 
 namespace Dumux {
 

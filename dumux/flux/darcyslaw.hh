@@ -49,7 +49,7 @@ using DarcysLaw = DarcysLawImplementation<TypeTag, GetPropType<TypeTag, Properti
 } // end namespace Dumux
 
 #include <dumux/flux/box/darcyslaw.hh>
-#include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>
+#include <dumux/flux/cctpfa/darcyslaw.hh>
 #include <dumux/discretization/cellcentered/mpfa/darcyslaw.hh>
 
 #endif

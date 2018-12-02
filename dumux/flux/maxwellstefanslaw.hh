@@ -43,7 +43,7 @@ using MaxwellStefansLaw = MaxwellStefansLawImplementation<TypeTag, GetPropType<T
 
 } // end namespace
 
-#include <dumux/discretization/cellcentered/tpfa/maxwellstefanslaw.hh>
+#include <dumux/flux/cctpfa/maxwellstefanslaw.hh>
 #include <dumux/flux/box/maxwellstefanslaw.hh>
 #include <dumux/discretization/staggered/freeflow/maxwellstefanslaw.hh>
 
