@@ -45,6 +45,6 @@ using MaxwellStefansLaw = MaxwellStefansLawImplementation<TypeTag, GetPropType<T
 
 #include <dumux/flux/cctpfa/maxwellstefanslaw.hh>
 #include <dumux/flux/box/maxwellstefanslaw.hh>
-#include <dumux/discretization/staggered/freeflow/maxwellstefanslaw.hh>
+#include <dumux/flux/staggered/freeflow/maxwellstefanslaw.hh>
 
 #endif

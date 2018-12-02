@@ -48,6 +48,6 @@ using FouriersLaw = FouriersLawImplementation<TypeTag, GetPropType<TypeTag, Prop
 #include <dumux/flux/cctpfa/fourierslaw.hh>
 #include <dumux/flux/ccmpfa/fourierslaw.hh>
 #include <dumux/flux/box/fourierslaw.hh>
-#include <dumux/discretization/staggered/freeflow/fourierslaw.hh>
+#include <dumux/flux/staggered/freeflow/fourierslaw.hh>
 
 #endif
