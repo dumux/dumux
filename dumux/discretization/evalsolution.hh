@@ -32,6 +32,7 @@
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/typetraits/state.hh>
+#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
