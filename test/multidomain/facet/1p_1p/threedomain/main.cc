@@ -96,9 +96,9 @@ int main(int argc, char** argv) try
 
     // the multidomain traits and some indices
     using Traits = typename TestTraits::MDTraits;
-    static const auto bulkId = Traits::template SubDomain<0>::Index{};
-    static const auto facetId = Traits::template SubDomain<1>::Index{};
-    static const auto edgeId = Traits::template SubDomain<2>::Index{};
+    constexpr auto bulkId = Traits::template SubDomain<0>::Index{};
+    constexpr auto facetId = Traits::template SubDomain<1>::Index{};
+    constexpr auto edgeId = Traits::template SubDomain<2>::Index{};
 
     // try to create a grid (from the given grid file or the input file)
     FacetCouplingGridManager<Traits::template SubDomain<bulkId>::Grid,
