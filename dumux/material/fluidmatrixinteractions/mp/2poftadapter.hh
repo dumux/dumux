@@ -23,27 +23,38 @@
  *        available under the M-phase API for material laws.
  * Also use the temperature dependent version of the material laws.
  */
-#ifndef DUMUX_MP_2P_OFT_ADAPTER_HH
-#define DUMUX_MP_2P_OFT_ADAPTER_HH
+#ifndef DUMUX_MP_OFT_ADAPTER_HH
+#define DUMUX_MP_OFT_ADAPTER_HH
 
 #include <algorithm>
+#include <cassert>
+#include <dumux/common/typetraits/typetraits.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Adapts the interface of the MpNc material law to the standard-Dumux material law.
  * Also use the temperature dependent version of the material laws.
  */
-template <int wPhaseIdx, class TwoPLaw>
-class TwoPOfTAdapter
+template <class MaterialLaw, int numPhases>
+class MPOfTAdapter
 {
-    enum { nPhaseIdx = (wPhaseIdx == 0)?1:0 };
+    static_assert(AlwaysFalse<MaterialLaw>::value, "Adapter not implemented for the specified number of phases");
+};
+
+
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Adapts the interface of the MpNc material law to the standard-Dumux material law.
+ * Also use the temperature dependent version of the material laws.
+ */
+template <class MaterialLaw>
+class MPOfTAdapter<MaterialLaw, 2>
+{
 
 public:
-    using Params = typename TwoPLaw::Params;
-    using Scalar = typename Params::Scalar;
-    enum { numPhases = 2 };
+    using Params = typename MaterialLaw::Params;
 
     /*!
      * \brief The capillary pressure-saturation curve.
@@ -56,13 +67,16 @@ public:
     static void capillaryPressures(pcContainerT &pc,
                                    const Params &params,
                                    const FluidState &fluidState,
-                                   int wPhaseIdx = 0)
+                                   int wPhaseIdx)
     {
+        assert(pc.size() == 2);
+        const int nPhaseIdx = 1 - wPhaseIdx;
+
         // non-wetting phase gets the capillary pressure added
         pc[nPhaseIdx] = 0;
 
         // wetting phase does not get anything added
-        pc[wPhaseIdx] = - TwoPLaw::pc(params, fluidState.saturation(wPhaseIdx), fluidState.temperature(wPhaseIdx));
+        pc[wPhaseIdx] = - MaterialLaw::pc(params, fluidState.saturation(wPhaseIdx), fluidState.temperature(wPhaseIdx));
     }
 
     /*!
@@ -70,14 +84,18 @@ public:
      * \param kr Container for relative permeability
      * \param params Array of parameters
      * \param fluidState Fluidstate
+     * \param wPhaseIdx the phase index of the wetting phase
      */
     template <class krContainerT, class FluidState>
     static void relativePermeabilities(krContainerT &kr,
-                   const Params &params,
-                   const FluidState &fluidState)
+                                       const Params &params,
+                                       const FluidState &fluidState,
+                                       int wPhaseIdx)
     {
-        kr[wPhaseIdx] = TwoPLaw::krw(params, fluidState.saturation(wPhaseIdx));
-        kr[nPhaseIdx] = TwoPLaw::krn(params, fluidState.saturation(wPhaseIdx));
+        assert(kr.size() == 2);
+        const int nPhaseIdx = 1 - wPhaseIdx;
+        kr[wPhaseIdx] = MaterialLaw::krw(params, fluidState.saturation(wPhaseIdx));
+        kr[nPhaseIdx] = MaterialLaw::krn(params, fluidState.saturation(wPhaseIdx));
     }
 };
 }

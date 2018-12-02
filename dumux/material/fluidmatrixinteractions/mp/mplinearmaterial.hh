@@ -86,7 +86,8 @@ public:
     template <class ContainerT, class FluidState>
     static void relativePermeabilities(ContainerT &values,
                                        const Params &params,
-                                       const FluidState &state)
+                                       const FluidState &state,
+                                       int wPhaseIdx = 0)
     {
         using std::max;
         using std::min;

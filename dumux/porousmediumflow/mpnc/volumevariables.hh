@@ -106,14 +106,15 @@ public:
 
         //calculate the remaining quantities
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         // relative permeabilities
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numFluidPhases()>;
-        MPAdapter::relativePermeabilities(relativePermeability_,
-                                            materialParams,
-                                            fluidState_);
+        MPAdapter::relativePermeabilities(relativePermeability_, materialParams, fluidState_, wPhaseIdx);
+
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
+
         if (enableDiffusion)
         {
             for (int phaseIdx = 0; phaseIdx < numFluidPhases(); ++phaseIdx)
@@ -561,13 +562,12 @@ public:
 
         //calculate the remaining quantities
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
 
         // relative permeabilities
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numFluidPhases()>;
-        MPAdapter::relativePermeabilities(relativePermeability_,
-                                          materialParams,
-                                          fluidState_);
+        MPAdapter::relativePermeabilities(relativePermeability_,  materialParams, fluidState_, wPhaseIdx);
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
         if (enableDiffusion)
