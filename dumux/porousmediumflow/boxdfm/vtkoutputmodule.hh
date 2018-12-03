@@ -95,7 +95,7 @@ public:
     : ParentType(gridVariables, sol, name, paramGroup, dm, verbose)
     {
         // create the fracture grid and all objects needed on it
-        initializeFracture(fractureGridAdapter);
+        initializeFracture_(fractureGridAdapter);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -482,7 +482,7 @@ private:
 
     //! Creates the lower-dimensional fracture grid, index maps and writers
     template< class FractureGridAdapter >
-    void initializeFracture(const FractureGridAdapter& fractureGridAdapter)
+    void initializeFracture_(const FractureGridAdapter& fractureGridAdapter)
     {
         const auto& fvGridGeometry = this->fvGridGeometry();
         const auto& gridView = fvGridGeometry.gridView();
