@@ -29,7 +29,7 @@
 
 #include <dune/grid/onedgrid.hh>
 
-#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/box.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/mpnc/model.hh>

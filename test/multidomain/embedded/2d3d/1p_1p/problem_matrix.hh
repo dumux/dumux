@@ -32,7 +32,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cctpfa.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>

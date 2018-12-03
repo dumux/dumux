@@ -28,7 +28,7 @@
 
 #include <dune/common/fmatrix.hh>
 
-#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/geomechanics/poroelastic/model.hh>
 #include <dumux/geomechanics/fvproblem.hh>
 

@@ -10,6 +10,5 @@ fvgridgeometry.hh
 gridfacevariables.hh
 gridfluxvariablescache.hh
 gridvariables.hh
-properties.hh
 subcontrolvolumeface.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/staggered)

@@ -27,8 +27,8 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
-#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>

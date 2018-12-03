@@ -44,9 +44,9 @@ using FicksLaw = FicksLawImplementation<TypeTag, GetPropType<TypeTag, Properties
 
 } // end namespace Dumux
 
-#include <dumux/discretization/cellcentered/tpfa/fickslaw.hh>
-#include <dumux/discretization/cellcentered/mpfa/fickslaw.hh>
-#include <dumux/discretization/box/fickslaw.hh>
-#include <dumux/discretization/staggered/freeflow/fickslaw.hh>
+#include <dumux/flux/cctpfa/fickslaw.hh>
+#include <dumux/flux/ccmpfa/fickslaw.hh>
+#include <dumux/flux/box/fickslaw.hh>
+#include <dumux/flux/staggered/freeflow/fickslaw.hh>
 
 #endif

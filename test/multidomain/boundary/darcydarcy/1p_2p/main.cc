@@ -47,7 +47,7 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 
 #include <dumux/multidomain/traits.hh>

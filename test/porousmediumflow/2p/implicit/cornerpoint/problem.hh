@@ -26,7 +26,7 @@
 #if HAVE_OPM_GRID
 #include <opm/grid/CpGrid.hpp>
 
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cctpfa.hh>
 
 #include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/components/simpleh2o.hh>

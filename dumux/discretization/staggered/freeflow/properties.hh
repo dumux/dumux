@@ -32,7 +32,7 @@
 #include <dumux/common/intersectionmapper.hh>
 #include <dumux/common/defaultmappertraits.hh>
 
-#include <dumux/discretization/staggered/properties.hh>
+#include <dumux/discretization/staggered.hh>
 #include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/freeflow/properties.hh>
 

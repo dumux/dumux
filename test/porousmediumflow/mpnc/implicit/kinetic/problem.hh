@@ -42,7 +42,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/box.hh>
 
 #include <dumux/porousmediumflow/mpnc/model.hh>
 #include <dumux/porousmediumflow/mpnc/pressureformulation.hh>

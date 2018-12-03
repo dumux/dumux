@@ -30,7 +30,7 @@
 #define DUMUX_FACETCOUPLING_CC_TPFA_PROPERTIES_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cctpfa.hh>
 #include <dumux/multidomain/facet/cellcentered/upwindscheme.hh>
 #include <dumux/multidomain/facet/cellcentered/localresidual.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/darcyslaw.hh>

@@ -30,7 +30,7 @@
 #define DUMUX_FACETCOUPLING_BOX_PROPERTIES_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/box.hh>
 
 #include <dumux/multidomain/facet/box/darcyslaw.hh>
 #include <dumux/multidomain/facet/box/elementboundarytypes.hh>

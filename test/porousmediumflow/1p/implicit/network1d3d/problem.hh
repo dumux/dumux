@@ -33,8 +33,8 @@
 #endif
 
 #include <dumux/common/reorderingdofmapper.hh>
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
-#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
