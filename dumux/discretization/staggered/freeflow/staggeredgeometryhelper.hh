@@ -47,7 +47,6 @@ struct PairData
     int globalCommonEntIdx;
     Scalar parallelDistance;
     Scalar normalDistance;
-    GlobalPosition virtualOuterNormalFaceDofPos;
     GlobalPosition virtualOuterParallelFaceDofPos;
 };
 
@@ -245,7 +244,6 @@ private:
                 const auto& boundaryFacetCenter = intersection_.geometry().center();
                 const auto distance = boundaryFacetCenter - elementCenter;
 
-                pairData_[pairIdx].virtualOuterNormalFaceDofPos = innerNormalFacePos_[pairIdx] + distance;
                 pairData_[pairIdx].normalDistance = std::move(distance.two_norm());
             }
         }
