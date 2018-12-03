@@ -4,7 +4,7 @@ set(TEX_INPUTS
   1_introduction.tex
   2_detailedinstall.tex
   2_quickinstall.tex
-  3_tutorial.tex
+  3_course.tex
   3_furtherpractice.tex
   4_assemblinglinearsystem.tex
   4_developingdumux.tex
