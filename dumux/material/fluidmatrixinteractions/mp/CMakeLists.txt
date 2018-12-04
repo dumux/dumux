@@ -1,5 +1,4 @@
 install(FILES
-2poftadapter.hh
 mpadapter.hh
 mplinearmaterial.hh
 mplinearmaterialparams.hh
