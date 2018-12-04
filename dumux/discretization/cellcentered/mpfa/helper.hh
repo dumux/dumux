@@ -183,7 +183,7 @@ public:
      * \brief Calculates the number of scvfs in a given element geometry type.
      * \param gt The element geometry type
      */
-    static constexpr std::size_t getNumLocalScvfs(const Dune::GeometryType& gt)
+    static std::size_t getNumLocalScvfs(const Dune::GeometryType& gt)
     {
         if (gt == Dune::GeometryTypes::triangle)
             return 6;
@@ -479,7 +479,7 @@ public:
      *
      * \param gt The element geometry type
      */
-    static constexpr std::size_t getNumLocalScvfs(const Dune::GeometryType& gt)
+    static std::size_t getNumLocalScvfs(const Dune::GeometryType& gt)
     {
         if (gt == Dune::GeometryTypes::tetrahedron)
             return 12;
