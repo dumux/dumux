@@ -200,8 +200,12 @@ public:
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvf) const
     {
-        // TODO: return velocity from stokes problem here! Is this correct?
-        return this->neumann(element, fvGeometry, elemVolVars, scvf);
+        NumEqVector values(0.0);
+
+        if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+            values[Indices::conti0EqIdx] = couplingManager().couplingData().neumannCouplingCondition(fvGeometry, elemVolVars, scvf);
+
+        return values;
     }
 
     // \}
@@ -238,7 +242,7 @@ public:
      */
     PrimaryVariables initial(const Element &element) const
     {
-        return PrimaryVariables(0.0);
+        return PrimaryVariables(1.0);
     }
 
     // \}

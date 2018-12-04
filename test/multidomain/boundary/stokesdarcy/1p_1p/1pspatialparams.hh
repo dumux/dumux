@@ -48,14 +48,20 @@ class OnePSpatialParams
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
+    static constexpr int dimWorld = GridView::dimensionworld;
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
     OnePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+        : ParentType(fvGridGeometry), permeability_(0.0)
     {
+        //auto perm = getParam<Scalar>("Darcy.SpatialParams.Permeability");
+        //permeability_[0][0] = permeability_[1][1] = perm;
         permeability_ = getParam<Scalar>("Darcy.SpatialParams.Permeability");
+
         alphaBJ_ = getParam<Scalar>("Darcy.SpatialParams.AlphaBeaversJoseph");
     }
 
@@ -84,7 +90,7 @@ public:
 
 
 private:
-    Scalar permeability_;
+    PermeabilityType permeability_;
     Scalar alphaBJ_;
 };
 
