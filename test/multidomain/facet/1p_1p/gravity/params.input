@@ -1,0 +1,27 @@
+[Problem]
+EnableGravity = true
+FractureAperture = 1e-3
+
+[Grid]
+File = ./grids/gravity.msh
+
+[Bulk]
+Problem.Name = bulk
+SpatialParams.Permeability = 1
+
+[LowDim]
+Problem.Name = lowdim
+SpatialParams.Permeability = 1e-4
+
+[FacetCoupling]
+Xi = 1.0
+
+[Vtk]
+OutputName = test_md_facet_1p1p_gravity_xi1
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e10
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0

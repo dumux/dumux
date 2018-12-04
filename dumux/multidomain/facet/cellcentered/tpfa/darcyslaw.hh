@@ -29,6 +29,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/dynvector.hh>
+#include <dune/common/float_cmp.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
@@ -90,6 +91,9 @@ public:
     //! Export transmissibility storage type
     using AdvectionTransmissibilityContainer = std::array<Scalar, 3>;
 
+    //! Export the type used for the gravity coefficients
+    using GravityCoefficients = std::array<Scalar, 2>;
+
     //! update subject to a given problem
     template< class Problem, class ElementVolumeVariables >
     void updateAdvection(const Problem& problem,
@@ -98,26 +102,35 @@ public:
                          const ElementVolumeVariables& elemVolVars,
                          const SubControlVolumeFace &scvf)
     {
-        tij_ = AdvectionType::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
+        tij_ = AdvectionType::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, g_);
     }
 
     //! We use the same name as in the TpfaDarcysLawCache so
     //! that this cache and the law implementation for non-coupled
     //! models can be reused here on facets that do not lie on an
-    //! interior boundary, i.e. do not coincide with a fracture
-    Scalar advectionTij() const { return tij_[insideTijIdx]; }
+    //! interior boundary, i.e. do not coincide with a facet element
+    Scalar advectionTij() const
+    { return tij_[insideTijIdx]; }
 
     //! returns the transmissibility associated with the inside cell
-    Scalar advectionTijInside() const { return tij_[insideTijIdx]; }
+    Scalar advectionTijInside() const
+    { return tij_[insideTijIdx]; }
 
     //! returns the transmissibility associated with the outside cell
-    Scalar advectionTijOutside() const {return tij_[outsideTijIdx]; }
+    Scalar advectionTijOutside() const
+    { return tij_[outsideTijIdx]; }
 
     //! returns the transmissibility associated with the outside cell
-    Scalar advectionTijFacet() const {return tij_[facetTijIdx]; }
+    Scalar advectionTijFacet() const
+    { return tij_[facetTijIdx]; }
+
+    //! return the coefficients for the computation of gravity at the scvf
+    const GravityCoefficients& gravityCoefficients() const
+    { return g_; }
 
 private:
     std::array<Scalar, 3> tij_;
+    GravityCoefficients g_;
 };
 
 /*!
@@ -188,27 +201,33 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
         static const Scalar gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
         if (gravity)
         {
-            // this is inconsistent for xi != 1
-            static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
-            if (xi != 1.0)
-                DUNE_THROW(Dune::NotImplemented, "Gravitational acceleration for facet coupling and xi != 1.0");
-
-            // compute alpha := n^T*K*g
+            // compute alpha := n^T*K*g and add to flux (use arithmetic mean for density)
             const auto& g = problem.gravityAtPos(scvf.ipGlobal());
-            const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
-
-            // for the density, use arithmetic average
             const auto rho = 0.5*(insideVolVars.density(phaseIdx) + facetVolVars.density(phaseIdx));
-            flux += rho*scvf.area()*alpha_inside;
+            const auto rhoTimesArea = rho*scvf.area();
+            const auto alpha_inside = rhoTimesArea*insideVolVars.extrusionFactor()
+                                      *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
 
-            // maybe add K-weighted gravitational contribution
+            flux += alpha_inside;
             if (!scvf.boundary())
             {
                 const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-                const auto wFacet = computeFacetTransmissibility_(insideVolVars, facetVolVars, scvf);
-                const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideVolVars.permeability(), g)*outsideVolVars.extrusionFactor();
 
-                flux += rho*fluxVarsCache.advectionTijInside()/wFacet*(alpha_inside - alpha_outside);
+                // add further gravitational contributions
+                if ( problem.interiorBoundaryTypes(element, scvf).hasOnlyNeumann() )
+                {
+                    static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
+                    const auto alpha_facet = rhoTimesArea*insideVolVars.extrusionFactor()
+                                             *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), g);
+                    const auto alpha_outside = rhoTimesArea*outsideVolVars.extrusionFactor()
+                                               *vtmv(scvf.unitOuterNormal(), outsideVolVars.permeability(), g);
+
+                    flux -= fluxVarsCache.gravityCoefficients()[0]*(xi*alpha_inside - alpha_facet + (1.0 - xi)*alpha_outside);
+                    flux += fluxVarsCache.gravityCoefficients()[1]*(xi*alpha_outside - alpha_facet + (1.0 - xi)*alpha_inside);
+                }
+
+                // add outside contribution
+                flux += fluxVarsCache.advectionTijOutside()*outsideVolVars.pressure(phaseIdx);
             }
 
             return flux;
@@ -226,6 +245,20 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
                                                   const FVElementGeometry& fvGeometry,
                                                   const ElementVolumeVariables& elemVolVars,
                                                   const SubControlVolumeFace& scvf)
+    {
+        typename Cache::GravityCoefficients g;
+        return calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, g);
+    }
+
+    // This overload additionally receives a container in which the coefficients required
+    // for the computation of the gravitational acceleration ar the scvf are stored
+    template< class Problem, class ElementVolumeVariables >
+    static TijContainer calculateTransmissibility(const Problem& problem,
+                                                  const Element& element,
+                                                  const FVElementGeometry& fvGeometry,
+                                                  const ElementVolumeVariables& elemVolVars,
+                                                  const SubControlVolumeFace& scvf,
+                                                  typename Cache::GravityCoefficients& g)
     {
         TijContainer tij;
         if (!problem.couplingManager().isCoupled(element, scvf))
@@ -260,8 +293,9 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
             // where \f$\gamma$\f denotes the domain living on the facets and \f$\bar{\mathbf{u}}$\f are
             // intermediate face unknowns in the matrix domain. Equivalently, flux continuity reads:
             // \f$\mathbf{A} \bar{\mathbf{u}} = \mathbf{B} \mathbf{u} + \mathbf{M} \mathbf{u}_\gamma\f$.
-            // Combining the two, we can eliminate the intermediate unknowns and compute the transmissibilities.
-            if (!scvf.boundary() && xi != 1.0)
+            // Combining the two, we can eliminate the intermediate unknowns and compute the transmissibilities
+            // that allow the description of the fluxes as functions of the cell and Dirichlet pressures only.
+            if (!scvf.boundary())
             {
                 const auto outsideScvIdx = scvf.outsideScvIdx();
                 const auto& outsideVolVars = elemVolVars[outsideScvIdx];
@@ -270,11 +304,32 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
                                                                                outsideVolVars.permeability(),
                                                                                outsideVolVars.extrusionFactor());
 
-                const Scalar factor = wIn * wFacet / ( wIn * wOut * ( 2.0 * xi - 1.0 ) + wFacet * ( xi * ( wIn + wOut ) + wFacet ) );
+                if ( !Dune::FloatCmp::eq(xi, 1.0, 1e-6) )
+                {
+                    // The gravity coefficients are the first row of the inverse of the A matrix in the local eq system
+                    // multiplied with wIn. Note that we never compute the inverse but use an optimized implementation below.
+                    // The A matrix has the following coefficients:
+                    // A = | xi*wIn + wFacet, (xi - 1.0)*wOut  |  -> AInv = 1/detA | xi*wOut + wFacet, -(xi - 1.0)*wOut |
+                    //     | wIn*(xi - 1.0) , xi*wOut + wFacet |                   | -wIn*(xi - 1.0) , xi*wIn + wFacet  |
+                    const Scalar xiMinusOne = (xi - 1.0);
+                    const Scalar a01 = xiMinusOne*wOut;
+                    const Scalar a11 = xi*wOut + wFacet;
+                    const Scalar detA = (xi*wIn + wFacet)*a11 - xiMinusOne*wIn*a01;
+                    g[0] = wIn*a11/detA; g[1] = -wIn*a01/detA;
 
-                tij[Cache::insideTijIdx]  = factor * ( wOut * xi + wFacet );
-                tij[Cache::outsideTijIdx] = factor * ( wOut * ( 1.0 - xi ) );
-                tij[Cache::facetTijIdx]   = factor * ( - wOut - wFacet );
+                    // optimized implementation: factorization obtained using sympy
+                    const Scalar factor = wIn * wFacet / ( wIn * wOut * ( 2.0 * xi - 1.0 ) + wFacet * ( xi * ( wIn + wOut ) + wFacet ) );
+                    tij[Cache::insideTijIdx]  = factor * ( wOut * xi + wFacet );
+                    tij[Cache::outsideTijIdx] = factor * ( wOut * ( 1.0 - xi ) );
+                    tij[Cache::facetTijIdx]   = factor * ( - wOut - wFacet );
+                }
+                else
+                {
+                    g[0] = wIn/(wIn+wFacet); g[1] = 0.0;
+                    tij[Cache::insideTijIdx] = wFacet*g[0];
+                    tij[Cache::facetTijIdx] = -tij[Cache::insideTijIdx];
+                    tij[Cache::outsideTijIdx] = 0.0;
+                }
             }
             else
             {
@@ -337,17 +392,21 @@ public:
     //! We use the same name as in the TpfaDarcysLawCache so
     //! that this cache and the law implementation for non-coupled
     //! models can be reused here on facets that do not lie on an
-    //! interior boundary, i.e. do not coincide with a fracture
-    Scalar advectionTij() const { return tij_[insideTijIdx]; }
+    //! interior boundary, i.e. do not coincide with a facet element
+    Scalar advectionTij() const
+    { return tij_[insideTijIdx]; }
 
     //! returns the transmissibility associated with the inside cell
-    Scalar advectionTijInside() const { return tij_[insideTijIdx]; }
+    Scalar advectionTijInside() const
+    { return tij_[insideTijIdx]; }
 
     //! returns the transmissibility associated with the outside cell
-    Scalar advectionTijOutside(unsigned int idxInOutside) const {return tij_[firstOutsideTijIdx+idxInOutside]; }
+    Scalar advectionTijOutside(unsigned int idxInOutside) const
+    { return tij_[firstOutsideTijIdx+idxInOutside]; }
 
     //! returns the transmissibility associated with the outside cell
-    Scalar advectionTijFacet() const {return tij_[facetTijIdx]; }
+    Scalar advectionTijFacet() const
+    { return tij_[facetTijIdx]; }
 
 private:
     std::vector<Scalar> tij_;
@@ -394,7 +453,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
     {
         static const Scalar gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
         if (gravity)
-            DUNE_THROW(Dune::NotImplemented, "gravity for darcys law with facet coupling on surface grids");
+            DUNE_THROW(Dune::NotImplemented, "Gravity for darcys law with facet coupling on surface grids");
 
         if (!problem.couplingManager().isOnInteriorBoundary(element, scvf))
             return TpfaDarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarsCache);
@@ -438,7 +497,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
 
         //! xi factor for the coupling conditions
         static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
-        static const Scalar oneMinusXi = 1.0 - xi;
+        static const Scalar xiMinusOne = xi - 1.0;
 
         const auto area = scvf.area();
         const auto insideScvIdx = scvf.insideScvIdx();
@@ -458,9 +517,10 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
         if (iBcTypes.hasOnlyNeumann())
         {
             const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
-            using std::sqrt;
+
             // Here we use the square root of the facet extrusion factor
             // as an approximate average distance from scvf ip to facet center
+            using std::sqrt;
             const auto wFacet = 2.0*area*insideVolVars.extrusionFactor()
                                         /sqrt(facetVolVars.extrusionFactor())
                                         *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
@@ -471,11 +531,11 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
             // intermediate face unknowns in the matrix domain. Equivalently, flux continuity reads:
             // \f$\mathbf{A} \bar{\mathbf{u}} = \mathbf{B} \mathbf{u} + \mathbf{M} \mathbf{u}_\gamma\f$.
             // Combining the two, we can eliminate the intermediate unknowns and compute the transmissibilities.
-            if (!scvf.boundary() && xi != 1.0)
+            if (!scvf.boundary() && !Dune::FloatCmp::eq(xi, 1.0, 1e-6))
             {
                 // assemble matrices
                 const Scalar xiWIn = xi*wIn;
-                const Scalar oneMinusXiWIn = oneMinusXi*wIn;
+                const Scalar xiMinusOneWIn = xiMinusOne*wIn;
                 const auto numDofs = numOutsideScvs+1;
 
                 Dune::DynamicMatrix<Scalar> A(numDofs, numDofs, 0.0);
@@ -502,12 +562,12 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
                                                          flipScvf.unitOuterNormal());
                     // assemble local system matrices
                     const auto xiWOut = xi*wOut;
-                    const auto oneMinusXiWOut = oneMinusXi*wOut;
+                    const auto xiMinusOneWOut = xiMinusOne*wOut;
                     const auto curDofIdx = i+1;
 
                     M[curDofIdx] = wFacetOut;
-                    A[curDofIdx][0] += oneMinusXiWIn;
-                    B[curDofIdx][0] += oneMinusXiWIn;
+                    A[curDofIdx][0] += xiMinusOneWIn;
+                    B[curDofIdx][0] += xiMinusOneWIn;
 
                     for (unsigned int otherDofIdx = 0; otherDofIdx < numDofs; ++otherDofIdx)
                     {
@@ -518,8 +578,8 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
                         }
                         else
                         {
-                            A[otherDofIdx][curDofIdx] += oneMinusXiWOut;
-                            B[otherDofIdx][curDofIdx] += oneMinusXiWOut;
+                            A[otherDofIdx][curDofIdx] += xiMinusOneWOut;
+                            B[otherDofIdx][curDofIdx] += xiMinusOneWOut;
                         }
                     }
                 }
@@ -534,8 +594,8 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
                     for (unsigned int idxInOutside = 0; idxInOutside < numOutsideScvs; ++idxInOutside)
                         tij[Cache::firstOutsideTijIdx+idxInOutside] -= A[0][i]*B[i][idxInOutside+1];
                 }
-                std::for_each(tij.begin(), tij.end(), [xiWIn] (auto& t) { t *= xiWIn; });
-                tij[Cache::insideTijIdx] += xiWIn;
+                std::for_each(tij.begin(), tij.end(), [wIn] (auto& t) { t *= wIn; });
+                tij[Cache::insideTijIdx] += wIn;
             }
             else
             {

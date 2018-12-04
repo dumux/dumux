@@ -26,6 +26,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/float_cmp.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
@@ -71,6 +72,10 @@ public:
         // if this scvf is not on an interior boundary, use the standard law
         if (!scvf.interiorBoundary())
             return DefaultBoxDarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarCache);
+
+        static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
+        if ( !Dune::FloatCmp::eq(xi, 1.0, 1e-6) )
+            DUNE_THROW(Dune::NotImplemented, "Xi != 1.0 cannot be used with the Box-Facet-Coupling scheme");
 
         // get some references for convenience
         const auto& fluxVarCache = elemFluxVarCache[scvf];
