@@ -215,6 +215,10 @@ public:
             auto darcyElemFluxVarsCache = localView(assembler.gridVariables(darcyIdx).gridFluxVarsCache());
 
             darcyElemVolVars.bind(darcyElement, darcyFvGeometry, this->curSol()[darcyIdx]);
+
+            // To bind the darcy coupling context in needed since the darcyElemFluxVarsCache needs the stokes velocities
+            static constexpr auto domainId = typename Dune::index_constant<darcyIdx>();
+            bindCouplingContext(domainId, darcyElement);
             darcyElemFluxVarsCache.bind(darcyElement, darcyFvGeometry, darcyElemVolVars);
 
             const auto darcyElemSol = elementSolution(darcyElement, this->curSol()[darcyIdx], this->problem(darcyIdx).fvGridGeometry());

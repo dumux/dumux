@@ -319,7 +319,7 @@ public:
         // fp = facePressures[ivLocalScvfIdx];
 
 
-        if(true)
+        if(false)
         {
             momentumFlux = darcyPressure;
         }
@@ -334,6 +334,7 @@ public:
             const auto& fluxVarsCache = elemFluxVarsCache[darcyScvf];
             Scalar velocityDarcy = 0.0;
             Scalar tiFace = 1.0;
+            Scalar interfacePressure = 0.0;
             if (fluxVarsCache.usesSecondaryIv())
             {
                 const auto& tij = fluxVarsCache.advectionTijSecondaryIv();
@@ -362,6 +363,16 @@ public:
                 const auto& pj = fluxVarsCache.pressuresPrimaryIv(darcyPhaseIdx);
                 const auto ivIndexInContainer = fluxVarsCache.ivIndexInContainer();
                 const auto& interactionVolume = elemFluxVarsCache.primaryInteractionVolumes()[ivIndexInContainer];
+                const auto& dataHandle = elemFluxVarsCache.primaryDataHandles()[ivIndexInContainer];
+
+                auto AB = dataHandle.advectionAB(); // B right-multiplied to the inverse of A
+                auto A = dataHandle.advectionA();   // the inverse of A
+                auto N = dataHandle.advectionN();   // container with the Neumann  per local scvf
+                auto facePressures = N;
+
+                AB.mv(pj, facePressures);
+                A.umv(N, facePressures);
+
                 using LocalIndexType = typename std::decay_t<decltype(interactionVolume)>::Traits::IndexSet::LocalIndexType;
                 LocalIndexType localIdx = 0;
                 for (LocalIndexType faceIdx = 0; faceIdx < interactionVolume.numFaces(); ++faceIdx)
@@ -371,27 +382,11 @@ public:
                     if(curGlobalScvf.index() == darcyScvf.index())
                         localIdx = curLocalScvf.localDofIndex();
                 }
-
-                for(LocalIndexType idx=0; idx<pj.size(); ++idx)
-                    if(idx != localIdx)
-                        velocityDarcy += tij[idx]*pj[idx];
-
-                velocityDarcy = tij*pj;
-                tiFace = tij[localIdx];
+                std::cout << "N: " << N << std::endl;
+                std::cout <<"facePressures: " << facePressures << std::endl;
+                std::cout <<"localIdx: " << (int) localIdx << std::endl;
+                interfacePressure = facePressures[localIdx];
             }
-
-            static const bool enableGravity = getParamFromGroup<bool>(couplingManager_.problem(darcyIdx).paramGroup(), "Problem.EnableGravity");
-            if (enableGravity)
-                velocityDarcy += fluxVarsCache.gravity(darcyPhaseIdx);
-
-            // switch the sign if necessary
-            if (fluxVarsCache.advectionSwitchFluxSign())
-                velocityDarcy *= -1.0;
-
-            velocityDarcy /= darcyScvf.area();
-            const auto& g =  couplingManager_.problem(darcyIdx).gravityAtPos(darcyScvf.ipGlobal());
-            const auto alpha_inside = vtmv(darcyScvf.unitOuterNormal(), volVarsDarcy.permeability(), g)*volVarsDarcy.extrusionFactor();
-            const Scalar interfacePressure = -(scvf.directionSign() * velocity * mu + velocityDarcy)/tiFace;
             momentumFlux = interfacePressure;
         }
 
@@ -573,6 +568,20 @@ public:
         const bool insideIsUpstream = velocity > 0.0;
 
         return massFlux_(velocity, darcyDensity, stokesDensity, insideIsUpstream);
+    }
+
+    /*!
+     * \brief Returns the mass flux across the coupling boundary as seen from the Darcy domain.
+     */
+    Scalar neumannCouplingCondition(const FVElementGeometry<darcyIdx>& fvGeometry,
+                                 const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                 const SubControlVolumeFace<darcyIdx>& scvf) const
+    {
+        const auto& darcyContext = this->couplingManager().darcyCouplingContext(scvf);
+        const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
+        const Scalar darcyViscosity = darcyElemVolVars[scvf.insideScvIdx()].viscosity(couplingPhaseIdx(darcyIdx));
+
+        return velocity * darcyViscosity;
     }
 
     /*!
