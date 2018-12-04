@@ -27,15 +27,14 @@
 #include <numeric>
 #include <functional>
 #include <type_traits>
+#include <vector>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/fmatrix.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/geometry/makegeometry.hh>
 #include <dumux/common/geometry/intersectspointgeometry.hh>
@@ -46,21 +45,18 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief  Class used to calculate fluxes over surfaces. This only works for the staggered grid discretization.
  */
-template <class TypeTag>
+template<class GridVariables, class SolutionVector, class ModelTraits, class LocalResidual>
 class FluxOverSurface
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using Scalar = typename GridVariables::Scalar;
+    using FVGridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using GridView = typename FVGridGeometry::GridView;
+    using VolumeVariables = typename GridVariables::VolumeVariables;
     using Element = typename GridView::template Codim<0>::Entity;
+
+    using CellCenterPrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[FVGridGeometry::cellCenterIdx()][0])>;
 
     enum {
         // Grid and world dimension
@@ -140,7 +136,6 @@ class FluxOverSurface
         std::vector<CellCenterPrimaryVariables> values_;
     };
 
-
 public:
 
     using SurfaceList = std::vector<SurfaceGeometryType>;
@@ -148,14 +143,12 @@ public:
     /*!
      * \brief The constructor
      */
-    FluxOverSurface(const Problem& problem,
-                    const GridVariables& gridVariables,
+    FluxOverSurface(const GridVariables& gridVariables,
                     const SolutionVector& sol)
-    : problem_(problem),
-      gridVariables_(gridVariables),
+    : gridVariables_(gridVariables),
       sol_(sol)
     {
-        verbose_  = getParamFromGroup<bool>(problem.paramGroup(), "FluxOverSurface.Verbose", false);
+        verbose_  = getParamFromGroup<bool>(problem_().paramGroup(), "FluxOverSurface.Verbose", false);
     }
 
     /*!
@@ -233,8 +226,8 @@ public:
                                const auto& scvf,
                                const auto& elemFluxVarsCache)
         {
-            LocalResidual localResidual(&problem_);
-            return localResidual.computeFluxForCellCenter(problem_, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+            LocalResidual localResidual(&problem_());
+            return localResidual.computeFluxForCellCenter(problem_(), element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
         };
 
         calculateFluxes(fluxType);
@@ -245,7 +238,7 @@ public:
      */
     void calculateVolumeFluxes()
     {
-        const auto isCompositional = std::integral_constant<bool, (GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents() > 1) >();
+        const auto isCompositional = std::integral_constant<bool, (ModelTraits::numFluidComponents() > 1) >();
         calculateVolumeFluxesImpl_(isCompositional);
     }
 
@@ -269,15 +262,15 @@ public:
             surface.second.resetValues();
 
         // make sure not to iterate over the same dofs twice
-        std::vector<bool> dofVisited(problem_.fvGridGeometry().numFaceDofs(), false);
+        std::vector<bool> dofVisited(problem_().fvGridGeometry().numFaceDofs(), false);
 
         auto elemVolVars = localView(gridVariables_.curGridVolVars());
         auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
         auto elemFaceVars = localView(gridVariables_.curGridFaceVars());
 
-        for(auto&& element : elements(problem_.fvGridGeometry().gridView()))
+        for(auto&& element : elements(problem_().fvGridGeometry().gridView()))
         {
-            auto fvGeometry = localView(problem_.fvGridGeometry());
+            auto fvGeometry = localView(problem_().fvGridGeometry());
             fvGeometry.bind(element);
 
             elemVolVars.bind(element, fvGeometry, sol_);
@@ -344,6 +337,8 @@ public:
 
 private:
 
+    const auto& problem_() const { return gridVariables_.curGridVolVars().problem(); }
+
     /*!
      * \brief Calculate the volume fluxes over all surfaces for compositional models.
      *        This method simply averages the densities between two adjacent cells.
@@ -357,13 +352,13 @@ private:
                                const auto& scvf,
                                const auto& elemFluxVarsCache)
         {
-            LocalResidual localResidual(&problem_);
-            const auto massOrMoleFlux = localResidual.computeFluxForCellCenter(problem_, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+            LocalResidual localResidual(&problem_());
+            const auto massOrMoleFlux = localResidual.computeFluxForCellCenter(problem_(), element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
 
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-            constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
+            constexpr bool useMoles = false;//getPropValue<TypeTag, Properties::UseMoles>();
             const auto density = [useMoles](const auto& volVars)
             {
                 return useMoles ? volVars.molarDensity() : volVars.density() ;
@@ -371,8 +366,8 @@ private:
 
             const auto avgDensity = 0.5*density(insideVolVars) + 0.5*density(outsideVolVars);
 
-            constexpr auto replaceCompEqIdx = getPropValue<TypeTag, Properties::ReplaceCompEqIdx>();
-            constexpr auto numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
+            constexpr auto replaceCompEqIdx = ModelTraits::ReplaceCompEqIdx();
+            constexpr auto numComponents = ModelTraits::numFluidComponents();
 
             const Scalar cumulativeFlux = [replaceCompEqIdx, numComponents, &massOrMoleFlux]()
             {
@@ -409,8 +404,8 @@ private:
                                const auto& scvf,
                                const auto& elemFluxVarsCache)
         {
-            LocalResidual localResidual(&problem_);
-            const Scalar totalMassFlux = localResidual.computeFluxForCellCenter(problem_, element, fvGeometry, elemVolVars,
+            LocalResidual localResidual(&problem_());
+            const Scalar totalMassFlux = localResidual.computeFluxForCellCenter(problem_(), element, fvGeometry, elemVolVars,
                                                                                 elemFaceVars, scvf, elemFluxVarsCache)[0];
 
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
@@ -427,7 +422,6 @@ private:
     }
 
     std::map<std::string, SurfaceData<surfaceDim ,dim> > surfaces_;
-    const Problem& problem_;
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;
     bool verbose_;
