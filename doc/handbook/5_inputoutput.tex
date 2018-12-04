@@ -151,6 +151,26 @@ The *.pvd file groups the singel *.vtu files and contains additionaly the timest
 Also it is the main file for the visualisation with paraview.
 The vtk-file format is also supported by other common visualisation programms like Visit and Tecplot. 
 
+\subsubsection{Customize the VTK output}
+Dependent on the used \texttt{TYPETAG} a default set of variables is stored in the VTK files, but it's also possible
+to add further variables. For that you can use the method \texttt{addField} of the \texttt{vtkWriter}.
+\begin{lstlisting}[style=DumuxCode]
+vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
+\end{lstlisting}
+
+The first input argument of this method is the value of the additional variable, provided by a method of the corresponding problem.
+If it doesn't already exists, the user has to provide this method (see example below for analytic temperatur).
+\begin{lstlisting}[style=DumuxCode]
+//! get the analytical temperature
+const std::vector<Scalar>& getExactTemperature()
+{
+    return temperatureExact_;
+}
+\end{lstlisting}
+
+The second input argument is the name of the additional variable (as it should be written in the VTK files).
+The example above is taken from:\\ \texttt{test/porousmediumflow/1pnc/implicit/test\_1p2cni\_convection\_fv.cc}
+
 \subsubsection{Gnuplot interface}
 \Dumux provides some gnuplot interface, which can be used to plot results and generate directly an 
 image file (e.g. png). To use the gnuplot interface gnuplot has to be installed. For more information see \ref{gnuplot}.
