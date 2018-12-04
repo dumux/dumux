@@ -74,13 +74,14 @@ public:
      * \param values Container for the return values
      * \param params Array of parameters
      * \param state Fluidstate
+     * \param wPhaseIdx the phase index of the wetting phase
      */
     template <class ContainerT, class FluidState>
     static void relativePermeabilities(ContainerT &values,
                                        const Params &params,
-                                       const FluidState &state)
+                                       const FluidState &state,
+                                       int wPhaseIdx)
     {
-        const int wPhaseIdx = state.wettingPhase();
         assert(values.size() == 2);
         const int nPhaseIdx = 1 - wPhaseIdx;
         values[wPhaseIdx] = MaterialLaw::krw(params, state.saturation(wPhaseIdx));
