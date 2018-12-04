@@ -95,7 +95,7 @@ public:
     : ParentType(gridVariables, sol, name, paramGroup, dm, verbose)
     {
         // create the fracture grid and all objects needed on it
-        initializeFracture(fractureGridAdapter);
+        initializeFracture_(fractureGridAdapter);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -149,6 +149,7 @@ private:
 
         // some references for convenience
         const auto& gridView = this->fvGridGeometry().gridView();
+        const auto& fractureGridView = fractureGrid_->leafGridView();
         const auto& volVarScalarDataInfo = this->volVarScalarDataInfo();
         const auto& volVarVectorDataInfo = this->volVarVectorDataInfo();
 
@@ -161,7 +162,7 @@ private:
         {
             const auto numCells = gridView.size(0);
             const auto numDofs = gridView.size(dim);
-            const auto numFractureVert = fractureGridView_->size(FractureGridView::dimension);
+            const auto numFractureVert = fractureGridView.size(FractureGridView::dimension);
 
             // get fields for all volume variables
             if (!this->volVarScalarDataInfo().empty())
@@ -251,7 +252,7 @@ private:
             {
                 this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().vertexMapper(), volVarVectorData[i],
                                                             volVarVectorDataInfo[i].name, /*numComp*/dimWorld, /*codim*/dim).get() );
-                fractureSequenceWriter_->addVertexData( FractureField(*fractureGridView_, *fractureVertexMapper_, volVarVectorDataFracture[i],
+                fractureSequenceWriter_->addVertexData( FractureField(fractureGridView, *fractureVertexMapper_, volVarVectorDataFracture[i],
                                                                       volVarVectorDataInfo[i].name, /*numComp*/dimWorld, /*codim*/dim-1).get() );
             }
 
@@ -318,6 +319,7 @@ private:
 
         // some references for convenience
         const auto& gridView = this->fvGridGeometry().gridView();
+        const auto& fractureGridView = fractureGrid_->leafGridView();
         const auto& volVarScalarDataInfo = this->volVarScalarDataInfo();
         const auto& volVarVectorDataInfo = this->volVarVectorDataInfo();
 
@@ -330,7 +332,7 @@ private:
         {
             const auto numCells = gridView.size(0);
             const auto numDofs = gridView.size(dim);
-            const auto numFractureCells = fractureGridView_->size(0);
+            const auto numFractureCells = fractureGridView.size(0);
 
             // get fields for all volume variables
             if (!this->volVarScalarDataInfo().empty())
@@ -424,7 +426,7 @@ private:
                 this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().elementMapper(), volVarScalarData[i],
                                                             volVarScalarDataInfo[i].name, /*numComp*/1, /*codim*/dim,
                                                             /*nonconforming*/this->dataMode()).get() );
-                fractureSequenceWriter_->addVertexData( FractureField(*fractureGridView_, *fractureElementMapper_, volVarScalarDataFracture[i],
+                fractureSequenceWriter_->addVertexData( FractureField(fractureGridView, *fractureElementMapper_, volVarScalarDataFracture[i],
                                                                       volVarScalarDataInfo[i].name, /*numComp*/1, /*codim*/dim-1,
                                                                       /*nonconforming*/this->dataMode()).get() );
             }
@@ -434,7 +436,7 @@ private:
                 this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().elementMapper(), volVarVectorData[i],
                                                             volVarVectorDataInfo[i].name, /*numComp*/dimWorld, /*codim*/dim,
                                                             /*nonconforming*/this->dataMode()).get() );
-                fractureSequenceWriter_->addVertexData( FractureField(*fractureGridView_, *fractureElementMapper_, volVarVectorDataFracture[i],
+                fractureSequenceWriter_->addVertexData( FractureField(fractureGridView, *fractureElementMapper_, volVarVectorDataFracture[i],
                                                                       volVarVectorDataInfo[i].name, /*numComp*/dimWorld, /*codim*/dim-1,
                                                                       /*nonconforming*/this->dataMode()).get() );
             }
@@ -480,7 +482,7 @@ private:
 
     //! Creates the lower-dimensional fracture grid, index maps and writers
     template< class FractureGridAdapter >
-    void initializeFracture(const FractureGridAdapter& fractureGridAdapter)
+    void initializeFracture_(const FractureGridAdapter& fractureGridAdapter)
     {
         const auto& fvGridGeometry = this->fvGridGeometry();
         const auto& gridView = fvGridGeometry.gridView();
@@ -562,18 +564,18 @@ private:
         }
 
         // make grid and get grid view
-        auto grid = gridFactory.createGrid();
-        fractureGridView_ = std::make_unique<FractureGridView>(grid->leafGridView());
+        fractureGrid_ = std::shared_ptr<FractureGrid>(gridFactory.createGrid());
 
         // update fracture mappers
-        fractureVertexMapper_ = std::make_unique<FractureMapper>(*fractureGridView_, Dune::mcmgVertexLayout());
-        fractureElementMapper_ = std::make_unique<FractureMapper>(*fractureGridView_, Dune::mcmgElementLayout());
+        const auto& fractureGridView = fractureGrid_->leafGridView();
+        fractureVertexMapper_ = std::make_unique<FractureMapper>(fractureGridView, Dune::mcmgVertexLayout());
+        fractureElementMapper_ = std::make_unique<FractureMapper>(fractureGridView, Dune::mcmgElementLayout());
 
         // obtain map fracture insertion indices -> fracture grid indices
-        std::vector<IndexType> insToVertexIdx(fractureGridView_->size(FractureGridView::dimension));
-        std::vector<IndexType> insToElemIdx(fractureGridView_->size(0));
-        for (const auto& v : vertices(*fractureGridView_)) insToVertexIdx[ gridFactory.insertionIndex(v) ] = fractureVertexMapper_->index(v);
-        for (const auto& e : elements(*fractureGridView_)) insToElemIdx[ gridFactory.insertionIndex(e) ] = fractureElementMapper_->index(e);
+        std::vector<IndexType> insToVertexIdx(fractureGridView.size(FractureGridView::dimension));
+        std::vector<IndexType> insToElemIdx(fractureGridView.size(0));
+        for (const auto& v : vertices(fractureGridView)) insToVertexIdx[ gridFactory.insertionIndex(v) ] = fractureVertexMapper_->index(v);
+        for (const auto& e : elements(fractureGridView)) insToElemIdx[ gridFactory.insertionIndex(e) ] = fractureElementMapper_->index(e);
 
         // update vertex index map
         for (IndexType dofIdx = 0; dofIdx < gridView.size(GridView::dimension); ++dofIdx)
@@ -586,13 +588,15 @@ private:
                 dataPair.second = insToElemIdx[ dataPair.second ];
 
         // instantiate writers for the fracture
-        fractureWriter_ = std::make_shared< Dune::VTKWriter<FractureGridView> >(*fractureGridView_, this->dataMode());
+        fractureWriter_ = std::make_shared< Dune::VTKWriter<FractureGridView> >(fractureGridView, this->dataMode());
         fractureSequenceWriter_ = std::make_unique< Dune::VTKSequenceWriter<FractureGridView> >(fractureWriter_, this->name() + "_fracture");
     }
 
+    std::shared_ptr<FractureGrid> fractureGrid_;
+
     std::unique_ptr<FractureMapper> fractureVertexMapper_;
     std::unique_ptr<FractureMapper> fractureElementMapper_;
-    std::unique_ptr<FractureGridView> fractureGridView_;
+
     std::shared_ptr<Dune::VTKWriter<FractureGridView>> fractureWriter_;
     std::unique_ptr< Dune::VTKSequenceWriter<FractureGridView> > fractureSequenceWriter_;
 
