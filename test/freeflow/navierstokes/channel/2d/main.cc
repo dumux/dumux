@@ -129,7 +129,10 @@ int main(int argc, char** argv) try
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // set up two surfaces over which fluxes are calculated
-    FluxOverSurface<TypeTag> flux(*problem, *gridVariables, x);
+    FluxOverSurface<GridVariables,
+                    SolutionVector,
+                    GetPropType<TypeTag, Properties::ModelTraits>,
+                    GetPropType<TypeTag, Properties::LocalResidual>> flux(*gridVariables, x);
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 

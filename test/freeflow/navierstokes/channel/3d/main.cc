@@ -113,7 +113,10 @@ int main(int argc, char** argv) try
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // set up two planes over which fluxes are calculated
-    FluxOverSurface<TypeTag> flux(*problem, *gridVariables, x);
+    FluxOverSurface<GridVariables,
+                    SolutionVector,
+                    GetPropType<TypeTag, Properties::ModelTraits>,
+                    GetPropType<TypeTag, Properties::LocalResidual>> flux(*gridVariables, x);
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
