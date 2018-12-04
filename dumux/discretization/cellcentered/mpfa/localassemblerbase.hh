@@ -26,20 +26,25 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_BASE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_BASE_HH
 
+#include <algorithm>
+#include <vector>
 #include <type_traits>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/reservedvector.hh>
 
-namespace Dumux
-{
+#include <dumux/common/typetraits/isvalid.hh>
+#include "localassemblerhelper.hh"
+
+namespace Dumux {
+
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Defines the general interface of the local assembler
  *        classes for the assembly of the interaction volume-local
  *        transmissibility matrix. Specializations have to be provided
  *        for the available interaction volume implementations. these
- *        should derive from this base clases.
+ *        should derive from this base class.
  *
  * \tparam P The problem type
  * \tparam EG The element finite volume geometry
@@ -47,37 +52,13 @@ namespace Dumux
  */
 template< class P, class EG, class EV >
 class InteractionVolumeAssemblerBase
+: public InteractionVolumeAssemblerHelper
 {
     using Problem = P;
     using FVElementGeometry = EG;
     using ElementVolumeVariables = EV;
 
-    typedef std::true_type yes;
-    typedef std::false_type no;
-
-    //! Determines whether or not a matrix has a resize() function
-    template<typename M>
-    struct matrix_has_resize_method
-    {
-    private:
-        // resize function is called with two indices for matrices
-        template<typename U> static auto test(int) -> decltype(std::declval<U>().resize(0, 0), yes());
-        template<typename> static no test(...);
-    public:
-        static constexpr bool value = std::is_same<decltype(test<M>(0)), yes>::value;
-    };
-
-    //! determines whether or not a vector has a resize() function
-    template<typename V>
-    struct vector_has_resize_method
-    {
-    private:
-        // resize function is called with one index for vectors
-        template<typename U> static auto test(int) -> decltype(std::declval<U>().resize(0), yes());
-        template<typename> static no test(...);
-    public:
-        static constexpr bool value = std::is_same<decltype(test<V>(0)), yes>::value;
-    };
+    using Helper = InteractionVolumeAssemblerHelper;
 
  public:
     /*!
@@ -129,7 +110,7 @@ class InteractionVolumeAssemblerBase
      * \tparam GetU Lambda to obtain the cell unknowns from grid indices
      *
      * \param handle The data handle in which the vector is stored
-     * \param iv The mpfa-o interaction volume
+     * \param iv The interaction volume
      * \param getU Lambda to obtain the desired cell/Dirichlet value from vol vars
      */
     template< class DataHandle, class IV, class GetU >
@@ -143,7 +124,7 @@ class InteractionVolumeAssemblerBase
      *        interaction volume.
      *
      * \param handle The data handle in which the vector is stored
-     * \param iv The mpfa-o interaction volume
+     * \param iv The interaction volume
      * \param getRho Lambda to obtain the density from volume variables
      */
     template< class DataHandle, class IV, class GetRho >
@@ -158,10 +139,10 @@ class InteractionVolumeAssemblerBase
         auto& g = handle.g();
         auto& deltaG = handle.deltaG();
         auto& outsideG = handle.gOutside();
-        resizeVector_(g, iv.numFaces());
-        resizeVector_(deltaG, iv.numUnknowns());
+        Helper::resizeVector(g, iv.numFaces());
+        Helper::resizeVector(deltaG, iv.numUnknowns());
         if (isSurfaceGrid)
-            resizeVector_(outsideG, iv.numFaces());
+            Helper::resizeVector(outsideG, iv.numFaces());
 
         //! For each face, we...
         //! - arithmetically average the phase densities
@@ -194,7 +175,7 @@ class InteractionVolumeAssemblerBase
             Scalar rho;
 
             if (isSurfaceGrid)
-                resizeVector_(outsideG[faceIdx], numOutsideFaces);
+                Helper::resizeVector(outsideG[faceIdx], numOutsideFaces);
 
             if (!curLocalScvf.isDirichlet())
             {
@@ -250,7 +231,7 @@ class InteractionVolumeAssemblerBase
         {
             using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
             FaceVector AG;
-            resizeVector_(AG, iv.numUnknowns());
+            Helper::resizeVector(AG, iv.numUnknowns());
             handle.A().mv(deltaG, AG);
 
             // compute gravitational accelerations
@@ -277,39 +258,6 @@ class InteractionVolumeAssemblerBase
             }
         }
     }
-
-protected:
-    //! resizes a matrix to the given sizes (specialization for dynamic matrix type)
-    template< class Matrix,
-              class size_type,
-              std::enable_if_t<matrix_has_resize_method<Matrix>::value, int> = 0 >
-    void resizeMatrix_(Matrix& M, size_type rows, size_type cols)
-    {
-        M.resize(rows, cols);
-    }
-
-    //! resizes a matrix to the given sizes (specialization for static matrix type - do nothing)
-    template< class Matrix,
-              class size_type,
-              std::enable_if_t<!matrix_has_resize_method<Matrix>::value, int> = 0 >
-    void resizeMatrix_(Matrix& M, size_type rows, size_type cols)
-    {}
-
-    //! resizes a vector to the given size (specialization for dynamic matrix type)
-    template< class Vector,
-              class size_type,
-              std::enable_if_t<vector_has_resize_method<Vector>::value, int> = 0 >
-    void resizeVector_(Vector& v, size_type size)
-    {
-        v.resize(size);
-    }
-
-    //! resizes a vector to the given size (specialization for static vector type - do nothing)
-    template< class Vector,
-              class size_type,
-              std::enable_if_t<!vector_has_resize_method<Vector>::value, int> = 0 >
-    void resizeVector_(Vector& v, size_type rows)
-    {}
 
 private:
     // pointers to the data required for assembly

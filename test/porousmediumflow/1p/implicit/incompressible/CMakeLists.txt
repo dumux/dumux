@@ -41,7 +41,9 @@ dune_add_test(NAME test_1p_incompressible_mpfa
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_mpfa-00001.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_mpfa_anadiff params.input -Problem.Name test_1p_incompressible_mpfa")
+                                ${CMAKE_SOURCE_DIR}/test/references/test_1p_mpfa_scvvelocities-reference.vtp
+                                ${CMAKE_CURRENT_BINARY_DIR}/mpfa_scv_velocities.vtp
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_mpfa_anadiff params.input -Problem.Name test_1p_incompressible_mpfa -IO.WriteMpfaVelocities true")
 
 # using box and analytical Jacobian
 dune_add_test(NAME test_1p_incompressible_box

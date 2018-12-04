@@ -32,7 +32,6 @@
 #include <dune/common/reservedvector.hh>
 
 #include <dumux/common/math.hh>
-
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 #include <dumux/discretization/cellcentered/mpfa/localfacedata.hh>
@@ -41,6 +40,7 @@
 #include "localassembler.hh"
 #include "localsubcontrolentities.hh"
 #include "interactionvolumeindexset.hh"
+#include "scvgeometryhelper.hh"
 
 namespace Dumux
 {
@@ -211,22 +211,12 @@ public:
                 {
                     // loop over scvfs in outside scv until we find the one coinciding with current scvf
                     const auto outsideLocalScvIdx = neighborScvIndicesLocal[i];
-                    for (int coord = 0; coord < GridView::dimension; ++coord)
-                    {
-                        if (indexSet.localScvfIndex(outsideLocalScvIdx, coord) == faceIdxLocal)
-                        {
-                            const auto globalScvfIdx = indexSet.nodalIndexSet().gridScvfIndex(outsideLocalScvIdx, coord);
-                            const auto& flipScvf = fvGeometry.scvf(globalScvfIdx);
-                            localFaceData_.emplace_back(faceIdxLocal,       // iv-local scvf idx
-                                                        outsideLocalScvIdx, // iv-local scv index
-                                                        i-1,                // scvf-local index in outside faces
-                                                        flipScvf.index());  // global scvf index
-                            break; // go to next outside face
-                        }
-                    }
-
-                    // make sure we found it
-                    assert(localFaceData_.back().ivLocalInsideScvIndex() == outsideLocalScvIdx);
+                    const auto& flipScvfIndex = fvGeometry.fvGridGeometry().flipScvfIndexSet()[scvf.index()][i-1];
+                    const auto& flipScvf = fvGeometry.scvf(flipScvfIndex);
+                    localFaceData_.emplace_back(faceIdxLocal,       // iv-local scvf idx
+                                                outsideLocalScvIdx, // iv-local scv index
+                                                i-1,                // scvf-local index in outside faces
+                                                flipScvf.index());  // global scvf index
                 }
             }
         }
@@ -271,6 +261,11 @@ public:
     //! returns a reference to the information container on Dirichlet BCs within this iv
     const std::vector<DirichletData>& dirichletData() const
     { return dirichletData_; }
+
+    //! returns the geometry of the i-th local scv
+    template< class FVElementGeometry >
+    auto getScvGeometry(LocalIndexType ivLocalScvIdx, const FVElementGeometry& fvGeometry) const
+    { return CCMpfaOScvGeometryHelper<LocalScvType>::computeScvGeometry(ivLocalScvIdx, *this, fvGeometry); }
 
     //! returns the number of interaction volumes living around a vertex
     template< class NI >

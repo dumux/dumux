@@ -30,6 +30,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassemblerbase.hh>
+#include <dumux/discretization/cellcentered/mpfa/localassemblerhelper.hh>
 #include <dumux/discretization/cellcentered/mpfa/computetransmissibility.hh>
 
 namespace Dumux
@@ -49,6 +50,7 @@ class MpfaOInteractionVolumeAssembler
 : public InteractionVolumeAssemblerBase< P, EG, EV >
 {
     using ParentType = InteractionVolumeAssemblerBase< P, EG, EV >;
+    using Helper = InteractionVolumeAssemblerHelper;
 
 public:
     //! Pull up constructor of the base class
@@ -99,7 +101,7 @@ public:
                     tijOut[fIdx].resize(numOutsideFaces);
                     std::for_each(tijOut[fIdx].begin(),
                                   tijOut[fIdx].end(),
-                                  [&](auto& v) { this->resizeVector_(v, iv.numKnowns()); });
+                                  [&](auto& v) { Helper::resizeVector(v, iv.numKnowns()); });
                 }
 
                 // compute outside transmissibilities
@@ -155,7 +157,7 @@ public:
     void assembleU(DataHandle& handle, const IV& iv, const GetU& getU)
     {
         auto& u = handle.uj();
-        this->resizeVector_(u, iv.numKnowns());
+        Helper::resizeVector(u, iv.numKnowns());
 
         // put the cell unknowns first, then Dirichlet values
         typename IV::Traits::IndexSet::LocalIndexType i = 0;
@@ -202,14 +204,14 @@ private:
         static constexpr int dimWorld = IV::Traits::GridView::dimensionworld;
 
         // resize omegas
-        this->resizeVector_(wijk, iv.numFaces());
+        Helper::resizeVector(wijk, iv.numFaces());
 
         // if only Dirichlet faces are present in the iv,
         // the matrices A, B & C are undefined and D = T
         if (iv.numUnknowns() == 0)
         {
             // resize & reset D matrix
-            this->resizeMatrix_(D, iv.numFaces(), iv.numKnowns()); D = 0.0;
+            Helper::resizeMatrix(D, iv.numFaces(), iv.numKnowns()); D = 0.0;
 
             // Loop over all the faces, in this case these are all dirichlet boundaries
             for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
@@ -226,7 +228,7 @@ private:
                 const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
 
                 // the omega factors of the "positive" sub volume
-                this->resizeVector_(wijk[faceIdx], /*no outside scvs present*/1);
+                Helper::resizeVector(wijk[faceIdx], /*no outside scvs present*/1);
                 wijk[faceIdx][0] = computeMpfaTransmissibility(posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
 
                 const auto posScvLocalDofIdx = posLocalScv.localDofIndex();
@@ -242,10 +244,10 @@ private:
         else
         {
             // resize & reset matrices
-            this->resizeMatrix_(A, iv.numUnknowns(), iv.numUnknowns()); A = 0.0;
-            this->resizeMatrix_(B, iv.numUnknowns(), iv.numKnowns());   B = 0.0;
-            this->resizeMatrix_(C, iv.numFaces(), iv.numUnknowns());    C = 0.0;
-            this->resizeMatrix_(D, iv.numFaces(), iv.numKnowns());      D = 0.0;
+            Helper::resizeMatrix(A, iv.numUnknowns(), iv.numUnknowns()); A = 0.0;
+            Helper::resizeMatrix(B, iv.numUnknowns(), iv.numKnowns());   B = 0.0;
+            Helper::resizeMatrix(C, iv.numFaces(), iv.numUnknowns());    C = 0.0;
+            Helper::resizeMatrix(D, iv.numFaces(), iv.numKnowns());      D = 0.0;
 
             for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
             {
@@ -263,7 +265,7 @@ private:
                 const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
 
                 // the omega factors of the "positive" sub volume
-                this->resizeVector_(wijk[faceIdx], neighborScvIndices.size());
+                Helper::resizeVector(wijk[faceIdx], neighborScvIndices.size());
                 wijk[faceIdx][0] = computeMpfaTransmissibility(posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
 
                 // go over the coordinate directions in the positive sub volume

@@ -112,6 +112,36 @@ int main() try
     if (!Dune::FloatCmp::eq(reference, Dumux::vtmv(v1_dyn, K_dyn, v2_dyn), 1e-6))
         DUNE_THROW(Dune::Exception, "vtmv-result does not match reference");
 
+    //////////////////////////////////////////////////////////////////
+    ///// Dumux::mv ///////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
+
+    const Dune::FieldVector<double, 3> fieldVecRef({3.0, 6.0, 9.0});
+    const Dune::DynamicVector<double> dynVecRef({3.0, 6.0, 9.0});
+
+    //! Test mv with FieldMatrix and FieldVector
+    if (!Dune::FloatCmp::eq<Dune::FieldVector<double, 3>, Dune::FloatCmp::CmpStyle::absolute>(fieldVecRef, Dumux::mv(K, v1), 1e-6))
+        DUNE_THROW(Dune::Exception, "mv-result does not match reference");
+
+    //! Test mv with Scalar and FieldVector
+    if (!Dune::FloatCmp::eq<Dune::FieldVector<double, 3>, Dune::FloatCmp::CmpStyle::absolute>(fieldVecRef, Dumux::mv(k, v1), 1e-6))
+        DUNE_THROW(Dune::Exception, "mv-result does not match reference");
+
+    //! Test mv with FieldMatrix and DynamicVector (use cast to FieldVector, there is no specialization of eq() for DynamicVector)
+    if (!Dune::FloatCmp::eq<Dune::FieldVector<double, 3>, Dune::FloatCmp::CmpStyle::absolute>(dynVecRef, Dumux::mv(K, v1_dyn), 1e-6))
+        DUNE_THROW(Dune::Exception, "mv-result does not match reference");
+
+    //! Test mv with Scalar and DynamicVector (use cast to FieldVector, there is no specialization of eq() for DynamicVector)
+    if (!Dune::FloatCmp::eq<Dune::FieldVector<double, 3>, Dune::FloatCmp::CmpStyle::absolute>(dynVecRef, Dumux::mv(k, v1_dyn), 1e-6))
+        DUNE_THROW(Dune::Exception, "mv-result does not match reference");
+
+    //! Test mv with DynamicMatrix and DynamicVector (use cast to FieldVector, there is no specialization of eq() for DynamicVector)
+    if (!Dune::FloatCmp::eq<Dune::FieldVector<double, 3>, Dune::FloatCmp::CmpStyle::absolute>(dynVecRef, Dumux::mv(K_dyn, v1_dyn), 1e-6))
+        DUNE_THROW(Dune::Exception, "mv-result does not match reference");
+
+    //! Test mv with DynamicMatrix and FieldVector
+    if (!Dune::FloatCmp::eq<Dune::FieldVector<double, 3>, Dune::FloatCmp::CmpStyle::absolute>(fieldVecRef, Dumux::mv(K_dyn, v1), 1e-6))
+        DUNE_THROW(Dune::Exception, "mv-result does not match reference");
 
     //////////////////////////////////////////////////////////////////
     ///// Dumux::trace ///////////////////////////////////////////////

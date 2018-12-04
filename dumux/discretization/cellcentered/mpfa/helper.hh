@@ -176,14 +176,14 @@ public:
      * \brief Calculates the area of an scvf.
      * \param scvfCorners Container with the corners of the scvf
      */
-    static CoordScalar getScvfArea(const ScvfCornerVector& scvfCorners)
+    static CoordScalar computeScvfArea(const ScvfCornerVector& scvfCorners)
     { return (scvfCorners[1]-scvfCorners[0]).two_norm(); }
 
     /*!
      * \brief Calculates the number of scvfs in a given element geometry type.
      * \param gt The element geometry type
      */
-    static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
+    static constexpr std::size_t getNumLocalScvfs(const Dune::GeometryType& gt)
     {
         if (gt == Dune::GeometryTypes::triangle)
             return 6;
@@ -468,7 +468,7 @@ public:
      * \brief Calculates the area of an scvf.
      * \param scvfCorners Container with the corners of the scvf
      */
-    static CoordScalar getScvfArea(const ScvfCornerVector& scvfCorners)
+    static CoordScalar computeScvfArea(const ScvfCornerVector& scvfCorners)
     {
         // after Wolfram alpha quadrilateral area
         return 0.5*Dumux::crossProduct(scvfCorners[3]-scvfCorners[0], scvfCorners[2]-scvfCorners[1]).two_norm();
@@ -479,7 +479,7 @@ public:
      *
      * \param gt The element geometry type
      */
-    static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
+    static constexpr std::size_t getNumLocalScvfs(const Dune::GeometryType& gt)
     {
         if (gt == Dune::GeometryTypes::tetrahedron)
             return 12;
