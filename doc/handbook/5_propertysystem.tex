@@ -4,28 +4,19 @@ A high level overview over the property system's design and principle ideas
 are given, then follows a reference and a self-contained example.
 
 \subsection{Motivation and features}
-The \Dumux property system was designed as an attempt to mitigate the
-problems of traits classes. It can be seen as a traits system
-which allows easy inheritance and any acyclic dependency of parameter
-definitions. Just like traits, the \Dumux property system is a compile
-time mechanism, thus there is no run-time performance penalty associated
-with it.
+The \Dumux property system is a traits system
+which allows easy inheritance.
 
 In the context of the \Dumux property system, a property is an arbitrary
-class body which may contain type definitions, values and methods. Each
-property has a so-called \emph{property tag} which labels its name.
+class body which may contain type definitions, values and methods.
 
 Just like normal classes, properties can be arranged in hierarchies. In
 the context of the \Dumux property system, nodes of the inheritance
 hierarchy are called \emph{type tags}.
 
-It also supports \emph{property nesting} and
-\emph{introspection}. Property nesting means that the definition of
+It also supports \emph{property nesting}. Property nesting means that the definition of
 a property can depend on the value of other properties which may be
-defined for arbitrary levels of the inheritance hierarchy. The term
-introspection denotes the ability to generate diagnostic messages
-which can be used to find out where a certain property was defined and
-how it was inherited.
+defined for arbitrary levels of the inheritance hierarchy.
 
 \subsection{How-to}
 All source files which use the property system should include
@@ -35,14 +26,14 @@ property tags as well as defining properties must be done inside the
 namespace \texttt{Dumux::Properties}.
 
 \subsubsection{Defining Type Tags}
-New nodes in the type tag hierarchy can be defined using
+New nodes in the type tag hierarchy can be defined in the \texttt{TTag} namespace using
 \begin{lstlisting}[style=DumuxCode]
 // Create new type tags
 namespace TTag {
-struct NewTypeTagName { using InheritsFrom = std::tuple<..., BaseTagName2, BaseTagName1>; };
+struct NewTypeTagName { using InheritsFrom = std::tuple<BaseTagName1, BaseTagName2, ...>; };
 } // end namespace TTag
 \end{lstlisting}
-where the \texttt{InheritsFrom} part is optional. To avoid
+where the \texttt{InheritsFrom} alias is optional. To avoid
 inconsistencies in the hierarchy, each type tag may be defined only
 once for a program.
 
@@ -55,17 +46,17 @@ namespace TTag {
 struct MyBaseTypeTag1 {};
 struct MyBaseTypeTag2 {};
 
-struct MyDerivedTypeTag { using InheritsFrom = std::tuple<MyBaseTypeTag2, MyBaseTypeTag1>; };
+struct MyDerivedTypeTag { using InheritsFrom = std::tuple<MyBaseTypeTag1, MyBaseTypeTag2>; };
 } // end namespace TTag
 }}
 \end{lstlisting}
 
-\subsubsection{Declaring Property Tags}
-New property tags are defined using:
-using
+\subsubsection{Defining new Property Tags}
+New property tags are defined using
+
 \begin{lstlisting}[style=DumuxCode]
-template<class TypeTag>
-struct NewPropTagName<TypeTag, TTag::MyTypeTag> { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct NewPropTagName { using type = UndefinedProperty; };
 \end{lstlisting}
 
 \vskip1ex\noindent
@@ -73,9 +64,17 @@ Example:
 \begin{lstlisting}[style=DumuxCode]
 namespace Dumux {
 namespace Properties {
-template<class TypeTag>
-struct MyPropertyTag<TypeTag, TTag::MyTypeTag> { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct MyPropertyTag { using type = UndefinedProperty; };
 }}
+\end{lstlisting}
+
+If you need to forward declare a property use
+
+\begin{lstlisting}[style=DumuxCode]
+// forward declaration
+template<class TypeTag, class MyTypeTag>
+struct NewPropTagName;
 \end{lstlisting}
 
 \subsubsection{Defining Properties}
@@ -88,8 +87,11 @@ struct PropertyTagName<TypeTag, TTag::TypeTagName>
   // arbitrary body of a struct
 };
 \end{lstlisting}
-For each program, a property itself can be declared at most once,
-although properties may be overwritten for derived type tags.
+
+This means a property is defined for a specific type tag node \texttt{TTag::TypeTagName}
+by providing a partial template specialization of \texttt{PropertyTagName}.
+The body typically contains either the alias \texttt{type}, or a data member \texttt{value}.
+However, you can of course write in the body whatever you like.
 
 \begin{lstlisting}[style=DumuxCode]
 template<class TypeTag>
@@ -113,21 +115,20 @@ namespace TTag {
 struct MyTypeTag {};
 }
 
-// Declare the properties
-template<class TypeTag, class MyTypeTag> struct MyCustomProperty;
+// Define some properties
+template<class TypeTag, class MyTypeTag> struct MyCustomProperty { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag> struct MyType { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag> struct MyBoolValue { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag> struct MyIntValue { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag> struct MyScalarValue { using type = UndefinedProperty; };
 
-template<class TypeTag, class MyTypeTag> struct MyType;
-
-template<class TypeTag, class MyTypeTag> struct MyBoolValue;
-
-template<class TypeTag, class MyTypeTag> struct MyIntValue;
-
-template<class TypeTag, class MyTypeTag> struct MyScalarValue;
-
-// Set the properties
+// Set the properties for the new type tag
 template<class TypeTag>
 struct MyCustomProperty<TypeTag, TTag::MyTypeTag>
-{static void print() { std::cout << "Hello, World!\n"; }};
+{
+    static void print()
+    { std::cout << "Hello, World!\n"; }
+};
 
 template<class TypeTag>
 struct MyType<TypeTag, TTag::MyTypeTag> { using type = unsigned int; };
@@ -144,33 +145,38 @@ struct MyScalarValue<TypeTag, TTag::MyTypeTag> { static constexpr double value =
 \end{lstlisting}
 
 \subsubsection{Retrieving Property Values}
-The type or the value of a property can be retrieved using
+The type of a property can be retrieved using
 \begin{lstlisting}[style=DumuxCode]
-using MyType = GetPropType<TypeTag, Properties::PropertyTag>
-auto myValue = getPropValue<TypeTag, Properties::PropertyTag>()
+using Prop = GetProp<TypeTag, Properties::PropertyTag>;
 \end{lstlisting}
 
+There is a helper struct and a helper function to retrieve the \texttt{type} and \texttt{value}
+members of a property
+
+\begin{lstlisting}[style=DumuxCode]
+using PropType = GetPropType<TypeTag, Properties::PropertyTag>;
+constexpr auto propValue = getPropValue<TypeTag, Properties::PropertyTag>();
+\end{lstlisting}
 
 \vskip1ex\noindent
 Example:\nolinebreak
 \begin{lstlisting}[style=DumuxCode]
 template <TypeTag>
 class MyClass {
-  // retrieve the ::type attribute of the 'NumEq' property
-  enum { numEq = GetPropType<Properties::ModelTraits>::numEq() };
+    // retrieve the ::value attribute of the 'UseMoles' property
+    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
+    static constexpr bool useMoles2 = GetProp<TypeTag, Properties::UseMoles>::value; // equivalent
 
-  // retrieve the ::value attribute of the 'UseMoles' property
-  static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
-
-  // retrieve the ::type attribute of the 'Scalar' property
-  using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    // retrieve the ::type attribute of the 'Scalar' property
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Scalar2 = GetProp<TypeTag, Properties::Scalar>::type; // equivalent
 };
 \end{lstlisting}
 
 \subsubsection{Nesting Property Definitions}
 Inside property definitions there is access to all other properties
 which are defined somewhere on the type tag hierarchy. The node for
-which the current property is requested is available via the keyword
+which the current property is requested is available via the template argument
 \texttt{TypeTag}. Inside property class bodies \texttt{GetPropType} can be used to
 retrieve other properties and create aliases.
 
@@ -180,8 +186,8 @@ Example:
 template<class TypeTag>
 struct Vector<TypeTag, TTag::MyModelTypeTag>
 {
-using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-using type = std::vector<Scalar>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = std::vector<Scalar>;
 };
 \end{lstlisting}
 
@@ -256,7 +262,7 @@ struct HummerH1 { using InheritsFrom = std::tuple<Tank, Pickup>; };
 
 Figure \ref{fig:car-propertynames} lists a few property names which
 make sense for at least one of the nodes of Figure
-\ref{fig:car-hierarchy}. These property names can be declared as
+\ref{fig:car-hierarchy}. These property names can be defined as
 follows:
 \begin{lstlisting}[name=propsyscars,style=DumuxCode]
 template<class TypeTag, class MyTypeTag>
@@ -364,10 +370,3 @@ will yield the following output:
 $ top speed of sedan: 210
 $ top speed of truck: 100
 \end{lstlisting}
-
-\subsection{Property Values}
-To get the value of a property use:
-\begin{description}
-\item[\texttt{{\small getPropValue:}}]
-Always returns the \emph{compile-time} specified value of the property.
-\end{description}
