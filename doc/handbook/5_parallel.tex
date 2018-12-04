@@ -8,7 +8,7 @@ computing clusters.
 There are different concepts and methods for parallel programming, they are
 often grouped in \textit{shared-memory} and \textit{distributed-memory}  
 apporaches. The parallelization in \Dumux is based on the 
-\textit{Message Passing Interface} (MPI), which is usually called MPI parallelization. 
+\textit{Message Passing Interface} (MPI), which is usually called MPI parallelization (distributed-memory approach). 
 It is the MPI parallelization that allows the user to run
 \Dumux applications in parallel on a desktop computer, the users laptop or 
 large high performance clusters. However, the chosen \Dumux 
@@ -32,12 +32,12 @@ must be installed on the system and all \Dune modules and \Dumux must be recompi
 \subsection{Prepare an Parallel Application}
 Not all parts of \Dumux can be used in parallel. One example are the linear solvers
 of the sequential backend. However, with the AMG backend \Dumux provides 
-a parallel solver backend based on Algebraic MultiGrid (AMG) that can be used in
+a parallel solver backend based on Algebraic Multi Grid (AMG) that can be used in
 parallel. 
 If an application uses not allready the AMG backend, the 
 backend must be switched by the user to run the application also in parallel.
 
-First, the header files for the parallel AMGBackend must be included
+First, the header files for the parallel AMG backend must be included.
 
 \begin{lstlisting}[style=DumuxCode]
 #include <dumux/linear/amgbackend.hh>
@@ -65,7 +65,7 @@ The parallel simulation is started with the \textbf{mpirun} command.
 mpirun -np <n_cores> <executable_name>
 \end{lstlisting}
 
-\textit{np} sets the number of cores {n\_cores} that should be used for the 
+\textit{np} sets the number of cores (\texttt{n\_cores}) that should be used for the 
 computation. On a cluster you usually have to use a queuing system (e.g. slurm) to 
 submit a job. 
 
