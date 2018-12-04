@@ -26,6 +26,10 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_BASE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_BASE_HH
 
+#include <algorithm>
+#include <vector>
+#include <type_traits>
+
 #include <dune/common/exceptions.hh>
 #include <dune/common/reservedvector.hh>
 
