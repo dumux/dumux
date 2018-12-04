@@ -21,13 +21,13 @@ set(TEX_INPUTS
   installDumux.sh)
 
 set(TEX_IMAGES
-  PNG/box_disc.png
-  PNG/cc_disc.png
-  PNG/dumux_strucutre_flowchart_horizontal_explained.png
-  PNG/dunedesign.png
+  png/box_disc.png
+  png/cc_disc.png
+  png/dumux_strucutre_flowchart_horizontal_explained.png
+  png/dunedesign.png
   ../logo/dumux_logo_hires_whitebg.png
-  PNG/dalton1.png
-  PNG/dalton2.png)
+  png/dalton1.png
+  png/dalton2.png)
 
 dune_add_latex_document(0_dumux-handbook.tex
   BIBFILES dumux-handbook.bib
