@@ -35,7 +35,10 @@ struct NewTypeTagName { using InheritsFrom = std::tuple<BaseTagName1, BaseTagNam
 \end{lstlisting}
 where the \texttt{InheritsFrom} alias is optional. To avoid
 inconsistencies in the hierarchy, each type tag may be defined only
-once for a program.
+once for a program. If you call \texttt{GetProp} the property system will first look for the properties defined in \texttt{BaseTagName1} in the \texttt{InheritsFrom} list.
+If a defined property is found this property is returned. If no defined property is found the search will continue in the ancestors of \texttt{BaseTagName1}.
+If again no defined property is found the search will continue in the second \texttt{BaseTagName2} in the list, and so on.
+If no defined property is found at all, a compiler error is triggered.
 
 \vskip1ex\noindent
 Example:
@@ -352,7 +355,7 @@ struct Payload<TypeTag, TTag::Pickup> { static constexpr int value = 5; };
 
 template<class TypeTag>
 struct TopSpeed<TypeTag, TTag::HummerH1>
-{static constexpr int value = getPropValue<TypeTag, TTag::Pickup::TopSpeed<TypeTag>>();};
+{ static constexpr int value = getPropValue<TypeTag, TTag::Pickup::TopSpeed<TypeTag>>(); };
 \end{lstlisting}
 
 \noindent
