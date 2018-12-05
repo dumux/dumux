@@ -128,8 +128,9 @@ int main(int argc, char** argv) try
     vtkWriter.write(0.0);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
+    timeLoop->setPeriodicCheckPoint(getParam<Scalar>("TimeLoop.PeriodicCheckPoint"));
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
@@ -160,7 +161,8 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        vtkWriter.write(timeLoop->time());
+        if (timeLoop->isCheckPoint() || timeLoop->finished())
+            vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
