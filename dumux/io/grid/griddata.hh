@@ -202,7 +202,7 @@ public:
     template<bool ug = Detail::isUG<Grid>::value, typename std::enable_if_t<ug, int> = 0>
     DataHandle createGmshDataHandle()
     {
-        return DataHandle(*gmshGrid_, *gridFactory_, elementMarkers_);
+        return DataHandle(*gmshGrid_, *gridFactory_, elementMarkers_, boundaryMarkers_);
     }
 
 private:

@@ -138,13 +138,29 @@ struct GmshGridDataHandle<Dune::UGGrid<dimgrid>, GridFactory, Data>
     using Grid = Dune::UGGrid<dimgrid>;
     using GridView = typename Grid::LevelGridView;
 
-    GmshGridDataHandle(const Grid& grid, const GridFactory& gridFactory, Data& elementMarkers)
+    GmshGridDataHandle(const Grid& grid, const GridFactory& gridFactory, Data& elementMarkers, Data& boundaryMarkers)
     : gridView_(grid.levelGridView(0))
     , idSet_(grid.localIdSet())
     , elementMarkers_(elementMarkers)
+    , boundaryMarkers_(boundaryMarkers)
     {
         for (const auto& element : elements(gridView_, Dune::Partitions::interior))
            std::swap(elementMarkers_[gridFactory.insertionIndex(element)], data_[idSet_.id(element)]);
+
+        // Depending on the Dune version, the boundary markers are present on
+        // all processes (<= 2.6) or on the root process only (>= 2.7). Try to
+        // handle this in a flexible way: determine if the minimum size over
+        // all processes of the boundary markers vector is zero. If yes, assume
+        // that the root process contains all markers and broadcast them.
+        auto bmSizeMin = boundaryMarkers_.size();
+        Dune::MPIHelper::getCollectiveCommunication().min(&bmSizeMin, 1);
+        if (bmSizeMin == 0)
+        {
+            auto bmSize = boundaryMarkers_.size();
+            Dune::MPIHelper::getCollectiveCommunication().broadcast(&bmSize, 1, 0);
+            boundaryMarkers_.resize(bmSize);
+            Dune::MPIHelper::getCollectiveCommunication().broadcast(&boundaryMarkers_.front(), bmSize, 0);
+        }
     }
 
     ~GmshGridDataHandle()
@@ -182,6 +198,7 @@ private:
     const GridView gridView_;
     const IdSet &idSet_;
     Data& elementMarkers_;
+    Data& boundaryMarkers_;
     mutable std::map< typename IdSet::IdType, typename Data::value_type> data_;
 };
 
