@@ -94,9 +94,10 @@ public:
         // calculate characteristic properties of the turbulent flow
         elementIdx_ = problem.fvGridGeometry().elementMapper().index(element);
         wallElementIdx_ = problem.wallElementIdx_[elementIdx_];
+        profileIdx_ = problem.wallProfileIdx_[elementIdx_];
         wallDistance_ = problem.wallDistance_[elementIdx_];
         velocity_ = problem.velocity_[elementIdx_];
-        velocityMaximum_ = problem.velocityMaximum_[wallElementIdx_];
+        velocityMaximum_ = problem.velocityMaximum_[profileIdx_];
         velocityGradients_ = problem.velocityGradients_[elementIdx_];
         const auto flowNormalAxis = problem.flowNormalAxis_[elementIdx_];
         const auto wallNormalAxis = problem.wallNormalAxis_[elementIdx_];
@@ -260,10 +261,12 @@ protected:
     { return dynamicEddyViscosity_  = value; }
 
     DimVector velocity_;
+    DimVector velocityMinimum_;
     DimVector velocityMaximum_;
     DimMatrix velocityGradients_;
     std::size_t elementIdx_;
     std::size_t wallElementIdx_;
+    std::size_t profileIdx_;
     Scalar wallDistance_;
     Scalar karmanConstant_;
     Scalar uStar_;

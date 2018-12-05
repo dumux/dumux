@@ -51,6 +51,7 @@ class ZeroEqProblem : public RANSProblem<TypeTag>
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
     using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Element = typename GridView::template Codim<0>::Entity;
     using Grid = typename GridView::Grid;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
@@ -79,6 +80,12 @@ public:
     : ParentType(fvGridGeometry, paramGroup)
     {
         eddyViscosityModel_ = getParamFromGroup<std::string>(paramGroup, "RANS.EddyViscosityModel", "vanDriest");
+        kinematicEddyViscosityInner.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        kinematicEddyViscosityOuter.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        kinematicEddyViscosityDifference.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        switchingPosition.resize(this->fvGridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
+        storedFMax.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        storedYFMax.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
     }
 
     /*!
@@ -91,6 +98,7 @@ public:
         // update size and initial values of the global vectors
         kinematicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
         additionalRoughnessLength_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+
     }
 
     /*!
@@ -161,114 +169,151 @@ public:
      */
     void updateBaldwinLomaxProperties()
     {
-        std::vector<Scalar> kinematicEddyViscosityInner(this->fvGridGeometry().elementMapper().size(), 0.0);
-        std::vector<Scalar> kinematicEddyViscosityOuter(this->fvGridGeometry().elementMapper().size(), 0.0);
-        std::vector<Scalar> kinematicEddyViscosityDifference(this->fvGridGeometry().elementMapper().size(), 0.0);
-        std::vector<Scalar> switchingPosition(this->fvGridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            calcInnerViscosity(element);
+            calcOuterViscosity(element);
+            findSwitchingPosition(element);
+            assignKinematicEddyViscocity(element);
+        }
+    }
 
+    /*!
+     * \brief Calcualates the inner eddy viscosity.
+     *
+     *  The inner velocity is calcualted as the product of:
+     *  The mixing length squared (mixingLength)
+     *  and the magnitude of the vorticity (omegaAbs)
+     *
+     * \param element An element which contains part of the control volume
+     */
+    void calcInnerViscosity(const Element& element)
+    {
         using std::abs;
         using std::exp;
-        using std::min;
-        using std::pow;
         using std::sqrt;
-        const Scalar aPlus = 26.0;
-        const Scalar k = 0.0168;
-        const Scalar cCP = 1.6;
-        const Scalar cWake = 0.25;
-        const Scalar cKleb = 0.3;
+        unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+        unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
+        Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
+        unsigned int flowNormalAxis = this->flowNormalAxis_[elementIdx];
+        unsigned int wallNormalAxis = this->wallNormalAxis_[elementIdx];
+//        Scalar omegaAbs = sqrt(2.0*this->vorticityTensorScalarProduct_[elementIdx];
 
-        std::vector<Scalar> storedFMax;
-        std::vector<Scalar> storedYFMax;
-        storedFMax.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedYFMax.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        Scalar omegaAbs = abs(this->velocityGradients_[elementIdx][flowNormalAxis][wallNormalAxis]
+                              - this->velocityGradients_[elementIdx][wallNormalAxis][flowNormalAxis]);
+        Scalar uStar = sqrt(this->kinematicViscosity_[wallElementIdx]
+                            * abs(this->velocityGradients_[wallElementIdx][flowNormalAxis][wallNormalAxis]));
+        Scalar yPlus = wallDistance * uStar / this->kinematicViscosity_[elementIdx];
+        Scalar mixingLength = this->karmanConstant() * wallDistance * (1.0 - exp(-yPlus / aPlus_));
+        kinematicEddyViscosityInner[elementIdx] = mixingLength * mixingLength * omegaAbs;
 
-        // (1) calculate inner viscosity and Klebanoff function
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        Scalar f = wallDistance * omegaAbs * (1.0 - exp(-yPlus / aPlus_));
+        if (f > storedFMax[wallElementIdx])
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
-            Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
-            unsigned int flowNormalAxis = this->flowNormalAxis_[elementIdx];
-            unsigned int wallNormalAxis = this->wallNormalAxis_[elementIdx];
-
-            Scalar omegaAbs = abs(this->velocityGradients_[elementIdx][flowNormalAxis][wallNormalAxis]
-                                  - this->velocityGradients_[elementIdx][wallNormalAxis][flowNormalAxis]);
-            Scalar uStar = sqrt(this->kinematicViscosity_[wallElementIdx]
-                                * abs(this->velocityGradients_[wallElementIdx][flowNormalAxis][wallNormalAxis]));
-            Scalar yPlus = wallDistance * uStar / this->kinematicViscosity_[elementIdx];
-            Scalar mixingLength = this->karmanConstant() * wallDistance * (1.0 - exp(-yPlus / aPlus));
-            kinematicEddyViscosityInner[elementIdx] = mixingLength * mixingLength * omegaAbs;
-
-            Scalar f = wallDistance * omegaAbs * (1.0 - exp(-yPlus / aPlus));
-            if (f > storedFMax[wallElementIdx])
-            {
-                storedFMax[wallElementIdx] = f;
-                storedYFMax[wallElementIdx] = wallDistance;
-            }
+            storedFMax[wallElementIdx] = f;
+            storedYFMax[wallElementIdx] = wallDistance;
         }
 
-        // (2) calculate outer viscosity
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+    }
+
+    /*!
+     * \brief Calcualates the inner eddy viscosity.
+     *
+     *  The outer velocity is calcualted as the product of:
+     *  Constants k and cCP,
+     *  The fWake term,
+     *  and the fKleb term.
+     *
+     * \param element An element which contains part of the control volume
+     */
+    void calcOuterViscosity(const Element& element)
+    {
+        using std::min;
+        using std::sqrt;
+        using std::pow;
+        unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+        unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
+        unsigned int profileIdx = this->wallProfileIdx_[elementIdx];
+        Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
+
+        Scalar maxVelocityNorm = 0.0;
+        Scalar minVelocityNorm = 0.0;
+        for (unsigned dimIdx = 0; dimIdx < dim; ++dimIdx)
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
-            Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
-
-            Scalar maxVelocityNorm = 0.0;
-            Scalar minVelocityNorm = 0.0;
-            for (unsigned dimIdx = 0; dimIdx < dim; ++dimIdx)
-            {
-                maxVelocityNorm += this->velocityMaximum_[wallElementIdx][dimIdx]
-                                   * this->velocityMaximum_[wallElementIdx][dimIdx];
-                minVelocityNorm += this->velocityMinimum_[wallElementIdx][dimIdx]
-                                   * this->velocityMinimum_[wallElementIdx][dimIdx];
-            }
-            Scalar deltaU = sqrt(maxVelocityNorm) - sqrt(minVelocityNorm);
-            Scalar yFMax = storedYFMax[wallElementIdx];
-            Scalar fMax = storedFMax[wallElementIdx];
-            Scalar fWake = min(yFMax * fMax, cWake * yFMax * deltaU * deltaU / fMax);
-            Scalar fKleb = 1.0 / (1.0 + 5.5 * pow(cKleb * wallDistance / yFMax, 6.0));
-            kinematicEddyViscosityOuter[elementIdx] = k * cCP * fWake * fKleb;
-
-            kinematicEddyViscosityDifference[elementIdx]
-              = kinematicEddyViscosityInner[elementIdx] - kinematicEddyViscosityOuter[elementIdx];
+            maxVelocityNorm += this->velocityMaximum_[profileIdx][dimIdx]
+                               * this->velocityMaximum_[profileIdx][dimIdx];
+            minVelocityNorm += this->velocityMinimum_[profileIdx][dimIdx]
+                               * this->velocityMinimum_[profileIdx][dimIdx];
         }
+        Scalar deltaU = sqrt(maxVelocityNorm) - sqrt(minVelocityNorm);
+        Scalar yFMax = storedYFMax[wallElementIdx];
+        Scalar fMax = storedFMax[wallElementIdx];
+        Scalar fWake = min(yFMax * fMax, cWake_ * yFMax * deltaU * deltaU / fMax);
+        Scalar fKleb = 1.0 / (1.0 + 5.5 * pow(cKleb_ * wallDistance / yFMax, 6.0));
+        kinematicEddyViscosityOuter[elementIdx] = k_ * cCP_ * fWake * fKleb;
 
-        // (3) switching point
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        kinematicEddyViscosityDifference[elementIdx]
+          = kinematicEddyViscosityInner[elementIdx] - kinematicEddyViscosityOuter[elementIdx];
+    }
+
+    /*!
+     * \brief Finds the point where the viscosity switches from inner to outer.
+     *
+     *  The switching point is located at the point closest to the wall
+     *  where the inner velocity is equal to the outer velocity.
+     *
+     * \param element An element which contains part of the control volume
+     */
+    void findSwitchingPosition(const Element& element)
+    {
+        unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+        unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
+        Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
+
+        // checks if sign switches, by multiplication
+        Scalar check = kinematicEddyViscosityDifference[wallElementIdx] * kinematicEddyViscosityDifference[elementIdx];
+        if (check < 0 // means sign has switched
+            && switchingPosition[wallElementIdx] > wallDistance)
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
-            Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
-
-            // checks if sign switches, by multiplication
-            Scalar check = kinematicEddyViscosityDifference[wallElementIdx] * kinematicEddyViscosityDifference[elementIdx];
-            if (check < 0 // means sign has switched
-                && switchingPosition[wallElementIdx] > wallDistance)
-            {
-                switchingPosition[wallElementIdx] = wallDistance;
-            }
+            switchingPosition[wallElementIdx] = wallDistance;
         }
+    }
 
-        // (4) finally determine eddy viscosity
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
-        {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
-            Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
+    /*!
+     * \brief Stores the kinematic eddy viscosity.
+     *
+     *  If the element is located closer to the wall than the switching position, the inner velocity is ued.
+     *  Otherwise, the outer viscosity is used.
+     *
+     * \param element An element which contains part of the control volume
+     */
+    void assignKinematicEddyViscocity(const Element& element)
+    {
+        unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+        unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
+        Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
 
+        if (wallDistance < switchingPosition[wallElementIdx])
             kinematicEddyViscosity_[elementIdx] = kinematicEddyViscosityInner[elementIdx];
-            if (wallDistance >= switchingPosition[wallElementIdx])
-            {
-                kinematicEddyViscosity_[elementIdx] = kinematicEddyViscosityOuter[elementIdx];
-            }
-        }
+        else
+            kinematicEddyViscosity_[elementIdx] = kinematicEddyViscosityOuter[elementIdx];
     }
 
 public:
     std::string eddyViscosityModel_;
     std::vector<Scalar> kinematicEddyViscosity_;
     std::vector<Scalar> additionalRoughnessLength_;
+    std::vector<Scalar> kinematicEddyViscosityInner;
+    std::vector<Scalar> kinematicEddyViscosityOuter;
+    std::vector<Scalar> kinematicEddyViscosityDifference;
+    std::vector<Scalar> switchingPosition;
+    std::vector<Scalar> storedFMax;
+    std::vector<Scalar> storedYFMax;
+    Scalar aPlus_ = 26.0;
+    Scalar k_ = 0.0168;
+    Scalar cCP_ = 1.6;
+    Scalar cWake_ = 0.25;
+    Scalar cKleb_ = 0.3;
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)

@@ -70,6 +70,7 @@ class RANSProblem : public NavierStokesProblem<TypeTag>
     using DimVector = GlobalPosition;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
+
 public:
     /*!
      * \brief The constructor
@@ -78,43 +79,148 @@ public:
      */
     RANSProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
-    { }
+    {
+        // update size and initial values of the global vectors
+        int numElements = this->fvGridGeometry().elementMapper().size();
+        cellCenter_.resize(numElements, GlobalPosition(0.0));
+        wallElementIdx_.resize(numElements);
+        wallDistance_.resize(numElements, std::numeric_limits<Scalar>::max());
+        wallProfileIdx_.resize(numElements, 0);
+        neighborIdx_.resize(numElements);
+        velocity_.resize(numElements, DimVector(0.0));
+        velocityGradients_.resize(numElements, DimMatrix(0.0));
+        stressTensorScalarProduct_.resize(numElements, 0.0);
+        vorticityTensorScalarProduct_.resize(numElements, 0.0);
+        flowNormalAxis_.resize(numElements, 0);
+        wallNormalAxis_.resize(numElements, 1);
+        kinematicViscosity_.resize(numElements, 0.0);
+        sandGrainRoughness_.resize(numElements, 0.0);
+    }
 
     /*!
      * \brief Update the static (solution independent) relations to the walls
      *
-     * This function determines all element with a wall intersection,
-     * the wall distances and the relation to the neighboring elements.
+     * This function first stores the location of each element (storeCCPositions),
+     * then stores a list of all elements with a wall intersection (findAllWallElements),
+     * then stores the distance from the wall to the element center for each element (storeWallInformation),
+     * and finally stores the indexes of the neighboring elements for each element (storeNeighborCellInformation).
      */
     void updateStaticWallProperties()
     {
-        using std::abs;
         std::cout << "Update static wall properties. ";
         calledUpdateStaticWallProperties = true;
 
-        // update size and initial values of the global vectors
-        wallElementIdx_.resize(this->fvGridGeometry().elementMapper().size());
-        wallDistance_.resize(this->fvGridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
-        neighborIdx_.resize(this->fvGridGeometry().elementMapper().size());
-        cellCenter_.resize(this->fvGridGeometry().elementMapper().size(), GlobalPosition(0.0));
-        velocity_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
-        velocityMaximum_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
-        velocityGradients_.resize(this->fvGridGeometry().elementMapper().size(), DimMatrix(0.0));
-        stressTensorScalarProduct_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        vorticityTensorScalarProduct_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        flowNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 0);
-        wallNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 1);
-        kinematicViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        sandGrainRoughness_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        // update the the cell centered locations
+        storeCCPositions(this->fvGridGeometry().gridView());
 
-        // retrieve all wall intersections and corresponding elements
-        std::vector<unsigned int> wallElements;
-        std::vector<GlobalPosition> wallPositions;
-        std::vector<unsigned int> wallNormalAxisTemp;
+        // fill the vector with elements on the wall
+        findAllWallElements(this->fvGridGeometry().gridView());
 
-        const auto gridView = this->fvGridGeometry().gridView();
+        std::cout << "NumWallIntersections=" << wallPositions_.size() << std::endl;
+        if (wallPositions_.size() == 0)
+            DUNE_THROW(Dune::InvalidStateException,
+                       "No wall intersections have been found. Make sure that the isOnWall(globalPos) is working properly.");
+
+        velocityMaximum_.resize(wallPositions_.size(), DimVector(1e-16));
+        velocityMinimum_.resize(wallPositions_.size(), DimVector(std::numeric_limits<Scalar>::max()));
+
+        // store the distance from the wall to the element
+        storeWallInformation(this->fvGridGeometry().gridView());
+
+        // stores the indexes of the neighboring elements for each element
+        storeNeighborCellInformation(this->fvGridGeometry().gridView());
+
+        std::cout << "\n";
+        std::cout << "wallElements_ size: "<< wallElements_.size() <<"\n";
+        for (int i = 0; i < wallElements_.size(); i++)
+            std::cout << wallElements_[i] << "\n";
+        std::cout << "\n";
+
+        std::cout << "\n";
+        std::cout << "wallPositions_ size: "<< wallPositions_.size() <<"\n";
+        for (int i = 0; i < wallPositions_.size(); i++)
+            std::cout << wallPositions_[i] << "\n";
+        std::cout << "\n";
+
+        std::cout << "\n";
+        std::cout << "wallElementIdx_ size: "<< wallElementIdx_.size() <<"\n";
+        for (int i = 0; i < wallElementIdx_.size(); i++)
+            std::cout << wallElementIdx_[i] << "\n";
+        std::cout << "\n";
+
+        std::cout << "\n";
+        std::cout << "wallProfileIdx_ size: "<< wallProfileIdx_.size() <<"\n";
+        for (int i = 0; i < wallProfileIdx_.size(); i++)
+            std::cout << wallProfileIdx_[i] << "\n";
+        std::cout << "\n";
+
+    }
+
+    /*!
+     * \brief Update the dynamic (solution dependent) relations to the walls
+     *
+     * This function first stores the cell centered velocities (storeCCVelocites),
+     * then stores the maximum and minimum velocities located along the axis perpendicular to the wall (storeCCmaxMinVelocities),
+     * then stores the velocity gradients (storeCCVelocityGradients),
+     * and then calculates the stress tensor and vorticity tensors (calculateStressTensorInformation, calculateVorticityTensorInformation).
+     * Further, the kinematic viscosity at the wall is stored.
+     *
+     * \param curSol The solution vector.
+     */
+    void updateDynamicWallProperties(const SolutionVector& curSol)
+    {
+        std::cout << "Update dynamic wall properties." << std::endl;
+        if (!calledUpdateStaticWallProperties)
+            DUNE_THROW(Dune::InvalidStateException,
+                       "You have to call updateStaticWallProperties() once before you call updateDynamicWallProperties().");
+
+        // store the cell centered velocities
+        storeCCVelocites(this->fvGridGeometry().gridView(), curSol);
+
+        // store the maximum and minimum velocities located along the axis perpendicular to the wall
+        storeCCMaxMinVelocities(this->fvGridGeometry().gridView());
+
+        // calculate and store the velocity gradients
+        storeCCVelocityGradients(this->fvGridGeometry().gridView());
+
+        // calculate and store the stress tensor and tensor product
+        calculateStressTensorInformation(this->fvGridGeometry().gridView());
+
+        // calculate and store the vortuosity tensor and tensor product
+        calculateVorticityTensorInformation(this->fvGridGeometry().gridView());
+
+        // store the kinematic viscosity at the wall
+        updateKinematicViscosity(this->fvGridGeometry().gridView(), curSol);
+    }
+
+    /*!
+     * \brief Stores all cell centered global wallPositions_
+     *
+     *  Fills a vector of cell centered locations indexed with the elementIdx
+     *
+     * \param gridView the grid view we are solving on
+     */
+    void storeCCPositions(const GridView& gridView)
+    {
+        // search for shortest distance to wall for each element
+        for (const auto& element : elements(gridView))
+        {
+            cellCenter_[this->fvGridGeometry().elementMapper().index(element)] = element.geometry().center();
+        }
+    }
+
+    /*!
+     * \brief Find all of the elements will a wall intersection
+     *
+     *  Stores all of the elements with a wall intersection (wallElements_),
+     *  their position (wallPositions_),
+     *  and the direction of the normal vector (wallNormalAxisTemp_).
+     *
+     * \param gridView the grid view we are solving on
+     */
+    void findAllWallElements(const GridView& gridView)
+    {
         auto fvGeometry = localView(this->fvGridGeometry());
-
         for (const auto& element : elements(gridView))
         {
             fvGeometry.bindElement(element);
@@ -126,50 +232,64 @@ public:
 
                 if (asImp_().isOnWall(scvf))
                 {
-                    wallElements.push_back(this->fvGridGeometry().elementMapper().index(element));
-                    wallPositions.push_back(scvf.center());
-                    wallNormalAxisTemp.push_back(scvf.directionIndex());
+                    wallElements_.push_back(this->fvGridGeometry().elementMapper().index(element));
+                    wallPositions_.push_back(scvf.center());
+                    wallNormalAxisTemp_.push_back(scvf.directionIndex());
                 }
             }
         }
-        std::cout << "NumWallIntersections=" << wallPositions.size() << std::endl;
-        if (wallPositions.size() == 0)
-            DUNE_THROW(Dune::InvalidStateException,
-                       "No wall intersections have been found. Make sure that the isOnWall(globalPos) is working properly.");
+    }
 
-
+    /*!
+     * \brief Store the distance from the wall to the element center and further wall information
+     *
+     *  A vector wallDistance_ is filled with the distance from the cell center to the wall for each element
+     *  A vector wallElementIdx_ is filled with the index of the element at the closest wallClockTime
+     *  A vector wallNormalAxis_ is filled with the
+     *
+     * \param gridView the grid view we are solving on
+     */
+    void storeWallInformation(const GridView& gridView)
+    {
+        using std::abs;
         // search for shortest distance to wall for each element
         for (const auto& element : elements(gridView))
         {
             unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
-            cellCenter_[elementIdx] = element.geometry().center();
-            for (unsigned int i = 0; i < wallPositions.size(); ++i)
+            for (unsigned int i = 0; i < wallPositions_.size(); ++i)
             {
-                static const int problemWallNormalAxis
-                    = getParamFromGroup<int>(this->paramGroup(), "RANS.WallNormalAxis", -1);
-                int searchAxis = problemWallNormalAxis;
-
-                // search along wall normal axis of the intersection
-                if (problemWallNormalAxis < 0 || problemWallNormalAxis >= dim)
-                {
-                    searchAxis = wallNormalAxisTemp[i];
-                }
+                int searchAxis = wallNormalAxisTemp_[i];
 
                 GlobalPosition global = element.geometry().center();
-                global -= wallPositions[i];
+                global -= wallPositions_[i];
                 // second and argument ensures to use only aligned elements
                 if (abs(global[searchAxis]) < wallDistance_[elementIdx]
                     && abs(global[searchAxis]) < global.two_norm() + 1e-8
                     && abs(global[searchAxis]) > global.two_norm() - 1e-8)
                 {
                     wallDistance_[elementIdx] = abs(global[searchAxis]);
-                    wallElementIdx_[elementIdx] = wallElements[i];
+                    wallElementIdx_[elementIdx] = wallElements_[i];
+                    wallProfileIdx_[elementIdx]= i;
                     wallNormalAxis_[elementIdx] = searchAxis;
-                    sandGrainRoughness_[elementIdx] = asImp_().sandGrainRoughnessAtPos(wallPositions[i]);
+                    sandGrainRoughness_[elementIdx] = asImp_().sandGrainRoughnessAtPos(wallPositions_[i]);
                 }
             }
         }
+    }
 
+    /*!
+     * \brief For each element, the indicies of the neighboring elements are stored
+     *
+     *  A vector of matrices(dimx2) called neighborIdx is filled.
+     *  Each entry in this vector will represent an element, indexed with elementIdx.
+     *  Each entry will have two neighboring indexes per dimension,
+     *  one for the element further from the origin, one for the element closer to the origin
+     *
+     * \param gridView the grid view we are solving on
+     */
+    void storeNeighborCellInformation(const GridView& gridView)
+    {
+        using std::abs;
         // search for neighbor Idxs
         for (const auto& element : elements(gridView))
         {
@@ -205,33 +325,18 @@ public:
     }
 
     /*!
-     * \brief Update the dynamic (solution dependent) relations to the walls
+     * \brief Stores the cell centered velocity
      *
-     * The basic function calcuates the cell-centered velocities and
-     * the respective gradients.
-     * Further, the kinematic viscosity at the wall is stored.
+     *  Builds a vector velocity_ where for each element,
+     *  the average of the velocities on the faces is stored at the cell center
      *
+     * \param gridView the grid view we are solving on
      * \param curSol The solution vector.
      */
-    void updateDynamicWallProperties(const SolutionVector& curSol)
+    void storeCCVelocites(const GridView& gridView, const SolutionVector& curSol)
     {
-        using std::abs;
-        using std::max;
-        using std::min;
-        std::cout << "Update dynamic wall properties." << std::endl;
-        if (!calledUpdateStaticWallProperties)
-            DUNE_THROW(Dune::InvalidStateException,
-                       "You have to call updateStaticWallProperties() once before you call updateDynamicWallProperties().");
-
-        static const int flowNormalAxis
-            = getParamFromGroup<int>(this->paramGroup(), "RANS.FlowNormalAxis", -1);
-
-        // re-initialize min and max values
-        velocityMaximum_.assign(this->fvGridGeometry().elementMapper().size(), DimVector(1e-16));
-        velocityMinimum_.assign(this->fvGridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
-
         // calculate cell-center-averaged velocities
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(gridView))
         {
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
@@ -248,13 +353,60 @@ public:
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
                 velocity_[elementIdx][dimIdx] = velocityTemp[dimIdx] * 0.5; // faces are equidistant to cell center
         }
+    }
 
-        // calculate cell-center-averaged velocity gradients, maximum, and minimum values
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+    /*!
+     * \brief Stores the maxiumum and minimum velocities
+     *
+     *  For each profile perpendicular to a wall position, the maxmimum and minimum velocities are logged.
+     *
+     * \param gridView the grid view we are solving on
+     */
+    void storeCCMaxMinVelocities(const GridView& gridView)
+    {
+        using std::abs;
+        using std::max;
+        using std::min;
+
+        // re-initialize min and max values
+        std::fill(velocityMaximum_.begin(), velocityMaximum_.end(), DimVector(1e-16));
+        std::fill(velocityMinimum_.begin(), velocityMinimum_.end(), DimVector(std::numeric_limits<Scalar>::max()));
+
+        // calculate the maximum and minumum velocities in each profile
+        for (const auto& element : elements(gridView))
         {
             unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementIdx = wallElementIdx_[elementIdx];
+            unsigned int profileIdx = this->wallProfileIdx_[elementIdx];
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                if (abs(this->velocity_[elementIdx][dimIdx]) > abs(velocityMaximum_[profileIdx][dimIdx]))
+                {
+                    velocityMaximum_[profileIdx][dimIdx] = this->velocity_[elementIdx][dimIdx];
+                }
+                if (abs(this->velocity_[elementIdx][dimIdx]) < abs(velocityMinimum_[profileIdx][dimIdx]))
+                {
+                    velocityMinimum_[profileIdx][dimIdx] = this->velocity_[elementIdx][dimIdx];
+                }
+            }
+        }
+    }
 
+    /*!
+     * \brief Calculates the velocity gradients in each element
+     *
+     *  For each cell, a velocity gradient matrix is filled.
+     *  In the case of a dirichlet boundary, the velocity gradient matrix is adapted.
+     *  In the case of a Beavers Joeseph conditon at the boundary, the matrix is adapted.
+     *
+     * \param gridView the grid view we are solving on
+     */
+    void storeCCVelocityGradients(const GridView& gridView)
+    {
+        using std::abs;
+        // calculate cell-center-averaged velocity gradients
+        for (const auto& element : elements(gridView))
+        {
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
             Scalar maxVelocity = 0.0;
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
@@ -270,20 +422,7 @@ public:
                         velocityGradients_[elementIdx][velIdx][dimIdx] = 0.0;
                 }
 
-                if (abs(velocity_[elementIdx][dimIdx]) > abs(velocityMaximum_[wallElementIdx][dimIdx]))
-                {
-                    velocityMaximum_[wallElementIdx][dimIdx] = velocity_[elementIdx][dimIdx];
-                }
-                if (abs(velocity_[elementIdx][dimIdx]) < abs(velocityMinimum_[wallElementIdx][dimIdx]))
-                {
-                    velocityMinimum_[wallElementIdx][dimIdx] = velocity_[elementIdx][dimIdx];
-                }
-
-                if (0 <= flowNormalAxis && flowNormalAxis < dim)
-                {
-                    flowNormalAxis_[elementIdx] = flowNormalAxis;
-                }
-                else if (abs(maxVelocity) < abs(velocity_[elementIdx][dimIdx]))
+                if (abs(maxVelocity) < abs(velocity_[elementIdx][dimIdx]))
                 {
                     maxVelocity = abs(velocity_[elementIdx][dimIdx]);
                     flowNormalAxis_[elementIdx] = dimIdx;
@@ -353,16 +492,25 @@ public:
                     velocityGradients_[elementIdx][velIdx][dirIdx]
                         = (velocity_[neighborIdx][velIdx] - bjsVelocityAverage[dirIdx])
                           / (cellCenter_[neighborIdx][dirIdx] - normalNormCoordinate[dirIdx]);
-
                 }
             }
         }
+    }
 
+    /*!
+     * \brief Calculates the Stress Tensor Information in each element
+     *
+     *  First the Stress Tensor matrix is filled,
+     *  then the scalar product of this matrix is calculated.
+     *
+     * \param gridView the grid view we are solving on
+     */
+    void calculateStressTensorInformation(const GridView& gridView)
+    {
         // calculate or call all secondary variables
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
-
             Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension> stressTensor(0.0);
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
@@ -370,7 +518,7 @@ public:
                 {
                     stressTensor[dimIdx][velIdx] = 0.5 * velocityGradients_[elementIdx][dimIdx][velIdx]
                                                    + 0.5 * velocityGradients_[elementIdx][velIdx][dimIdx];
-              }
+                }
             }
             stressTensorScalarProduct_[elementIdx] = 0.0;
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
@@ -380,7 +528,23 @@ public:
                     stressTensorScalarProduct_[elementIdx] += stressTensor[dimIdx][velIdx] * stressTensor[dimIdx][velIdx];
                 }
             }
+        }
+    }
 
+    /*!
+     * \brief Calculates the Vorticity Tensor Information in each element
+     *
+     *  First the Vorticity Tensor matrix is filled,
+     *  then the scalar product of this matrix is calculated.
+     *
+     * \param gridView the grid view we are solving on
+     */
+    void calculateVorticityTensorInformation(const GridView& gridView)
+    {
+        // calculate or call all secondary variables
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
             Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension> vorticityTensor(0.0);
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
@@ -398,7 +562,22 @@ public:
                     vorticityTensorScalarProduct_[elementIdx] += vorticityTensor[dimIdx][velIdx] * vorticityTensor[dimIdx][velIdx];
                 }
             }
+        }
+    }
 
+    /*!
+     * \brief Store the kinematic viscosity in each element
+     *
+     *  Using the previous solution, the kinematic viscosity for each element is stored.
+     *
+     * \param gridView the grid view we are solving on
+     */
+    void updateKinematicViscosity(const GridView& gridView, const SolutionVector& curSol)
+    {
+        // calculate or call all secondary variables
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
@@ -519,15 +698,19 @@ public:
     std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIdx_;
     std::vector<GlobalPosition> cellCenter_;
     std::vector<DimVector> velocity_;
-    std::vector<DimVector> velocityMaximum_;
-    std::vector<DimVector> velocityMinimum_;
     std::vector<DimMatrix> velocityGradients_;
+    std::vector<DimVector> velocityMinimum_;
+    std::vector<DimVector> velocityMaximum_;
     std::vector<Scalar> stressTensorScalarProduct_;
     std::vector<Scalar> vorticityTensorScalarProduct_;
     std::vector<unsigned int> wallNormalAxis_;
     std::vector<unsigned int> flowNormalAxis_;
     std::vector<Scalar> kinematicViscosity_;
     std::vector<Scalar> sandGrainRoughness_;
+    std::vector<unsigned int> wallElements_;
+    std::vector<GlobalPosition> wallPositions_;
+    std::vector<unsigned int> wallProfileIdx_;
+    std::vector<unsigned int> wallNormalAxisTemp_;
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
