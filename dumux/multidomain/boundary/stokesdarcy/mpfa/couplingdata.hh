@@ -239,6 +239,10 @@ class StokesDarcyCouplingDataImplementationBase
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
+    template<std::size_t id> using GridView = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridView);
+    template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+    using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
+
 public:
     StokesDarcyCouplingDataImplementationBase(const CouplingManager& couplingmanager): couplingManager_(couplingmanager) {}
 
@@ -291,7 +295,9 @@ public:
         const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
 
         const auto& elemVolVars = *(stokesContext.elementVolVars);
-        const auto& elemFluxVarsCache = *(stokesContext.elementFluxVarsCache);
+        auto& elemFluxVarsCache = *(stokesContext.elementFluxVarsCache);
+
+        elemFluxVarsCache.update(stokesContext.element, stokesContext.fvGeometry, elemVolVars);
 
         //FluxVariables<darcyIdx> fluxVars;
 
@@ -382,12 +388,18 @@ public:
                     if(curGlobalScvf.index() == darcyScvf.index())
                         localIdx = curLocalScvf.localDofIndex();
                 }
-                std::cout << "N: " << N << std::endl;
-                std::cout <<"facePressures: " << facePressures << std::endl;
-                std::cout <<"localIdx: " << (int) localIdx << std::endl;
+//                std::cout << "pj: " << pj << std::endl;
+//                std::cout << "N: " << N << std::endl;
+//                std::cout << "velocity: " << velocity << std::endl;
+//                std::cout <<"facePressures: " << facePressures << std::endl;
+//                std::cout <<"localIdx: " << (int) localIdx << std::endl;
                 interfacePressure = facePressures[localIdx];
             }
+            //const Scalar distance = (stokesContext.element.geometry().center() - scvf.center()).two_norm();
+            //const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).gravity()[scvf.directionIndex()];
+            //interfacePressure = ((scvf.directionSign() * velocity * (mu/darcyPermeability(scvf))) + rho * g) * distance + darcyPressure;
             momentumFlux = interfacePressure;
+            //momentumFlux = interfacePressure;
         }
 
         // normalize pressure
@@ -550,6 +562,10 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
+    template<std::size_t id> using GridView = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridView);
+    template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+    using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
+
 public:
     using ParentType::ParentType;
     using ParentType::couplingPhaseIdx;
@@ -573,12 +589,32 @@ public:
     /*!
      * \brief Returns the mass flux across the coupling boundary as seen from the Darcy domain.
      */
-    Scalar neumannCouplingCondition(const FVElementGeometry<darcyIdx>& fvGeometry,
-                                 const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
-                                 const SubControlVolumeFace<darcyIdx>& scvf) const
+    Scalar neumannCouplingCondition(const Element<darcyIdx>& element,
+                                    const FVElementGeometry<darcyIdx>& fvGeometry,
+                                    const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                    const SubControlVolumeFace<darcyIdx>& scvf) const
     {
-        const auto& darcyContext = this->couplingManager().darcyCouplingContext(scvf);
-        const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
+        const auto darcyElementIdx = this->couplingManager().problem(darcyIdx).fvGridGeometry().elementMapper().index(element);
+        const auto& data = this->couplingManager().couplingMapper_.darcyElementToStokesElementMap().at(darcyElementIdx);
+        unsigned int scvfIndex = 0;
+        for(int i=0; i<data.size(); i++)
+        {
+            const auto indices = data[i];
+            if(indices.flipScvfIdx == scvf.index())
+            {
+                scvfIndex = indices.scvfIdx;
+            }
+        }
+        // prepare the coupling context
+//        const auto& stokesFaceIndices = this->couplingManager().darcyToStokesFaceCouplingStencils_.at(darcyElementIdx);
+
+//        if(stokesElementIndices.size() < 2)
+//            DUNE_THROW(Dune::InvalidStateException, "The refinement level of the stokes grid should we one level finer");
+
+        const auto& stokesScvf = this->couplingManager().problem(stokesIdx).fvGridGeometry().scvf(scvfIndex);
+        VelocityVector faceVelocity(0.0);
+        faceVelocity[stokesScvf.directionIndex()] = this->couplingManager().curSol()[stokesFaceIdx][stokesScvf.dofIndex()];
+        const Scalar velocity = faceVelocity * scvf.unitOuterNormal();
         const Scalar darcyViscosity = darcyElemVolVars[scvf.insideScvIdx()].viscosity(couplingPhaseIdx(darcyIdx));
 
         return velocity * darcyViscosity;
@@ -729,6 +765,10 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     using NumEqVector = Dune::FieldVector<Scalar, numComponents>;
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
+
+    template<std::size_t id> using GridView = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridView);
+    template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+    using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
 
 public:
     using ParentType::ParentType;

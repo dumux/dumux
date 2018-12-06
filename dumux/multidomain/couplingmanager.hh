@@ -267,8 +267,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "The problem pointer was not set or has already expired. Use setSubProblems() before calling this function");
     }
 
-protected:
-
+public:
     /*!
      * \brief the solution vector of the coupled problem
      * \note in case of numeric differentiation the solution vector always carries the deflected solution

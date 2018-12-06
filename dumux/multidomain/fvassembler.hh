@@ -30,6 +30,7 @@
 
 #include <dune/common/hybridutilities.hh>
 #include <dune/istl/matrixindexset.hh>
+#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
@@ -175,6 +176,20 @@ public:
             auto& subRes = (*residual_)[domainId];
             this->assembleJacobianAndResidual_(domainId, jacRow, subRes, curSol);
         });
+
+        static constexpr auto stokesCellIdx = Dune::index_constant<0>();
+        static constexpr auto stokesFaceIdx = Dune::index_constant<1>();
+        static constexpr auto darcyIdx = Dune::index_constant<2>();
+
+//        Dune::printmatrix(std::cout, (*jacobian_)[stokesCellIdx][stokesCellIdx], "", "");
+//        Dune::printmatrix(std::cout, (*jacobian_)[stokesCellIdx][stokesFaceIdx], "", "");
+//        Dune::printmatrix(std::cout, (*jacobian_)[stokesCellIdx][darcyIdx], "", "");
+//        Dune::printmatrix(std::cout, (*jacobian_)[stokesFaceIdx][stokesCellIdx], "", "");
+//        Dune::printmatrix(std::cout, (*jacobian_)[stokesFaceIdx][stokesFaceIdx], "", "");
+//        Dune::printmatrix(std::cout, (*jacobian_)[stokesFaceIdx][darcyIdx], "", "");
+//        Dune::printmatrix(std::cout, (*jacobian_)[darcyIdx][stokesCellIdx], "", "");
+//        Dune::printmatrix(std::cout, (*jacobian_)[darcyIdx][stokesFaceIdx], "", "");
+//        Dune::printmatrix(std::cout, (*jacobian_)[darcyIdx][darcyIdx], "", "");
     }
 
     //! compute the residuals using the internal residual

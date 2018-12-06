@@ -389,6 +389,23 @@ public:
     }
 
     /*!
+     * \brief Update the transmissibilities in the darcy domain after the stokes velocity was changed
+     * \note Specialization of the function for deactivated grid-wide volume variables caching
+     */
+    using ParentType::updateCoupledVariables;
+    template< class LocalAssemblerI, class UpdatableFluxVarCache >
+    void updateCoupledVariables(Dune::index_constant<darcyIdx> domainI,
+                                const LocalAssemblerI& localAssemblerI,
+                                ElementVolumeVariables<darcyIdx>& elemVolVars,
+                                UpdatableFluxVarCache& fluxVarsCache)
+    {
+        // update transmissibilities after low dim context has changed
+        fluxVarsCache.update(localAssemblerI.element(),
+                             localAssemblerI.fvGeometry(),
+                             localAssemblerI.curElemVolVars());
+    }
+
+    /*!
      * \brief Update the coupling context for the Stokes cc residual w.r.t. the Darcy DOFs (FaceToDarcy)
      */
     template<std::size_t i, class LocalAssemblerI, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
@@ -584,7 +601,7 @@ protected:
         stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
     }
 
-private:
+public:
 
     std::vector<bool> isCoupledDarcyDof_;
     std::shared_ptr<CouplingData> couplingData_;
