@@ -76,6 +76,8 @@ public:
                          const ElementFluxVariablesCache& elemFluxVarsCache,
                          const SubControlVolumeFace& scvf) const
     {
+        using CouplingManager = typename Problem::CouplingManager;
+
         NumEqVector flux(0.0);
 
         // inner faces
@@ -93,6 +95,11 @@ public:
             if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
                 flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
+//            else if (problem.couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+//            {
+//                flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+//            }
+
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
             {
@@ -108,7 +115,6 @@ public:
             else
                 DUNE_THROW(Dune::NotImplemented, "Mixed boundary conditions. Use pure boundary conditions by converting Dirichlet BCs to Robin BCs");
         }
-
         return flux;
     }
 };

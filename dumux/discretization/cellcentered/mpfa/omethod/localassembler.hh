@@ -67,20 +67,24 @@ public:
      * \param getT Lambda to evaluate the scv-wise tensors
      */
     template< class IV, class TensorFunc >
-    void assemble(typename IV::Traits::MatVecTraits::TMatrix& T,
+    void assemble(typename IV::Traits::MatVecTraits::AMatrix& A,
+                  typename IV::Traits::MatVecTraits::BMatrix& AB,
+                  typename IV::Traits::MatVecTraits::CMatrix& CA,
+                  typename IV::Traits::MatVecTraits::TMatrix& T,
                   typename IV::Traits::MatVecTraits::FaceVector& N,
                   IV& iv, const TensorFunc& getT)
     {
         // assemble D into T directly
-        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, N, iv, getT);
+        assembleLocalMatrices_(A, AB, CA, T, N, iv, getT);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
         {
             // T = C*A^-1*B + D
-            iv.A().invert();
-            iv.C().rightmultiply(iv.A());
-            T += multiplyMatrices(iv.C(), iv.B());
+            A.invert();
+            CA.rightmultiply(A);
+            T += multiplyMatrices(CA, AB);
+            AB.leftmultiply(A);
         }
     }
 
@@ -650,7 +654,7 @@ private:
         static constexpr int dimWorld = IV::Traits::GridView::dimensionworld;
 
         // Matrix D is assumed to have the right size already
-        assert(D.rows() == iv.numFaces() && D.cols() == iv.numKnowns());
+        D.resize(iv.numFaces(), iv.numKnowns());
 
         // if only Dirichlet faces are present in the iv,
         // the matrices A, B & C are undefined and D = T
@@ -689,9 +693,10 @@ private:
         else
         {
             // we require the matrices A,B,C to have the correct size already
-            assert(A.rows() == iv.numUnknowns() && A.cols() == iv.numUnknowns());
-            assert(B.rows() == iv.numUnknowns() && B.cols() == iv.numKnowns());
-            assert(C.rows() == iv.numFaces() && C.cols() == iv.numUnknowns());
+            A.resize(iv.numUnknowns(), iv.numUnknowns());
+            B.resize(iv.numUnknowns(), iv.numKnowns());
+            C.resize(iv.numFaces(), iv.numUnknowns());
+            N.resize(iv.numUnknowns());
 
             // reset matrices
             A = 0.0;

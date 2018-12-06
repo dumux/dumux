@@ -147,6 +147,14 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             if (dim == dimWorld)
             {
                 primaryTij_ = &dataHandle.advectionT()[ivLocalIdx];
+
+                for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                {
+                    PrimaryIvCellVector N(iv.numFaces());
+                    dataHandle.advectionCA().mv(dataHandle.advectionN(), N);
+                    neumann_[phaseIdx] = N[ivLocalIdx];
+                }
+
                 if (enableGravity)
                     for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                         g_[phaseIdx] = dataHandle.gravity(phaseIdx)[ivLocalIdx];
@@ -202,6 +210,14 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             if (dim == dimWorld)
             {
                 secondaryTij_ = &dataHandle.advectionT()[ivLocalIdx];
+
+                for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                {
+                    PrimaryIvCellVector N(iv.numFaces());
+                    dataHandle.advectionCA().mv(dataHandle.advectionN(), N);
+                    neumann_[phaseIdx] = N[ivLocalIdx];
+                }
+
                 if (enableGravity)
                     for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                         g_[phaseIdx] = dataHandle.gravity(phaseIdx)[ivLocalIdx];
@@ -251,6 +267,9 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
         //! This function returns whether or not this scvf is an "outside" face in the iv.
         bool advectionSwitchFluxSign() const { return switchFluxSign_; }
 
+        //! Neumann BCs
+        const Scalar neumannContribution(int phaseIdx) const { return neumann_[phaseIdx]; }
+
     private:
         bool switchFluxSign_;
 
@@ -264,6 +283,9 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
         //! The interaction-volume wide phase pressures pj
         std::array<const PrimaryIvCellVector*, numPhases> primaryPj_;
         std::array<const SecondaryIvCellVector*, numPhases> secondaryPj_;
+
+        //! Contribution from Neumann boundary condition
+        std::array<Scalar, numPhases> neumann_;
 
         //! Gravitational flux contribution on this face
         std::array< Scalar, numPhases > g_;
@@ -301,7 +323,7 @@ public:
             const auto& pj = fluxVarsCache.pressuresPrimaryIv(phaseIdx);
             scvfFlux = tij*pj;
         }
-
+        scvfFlux += scvf.area()*fluxVarsCache.neumannContribution(phaseIdx);
         // maybe add gravitational acceleration
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
         if (enableGravity)
