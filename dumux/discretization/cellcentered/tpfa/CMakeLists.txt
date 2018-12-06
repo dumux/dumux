@@ -3,7 +3,6 @@ computetransmissibility.hh
 elementfluxvariablescache.hh
 elementvolumevariables.hh
 fluxvariablescachefiller.hh
-fourierslawnonequilibrium.hh
 fvelementgeometry.hh
 fvgridgeometry.hh
 gridfluxvariablescache.hh
