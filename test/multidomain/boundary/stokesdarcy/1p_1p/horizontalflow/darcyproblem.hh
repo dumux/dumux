@@ -36,6 +36,8 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
+#include <dumux/multidomain/boundary/stokesdarcy/mpfa/upwindscheme.hh>
+
 namespace Dumux
 {
 template <class TypeTag>
@@ -64,6 +66,11 @@ SET_PROP(DarcyOneP, SpatialParams)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = OnePSpatialParams<FVGridGeometry, Scalar>;
 };
+
+//! The flux variables for models involving flow in porous media
+SET_TYPE_PROP(DarcyOneP,
+              FluxVariables,
+              PorousMediumFluxVariables<TypeTag, CCMpfaStokesDarcyUpwindScheme<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)> >);
 }
 
 template <class TypeTag>
@@ -86,9 +93,9 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
+public:
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
 
-public:
     DarcySubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
@@ -203,7 +210,7 @@ public:
         NumEqVector values(0.0);
 
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
-            values[Indices::conti0EqIdx] = couplingManager().couplingData().neumannCouplingCondition(fvGeometry, elemVolVars, scvf);
+            values[Indices::conti0EqIdx] = scvf.area()*couplingManager().couplingData().neumannCouplingCondition(element, fvGeometry, elemVolVars, scvf);
 
         return values;
     }
@@ -242,7 +249,7 @@ public:
      */
     PrimaryVariables initial(const Element &element) const
     {
-        return PrimaryVariables(1.0);
+        return PrimaryVariables(0.0);
     }
 
     // \}

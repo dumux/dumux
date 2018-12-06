@@ -323,7 +323,7 @@ public:
             const auto& pj = fluxVarsCache.pressuresPrimaryIv(phaseIdx);
             scvfFlux = tij*pj;
         }
-        scvfFlux += scvf.area()*fluxVarsCache.neumannContribution(phaseIdx);
+        scvfFlux += fluxVarsCache.neumannContribution(phaseIdx);
         // maybe add gravitational acceleration
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
         if (enableGravity)

@@ -1,11 +1,11 @@
 [Darcy.Grid]
 UpperRight = 1 1
-Cells = 1 1
+Cells = 10 10
 
 [Stokes.Grid]
 LowerLeft = 0 1
 UpperRight = 1 2
-Cells = 1 1
+Cells = 10 10
 Refinement = 1
 
 [Stokes.Problem]
@@ -19,14 +19,16 @@ Name = darcy
 Permeability = 1e-6 # m^2
 AlphaBeaversJoseph = 1.0
 
-
 [Problem]
 Name = test_stokes1pdarcy1phorizontal
 EnableGravity = false
 EnableInertiaTerms = false
 
-[Vtk]
-AddVelocity = 0
+[Stokes.Vtk]
+AddVelocity = 1
 
 [Mpfa]
 Q = 0.5
+
+[Newton]
+MaxRelativeShift = 1.0e-8

@@ -141,6 +141,7 @@ int main(int argc, char** argv) try
     std::get<0>(stokesSol) = cellCenterSol;
     std::get<1>(stokesSol) = faceSol;
     stokesProblem->applyInitialSolution(stokesSol);
+    darcyProblem->applyInitialSolution(sol[darcyIdx]);
     sol[stokesCellCenterIdx] = stokesSol[stokesCellCenterIdx];
     sol[stokesFaceIdx] = stokesSol[stokesFaceIdx];
 
