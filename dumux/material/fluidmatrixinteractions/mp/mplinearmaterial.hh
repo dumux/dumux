@@ -61,7 +61,7 @@ public:
      * \param values Container for the return values
      * \param params Array of Parameters
      * \param state The fluid state
-     * \param wPhaseIdx the phase index of the wetting phase
+     * \param wPhaseIdx The phase index of the wetting phase
      */
     template <class ContainerT, class FluidState>
     static void capillaryPressures(ContainerT &values,
@@ -82,6 +82,7 @@ public:
      * \param values Container for the return values
      * \param params Array of Parameters
      * \param state The fluid state
+     * \param wPhaseIdx the phase index of the wetting phase
      */
     template <class ContainerT, class FluidState>
     static void relativePermeabilities(ContainerT &values,

@@ -131,7 +131,7 @@
       <variables title=""/>
     </memberdef>
     <includegraph visible="yes"/>
-    <includedbygraph visible="yes"/>
+    <includedbygraph visible="no"/>
     <authorsection/>
   </file>
 

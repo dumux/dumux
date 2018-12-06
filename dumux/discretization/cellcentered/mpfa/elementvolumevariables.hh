@@ -73,6 +73,7 @@ namespace CCMpfa {
      * \param volVars       The container where the volume variables are stored
      * \param volVarIndices The container where the volume variable indices are stored
      * \param problem       The problem containing the Dirichlet boundary conditions
+     * \param element       The element to which the finite volume geometry is bound
      * \param fvGeometry    The element finite volume geometry
      * \param nodalIndexSet The dual grid index set around a node
      */
