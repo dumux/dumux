@@ -41,18 +41,22 @@ namespace Dumux {
 /*!
  * \ingroup Common
  * \brief A point source base class
- * \tparam GlobalPosition the position type
- * \tparam SourceValues the a vector type storing the source for all equations
+ * \tparam PositionType the position type
+ * \tparam ValueType the a vector type storing the source for all equations
  */
-template<class GlobalPosition, class SourceValues>
+template<class PositionType, class ValueType>
 class PointSource
 {
 public:
     //! Export the scalar type
-    using Scalar = std::decay_t<decltype(std::declval<SourceValues>()[0])>;
+    using Scalar = std::decay_t<decltype(std::declval<ValueType>()[0])>;
+    //! Export the position type
+    using GlobalPosition = PositionType;
+    //! Export the value type
+    using Values = ValueType;
 
     //! Constructor for constant point sources
-    PointSource(GlobalPosition pos, SourceValues values)
+    PointSource(GlobalPosition pos, Values values)
       : values_(values), pos_(pos), embeddings_(1) {}
 
     //! Constructor for sol dependent point sources, when there is no
@@ -89,7 +93,7 @@ public:
     }
 
     //! Convenience = operator overload modifying only the values
-    PointSource& operator= (const SourceValues& values)
+    PointSource& operator= (const Values& values)
     {
         values_ = values;
         return *this;
@@ -103,7 +107,7 @@ public:
     }
 
     //! return the source values
-    SourceValues values() const
+    Values values() const
     { return values_; }
 
     //! return the source position
@@ -144,7 +148,7 @@ public:
     }
 
 protected:
-    SourceValues values_; //!< value of the point source for each equation
+    Values values_; //!< value of the point source for each equation
 private:
     GlobalPosition pos_; //!< position of the point source
     std::size_t embeddings_; //!< how many SCVs the point source is associated with
