@@ -78,13 +78,13 @@ protected:
                         std::cout << "Gas phase disappears at dof " << dofIdxGlobal
                                 << ", coordinates: " << globalPos << ", sg: "
                                 << volVars.saturation(FluidSystem::gPhaseIdx) << std::endl;
-                    newPhasePresence = FluidSystem::gPhaseIdx;
+                    newPhasePresence = Indices::wnPhaseOnly;
 
                     priVars[Indices::pressureIdx] = volVars.fluidState().pressure(FluidSystem::wPhaseIdx);
                     priVars[Indices::switch1Idx] = volVars.fluidState().temperature();
                 }
             }
-            else if (phasePresence == FluidSystem::gPhaseIdx)
+            else if (phasePresence == Indices::wnPhaseOnly)
             {
                 bool gasFlag = 0;
 
