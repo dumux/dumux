@@ -120,14 +120,16 @@ public:
     //function which assembles the system of equations to be solved
     void assemble(bool first);
 
-    void get1pSource(EntryType&, const Element&, const CellData&);
+    void get1pSource(EntryType& sourceEntry, const Element& elementI, const CellData& cellDataI);
 
-    void get1pStorage(EntryType&, const Element&, CellData&);
+    void get1pStorage(EntryType& storageEntry, const Element& elementI, CellData& cellDataI);
 
-    void get1pFlux(EntryType&, const Intersection&, const CellData&);
+    void get1pFlux(EntryType& entries, const Intersection& intersection,
+                   const CellData& cellDataI);
 
-    void get1pFluxOnBoundary(EntryType&,
-                            const Intersection&, const CellData&);
+    void get1pFluxOnBoundary(EntryType& entries,
+                             const Intersection& intersection,
+                             const CellData& cellDataI);
 
     //initialize multi-physics-specific pressure model constituents
     void initialize(bool solveTwice = false)
@@ -205,8 +207,8 @@ public:
         return;
     }
 
-    //! Constructs a FVPressure2P2CPC object
-    /**
+    /*!
+     * \brief Constructs a FVPressure2P2CPC object
      * \param problem a problem class object
      */
     FVPressure2P2CMultiPhysics(Problem& problem) : FVPressure2P2C<TypeTag>(problem),
@@ -226,8 +228,8 @@ protected:
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
     Dune::Timer timer_; //!< A timer for the time spent on the multiphysics framework.
 
-    //! Indices of matrix and rhs entries
-    /**
+   /*!
+    * \brief Indices of matrix and rhs entries
     * During the assembling of the global system of equations get-functions are called (getSource(),
     * getFlux(), etc.), which return global matrix or right hand side entries in a vector.
     * These can be accessed using following indices:
@@ -240,8 +242,10 @@ protected:
     };
 };
 
-//! function which assembles the system of equations to be solved
-/*! for first == true, this function assembles the matrix and right hand side for
+/*!
+ * \brief  function which assembles the system of equations to be solved
+ *
+ * for first == true, this function assembles the matrix and right hand side for
  * the solution of the pressure field in the same way as in the class FVPressure2P.
  * for first == false, the approach is changed to \f[-\frac{\partial V}{\partial p}
  * \frac{\partial p}{\partial t}+\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}\nabla\cdot
@@ -346,8 +350,10 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
     return;
 }
 
-//! Assembles the source term
-/** The source is translated into a volumentric source term:
+/*!
+ * \brief Assembles the source term
+ *
+ * The source is translated into a volumentric source term:
  * \f[ V_i \sum_{\kappa} \frac{1}{\varrho} q^{\kappa}_i \; , \f]
  * because under singlephase conditions
  * \f[ \frac{\partial v_{t}}{\partial C^{\kappa}} \approx \frac{1}{\varrho} \f].
@@ -375,8 +381,10 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pSource(Dune::FieldVector<Scalar, 
     return;
 }
 
-//! Assembles the storage term for a 1p cell in a multiphysics framework
-/** The storage term comprises the (single-phase) compressibility (due to a change in
+/*!
+ * \brief  Assembles the storage term for a 1p cell in a multiphysics framework
+ *
+ * The storage term comprises the (single-phase) compressibility (due to a change in
  * pressure from last timestep):
  *  \f[ V_i c_{i} \frac{p^t_i - p^{t-\Delta t}_i}{\Delta t} \f]
  * and the damped error introduced by the incorrect transport of the last timestep:
@@ -761,15 +769,16 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
 }
 
 
-//! constitutive functions are updated once if new concentrations are calculated and stored in the variables container
 /*!
+ * \brief constitutive functions are updated once if new concentrations are calculated and stored in the variables container
+ *
  * In contrast to the standard sequential 2p2c model ( FVPressure2P2C<TypeTag>::updateMaterialLaws() ),
  * this method also holds routines to adapt the subdomain. The subdomain indicates weather we are in 1p domain (value = 1)
  * or in the two phase subdomain (value = 2).
  * Note that the type of flash, i.e. the type of FluidState (FS), present in each cell does not have to
  * coincide with the subdomain. If a cell will be simple and was complex, a complex FS is available, so next time step
  * will use this complex FS, but updateMaterialLaw afterwards will finally transform that to simple FS.
- *  \param postTimeStep Flag indicating method is called from Problem::postTimeStep()
+ * \param postTimeStep Flag indicating method is called from Problem::postTimeStep()
  */
 template<class TypeTag>
 void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
@@ -887,8 +896,10 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
     return;
 }
 
-//! updates secondary variables of one single phase cell
-/*! For each element, the secondary variables are updated according to the
+/*!
+ * \brief updates secondary variables of one single phase cell
+ *
+ * For each element, the secondary variables are updated according to the
  * primary variables. Only a simple flash calulation has to be carried out,
  * as phase distribution is already known: single-phase.
  * \param elementI The element
