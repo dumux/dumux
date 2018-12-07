@@ -467,6 +467,20 @@ class SubDomainStaggeredLocalAssembler;
  * \ingroup StaggeredDiscretization
  * \ingroup MultiDomain
  * \brief Staggered scheme local assembler using numeric differentiation and implicit time discretization
+ *
+ * The assembly of the cellCenterResidual is done element-wise, the assembly of the face residual is done half-element-wise.
+ *
+ * A sketch of what this means can be found in the following image:
+ *
+ * \image html staggered_halfelementwise.png
+ *
+ * Half-element wise assembly means, that integrals are
+split into contributions from the left and right part of the staggered control volume. For an example term \f$\int_{\Omega}\varrho u\text{d}\Omega\f$ this reads
+\f$\int_{\Omega}\varrho u\text{d}\Omega = \frac{1}{2}\Omega_\text{left}\varrho_\text{left}u+\frac{1}{2}\Omega_\text{right}\varrho_\text{right}u\f$.
+
+During assembly, \f$\frac{1}{2}\Omega_\text{left}\varrho_\text{left}u\f$ is added to the residual of the
+staggered control volume \f$\Omega\f$, when the loops reach the scvf within element \f$\Omega_\text{left}\f$. \f$\frac{1}{2}\Omega_\text{right}\varrho_\text{right}u\f$ is added to the residual of \f$\Omega\f$, when the loops reach the scvf within in element \f$\Omega_\text{right}\f$.
+Other terms are split analogously.
  */
 template<std::size_t id, class TypeTag, class Assembler>
 class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
