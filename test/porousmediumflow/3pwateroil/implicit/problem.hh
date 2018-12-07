@@ -317,8 +317,6 @@ private:
     mutable Scalar massProducedWater_;
 
     std::string name_;
-
-    std::ofstream massBalance;
 };
 } //end namespace
 

@@ -181,7 +181,8 @@ int main(int argc, char** argv) try
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
         // write vtk output
-        vtkWriter.write(timeLoop->time());
+        if (timeLoop->isCheckPoint() || timeLoop->finished())
+            vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());
 
