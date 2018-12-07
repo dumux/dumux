@@ -168,6 +168,12 @@
      */
     /*!
      * \ingroup PorousmediumflowModels
+     * \defgroup SolidEnergyModel Solid energy
+     * \brief Energy equation for the solid (general heat equation)
+     * \copydetails ./porousmediumflow/solidenergy/model.hh
+     */
+    /*!
+     * \ingroup PorousmediumflowModels
      * \defgroup TracerModel Tracer
      * \brief Multi-component advection-diffusion-reaction model with given velocity field
      * \copydetails ./porousmediumflow/tracer/model.hh
