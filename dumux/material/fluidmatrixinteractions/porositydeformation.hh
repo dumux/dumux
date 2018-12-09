@@ -44,7 +44,6 @@ public:
      *       the displacements in the different grid directions are stored
      *       in the first entries of the primary variable vector.
      *
-     *
      * \param fvGridGeometry The finite volume grid geometry
      * \param element The finite element
      * \param elemSol The element solution
@@ -53,10 +52,10 @@ public:
      * \param minPoro A minimum porosity value
      * \param maxPoro A maximum porosity value
      *
-     * \note Han and Dusseault (2003, doi 10.1016/S0920-4105(03)00047-0)
-     *       provide a derivation for \f$\text{d} \phi = -(1 - \phi ) \text{d} \epsilon_v\f$.
-     *       Here, \f$\epsilon_v\f$ is equal to \f$text{div} \mathbf{u}\f$.
-     *       By using an initial porosity \f$\phi_0\f$ and assuming \epsilon_{v, 0} = 0,
+     * \note \cite han2003 ( https://doi.org/10.1016/S0920-4105(03)00047-0 )
+     *       provide a derivation for \f$\text{d} \phi = -(1 - \phi ) \text{d} \epsilon_v \f$.
+     *       Here, \f$\epsilon_v\f$ is equal to \f$\text{div} \mathbf{u}\f$.
+     *       By using an initial porosity \f$\phi_0\f$ and assuming  \f$ \epsilon_{v, 0} = 0 \f$,
      *       one obtains \f$\phi = \frac{\phi_0 - \text{div} \mathbf{u}}{1 - \text{div} \mathbf{u}}\f$,
      *       which is the formulation for the rock mechanics sign convention. Here we are
      *       using the continuum mechanics sign convention, thus, the final formula reads:

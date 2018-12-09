@@ -91,7 +91,6 @@ public:
                          int idx1, int idx2, int idx3, int idx4, int idx5, int idx6,
                          Dune::FieldVector<bool, 4> &useCases);
 
-
     int transmissibilityTPFA(Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
                              InteractionVolume& interactionVolume,
                              std::vector<DimVector >& lambda,
@@ -119,7 +118,6 @@ public:
                                  InteractionVolume& interactionVolume,
                                  std::vector<DimVector >& lambda,
                                  int idx1, int idx2, int idx3, int idx6);
-
 
     /*!
      * \brief Constructs a FvMpfaL3dTransmissibilityCalculator object

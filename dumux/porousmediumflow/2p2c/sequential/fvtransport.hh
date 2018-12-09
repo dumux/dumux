@@ -30,15 +30,16 @@
 #include <dumux/common/math.hh>
 #include <dumux/linear/vectorexchange.hh>
 
-/**
- * @file
- * @brief  Finite Volume discretization of the component transport equation
+/*!
+ * \file
+ * \brief  Finite Volume discretization of the component transport equation
  */
-
 namespace Dumux
 {
-//! Compositional transport step in a Finite Volume discretization
-/*! \ingroup multiphase
+/*!
+ * \ingroup Sequential
+ * \brief Compositional transport step in a Finite Volume discretization
+ *
  *  The finite volume model for the solution of the transport equation for compositional
  *  two-phase flow.
  *  \f[
@@ -51,7 +52,6 @@ namespace Dumux
  *  The whole flux contribution for each cell is subdivided into a storage term, a flux term and a source term.
  *  Corresponding functions (<tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt>) are provided,
  *  internal sources are directly treated.
- *
  *
  *  \tparam TypeTag The Type Tag
  */
@@ -134,17 +134,21 @@ public:
     void updateConcentrations(TransportSolutionType& updateVector, Scalar dt);
 
     // Function which calculates the flux update
-    void getFlux(ComponentVector&, EntryType&,
-            const Intersection&, CellData&);
+    void getFlux(ComponentVector& fluxEntries, EntryType& timestepFlux,
+                 const Intersection& intersection, CellData& cellDataI);
 
     // Function which calculates the boundary flux update
-    void getFluxOnBoundary(ComponentVector&, EntryType&,
-                           const Intersection&, const CellData&);
+    void getFluxOnBoundary(ComponentVector& fluxEntries, EntryType& timestepFlux,
+                           const Intersection& intersection, const CellData& cellDataI);
 
-    void evalBoundary(GlobalPosition,const Intersection&,FluidState &, PhaseVector &);
+    void evalBoundary(GlobalPosition globalPosFace,
+                      const Intersection& intersection,
+                      FluidState& BCfluidState,
+                      PhaseVector& pressBound);
 
-    //! Set the initial values before the first pressure equation
+
     /*!
+     * \brief Set the initial values before the first pressure equation
      * This method is called before first pressure equation is solved from IMPET.
      */
     void initialize()
@@ -159,8 +163,10 @@ public:
         }
     }
 
-    //! \brief Write transport variables into the output files
-     /*  \param writer applied VTK-writer */
+    /*!
+     * \brief Write transport variables into the output files
+     * \param writer applied VTK-writer
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -197,10 +203,11 @@ public:
 
     /*! \name Access functions for protected variables  */
     //@{
-    //! Return the vector of the transported quantity
-    /*! For an immiscible IMPES scheme, this is the saturation. For compositional simulations, however,
-     *  the total concentration of all components is transported.
-     *  @param transportedQuantity Vector of both transported components
+    /*!
+     * \brief Return the vector of the transported quantity
+     * For an immiscible IMPES scheme, this is the saturation. For compositional simulations, however,
+     * the total concentration of all components is transported.
+     * \param transportedQuantity Vector of both transported components
      */
     void getTransportedQuantity(TransportSolutionType& transportedQuantity)
     {
@@ -214,11 +221,12 @@ public:
 
     /*! \name Access functions for protected variables  */
     //@{
-    //! Return the the total concentration stored in the transport vector
-    /*! To get real cell values, do not acess this method, but rather
+    /*!
+     * \brief Return the the total concentration stored in the transport vector
+     * To get real cell values, do not acess this method, but rather
      * call the respective function in the cell data object.
-     * @param compIdx The index of the component
-     * @param eIdxGlobal The global index of the current cell.
+     * \param compIdx The index of the component
+     * \param eIdxGlobal The global index of the current cell.
      */
     Scalar& totalConcentration(int compIdx, int eIdxGlobal)
     {
@@ -229,9 +237,10 @@ public:
     {}
 
 
-    //! Function to control the abort of the transport-sub-time-stepping depending on a physical parameter range
     /*!
-     * @param entry Cell entries of the update vector
+     * \brief Function to control the abort of the transport-sub-time-stepping
+     * depending on a physical parameter range
+     * \param entry Cell entries of the update vector
      */
     template<class DataEntry>
     bool inPhysicalRange(DataEntry& entry)
@@ -254,8 +263,8 @@ public:
     }
 
     //@}
-    //! Constructs a FVTransport2P2C object
     /*!
+     * \brief Constructs a FVTransport2P2C object
      * Currently, the compositional transport scheme can not be applied with a global pressure / total velocity
      * formulation.
      *
@@ -332,8 +341,9 @@ private:
     { return *static_cast<const Implementation *>(this); }
 };
 
-//! \brief Calculate the update vector and determine timestep size
+
 /*!
+ *  \brief Calculate the update vector and determine timestep size
  *  This method calculates the update vector \f$ u \f$ of the discretized equation
  *  \f[
        C^{\kappa , new} = C^{\kappa , old} + u,
@@ -345,8 +355,8 @@ private:
  *  employing a CFL condition.
  *
  *  \param t Current simulation time \f$\mathrm{[s]}\f$
- *  \param[out] dt Time step size \f$\mathrm{[s]}\f$
- *  \param[out] updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
+ *  \param dt Time step size \f$\mathrm{[s]}\f$
+ *  \param updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
  *  \param impet Flag that determines if it is a real impet step or an update estimate for volume derivatives
  */
 template<class TypeTag>
@@ -499,10 +509,11 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
             Dune::dinfo  << " Averageing done for " << averagedFaces_ << " faces. "<< std::endl;
     }
 }
-/*  Updates the transported quantity once an update is calculated.
- *  This method updates both, the internal transport solution vector and the entries in the cellData.
- *  \param updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
+/*!
+ * \brief Updates the transported quantity once an update is calculated.
  *
+ * This method updates both, the internal transport solution vector and the entries in the cellData.
+ * \param updateVector Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
  */
 template<class TypeTag>
 void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& updateVector)
@@ -513,10 +524,12 @@ void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& 
         updateConcentrations(updateVector, problem().timeManager().timeStepSize());
 }
 
-/*  Updates the transported quantity once an update is calculated.
- *  This method updates both, the internal transport solution vector and the entries in the cellData.
- *  \param updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
+/*!
+ * \brief Updates the transported quantity once an update is calculated.
  *
+ * This method updates both, the internal transport solution vector and the entries in the cellData.
+ * \param updateVector Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
+ * \param dt Time step size \f$\mathrm{[s]}\f$
  */
 template<class TypeTag>
 void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& updateVector, Scalar dt)
@@ -524,10 +537,12 @@ void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& 
     updateConcentrations(updateVector, dt);
 }
 
-/*  Updates the concentrations once an update is calculated.
- *  This method updates both, the internal transport solution vector and the entries in the cellData.
- *  \param updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
+/*!
+ * \brief Updates the concentrations once an update is calculated.
  *
+ * This method updates both, the internal transport solution vector and the entries in the cellData.
+ * \param updateVector Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
+ * \param dt Time step size \f$\mathrm{[s]}\f$
  */
 template<class TypeTag>
 void FVTransport2P2C<TypeTag>::updateConcentrations(TransportSolutionType& updateVector, Scalar dt)
@@ -544,8 +559,9 @@ void FVTransport2P2C<TypeTag>::updateConcentrations(TransportSolutionType& updat
     }
 }
 
-//! Get flux at an interface between two cells
-/** The flux through \f$ \gamma \f$  is calculated according to the underlying pressure field,
+/*!
+ * \brief  Get flux at an interface between two cells
+ * The flux through \f$ \gamma \f$  is calculated according to the underlying pressure field,
  * calculated by the pressure model.
  *  \f[ - A_{\gamma} \mathbf{n}^T_{\gamma} \mathbf{K}  \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha}
      \mathbf{d}_{ij}  \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}^T \mathbf{d}_{ij} \right)
@@ -848,8 +864,11 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
 
     return;
 }
-//! Get flux on Boundary
-/** The flux through \f$ \gamma \f$  is calculated according to the underlying pressure field,
+
+/*!
+ * \brief Get flux on Boundary
+ *
+ * The flux through \f$ \gamma \f$  is calculated according to the underlying pressure field,
  * calculated by the pressure model.
  *  \f[ - A_{\gamma}  \mathbf{n}^T_{\gamma} \mathbf{K} \mathbf{d}_{i-Boundary}
       \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \sum_{\kappa} X^{\kappa}_{\alpha}
@@ -939,9 +958,9 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
 
         // read boundary values
         this->evalBoundary(globalPosFace,
-                        intersection,
-                        BCfluidState,
-                        pressBound);
+                           intersection,
+                           BCfluidState,
+                           pressBound);
 
         // determine fluid properties at the boundary
         Scalar densityWBound = BCfluidState.density(wPhaseIdx);
@@ -1069,8 +1088,10 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
     return;
 }
 
-//! evaluate the boundary conditions
+
 /*!
+ * \brief Evaluate the boundary conditions
+ *
  *  As the transport primary variable in this formulation is the total component
  *  concentration, \f$ C^{\kappa} \f$ it seems natural that the boundary values
  *  are also total concentrations. However, as for the initial conditions, it is

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CCDiscretization
+ * \ingroup Discretization
  * \brief The local element solution class for cell-centered methods
  */
 #ifndef DUMUX_CC_ELEMENT_SOLUTION_HH
@@ -32,7 +32,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup CCDiscretization
+ * \ingroup Discretization
  * \brief The element solution vector
  */
 template<class FVElementGeometry, class PV>
@@ -106,7 +106,7 @@ private:
 };
 
 /*!
- * \ingroup CCDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for cell-centered schemes
  */
 template<class Element, class SolutionVector, class FVGridGeometry>
@@ -122,7 +122,7 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const FV
 }
 
 /*!
-* \ingroup CCDiscretization
+* \ingroup Discretization
 * \brief  Make an element solution for cell-centered schemes
  */
 template<class Element, class ElementVolumeVariables, class FVElementGeometry>
@@ -136,7 +136,7 @@ auto elementSolution(const Element& element, const ElementVolumeVariables& elemV
 }
 
 /*!
- * \ingroup CCDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for cell-centered schemes
  * \note This is e.g. used to contruct an element solution at Dirichlet boundaries
  */
@@ -150,7 +150,7 @@ auto elementSolution(PrimaryVariables&& priVars)
 }
 
 /*!
- * \ingroup CCDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for cell-centered schemes
  * \note This is e.g. used to contruct an element solution at Dirichlet boundaries
  */

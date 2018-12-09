@@ -37,7 +37,6 @@ namespace Dumux
 {
 
 /*!
- * \ingroup InputOutput
  * \ingroup NavierStokesModel
  * \brief helper function to determine the names of cell-centered primary variables of a model with staggered grid discretization
  * \note use this as input for the load solution function
@@ -58,7 +57,6 @@ std::function<std::string(int,int)> createCellCenterPVNameFunction(const std::st
 }
 
 /*!
- * \ingroup InputOutput
  * \ingroup NavierStokesModel
  * \brief helper function to determine the names of primary variables on the cell faces of a model with staggered grid discretization
  * \note use this as input for the load solution function

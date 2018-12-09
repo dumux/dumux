@@ -831,7 +831,7 @@ private:
  */
 // \{
 
-/*
+/*!
  * A simple ilu0 block diagonal preconditioner
  */
 template<class M, class X, class Y, int blockLevel = 2>
@@ -875,17 +875,8 @@ public:
         static_assert(blockLevel >= 2, "Only makes sense for MultiTypeBlockMatrix!");
     }
 
-    /*!
-       \brief Prepare the preconditioner.
-
-       \copydoc Dune::Preconditioner::pre(X&,Y&)
-     */
     void pre (X& v, Y& d) final {}
 
-    /*!
-     * \brief Apply the preconditoner.
-     * \copydoc Dune::Preconditioner::apply(X&,const Y&)
-     */
     void apply (X& v, const Y& d) final
     {
         using namespace Dune::Hybrid;
@@ -895,10 +886,6 @@ public:
         });
     }
 
-    /*!
-     * \brief Clean up.
-     * \copydoc Dune::Preconditioner::post(X&)
-     */
     void post (X&) final {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
@@ -1006,9 +993,20 @@ public:
     }
 
     /*!
-       \brief Prepare the preconditioner.
-
-       \copydoc Dune::Preconditioner::pre(X&,Y&)
+     * \brief Prepare the preconditioner.
+     *
+     * A solver solves a linear operator equation A(v)=d by applying
+     * one or several steps of the preconditioner. The method pre()
+     * is called before the first apply operation.
+     * d and v are right hand side and solution vector of the linear
+     * system respectively. It may. e.g., scale the system, allocate memory or
+     * compute a (I)LU decomposition.
+     * Note: The ILU decomposition could also be computed in the constructor
+     * or with a separate method of the derived method if several
+     * linear systems with the same matrix are to be solved.
+     *
+     * \param v The left hand side of the equation.
+     * \param d The right hand side of the equation.
      */
     void pre (X& v, Y& d) final
     {
@@ -1020,8 +1018,15 @@ public:
     }
 
     /*!
-     * \brief Apply the preconditoner.
-     * \copydoc Dune::Preconditioner::apply(X&,const Y&)
+     * \brief Apply one step of the preconditioner to the system A(v)=d.
+     *
+     * On entry v=0 and d=b-A(x) (although this might not be
+     * computed in that way. On exit v contains the update, i.e
+     * one step computes \f$ v = M^{-1} d \f$ where \f$ M \f$ is the
+     * approximate inverse of the operator \f$ A \f$ characterizing
+     * the preconditioner.
+     * \param v The update to be computed
+     * \param d The current defect.
      */
     void apply (X& v, const Y& d) final
     {
@@ -1034,7 +1039,12 @@ public:
 
     /*!
      * \brief Clean up.
-     * \copydoc Dune::Preconditioner::post(X&)
+     *
+     * This method is called after the last apply call for the
+     * linear system to be solved. Memory may be deallocated safely
+     * here. v is the solution of the linear equation.
+     *
+     * \param v The right hand side of the equation.
      */
     void post (X& v) final
     {

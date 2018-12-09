@@ -33,21 +33,22 @@
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 
-/**
- * @file
- * @brief  Finite Volume 2p2c Pressure Model
+/*!
+ * \file
+ * \brief  Finite Volume 2p2c Pressure Model
  */
-
 namespace Dumux
 {
-//! The finite volume model for the solution of the compositional pressure equation
-/*! \ingroup multiphase
- *  Provides a Finite Volume implementation for the pressure equation of a compressible
- *  system with two components. An IMPES-like method is used for the sequential
- *  solution of the problem.  Diffusion is neglected, capillarity can be regarded.
- *  Isothermal conditions and local thermodynamic
- *  equilibrium are assumed.  Gravity is included.
- *  \f[
+/*!
+ * \ingroup multiphase
+ * \brief The finite volume model for the solution of the compositional pressure equation
+ *
+ * Provides a Finite Volume implementation for the pressure equation of a compressible
+ * system with two components. An IMPES-like method is used for the sequential
+ * solution of the problem.  Diffusion is neglected, capillarity can be regarded.
+ * Isothermal conditions and local thermodynamic
+ * equilibrium are assumed.  Gravity is included.
+ * \f[
          c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}}
          \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
           = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
@@ -66,7 +67,6 @@ namespace Dumux
  * whereas this class provides the actual entries for the matrix and RHS vector.
  * The partial derivatives of the actual fluid volume \f$ v_{total} \f$ are gained by using a secant method.
  *
- * \tparam TypeTag The Type Tag
  */
 template<class TypeTag> class FVPressure2P2C
 : public FVPressureCompositional<TypeTag>
@@ -104,11 +104,13 @@ template<class TypeTag> class FVPressure2P2C
         wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
         contiWEqIdx = Indices::contiWEqIdx, contiNEqIdx = Indices::contiNEqIdx
     };
-    //! Indices of matrix and rhs entries
-    /** During the assembling of the global system of equations get-functions are called
+
+    /*!
+     * \brief Indices of matrix and rhs entries
+     * During the assembling of the global system of equations get-functions are called
      * (getSource(), getFlux(), etc.), which return global matrix or right hand side entries
      * in a vector. These can be accessed using following indices:
-    */
+     */
     enum
     {
         rhs = 1,//!<index for the right hand side entry
@@ -143,20 +145,20 @@ protected:
     }
 
 public:
-    void getSource(EntryType&, const Element&, const CellData&, const bool);
 
-    void getStorage(EntryType&, const Element&, const CellData&, const bool);
+    void getSource(EntryType& sourceEntry, const Element& elementI, const CellData& cellDataI, const bool first);
 
-    void getFlux(EntryType&, const Intersection&, const CellData&, const bool);
+    void getStorage(EntryType& storageEntry, const Element& elementI, const CellData& cellDataI, const bool first);
 
-    void getFluxOnBoundary(EntryType&,
-                            const Intersection&, const CellData&, const bool);
+    void getFlux(EntryType& entries, const Intersection& intersection, const CellData& cellDataI, const bool first);
+
+    void getFluxOnBoundary(EntryType& entries, const Intersection& intersection, const CellData& cellDataI, const bool first);
 
     //updates secondary variables for one cell and stores in the variables object
     void updateMaterialLawsInElement(const Element& elementI, bool postTimeStep);
 
-    //! Constructs a FVPressure2P2C object
-    /**
+    /*!
+     * \brief Constructs a FVPressure2P2C object
      * \param problem a problem class object
      */
     FVPressure2P2C(Problem& problem) : FVPressureCompositional<TypeTag>(problem),
@@ -196,9 +198,10 @@ private:
     {   return *static_cast<const Implementation *>(this);}
 };
 
-
-//! Assembles the source term
-/** for first == true, a source is implemented as in FVPressure2P.
+/*!
+ * \brief Assembles the source term
+ *
+ * for first == true, a source is implemented as in FVPressure2P.
  * for first == false, the source is translated into a volumentric source term:
  * \f[ V_i \sum_{\kappa} \frac{\partial v_{t}}{\partial C^{\kappa}} q^{\kappa}_i  \f].
  * \param sourceEntry The Matrix and RHS entries
@@ -241,8 +244,10 @@ void FVPressure2P2C<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& sourceEntr
     return;
 }
 
-//! Assembles the storage term
-/** for first == true, there is no storage contribution.
+/*!
+ * \brief Assembles the storage term
+ *
+ * for first == true, there is no storage contribution.
  * for first == false, the storage term comprises the compressibility (due to a change in
  * pressure from last timestep):
  *  \f[ V_i c_{t,i} \frac{p^t_i - p^{t-\Delta t}_i}{\Delta t} \f]
@@ -325,9 +330,10 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
     return;
 }
 
-
-//! Get flux at an interface between two cells
-/*! for first == true, the flux is calculated in traditional fractional-flow forn as in FVPressure2P.
+/*!
+ * \brief Get flux at an interface between two cells
+ *
+ * for first == true, the flux is calculated in traditional fractional-flow forn as in FVPressure2P.
  * for first == false, the flux thorugh \f$ \gamma \f$  is calculated via a volume balance formulation
  *  \f[ - A_{\gamma} \mathbf{n}^T_{\gamma} \mathbf{K}  \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha}
      \mathbf{d}_{ij}  \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}^T \mathbf{d}_{ij} \right)
@@ -617,8 +623,10 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
     }   // end !first
 }
 
-//! Get flux on Boundary
-/** for first == true, the flux is calculated in traditional fractional-flow forn as in FVPressure2P.
+/*!
+ * \brief Get flux on Boundary
+ *
+ * for first == true, the flux is calculated in traditional fractional-flow forn as in FVPressure2P.
  * for first == false, the flux thorugh \f$ \gamma \f$  is calculated via a volume balance formulation
  *  \f[ - A_{\gamma} \mathbf{n}^T_{\gamma} \mathbf{K} \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \mathbf{d}_{ij}
     \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}^T \mathbf{d}_{ij} \right)
@@ -882,8 +890,10 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
     return;
 }
 
-//! updates secondary variables of one cell
-/*! For each element, the secondary variables are updated according to the
+/*!
+ * \brief Updates secondary variables of one cell
+ *
+ * For each element, the secondary variables are updated according to the
  * primary variables. In case the method is called after the Transport,
  * i.e. at the end / post time step, CellData2p2c.reset() resets the volume
  * derivatives for the next time step.
