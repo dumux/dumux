@@ -85,11 +85,9 @@ dune_add_test(NAME test_gridmanager_gmsh_3d_ug_parallel
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_gmsh_3d_ug -Problem.Name bifurcation_ug_parallel"
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_gmsh_3d_ug -Problem.Name bifurcation_ug_parallel -Grid.Refine false"
                        --files ${CMAKE_SOURCE_DIR}/test/references/gridmanager-bifurcation-3d-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-bifurcation_ug_parallel-00000.pvtu
-                               ${CMAKE_SOURCE_DIR}/test/references/gridmanager-bifurcation-3d-reference-refined.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-bifurcation_ug_parallel-00001.pvtu)
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-bifurcation_ug_parallel-00000.pvtu)
 
 add_executable(test_gridmanager_gmsh_e_markers_alu EXCLUDE_FROM_ALL test_gridmanager_gmsh_e_markers.cc)
 target_compile_definitions(test_gridmanager_gmsh_e_markers_alu PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>)
