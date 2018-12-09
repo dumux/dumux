@@ -41,7 +41,7 @@ template<class GridView>
 class ConformingGridIntersectionMapper
 {
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = unsigned int;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
 
     static constexpr int codimIntersection =  1;
 public:
@@ -68,7 +68,7 @@ public:
         return element.subEntities(1);
     }
 
-    IndexType globalIntersectionIndex(const Element& element, const IndexType localFaceIdx) const
+    GridIndexType globalIntersectionIndex(const Element& element, const std::size_t localFaceIdx) const
     {
         return gridView_.indexSet().subIndex(element, localFaceIdx, codimIntersection);
     }
@@ -87,7 +87,7 @@ class NonConformingGridIntersectionMapper
 {
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
-    using IndexType = unsigned int;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
 
 public:
     NonConformingGridIntersectionMapper(const GridView& gridview)
@@ -104,7 +104,7 @@ public:
         return numIntersections_;
     }
 
-    IndexType globalIntersectionIndex(const Element& element, const IndexType localFaceIdx) const
+    GridIndexType globalIntersectionIndex(const Element& element, const std::size_t localFaceIdx) const
     {
         return (intersectionMapGlobal_[index(element)].find(localFaceIdx))->second; //use find() for const function!
     }
@@ -165,7 +165,7 @@ public:
     }
 
 private:
-    IndexType index(const Element& element) const
+    GridIndexType index(const Element& element) const
     {
         return gridView_.indexSet().index(element);
     }

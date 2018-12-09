@@ -50,9 +50,9 @@ class BoxDfmFluxVariablesCache
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
-    using TransmissibilityVector = std::vector<IndexType>;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
+    using Stencil = std::vector<GridIndexType>;
+    using TransmissibilityVector = std::vector<GridIndexType>;
 
     using CoordScalar = typename GridView::ctype;
     static const int dim = GridView::dimension;
