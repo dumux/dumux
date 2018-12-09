@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FV_ELEMENT_GEOMETRY_HH
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 
 namespace Dumux {
@@ -52,7 +53,9 @@ template<class GG>
 class StaggeredFVElementGeometry<GG, true> : public CCTpfaFVElementGeometry<GG, true>
 {
     using ParentType = CCTpfaFVElementGeometry<GG, true>;
-    using IndexType = typename GG::GridView::IndexSet::IndexType;
+    using GridView = typename GG::GridView;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
 public:
     //! export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
@@ -67,7 +70,7 @@ public:
 
     //! Get a sub control volume face with an element index and a local scvf index
     using ParentType::scvf;
-    const SubControlVolumeFace& scvf(IndexType eIdx, IndexType localScvfIdx) const
+    const SubControlVolumeFace& scvf(GridIndexType eIdx, LocalIndexType localScvfIdx) const
     {
         return this->fvGridGeometry().scvf(eIdx, localScvfIdx);
     }
@@ -86,7 +89,8 @@ class StaggeredFVElementGeometry<GG, false>
 {
     using ThisType = StaggeredFVElementGeometry<GG, false>;
     using GridView = typename GG::GridView;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Element = typename GridView::template Codim<0>::Entity;
 public:
     //! export type of subcontrol volume
@@ -107,14 +111,14 @@ public:
     : fvGridGeometryPtr_(&fvGridGeometry) {}
 
     //! Get a sub control volume face with an element index and a local scvf index
-    const SubControlVolumeFace& scvf(IndexType eIdx, IndexType localScvfIdx) const
+    const SubControlVolumeFace& scvf(GridIndexType eIdx, LocalIndexType localScvfIdx) const
     {
         return scvf(this->fvGridGeometry().localToGlobalScvfIndex(eIdx, localScvfIdx));
     }
 
     //! Get an elment sub control volume with a global scv index
     //! We separate element and neighbor scvs to speed up mapping
-    const SubControlVolume& scv(IndexType scvIdx) const
+    const SubControlVolume& scv(GridIndexType scvIdx) const
     {
         if (scvIdx == scvIndices_[0])
             return scvs_[0];
@@ -124,7 +128,7 @@ public:
 
     //! Get an element sub control volume face with a global scvf index
     //! We separate element and neighbor scvfs to speed up mapping
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     {
         auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx);
         if (it != scvfIndices_.end())
@@ -175,7 +179,7 @@ public:
         neighborScvfIndices_.reserve(element.subEntities(1));
         neighborScvfs_.reserve(element.subEntities(1));
 
-        std::vector<IndexType> handledNeighbors;
+        std::vector<GridIndexType> handledNeighbors;
         handledNeighbors.reserve(element.subEntities(1));
         for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
         {
@@ -234,7 +238,7 @@ private:
             if (intersection.neighbor() || intersection.boundary())
             {
                 geometryHelper.updateLocalFace(fvGridGeometry().intersectionMapper(), intersection);
-                std::vector<IndexType> scvIndices{eIdx, scvfNeighborVolVarIndex};
+                std::vector<GridIndexType> scvIndices{eIdx, scvfNeighborVolVarIndex};
                 scvfs_.emplace_back(intersection,
                                     intersection.geometry(),
                                     scvFaceIndices[scvfCounter],
@@ -250,7 +254,7 @@ private:
     }
 
     //! create the necessary scvs and scvfs of the neighbor elements to the bound elements
-    void makeNeighborGeometries_(const Element& element, const IndexType eIdx)
+    void makeNeighborGeometries_(const Element& element, const GridIndexType eIdx)
     {
         // using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
 
@@ -274,7 +278,7 @@ private:
                 // only create subcontrol faces where the outside element is the bound element
                 if (intersection.outside() == *elementPtr_)
                 {
-                    std::vector<IndexType> scvIndices{eIdx, scvfNeighborVolVarIndex};
+                    std::vector<GridIndexType> scvIndices{eIdx, scvfNeighborVolVarIndex};
                     neighborScvfs_.emplace_back(intersection,
                                                 intersection.geometry(),
                                                 scvFaceIndices[scvfCounter],
@@ -290,8 +294,8 @@ private:
         }
     }
 
-    const IndexType findLocalIndex_(const IndexType idx,
-                                    const std::vector<IndexType>& indices) const
+    const LocalIndexType findLocalIndex_(const GridIndexType idx,
+                                         const std::vector<GridIndexType>& indices) const
     {
         auto it = std::find(indices.begin(), indices.end(), idx);
         assert(it != indices.end() && "Could not find the scv/scvf! Make sure to properly bind this class!");
@@ -316,16 +320,16 @@ private:
     const FVGridGeometry* fvGridGeometryPtr_;  //!< the grid fvgeometry
 
     // local storage after binding an element
-    std::array<IndexType, 1> scvIndices_;
+    std::array<GridIndexType, 1> scvIndices_;
     std::array<SubControlVolume, 1> scvs_;
 
-    std::vector<IndexType> scvfIndices_;
+    std::vector<GridIndexType> scvfIndices_;
     std::vector<SubControlVolumeFace> scvfs_;
 
-    std::vector<IndexType> neighborScvIndices_;
+    std::vector<GridIndexType> neighborScvIndices_;
     std::vector<SubControlVolume> neighborScvs_;
 
-    std::vector<IndexType> neighborScvfIndices_;
+    std::vector<GridIndexType> neighborScvfIndices_;
     std::vector<SubControlVolumeFace> neighborScvfs_;
 
     bool hasBoundaryScvf_ = false;

@@ -32,6 +32,7 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/boundaryflag.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 
 namespace Dumux {
@@ -51,8 +52,8 @@ struct CCTpfaDefaultScvfGeometryTraits
     static constexpr int dimWorld = Grid::dimensionworld;
 
     using Scalar = typename Grid::ctype;
-    using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-    using LocalIndexType = unsigned int;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using GridIndexStorage = typename std::conditional_t< (dim<dimWorld),
                                                           std::vector<GridIndexType>,
                                                           Dune::ReservedVector<GridIndexType, 2> >;

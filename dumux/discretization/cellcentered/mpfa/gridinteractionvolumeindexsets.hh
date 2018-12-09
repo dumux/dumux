@@ -52,7 +52,7 @@ public:
     using PrimaryInteractionVolume = PI;
     using SecondaryInteractionVolume = SI;
 
-    using GridIndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
+    using GridIndexType = typename NI::GridIndexType;
     using DualGridIndexSet = CCMpfaDualGridIndexSet< NI >;
 
     /*!

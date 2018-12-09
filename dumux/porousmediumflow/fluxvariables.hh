@@ -55,7 +55,6 @@ class PorousMediumFluxVariables
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;

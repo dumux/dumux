@@ -92,7 +92,7 @@ class BoxDfmFVGridGeometry<Scalar, GV, true, Traits>
 {
     using ThisType = BoxDfmFVGridGeometry<Scalar, GV, true, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
-    using IndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename GV::IndexSet::IndexType;
 
     using Element = typename GV::template Codim<0>::Entity;
     using CoordScalar = typename GV::ctype;
@@ -234,7 +234,7 @@ public:
                 const auto numCorners = isGeometry.corners();
                 const auto idxInInside = intersection.indexInInside();
 
-                std::vector<IndexType> isVertexIndices(numCorners);
+                std::vector<GridIndexType> isVertexIndices(numCorners);
                 for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
                     isVertexIndices[vIdxLocal] = this->vertexMapper().subIndex(element,
                                                                                referenceElement.subEntity(idxInInside, 1, vIdxLocal, dim),
@@ -349,9 +349,9 @@ public:
     //! The finite element cache for creating local FE bases
     const FeCache& feCache() const { return feCache_; }
     //! Get the local scvs for an element
-    const std::vector<SubControlVolume>& scvs(IndexType eIdx) const { return scvs_[eIdx]; }
+    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const { return scvs_[eIdx]; }
     //! Get the local scvfs for an element
-    const std::vector<SubControlVolumeFace>& scvfs(IndexType eIdx) const { return scvfs_[eIdx]; }
+    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const { return scvfs_[eIdx]; }
     //! If a vertex / d.o.f. is on the boundary
     bool dofOnBoundary(unsigned int dofIdx) const { return boundaryDofIndices_[dofIdx]; }
     //! If a vertex / d.o.f. is on a fracture
@@ -396,7 +396,7 @@ class BoxDfmFVGridGeometry<Scalar, GV, false, Traits>
 {
     using ThisType = BoxDfmFVGridGeometry<Scalar, GV, false, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
-    using IndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename GV::IndexSet::IndexType;
 
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
@@ -484,7 +484,7 @@ public:
                 const auto numCorners = isGeometry.corners();
                 const auto idxInInside = intersection.indexInInside();
 
-                std::vector<IndexType> isVertexIndices(numCorners);
+                std::vector<GridIndexType> isVertexIndices(numCorners);
                 for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
                     isVertexIndices[vIdxLocal] = this->vertexMapper().subIndex(element,
                                                                                referenceElement.subEntity(idxInInside, 1, vIdxLocal, dim),

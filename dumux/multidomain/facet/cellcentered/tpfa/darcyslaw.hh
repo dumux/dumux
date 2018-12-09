@@ -150,7 +150,6 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using IndexType = typename GridView::IndexSet::IndexType;
 
     //! Compute the transmissibility associated with the facet element
     template<class VolumeVariables, class FacetVolVars>
@@ -429,7 +428,6 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using IndexType = typename GridView::IndexSet::IndexType;
 
   public:
     //! state the scalar type of the law

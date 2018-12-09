@@ -29,6 +29,7 @@
 #include <algorithm>
 
 #include <dune/common/reservedvector.hh>
+#include <dumux/common/indextraits.hh>
 
 namespace Dumux
 {
@@ -43,8 +44,8 @@ template<class GV>
 struct NodalIndexSetDefaultTraits
 {
     using GridView = GV;
-    using GridIndexType = typename GV::IndexSet::IndexType;
-    using LocalIndexType = std::uint8_t;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GV>::SmallLocalIndex;
 
     //! per default, we use dynamic data containers (iv size unknown)
     template< class T > using NodalScvDataStorage = std::vector< T >;

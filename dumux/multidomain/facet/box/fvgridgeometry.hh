@@ -33,6 +33,7 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
@@ -95,7 +96,8 @@ class BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>
 {
     using ThisType = BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
-    using IndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
     using Element = typename GV::template Codim<0>::Entity;
     using CoordScalar = typename GV::ctype;
@@ -201,7 +203,6 @@ public:
             // construct the sub control volumes
             scvs_[eIdx].clear();
             scvs_[eIdx].reserve(elementGeometry.corners());
-            using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
                 scvs_[eIdx].emplace_back(geometryHelper,
                                          scvLocalIdx,
@@ -290,32 +291,32 @@ public:
     { return feCache_; }
 
     //! Get the local scvs for an element
-    const std::vector<SubControlVolume>& scvs(IndexType eIdx) const
+    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
     { return scvs_[eIdx]; }
 
     //! Get the local scvfs for an element
-    const std::vector<SubControlVolumeFace>& scvfs(IndexType eIdx) const
+    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
     { return scvfs_[eIdx]; }
 
     //! If a d.o.f. is on the boundary
-    bool dofOnBoundary(unsigned int dofIdx) const
+    bool dofOnBoundary(GridIndexType dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
 
     //! If a d.o.f. is on an interior boundary
-    bool dofOnInteriorBoundary(unsigned int dofIdx) const
+    bool dofOnInteriorBoundary(GridIndexType dofIdx) const
     { return interiorBoundaryDofIndices_[dofIdx]; }
 
     //! Periodic boundaries are not supported for the box facet coupling scheme
-    bool dofOnPeriodicBoundary(std::size_t dofIdx) const
+    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
     { return false; }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box facet coupling scheme"); }
 
     //! Returns the map between dofs across periodic boundaries
-    std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
-    { return std::unordered_map<std::size_t, std::size_t>(); }
+    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
+    { return std::unordered_map<GridIndexType, GridIndexType>(); }
 
 private:
     const FeCache feCache_;
@@ -346,7 +347,8 @@ class BoxFacetCouplingFVGridGeometry<Scalar, GV, false, Traits>
 {
     using ThisType = BoxFacetCouplingFVGridGeometry<Scalar, GV, false, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
-    using IndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
@@ -451,12 +453,11 @@ public:
                 const auto idxInInside = intersection.indexInInside();
                 const auto boundary = intersection.boundary();
 
-                using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
                 std::vector<LocalIndexType> vIndicesLocal(numFaceCorners);
                 for (int i = 0; i < numFaceCorners; ++i)
                     vIndicesLocal[i] = static_cast<LocalIndexType>(referenceElement.subEntity(idxInInside, 1, i, dim));
 
-                std::vector<IndexType> gridVertexIndices(numFaceCorners);
+                std::vector<GridIndexType> gridVertexIndices(numFaceCorners);
                 for (int i = 0; i < numFaceCorners; ++i)
                     gridVertexIndices[i] = this->vertexMapper().vertexIndex(element, vIndicesLocal[i], dim);
 
@@ -506,16 +507,16 @@ public:
     { return facetIsOnInteriorBoundary_[ facetMapper_.subIndex(element, intersection.indexInInside(), 1) ]; }
 
     //! Periodic boundaries are not supported for the box facet coupling scheme
-    bool dofOnPeriodicBoundary(std::size_t dofIdx) const
+    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
     { return false; }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-    std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the facet coupling scheme"); }
 
     //! Returns the map between dofs across periodic boundaries
-    std::unordered_map<std::size_t, std::size_t> periodicVertexMap() const
-    { return std::unordered_map<std::size_t, std::size_t>(); }
+    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
+    { return std::unordered_map<GridIndexType, GridIndexType>(); }
 
 private:
     const FeCache feCache_;

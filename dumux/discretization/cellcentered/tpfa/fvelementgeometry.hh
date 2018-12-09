@@ -31,6 +31,7 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
+#include <dumux/common/indextraits.hh>
 #include <dune/common/iteratorrange.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
@@ -59,7 +60,7 @@ class CCTpfaFVElementGeometry<GG, true>
 {
     using ThisType = CCTpfaFVElementGeometry<GG, true>;
     using GridView = typename GG::GridView;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
@@ -80,21 +81,21 @@ public:
 
     //! Get an elment sub control volume with a global scv index
     //! We separate element and neighbor scvs to speed up mapping
-    const SubControlVolume& scv(IndexType scvIdx) const
+    const SubControlVolume& scv(GridIndexType scvIdx) const
     {
         return fvGridGeometry().scv(scvIdx);
     }
 
     //! Get an element sub control volume face with a global scvf index
     //! We separate element and neighbor scvfs to speed up mapping
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     {
         return fvGridGeometry().scvf(scvfIdx);
     }
 
     //! Get the scvf on the same face but from the other side
     //! Note that e.g. the normals might be different in the case of surface grids
-    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvIdx = 0) const
+    const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvIdx = 0) const
     {
         return fvGridGeometry().flipScvf(scvfIdx, outsideScvIdx);
     }
@@ -104,10 +105,10 @@ public:
     //! This is a free function found by means of ADL
     //! To iterate over all sub control volumes of this FVElementGeometry use
     //! for (auto&& scv : scvs(fvGeometry))
-    friend inline Dune::IteratorRange< ScvIterator<SubControlVolume, std::array<IndexType, 1>, ThisType> >
+    friend inline Dune::IteratorRange< ScvIterator<SubControlVolume, std::array<GridIndexType, 1>, ThisType> >
     scvs(const CCTpfaFVElementGeometry& fvGeometry)
     {
-        using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::array<IndexType, 1>, ThisType>;
+        using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::array<GridIndexType, 1>, ThisType>;
         return Dune::IteratorRange<ScvIterator>(ScvIterator(fvGeometry.scvIndices_.begin(), fvGeometry),
                                                 ScvIterator(fvGeometry.scvIndices_.end(), fvGeometry));
     }
@@ -117,12 +118,12 @@ public:
     //! This is a free function found by means of ADL
     //! To iterate over all sub control volume faces of this FVElementGeometry use
     //! for (auto&& scvf : scvfs(fvGeometry))
-    friend inline Dune::IteratorRange< ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType> >
+    friend inline Dune::IteratorRange< ScvfIterator<SubControlVolumeFace, std::vector<GridIndexType>, ThisType> >
     scvfs(const CCTpfaFVElementGeometry& fvGeometry)
     {
         const auto& g = fvGeometry.fvGridGeometry();
         const auto scvIdx = fvGeometry.scvIndices_[0];
-        using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
+        using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<GridIndexType>, ThisType>;
         return Dune::IteratorRange<ScvfIterator>(ScvfIterator(g.scvfIndicesOfScv(scvIdx).begin(), fvGeometry),
                                                  ScvfIterator(g.scvfIndicesOfScv(scvIdx).end(), fvGeometry));
     }
@@ -163,7 +164,7 @@ public:
 private:
 
     const Element* elementPtr_;
-    std::array<IndexType, 1> scvIndices_;
+    std::array<GridIndexType, 1> scvIndices_;
     const FVGridGeometry* fvGridGeometryPtr_;
 };
 
@@ -177,7 +178,8 @@ class CCTpfaFVElementGeometry<GG, false>
 {
     using ThisType = CCTpfaFVElementGeometry<GG, false>;
     using GridView = typename GG::GridView;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Element = typename GridView::template Codim<0>::Entity;
 
     static const int dim = GridView::dimension;
@@ -201,7 +203,7 @@ public:
 
     //! Get an elment sub control volume with a global scv index
     //! We separate element and neighbor scvs to speed up mapping
-    const SubControlVolume& scv(IndexType scvIdx) const
+    const SubControlVolume& scv(GridIndexType scvIdx) const
     {
         if (scvIdx == scvIndices_[0])
             return scvs_[0];
@@ -211,7 +213,7 @@ public:
 
     //! Get an element sub control volume face with a global scvf index
     //! We separate element and neighbor scvfs to speed up mapping
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     {
         auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx);
         if (it != scvfIndices_.end())
@@ -222,7 +224,7 @@ public:
 
     //! Get the scvf on the same face but from the other side
     //! Note that e.g. the normals might be different in the case of surface grids
-    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvIdx = 0) const
+    const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvIdx = 0) const
     {
         auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx);
         if (it != scvfIndices_.end())
@@ -283,7 +285,7 @@ public:
         neighborScvfIndices_.reserve(element.subEntities(1));
         neighborScvfs_.reserve(element.subEntities(1));
 
-        std::vector<IndexType> handledNeighbors;
+        std::vector<GridIndexType> handledNeighbors;
         handledNeighbors.reserve(element.subEntities(1));
 
         for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
@@ -361,7 +363,7 @@ public:
 
 private:
 
-    IndexType findFlippedScvfIndex_(IndexType insideScvIdx, IndexType globalOutsideScvIdx)
+    GridIndexType findFlippedScvfIndex_(GridIndexType insideScvIdx, GridIndexType globalOutsideScvIdx)
     {
         for (unsigned int localNeighborScvfIdx = 0; localNeighborScvfIdx < neighborScvfs_.size(); ++localNeighborScvfIdx)
         {
@@ -440,7 +442,7 @@ private:
     }
 
     //! create the necessary scvs and scvfs of the neighbor elements to the bound elements
-    void makeNeighborGeometries(const Element& element, const IndexType eIdx)
+    void makeNeighborGeometries(const Element& element, const GridIndexType eIdx)
     {
         using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
 
@@ -527,8 +529,8 @@ private:
         }
     }
 
-    const IndexType findLocalIndex(const IndexType idx,
-                                   const std::vector<IndexType>& indices) const
+    const LocalIndexType findLocalIndex(const GridIndexType idx,
+                                        const std::vector<GridIndexType>& indices) const
     {
         auto it = std::find(indices.begin(), indices.end(), idx);
         assert(it != indices.end() && "Could not find the scv/scvf! Make sure to properly bind this class!");
@@ -556,19 +558,19 @@ private:
     const FVGridGeometry* fvGridGeometryPtr_;  //!< the grid fvgeometry
 
     // local storage after binding an element
-    std::array<IndexType, 1> scvIndices_;
+    std::array<GridIndexType, 1> scvIndices_;
     std::array<SubControlVolume, 1> scvs_;
 
-    std::vector<IndexType> scvfIndices_;
+    std::vector<GridIndexType> scvfIndices_;
     std::vector<SubControlVolumeFace> scvfs_;
-    std::vector<std::vector<IndexType>> flippedScvfIndices_;
+    std::vector<std::vector<GridIndexType>> flippedScvfIndices_;
 
-    std::vector<IndexType> neighborScvIndices_;
+    std::vector<GridIndexType> neighborScvIndices_;
     std::vector<SubControlVolume> neighborScvs_;
 
-    std::vector<IndexType> neighborScvfIndices_;
+    std::vector<GridIndexType> neighborScvfIndices_;
     std::vector<SubControlVolumeFace> neighborScvfs_;
-    std::vector<std::vector<IndexType>> flippedNeighborScvfIndices_;
+    std::vector<std::vector<GridIndexType>> flippedNeighborScvfIndices_;
 
     bool hasBoundaryScvf_ = false;
 };

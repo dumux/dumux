@@ -25,6 +25,7 @@
 #define DUMUX_STAGGERED_FREEFLOW_CONNECTIVITY_MAP_HH
 
 #include <vector>
+#include <dumux/common/indextraits.hh>
 
 namespace Dumux {
 
@@ -41,17 +42,17 @@ class StaggeredFreeFlowConnectivityMap
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = std::size_t;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
     using CellCenterIdxType = typename FVGridGeometry::DofTypeIndices::CellCenterIdx;
     using FaceIdxType = typename FVGridGeometry::DofTypeIndices::FaceIdx;
 
-    using CellCenterToCellCenterMap = std::vector<std::vector<IndexType>>;
-    using CellCenterToFaceMap = std::vector<std::vector<IndexType>>;
-    using FaceToCellCenterMap = std::vector<std::vector<IndexType>>;
-    using FaceToFaceMap = std::vector<std::vector<IndexType>>;
+    using CellCenterToCellCenterMap = std::vector<std::vector<GridIndexType>>;
+    using CellCenterToFaceMap = std::vector<std::vector<GridIndexType>>;
+    using FaceToCellCenterMap = std::vector<std::vector<GridIndexType>>;
+    using FaceToFaceMap = std::vector<std::vector<GridIndexType>>;
 
-    using Stencil = std::vector<IndexType>;
+    using Stencil = std::vector<GridIndexType>;
 
 public:
 
@@ -92,25 +93,25 @@ public:
     }
 
     //! Returns the stencil of a cell center dof w.r.t. other cell center dofs
-    const std::vector<IndexType>& operator() (CellCenterIdxType, CellCenterIdxType, const IndexType globalI) const
+    const std::vector<GridIndexType>& operator() (CellCenterIdxType, CellCenterIdxType, const GridIndexType globalI) const
     {
         return cellCenterToCellCenterMap_[globalI];
     }
 
     //! Returns the stencil of a cell center dof w.r.t. face dofs
-    const std::vector<IndexType>& operator() (CellCenterIdxType, FaceIdxType, const IndexType globalI) const
+    const std::vector<GridIndexType>& operator() (CellCenterIdxType, FaceIdxType, const GridIndexType globalI) const
     {
         return cellCenterToFaceMap_[globalI];
     }
 
     //! Returns the stencil of a face dof w.r.t. cell center dofs
-    const std::vector<IndexType>& operator() (FaceIdxType, CellCenterIdxType, const IndexType globalI) const
+    const std::vector<GridIndexType>& operator() (FaceIdxType, CellCenterIdxType, const GridIndexType globalI) const
     {
         return faceToCellCenterMap_[globalI];
     }
 
     //! Returns the stencil of a face dof w.r.t. other face dofs
-    const std::vector<IndexType>& operator() (FaceIdxType, FaceIdxType, const IndexType globalI) const
+    const std::vector<GridIndexType>& operator() (FaceIdxType, FaceIdxType, const GridIndexType globalI) const
     {
         return faceToFaceMap_[globalI];
     }

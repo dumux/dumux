@@ -74,7 +74,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::SubControlVolumeFace;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
-    template<std::size_t id> using IndexType = typename GridView<id>::IndexSet::IndexType;
+    template<std::size_t id> using GridIndexType = typename GridView<id>::IndexSet::IndexType;
 
     template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using GridVolumeVariables = typename GridVariables<id>::GridVolumeVariables;
@@ -98,7 +98,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     struct BulkCouplingContext
     {
         bool isSet;
-        IndexType< bulkId > elementIdx;
+        GridIndexType< bulkId > elementIdx;
         std::vector< FVElementGeometry<lowDimId> > lowDimFvGeometries;
         std::vector< ElementVolumeVariables<lowDimId> > lowDimElemVolVars;
 
@@ -136,7 +136,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
 
     public:
         bool isSet;
-        IndexType< lowDimId > elementIdx;
+        GridIndexType< lowDimId > elementIdx;
         ContainerType< std::unique_ptr<FVElementGeometry<bulkId>> > bulkFvGeometries;
         ContainerType< std::unique_ptr<ElementVolumeVariables<bulkId>> > bulkElemVolVars;
         ContainerType< std::unique_ptr<ElementFluxVariablesCache<bulkId>> > bulkElemFluxVarsCache;
@@ -336,7 +336,7 @@ public:
     evalCouplingResidual(BulkIdType,
                          const BulkLocalAssembler& bulkLocalAssembler,
                          LowDimIdType,
-                         IndexType<lowDimId> dofIdxGlobalJ)
+                         GridIndexType<lowDimId> dofIdxGlobalJ)
     {
         const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
 
@@ -361,7 +361,7 @@ public:
                                                                bulkLocalAssembler.elemBcTypes(),
                                                                bulkLocalAssembler.elemFluxVarsCache(),
                                                                bulkLocalAssembler.localResidual(),
-                                                               std::array<IndexType<bulkId>, 1>({scvfIdx}) );
+                                                               std::array<GridIndexType<bulkId>, 1>({scvfIdx}) );
         }
 
         return res;
@@ -378,7 +378,7 @@ public:
     evalCouplingResidual(LowDimIdType,
                          const LowDimLocalAssembler& lowDimLocalAssembler,
                          BulkIdType,
-                         IndexType<bulkId> dofIdxGlobalJ)
+                         GridIndexType<bulkId> dofIdxGlobalJ)
     {
         // make sure this is called for the element for which the context was set
         assert(lowDimContext_.isSet);
@@ -423,7 +423,7 @@ public:
             // if it uses box, it is the one scvf coinciding with the given scv
             static constexpr bool lowDimUsesBox = FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box;
             const auto& coincidingScvfs = bulkMap.find(embedment.first)->second.elementToScvfMap.at(lowDimContext_.elementIdx);
-            const auto& scvfList = lowDimUsesBox ? std::vector<IndexType<lowDimId>>{ coincidingScvfs[scv.localDofIndex()] }
+            const auto& scvfList = lowDimUsesBox ? std::vector<GridIndexType<lowDimId>>{ coincidingScvfs[scv.localDofIndex()] }
                                                  : coincidingScvfs;
 
             sources += evalBulkFluxes_(this->problem(bulkId).fvGridGeometry().element(embedment.first),
@@ -551,7 +551,7 @@ public:
     void updateCouplingContext(BulkIdType domainI,
                                const BulkLocalAssembler& bulkLocalAssembler,
                                LowDimIdType domainJ,
-                               IndexType<lowDimId> dofIdxGlobalJ,
+                               GridIndexType<lowDimId> dofIdxGlobalJ,
                                const PrimaryVariables<lowDimId>& priVarsJ,
                                unsigned int pvIdxJ)
     {
@@ -620,7 +620,7 @@ public:
     void updateCouplingContext(BulkIdType domainI,
                                const BulkLocalAssembler& bulkLocalAssembler,
                                BulkIdType domainJ,
-                               IndexType<bulkId> dofIdxGlobalJ,
+                               GridIndexType<bulkId> dofIdxGlobalJ,
                                const PrimaryVariables<bulkId>& priVarsJ,
                                unsigned int pvIdxJ)
     {
@@ -637,7 +637,7 @@ public:
     void updateCouplingContext(LowDimIdType domainI,
                                const LowDimLocalAssembler& lowDimLocalAssembler,
                                BulkIdType domainJ,
-                               IndexType<bulkId> dofIdxGlobalJ,
+                               GridIndexType<bulkId> dofIdxGlobalJ,
                                const PrimaryVariables<bulkId>& priVarsJ,
                                unsigned int pvIdxJ)
     {
@@ -696,7 +696,7 @@ public:
     void updateCouplingContext(LowDimIdType domainI,
                                const LowDimLocalAssembler& lowDimLocalAssembler,
                                LowDimIdType domainJ,
-                               IndexType<lowDimId> dofIdxGlobalJ,
+                               GridIndexType<lowDimId> dofIdxGlobalJ,
                                const PrimaryVariables<lowDimId>& priVarsJ,
                                unsigned int pvIdxJ)
     {

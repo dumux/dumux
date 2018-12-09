@@ -24,6 +24,7 @@
 
 #include <dune/common/indices.hh>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/couplingmapperbase.hh>
@@ -73,8 +74,8 @@ public:
                                            const LowDimFVG& lowDimFvGridGeometry,
                                            const BulkFVG& bulkFvGridGeometry)
         {
-            using LowDimIndexType = typename LowDimFVG::GridView::IndexSet::IndexType;
-            using BulkIndexType = typename BulkFVG::GridView::IndexSet::IndexType;
+            using LowDimIndexType = typename IndexTraits<typename LowDimFVG::GridView>::GridIndex;
+            using BulkIndexType = typename IndexTraits<typename BulkFVG::GridView>::GridIndex;
 
             const auto lowDimElemIdx = lowDimFvGridGeometry.elementMapper().index(lowDimElement);
             auto& lowDimData = this->couplingMap_(facetGridId, bulkGridId)[lowDimElemIdx];

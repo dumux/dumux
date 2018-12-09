@@ -53,7 +53,7 @@ class BoxDfmFVElementGeometry<GG, true>
     using GridView = typename GG::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
@@ -74,11 +74,11 @@ public:
     : fvGridGeometryPtr_(&fvGridGeometry) {}
 
     //! Get a sub control volume with a local scv index
-    const SubControlVolume& scv(IndexType scvIdx) const
+    const SubControlVolume& scv(std::size_t scvIdx) const
     { return fvGridGeometry().scvs(eIdx_)[scvIdx]; }
 
     //! Get a sub control volume face with a local scvf index
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(std::size_t scvfIdx) const
     { return fvGridGeometry().scvfs(eIdx_)[scvfIdx]; }
 
     //! iterator range for sub control volumes. Iterates over
@@ -143,7 +143,7 @@ public:
 private:
     const Element* elementPtr_;
     const FVGridGeometry* fvGridGeometryPtr_;
-    IndexType eIdx_;
+    GridIndexType eIdx_;
 };
 
 //! specialization in case the FVElementGeometries are not stored
@@ -154,7 +154,7 @@ class BoxDfmFVElementGeometry<GG, false>
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using CoordScalar = typename GridView::ctype;
@@ -181,11 +181,11 @@ public:
     : fvGridGeometryPtr_(&fvGridGeometry) {}
 
     //! Get a sub control volume with a local scv index
-    const SubControlVolume& scv(IndexType scvIdx) const
+    const SubControlVolume& scv(std::size_t scvIdx) const
     { return scvs_[scvIdx]; }
 
     //! Get a sub control volume face with a local scvf index
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(std::size_t scvfIdx) const
     { return scvfs_[scvfIdx]; }
 
     //! iterator range for sub control volumes. Iterates over
@@ -315,7 +315,7 @@ private:
             const auto numCorners = isGeometry.corners();
             const auto idxInInside = intersection.indexInInside();
 
-            std::vector<IndexType> isVertexIndices(numCorners);
+            std::vector<GridIndexType> isVertexIndices(numCorners);
             for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
                 isVertexIndices[vIdxLocal] = fvGridGeometry().vertexMapper().subIndex(element,
                                                                                       referenceElement.subEntity(idxInInside, 1, vIdxLocal, dim),
@@ -410,7 +410,7 @@ private:
 
     //! The bound element
     const Element* elementPtr_;
-    IndexType eIdx_;
+    GridIndexType eIdx_;
 
     //! The global geometry this is a restriction of
     const FVGridGeometry* fvGridGeometryPtr_;

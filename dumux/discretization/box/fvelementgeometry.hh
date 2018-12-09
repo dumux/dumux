@@ -29,6 +29,7 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
@@ -52,7 +53,8 @@ class BoxFVElementGeometry<GG, true>
     using GridView = typename GG::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
@@ -72,13 +74,13 @@ public:
     : fvGridGeometryPtr_(&fvGridGeometry) {}
 
     //! Get a sub control volume with a local scv index
-    const SubControlVolume& scv(IndexType scvIdx) const
+    const SubControlVolume& scv(LocalIndexType scvIdx) const
     {
         return fvGridGeometry().scvs(eIdx_)[scvIdx];
     }
 
     //! Get a sub control volume face with a local scvf index
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(LocalIndexType scvfIdx) const
     {
         return fvGridGeometry().scvfs(eIdx_)[scvfIdx];
     }
@@ -156,7 +158,7 @@ private:
     const Element* elementPtr_;
     const FVGridGeometry* fvGridGeometryPtr_;
 
-    IndexType eIdx_;
+    GridIndexType eIdx_;
 };
 
 //! specialization in case the FVElementGeometries are not stored
@@ -166,10 +168,9 @@ class BoxFVElementGeometry<GG, false>
     using GridView = typename GG::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Element = typename GridView::template Codim<0>::Entity;
-
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
@@ -192,13 +193,13 @@ public:
     : fvGridGeometryPtr_(&fvGridGeometry) {}
 
     //! Get a sub control volume with a local scv index
-    const SubControlVolume& scv(IndexType scvIdx) const
+    const SubControlVolume& scv(LocalIndexType scvIdx) const
     {
         return scvs_[scvIdx];
     }
 
     //! Get a sub control volume face with a local scvf index
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(LocalIndexType scvfIdx) const
     {
         return scvfs_[scvfIdx];
     }
@@ -275,7 +276,6 @@ private:
 
     void makeElementGeometries(const Element& element)
     {
-        auto eIdx = fvGridGeometry().elementMapper().index(element);
         hasBoundaryScvf_ = false;
 
         // get the element geometry
@@ -287,7 +287,6 @@ private:
 
         // construct the sub control volumes
         scvs_.resize(elementGeometry.corners());
-        using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
         for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
         {
             // get asssociated dof index
@@ -296,7 +295,7 @@ private:
             // add scv to the local container
             scvs_[scvLocalIdx] = SubControlVolume(geometryHelper,
                                                   scvLocalIdx,
-                                                  eIdx,
+                                                  eIdx_,
                                                   dofIdxGlobal);
         }
 
@@ -304,7 +303,7 @@ private:
         const auto numInnerScvf = (dim==1) ? 1 : element.subEntities(dim-1);
         scvfs_.resize(numInnerScvf);
 
-        unsigned int scvfLocalIdx = 0;
+        LocalIndexType scvfLocalIdx = 0;
         for (; scvfLocalIdx < numInnerScvf; ++scvfLocalIdx)
         {
             // find the local scv indices this scvf is connected to
@@ -350,7 +349,7 @@ private:
 
     //! The bound element
     const Element* elementPtr_;
-    IndexType eIdx_;
+    GridIndexType eIdx_;
 
     //! The global geometry this is a restriction of
     const FVGridGeometry* fvGridGeometryPtr_;

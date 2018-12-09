@@ -28,6 +28,7 @@
 
 #include <dune/geometry/referenceelements.hh>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
@@ -52,7 +53,8 @@ class BoxFacetCouplingFVElementGeometry<GG, true>
     using GridView = typename GG::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
@@ -69,14 +71,15 @@ public:
 
     //! Constructor
     BoxFacetCouplingFVElementGeometry(const FVGridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry) {}
+    : fvGridGeometryPtr_(&fvGridGeometry)
+    {}
 
     //! Get a sub control volume with a local scv index
-    const SubControlVolume& scv(IndexType scvIdx) const
+    const SubControlVolume& scv(LocalIndexType scvIdx) const
     { return fvGridGeometry().scvs(eIdx_)[scvIdx]; }
 
     //! Get a sub control volume face with a local scvf index
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(LocalIndexType scvfIdx) const
     { return fvGridGeometry().scvfs(eIdx_)[scvfIdx]; }
 
     //! iterator range for sub control volumes. Iterates over
@@ -142,7 +145,7 @@ private:
     const Element* elementPtr_;
     const FVGridGeometry* fvGridGeometryPtr_;
 
-    IndexType eIdx_;
+    GridIndexType eIdx_;
 };
 
 //! specialization in case the geometries are not stored grid-wide
@@ -153,7 +156,8 @@ class BoxFacetCouplingFVElementGeometry<GG, false>
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using CoordScalar = typename GridView::ctype;
@@ -175,14 +179,15 @@ public:
 
     //! Constructor
     BoxFacetCouplingFVElementGeometry(const FVGridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry) {}
+    : fvGridGeometryPtr_(&fvGridGeometry)
+    {}
 
     //! Get a sub control volume with a local scv index
-    const SubControlVolume& scv(IndexType scvIdx) const
+    const SubControlVolume& scv(LocalIndexType scvIdx) const
     { return scvs_[scvIdx]; }
 
     //! Get a sub control volume face with a local scvf index
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(LocalIndexType scvfIdx) const
     { return scvfs_[scvfIdx]; }
 
     //! iterator range for sub control volumes. Iterates over
@@ -328,7 +333,7 @@ private:
 
     //! The bound element
     const Element* elementPtr_;
-    IndexType eIdx_;
+    GridIndexType eIdx_;
 
     //! The global geometry this is a restriction of
     const FVGridGeometry* fvGridGeometryPtr_;

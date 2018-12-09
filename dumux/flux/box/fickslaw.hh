@@ -55,7 +55,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box>
     using BalanceEqOpts = GetPropType<TypeTag, Properties::BalanceEqOpts>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 

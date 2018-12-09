@@ -25,8 +25,10 @@
 #define DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 
 #include <dune/common/fvector.hh>
-#include <dumux/discretization/subcontrolvolumebase.hh>
+
 #include <dumux/common/optional.hh>
+#include <dumux/common/indextraits.hh>
+#include <dumux/discretization/subcontrolvolumebase.hh>
 
 namespace Dumux {
 
@@ -40,8 +42,8 @@ template<class GridView>
 struct CCDefaultScvGeometryTraits
 {
     using Geometry = typename GridView::template Codim<0>::Geometry;
-    using GridIndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = unsigned int;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Scalar = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

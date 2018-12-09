@@ -26,10 +26,13 @@
 
 #include <vector>
 #include <array>
+
 #include <dune/common/reservedvector.hh>
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/multilineargeometry.hh>
+
+#include <dumux/common/indextraits.hh>
 
 namespace Dumux {
 
@@ -48,8 +51,8 @@ struct CCMpfaDefaultScvfGeometryTraits
     static const int dimWorld = Grid::dimensionworld;
 
     using Scalar = typename Grid::ctype;
-    using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-    using LocalIndexType = unsigned int;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using OutsideGridIndexStorage = typename std::conditional_t< (dim<dimWorld),
                                                                  std::vector<GridIndexType>,
                                                                  Dune::ReservedVector<GridIndexType, 1> >;

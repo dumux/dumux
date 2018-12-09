@@ -25,6 +25,8 @@
 #define DUMUX_FACETCOUPLING_MANAGER_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/indextraits.hh>
+
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalsolution.hh>
@@ -133,7 +135,7 @@ class FacetCouplingThreeDomainManager
     template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
-    template<std::size_t id> using IndexType = typename GridView<id>::IndexSet::IndexType;
+    template<std::size_t id> using GridIndexType = typename IndexTraits<GridView<id>>::GridIndex;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
     template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
@@ -237,7 +239,7 @@ public:
     evalCouplingResidual(Dune::index_constant<i> domainI,
                          const LocalAssembler& localAssembler,
                          Dune::index_constant<j> domainJ,
-                         IndexType<j> dofIdxGlobalJ)
+                         GridIndexType<j> dofIdxGlobalJ)
     {
         typename LocalResidual<i>::ElementResidualVector res(1);
         res = 0.0;
@@ -263,7 +265,7 @@ public:
     void updateCouplingContext(FacetIdType domainI,
                                const FacetLocalAssembler& facetLocalAssembler,
                                FacetIdType domainJ,
-                               IndexType<facetId> dofIdxGlobalJ,
+                               GridIndexType<facetId> dofIdxGlobalJ,
                                const PrimaryVariables<facetId>& priVarsJ,
                                unsigned int pvIdxJ)
     {
@@ -283,7 +285,7 @@ public:
     void updateCouplingContext(Dune::index_constant<i> domainI,
                                const LocalAssembler& localAssembler,
                                Dune::index_constant<j> domainJ,
-                               IndexType<j> dofIdxGlobalJ,
+                               GridIndexType<j> dofIdxGlobalJ,
                                const PrimaryVariables<j>& priVarsJ,
                                unsigned int pvIdxJ)
     { /*do nothing here*/ }

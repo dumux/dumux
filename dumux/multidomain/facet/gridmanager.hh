@@ -39,6 +39,7 @@
 
 #include <dumux/io/grid/griddata.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/typetraits/utility.hh>
 
 #include "gmshreader.hh"
@@ -162,9 +163,9 @@ class FacetCouplingEmbeddings
     template<std::size_t id> using GridFactory = typename Dune::GridFactory<Grid<id>>;
 
     //! we use the bulk grid's index type here
-    using IT = typename Grid<0>::LeafGridView::IndexSet::IndexType;
+    using GIType = typename IndexTraits< typename Grid<0>::LeafGridView >::GridIndex;
     //! the map type to store embedment data
-    using EmbedmentMap = std::unordered_map<IT, std::vector<IT>>;
+    using EmbedmentMap = std::unordered_map<GIType, std::vector<GIType>>;
 
 public:
     //! export the i-th grid view type
@@ -180,7 +181,7 @@ public:
     //! export the bulk grid type
     using BulkGridView = GridView<bulkGridId>;
     //! export the type used for indices
-    using IndexType = IT;
+    using GridIndexType = GIType;
 
     //! return reference to the i-th grid view
     template<std::size_t id>
@@ -189,41 +190,41 @@ public:
 
     //! return the insertion index of an entity of the i-th grid
     template<std::size_t id, class Entity>
-    IndexType insertionIndex(const Entity& entity) const
+    GridIndexType insertionIndex(const Entity& entity) const
     { return std::get<id>(gridFactoryPtrTuple_)->insertionIndex(entity); }
 
     //! Returns the insertion indices of the entities embedded in given element
     template<std::size_t id>
-    typename std::unordered_map< IndexType, std::vector<IndexType> >::mapped_type
+    typename std::unordered_map< GridIndexType, std::vector<GridIndexType> >::mapped_type
     embeddedEntityIndices(const typename Grid<id>::template Codim<0>::Entity& element) const
     {
         const auto& map = embeddedEntityMaps_[id];
         auto it = map.find( std::get<id>(gridFactoryPtrTuple_)->insertionIndex(element) );
         if (it != map.end()) return it->second;
-        else return typename std::unordered_map< IndexType, std::vector<IndexType> >::mapped_type();
+        else return typename std::unordered_map< GridIndexType, std::vector<GridIndexType> >::mapped_type();
     }
 
     //! Returns the insertion indices of the entities in which the element is embedded
     template<std::size_t id>
-    typename std::unordered_map< IndexType, std::vector<IndexType> >::mapped_type
+    typename std::unordered_map< GridIndexType, std::vector<GridIndexType> >::mapped_type
     adjoinedEntityIndices(const typename Grid<id>::template Codim<0>::Entity& element) const
     {
         const auto& map = adjoinedEntityMaps_[id];
         auto it = map.find( std::get<id>(gridFactoryPtrTuple_)->insertionIndex(element) );
         if (it != map.end()) return it->second;
-        else return typename std::unordered_map< IndexType, std::vector<IndexType> >::mapped_type();
+        else return typename std::unordered_map< GridIndexType, std::vector<GridIndexType> >::mapped_type();
     }
 
     //! Returns the maps of the embedded entities
-    const std::unordered_map< IndexType, std::vector<IndexType> >& embeddedEntityMap(std::size_t id) const
+    const std::unordered_map< GridIndexType, std::vector<GridIndexType> >& embeddedEntityMap(std::size_t id) const
     { assert(id < numGrids); return embeddedEntityMaps_[id]; }
 
     //! Returns the maps of the adjoined entities of dimension d+1
-    const std::unordered_map< IndexType, std::vector<IndexType> >& adjoinedEntityMap(std::size_t id) const
+    const std::unordered_map< GridIndexType, std::vector<GridIndexType> >& adjoinedEntityMap(std::size_t id) const
     { assert(id < numGrids); return adjoinedEntityMaps_[id]; }
 
     //! Returns the hierachy's insertion indices that make up the grid for the given id
-    const std::vector<IndexType>& lowDimVertexIndices(std::size_t id) const
+    const std::vector<GridIndexType>& lowDimVertexIndices(std::size_t id) const
     { assert(id > 0 && id < numGrids); return lowDimGridVertexIndices_[id-1]; }
 
     /*!
@@ -240,7 +241,7 @@ public:
                   std::shared_ptr<GridFactory<id>> gridFactoryPtr,
                   EmbedmentMap&& embeddedEntityMap,
                   EmbedmentMap&& adjoinedEntityMap,
-                  std::vector<IndexType>&& lowDimGridVertexIndices = std::vector<IndexType>() )
+                  std::vector<GridIndexType>&& lowDimGridVertexIndices = std::vector<GridIndexType>() )
     {
         std::get<id>(gridViewPtrTuple_) = std::make_shared<GridView<id>>(gridPtr->leafGridView());
         std::get<id>(gridFactoryPtrTuple_) = gridFactoryPtr;
@@ -256,7 +257,7 @@ private:
     std::array<EmbedmentMap, numGrids> adjoinedEntityMaps_;
 
     //! Contains the hierarchy insertion indices that make up a lower-dimensional grid
-    std::array<std::vector<IndexType>, numGrids-1> lowDimGridVertexIndices_;
+    std::array<std::vector<GridIndexType>, numGrids-1> lowDimGridVertexIndices_;
 
     //! tuple to store the grids
     using Indices = std::make_index_sequence<numGrids>;

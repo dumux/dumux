@@ -73,7 +73,7 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
     template<std::size_t id> using FVGridGeometry = typename GridVariables<id>::GridGeometry;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
-    template<std::size_t id> using IndexType = typename GridView<id>::IndexSet::IndexType;
+    template<std::size_t id> using GridIndexType = typename GridView<id>::IndexSet::IndexType;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using GlobalPosition = typename Element<id>::Geometry::GlobalCoordinate;
 
@@ -96,8 +96,8 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
     //! Types used for coupling stencils
     template<std::size_t id>
     using CouplingIndexType = typename std::conditional< id == PMFlowId,
-                                                         IndexType<PoroMechId>,
-                                                         IndexType<PMFlowId> >::type;
+                                                         GridIndexType<PoroMechId>,
+                                                         GridIndexType<PMFlowId> >::type;
 
     /*!
      * \brief Porous medium flow domain data required for the residual calculation of an
@@ -208,7 +208,7 @@ public:
     void updateCouplingContext(Dune::index_constant<PoroMechId> poroMechDomainId,
                                const PoroMechLocalAssembler& poroMechLocalAssembler,
                                Dune::index_constant<PMFlowId> pmFlowDomainId,
-                               IndexType<PMFlowId> dofIdxGlobalJ,
+                               GridIndexType<PMFlowId> dofIdxGlobalJ,
                                const PrimaryVariables<PMFlowId>& priVarsJ,
                                unsigned int pvIdxJ)
     {
@@ -231,7 +231,7 @@ public:
     void updateCouplingContext(Dune::index_constant<PoroMechId> poroMechDomainIdI,
                                const PoroMechLocalAssembler& poroMechLocalAssembler,
                                Dune::index_constant<PoroMechId> poroMechDomainIdJ,
-                               IndexType<PoroMechId> dofIdxGlobalJ,
+                               GridIndexType<PoroMechId> dofIdxGlobalJ,
                                const PrimaryVariables<PoroMechId>& priVarsJ,
                                unsigned int pvIdxJ)
     {
@@ -252,7 +252,7 @@ public:
     void updateCouplingContext(Dune::index_constant<PMFlowId> pmFlowDomainId,
                                const PMFlowLocalAssembler& pmFlowLocalAssembler,
                                Dune::index_constant<j> domainIdJ,
-                               IndexType<j> dofIdxGlobalJ,
+                               GridIndexType<j> dofIdxGlobalJ,
                                const PrimaryVariables<j>& priVarsJ,
                                unsigned int pvIdxJ)
     {
@@ -312,7 +312,7 @@ public:
     evalCouplingResidual(Dune::index_constant<PMFlowId> pmFlowDomainId,
                          const PMFlowLocalAssembler& pmFlowLocalAssembler,
                          Dune::index_constant<PoroMechId> poroMechDomainId,
-                         IndexType<PoroMechId> dofIdxGlobalJ)
+                         GridIndexType<PoroMechId> dofIdxGlobalJ)
     {
         auto res = pmFlowLocalAssembler.localResidual().evalFluxAndSource(pmFlowLocalAssembler.element(),
                                                                           pmFlowLocalAssembler.fvGeometry(),
@@ -341,7 +341,7 @@ public:
     evalCouplingResidual(Dune::index_constant<PoroMechId> poroMechDomainId,
                          const PoroMechLocalAssembler& pmFlowLocalAssembler,
                          Dune::index_constant<PMFlowId> pmFlowDomainId,
-                         IndexType<PMFlowId> dofIdxGlobalJ)
+                         GridIndexType<PMFlowId> dofIdxGlobalJ)
     {
         return pmFlowLocalAssembler.localResidual().evalFluxAndSource(pmFlowLocalAssembler.element(),
                                                                       pmFlowLocalAssembler.fvGeometry(),

@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <dune/common/reservedvector.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux
@@ -56,11 +57,11 @@ class FluxStencil<FVElementGeometry, DiscretizationMethod::cctpfa>
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
 public:
     //! Each cell I couples to a cell J always only via one face
-    using ScvfStencilIForJ = Dune::ReservedVector<IndexType, 1>;
+    using ScvfStencilIForJ = Dune::ReservedVector<GridIndexType, 1>;
 
     //! The flux stencil type
     using Stencil = typename SubControlVolumeFace::Traits::GridIndexStorage;
@@ -96,14 +97,14 @@ class FluxStencil<FVElementGeometry, DiscretizationMethod::ccmpfa>
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
     // Use the stencil type of the primary interaction volume
     using NodalIndexSet = typename FVGridGeometry::GridIVIndexSets::DualGridIndexSet::NodalIndexSet;
 
 public:
     //! We don't know yet how many faces couple to a neighboring element
-    using ScvfStencilIForJ = std::vector<IndexType>;
+    using ScvfStencilIForJ = std::vector<GridIndexType>;
 
     //! The flux stencil type
     using Stencil = typename NodalIndexSet::NodalGridStencilType;

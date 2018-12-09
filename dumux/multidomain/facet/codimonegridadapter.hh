@@ -26,8 +26,11 @@
 #define DUMUX_FACETCOUPLING_CODIM_ONE_GRID_ADAPTER_HH
 
 #include <memory>
+
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/geometry/referenceelements.hh>
+
+#include <dumux/common/indextraits.hh>
 
 namespace Dumux {
 
@@ -50,7 +53,7 @@ class CodimOneGridAdapter
     using FacetGridView = typename Embeddings::template GridView<facetGridId>;
     using FacetGridVertex = typename FacetGridView::template Codim<FacetGridView::dimension>::Entity;
     using FacetGridElement = typename FacetGridView::template Codim<0>::Entity;
-    using FacetGridIndexType = typename FacetGridView::IndexSet::IndexType;
+    using FacetGridIndexType = typename IndexTraits<FacetGridView>::GridIndex;
 
     // Extract some types of the bulk grid
     using BulkGridView = typename Embeddings::template GridView<bulkGridId>;
@@ -59,7 +62,7 @@ class CodimOneGridAdapter
     using BulkGridElement = typename BulkGridView::template Codim<0>::Entity;
     using BulkGridIntersection = typename BulkGridView::Intersection;
     using BulkGridVertex = typename BulkGridView::template Codim<BulkGridView::dimension>::Entity;
-    using BulkIndexType = typename BulkGridView::IndexSet::IndexType;
+    using BulkIndexType = typename IndexTraits<BulkGridView>::GridIndex;
 
     // Find out if the given bulk grid is the one with highest dimensionality among the created grids
     static constexpr bool bulkHasHighestDimension = (int(BulkGridView::dimension) == Embeddings::bulkDim);

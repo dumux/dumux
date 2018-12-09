@@ -31,6 +31,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/parameters.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
 namespace Dumux
@@ -59,7 +60,7 @@ class CCMpfaFVElementGeometry<GG, true>
     using ThisType = CCMpfaFVElementGeometry<GG, true>;
     using GridView = typename GG::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using GridIndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
     static constexpr int dim = GridView::dimension;
 
@@ -175,7 +176,7 @@ class CCMpfaFVElementGeometry<GG, false>
     using ThisType = CCMpfaFVElementGeometry<GG, false>;
     using GridView = typename GG::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using GridIndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using MpfaHelper = typename GG::MpfaHelper;
 
     static const int dim = GridView::dimension;

@@ -27,6 +27,7 @@
 #include <utility>
 #include <dune/common/fvector.hh>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
@@ -48,7 +49,8 @@ class FreeFlowStaggeredSubControlVolumeFace
     using ThisType = FreeFlowStaggeredSubControlVolumeFace<GV, T>;
     using ParentType = SubControlVolumeFaceBase<ThisType, T>;
     using Geometry = typename T::Geometry;
-    using GridIndexType = typename T::GridIndexType;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
     using Scalar = typename T::Scalar;
     static const int dim = Geometry::mydimension;
@@ -192,7 +194,7 @@ public:
     }
 
     //! The local index of this sub control volume face
-    GridIndexType localFaceIdx() const
+    LocalIndexType localFaceIdx() const
     {
         return localFaceIdx_;
     }
@@ -262,7 +264,7 @@ private:
     int dofIdxOpposingFace_;
     Scalar selfToOppositeDistance_;
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
-    int localFaceIdx_;
+    LocalIndexType localFaceIdx_;
     unsigned int dirIdx_;
     int outerNormalSign_;
     bool isGhostFace_;

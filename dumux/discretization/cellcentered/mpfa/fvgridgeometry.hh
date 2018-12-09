@@ -29,6 +29,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/parameters.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
@@ -78,7 +79,7 @@ class CCMpfaFVGridGeometry<GV, Traits, true>
     using Element = typename GV::template Codim<0>::Entity;
     using Vertex = typename GV::template Codim<dim>::Entity;
     using Intersection = typename GV::Intersection;
-    using GridIndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using CoordScalar = typename GV::ctype;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
@@ -448,7 +449,7 @@ class CCMpfaFVGridGeometry<GV, Traits, false>
     using Element = typename GV::template Codim<0>::Entity;
     using Vertex = typename GV::template Codim<dim>::Entity;
     using Intersection = typename GV::Intersection;
-    using GridIndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using CoordScalar = typename GV::ctype;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
