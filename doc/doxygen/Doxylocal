@@ -25,11 +25,9 @@ EXTRA_PACKAGES        += amsmath,amssymb,units
 
 LAYOUT_FILE            = @srcdir@/DoxygenDumuxLayout.xml
 
+HTML_HEADER            = @srcdir@/header.html
+
 HTML_EXTRA_STYLESHEET  = @srcdir@/customdoxygendumux.css
-
-HTML_COLORSTYLE_HUE    = 37
-
-HTML_COLORSTYLE_SAT    = 206
 
 EXCLUDE_PATTERNS       =
 
