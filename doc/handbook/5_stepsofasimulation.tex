@@ -2,17 +2,12 @@
 \label{flow}
 
 
-This chapter is supposed to show how things are ``handed around'' in \Dumux. It
+This chapter is supposed to give a short overview over how things are ``handed around'' in \Dumux. It
 is not a comprehenisve guide through the modeling framework of \Dumux, but
 hopefully it will help getting to grips with it.
 
 In Section \ref{content} the structure of \Dumux is shown from a \emph{content}
 point of view.
-% TODO: revise section about implementation structure
-% Section \ref{implementation} however is written from the point of view of the \emph{implementation}.
-% The same coloration in the flowcharts of both sections refers to the same level of calculation. For keeping things 
-% simple, the program flow of a \verb+2p+ model is shown in section \ref{implementation}. There are extensive comments 
-% regarding the formating in the tex file: so feel free, to enhance this description.
 
 \subsection{Structure -- by Content}
 
@@ -21,12 +16,11 @@ In Figure \ref{fig:algorithm}, the algorithmic representations of a monolithical
 solution solution scheme is illustrated down to the element level.
 
 \begin{figure}[hbt]
-% \begin{tabular}{ l | l }
-% \begin{minipage}[t]{0.48\textwidth}
 \setcounter{thingCounter}{0}
 
 \scriptsize
 \sffamily
+\begin{center}\parbox{0cm}{
 \begin{tabbing}
 \textbf{{\begin{turn}{45}\color{black}\numberThis{main}{init}\end{turn}}}             \=
 \textbf{{\begin{turn}{45}\color{dumuxBlue}\numberThis{time step}{prep}\end{turn}}}            \=
@@ -36,7 +30,6 @@ solution solution scheme is illustrated down to the element level.
 \color{black}initialize \\
 \color{black}\textbf{foreach} time step\\
 
-  \> \color{dumuxBlue}prepare update\\
   \> \color{dumuxBlue}\textbf{foreach} \textsc{Newton} iteration \\
 
     \> \> \color{Mulberry}\textbf{foreach} element \\
@@ -59,354 +52,13 @@ solution solution scheme is illustrated down to the element level.
   \> \color{dumuxBlue}- write result\\
 \color{black}\textbf{endfor}\\
 \color{black}finalize
-\end{tabbing}
-
-% \end{minipage}
-% 
-% &
-
-% TODO: revise second figure
-% \begin{minipage}[t]{0.48\textwidth}
-% \setcounter{thingCounter}{0}
-% 
-% \scriptsize
-% \sffamily
-% \begin{tabbing}
-% \textbf{{\begin{turn}{45}\color{black}1. main\end{turn}}}             \=
-% \textbf{{\begin{turn}{45}\color{dumuxBlue}2. time step\end{turn}}}            \=
-% \textbf{{\begin{turn}{45}\color{Mulberry}3. \textsc{IMPES/C}\end{turn}}}        \=
-% \textbf{{\begin{turn}{45}\color{dumuxYellow}4. element\end{turn}}}             \=  \\
-% \\
-% \color{black}initialize \\
-% \color{black}\textbf{foreach} time step\\
-% 
-%   \> \color{dumuxBlue}prepare update\\
-%   \> \color{dumuxBlue}\textbf{foreach} \textsc{IMPES/C} step \\
-%     \> \> \color{Mulberry}\textbf{if} grid is adaptive\\
-%       \> \> \> \color{dumuxYellow}- calculate refinement indicator\\
-%       \> \> \> \color{dumuxYellow}- mark elements, adapt the grid\\
-%       \> \> \> \color{dumuxYellow}- map old solution to new grid\\
-%     \> \> \color{Mulberry}- calculate {flow field}\\
-%     \> \> \color{Mulberry}\textbf{foreach} element \\
-% 
-%       \> \> \> \color{dumuxYellow}- calculate element stiffness matrix \\
-%       \> \> \> \color{dumuxYellow}- assemble into global matrix \\
-% 
-%     \> \> \color{Mulberry} \textbf{endfor} \\
-%     \> \> \color{Mulberry} solve linear system\\
-% 
-%     \> \> \color{Mulberry}- calculate {transport} \\
-%     \> \> \color{Mulberry}\; (saturations, concentrations,...) \\
-%     \> \> \color{Mulberry}\textbf{foreach} element  \\
-%       \> \> \> \color{dumuxYellow}-calculate update (explicitly) \\
-%       \> \> \> \color{dumuxYellow}- adapt time step ({CFL}-like criterion) \\
-%     \> \> \color{Mulberry}\textbf{endfor} \\
-%     \> \> \color{Mulberry}- update old solution \\
-%     \> \> \color{Mulberry}- postprocess (flash calculation, etc.)\\
-%   \> \color{dumuxBlue}\textbf{endfor}\\
-%   \> \color{dumuxBlue}- write result\\
-% \color{black}\textbf{endfor}\\
-% finalize
-% \end{tabbing}
-% 
-% \end{minipage}
-% \end{tabular}
-
-% \caption{Structure of a fully implicit (\textbf{left}) and a sequential
-% (\textbf{right}) scheme in \Dumux.}
+\end{tabbing}}
+\end{center}
 \caption{Structure of a monolithical solution scheme in \Dumux.}
 \label{fig:algorithm}
 \end{figure}
 
-% \subsection{Structure --  by Implementation}
-%  \label{implementation}
-% This section is supposed to help you in getting an idea how things are handled in
-% \Dumux and in which files things are written down.
-% This is not intuitivly clear, therefore it is mentioned for each \fbox{step-stone}.
-% \textbf{called by} tells you from which file a function is
-% accessed. \textbf{implemented in} tells you in which file the function is written
-% down. The name of the function is set in \verb+typewriter+.
-% Being a function is indicated by round brackets \verb+()+ but only the function
-% name is given and not the full signature (arguments...) .
-% Comments regarding the events within one step-stone are set \scriptsize{smaller}.
-% 
-% \begin{landscape}
-% \pagestyle{empty} % switch off headings and footer in order to get more space for the flowchart
-% \setlength{\voffset}{4.2cm}
-% 
-% % command for blocks
-% \newcommand{\step}[6]{
-% \begin{minipage}{7.5cm}
-% {\tiny \color{#1}\texttt{#2} $\Rightarrow$ \texttt{#3}}\\
-% \fcolorbox{#1}{white}{
-%     \begin{minipage}{7.0cm}
-%     \begin{scriptsize}
-%     \texttt{#4} \hfill \color{gray}in: #5\color{black}\\
-%     \hphantom{m}\begin{minipage}[t]{6.8cm}#6\end{minipage}
-%     \end{scriptsize}
-%     \end{minipage}}
-% \end{minipage}
-% }
-% 
-% % command for the arrow with text
-% \newcommand{\longArrow}[1]{
-% \begin{minipage}[b]{7.5cm}
-% \fcolorbox{white}{white}{
-% \begin{minipage}[b]{7.0cm}
-%     \begin{center}
-%     \begin{scriptsize}
-%     $\overrightarrow{ %an arrow under which things may be written
-%       \begin{array}{c} % in order to be able to write multiple lines under the arrow
-%       #1\\
-%       \hphantom{\hspace{6.5cm}}
-%       \end{array}
-%     }$
-%     \end{scriptsize}
-%     \end{center}
-% \end{minipage}%
-% }
-% \end{minipage}%
-% \hphantom{ $\overrightarrow{}$}%
-% }
-% 
-% % command for the arrow between steps
-% \newcommand{\shortArrow}{$\overrightarrow{}$}
-% 
-% % command for marking things as model specific
-% \newcommand{\modelSpecific}{\emph{model specific}\xspace}
-% 
-% % the distance between two lines
-% \newcommand{\dummyDistance}{\\[4\baselineskip]}
-% 
-% % THE FLOW CHART STARTS HERE
-% \noindent
-% \step{black}{main()}{Dumux::start<ProblemTypeTag>() $\Rightarrow$ start\_()}{start\_()}{start.hh}%
-%      {start the simulation}
-% \shortArrow
-% \step{black}{start\_()}{timeManager.init()}{init()}{timemanager.hh}%
-%      {initialization}
-% \shortArrow
-% \step{black}{start\_()}{timeManager.run()}{run()}{timemanager.hh}%
-%      {time step management}
-% \dummyDistance
-% %
-% \longArrow{
-%     \textnormal{\texttt{while(!finished)}}\\
-%     \textnormal{\color{black}main}
-%     \rightarrow \textnormal{\color{dumuxBlue}time step}
-%     }
-% \step{dumuxBlue}{run()}{problem->timeIntegration()}{timeIntegration()}{implicitproblem.hh}%
-%      {execute time integration scheme}%
-% \longArrow{
-%     \textnormal{define number of allowed \textsc{Newton} fails}\\
-%     \textnormal{(each halving dt)}
-%     }
-% \dummyDistance
-% %
-% \step{dumuxBlue}{timeIntegration()}{model->update()}{update()}{implicitmodel.hh}%
-%      {sth like numerical model}
-% \shortArrow
-% \step{dumuxBlue}{update()}{solver.execute()}{execute()}{newtonmethod.hh}%
-%      {applying \textsc{Newton} method\\
-%       keeps track of things, catching errors}
-% \longArrow{
-%     \textnormal{\color{dumuxBlue}time step}
-%     \rightarrow \textnormal{\color{Mulberry}Newton step}\\
-%     \texttt{while(ctl.newtonProceed()}\\
-%     \textnormal{uLastIter = uCurrentIter(model.uCur())}
-%     }
-% \dummyDistance
-% %
-% \noindent
-% \step{Mulberry}{execute() $\Rightarrow$ execute\_()}{jacobianAsm.assemble()}{assemble()}{implicitassembler.hh}%
-%      {linearize the problem:\\
-%       add all element contributions to global \textsc{Jacobian}
-%       and global residual}%
-% \shortArrow
-% \step{Mulberry}{assemble() $\Rightarrow$ asImp\_().assemble\_()}{resetSystem\_()}{resetSystem\_()}{implicitassembler.hh}%
-%      {set r.h.s. (i.e. residual)\\
-%       set \textsc{Jacobian}  to zero }
-% \longArrow{
-%     \textnormal{\color{Mulberry}Newton step}
-%     \rightarrow \textnormal{\color{dumuxYellow}element}\\
-%     \texttt{loop all elements}\\
-%     }
-% \dummyDistance
-% %
-% \noindent
-% \step{dumuxYellow}{assemble() $\Rightarrow$ asImp\_().assemble\_()}{asImp\_().assembleElement\_()}{assembleElement\_()}{e.g. boxassembler.hh}%
-%      {call local \textsc{Jacobian} and residual assembly}%
-% \shortArrow
-% \step{dumuxYellow}{assembleElement\_()}{model\_().localJacobian().assemble()}{assemble()}{implicitlocaljacobian.hh}%
-%      {set curr. element, update element's fin.vol.geom.\\
-%       reset local \textsc{Jacobian} to 0\\
-%       update types of boundaries on this element}%
-% \shortArrow
-% \step{dumuxYellow}{assemble()}{prevVolVars\_.update(),curVolVars\_.update()}{update()}{e.g. 2pvolumevariables.hh}%
-%      {call model (e.g. \texttt{2p})specific update of quantities defined for the volume:\\
-%       variables for the \emph{current} and \emph{previous} timestep}%
-% \dummyDistance
-% %
-% \noindent
-% \step{dumuxYellow}{update()}{completeFluidState()}{completeFluidState()}{e.g. 2pvolumevariables.hh}%
-%      {calculate all required fluid properties from the primary variables,
-%       here the fluid system does the real work:\\
-%       calculates, saves, and provides: densities, etc.}
-% \shortArrow
-% \step{dumuxYellow}{assemble()}{localResidual().eval()$\Rightarrow$asImp\_().eval()}{eval()}{e.g. implicitlocalresidual.hh}%
-%      {the element's local residual is calculated:\\
-%       see the next two stepstones}%
-% \shortArrow
-% \step{dumuxYellow}{eval()}{asImp\_().evalFluxes\_()}{evalFluxes\_()}{e.g. boxlocalresidual.hh}%
-%      {evaluate the fluxes going into each finite volume,
-%       this is \modelSpecific}
-% \dummyDistance
-% %
-% \step{dumuxYellow}{evalFluxes\_()}{this$\rightarrow$asImp\_().computeFlux()}{computeFlux()}{e.g. 2plocalresidual.hh}%
-%      {this calculate the \modelSpecific fluxes (e.g. advective and diffusive)
-%       using the \texttt{FluxVariables}}
-% \shortArrow
-% \step{dumuxYellow}{eval()}{asImp\_().evalVolumeTerms\_()}{evalVolumeTerms\_()}{implicitlocalresidual.hh}%
-%      {evaluate the \modelSpecific storage and source terms for each finite volume}%
-% \shortArrow
-% \step{dumuxYellow}{eval()}{asImp\_().evalBoundary\_()}{evalBoundary\_()}{implicitlocalresidual.hh}%
-%      {evaluate the \modelSpecific boundary conditions}%
-% \dummyDistance
-% %
-% \step{dumuxYellow}{assemble()}{asImp\_().evalPartialDerivative\_()}{evalPartialDerivative\_()}{e.g. implicitlocaljacobian.hh}%
-%      {actually calculate the element's (local) \textsc{Jacobian}\\
-%       matrix a property chooses backward/central/foward\\
-%       differences. here: central differences}
-% \shortArrow
-% \begin{minipage}{0.50\textwidth}
-%   \begin{scriptsize}\textnormal{approximation of partial derivatives: numerical differentiation}\end{scriptsize}\\
-%   \begin{scriptsize}\textnormal{add $\pm \epsilon$ solution, divide difference of residual by $2\epsilon$}\end{scriptsize}\\
-%   \begin{scriptsize}\textnormal{all partial derivatives for the element from the local \textsc{Jacobian} matrix}\end{scriptsize}\\
-%   $\left \lbrace
-%       \begin{tabular}{l}%these question marks are for the \verb, not meant as ``unclear''
-%           \verb?priVars[pvIdx]+=eps?\\
-%           \begin{scriptsize}\textnormal{this is adding eps to the current solution}\end{scriptsize}\\
-%       \verb?curVolVars_[scvIdx].update(+eps)?\\
-%           \begin{scriptsize}\textnormal{recalculate volume variables, having $\epsilon$ added}\end{scriptsize}\\
-%           \verb?localResidual().eval(+eps)?\\
-%           \begin{scriptsize}\textnormal{calculate local residual for modified solution as before: involves}\end{scriptsize}\\
-%       {\scriptsize $\begin{array}{l}
-%           \textnormal{- \textbf{computeFlux}}\\
-%           \textnormal{- \textbf{computeStorage}}\\
-%           \textnormal{- \textbf{computeSource}} \\
-%       \end{array}$} \\
-%       \verb?store the residual()?\\
-%       \verb?repeat for priVars[pvIdx]-=eps?\\
-%       \verb?derivative is (residual(+eps) - residual(-eps))/2eps?\\
-%     \end{tabular}
-%     \right .
-%   $
-% \end{minipage}
-% \dummyDistance
-% %
-% \step{dumuxYellow}{assemble\_()}{asImp\_().assembleElement\_()}{assembleElement\_()}{implicitassembler.hh}%
-%      {Residual of the current solution is now\\
-%       ``numerically differentiated'', for the element i.e.\\
-%       the local \textsc{Jacobian} matrix is calculated. }%
-% \longArrow{
-%     \textnormal{The contribution of a single element is done.}\\
-%     \textnormal{Now, it needs to be added to the global quantities:}\\
-%     \textnormal{Add to global residual and global \textsc{Jacobian}}.}
-% \step{dumuxYellow}{assemble\_()}{asImp\_().assembleElement\_()}{assembleElement\_()}{e.g. boxassembler.hh}
-%      {Add to global residual.:\\
-%       \texttt{resdidual\_[globI+=\\model\_().globalJacobian().resdidual(i)]}}
-% \dummyDistance
-% %
-% \longArrow{
-%     \textnormal{loop vertices}\\
-%     \textnormal{of an element}
-%     }
-% \step{dumuxYellow}{assemble\_()}{asImp\_().assembleElement\_()}{assembleElement\_()}{e.g. boxassembler.hh}
-%      {Add to global residual:\\
-%       \texttt{(*matrix\_)[globI][globJ] +=\\model\_().localJacobian().mat(i,j)}}
-% \longArrow{
-%     \textbf{\textbf{\color{dumuxYellow}element}}
-%     \rightarrow \textbf{\color{Mulberry}Newton step}\\
-%     \textnormal{Assembling of elements to global quantities is done.}
-%     }
-% \dummyDistance
-% %
-% \step{Mulberry}{execute\_()}{while(ctl.newtonProceed())}{newtonProceed()}{newtoncontroller.hh}%
-%      {Print information.\\
-%       Start/ stop timer.}%
-% 
-% \longArrow{
-%     \textnormal{set delta Vector to zero} \\
-%     \textnormal{(this is what is}\\
-%     \textnormal{solved for later)}\\
-%     }
-% \step{Mulberry}{execute\_()}{ctl.newtonSolveLinear()}{newtonSolveLinear()}{newtoncontroller.hh}%
-%      {Catching errors.\\
-%       Ask the linear solver to solve the system.\\
-%       i.e.: give \textsc{Jacobian}(matrix), delta(x), r.h.s.(residual) to linear solver\\
-%       $\nabla r(x^k) \cdot \Delta x^k = r(x^k)$\\
-%       tricky: each \textsc{Newton} step solves a linear system of equations.}%
-% \shortArrow
-% \step{Mulberry}{newtonSolveLinear()}{int converged = linearSolver\_.solve()}{solve()}{boxlinearsolver.hh}%
-%      {Solve the linear system with the chosen backend.}%
-% \dummyDistance
-% %
-% \step{Mulberry}{execute\_()}{ctl.newtonUpdate()}{newtonUpdate()}{newtoncontroller.hh}%
-%      {We solved for the change in solution, but need the solution:\\
-%       Calculate current (this iteration) solution\\
-%       \quad from last (iteration) solution and current (iteration) change in  solution:\\
-%       $x^{k+1} = x^k - \Delta x^k$ where $\Delta x^k = (\nabla r(x^k))^{-1} \cdot r(x^k)$}
-% \shortArrow
-% \step{Mulberry}{execute\_()}{ctl.newtonEndStep()}{newtonEndStep()}{newtoncontroller.hh}%
-%      {Increase counter for number of \textsc{Newton} steps.\\
-%       Print info.}%
-% \longArrow{
-%     \textnormal{check whether to do another \textsc{Newton} iteration:} \\
-%     \textnormal{that is: check if the error is below tolerance or}\\
-%     \textnormal{maximum number of iterations was reached.}
-%     }
-% \dummyDistance
-% %
-% \longArrow{
-%     \textbf{\textbf{\color{Mulberry}Newton step}}
-%     \rightarrow \textbf{\color{dumuxBlue}Time step}\\
-%     \textnormal{\textsc{Newton} done}\\
-%     \textnormal{if failed $\rightsquigarrow$ halve timestep size, restart loop}\\
-%     }
-% \step{dumuxBlue}{execute\_()}{ctl.newtonEnd()}{newtonEnd()}{newtoncontroller.hh}%
-%      {Tell the controller we are done}%
-% \shortArrow
-% \step{dumuxBlue}{update()}{asImp\_().updateSuccessful()}{updateSuccessful()}{e.g. implicitmodel.hh}%
-%      {can be filled \modelSpecific}%
-% \dummyDistance
-% %
-% \longArrow{
-%     \textnormal{in while(!finished)}
-%     }
-% \step{dumuxBlue}{run()}{problem\_->postTimeStep()}{postTimeStep(),writeOutput()}{implicitproblem.hh}%
-%      {Give the problem the chance to post-process the solution.}%
-% \longArrow{
-%     \textnormal{write output}\\
-%     \textnormal{uPrev $\leftarrow$ uCur}\\
-%     \textnormal{time += dt, timestepIdx++}\\
-%     \textnormal{deal with restart and episodes }
-%     }
-% \dummyDistance
-% %
-% \step{dumuxBlue}{run()$\Rightarrow$setTimeStepSize(problem\_->nextTimeStepSize(dt))\\
-%                  $\Rightarrow$nextTimeStepSize()}
-%      {newtonCtl\_.suggestTimestepSize()}{suggestTimestepSize()}{newtoncontroller.hh}%
-%      {Determine new time step size from number of \textsc{Newton} steps.}%
-% \longArrow{
-%   \textbf{\color{dumuxBlue}Time step}
-%   \rightarrow \textbf{\color{black}main}\\
-%   \textnormal{loop until simulation is finished}
-% }
-% 
-% \end{landscape}
-% 
-% \newpage
-% % Original pagestyle (headings and footer) were switched off,
-% % in order to get more space for the flowchart.
-% \pagestyle{scrheadings}
-% \normalsize
+\subsection{Structure -- by Implementation}
+A possible starting point to understand how the abovementioned algorithm is implemented within \Dumux,
+is the example main file
+\url{https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/releases/3.0/exercises/exercise-mainfile/exercise_1p_a.cc}
