@@ -30,6 +30,7 @@
 #define DUMUX_NONEQUILIBRIUM_VOLUME_VARIABLES_HH
 
 #include <cassert>
+#include <array>
 
 #include <dumux/common/dimensionlessnumbers.hh>
 
@@ -62,7 +63,7 @@ class NonEquilibriumVolumeVariablesImplementation< Traits,
                                                    false/*chemicalNonEquilibrium?*/,
                                                    true/*thermalNonEquilibrium?*/,
                                                    2>
-    :public EquilibriumVolumeVariables
+: public EquilibriumVolumeVariables
 {
     using ParentType = EquilibriumVolumeVariables;
     using ParameterCache = typename Traits::FluidSystem::ParameterCache;
