@@ -45,6 +45,11 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
       in the sub-control volumes adjacent to vertices that lie on material discontinuities. This allows a sharper representation of the saturation front evolving
       in heterogeneous porous media.
     - __Box-dfm:__ The `2pdfm` model from version 2.12 has been generalized such that it can be used on any DuMux model and in both two and three dimensions.
+    - __MPNC:__ The general m-phase n-component model has been adapted in structure to the other porous medium flow models.
+    - __Tracer transport__: A new model for tracer transport with a given flow field has been added. The model can be also used to implement sequentially
+      coupled simulations, or iterative solvers where flow and transport are decoupled / weakly coupled.
+    - __Mineralization__: An adapter model for mineralization has been added and can be used with all porousmediumflow models. A balance for the solid
+      volume fraction of precipitating, adsorbed, or absorbed substances is added to the existing equations.
     - __Multidomain:__ DuMux 3.0 introduces a new multidomain framework which does no longer depend on `dune-multidomain` and can be used for the coupling
       of an arbitrary number of subdomains. The sub-domains can be regions in which a different set of equations are solved and/or which have different
       dimensionalities. The implementation is such that any of the existing DuMux models can be used in the subdomains, while the data and functionality
@@ -75,6 +80,10 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
       exactly the implementation code otherwise.
       Furthermore, having TypeTag as a template argument leads to bad programming, and unnecessary dependencies that should be avoided in
       every object-oriented code.
+    - __Restarting simulations:__ The old restart module was replaced by an implementation based on a VTK backend (other formats might be added later such as HDF5).
+      Restarted simulations can read solutions from vtk files. In parallel, there is currently the restriction that the number of processors has be the same
+      as before the restart. Restarted simulations can read grids from vtk (currently only sequential, non-adaptive grids, support for parallel and adaptive
+      will be added in future version).
     - __Components:__ Components can now derive from different base classes, `Base`, `Liquid`, `Solid`, `Gas`, depending on which
       phase states are implemented. This can be used to determine at compile time if a component support a certain phase state.
     - __Solid systems:__ DuMuX 3.0 introduces solid systems similar to fluid systems but for solid components. This allows a consistent
@@ -88,10 +97,14 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
     - __Solution-dependent spatial params:__ A redesign of the spatial params interface allows now to define spatial parameters such as permeability
       and porosity that depend on the solution. This makes it easier to implement mineralization models altering the solid structure of the porous medium.
     - __Different wettability:__ The 2p models can now model materials with different wettability (hydrophobic, hydrophilic) in different parts of the domain.
+    - __Thermal and chemical non-equilibrium:__ The possibility to consider thermal and/or chemical non-equilibrium of several types has been enabled for all
+      porous medium models.
+
 
 * __IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:__
+    - Many classes have been completely redesigned. See the numerous example applications included in 3.0 showcasing all new classes.
     - The `GridCreator` has been replaced by the `GridManager`, which no longer uses a singleton for the grid object.
-      This makes it possible to create two grids of the exact same type.
+      This makes it possible to create two grids of the exact same type. The `GridManager` also handles user data provided in grid files.
 
 * __Deprecated CLASSES/FILES, to be removed after 3.0:__
     - All classes of the sequential models are deprecated. The sequential models will be ported to the new structure
