@@ -73,9 +73,9 @@
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/rans/model.hh>
+#include <dumux/freeflow/rans/twoeq/indices.hh>
 
 #include "fluxvariables.hh"
-#include "indices.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "iofields.hh"
@@ -103,7 +103,7 @@ struct KOmegaModelTraits : RANSModelTraits<dimension>
     static constexpr int numFluidComponents() { return 1; }
 
     //! The indices
-    using Indices = KOmegaIndices<dim(), numFluidComponents()>;
+    using Indices = RANSTwoEqIndices<dim(), numFluidComponents()>;
 };
 
 ///////////////////////////////////////////////////////////////////////////

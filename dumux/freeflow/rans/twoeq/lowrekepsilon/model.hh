@@ -81,9 +81,9 @@
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/rans/model.hh>
+#include <dumux/freeflow/rans/twoeq/indices.hh>
 
 #include "fluxvariables.hh"
-#include "indices.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "iofields.hh"
@@ -111,7 +111,7 @@ struct LowReKEpsilonModelTraits : RANSModelTraits<dimension>
     static constexpr int numFluidComponents() { return 1; }
 
     //! the indices
-    using Indices = LowReKEpsilonIndices<dim(), numFluidComponents()>;
+    using Indices = RANSTwoEqIndices<dim(), numFluidComponents()>;
 };
 
 ///////////////////////////////////////////////////////////////////////////

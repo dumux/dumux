@@ -18,11 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup KEpsilonModel
- * \copydoc Dumux::KEpsilonIndices
+ * \ingroup RANSModel
+ * \copydoc Dumux::RANSTwoEqIndices
  */
-#ifndef DUMUX_KEPSILON_INDICES_HH
-#define DUMUX_KEPSILON_INDICES_HH
+#ifndef DUMUX_RANS_TWO_EQ_INDICES_HH
+#define DUMUX_RANS_TWO_EQ_INDICES_HH
 
 #include <dumux/freeflow/navierstokes/indices.hh>
 
@@ -30,14 +30,14 @@ namespace Dumux {
 
 // \{
 /*!
- * \ingroup KEpsilonModel
- * \brief The common indices for the isothermal k-epsilon model.
+ * \ingroup RANSModel
+ * \brief The common indices for isothermal two-equation RANS models.
  *
  * \tparam dimension The dimension of the problem
  * \tparam numComponents The number of considered transported components
  */
 template<int dimension, int numComponents>
-struct KEpsilonIndices : public NavierStokesIndices<dimension>
+struct RANSTwoEqIndices : public NavierStokesIndices<dimension>
 {
 public:
     static constexpr auto turbulentKineticEnergyEqIdx = dimension + numComponents;
