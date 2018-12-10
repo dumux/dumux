@@ -32,7 +32,11 @@ using Gmsh. Further, the format supports higher order elements. They can be used
 manager \texttt{UGGrid}.
 An example can be found in \texttt{dumux/test\allowbreak/io/gridcreator}.
 
-
+\subsubsection{Other Grid Formats}
+Grid formats other than .DGF and .MSH grids will have to be converted to the .DGF or .MSH format before they can be used in \Dumux.
+If conversion is not an option, another possibility would be to write your own \texttt{GridCreator}. Examples of other grid formats,
+which have previously been either converted or custom-created in \Dumux, are Petrel grids (cornerpoint grids),
+ArtMesh grids (fractured network grids), and ICEM grids (CAD developed grids).
 
 \subsection{The default \texttt{GridCreator}}
 The default \texttt{GridCreator} is called \texttt{GridCreator} and is automatically avaible in all problems.
@@ -92,48 +96,6 @@ Cells = 10 10 20
 CellType = Cube # or Simplex
 \end{lstlisting}
 For all available parameters see the Doxygen documentation.
-
-\subsection{Other grid formats and customized grid creators}
-Other grid formats than DGF and MSH have to be converted to DGF or MSH to be read into \Dumux. A second possiblity (advanced \Cplusplus) is to write your own
-\texttt{GridCreator}.
-A (non-comprehensive) list of hints for some other common grid formats follows.
-
-\subsubsection{Petrel}
-Grids from Petrel (in ASCII format with the extension *.GRDECL) can be imported into \Dumux in two ways:
-  \begin{enumerate}
-  \item Using the GRDECL format directly with the help of the grid-manager \texttt{dune-cornerpoint}.
-  \item Converting the GRDECL file into the DGF format.
-  \end{enumerate}
-The fist options requires the installation of \texttt{dune-cornerpoint} along with its dependencies. Set the property \texttt{Grid} to \texttt{Dune::CpGrid} in your problem file.
-
-The second option has the advantage that you end up with a DGF which can then be used with any grid-manager (\texttt{dune-alugrid}, \texttt{UG} etc.) You also have to install \texttt{dune-cornerpoint}. Additionally you have to modify the converter \texttt{grdecl2vtu} found in \texttt{dune-cornerpoint/examples} to also write a DGF. To do so you have to:
-\begin{itemize}
- \item Include the \texttt{dgfwriter.hh} found in \texttt{dune-grid/dune/grid/io/file/dgfparser}
- \item Create an object of the \texttt{Dune::DGFWriter} and call the its function \texttt{write()} within the \texttt{main} function for example after the \texttt{vtkwriter()} is called:
-\begin{lstlisting}[style=DumuxCode]
-Dune::DGFWriterParam<CpGrid::LeafGridView> dgfWriter(grid.leafView()))
-dgfWriter.write(fnamebase + ".dgf")
-\end{lstlisting}
-\end{itemize}
-Material parameters for elements with Petrel specific keywords like \texttt{PORO} are parsed by the converter \texttt{grdecl2vtu} (see the \texttt{main} function). They are available as vectors within the \texttt{main} function. The main GRDECL file with the coordinates must include the GRDECL files of the parameters, if for example the parameters are not already included, include the file bearing your parameter in your main GRDECL file:
-\begin{lstlisting}
-INCLUDE
-'PARAMETER_X.GRDECL'
-/
-\end{lstlisting}
-To add the parameters to your DGF you have to make changes to the header \texttt{dgfwriter.hh} such that they are passed as arguments of the \texttt{write()} function and written after each element (modify \texttt{writeElement()} and internal \texttt{write()} functions accordingly). Take caution that you stick to the correct DGF syntax (see \textbf{Modules $\rightarrow$ I/O $\rightarrow$ Dune Grid Format (DGF)} for reference).
-
-\subsubsection{ArtMesh}
-\href{http://www.topologica.org/toplog/wp/}{ArtMesh} is a 3D mesh generation software. It has its own mesh file format
-which can be read by \Dumux via the \texttt{ArtGridCreator}. Traditionally it was used within \Dumux for fracture simulations with
-the discrete fracture matrix model (\texttt{2pdfm}). A detailed description of the fracture network creation and gridding
-can be found for example in \cite{Tatomir2012a}, pp. 68.
-
-\subsubsection{ICEM}
-For complex geometries a graphical tool to create grids might be appropriate. One possibility to mesh for example CAD
-geometry data is the commercial software \href{http://www.ansys.com/Products/Other+Products/ANSYS+ICEM+CFD/}{ANSYS ICEM
-CFD}. A very detailed, but outdated description can be found at the LH2 internal wiki. A more recent best practice guide is available
-in dumux-devel at dumux-devel/util/gridconverters/Documentation\_ICEM\_CFD\_create\_mesh.odt. At LH2 exists a script which converts the ICEM mesh into the DGF.
 
 % \subsubsection{Cornerpoint grids}
 % TODO
