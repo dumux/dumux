@@ -79,8 +79,7 @@ struct MolecularDiffusionType<TypeTag, TTag::MaxwellStefanNCTest> { using type =
 
 /*!
  * \ingroup NavierStokesNCTests
- * \brief  A simple fluid system with one MaxwellStefan component.
- * \todo doc me!
+ * \brief  A simple fluid system with three components for testing the  multicompoent diffusion with the Maxwell Stefan formulation.
  */
 template<class TypeTag>
 class MaxwellStefanFluidSystem
@@ -197,8 +196,8 @@ struct FluidSystem<TypeTag, TTag::MaxwellStefanNCTest> { using type = MaxwellSte
 
 } //end namespace Property
 /*!
+ * \ingroup NavierStokesNCTests
  * \brief  Test problem for the maxwell stefan model
- * \todo doc me!
  */
 template <class TypeTag>
 class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
