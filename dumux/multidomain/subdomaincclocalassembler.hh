@@ -380,10 +380,9 @@ public:
                 elemSol[0][pvIdx] = priVar;
                 this->couplingManager().updateCouplingContext(domainI, *this, domainI, globalI, elemSol[0], pvIdx);
                 curVolVars.update(elemSol, this->problem(), element, scv);
+                elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
                 if (enableGridFluxVarsCache)
                     gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
-                else
-                    elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 // calculate the residual with the deflected primary variables
                 if (!this->elementIsGhost()) partialDerivsTmp[0] = this->evalLocalResidual()[0];
@@ -476,9 +475,15 @@ public:
             if (enableGridFluxVarsCache)
             {
                 if (enableGridVolVarsCache)
+                {
                     this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
+                    this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), elemFluxVarsCache);
+                }
                 else
+                {
                     this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, gridVariables.gridFluxVarsCache());
+                    this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, elemFluxVarsCache);
+                }
             }
             else
             {
