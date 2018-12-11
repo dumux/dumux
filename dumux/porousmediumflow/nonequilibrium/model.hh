@@ -20,8 +20,7 @@
 /*!
  * \file
  * \ingroup PorousmediumNonEquilibriumModel
- * \brief This is the specialization that is able to capture non-equilibrium mass and / or energy transfer.
- * \todo DocMe
+ * \brief This specifies models which are able to capture non-equilibrium mass and / or energy transfer.
  */
 #ifndef DUMUX_NONEQUILIBRIUM_MODEL_HH
 #define DUMUX_NONEQUILIBRIUM_MODEL_HH
@@ -41,7 +40,7 @@
 #include "iofields.hh"
 
 /*!
- * \ingroup \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup PorousmediumNonEquilibriumModel
  * \brief Defines the properties required for non-equilibrium models
  */
 namespace Dumux
