@@ -249,25 +249,12 @@ public:
                                                       const SubControlVolumeFace<bulkId>& scvf) const
     {
         assert(bulkContext_.isSet);
-        assert(bulkScvfIsCoupled_[scvf.index()]);
-        assert(scvf.insideScvIdx() == this->problem(bulkId).fvGridGeometry().elementMapper().index(element));
 
+        const auto lowDimElemIdx = getLowDimElementIndex(element, scvf);
         const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-        const auto& couplingData = map.find(scvf.insideScvIdx())->second;
-
-        // search the low dim element idx this scvf is embedded in
-        auto it = std::find_if( couplingData.elementToScvfMap.begin(),
-                                couplingData.elementToScvfMap.end(),
-                                [&scvf] (auto& dataPair)
-                                {
-                                    const auto& scvfs = dataPair.second;
-                                    return std::find(scvfs.begin(), scvfs.end(), scvf.index()) != scvfs.end();
-                                } );
-
-        assert(it != couplingData.elementToScvfMap.end());
-        const auto lowDimElemIdx = it->first;
         const auto& s = map.find(bulkContext_.elementIdx)->second.couplingElementStencil;
         const auto& idxInContext = std::distance( s.begin(), std::find(s.begin(), s.end(), lowDimElemIdx) );
+
         assert(std::find(s.begin(), s.end(), lowDimElemIdx) != s.end());
         return bulkContext_.lowDimVolVars[idxInContext];
     }
@@ -278,12 +265,20 @@ public:
     const Element<lowDimId> getLowDimElement(const Element<bulkId>& element,
                                              const SubControlVolumeFace<bulkId>& scvf) const
     {
-        assert(bulkContext_.isSet);
+        const auto lowDimElemIdx = getLowDimElementIndex(element, scvf);
+        return this->problem(lowDimId).fvGridGeometry().element(lowDimElemIdx);
+    }
+
+    /*!
+     * \brief returns the index of the lower-dimensional element coinciding with a bulk scvf.
+     */
+    const GridIndexType<lowDimId> getLowDimElementIndex(const Element<bulkId>& element,
+                                                        const SubControlVolumeFace<bulkId>& scvf) const
+    {
         assert(bulkScvfIsCoupled_[scvf.index()]);
-        assert(scvf.insideScvIdx() == this->problem(bulkId).fvGridGeometry().elementMapper().index(element));
 
         const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-        const auto& couplingData = map.find(scvf.insideScvIdx())->second;
+        const auto& couplingData = map.at(scvf.insideScvIdx());
 
         // search the low dim element idx this scvf is embedded in
         auto it = std::find_if( couplingData.elementToScvfMap.begin(),
@@ -295,8 +290,7 @@ public:
                                 } );
 
         assert(it != couplingData.elementToScvfMap.end());
-        const auto lowDimElemIdx = it->first;
-        return this->problem(lowDimId).fvGridGeometry().element(lowDimElemIdx);
+        return it->first;
     }
 
     /*!

@@ -184,6 +184,12 @@ public:
     using BulkFacetManager::getLowDimVolVars;
     using FacetEdgeManager::getLowDimVolVars;
 
+    using BulkFacetManager::getLowDimElement;
+    using FacetEdgeManager::getLowDimElement;
+
+    using BulkFacetManager::getLowDimElementIndex;
+    using FacetEdgeManager::getLowDimElementIndex;
+
     using BulkFacetManager::evalSourcesFromBulk;
     using FacetEdgeManager::evalSourcesFromBulk;
 
