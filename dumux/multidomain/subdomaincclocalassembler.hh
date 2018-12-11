@@ -465,6 +465,9 @@ public:
         const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
         const auto& curSolJ = this->curSol()[domainJ];
 
+        // make sure the flux variables cache does not contain any artifacts from prior differentiation
+        elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
+
         // convenience lambda for call to update self
         auto updateCoupledVariables = [&] ()
         {
