@@ -333,5 +333,6 @@ public:
 // Here, we have to include all available implementations
 #include <dumux/multidomain/facet/box/couplingmanager.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/couplingmanager.hh>
+#include <dumux/multidomain/facet/cellcentered/mpfa/couplingmanager.hh>
 
 #endif

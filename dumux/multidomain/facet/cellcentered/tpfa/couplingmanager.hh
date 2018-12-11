@@ -314,12 +314,12 @@ public:
 
         typename LocalResidual<bulkId>::ElementResidualVector res(1);
         res = 0.0;
-        res[0] = evalBulkFluxes_(bulkLocalAssembler.element(),
-                                 bulkLocalAssembler.fvGeometry(),
-                                 bulkLocalAssembler.curElemVolVars(),
-                                 bulkLocalAssembler.elemFluxVarsCache(),
-                                 bulkLocalAssembler.localResidual(),
-                                 map.find(bulkContext_.elementIdx)->second.dofToCouplingScvfMap.at(dofIdxGlobalJ));
+        res[0] = evalBulkFluxes(bulkLocalAssembler.element(),
+                                bulkLocalAssembler.fvGeometry(),
+                                bulkLocalAssembler.curElemVolVars(),
+                                bulkLocalAssembler.elemFluxVarsCache(),
+                                bulkLocalAssembler.localResidual(),
+                                map.find(bulkContext_.elementIdx)->second.dofToCouplingScvfMap.at(dofIdxGlobalJ));
         return res;
     }
 
@@ -391,12 +391,12 @@ public:
         assert(lowDimContext_.isSet);
         const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
         for (const auto& embedment : it->second.embedments)
-            sources += evalBulkFluxes_(this->problem(bulkId).fvGridGeometry().element(embedment.first),
-                                       *lowDimContext_.bulkFvGeometry,
-                                       *lowDimContext_.bulkElemVolVars,
-                                       *lowDimContext_.bulkElemFluxVarsCache,
-                                       *lowDimContext_.bulkLocalResidual,
-                                       bulkMap.find(embedment.first)->second.elementToScvfMap.at(lowDimContext_.elementIdx));
+            sources += evalBulkFluxes(this->problem(bulkId).fvGridGeometry().element(embedment.first),
+                                      *lowDimContext_.bulkFvGeometry,
+                                      *lowDimContext_.bulkElemVolVars,
+                                      *lowDimContext_.bulkElemFluxVarsCache,
+                                      *lowDimContext_.bulkLocalResidual,
+                                      bulkMap.find(embedment.first)->second.elementToScvfMap.at(lowDimContext_.elementIdx));
 
         // if lowdim domain uses box, we distribute the sources equally among the scvs
         if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
@@ -771,15 +771,14 @@ protected:
     BulkCouplingContext& bulkCouplingContext() { return bulkContext_; }
     LowDimCouplingContext& lowDimCouplingContext() { return lowDimContext_; }
 
-private:
     //! evaluates the bulk-facet exchange fluxes for a given facet element
     template<class BulkScvfIndices>
-    NumEqVector<bulkId> evalBulkFluxes_(const Element<bulkId>& elementI,
-                                        const FVElementGeometry<bulkId>& fvGeometry,
-                                        const ElementVolumeVariables<bulkId>& elemVolVars,
-                                        const ElementFluxVariablesCache<bulkId>& elemFluxVarsCache,
-                                        const LocalResidual<bulkId>& localResidual,
-                                        const BulkScvfIndices& scvfIndices) const
+    NumEqVector<bulkId> evalBulkFluxes(const Element<bulkId>& elementI,
+                                       const FVElementGeometry<bulkId>& fvGeometry,
+                                       const ElementVolumeVariables<bulkId>& elemVolVars,
+                                       const ElementFluxVariablesCache<bulkId>& elemFluxVarsCache,
+                                       const LocalResidual<bulkId>& localResidual,
+                                       const BulkScvfIndices& scvfIndices) const
     {
 
         NumEqVector<bulkId> coupledFluxes(0.0);
@@ -793,6 +792,7 @@ private:
         return coupledFluxes;
     }
 
+private:
     std::shared_ptr<CouplingMapper> couplingMapperPtr_;
 
     //! store bools for all bulk elements/scvfs that indicate if they

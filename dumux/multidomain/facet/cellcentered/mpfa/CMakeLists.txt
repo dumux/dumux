@@ -1,4 +1,5 @@
 install(FILES
+couplingmanager.hh
 couplingmapper.hh
 interactionvolume.hh
 localassembler.hh
