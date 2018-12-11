@@ -210,14 +210,11 @@ public:
         auto& bulkCouplingData = this->couplingMap_(bulkGridId, facetGridId);
         std::for_each(bulkCouplingData.begin(), bulkCouplingData.end(), makeBulkMapEntryUnique);
 
-        // coupling stencils might not be unique if box is used in lowdim domain
-        if (LowDimFVG::discMethod == DiscretizationMethod::box)
-        {
-            auto& bulkCouplingData = this->couplingMap_(bulkGridId, facetGridId);
-            std::for_each(bulkCouplingData.begin(),
-                          bulkCouplingData.end(),
-                          [&makeUnique] (auto& pair) { makeUnique(pair.second.couplingStencil); });
-        }
+        // coupling stencils might not be unique in lowdim domain
+        auto& lowDimCouplingData = this->couplingMap_(facetGridId, bulkGridId);
+        std::for_each(lowDimCouplingData.begin(),
+                      lowDimCouplingData.end(),
+                      [&makeUnique] (auto& pair) { makeUnique(pair.second.couplingStencil); });
     }
 
 private:
