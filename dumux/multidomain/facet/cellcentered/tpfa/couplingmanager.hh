@@ -296,8 +296,7 @@ public:
     /*!
      * \brief Evaluates the coupling element residual of a bulk domain element with respect
      *        to a dof in the lower-dimensional domain (dofIdxGlobalJ). This is essentially
-     *        the fluxes across the bulk element facets that coincide with the lower-dimensional
-     *        element whose dof idx is dofIdxGlobalJ.
+     *        the fluxes across the bulk element facets that depend on dofIdxGlobalJ.
      */
     template< class BulkLocalAssembler >
     typename LocalResidual<bulkId>::ElementResidualVector
@@ -748,6 +747,15 @@ public:
     const typename CouplingMapper::template Stencil<id>&
     getEmptyStencil(Dune::index_constant<id>) const
     { return std::get<(id == bulkId ? 0 : 1)>(emptyStencilTuple_); }
+
+protected:
+    //! Return const references to the bulk coupling contexts
+    const BulkCouplingContext& bulkCouplingContext() const { return bulkContext_; }
+    const LowDimCouplingContext& lowDimCouplingContext() const { return lowDimContext_; }
+
+    //! Return references to the bulk coupling contexts
+    BulkCouplingContext& bulkCouplingContext() { return bulkContext_; }
+    LowDimCouplingContext& lowDimCouplingContext() { return lowDimContext_; }
 
 private:
     //! evaluates the bulk-facet exchange fluxes for a given facet element
