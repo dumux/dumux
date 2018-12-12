@@ -173,9 +173,12 @@ public:
             auto prevPrevCCStorage = asImp_().computeStorageForCellCenter(problem, scv, prevPrevVolVars);
             prevPrevCCStorage *= prevPrevVolVars.extrusionFactor();
 
-            storage = std::move(curCCStorage) * curFactor_();
-            storage -= std::move(prevCCStorage) * prevFactor_();
-            storage += std::move(prevPrevCCStorage) * prevPrevFactor_();
+            curCCStorage *= curFactor_();
+            prevCCStorage *= prevFactor_();
+            prevPrevCCStorage *= prevPrevFactor_();
+            storage = std::move(curCCStorage);
+            storage -= std::move(prevCCStorage);
+            storage += std::move(prevPrevCCStorage);
         }
         else
         {
@@ -313,9 +316,12 @@ public:
             // BDF2 method
             auto prevPrevFaceStorage = asImp_().computeStorageForFace(problem, scvf, prevPrevElemVolVars[scv], prevPrevElemFaceVars);
 
-            storage = std::move(curFaceStorage) * curFactor_();
-            storage -= std::move(prevFaceStorage) * prevFactor_();
-            storage += std::move(prevPrevFaceStorage) * prevPrevFactor_();
+            curFaceStorage *= curFactor_();
+            prevFaceStorage *= prevFactor_();
+            prevPrevFaceStorage *= prevPrevFactor_();
+            storage = std::move(curFaceStorage);
+            storage -= std::move(prevFaceStorage);
+            storage += std::move(prevPrevFaceStorage);
         }
         else
         {
