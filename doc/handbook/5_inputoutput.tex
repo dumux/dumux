@@ -4,9 +4,11 @@
 This section summarizes some ideas about grid generation and grid formats that can be used by \Dumux
 for input and output formats.
 In general,
-\Dumux can read grids from file, or construct grids inside the code. All grids are constructed inside a so called \texttt{GridCreator} which is a \Dumux property.
+\Dumux can read grids from files and construct grids inside the code with a \texttt{GridCreator}.
+All grids are constructed inside a so called \texttt{GridManger}.  
 Note that some \texttt{GridCreator}s are already available in \Dumux, so e.g.
-construction of a structured grid is fairly easy. We will subsequently introduce the supported file formats, the standard \texttt{Gridcreator} and its capabilities
+construction of a structured grid is fairly easy. We will subsequently introduce the supported file formats,
+the standard \texttt{GridCreator} and its capabilities
 and briefly mention how to customize and deal with common other grid formats.
 
 \subsection{Supported grid file formats}
@@ -101,27 +103,27 @@ For all available parameters see the Doxygen documentation.
 % TODO
 
 \subsection{Output formats}
-The default output format for \Dumux is the vtk-file format. Additionally it is possible 
-to generate plots with the gnuplot interface.
+The default output format for \Dumux is the VTK file format. Additionally it is possible 
+to generate plots with gnuplot directly from \Dumux.
 
 \subsubsection{VTK file format}
-Dumux allows to write out simulation results via the vtkwirter.
+Dumux allows to write out simulation results via the \texttt{vtkWirter}.
 For every print out step, a single *.vtu file is created. For parallel simulations one file
-per printoutstep is generated for each processor. 
-Time step information and files are stored in a *.pvd file.
-The *.pvd file groups the singel *.vtu files and contains additionaly the timestep information.
-Also it is the main file for the visualisation with paraview.
-The vtk-file format is also supported by other common visualisation programms like Visit and Tecplot. 
+per print out step is generated for each processor. 
+The *.pvd file groups the single *.vtu files and contains additionally the time step information.
+Also it is the main file for the visualisation with ParaView.
+The VTK file format is also supported by other common visualisation programs like Visit and Tecplot. 
 
 \subsubsection{Customize the VTK output}
-Dependent on the used \texttt{TYPETAG} a default set of variables is stored in the VTK files, but it's also possible
-to add further variables. For that you can use the method \texttt{addField} of the \texttt{vtkWriter}.
+Using the respective \texttt{initOutputModule} function of the model \texttt{IOFields} a default
+set of variables is stored in the VTK files. But it's also possible to add further variables.
+For that you can use the method \texttt{addField} of the \texttt{vtkWriter}. E.g. add a variable called temperatureExact:
 \begin{lstlisting}[style=DumuxCode]
 vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
 \end{lstlisting}
 
 The first input argument of this method is the value of the additional variable, provided by a method of the corresponding problem.
-If it doesn't already exists, the user has to provide this method (see example below for analytic temperatur).
+If it doesn't already exists, the user has to provide this method.
 \begin{lstlisting}[style=DumuxCode]
 //! get the analytical temperature
 const std::vector<Scalar>& getExactTemperature()
@@ -134,6 +136,6 @@ The second input argument is the name of the additional variable (as it should b
 The example above is taken from:\\ \texttt{test/porousmediumflow/1pnc/implicit/test\_1p2cni\_convection\_fv.cc}
 
 \subsubsection{Gnuplot interface}
-\Dumux provides some gnuplot interface, which can be used to plot results and generate directly an 
-image file (e.g. png). To use the gnuplot interface gnuplot has to be installed. For more information see \ref{gnuplot}.
+\Dumux provides a gnuplot interface, which can be used to plot results and generate 
+image files (e.g. png). To use the gnuplot interface gnuplot has to be installed. For more information see \ref{gnuplot}.
 
