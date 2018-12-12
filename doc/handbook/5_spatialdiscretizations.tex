@@ -172,7 +172,7 @@ flow and transport equations:
 \end{equation}
 Equation \eqref{eq:discfin} has to be fulfilled for each box $B_j$.
 
-\subsection{Cell Centered Finite Volume Method -- A Short Introduction}\label{cc}
+\subsection{Cell Centered Finite Volume Methods -- A Short Introduction}\label{cc}
 
 \begin{figure} [ht]
 \centering
@@ -198,8 +198,132 @@ should only be applied for structured grids
 direction of the gradient between the two element/control
 volume centers).
 
-% \subsubsection{MPFA}\label{cc_mpfa}
-% TODO
+We consider a domain $\Omega \in \mathbb{R}^d$, $d \in \{ 2, 3 \}$ with boundary $\Gamma = \bar{\Omega} / \Omega$ and the following elliptic model problem:
+
+\begin{equation}
+  \begin{aligned}
+                   \nabla \cdot \left( - \mathbf{\Lambda} \nabla u \right) &= q   &&\mathrm{in} \, \Omega \\
+               \left( - \mathbf{\Lambda} \nabla u \right) \cdot \mathbf{n} &= v_N &&\mathrm{on} \, \Gamma_N \\
+                                                                   u &= u_D &&\mathrm{on} \, \Gamma_D.
+    \label{eq:elliptic}
+  \end{aligned}
+\end{equation}
+
+Here, $\mathbf{\Lambda} = \mathbf{\Lambda}(\mathbf{x}, \mathbf{u})$ is a symmetric and positive definite tensor of second rank, $u = u (\mathbf{x})$ is unknown and $q = q(\mathbf{x}, \mathbf{u})$ is a source/sink. For the derivation of the finite-volume formulation we integrate the first equation of \eqref{eq:elliptic} over $\Omega$ and apply the Gauss divergence theorem:
+
+\begin{equation}
+    \int_{\Gamma} \left( - \mathbf{\Lambda} \nabla u \right) \cdot \mathbf{n} \mathrm{d} \Gamma = \int_\Omega q \mathrm{d}\Omega.
+    \label{eq:ellipticIntegrated}
+\end{equation}
+
+We denote by $\mathcal{M}$ the mesh that results from the division of the domain $\Omega$ into $n_e$ control volumes $K_i$. Each $K_i$ is a polygonal open set and $\mathring{K_i} \mathring{\cap K_j} = \emptyset, \forall{i \neq j}$ and $\Omega = \cup_i^{n_e} K_i$. We then enforce equation \eqref{eq:ellipticIntegrated} to be fulfilled in each control volume, which leads to
+
+\begin{equation}
+    \sum_{\sigma \in K} F_{K, \sigma} = Q_K, \forall_{K \in \mathcal{M}}
+\end{equation}
+
+where $F_{K, \sigma} \approx \int_{\sigma} \left( - \mathbf{\Lambda} \nabla u \right) \cdot \mathbf{n} \mathrm{d} \Gamma$ is the discrete flux through a face $\sigma$ of cell $K$ and $Q_k = \int_K q \mathrm{d}x$ is the integrated source/sink term. 
+
+\subsubsection{TPFA}\label{cc_tpfa}
+
+ 
+
+\subsubsection{MPFA}\label{cc_mpfa}
+Expressions for the face fluxes $F_{K, \sigma}$ are usually obtained by introducing intermediate face unknowns $\bar{u}_\sigma$ in addition to the cell unknowns $u_K$ and enforcing the physically motivated continuity of fluxes and continuity of the solution across the faces. For a face $\sigma$ between the two polygons $K$ and $L$ these conditions read:
+
+\begin{equation}
+    \begin{aligned}
+        &F_{K, \sigma} + F_{L, \sigma} = 0 \\
+        &\bar{u}_{\sigma, K} = \bar{u}_{\sigma, L} = \bar{u}_{\sigma}.
+        \label{eq:sigmaConditions}
+    \end{aligned}
+\end{equation}
+
+Using these conditions the intermediate face unknowns $\bar{u}_\sigma$ can be eliminated and the fluxes are expressed as a function of the cell unknowns $u_k$ and associated transmissibilities $t_{\sigma, k}$:
+
+\begin{equation}
+    F_{\sigma} = \sum_{k \in \mathcal{S}_\sigma} t_{\sigma, k} u_{k}.
+    \label{eq:FVFluxExpression}
+\end{equation}
+
+%\begin{figure}[t]
+%  \hspace{-15mm}
+%  \def\svgwidth{500pt}
+%  \input{pics/interactionregion.pdf_tex}
+%  \caption{Interaction region for the Mpfa-o method. The graphic on the right illustrates %how the sub-control volume $m^v_2$ and face $\sigma^v_2$ are embedded in cell $K_2$. Note %that the face stencils for all sub-control volume faces in the depicted interaction region %are $\mathcal{S}_{\sigma^v_i} = \{ 1, .., 7 \}$.}
+%  \label{fig:interactionRegion_mpfa}
+%\end{figure}
+
+Here, $\mathcal{S}_\sigma$ is the face stencil. The main difference between the various finite-volume schemes available is the assembly of the face fluxes, i.e.\ the computation of the $t_{\sigma, k}$ and the size of $\mathcal{S}_\sigma$. The standard scheme used in industrial codes is the two-point flux approximation (tpfa), which is computationally very efficient, but leads to inconsistent fluxes on general meshes. We cannot assure certain mesh properties as we want to consider meshes being constrained to arbitrary lower-dimensional fracture entities. Therefore, the method presented in this work is based on a multi-point flux approximation method (Mpfa-o method), which was first introduced in \citet{Aavatsmark2002}. In this scheme, a dual grid is created by connecting the barycenters of the cells with the barycenters of the faces ($d=2$) or the barycenters of the faces and edges ($d=3$). This divides each cell into sub-control volumes $m^v_K$ and each face into sub-control volume faces $\sigma^v$. The continuity conditions \eqref{eq:sigmaConditions} are now imposed on the $\sigma^v$ locally within an interaction region, which consists of sub-cells and sub-control volume faces sharing a common vertex (see fig. \ref{fig:interactionRegion_mpfa}). We allow for piecewise constant $\mathbf{\Lambda}$ (per cell) and construct discrete gradients $\nabla_K^v u$ (per sub-control volume), which enables us to write the discrete flux across $\sigma^v_1$ from cell $1$ as follows:
+
+\begin{equation}
+    F_{1, \sigma^v_1} = - |\sigma^v_1| \mathbf{n}_{\sigma^v_1}^T \mathbf{\Lambda}_1 \nabla_1^v u.
+    \label{eq:discreteFlux}
+\end{equation}
+
+We use the definition for the sub-control volume gradient given in \citet{Aavatsmark2002}:
+
+\begin{equation}
+    \nabla_1^v u = \frac{1}{T_1} \boldsymbol{\nu}_{11} (\bar{u}_{\sigma^v_1} - u_1) +
+                   \frac{1}{T_1} \boldsymbol{\nu}_{12} (\bar{u}_{\sigma^v_7} - u_1),
+\end{equation}
+
+which uses the relations
+
+\begin{equation}
+    \begin{aligned}
+        &\boldsymbol{\nu}_{11} = \mathbf{R} \mathbf{x}_{12}, \\
+        &\boldsymbol{\nu}_{12} = - \mathbf{R} \mathbf{x}_{11}, \\
+        &T_1 = \| \mathbf{x}_{12} \mathbf{R} \mathbf{x}_{11} \|,
+    \end{aligned}
+\end{equation}
+
+where $\mathbf{R} = \left( {\begin{array}{cc}
+                                     0 & 1 \\
+                                     -1 & 0
+                                     \end{array} } \right)$. Inserting this into equation \eqref{eq:discreteFlux} gives
+
+\begin{equation}
+    F_{1, \sigma^v_1} = - \frac{|\sigma^v_1| \mathbf{n}_{\sigma^v_1}^T \mathbf{\Lambda}_1 \boldsymbol{\nu}_{11}}{T_1} (\bar{u}_{\sigma^v_1} - u_1) -
+                         \frac{|\sigma^v_1| \mathbf{n}_{\sigma^v_1}^T \mathbf{\Lambda}_1 \boldsymbol{\nu}_{12}}{T_1} (\bar{u}_{\sigma^v_7} - u_1).
+\end{equation}
+
+We now introduce the coefficients $\omega^k_{j, \sigma_i^v} = - \frac{|\sigma^v_i| \mathbf{n}_{\sigma^v_i}^T \mathbf{\Lambda}_j \boldsymbol{\nu}_{jk}}{T_j}$, where $j$ and $i$ are the local indices of a sub-control volume and sub-control volume face within the interaction region and $k$ ($1 \leq k \leq d$) is the local coordinate direction in the sub-control volume. This leads to the following general expression for a sub-control volume face flux (here shown for $d = 2$)
+
+\begin{equation}
+    F_{j, \sigma^v_i} = \left( \omega^1_{j, \sigma^v_i} \hspace{2mm} \omega^2_{j, \sigma^v_i} \right)^T \left( {\begin{array}{c}
+                                                                                                                \bar{u}_{\sigma^v_{\varphi(j, 1)}} - u_j \\
+                                                                                                                \bar{u}_{\sigma^v_{\varphi(j, 2)}} - u_j
+                                                                                                                \end{array} } \right),
+\end{equation}
+
+where we introduced the surjective function $\varphi: (j, k) \rightarrow i$, which maps to each pair of local sub-control volume index and coordinate direction the local index of the corresponding sub-control volume face. The fluxes for all sub-control volume faces within an interaction region can be written in matrix form as a function of the $u_j$ and $\bar{u}^v_{\sigma^v_i}$:
+
+\begin{equation}
+    \mathbf{f} = \mathbf{C}^{7 \times 7} \mathbf{\bar{u}} + \mathbf{D}^{7 \times 7} \mathbf{u}.
+    \label{eq:fluxesInInteractionVolume}
+\end{equation}
+
+The continuity conditions \eqref{eq:sigmaConditions} are enforced on one point per sub-control volume face, which can be defined anywhere between the center of the face of the primal grid and the vertex position, parameterized by $q$ ($0 \leq q < 1$, see fig. \ref{fig:interactionRegion_mpfa}). This gives rise to one equation per face, which in matrix form reads
+
+\begin{equation}
+    \mathbf{A}^{7 \times 7} \mathbf{\bar{u}} = \mathbf{B}^{7 \times 7} \mathbf{u}
+    \label{eq:localSystem}
+\end{equation}
+
+and leads to the following expression for the sub-control volume face fluxes as a function of only the cell unknowns $\mathbf{u}$:
+
+\begin{equation}
+    \mathbf{f} = \mathbf{C}^{7 \times 7} \mathbf{\bar{u}} + \mathbf{D}^{7 \times 7} \mathbf{u} \
+               = \left[ \mathbf{C}^{7 \times 7} \left( \mathbf{A}^{7 \times 7} \right)^{-1} \mathbf{B}^{7 \times 7} + \mathbf{D}^{7 \times 7} \right] \mathbf{u} = \mathbf{T}^{7 \times 7} \mathbf{u}.
+    \label{eq:fluxExpression}
+\end{equation}
+
+In the above equation \eqref{eq:fluxExpression} the rows of the system are the resulting flux expressions $F_{\sigma^v_i} = \sum_{k = 1}^7 t_{\sigma^v_i, k} u_{k}$ for the sub-control volume faces within the interaction region, where the matrix $\mathbf{T}$ contains the corresponding transmissibilities. The overall flux across a face $\sigma$ of the primal grid is the sum over all its embedded sub-control volume faces:
+
+\begin{equation}
+    F_{\sigma} = \sum_{\sigma^v \in \sigma} F_{\sigma^v}.
+\end{equation}
 % \subsubsection{NLTPFA}\label{cc_nltpfa}
 % TODO
 
