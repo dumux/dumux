@@ -192,9 +192,9 @@ volume faces. This is a two point flux approximation since the flux between
 the element/control volume centers $i$ and $j$ is calculated
 only with information from these two points. In contrast the box method uses
 a multi-point flux approximation where all nodes of the
-element influence the flux between two specific nodes. \\
+element influence the flux between two specific nodes. \par
 Neumann boundary conditions are applied at the boundary control volume faces
-and Dirichlet boundary conditions at the boundary control volumes. \\
+and Dirichlet boundary conditions at the boundary control volumes. \par
 The cell centered finite volume method is robust and mass conservative but
 should only be applied for structured grids
 (the control volume face normal vector ($n_{ij}$) should be parallel to the
@@ -215,7 +215,7 @@ volume centers).
 In the two-dimensional free-flow models, the continuity equation is discretized using the black control volumes, the $x$-component of the momentum equation is discretized using the blue control volumes and the $y$-component is discretized using the red control volumes. In three dimensions this works analogously.}
 \end{figure}
 
-The staggered-grid or marker-and-cell method uses a finite volume method with different control volumes for different equations. There are control volumes centered around the scalar primary variables. They correspond to the finite volume mesh. Additionally, there are control volumes located around the $x,y$ and (in 3D) $z$ velocity components which are shifted in the $x,y$ and $z$ direction, such that the velocity components are located on the edges of the cell-centered finite volume mesh (see Figure~\ref{pc:staggered}). As for the cell-centered method, the fluxes are evaluated at the edges of each control volume with a two-point flux approximation, cf. \ref{cc}.\\
+The staggered-grid or marker-and-cell method uses a finite volume method with different control volumes for different equations. There are control volumes centered around the scalar primary variables. They correspond to the finite volume mesh. Additionally, there are control volumes located around the $x,y$ and (in 3D) $z$ velocity components which are shifted in the $x,y$ and $z$ direction, such that the velocity components are located on the edges of the cell-centered finite volume mesh (see Figure~\ref{pc:staggered}). As for the cell-centered method, the fluxes are evaluated at the edges of each control volume with a two-point flux approximation, cf. \ref{cc}.\par
 The staggered-grid method is robust, mass conservative, and free of pressure oscillations
 but should, as the cell-centered TPFA method, only be applied for structured grids.
 Currently, all free-flow models in \Dumux use the staggered-grid discretization.
