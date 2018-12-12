@@ -30,7 +30,6 @@ namespace FluidSystems {
 /*!
  * \ingroup FluidSystems
  * \brief  A simple fluid system with one MaxwellStefan component.
- * \todo doc me!
  */
 template<class Scalar>
 class H2N2CO2FluidSystem: public Base<Scalar, H2N2CO2FluidSystem<Scalar>>

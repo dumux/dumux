@@ -94,8 +94,8 @@ struct EnableFVGridGeometryCache<TypeTag, TTag::OnePCompressible> { static const
 /*!
  * \ingroup OnePTests
  * \brief  Test problem for the compressible one-phase model:
- *\todo doc me!
- * <tt>./test_box1pfv</tt> or
+ *
+ * Can be run as <tt>./test_box1pfv</tt> or
  * <tt>./test_cc1pfv</tt>
  */
 template<class TypeTag>

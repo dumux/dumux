@@ -99,8 +99,8 @@ struct EnableFVGridGeometryCache<TypeTag, TTag::OnePIncompressible> { static con
 /*!
  * \ingroup OnePTests
  * \brief  Test problem for the incompressible one-phase model:
- *\todo doc me!
- * <tt>./test_box1pfv</tt> or
+ *
+ * Can be run as <tt>./test_box1pfv</tt> or
  * <tt>./test_cc1pfv</tt>
  */
 template<class TypeTag>

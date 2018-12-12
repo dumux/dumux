@@ -33,7 +33,10 @@ namespace Dumux {
 /*!
  * \ingroup OnePTests
  * \brief  Multidomain test problem for the incompressible one-phase model
- * \todo doc me!
+ *
+ * Two possibilities to divide the model domain are given:
+ * half: a horizontal interface splits the domain in two equally sized subdomains
+ * lens: one subdomain is defined as a central lens, surrounded by the other subdomain
  */
 template<class TypeTag, std::size_t tag>
 class OnePTestProblem

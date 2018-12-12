@@ -20,6 +20,7 @@
  * \file
  *
  * \brief Test for the instationary staggered grid Navier-Stokes model with analytical solution (Angeli et al., 2017)
+ * The unsteady, 2D, incompressible Navier-Stokes equations for a zero source and a Newtonian flow is solved and compared to an analytical solution (sums/products of trigonometric functions). The velocities and pressures decay exponentially. The Dirichlet boundary conditions are time-dependent and consistent with the analytical solution.
  */
 #include <config.h>
 
