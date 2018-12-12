@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the staggered grid Navier-Stokes model (Kovasznay 1947)
+ * \ingroup NavierStokesTests
+ * \brief Test for the staggered grid Navier-Stokes model (Kovasznay 1947).
  */
+
 #include <config.h>
 
 #include <ctime>

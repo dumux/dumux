@@ -21,6 +21,7 @@
  * \ingroup NavierStokesTests
  * \brief Test for the instationary staggered grid Navier-Stokes model with analytical solution (Angeli et al., 2017)
  */
+
 #ifndef DUMUX_ANGELI_TEST_PROBLEM_HH
 #define DUMUX_ANGELI_TEST_PROBLEM_HH
 
@@ -34,13 +35,11 @@
 #include <dumux/freeflow/navierstokes/model.hh>
 #include "../l2error.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class AngeliTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct AngeliTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
@@ -71,13 +70,16 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::AngeliTest> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::AngeliTest> { static constexpr bool value = true; };
-
-}
+} // end namespace Properties
 
 /*!
  * \ingroup NavierStokesTests
- * \brief  Test problem for the staggered grid (Angeli 1947)
- * \todo doc me!
+ * \brief  Test problem for the staggered grid (Angeli 1947).
+ *
+ * The unsteady, 2D, incompressible Navier-Stokes equations for a zero source and a Newtonian
+ * flow is solved and compared to an analytical solution (sums/products of trigonometric functions).
+ * The velocities and pressures decay exponentially. The Dirichlet boundary conditions are
+ * time-dependent and consistent with the analytical solution.
  */
 template <class TypeTag>
 class AngeliTestProblem : public NavierStokesProblem<TypeTag>
@@ -136,7 +138,7 @@ public:
     }
 
    /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
@@ -145,7 +147,7 @@ public:
 
 
    /*!
-     * \brief Return the sources within the domain.
+     * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
      */
@@ -199,7 +201,7 @@ public:
     }
 
    /*!
-     * \brief Return dirichlet boundary values at a given position
+     * \brief Returns Dirichlet boundary values at a given position.
      *
      * \param globalPos The global position
      */
@@ -210,7 +212,7 @@ public:
     }
 
     /*!
-     * \brief Return the analytical solution of the problem at a given position
+     * \brief Returns the analytical solution of the problem at a given position.
      *
      * \param globalPos The global position
      * \param time The current simulation time
@@ -239,7 +241,7 @@ public:
     // \{
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -249,7 +251,7 @@ public:
     }
 
    /*!
-     * \brief Returns the analytical solution for the pressure
+     * \brief Returns the analytical solution for the pressure.
      */
     auto& getAnalyticalPressureSolution() const
     {
@@ -257,7 +259,7 @@ public:
     }
 
    /*!
-     * \brief Returns the analytical solution for the velocity
+     * \brief Returns the analytical solution for the velocity.
      */
     auto& getAnalyticalVelocitySolution() const
     {
@@ -265,7 +267,7 @@ public:
     }
 
    /*!
-     * \brief Returns the analytical solution for the velocity at the faces
+     * \brief Returns the analytical solution for the velocity at the faces.
      */
     auto& getAnalyticalVelocitySolutionOnFace() const
     {
@@ -284,7 +286,9 @@ public:
     }
 
    /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     * \brief Adds additional VTK output data to the VTKWriter.
+     *
+     * Function is called by the output module on every write.
      */
     void createAnalyticalSolution()
     {
@@ -331,6 +335,6 @@ private:
     std::vector<VelocityVector> analyticalVelocity_;
     std::vector<VelocityVector> analyticalVelocityOnFace_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

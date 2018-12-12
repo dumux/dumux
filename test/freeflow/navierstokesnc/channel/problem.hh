@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup NavierStokesNCTests
- * \brief Channel flow test for the multi-component staggered grid (Navier-)Stokes model
+ * \brief Channel flow test for the multi-component staggered grid (Navier-)Stokes model.
  */
+
 #ifndef DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
 #define DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
 
@@ -92,8 +93,7 @@ struct UseMoles<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = fa
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = true; };
 #endif
-
-}
+} // end namespace Properties
 
 /*!
  * \ingroup NavierStokesNCTests
@@ -142,7 +142,7 @@ public:
     }
 
    /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
@@ -150,7 +150,7 @@ public:
     { return 273.15 + 10; } // 10C
 
    /*!
-     * \brief Return the sources within the domain.
+     * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
      */
@@ -208,8 +208,7 @@ public:
     }
 
    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      */
@@ -248,7 +247,7 @@ public:
     // \{
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -271,7 +270,9 @@ public:
     }
 
    /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     * \brief Adds additional VTK output data to the VTKWriter.
+     *
+     * Function is called by the output module on every write.
      *
      * \param gridVariables The grid variables
      * \param sol The solution vector
@@ -327,6 +328,6 @@ private:
     TimeLoopPtr timeLoop_;
     std::vector<Scalar> deltaP_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the staggered grid multi-component RANS model
+ * \ingroup RANSNCTests
+ * \brief Test for the staggered grid multi-component RANS model.
  */
+
 #include <config.h>
 
 #include <ctime>

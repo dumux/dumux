@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup NavierStokesNCTests
  * \brief Test for the staggered grid multi-component (Navier-)Stokes model
  */
+
 #include <config.h>
 
 #include <ctime>

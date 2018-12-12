@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Channel flow test for the staggered grid (Navier-)Stokes model
+ * \ingroup NavierStokesTests
+ * \brief Channel flow test for the staggered grid (Navier-)Stokes model.
  */
+
 #include <config.h>
 
 #include <ctime>

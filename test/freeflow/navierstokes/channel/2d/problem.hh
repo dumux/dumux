@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief Channel flow test for the staggered grid (Navier-)Stokes model
+ * \brief Channel flow test for the staggered grid (Navier-)Stokes model.
  */
+
 #ifndef DUMUX_CHANNEL_TEST_PROBLEM_HH
 #define DUMUX_CHANNEL_TEST_PROBLEM_HH
 
@@ -34,13 +35,11 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class ChannelTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 #if !NONISOTHERMAL
@@ -77,12 +76,18 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::ChannelTest> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::ChannelTest> { static constexpr bool value = true; };
-}
+} // end namespace Properties
 
 /*!
  * \ingroup NavierStokesTests
  * \brief  Test problem for the one-phase (Navier-) Stokes problem in a channel.
- * \todo doc me!
+ *
+ * Flow from left to right in a two-dimensional channel is considered. At the inlet (left),
+ * fixed values for velocity are set, while at the outlet (right), a fixed pressure
+ * boundary condition is used. The channel is confined by solid walls at the top and bottom
+ * of the domain which corresponds to no-slip/no-flow conditions.
+ * For the non-isothermal test, water of increased temperature is injected at the inlet
+ * while the walls are fully isolating.
  */
 template <class TypeTag>
 class ChannelTestProblem : public NavierStokesProblem<TypeTag>
@@ -122,7 +127,7 @@ public:
     }
 
    /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
@@ -130,7 +135,7 @@ public:
     { return 273.15 + 10; } // 10C
 
    /*!
-     * \brief Return the sources within the domain.
+     * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
      */
@@ -182,8 +187,7 @@ public:
     }
 
    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      */
@@ -212,7 +216,7 @@ public:
     // \{
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -259,6 +263,6 @@ private:
     Scalar inletVelocity_;
     TimeLoopPtr timeLoop_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

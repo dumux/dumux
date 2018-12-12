@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup RANSNCTests
- * \brief Flat plate test for the multi-component staggered grid Reynolds-averaged Navier-Stokes model
+ * \brief Flat plate test for the multi-component staggered grid Reynolds-averaged Navier-Stokes model.
  */
+
 #ifndef DUMUX_RANS_NC_TEST_PROBLEM_HH
 #define DUMUX_RANS_NC_TEST_PROBLEM_HH
 
@@ -48,13 +49,11 @@
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class FlatPlateNCTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 
 // Create new type tags
 namespace TTag {
@@ -126,7 +125,7 @@ struct UseMoles<TypeTag, TTag::FlatPlateNCTest> { static constexpr bool value = 
  *
  * Dry air is entering from the left side and flows above a 1-D a flat plate.
  * In the middle of the inlet, water vapor is injected, which spreads by turbulent diffusion.
- * For the nonisothermal model the bottom has a constant temperature
+ * For the non-isothermal model the bottom has a constant temperature
  * which is \f$ \unit[30]{K} \f$ higher than the initial and inlet temperature.
  */
 template <class TypeTag>
@@ -209,7 +208,7 @@ public:
     }
 
    /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      * The isothermal problem assumes a temperature of 10 degrees Celsius.
      */
@@ -217,7 +216,7 @@ public:
     { return 273.15 + 10; } // 10C
 
    /*!
-     * \brief Return the sources within the domain.
+     * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
      */
@@ -329,11 +328,11 @@ public:
 #endif
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet values at the boundary.
+     * \brief Evaluates the boundary conditions for a Dirichlet values at the boundary.
      *
      * \param element The finite element
-     * \param scvf the sub control volume face
-     * \note used for cell-centered discretization schemes
+     * \param scvf The sub-control volume face
+     * \note Used for cell-centered discretization schemes
      */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
@@ -360,11 +359,11 @@ public:
     }
 
      /*!
-      * \brief Evaluate the boundary conditions for fixed values at cell centers
+      * \brief Evaluates the boundary conditions for fixed values at cell centers.
       *
       * \param element The finite element
-      * \param scv the sub control volume
-      * \note used for cell-centered discretization schemes
+      * \param scv The sub control volume
+      * \note Used for cell-centered discretization schemes
       */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
     {
@@ -388,7 +387,7 @@ public:
     // \{
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -465,6 +464,6 @@ private:
     Scalar dissipation_;
     TimeLoopPtr timeLoop_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

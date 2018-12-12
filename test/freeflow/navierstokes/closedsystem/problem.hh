@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief A test problem for the staggered (Navier-) Stokes model
+ * \brief A test problem for the staggered (Navier-) Stokes model.
  */
+
 #ifndef DUMUX_CLOSEDSYSTEM_TEST_PROBLEM_HH
 #define DUMUX_CLOSEDSYSTEM_TEST_PROBLEM_HH
 
@@ -33,13 +34,11 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class ClosedSystemTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct ClosedSystemTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
@@ -68,13 +67,16 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::ClosedSystemTest> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::ClosedSystemTest> { static constexpr bool value = true; };
-
-}
+} // end namespace Properties
 
 /*!
  * \ingroup NavierStokesTests
- * \brief  Test problem for the one-phase model.
- * \todo doc me!
+ * \brief Test problem for the one-phase (Navier-) Stokes model.
+ *
+ * Here, a quadratic two-dimensional domain with closed walls at all sides is considered.
+ * If all walls are immobile and gravity is switched on, a hydrostatic pressure
+ * gradient will develop. When assigning a fixed velocity to the top wall (without gravity),
+ * this test corresponds to a lid-driven cavity problem.
  */
 template <class TypeTag>
 class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
@@ -113,7 +115,7 @@ public:
     }
 
    /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
@@ -121,7 +123,7 @@ public:
     { return 273.15 + 10; } // 10C
 
    /*!
-     * \brief Return the sources within the domain.
+     * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
      */
@@ -173,7 +175,7 @@ public:
     }
 
    /*!
-     * \brief Return dirichlet boundary values at a given position
+     * \brief Returns Dirichlet boundary values at a given position.
      *
      * \param globalPos The global position
      */
@@ -191,7 +193,7 @@ public:
     }
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -212,6 +214,6 @@ private:
     Scalar eps_;
     Scalar lidVelocity_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

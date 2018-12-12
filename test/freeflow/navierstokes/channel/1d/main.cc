@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for a 1-D staggered grid Navier-Stokes model
+ * \ingroup NavierStokesTests
+ * \brief Test for a 1-D staggered grid Navier-Stokes model.
  */
+
 #include <config.h>
 
 #include <ctime>

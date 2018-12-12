@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the staggered grid Stokes model in a closed domain
+ * \ingroup NavierStokesTests
+ * \brief Test for the staggered grid Stokes model in a closed domain.
  */
+
 #include <config.h>
 
 #include <ctime>

@@ -18,12 +18,13 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Pipe flow test for the staggered grid RANS model
+ * \ingroup RANSTests
+ * \brief Pipe flow test for the staggered grid RANS model,
  *
  * This test simulates is based on pipe flow experiments by
  * John Laufers experiments in 1954 \cite Laufer1954a.
  */
+
 #include <config.h>
 
 #include <ctime>

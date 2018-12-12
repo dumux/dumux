@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief Test for the 1-D Navier-Stokes model with an analytical solution
+ * \brief Test for the 1-D Navier-Stokes model with an analytical solution.
  *
  * \copydoc Dumux::NavierStokesAnalyticProblem
  */
@@ -38,13 +38,11 @@
 #include "../../l2error.hh"
 
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class NavierStokesAnalyticProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct NavierStokesAnalytic { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
@@ -76,15 +74,15 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::NavierStokesAnalytic> { sta
 
 template<class TypeTag>
 struct NormalizePressure<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = false; };
-}
+} // end namespace Properties
 
 /*!
  * \ingroup NavierStokesTests
- * \brief Test for the 1-D Navier-Stokes model with an analytical solution
+ * \brief Test for the 1-D Navier-Stokes model with an analytical solution.
  *
  * The 1-D analytic solution is given by
  * \f[ p = 2 - 2 \cdot x \f]
- * \f[ v_\text{x} = 2 \cdot x^3 \f]
+ * \f[ v_\text{x} = 2 \cdot x^3 \f].
  */
 template <class TypeTag>
 class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
@@ -144,7 +142,7 @@ public:
     }
 
    /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
@@ -152,7 +150,7 @@ public:
     { return 298.0; }
 
    /*!
-     * \brief Return the sources within the domain.
+     * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
      */
@@ -239,7 +237,7 @@ public:
     }
 
    /*!
-     * \brief Return dirichlet boundary values at a given position
+     * \brief Returns Dirichlet boundary values at a given position
      *
      * \param globalPos The global position
      */
@@ -250,7 +248,7 @@ public:
     }
 
     /*!
-     * \brief Return the analytical solution of the problem at a given position
+     * \brief Returns the analytical solution of the problem at a given position
      *
      * \param globalPos The global position
      */
@@ -321,7 +319,7 @@ public:
     // \{
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -339,7 +337,7 @@ public:
     }
 
    /*!
-     * \brief Returns the analytical solution for the velocity
+     * \brief Returns the analytical solution for the velocity.
      */
     auto& getAnalyticalVelocitySolution() const
     {
@@ -347,7 +345,7 @@ public:
     }
 
    /*!
-     * \brief Returns the analytical solution for the velocity at the faces
+     * \brief Returns the analytical solution for the velocity at the faces.
      */
     auto& getAnalyticalVelocitySolutionOnFace() const
     {
@@ -357,7 +355,9 @@ public:
 private:
 
    /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     * \brief Adds additional VTK output data to the VTKWriter.
+     *
+     * Function is called by the output module on every write.
      */
     void createAnalyticalSolution_()
     {
@@ -401,6 +401,6 @@ private:
     std::vector<GlobalPosition> analyticalVelocity_;
     std::vector<GlobalPosition> analyticalVelocityOnFace_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

@@ -16,11 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  *
-  * \brief 3D Channel flow test for the staggered grid (Navier-)Stokes model
-  */
+/*!
+ * \file
+ * \ingroup NavierStokesTests
+ * \brief 3D Channel flow test for the staggered grid (Navier-)Stokes model
+ */
+
 #include <config.h>
 
 #include <ctime>

@@ -27,12 +27,11 @@
 #include <vector>
 #include <cmath>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup NavierStokesTests
- * \brief  Routines to calculate the discrete L2 error
+ * \brief Routines to calculate the discrete L2 error
  */
 template<class Scalar, class ModelTraits, class PrimaryVariables>
 class NavierStokesTestL2Error
@@ -42,7 +41,7 @@ class NavierStokesTestL2Error
 public:
 
     /*!
-      * \brief Calculate the L2 error between the analytical solution and the numerical approximation.
+      * \brief Calculates the L2 error between the analytical solution and the numerical approximation.
       *
       * \param problem The object specifying the problem which ought to be simulated
       * \param curSol Vector containing the current solution
@@ -126,6 +125,6 @@ private:
     }
 
 };
-} //end namespace DUMUX_TEST_L2_ERROR_HH
+} // end namespace Dumux
 
 #endif
