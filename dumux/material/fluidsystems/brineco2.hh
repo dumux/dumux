@@ -355,6 +355,7 @@ public:
     template <class FluidState>
     static Scalar density(const FluidState& fluidState, int phaseIdx)
     {
+        Scalar T = fluidState.temperature(phaseIdx);
         if (phaseIdx == liquidPhaseIdx)
             return liquidDensityMixture_(fluidState);
 
@@ -364,10 +365,12 @@ public:
                 // use the CO2 gas density only and neglect compositional effects
                 return CO2::gasDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
             else
-                //account for compositional effects (water) in the gas phase
-                return gasDensityMixture_(fluidState.temperature(phaseIdx),
-                                          fluidState.pressure(phaseIdx),
-                                          fluidState.moleFraction(phaseIdx, comp0Idx));
+            {
+                // assume ideal mixture: steam and CO2 don't "see" each other
+                Scalar rho_gH2O = H2O::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, BrineOrH2OIdx));
+                Scalar rho_gCO2 = CO2::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, CO2Idx));
+                return (rho_gH2O + rho_gCO2);
+            }
         }
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
@@ -386,10 +389,21 @@ public:
     template <class FluidState>
     static Scalar molarDensity(const FluidState& fluidState, int phaseIdx)
     {
+        Scalar T = fluidState.temperature(phaseIdx);
         if (phaseIdx == liquidPhaseIdx)
             return density(fluidState, phaseIdx)/fluidState.averageMolarMass(phaseIdx);
         else if (phaseIdx == gasPhaseIdx)
-            return CO2::gasMolarDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+        {
+            if (Policy::useCO2GasDensityAsGasMixtureDensity())
+                return CO2::gasMolarDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+            else
+            {
+                // assume ideal mixture: steam and CO2 don't "see" each other
+                Scalar rhoMolar_gH2O = H2O::gasMolarDensity(T, fluidState.partialPressure(gasPhaseIdx, BrineOrH2OIdx));
+                Scalar rhoMolar_gCO2 = CO2::gasMolarDensity(T, fluidState.partialPressure(gasPhaseIdx, CO2Idx));
+                return rhoMolar_gH2O + rhoMolar_gCO2;
+            }
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
@@ -820,23 +834,6 @@ private:
                                      tempC*(8.74e-4 -
                                             tempC*5.044e-7))) / 1.0e6;
         return 1/(xlCO2 * V_phi/M_T + M_H2O * xlH2O / (rho_pure * M_T));
-    }
-
-    /*!
-     * \brief Gas-phase density calculation accounting for compositional effects.
-     *
-     * \param temperature The temperature
-     * \param pg the gas-phase pressure
-     * \param xgH2O the gas-phase H2O mole fraction
-     * \return the gas-phase density
-     */
-    static Scalar gasDensityMixture_(Scalar temperature, Scalar pg, Scalar xgH2O)
-    {
-        const Scalar pH2O = xgH2O*pg; //Dalton' Law
-        const Scalar pCO2 = pg - pH2O;
-        const Scalar gasDensityCO2 = CO2::gasDensity(temperature, pCO2);
-        const Scalar gasDensityH2O = H2O::gasDensity(temperature, pH2O);
-        return gasDensityCO2 + gasDensityH2O;
     }
 };
 
