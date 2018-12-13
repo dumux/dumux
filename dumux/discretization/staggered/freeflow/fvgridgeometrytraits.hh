@@ -28,7 +28,6 @@
 #include <dumux/common/intersectionmapper.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
-#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
 
 #include "subcontrolvolumeface.hh"
 #include "connectivitymap.hh"
