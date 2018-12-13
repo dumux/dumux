@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief Constant velocity advective law for transport models.
  *        This file contains the data which is required to calculate
  *        volume and mass fluxes of fluid phases over a face of a finite volume.
@@ -33,7 +33,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief Evaluates a user given velocity field
  */
 template <class Scalar>

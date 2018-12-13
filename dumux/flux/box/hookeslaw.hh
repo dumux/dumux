@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxFlux
  * \brief Specialization of Hooke's law for the box scheme. This computes
  *        the stress tensor and surface forces resulting from mechanical deformation.
  */
@@ -33,7 +34,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup BoxFlux
  * \brief Hooke's law for box scheme
  * \tparam ScalarType the scalar type for scalar physical quantities
  * \tparam FVGridGeometry the grid geometry

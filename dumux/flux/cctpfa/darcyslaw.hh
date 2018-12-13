@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Darcy's law for cell-centered finite volume schemes with two-point flux approximation
  */
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_DARCYS_LAW_HH
@@ -38,7 +38,7 @@ template<class TypeTag, DiscretizationMethod discMethod>
 class DarcysLawImplementation;
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Darcy's law for cell-centered finite volume schemes with two-point flux approximation
  * \note Darcy's law is specialized for network and surface grids (i.e. if grid dim < dimWorld)
  * \tparam Scalar the scalar type for scalar physical quantities
@@ -49,7 +49,7 @@ template<class Scalar, class FVGridGeometry, bool isNetwork>
 class CCTpfaDarcysLaw;
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Darcy's law for cell-centered finite volume schemes with two-point flux approximation
  * \note Darcy's law is specialized for network and surface grids (i.e. if grid dim < dimWorld)
  */
@@ -61,7 +61,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 {};
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Class that fills the cache corresponding to tpfa Darcy's Law
  */
 template<class FVGridGeometry>
@@ -89,7 +89,7 @@ public:
 };
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief The cache corresponding to tpfa Darcy's Law
  */
 template<class AdvectionType, class FVGridGeometry>
@@ -121,7 +121,7 @@ private:
 };
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
  */
 template<class ScalarType, class FVGridGeometry>
@@ -275,7 +275,7 @@ private:
 };
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim < dimWorld (network/surface grids)
  */
 template<class ScalarType, class FVGridGeometry>

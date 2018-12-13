@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup StaggeredDiscretization
+ * \ingroup StaggeredFlux
  * \brief Specialization of Fourier's Law for the staggered free flow method.
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FOURIERS_LAW_HH
@@ -30,14 +30,14 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawImplementation;
 
 /*!
- * \ingroup StaggeredDiscretization
+ * \ingroup StaggeredFlux
  * \brief Specialization of Fourier's Law for the staggered free flow method.
  */
 template <class TypeTag>

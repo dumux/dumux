@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Flux
  * \brief This file contains the data which is required to calculate
  *        diffusive mass fluxes due to molecular diffusion with Fick's law.
  */
@@ -27,15 +28,15 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template <class TypeTag, DiscretizationMethod discMethod>
 class MaxwellStefansLawImplementation
 {};
 
 /*!
- * \ingroup MaxwellStefansLaw
+ * \ingroup Flux
  * \brief Evaluates the diffusive mass flux according to Maxwell Stafan's law
  */
 template <class TypeTag>

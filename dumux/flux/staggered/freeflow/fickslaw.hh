@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup StaggeredFlux
  * \brief This file contains the data which is required to calculate
  *        diffusive molar fluxes due to molecular diffusion with Fick's law.
  */
@@ -34,14 +35,14 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
 class FicksLawImplementation;
 
 /*!
- * \ingroup StaggeredFicksLaw
+ * \ingroup StaggeredFlux
  * \brief Specialization of Fick's Law for the staggered free flow method.
  */
 template <class TypeTag>

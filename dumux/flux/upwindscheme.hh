@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief Base class for the upwind scheme
  */
 #ifndef DUMUX_DISCRETIZATION_UPWINDSCHEME_HH
@@ -34,7 +34,7 @@ template<class FVGridGeometry, DiscretizationMethod discMethod>
 class UpwindSchemeImpl;
 
 /*!
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief The upwind scheme used for the advective fluxes.
  *        This depends on the chosen discretization method.
  */

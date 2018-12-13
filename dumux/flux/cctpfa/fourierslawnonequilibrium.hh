@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
 * \file
-* \ingroup CCTpfaDiscretization
+* \ingroup CCTpfaFlux
 * \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
 */
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FOURIERS_LAW_NONEQUILIBRIUM_HH
@@ -36,9 +36,9 @@ template<class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawNonEquilibriumImplementation;
 
 /*!
-* \ingroup CCTpfaDiscretization
-* \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
-*/
+ * \ingroup CCTpfaFlux
+ * \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
+ */
 template <class TypeTag>
 class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cctpfa>
 {

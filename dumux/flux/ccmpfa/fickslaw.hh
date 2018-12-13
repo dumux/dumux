@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CCMpfaDiscretization
+ * \ingroup CCMpfaFlux
  * \brief Fick's law for cell-centered finite volume schemes with multi-point flux approximation
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FICKS_LAW_HH
@@ -28,14 +28,14 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 //! forward declaration of the method-specific implemetation
 template<class TypeTag, DiscretizationMethod discMethod>
 class FicksLawImplementation;
 
 /*!
- * \ingroup CCMpfaDiscretization
+ * \ingroup CCMpfaFlux
  * \brief Fick's law for cell-centered finite volume schemes with multi-point flux approximation
  */
 template <class TypeTag>

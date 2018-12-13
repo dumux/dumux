@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Flux
  * \brief This file contains the data which is required to calculate
  *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
  */
@@ -35,7 +36,7 @@ class FouriersLawNonEquilibriumImplementation
 {};
 
 /*!
- * \ingroup FouriersLaw
+ * \ingroup Flux
  * \brief Evaluates the heat conduction flux according to Fouriers's law
  */
 template <class TypeTag>

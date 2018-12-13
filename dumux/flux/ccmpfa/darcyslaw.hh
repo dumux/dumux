@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CCMpfaDiscretization
+ * \ingroup CCMpfaFlux
  * \brief Darcy's Law for cell-centered finite volume schemes
  *        with multi-point flux approximation.
  */
@@ -32,15 +32,16 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 //! forward declaration of the method-specific implementation
 template<class TypeTag, DiscretizationMethod discMethod>
 class DarcysLawImplementation;
 
 /*!
- * \ingroup CCMpfaDiscretization
- * \brief Darcy's law for cell-centered finite volume schemes with multi-point flux approximation.
+ * \ingroup CCMpfaFlux
+ * \brief Darcy's law for cell-centered finite volume schemes
+ *        with multi-point flux approximation.
  */
 template<class TypeTag>
 class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>

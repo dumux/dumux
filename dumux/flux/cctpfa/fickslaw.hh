@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Fick's law for cell-centered finite volume schemes with two-point flux approximation
  */
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FICKS_LAW_HH
@@ -30,14 +30,14 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
 class FicksLawImplementation;
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Fick's law for cell-centered finite volume schemes with two-point flux approximation
  */
 template <class TypeTag>

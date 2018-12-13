@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxFlux
  * \brief This file contains the data which is required to calculate
  *        energy fluxes due to molecular diffusion with Fourier's law.
  */
@@ -28,14 +29,14 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawImplementation;
 
 /*!
- * \ingroup BoxFouriersLaw
+ * \ingroup BoxFlux
  * \brief Specialization of Fourier's Law for the box method.
  */
 template <class TypeTag>
