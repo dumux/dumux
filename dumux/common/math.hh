@@ -34,8 +34,8 @@
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/float_cmp.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Common
  * \brief Calculate the (weighted) arithmetic mean of two scalar values.

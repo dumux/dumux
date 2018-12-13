@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Geometry
  * \brief An axis-aligned bounding box volume hierarchy for dune grids
  *
  * Dumux implementation of an AABB tree
@@ -41,11 +41,10 @@
 #include <dune/common/timer.hh>
 #include <dune/common/fvector.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief An axis-aligned bounding box volume tree implementation
  *
  * The class constructs a hierarchical structure of bounding box volumes around

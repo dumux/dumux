@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Create Dune geometries from user-specified points
  */
 #ifndef DUMUX_MAKE_GEOMETRY_HH
@@ -33,7 +33,10 @@
 
 namespace Dumux {
 
-//! Checks if four points lie within the same plane.
+/*!
+ * \ingroup Geometry
+ * \brief Checks if four points lie within the same plane
+ */
 template<class CoordScalar>
 bool pointsAreCoplanar(const std::vector<Dune::FieldVector<CoordScalar, 3>>& points, const CoordScalar scale)
 {
@@ -48,7 +51,10 @@ bool pointsAreCoplanar(const std::vector<Dune::FieldVector<CoordScalar, 3>>& poi
     return abs(M.determinant()) < 1.5e-7*scale*scale*scale*scale;
 }
 
-//! Checks if four points lie within the same plane.
+/*!
+ * \ingroup Geometry
+ * \brief  Checks if four points lie within the same plane.
+ */
 template<class CoordScalar>
 bool pointsAreCoplanar(const std::vector<Dune::FieldVector<CoordScalar, 3>>& points)
 {
@@ -71,6 +77,7 @@ bool pointsAreCoplanar(const std::vector<Dune::FieldVector<CoordScalar, 3>>& poi
 }
 
 /*!
+ * \ingroup Geometry
  * \brief Returns a vector of points following the dune ordering.
  *        Convenience method that creates a temporary object in case no array of orientations is desired.
  *
@@ -84,6 +91,7 @@ std::vector<Dune::FieldVector<CoordScalar, 3>> getReorderedPoints(const std::vec
 }
 
 /*!
+ * \ingroup Geometry
  * \brief Returns a vector of points following the dune ordering.
  *
  * \param points The user-specified vector of points (potentially in wrong order).
@@ -130,6 +138,7 @@ std::vector<Dune::FieldVector<CoordScalar, 3>> getReorderedPoints(const std::vec
 }
 
 /*!
+ * \ingroup Geometry
  * \brief Creates a dune quadrilateral geometry given 4 corner points.
  *
  * \tparam CoordScalar The CoordScalar type.

@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Common
  * \file
+ * \ingroup Common
  *
  * \brief _Declares_ all properties used in Dumux.
  * \note Include this to forward declare properties in your headers.

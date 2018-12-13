@@ -28,8 +28,7 @@
 #include <iostream>
 #include <ctime>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Common

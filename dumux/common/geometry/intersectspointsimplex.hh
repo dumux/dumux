@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Detect if a point intersects a simplex (including boundary)
  */
 #ifndef DUMUX_INTERSECTS_POINT_SIMPLEX_HH
@@ -29,7 +29,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Find out whether a point is inside a tetrahedron (p0, p1, p2, p3) (dimworld is 3)
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 3), int> = 0>
@@ -71,7 +71,7 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Find out whether a point is inside a triangle (p0, p1, p2, p3) (dimworld is 3)
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 3), int> = 0>
@@ -125,7 +125,7 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Find out whether a point is inside a triangle (p0, p1, p2, p3) (dimworld is 2)
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 2), int> = 0>
@@ -152,7 +152,7 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Find out whether a point is inside a interval (p0, p1, p2, p3) (dimworld is 3)
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 3), int> = 0>
@@ -192,7 +192,7 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Find out whether a point is inside a interval (p0, p1, p2, p3) (dimworld is 2)
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 2), int> = 0>
@@ -233,7 +233,7 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Find out whether a point is inside a interval (p0, p1, p2, p3) (dimworld is 1)
  */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 1), int> = 0>

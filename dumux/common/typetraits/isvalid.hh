@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
  * \ingroup TypeTraits
  * \brief A helper function for class member function introspection
  * \note Follows the description by Jean Guegant on
@@ -73,7 +72,6 @@ public:
 
 
 /*!
- * \ingroup Common
  * \ingroup TypeTraits
  * \brief A function that creates a test functor to do class member introspection at compile time
  * \return a functor that returns true if the expression is valid with a given type / object

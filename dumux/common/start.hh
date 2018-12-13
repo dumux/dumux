@@ -114,7 +114,7 @@ int start_(int argc,
 }
 
 /*!
- * \ingroup Start
+ * \ingroup Common
  *
  * \brief Provides a main function with error handling
  *

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Assembly
+ * \ingroup Common
  * \brief A class for numeric differentiation
  *
  */
@@ -31,7 +31,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Assembly
+ * \ingroup Common
  * \brief A class for numeric differentiation with respect to a scalar parameter
  */
 class NumericDifferentiation

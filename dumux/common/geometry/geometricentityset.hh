@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Geometry
  * \brief An interface for a set of geometric entities
  * \note This can be used e.g. to contruct a bounding box volume hierarchy of a grid
  * It defines the minimum requirement for such a set
@@ -31,7 +31,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief An interface for a set of geometric entities
  * \note This can be used e.g. to contruct a bounding box volume hierarchy of a grid
  * It defines the minimum requirement for such a set

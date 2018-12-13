@@ -36,8 +36,8 @@
 
 #include <dumux/common/parameters.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Common
  * \brief Manages the handling of time dependent problems.
@@ -82,7 +82,10 @@ public:
     virtual Scalar timeStepSize() const = 0;
 };
 
-//! The default time loop for instationary simulations
+/*!
+ * \ingroup Common
+ * \brief The default time loop for instationary simulations
+ */
 template <class Scalar>
 class TimeLoop : public TimeLoopBase<Scalar>
 {
@@ -385,7 +388,10 @@ private:
     bool verbose_;
 };
 
-//! A time loop with a check point mechanism
+/*!
+ * \ingroup Common
+ * \brief A time loop with a check point mechanism
+ */
 template <class Scalar>
 class CheckPointTimeLoop : public TimeLoop<Scalar>
 {
