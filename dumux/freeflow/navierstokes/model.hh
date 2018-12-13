@@ -27,7 +27,7 @@
  \frac{\partial (\varrho \textbf{v})}{\partial t} + \nabla \cdot (\varrho \textbf{v} \textbf{v}^{\textup{T}}) = \nabla \cdot (\mu (\nabla \textbf{v} + \nabla \textbf{v}^{\textup{T}}))
    - \nabla p + \varrho \textbf{g} - \textbf{f}
  * \f]
- * By setting the property <code>EnableInertiaTerms</code> to <code>false</code> the Stokes
+ * By setting the runtime parameter <code>Problem.EnableInertiaTerms</code> to <code>false</code> the Stokes
  * equation can be solved. In this case the term
  * \f[
  *    \nabla \cdot (\varrho \textbf{v} \textbf{v}^{\textup{T}})

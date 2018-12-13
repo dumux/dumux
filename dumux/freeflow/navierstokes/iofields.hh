@@ -24,13 +24,9 @@
 #ifndef DUMUX_NAVIER_STOKES_IO_FIELDS_HH
 #define DUMUX_NAVIER_STOKES_IO_FIELDS_HH
 
-#include <dune/common/fvector.hh>
 #include <dune/common/deprecated.hh>
-#include <dune/common/indices.hh>
-#include <dune/istl/multitypeblockvector.hh> // TODO: needed? or is forward declare enough?
 
 #include <dumux/common/parameters.hh>
-#include <dumux/discretization/method.hh>
 #include <dumux/io/name.hh>
 
 namespace Dumux
