@@ -114,7 +114,7 @@ public:
  * \ingroup CCDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
  * \tparam TypeTag The TypeTag
- * \tparam DM The differentiation method to residual compute derivatives
+ * \tparam diffMethod The differentiation method to residual compute derivatives
  * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::numeric, bool implicit = true>
