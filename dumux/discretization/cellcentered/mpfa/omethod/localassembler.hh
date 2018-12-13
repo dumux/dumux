@@ -25,18 +25,11 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 
-#include <cassert>
-
-#include <dune/common/reservedvector.hh>
-
-#include <dumux/common/math.hh>
-#include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassemblerbase.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassemblerhelper.hh>
 #include <dumux/discretization/cellcentered/mpfa/computetransmissibility.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -113,8 +106,7 @@ private:
      * \note  The matrices are expected to have been resized beforehand.
      *
      * \tparam IV The interaction volume type implementation
-     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
-     *                    which the local system is to be solved
+     * \tparam TensorFunc Lambda to obtain the tensor w.r.t. which the local system is to be solved
      *
      * \param A The A matrix of the iv-local equation system
      * \param B The B matrix of the iv-local equation system
