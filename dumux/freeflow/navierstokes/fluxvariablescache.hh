@@ -27,8 +27,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
 class FreeFlowFluxVariablesCacheImplementation

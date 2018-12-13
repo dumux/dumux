@@ -28,8 +28,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/freeflow/rans/volumevariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup LowReKEpsilonModel
@@ -223,6 +222,6 @@ protected:
     Scalar stressTensorScalarProduct_ = 0.0;
 };
 
-}
+} // end namespace Dumux
 
 #endif

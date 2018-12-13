@@ -75,7 +75,6 @@
  * \f[ C_{2\tilde{\varepsilon}} = 1.80 \f]
  * \f[ C_\mu = 0.09 \f]
  */
-
 #ifndef DUMUX_LOWREKEPSILON_MODEL_HH
 #define DUMUX_LOWREKEPSILON_MODEL_HH
 
@@ -89,8 +88,7 @@
 #include "volumevariables.hh"
 #include "iofields.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 namespace Properties {
 
 /*!

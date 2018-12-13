@@ -16,11 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup OneEqModel
-  * \copydoc Dumux::OneEqResidual
-  */
+/*!
+ * \file
+ * \ingroup OneEqModel
+ * \copydoc Dumux::OneEqResidual
+ */
 #ifndef DUMUX_ONEEQ_LOCAL_RESIDUAL_HH
 #define DUMUX_ONEEQ_LOCAL_RESIDUAL_HH
 
@@ -29,8 +29,7 @@
 #include <dumux/freeflow/navierstokes/localresidual.hh>
 #include <dumux/freeflow/rans/oneeq/staggered/localresidual.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
@@ -46,6 +45,6 @@ class OneEqResidualImpl;
 template<class TypeTag, class BaseLocalResidual>
 using OneEqResidual = OneEqResidualImpl<TypeTag, BaseLocalResidual, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
 
-}
+} // end namespace Dumux
 
 #endif

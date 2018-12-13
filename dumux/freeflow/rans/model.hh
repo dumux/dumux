@@ -33,7 +33,6 @@
  *    \mu_\textrm{eff} = \mu + \mu_\textrm{t}
  * \f].
  */
-
 #ifndef DUMUX_RANS_MODEL_HH
 #define DUMUX_RANS_MODEL_HH
 

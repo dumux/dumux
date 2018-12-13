@@ -33,8 +33,7 @@
 
 #include "model.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup KEpsilonModel
@@ -477,6 +476,6 @@ private:
     { return *static_cast<const Implementation *>(this); }
 };
 
-}
+} // end namespace Dumux
 
 #endif

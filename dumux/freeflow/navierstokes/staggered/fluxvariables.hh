@@ -86,13 +86,13 @@ public:
     using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
 
     /*!
-    * \brief Returns the advective flux over a sub control volume face.
-    * \param problem The object specifying the problem which ought to be simulated
-    * \param elemVolVars All volume variables for the element
-    * \param elemFaceVars The face variables
-    * \param scvf The sub control volume face
-    * \param upwindTerm The uwind term (i.e. the advectively transported quantity)
-    */
+     * \brief Returns the advective flux over a sub control volume face.
+     * \param problem The object specifying the problem which ought to be simulated
+     * \param elemVolVars All volume variables for the element
+     * \param elemFaceVars The face variables
+     * \param scvf The sub control volume face
+     * \param upwindTerm The uwind term (i.e. the advectively transported quantity)
+     */
     template<class UpwindTerm>
     static Scalar advectiveFluxForCellCenter(const Problem& problem,
                                              const ElementVolumeVariables& elemVolVars,
@@ -118,20 +118,20 @@ public:
     }
 
     /*!
-    * \brief Computes the flux for the cell center residual (mass balance).
-    *
-    * \verbatim
-    *                    scvf
-    *              ----------------
-    *              |              # current scvf    # scvf over which fluxes are calculated
-    *              |              #
-    *              |      x       #~~~~> vel.Self   x dof position
-    *              |              #
-    *        scvf  |              #                 -- element
-    *              ----------------
-    *                   scvf
-    * \endverbatim
-    */
+     * \brief Computes the flux for the cell center residual (mass balance).
+     *
+     * \verbatim
+     *                    scvf
+     *              ----------------
+     *              |              # current scvf    # scvf over which fluxes are calculated
+     *              |              #
+     *              |      x       #~~~~> vel.Self   x dof position
+     *              |              #
+     *        scvf  |              #                 -- element
+     *              ----------------
+     *                   scvf
+     * \endverbatim
+     */
     CellCenterPrimaryVariables computeMassFlux(const Problem& problem,
                                                const Element& element,
                                                const FVElementGeometry& fvGeometry,
@@ -151,8 +151,8 @@ public:
     }
 
     /*!
-    * \brief Returns the momentum flux over all staggered faces.
-    */
+     * \brief Returns the momentum flux over all staggered faces.
+     */
     FacePrimaryVariables computeMomentumFlux(const Problem& problem,
                                              const Element& element,
                                              const SubControlVolumeFace& scvf,
@@ -165,22 +165,22 @@ public:
     }
 
     /*!
-    * \brief Returns the frontal part of the momentum flux.
-    *        This treats the flux over the staggered face at the center of an element,
-    *        parallel to the current scvf where the velocity dof of interest lives.
-    *
-    * \verbatim
-    *                    scvf
-    *              ---------=======                 == and # staggered half-control-volume
-    *              |       #      | current scvf
-    *              |       #      |                 # staggered face over which fluxes are calculated
-    *   vel.Opp <~~|       #~~>   x~~~~> vel.Self
-    *              |       #      |                 x dof position
-    *        scvf  |       #      |
-    *              --------========                 -- element
-    *                   scvf
-    * \endverbatim
-    */
+     * \brief Returns the frontal part of the momentum flux.
+     *        This treats the flux over the staggered face at the center of an element,
+     *        parallel to the current scvf where the velocity dof of interest lives.
+     *
+     * \verbatim
+     *                    scvf
+     *              ---------=======                 == and # staggered half-control-volume
+     *              |       #      | current scvf
+     *              |       #      |                 # staggered face over which fluxes are calculated
+     *   vel.Opp <~~|       #~~>   x~~~~> vel.Self
+     *              |       #      |                 x dof position
+     *        scvf  |       #      |
+     *              --------========                 -- element
+     *                   scvf
+     * \endverbatim
+     */
     FacePrimaryVariables computeFrontalMomentumFlux(const Problem& problem,
                                                     const Element& element,
                                                     const SubControlVolumeFace& scvf,
@@ -258,22 +258,22 @@ public:
    }
 
     /*!
-    * \brief Returns the momentum flux over the staggered faces
-    *        perpendicular to the scvf where the velocity dof of interest
-    *        lives (coinciding with the element's scvfs).
-    *
-    * \verbatim
-    *                scvf
-    *              ---------#######                 || and # staggered half-control-volume
-    *              |      ||      | current scvf
-    *              |      ||      |                 # normal staggered sub faces over which fluxes are calculated
-    *              |      ||      x~~~~> vel.Self
-    *              |      ||      |                 x dof position
-    *        scvf  |      ||      |
-    *              --------########                -- element
-    *                 scvf
-    * \endverbatim
-    */
+     * \brief Returns the momentum flux over the staggered faces
+     *        perpendicular to the scvf where the velocity dof of interest
+     *         lives (coinciding with the element's scvfs).
+     *
+     * \verbatim
+     *                scvf
+     *              ---------#######                 || and # staggered half-control-volume
+     *              |      ||      | current scvf
+     *              |      ||      |                 # normal staggered sub faces over which fluxes are calculated
+     *              |      ||      x~~~~> vel.Self
+     *              |      ||      |                 x dof position
+     *        scvf  |      ||      |
+     *              --------########                -- element
+     *                 scvf
+     * \endverbatim
+     */
     FacePrimaryVariables computeLateralMomentumFlux(const Problem& problem,
                                                     const Element& element,
                                                     const SubControlVolumeFace& scvf,
@@ -349,26 +349,26 @@ public:
 private:
 
     /*!
-    * \brief Returns the advective momentum flux over the staggered face perpendicular to the scvf
-    *        where the velocity dof of interest lives (coinciding with the element's scvfs).
-    *
-    * \verbatim
-    *              ----------------
-    *              |              |
-    *              |    transp.   |
-    *              |      vel.    |~~~~> vel.Parallel
-    *              |       ^      |
-    *              |       |      |
-    *       scvf   ---------#######                 || and # staggered half-control-volume
-    *              |      ||      | current scvf
-    *              |      ||      |                 # normal staggered faces over which fluxes are calculated
-    *              |      ||      x~~~~> vel.Self
-    *              |      ||      |                 x dof position
-    *        scvf  |      ||      |
-    *              ---------#######                -- elements
-    *                 scvf
-    * \endverbatim
-    */
+     * \brief Returns the advective momentum flux over the staggered face perpendicular to the scvf
+     *        where the velocity dof of interest lives (coinciding with the element's scvfs).
+     *
+     * \verbatim
+     *              ----------------
+     *              |              |
+     *              |    transp.   |
+     *              |      vel.    |~~~~> vel.Parallel
+     *              |       ^      |
+     *              |       |      |
+     *       scvf   ---------#######                 || and # staggered half-control-volume
+     *              |      ||      | current scvf
+     *              |      ||      |                 # normal staggered faces over which fluxes are calculated
+     *              |      ||      x~~~~> vel.Self
+     *              |      ||      |                 x dof position
+     *        scvf  |      ||      |
+     *              ---------#######                -- elements
+     *                 scvf
+     * \endverbatim
+     */
     FacePrimaryVariables computeAdvectivePartOfLateralMomentumFlux_(const Problem& problem,
                                                                     const Element& element,
                                                                     const SubControlVolumeFace& scvf,
@@ -439,27 +439,27 @@ private:
     }
 
     /*!
-    * \brief Returns the diffusive momentum flux over the staggered face perpendicular to the scvf
-    *        where the velocity dof of interest lives (coinciding with the element's scvfs).
-    *
-    * \verbatim
-    *              ----------------
-    *              |              |vel.
-    *              |    in.norm.  |Parallel
-    *              |       vel.   |~~~~>
-    *              |       ^      |        ^ out.norm.vel.
-    *              |       |      |        |
-    *       scvf   ---------#######:::::::::       || and # staggered half-control-volume (own element)
-    *              |      ||      | curr. ::
-    *              |      ||      | scvf  ::       :: staggered half-control-volume (neighbor element)
-    *              |      ||      x~~~~>  ::
-    *              |      ||      | vel.  ::       # normal staggered faces over which fluxes are calculated
-    *        scvf  |      ||      | Self  ::
-    *              ---------#######:::::::::       x dof position
-    *                 scvf
-    *                                              -- elements
-    * \endverbatim
-    */
+     * \brief Returns the diffusive momentum flux over the staggered face perpendicular to the scvf
+     *        where the velocity dof of interest lives (coinciding with the element's scvfs).
+     *
+     * \verbatim
+     *              ----------------
+     *              |              |vel.
+     *              |    in.norm.  |Parallel
+     *              |       vel.   |~~~~>
+     *              |       ^      |        ^ out.norm.vel.
+     *              |       |      |        |
+     *       scvf   ---------#######:::::::::       || and # staggered half-control-volume (own element)
+     *              |      ||      | curr. ::
+     *              |      ||      | scvf  ::       :: staggered half-control-volume (neighbor element)
+     *              |      ||      x~~~~>  ::
+     *              |      ||      | vel.  ::       # normal staggered faces over which fluxes are calculated
+     *        scvf  |      ||      | Self  ::
+     *              ---------#######:::::::::       x dof position
+     *                 scvf
+     *                                              -- elements
+     * \endverbatim
+     */
     FacePrimaryVariables computeDiffusivePartOfLateralMomentumFlux_(const Problem& problem,
                                                                     const Element& element,
                                                                     const SubControlVolumeFace& scvf,
@@ -546,21 +546,21 @@ private:
     }
 
     /*!
-    * \brief Returns the momentum flux over an inflow or outflow boundary face.
-    *
-    * \verbatim
-    *                    scvf      //
-    *              ---------=======//               == and # staggered half-control-volume
-    *              |      ||      #// current scvf
-    *              |      ||      #//               # staggered boundary face over which fluxes are calculated
-    *              |      ||      x~~~~> vel.Self
-    *              |      ||      #//               x dof position
-    *        scvf  |      ||      #//
-    *              --------========//               -- element
-    *                   scvf       //
-    *                                              // boundary
-    * \endverbatim
-    */
+     * \brief Returns the momentum flux over an inflow or outflow boundary face.
+     *
+     * \verbatim
+     *                    scvf      //
+     *              ---------=======//               == and # staggered half-control-volume
+     *              |      ||      #// current scvf
+     *              |      ||      #//               # staggered boundary face over which fluxes are calculated
+     *              |      ||      x~~~~> vel.Self
+     *              |      ||      #//               x dof position
+     *        scvf  |      ||      #//
+     *              --------========//               -- element
+     *                   scvf       //
+     *                                              // boundary
+     * \endverbatim
+     */
     FacePrimaryVariables inflowOutflowBoundaryFlux_(const Problem& problem,
                                                     const Element& element,
                                                     const SubControlVolumeFace& scvf,

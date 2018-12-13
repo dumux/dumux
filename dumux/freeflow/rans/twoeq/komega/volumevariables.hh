@@ -29,8 +29,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/freeflow/rans/volumevariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup KOmegaEqModel

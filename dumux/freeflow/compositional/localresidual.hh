@@ -29,8 +29,7 @@
 #include <dumux/freeflow/navierstokes/localresidual.hh>
 #include <dumux/freeflow/compositional/staggered/localresidual.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>

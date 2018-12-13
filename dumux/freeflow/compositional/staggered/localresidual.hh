@@ -93,6 +93,6 @@ public:
         return storage;
     }
 };
-}
+} // end namespace Dumux
 
 #endif

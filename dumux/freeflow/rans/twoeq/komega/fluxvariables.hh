@@ -16,19 +16,18 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup KOmegaModel
-  * \copydoc Dumux::KOmegaFluxVariables
-  */
+/*!
+ * \file
+ * \ingroup KOmegaModel
+ * \copydoc Dumux::KOmegaFluxVariables
+ */
 #ifndef DUMUX_KOMEGA_FLUXVARIABLES_HH
 #define DUMUX_KOMEGA_FLUXVARIABLES_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/rans/twoeq/komega/staggered/fluxvariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>

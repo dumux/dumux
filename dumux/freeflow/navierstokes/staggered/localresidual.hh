@@ -30,8 +30,7 @@
 #include <dune/common/hybridutilities.hh>
 #include <dumux/freeflow/nonisothermal/localresidual.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
@@ -187,7 +186,7 @@ public:
 
 protected:
 
-     /*!
+    /*!
      * \brief Evaluate boundary conditions for a cell center dof
      */
     template<class ElementBoundaryTypes>
@@ -242,7 +241,7 @@ protected:
         }
     }
 
-     /*!
+    /*!
      * \brief Evaluate boundary conditions for a face dof
      */
     template<class ElementBoundaryTypes>

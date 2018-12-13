@@ -27,9 +27,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/compositional/staggered/fluxvariables.hh>
 
-namespace Dumux
-{
-
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>

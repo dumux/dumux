@@ -19,7 +19,6 @@
 /*!
  * \file
  * \ingroup KEpsilonModel
- *
  * \copydoc Dumux::KEpsilonVolumeVariables
  */
 #ifndef DUMUX_KEPSILON_VOLUME_VARIABLES_HH
@@ -28,8 +27,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/freeflow/rans/volumevariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup KEpsilonModel

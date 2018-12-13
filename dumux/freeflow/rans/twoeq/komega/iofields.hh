@@ -27,8 +27,7 @@
 #include <dumux/freeflow/rans/iofields.hh>
 #include <dune/common/deprecated.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup KOmegaModel

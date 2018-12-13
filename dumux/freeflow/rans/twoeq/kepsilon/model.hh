@@ -75,8 +75,7 @@
 #include "volumevariables.hh"
 #include "iofields.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 namespace Properties {
 
 /*!

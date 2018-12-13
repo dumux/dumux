@@ -16,11 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup LowReKEpsilonModel
-  * \copydoc Dumux::LowReKEpsilonResidualImpl
-  */
+/*!
+ * \file
+ * \ingroup LowReKEpsilonModel
+ * \copydoc Dumux::LowReKEpsilonResidualImpl
+ */
 #ifndef DUMUX_STAGGERED_LOWREKEPSILON_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_LOWREKEPSILON_LOCAL_RESIDUAL_HH
 
@@ -121,6 +121,6 @@ public:
         return source;
     }
 };
-}
+} // end namespace Dumux
 
 #endif

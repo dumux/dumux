@@ -16,11 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup OneEqModel
-  * \copydoc Dumux::OneEqResidualImpl
-  */
+/*!
+ * \file
+ * \ingroup OneEqModel
+ * \copydoc Dumux::OneEqResidualImpl
+ */
 #ifndef DUMUX_STAGGERED_ONEEQ_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_ONEEQ_LOCAL_RESIDUAL_HH
 
@@ -116,6 +116,6 @@ public:
         return source;
     }
 };
-}
+} // end namespace Dumux
 
 #endif

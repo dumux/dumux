@@ -29,8 +29,7 @@
 #include <dumux/io/name.hh>
 #include <dumux/freeflow/navierstokes/iofields.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup FreeflowNCModel

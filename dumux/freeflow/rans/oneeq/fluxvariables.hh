@@ -16,11 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup OneEqModel
-  * \copydoc Dumux::OneEqFluxVariables
-  */
+/*!
+ * \file
+ * \ingroup OneEqModel
+ * \copydoc Dumux::OneEqFluxVariables
+ */
 #ifndef DUMUX_ONEEQFLUXVARIABLES_HH
 #define DUMUX_ONEEQFLUXVARIABLES_HH
 
@@ -28,8 +28,7 @@
 #include <dumux/freeflow/navierstokes/fluxvariables.hh>
 #include <dumux/freeflow/rans/oneeq/staggered/fluxvariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>

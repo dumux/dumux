@@ -30,8 +30,8 @@
 
 #include <dumux/common/parameters.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup RANSModel
  * \brief Volume variables for the isothermal single-phase Reynolds-Averaged Navier-Stokes models.
@@ -232,11 +232,11 @@ public:
     { return eddyThermalConductivity_; }
 
     /*!
-    * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
-    *
-    * \param compIIdx the index of the component which diffusive
-    * \param compJIdx the index of the component with respect to which compIIdx diffuses
-    */
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+     *
+     * \param compIIdx the index of the component which diffusive
+     * \param compJIdx the index of the component with respect to which compIIdx diffuses
+     */
     Scalar effectiveDiffusivity(int compIIdx, int compJIdx) const
     {
         return NavierStokesParentType::diffusionCoefficient(compIIdx, compJIdx) + eddyDiffusivity();
@@ -273,6 +273,6 @@ protected:
     Scalar eddyDiffusivity_ = 0.0;
     Scalar eddyThermalConductivity_ = 0.0;
 };
-}
+} // end namespace Dumux
 
 #endif

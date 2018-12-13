@@ -16,11 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup KEpsilonModel
-  * \copydoc Dumux::KEpsilonFluxVariablesImpl
-  */
+/*!
+ * \file
+ * \ingroup KEpsilonModel
+ * \copydoc Dumux::KEpsilonFluxVariablesImpl
+ */
 #ifndef DUMUX_KEPSILON_STAGGERED_FLUXVARIABLES_HH
 #define DUMUX_KEPSILON_STAGGERED_FLUXVARIABLES_HH
 
@@ -31,8 +31,7 @@
 #include <dumux/freeflow/navierstokes/fluxvariables.hh>
 #include <dumux/freeflow/rans/twoeq/kepsilon/fluxvariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
@@ -78,8 +77,8 @@ class KEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod
 public:
 
     /*!
-    * \brief Computes the flux for the cell center residual.
-    */
+     * \brief Computes the flux for the cell center residual.
+     */
     CellCenterPrimaryVariables computeMassFlux(const Problem& problem,
                                                const Element &element,
                                                const FVElementGeometry& fvGeometry,
@@ -178,8 +177,8 @@ public:
     }
 
     /*!
-    * \brief Returns the momentum flux over all staggered faces.
-    */
+     * \brief Returns the momentum flux over all staggered faces.
+     */
     FacePrimaryVariables computeMomentumFlux(const Problem& problem,
                                              const Element& element,
                                              const SubControlVolumeFace& scvf,

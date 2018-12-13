@@ -67,7 +67,6 @@
  *   \end{cases}.
  * \f]
  */
-
 #ifndef DUMUX_KOMEGA_MODEL_HH
 #define DUMUX_KOMEGA_MODEL_HH
 
@@ -81,8 +80,7 @@
 #include "volumevariables.hh"
 #include "iofields.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 namespace Properties {
 
 /*!

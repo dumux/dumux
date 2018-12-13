@@ -16,19 +16,18 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup KEpsilonModel
-  * \copydoc Dumux::KEpsilonFluxVariables
-  */
+/*!
+ * \file
+ * \ingroup KEpsilonModel
+ * \copydoc Dumux::KEpsilonFluxVariables
+ */
 #ifndef DUMUX_KEPSILON_FLUXVARIABLES_HH
 #define DUMUX_KEPSILON_FLUXVARIABLES_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/rans/twoeq/kepsilon/staggered/fluxvariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
