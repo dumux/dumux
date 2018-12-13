@@ -18,12 +18,15 @@
  * \file
  * \ingroup MPNCTests
  * \brief Problem where hot, pure liquid water is injected from the left hand side into a initially
- *        isotherm domain. The water is fully evaporated by a strong heat source.
- *        A local thermal non-equilibrium model is used: i.e. two different (fluid, solid)
- *        temperatures are primary variables.
+ *        isotherm domain.
+ *
+ * The water is fully evaporated by a strong heat source.
+ * A local thermal non-equilibrium model is used: i.e. two different (fluid, solid)
+ * temperatures are primary variables.
  *
  * \author Philipp Nuske
  */
+
 #ifndef DUMUX_COMBUSTION_PROBLEM_ONE_COMPONENT_HH
 #define DUMUX_COMBUSTION_PROBLEM_ONE_COMPONENT_HH
 
@@ -259,8 +262,8 @@ public:
     // \}
 
     /*!
-     * \brief Evaluate the source term for all balance equations within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all balance equations within a given
+     *        sub-control volume.
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
@@ -311,8 +314,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The global position
      *
@@ -324,8 +326,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
@@ -387,7 +388,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * For this method, the \a values parameter stores primary
      * variables.
@@ -508,19 +509,19 @@ private:
     }
 
     /*!
-     * \brief Give back whether the tested position (input) is a specific region (left) in the domain
+     * \brief Returns whether the tested position is on the left boundary of the domain.
      */
     bool onLeftBoundary_(const GlobalPosition & globalPos) const
     {   return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;}
 
     /*!
-     * \brief Give back whether the tested position (input) is a specific region (right) in the domain
+    * \brief Returns whether the tested position is on the right boundary of the domain.
      */
     bool onRightBoundary_(const GlobalPosition & globalPos) const
     {   return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;}
 
     /*!
-     * \brief Give back whether the tested position (input) is a specific region (right) in the domain
+     * \brief Returns whether the tested position is in a specific region (right) in the domain
      *  \todo this needs to be more sophisticated in order to allow for meshes with nodes not directly on the boundary
      */
     bool onRightBoundaryPorousMedium_(const GlobalPosition & globalPos) const
@@ -530,7 +531,7 @@ private:
     }
 
     /*!
-     * \brief Give back whether the tested position (input) is a specific region (right) in the domain
+     * \brief Returns whether the tested position is in the porous medium.
      */
     bool inPM_(const GlobalPosition & globalPos) const
     { return !this->spatialParams().inOutFlow(globalPos); }
@@ -562,6 +563,6 @@ private:
     std::shared_ptr<GridVariables> gridVariables_;
 };
 
-} //end namespace
+} // end namespace
 
 #endif

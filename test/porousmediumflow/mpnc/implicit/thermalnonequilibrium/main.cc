@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the three-phase box model
+ * \ingroup MPNCTests
+ * \brief Test for the three-phase box model.
  */
 #include <config.h>
 #include "problem.hh"
