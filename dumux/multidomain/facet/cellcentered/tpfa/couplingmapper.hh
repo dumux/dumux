@@ -128,9 +128,9 @@ public:
 
                 // add each dof in the low dim element to coupling stencil of the bulk element
                 auto& bulkData = this->couplingMap_(bulkGridId, facetGridId)[bulkElemIdx];
-                const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethod::cctpfa
-                                               ? std::vector<LowDimIndexType>( {lowDimElemIdx} )
-                                               : this->extractNodalDofs_(lowDimElement, lowDimFvGridGeometry);
+                const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethod::box
+                                               ? this->extractNodalDofs_(lowDimElement, lowDimFvGridGeometry)
+                                               : std::vector<LowDimIndexType>( {lowDimElemIdx} );
 
                 for (auto dofIdx : lowDimElementDofs)
                 {
