@@ -19,8 +19,7 @@
 /**
  * \file
  * \ingroup ThreePTests
- * \brief Definition of a 1p2cni problem:
- *        Component transport of nitrogen dissolved in the water phase.
+ * \brief Test for the ThreePModel in combination with the NI model for a convection problem.
  */
 #ifndef DUMUX_3PNI_CONVECTION_PROBLEM_HH
 #define DUMUX_3PNI_CONVECTION_PROBLEM_HH
@@ -43,8 +42,7 @@
 namespace Dumux {
 /**
  * \ingroup ThreePTests
- * \brief Definition of a 1p2cni problem:
- *        Component transport of nitrogen dissolved in the water phase.
+ * \brief Test for the ThreePModel in combination with the NI model for a convection problem.
  */
 template <class TypeTag>
 class ThreePNIConvectionProblem;
@@ -83,18 +81,20 @@ struct SpatialParams<TypeTag, TTag::ThreePNIConvection>
 } // end namespace Properties
 
 /*!
- * \ingroup ThreePModel
- * \ingroup ImplicitTestProblems
+ * \ingroup ThreePTests
  *
- * \brief Test for the ThreePModel in combination with the NI model for a convection problem:
+ * \brief Test for the ThreePModel in combination with the NI model for a convection problem.
+ *
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.
  *
  * Initially the domain is fully saturated with water at a constant temperature.
- * On the left hand side water is injected at a constant rate and on the right hand side
- * a Dirichlet boundary with constant pressure, saturation and temperature is applied.
+ * On the left hand side water is injected at a constant rate and on the right
+ * hand side a Dirichlet boundary with constant pressure, saturation and
+ * temperature is applied.
  *
- * The results are compared to an analytical solution where a retarded front velocity is calculated as follows:
+ * The results are compared to an analytical solution where a retarded front
+ * velocity is calculated as follows:
   \f[
      v_{Front}=\frac{q S_{water}}{\phi S_{total}}
  \f]
@@ -168,7 +168,7 @@ public:
         return temperatureExact_;
     }
 
-    //! udpate the analytical temperature
+    //! Udpate the analytical temperature
     void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
@@ -253,8 +253,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      *
@@ -265,14 +264,13 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param elemVolVars The element volume variables
      * \param scvf The subcontrolvolume face
-     *  Negative values mean influx.
+     * Negative values mean influx.
      */
     NumEqVector neumann(const Element &element,
                              const FVElementGeometry& fvGeometry,
@@ -300,7 +298,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *

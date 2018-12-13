@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the 3pni CC model
+ * \ingroup ThreePTests
+ * \brief Test for the 3pni CC model.
  */
 #include <config.h>
 #include "problem.hh"

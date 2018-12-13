@@ -36,7 +36,6 @@
 namespace Dumux {
 /*!
  * \ingroup ThreePTests
- *
  * \brief Definition of the spatial parameters for the infiltration problem
  */
 template<class FVGridGeometry, class Scalar>
@@ -56,18 +55,13 @@ class InfiltrationThreePSpatialParams
     using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
 
 public:
-    // export permeability type
+    //! Export permeability type
     using PermeabilityType = Scalar;
 
-    //get the material law from the property system
+    //! Get the material law from the property system
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     InfiltrationThreePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -121,7 +115,7 @@ public:
      * \param element The element
      * \param scv The sub control volume
      * \param elemSol The element solution vector
-     * \return the intrinsic permeability
+     * \return The intrinsic permeability
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,

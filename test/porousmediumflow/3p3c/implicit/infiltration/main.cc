@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the three-phase three-component box model
+ * \ingroup ThreePThreeCTests
+ * \brief Test for the three-phase three-component box model.
  */
 #include <config.h>
 #include <ctime>

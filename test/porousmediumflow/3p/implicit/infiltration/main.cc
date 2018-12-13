@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the three-phase CC model
+ * \ingroup ThreePTests
+ * \brief Test for the three-phase CC model.
  */
 #include <config.h>
 #include "problem.hh"

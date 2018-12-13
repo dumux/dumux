@@ -165,11 +165,6 @@ class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     ColumnProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -214,8 +209,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      *
@@ -227,8 +221,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+    * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      *
@@ -254,7 +247,7 @@ public:
 
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *
@@ -268,9 +261,11 @@ public:
 
 
     /*!
-     * \brief Append all quantities of interest which can be derived
+     * \brief Appends all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
-     *        writer. Adjust this in case of anisotropic permeabilities.
+     *        writer.
+     *
+     * Adjust this in case of anisotropic permeabilities.
      */
     template<class VTKWriter>
     void addVtkFields(VTKWriter& vtk)

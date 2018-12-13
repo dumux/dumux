@@ -21,6 +21,7 @@
  * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the 3pni problems.
  */
+
 #ifndef DUMUX_THREEPNI_SPATIAL_PARAMS_HH
 #define DUMUX_THREEPNI_SPATIAL_PARAMS_HH
 
@@ -53,7 +54,7 @@ class ThreePNISpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    // export permeability type
+    //! Export permeability type
     using PermeabilityType = Scalar;
 
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
