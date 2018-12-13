@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup FacetTests
- * \brief Tests the grid creator class for models using facet coupling.
+ * \brief Tests the coupling mapper class for models using facet coupling.
  */
 
 #include <config.h>
