@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup CO2Tests
  * \brief Test for the two-phase two-component CC model.
  */
 #include <config.h>
