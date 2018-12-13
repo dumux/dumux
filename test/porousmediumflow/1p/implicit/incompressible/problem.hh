@@ -21,6 +21,7 @@
  * \ingroup OnePTests
  * \brief The properties for the incompressible test
  */
+
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 
@@ -47,13 +48,11 @@
 #define GRIDTYPE Dune::YaspGrid<2>
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
 // forward declarations
 template<class TypeTag> class OnePTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 // create the type tag nodes
 // Create new type tags
 namespace TTag {
@@ -109,6 +108,7 @@ template<class TypeTag>
 struct Scalar<TypeTag, TTag::OnePIncompressibleTpfaQuad> { using type = Quad; };
 #endif
 } // end namespace Properties
+
 /*!
  * \ingroup OnePTests
  * \brief  Test problem for the incompressible one-phase model:
@@ -166,8 +166,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      *
@@ -194,10 +193,10 @@ public:
     }
 
     /*!
-     * \brief Return how much the domain is extruded at a given position.
+     * \brief Returns how much the domain is extruded at a given position.
      *
      * This means the factor by which a lower-dimensional
-     * entity needs to be expanded to get a full dimensional cell.
+     * entity needs to be expanded to get a full-dimensional cell.
      */
     Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
     {
@@ -208,7 +207,7 @@ public:
      * \brief Returns the velocity
      *
      * The velocity is given for the case of a linear pressure solution
-     * with constant permeablity and without gravity
+     * with constant permeablity and without gravity.
      */
     const GlobalPosition velocity() const
     {

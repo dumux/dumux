@@ -19,10 +19,12 @@
 /**
  * \file
  * \ingroup OnePTests
- * \brief Test for the OnePModel in combination with the NI model for a convection problem:
+ * \brief Test for the OnePModel in combination with the NI model for a convection problem.
+ *
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.
  */
+
 #ifndef DUMUX_1PNI_CONVECTION_PROBLEM_HH
 #define DUMUX_1PNI_CONVECTION_PROBLEM_HH
 
@@ -40,14 +42,12 @@
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 #include "spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class OnePNIConvectionProblem;
 
-namespace Properties
-{
+namespace Properties {
 
 // Create new type tags
 namespace TTag {
@@ -83,10 +83,10 @@ struct SpatialParams<TypeTag, TTag::OnePNIConvection>
 };
 } // end namespace Properties
 
-
 /*!
  * \ingroup OnePTests
- * \brief Test for the OnePModel in combination with the NI model for a convection problem:
+ * \brief Test for the OnePModel in combination with the NI model for a convection problem.
+ *
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.
  *
@@ -166,7 +166,7 @@ public:
         return temperatureExact_;
     }
 
-    //! udpate the analytical temperature
+    //! Udpate the analytical temperature
     void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
@@ -249,8 +249,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      *
@@ -300,7 +299,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *

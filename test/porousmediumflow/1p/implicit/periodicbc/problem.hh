@@ -21,6 +21,7 @@
  * \ingroup OnePTests
  * \brief The properties for the incompressible test
  */
+
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 
@@ -98,7 +99,7 @@ struct EnableFVGridGeometryCache<TypeTag, TTag::OnePIncompressible> { static con
 
 /*!
  * \ingroup OnePTests
- * \brief  Test problem for the incompressible one-phase model:
+ * \brief  Test problem for the incompressible one-phase model.
  *
  * Can be run as <tt>./test_box1pfv</tt> or
  * <tt>./test_cc1pfv</tt>
@@ -170,8 +171,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      *

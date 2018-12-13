@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief test for the 1pni CC model
+ * \brief Test for the 1pni CC model
  */
+
 #include <config.h>
 
 #include <ctime>

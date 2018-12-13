@@ -19,8 +19,9 @@
 /**
  * \file
  * \ingroup OnePNCTests
- * \brief Test for the OnePNCModel in combination with the NI model with transient boundary conditions:
- * The simulation domain is a tube where with an elevated temperature on the left hand side.
+ * \brief Test for the OnePNCModel in combination with the NI model with transient boundary conditions.
+ *
+ * The simulation domain is a tube with an elevated temperature on the left hand side.
  */
 #ifndef DUMUX_1P2CNI_TRANSIENT_BC_TEST_PROBLEM_HH
 #define DUMUX_1P2CNI_TRANSIENT_BC_TEST_PROBLEM_HH
@@ -42,14 +43,12 @@
 #include <dumux/material/components/h2o.hh>
 #include "../../spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class OnePTwoCNITransientBCProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct OnePTwoCNITransientBC { using InheritsFrom = std::tuple<OnePNCNI>; };
@@ -106,14 +105,14 @@ template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePTwoCNITransientBC> { static constexpr bool value = ENABLECACHING; };
 }
 
-
 /*!
  * \ingroup OnePNCTests
- * \brief Test for the OnePTwoCModel in combination with the NI model for a convection problem:
+ * \brief Test for the OnePTwoCModel in combination with the NI model for a convection problem.
+ *
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.
  *
- * Initially the domain is fully saturated with water at a constant temperature.
+ * Initially, the domain is fully saturated with water at a constant temperature.
  * On the left hand side water is injected at a constant rate and on the right hand side
  * a Dirichlet boundary with constant pressure, saturation and temperature is applied.
  *
@@ -169,7 +168,7 @@ class OnePTwoCNITransientBCProblem : public PorousMediumFlowProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
-    //! property that defines whether mole or mass fractions are used
+    //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
@@ -227,8 +226,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      */
@@ -248,8 +246,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * This is the method for the case where the Neumann condition is
      * potentially solution dependent and requires some quantities that
@@ -280,21 +277,21 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub control volume.
      *
      * For this method, the \a priVars parameter stores the rate mass
-     * of a component is generated or annihilate per volume
+     * of a component is generated or annihilated per volume
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      *
-     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
+     * The units must be according to either using mole or mass fractions (mole/(m^3*s) or kg/(m^3*s)).
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     { return NumEqVector(0.0); }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *

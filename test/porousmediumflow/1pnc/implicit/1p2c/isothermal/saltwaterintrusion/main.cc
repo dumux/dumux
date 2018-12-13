@@ -21,6 +21,7 @@
  * \ingroup OnePNCTests
  * \brief salt water intrusion test for the 1pnc model
  */
+
 #include <config.h>
 
 #include <ctime>

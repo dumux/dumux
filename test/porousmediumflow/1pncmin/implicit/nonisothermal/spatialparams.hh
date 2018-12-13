@@ -20,7 +20,7 @@
  * \file
  * \ingroup OnePNCMinTests
  * \brief Definition of the spatial parameters for the thermochemistry
- *        problem which uses the non-insothermal 1pncmin model
+ *        problem which uses the non-insothermal 1pncmin model.
  */
 
 #ifndef DUMUX_THERMOCHEM_SPATIAL_PARAMS_HH
@@ -34,10 +34,9 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTwoCModel
- * \ingroup BoxTestProblems
- * \brief Definition of the spatial parameters for the FuelCell
- *        problem which uses the isothermal 2p2c box model
+ * \ingroup OnePNCMinTests
+ * \brief Definition of the spatial parameters for the thermochemistry
+ *        problem which uses the non-insothermal 1pncmin model.
  */
 template<class FVGridGeometry, class Scalar>
 class ThermoChemSpatialParams
@@ -58,23 +57,20 @@ class ThermoChemSpatialParams
 public:
     // type used for the permeability (i.e. tensor or scalar)
     using PermeabilityType = Scalar;
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
+
     ThermoChemSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {}
 
-    /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
+    /*!
+     * \brief Returns the intrinsic permeability tensor K \f$[m^2]\f$ depending
      *  on the position in the domain
      *
      *  \param element The finite volume element
      *  \param scv The sub-control volume
      *  \param elemSol The element solution
      *
-     *  Solution dependent permeability function
+     *  Solution dependent permeability function.
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,

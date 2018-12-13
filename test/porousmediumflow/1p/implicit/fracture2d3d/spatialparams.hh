@@ -22,6 +22,7 @@
  * \brief The spatial parameters for the LensProblem which uses the
  *        two-phase fully implicit model
  */
+
 #ifndef DUMUX_ONEP_FRACTURE_TEST_SPATIALPARAMS_HH
 #define DUMUX_ONEP_FRACTURE_TEST_SPATIALPARAMS_HH
 
@@ -33,7 +34,7 @@ namespace Dumux {
 /*!
  * \ingroup OnePTests
  * \brief The spatial parameters for the LensProblem which uses the
- *        two-phase fully implicit model
+ *        two-phase fully implicit model.
  */
 template<class FVGridGeometry, class Scalar>
 class FractureSpatialParams
@@ -51,11 +52,6 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The fvGridGeometry
-     */
     FractureSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {}

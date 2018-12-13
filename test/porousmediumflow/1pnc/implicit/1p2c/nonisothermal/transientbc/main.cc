@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the 1pnc model
+ * \ingroup OnePNCTests
+ * \brief Test for the 1pnc model
  */
+
 #include <config.h>
 
 #include "problem.hh"

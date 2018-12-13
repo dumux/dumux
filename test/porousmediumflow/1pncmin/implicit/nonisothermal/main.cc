@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePNCMinTests
  * \brief Test for the 1pncminni model
  */
 #include <config.h>

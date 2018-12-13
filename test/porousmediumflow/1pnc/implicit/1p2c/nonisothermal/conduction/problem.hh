@@ -19,8 +19,9 @@
 /**
  * \file
  * \ingroup OnePNCTests
- * \brief Test for the OnePNCModel in combination with the NI model for a conduction problem:
- * The simulation domain is a tube where with an elevated temperature on the left hand side.
+ * \brief Test for the OnePNCModel in combination with the NI model for a conduction problem.
+ *
+ * The simulation domain is a tube with an elevated temperature on the left hand side.
  */
 #ifndef DUMUX_1P2CNI_CONDUCTION_TEST_PROBLEM_HH
 #define DUMUX_1P2CNI_CONDUCTION_TEST_PROBLEM_HH
@@ -42,14 +43,12 @@
 #include <dumux/material/components/h2o.hh>
 #include "../../spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class OnePTwoCNIConductionProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct OnePTwoCNIConduction { using InheritsFrom = std::tuple<OnePNCNI>; };
@@ -94,24 +93,23 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::OnePTwoCNIConduction> { static constexpr bool value = true; };
 }
 
-
 /*!
  * \ingroup OnePNCTests
- * \brief Definition of a problem, for the 1pnc problem:
+ * \brief Definition of a problem, for the 1pnc problem.
+ *
  * Nitrogen is dissolved in the water phase and
  * is transported with the water flow from the left side to the right.
  *
- * The model domain is 1 m times 1 m with a discretization length of 0.05 m
+ * The model domain is 1m times 1m with a discretization length of 0.05m
  * and homogeneous soil properties (\f$ \mathrm{K=10e-10, \Phi=0.4, \tau=0.28}\f$).
- * Initially the domain is filled with pure water.
+ * Initially, the domain is filled with pure water.
  *
  * At the left side, a Dirichlet condition defines a nitrogen mole fraction
- * of 0.3 mol/mol.
+ * of 0.3mol/mol.
  * The water phase flows from the left side to the right due to the applied pressure
- * gradient of 1e5 Pa/m. The nitrogen is transported with the water flow
- * and leaves the domain at the right boundary
- * where again Dirichlet boundary conditions are applied. Here, the nitrogen mole
- * fraction is set to 0.0 mol/mol.
+ * gradient of 1e5Pa/m. The nitrogen is transported with the water flow
+ * and leaves the domain at the right boundary, where again Dirichlet boundary
+ * conditions are applied. Here, the nitrogen mole fraction is set to 0.0mol/mol.
  *
  * This problem uses the \ref OnePNCModel model.
  *
@@ -148,7 +146,7 @@ class OnePTwoCNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
         N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx)
     };
 
-    //! property that defines whether mole or mass fractions are used
+    //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -169,13 +167,13 @@ public:
         temperatureExact_.resize(fvGridGeometry->numDofs(), 290.0);
     }
 
-    //! get the analytical temperature
+    //! Get the analytical temperature
     const std::vector<Scalar>& getExactTemperature()
     {
         return temperatureExact_;
     }
 
-    //! udpate the analytical temperature
+    //! Udpate the analytical temperature
     void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
@@ -261,8 +259,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      */
@@ -278,8 +275,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      */
     NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     { return NumEqVector(0.0); }
@@ -292,11 +288,11 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub control volume.
      *
      * For this method, the \a priVars parameter stores the rate mass
-     * of a component is generated or annihilate per volume
+     * of a component is generated or annihilated per volume
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      *
@@ -306,7 +302,7 @@ public:
     { return NumEqVector(0.0); }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *

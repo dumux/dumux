@@ -20,8 +20,9 @@
  * \file
  * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
- *        1p model with point sources
+ *        1p model with point sources.
  */
+
 #ifndef DUMUX_1P_SINGULARITY_SPATIALPARAMS_HH
 #define DUMUX_1P_SINGULARITY_SPATIALPARAMS_HH
 
@@ -33,7 +34,7 @@ namespace Dumux {
 /*!
  * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
- *        1p model with point sources
+ *        1p model with point sources.
  */
 template<class FVGridGeometry, class Scalar>
 class OnePSingularitySpatialParams
@@ -60,7 +61,7 @@ public:
     }
 
     /*!
-     * \brief Return the intrinsic permeability for the current sub-control volume in [m^2].
+     * \brief Returns the intrinsic permeability for the current sub-control volume in [m^2].
      *
      * \param element The element
      * \param scv The sub control volume
@@ -76,7 +77,7 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
+     * \brief Defines the porosity \f$\mathrm{[-]}\f$.
      *
      * \param globalPos The global position
      */

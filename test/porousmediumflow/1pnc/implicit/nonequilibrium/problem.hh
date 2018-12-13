@@ -19,8 +19,9 @@
 /**
  * \file
  * \ingroup OnePNCTests
- * \brief Test for the OnePNCModel in combination with the nonequilibrium model for a thermal nonequilibrium problem problem:
- * The simulation domain is a tube warmer water is injected at the right side.
+ * \brief Test for the OnePNCModel in combination with the nonequilibrium model for a thermal nonequilibrium problem problem.
+ *
+ * The simulation domain is a tube where warmer water is injected at the right side.
  */
 #ifndef DUMUX_1P2CNI_CONDUCTION_TEST_PROBLEM_HH
 #define DUMUX_1P2CNI_CONDUCTION_TEST_PROBLEM_HH
@@ -42,14 +43,12 @@
 #include <dumux/material/components/h2o.hh>
 #include "spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class OnePTwoCThermalNonequilibriumProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct OnePTwoCThermalNonequilibrium { using InheritsFrom = std::tuple<OnePNCNonEquil>; };
@@ -87,14 +86,13 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::OnePTwoCThermalNonequilibrium> { static constexpr bool value = true; };
 }
 
-
 /*!
  * \ingroup OnePNCTests
- * \brief Definition of a problem, for the 1pnc problem:
+ * \brief Definition of a problem, for the 1pnc problem.
  *
- * The model domain is 1 m times 1 m with a discretization length of 0.05 m
+ * The model domain is 1m times 1m with a discretization length of 0.05m
  * and homogeneous soil properties (\f$ \mathrm{K=10e-11, \Phi=0.4}\f$).
- * Initially the domain is filled with water and a small nitrogen fraction
+ * Initially, the domain is filled with water and a small nitrogen fraction
  *
  * At the right side warmer water is injected via a Neumann boundary and at the left side
  * Dirichlet values are set to the inital conditions.
@@ -146,7 +144,7 @@ class OnePTwoCThermalNonequilibriumProblem : public PorousMediumFlowProblem<Type
         energyEqIdx = Indices::energyEqIdx
     };
 
-    //! property that defines whether mole or mass fractions are used
+    //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -204,8 +202,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      */
@@ -217,8 +214,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * This is the method for the case where the Neumann condition is
      * potentially solution dependent and requires some quantities that
@@ -261,21 +257,21 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub control volume.
      *
      * For this method, the \a priVars parameter stores the rate mass
-     * of a component is generated or annihilate per volume
+     * of a component is generated or annihilated per volume
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      *
-     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
+     * The units must be according to either using mole or mass fractions (mole/(m^3*s) or kg/(m^3*s)).
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     { return NumEqVector(0.0); }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *

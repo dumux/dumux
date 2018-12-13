@@ -23,6 +23,7 @@
  *
  * It contains simple and advanced reaction kinetics according to Nagel et al. (2014).
  */
+
 #ifndef DUMUX_THERMOCHEM_REACTION_HH
 #define DUMUX_THERMOCHEM_REACTION_HH
 
@@ -38,7 +39,7 @@ class ThermoChemReaction {
 
 public:
     /*!
-     * \brief evaluates the reaction kinetics (see Nagel et al. 2014)
+     * \brief Evaluates the reaction kinetics (see Nagel et al. 2014)
      */
     template<class VolumeVariables>
     typename VolumeVariables::PrimaryVariables::value_type
@@ -88,7 +89,7 @@ public:
 
         Scalar qMass = 0.0;
 
-        //discharge or hydration
+        // discharge or hydration
         if (T < Teq){
             Scalar dXH_dt1 = 0.0;
             Scalar dXH_dt2 = 0.0;
@@ -158,7 +159,7 @@ public:
 
 
     /*!
-     * \brief evaluates the simple chemical reaction kinetics (see Nagel et al. 2014)
+     * \brief Evaluates the simple chemical reaction kinetics (see Nagel et al. 2014)
      */
     template<class VolumeVariables>
     typename VolumeVariables::PrimaryVariables::value_type
@@ -209,7 +210,7 @@ public:
 
         Scalar qMass = 0.0;
 
-         //discharge or hydration
+         // discharge or hydration
         if (T < Teq){
             Scalar massFracH2O_fPhase = volVars.massFraction(0, H2OIdx);
             Scalar krh = 0.2;
@@ -220,7 +221,7 @@ public:
             qMass =  rHydration;
         }
 
-        //charge or hydration
+        // charge or hydration
         else if(T > Teq){
 
             Scalar krd = 0.05;

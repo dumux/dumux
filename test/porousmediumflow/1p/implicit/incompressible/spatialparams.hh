@@ -21,6 +21,7 @@
  * \ingroup OnePTests
  * \brief The spatial params the incompressible test
  */
+
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 
@@ -69,7 +70,7 @@ public:
      * \param element The element
      * \param scv The sub control volume
      * \param elemSol The element solution vector
-     * \return the intrinsic permeability
+     * \return The intrinsic permeability
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
@@ -83,7 +84,7 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
+     * \brief Defines the porosity \f$\mathrm{[-]}\f$.
      *
      * \param globalPos The global position
      */
