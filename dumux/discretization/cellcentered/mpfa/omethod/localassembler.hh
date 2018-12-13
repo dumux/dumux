@@ -25,6 +25,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 
+#include <cassert>
+
 #include <dune/common/reservedvector.hh>
 
 #include <dumux/common/math.hh>
@@ -61,10 +63,6 @@ public:
      *        expressions and the local system of equations
      *        within an interaction volume in an mpfa-o type way.
      *
-     * \tparam IV The interaction volume type implementation
-     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
-     *                    which the local system is to be solved
-     *
      * \param handle The data handle in which the matrices are stored
      * \param iv The interaction volume
      * \param getT Lambda to evaluate the scv-wise tensors
@@ -76,78 +74,12 @@ public:
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
-        {
-            // T = C*(A^-1)*B + D
-            handle.A().invert();
-            handle.CA().rightmultiply(handle.A());
-            handle.T() += multiplyMatrices(handle.CA(), handle.AB());
-            handle.AB().leftmultiply(handle.A());
-
-            // On surface grids, compute the "outside" transmissibilities
-            using GridView = typename IV::Traits::GridView;
-            static constexpr int dim = GridView::dimension;
-            static constexpr int dimWorld = GridView::dimensionworld;
-            if (dim < dimWorld)
-            {
-                // bring outside tij container to the right size
-                auto& tijOut = handle.tijOutside();
-                tijOut.resize(iv.numFaces());
-                using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
-                for (LocalIndexType fIdx = 0; fIdx < iv.numFaces(); ++fIdx)
-                {
-                    const auto& curGlobalScvf = this->fvGeometry().scvf(iv.localScvf(fIdx).gridScvfIndex());
-                    const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
-                    // resize each face entry to the right number of outside faces
-                    tijOut[fIdx].resize(numOutsideFaces);
-                    std::for_each(tijOut[fIdx].begin(),
-                                  tijOut[fIdx].end(),
-                                  [&](auto& v) { Helper::resizeVector(v, iv.numKnowns()); });
-                }
-
-                // compute outside transmissibilities
-                for (const auto& localFaceData : iv.localFaceData())
-                {
-                    // continue only for "outside" faces
-                    if (!localFaceData.isOutsideFace())
-                        continue;
-
-                    const auto scvIdx = localFaceData.ivLocalInsideScvIndex();
-                    const auto scvfIdx = localFaceData.ivLocalScvfIndex();
-                    const auto idxInOut = localFaceData.scvfLocalOutsideScvfIndex();
-
-                    const auto& wijk = handle.omegas()[scvfIdx][idxInOut+1];
-                    auto& tij = tijOut[scvfIdx][idxInOut];
-
-                    tij = 0.0;
-                    for (unsigned int dir = 0; dir < dim; dir++)
-                    {
-                        // the scvf corresponding to this local direction in the scv
-                        const auto& scvf = iv.localScvf(iv.localScv(scvIdx).localScvfIndex(dir));
-
-                        // on interior faces the coefficients of the AB matrix come into play
-                        if (!scvf.isDirichlet())
-                        {
-                            auto tmp = handle.AB()[scvf.localDofIndex()];
-                            tmp *= wijk[dir];
-                            tij -= tmp;
-                        }
-                        else
-                            tij[scvf.localDofIndex()] -= wijk[dir];
-
-                        // add entry from the scv unknown
-                        tij[scvIdx] += wijk[dir];
-                    }
-                }
-            }
-        }
+            Helper::solveLocalSystem(this->fvGeometry(), handle, iv);
     }
 
     /*!
      * \brief Assembles the vector of primary (cell) unknowns and (maybe)
      *        Dirichlet boundary conditions within an interaction volume.
-     *
-     * \tparam IV The interaction volume type implementation
-     * \tparam GetU Lambda to obtain the cell unknowns from grid indices
      *
      * \param handle The data handle in which the vector is stored
      * \param iv The mpfa-o interaction volume
