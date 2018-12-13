@@ -134,6 +134,7 @@ class FacetCouplingThreeDomainManager
 
     template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
+    template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::SubControlVolumeFace;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using GridIndexType = typename IndexTraits<GridView<id>>::GridIndex;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
@@ -141,6 +142,11 @@ class FacetCouplingThreeDomainManager
     template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using ElementVolumeVariables = typename GridVariables<id>::GridVolumeVariables::LocalView;
     template<std::size_t id> using ElementFluxVariablesCache = typename GridVariables<id>::GridFluxVariablesCache::LocalView;
+
+    // helper function to check if a domain uses mpfa
+    template<std::size_t id>
+    static constexpr bool usesMpfa(Dune::index_constant<id> domainId)
+    { return FVGridGeometry<domainId>::discMethod == DiscretizationMethod::ccmpfa; }
 
 public:
     //! types used for coupling stencils
@@ -204,6 +210,40 @@ public:
 
     using BulkFacetManager::updateCoupledVariables;
     using FacetEdgeManager::updateCoupledVariables;
+
+    using BulkFacetManager::extendJacobianPattern;
+    using FacetEdgeManager::extendJacobianPattern;
+
+    using BulkFacetManager::evalAdditionalDomainDerivatives;
+    using FacetEdgeManager::evalAdditionalDomainDerivatives;
+
+    // extension of the jacobian pattern for the facet domain only occurs
+    // within the bulk-facet coupling & for mpfa being used in the bulk domain.
+    template<class JacobianPattern>
+    void extendJacobianPattern(FacetIdType, JacobianPattern& pattern) const
+    { BulkFacetManager::extendJacobianPattern(facetId, pattern); }
+
+    template<class FacetLocalAssembler, class JacobianMatrixDiagBlock, class GridVariables>
+    void evalAdditionalDomainDerivatives(FacetIdType,
+                                         const FacetLocalAssembler& facetLocalAssembler,
+                                         const typename FacetLocalAssembler::LocalResidual::ElementResidualVector& origResiduals,
+                                         JacobianMatrixDiagBlock& A,
+                                         GridVariables& gridVariables)
+    { BulkFacetManager::evalAdditionalDomainDerivatives(facetId, facetLocalAssembler, origResiduals, A, gridVariables); }
+
+    // Overload required for compatibility with mpfa
+    template<class GetTensor, bool mpfa = usesMpfa(bulkId), std::enable_if_t<mpfa, int> = 0>
+    auto getLowDimTensor(const Element<bulkId>& element,
+                         const SubControlVolumeFace<bulkId>& scvf,
+                         const GetTensor& getT) const
+    { return BulkFacetManager::getLowDimTensor(element, scvf, getT); }
+
+    // Overload required for compatibility with mpfa
+    template<class GetTensor, bool mpfa = usesMpfa(facetId), std::enable_if_t<mpfa, int> = 0>
+    auto getLowDimTensor(const Element<facetId>& element,
+                         const SubControlVolumeFace<facetId>& scvf,
+                         const GetTensor& getT) const
+    { return FacetEdgeManager::getLowDimTensor(element, scvf, getT); }
 
     /*!
      * \brief The coupling stencil of the bulk with the edge domain (empty stencil).
