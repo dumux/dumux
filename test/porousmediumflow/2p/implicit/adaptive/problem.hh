@@ -30,9 +30,13 @@
 
 #include <dumux/io/container.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
+/*!
+ * \ingroup TwoPTests
+ * \brief Soil contamination problem where DNAPL infiltrates a fully
+ *        water saturated medium.
+ */
 template <class TypeTag >
 class TwoPTestProblemAdaptive : public TwoPTestProblem<TypeTag>
 {
@@ -57,10 +61,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for
-     * an element for cell-centered models
-     *
-     * \param element
+     * \brief Evaluates the initial value for an element for cell-centered models.
      */
     PrimaryVariables initial(const Element& element) const
     {
@@ -74,10 +75,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for
-     * an vertex for vertex-centered models
-     *
-     * \param vertex
+     * \brief Evaluates the initial value for a vertex for vertex-centered models.
      */
     PrimaryVariables initial(const Vertex& vertex) const
     {

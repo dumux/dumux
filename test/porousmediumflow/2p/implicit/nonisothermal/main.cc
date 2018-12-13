@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPTests
  * \brief test for the 2pni CC model
  */
 #include <config.h>

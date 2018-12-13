@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Fracture 2d in 3d test for the two-phase box model
+ * \ingroup TwoPTests
+ * \brief Fracture 2d in 3d test for the two-phase box model.
  */
 #include <config.h>
 

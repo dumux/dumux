@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the 1pnc model
+ * \ingroup TwoPOneCTests
+ * \brief Test for the 2p1c model.
 */
+
 #include <config.h>
 
 #include "problem.hh"

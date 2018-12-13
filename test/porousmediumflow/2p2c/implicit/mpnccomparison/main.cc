@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the 2pni CC model
+ * \ingroup TwoPTwoCTests
+ * \brief Test for the 2p2cni CC model
  */
 #include <config.h>
 

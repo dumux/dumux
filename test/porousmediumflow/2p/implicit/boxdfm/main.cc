@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the two-phase porousmedium flow model
+ * \ingroup TwoPTests
+ * \brief Test for the two-phase porous medium flow model.
  */
 #include <config.h>
 

@@ -20,8 +20,9 @@
  * \file
  * \ingroup TwoPTests
  * \brief Non-isothermal gas injection problem where a gas (e.g. air) is injected into a fully
- *        water saturated medium. During buoyancy driven upward migration the gas
- *        passes a high temperature area.
+ *        water saturated medium.
+ *
+ * During buoyancy driven upward migration the gas passes a high temperature area.
  */
 
 #ifndef DUMUX_INJECTION_PROBLEM_2PNI_HH
@@ -91,24 +92,24 @@ struct SpatialParams<TypeTag, TTag::Injection2PNITypeTag>
 /*!
  * \ingroup TwoPTests
  * \brief Non-isothermal gas injection problem where a gas (e.g. air) is injected into a fully
- *        water saturated medium. During buoyancy driven upward migration the gas
- *        passes a high temperature area.
+ *        water saturated medium.
  *
- * The domain is sized 60 m times 40 m. The rectangular area with the increased temperature (380 K)
- * starts at (20 m, 5 m) and ends at (30 m, 35 m)
+ * During buoyancy driven upward migration the gas passes a high temperature area.
  *
- * For the mass conservation equation neumann boundary conditions are used on
- * the top, on the bottom and on the right of the domain, while dirichlet conditions
- * apply on the left boundary.
- * For the energy conservation equation dirichlet boundary conditions are applied
+ * The domain is sized 60m times 40m. The rectangular area with the increased
+ * temperature (380K) starts at (20m, 5m) and ends at (30m, 35m).
+ *
+ * For the mass conservation equation Neumann boundary conditions are used on
+ * the top, on the bottom and on the right of the domain, while Dirichlet conditions
+ * are applied on the left boundary.
+ * For the energy conservation equation Dirichlet boundary conditions are applied
  * on all boundaries.
  *
- * Gas is injected at the right boundary from 5 m to 15 m at a rate of
- * 0.001 kg/(s m), the remaining neumann boundaries are no-flow
- * boundaries.
+ * Gas is injected at the right boundary from 5m to 15m at a rate of
+ * 0.001kg/(s m), the remaining Neumann boundaries are no-flow boundaries.
  *
- * At the dirichlet boundaries a hydrostatic pressure, a gas saturation of zero and
- * a geothermal temperature gradient of 0.03 K/m are applied.
+ * At the Dirichlet boundaries a hydrostatic pressure, a gas saturation of zero and
+ * a geothermal temperature gradient of 0.03K/m are applied.
  *
  * This problem uses the \ref TwoPModel and \ref NIModel model.
  *
@@ -131,16 +132,16 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
 
     enum
     {
-        //! primary variable indices
+        //! Primary variable indices
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         temperatureIdx = Indices::temperatureIdx,
 
-        //! equation indices
+        //! Equation indices
         contiN2EqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx,
         energyEqIdx = Indices::energyEqIdx,
 
-        //! phase indices
+        //! Phase indices
         wPhaseIdx = FluidSystem::H2OIdx,
         nPhaseIdx = FluidSystem::N2Idx,
 
@@ -157,11 +158,6 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The fvGridGeometry
-     */
     InjectionProblem2PNI(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -228,8 +224,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The global position
      */
@@ -244,8 +239,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param globalPos The global position
      *
@@ -287,7 +281,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume.
      *
      * \param globalPos The global position
      */

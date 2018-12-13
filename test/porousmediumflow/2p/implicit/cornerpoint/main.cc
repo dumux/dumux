@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the two-phase porousmedium flow model on a cornerpoint grid
+ * \ingroup TwoPTests
+ * \brief Test for the two-phase porous medium flow model on a cornerpoint grid.
  */
 #include <config.h>
 // As of versions Opm 2018.04 and Dune 2.6, using opm-grid and dune-uggrid

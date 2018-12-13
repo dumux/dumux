@@ -19,7 +19,9 @@
 /*!
  * \file
  * \ingroup TwoPTwoCTests
- * \brief Problem where air is injected in a unsaturated porous medium. This test compares a mpnc problem with a 2p2c problem
+ * \brief Problem where air is injected in a unsaturated porous medium.
+ *
+ * This test compares a mpnc problem with a 2p2c problem.
  */
 #ifndef DUMUX_TWOPTWOC_MPNC_PROBLEM_HH
 #define DUMUX_TWOPTWOC_MPNC_PROBLEM_HH
@@ -39,10 +41,7 @@
 #include "iofields.hh"
 
 namespace Dumux {
-/*!
- * \ingroup TwoPTwoCTests
- * \brief Problem where air is injected in a unsaturated porous medium. This test compares a mpnc problem with a 2p2c problem
- */
+
 template <class TypeTag>
 class TwoPTwoCComparisonProblem;
 
@@ -96,11 +95,11 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::TwoPTwoCComparison> { using type = TwoPTwoCMPNCIOFields; };
 } // end namespace Properties
 
-
 /*!
  * \ingroup TwoPTwoCTests
- * \brief Problem where air is injected in a unsaturated porous medium. This test compares a mpnc problem with a 2p2c problem
+ * \brief Problem where air is injected in a unsaturated porous medium.
  *
+ * This test compares a mpnc problem with a 2p2c problem.
  */
 template <class TypeTag>
 class TwoPTwoCComparisonProblem : public PorousMediumFlowProblem<TypeTag>
@@ -123,11 +122,6 @@ class TwoPTwoCComparisonProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename ModelTraits::Indices;
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     TwoPTwoCComparisonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
@@ -184,8 +178,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet oundary segment.
      *
      * \param globalPos The global position
      */
@@ -195,8 +188,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
@@ -222,7 +214,7 @@ public:
     // \}
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      *

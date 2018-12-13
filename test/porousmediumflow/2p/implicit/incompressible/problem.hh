@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \ingroup TwoPTests
- * \brief The properties for the incompressible 2p test
+ * \brief The properties for the incompressible 2p test.
  */
 #ifndef DUMUX_INCOMPRESSIBLE_TWOP_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_TWOP_TEST_PROBLEM_HH
@@ -150,8 +150,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The global position
      */
@@ -179,8 +178,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluate the boundary conditions for a Neumann boundary segment.
      *
      * \param globalPos The position of the integration point of the boundary segment.
      *
@@ -201,7 +199,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume.
      *
      * \param globalPos The global position
      */

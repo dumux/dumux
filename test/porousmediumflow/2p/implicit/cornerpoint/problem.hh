@@ -18,8 +18,9 @@
  *****************************************************************************/
 /*!
  * \ingroup TwoPTests
- * \brief The properties for the 2p cornerpoint test
+ * \brief The properties for the 2p cornerpoint test.
  */
+
 #ifndef DUMUX_TWOP_CORNERPOINT_TEST_PROBLEM_HH
 #define DUMUX_TWOP_CORNERPOINT_TEST_PROBLEM_HH
 
@@ -150,8 +151,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param values Stores the Dirichlet values for the conservation equations in
      *               \f$ [ \textnormal{unit of primary variable} ] \f$
@@ -163,8 +163,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluate the boundary conditions for a Neumann boundary segment.
      *
      * \param values Stores the Neumann values for the conservation equations in
      *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
@@ -199,7 +198,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume.
      *
      * \param values Stores the initial values for the conservation equations in
      *               \f$ [ \textnormal{unit of primary variables} ] \f$
@@ -230,7 +229,7 @@ public:
     }
 
     /*!
-     * \brief Append all quantities of interest which can be derived
+     * \brief Appends all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
      *        writer.
      */

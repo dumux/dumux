@@ -20,7 +20,8 @@
  * \file
  * \ingroup TwoPTests
  * \brief A discrete fracture network embedded in an impermeable matrix.
- *        The fracture is a 2D network embedded in 3D.
+ *
+ * The fracture is a 2D network embedded in 3D.
  */
 #ifndef DUMUX_TWOP_FRACTURE_TEST_PROBLEM_HH
 #define DUMUX_TWOP_FRACTURE_TEST_PROBLEM_HH
@@ -186,8 +187,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The global position
      */
@@ -203,8 +203,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluate the boundary conditions for a Neumann boundary segment.
      *
      * \param globalPos The position of the integration point of the boundary segment.
      *
@@ -229,7 +228,7 @@ public:
 
 
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume.
      *
      * \param globalPos The global position
      */

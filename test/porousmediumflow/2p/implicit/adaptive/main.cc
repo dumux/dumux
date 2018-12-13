@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the two-phase porousmedium flow model
+ * \ingroup TwoPTests
+ * \brief Test for the two-phase porous medium flow model
  */
+
 #include <config.h>
 
 #include <ctime>
@@ -59,7 +60,7 @@
 #include "pointsourceproblem.hh"
 #include "problem.hh"
 
-//! type tags for the adaptive versions of the two-phase incompressible problem
+//! Type tags for the adaptive versions of the two-phase incompressible problem
 namespace Dumux {
 namespace Properties {
 //! Type Tags for the adaptive tests
