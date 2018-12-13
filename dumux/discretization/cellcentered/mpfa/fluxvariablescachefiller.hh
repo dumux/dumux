@@ -30,8 +30,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCMpfaDiscretization

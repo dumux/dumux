@@ -29,8 +29,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -85,6 +84,6 @@ private:
     std::vector<unsigned int> map_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

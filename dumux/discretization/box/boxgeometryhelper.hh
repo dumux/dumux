@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxDiscretization
  * \brief Helper class constructing the dual grid finite volume geometries
  *        for the box discretizazion method
  */
@@ -29,8 +30,7 @@
 
 #include <dumux/common/math.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 //! Create sub control volumes and sub control volume face geometries
 template<class GridView, int dim, class ScvType, class ScvfType>

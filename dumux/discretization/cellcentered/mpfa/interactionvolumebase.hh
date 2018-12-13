@@ -29,8 +29,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*
  * \ingroup CCMpfaDiscretization

@@ -222,8 +222,8 @@ PrimaryVariables evalSolution(const Element& element,
 }
 
 /*!
- * \brief Interpolates a given cell-centered element solution at a given global position.
  * \ingroup Discretization
+ * \brief Interpolates a given cell-centered element solution at a given global position.
  *
  * \return the primary variables (constant over the element)
  * \param element The element

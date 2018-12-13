@@ -29,8 +29,7 @@
 #include <dune/common/typetraits.hh>
 #include <dune/common/fmatrix.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCTpfaDiscretization

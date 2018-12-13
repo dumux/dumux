@@ -30,8 +30,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Discretization

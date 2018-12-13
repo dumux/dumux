@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxDiscretization
  * \brief Boundary types gathered on an element
  */
 #ifndef DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
@@ -29,7 +30,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoxModel
+ * \ingroup BoxDiscretization
  * \brief This class stores an array of BoundaryTypes objects
  */
 template<class BTypes>

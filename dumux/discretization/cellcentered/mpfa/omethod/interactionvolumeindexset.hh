@@ -28,8 +28,8 @@
 
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief The interaction volume index set class for the mpfa-o scheme.

@@ -27,8 +27,8 @@
 
 #include <cassert>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief General implementation of a data structure holding interaction
@@ -80,6 +80,6 @@ public:
     bool isOutsideFace() const { return isOutside_; }
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

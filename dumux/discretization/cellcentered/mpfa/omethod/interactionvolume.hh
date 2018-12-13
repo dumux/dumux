@@ -42,8 +42,8 @@
 #include "interactionvolumeindexset.hh"
 #include "scvgeometryhelper.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 //! Forward declaration of the o-method's interaction volume
 template< class Traits > class CCMpfaOInteractionVolume;
 
@@ -311,6 +311,6 @@ private:
     std::size_t numKnowns_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

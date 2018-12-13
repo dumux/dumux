@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
+ * \ingroup BoxDiscretization
  * \brief Flux variables cache class for the box scheme
  */
 #ifndef DUMUX_DISCRETIZATION_BOX_FLUXVARIABLES_CACHE_HH
@@ -30,7 +30,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup Discretization
  * \ingroup BoxDiscretization
  * \brief Flux variables cache class for the box scheme.
  *        For the box scheme, this class does not contain any physics-/process-dependent

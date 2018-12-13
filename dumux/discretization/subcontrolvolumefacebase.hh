@@ -27,8 +27,7 @@
 #include <utility>
 #include <dune/common/fvector.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Discretization

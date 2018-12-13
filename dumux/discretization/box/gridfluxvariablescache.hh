@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxDiscretization
  * \brief Global flux variable cache
  */
 #ifndef DUMUX_DISCRETIZATION_BOX_GRID_FLUXVARSCACHE_HH

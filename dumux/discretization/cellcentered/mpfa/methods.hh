@@ -24,8 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_METHODS_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_METHODS_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
     /*!
      * \brief The available mpfa schemes in Dumux
      * \ingroup CCMpfaDiscretization

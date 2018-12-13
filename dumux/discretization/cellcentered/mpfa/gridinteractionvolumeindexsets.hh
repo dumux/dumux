@@ -28,8 +28,7 @@
 
 #include "dualgridindexset.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCMpfaDiscretization

@@ -31,8 +31,8 @@
 #include <dune/common/reservedvector.hh>
 #include <dumux/common/indextraits.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Default traits to be used in conjuntion

@@ -24,8 +24,8 @@
 #ifndef DUMUX_SUBCONTROLVOLUME_HH
 #define DUMUX_SUBCONTROLVOLUME_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Discretization
  * \brief Base class for a sub control volume, i.e a part of the control

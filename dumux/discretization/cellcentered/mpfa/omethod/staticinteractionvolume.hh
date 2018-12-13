@@ -293,6 +293,6 @@ private:
     std::array<DirichletData, 0> dirichletData_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxDiscretization
  * \brief The local volume variables class
  */
 #ifndef DUMUX_DISCRETIZATION_BOX_ELEMENT_VOLUMEVARIABLES_HH
