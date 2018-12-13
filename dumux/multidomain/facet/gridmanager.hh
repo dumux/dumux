@@ -45,7 +45,7 @@
 #include "gmshreader.hh"
 
 namespace Dumux {
-namespace Detail {
+namespace FCGridManagerChecks {
 
     // The grid creator and grid data classes provided below
     // require that the grids passed as template arguments are
@@ -84,8 +84,8 @@ template<typename... Grids>
 class FacetCouplingGridDataWrapper
 {
     // make sure all grids have the same world dimension and are ordered in descending dimension
-    static_assert(Detail::FulfillConditions<false, Grids...>::value, "All grids must have the same world dimension!");
-    static_assert(Detail::FulfillConditions<true, Grids...>::value, "Grids must be ordered w.r.t the dimension in descending order!");
+    static_assert(FCGridManagerChecks::FulfillConditions<false, Grids...>::value, "All grids must have the same world dimension!");
+    static_assert(FCGridManagerChecks::FulfillConditions<true, Grids...>::value, "Grids must be ordered w.r.t the dimension in descending order!");
 
     //! determine the number of involved grids
     static constexpr std::size_t numGrids = sizeof...(Grids);
@@ -154,8 +154,8 @@ template<typename... Grids>
 class FacetCouplingEmbeddings
 {
     // make sure all grids have the same world dimension and are ordered in descending dimension
-    static_assert(Detail::FulfillConditions<false, Grids...>::value, "All grids must have the same world dimension!");
-    static_assert(Detail::FulfillConditions<true, Grids...>::value, "Grids must be ordered w.r.t the dimension in descending order!");
+    static_assert(FCGridManagerChecks::FulfillConditions<false, Grids...>::value, "All grids must have the same world dimension!");
+    static_assert(FCGridManagerChecks::FulfillConditions<true, Grids...>::value, "Grids must be ordered w.r.t the dimension in descending order!");
 
     //! the i-th grid type
     template<std::size_t id> using Grid = typename std::tuple_element_t<id, std::tuple<Grids...>>;
@@ -284,8 +284,8 @@ template<typename... Grids>
 class FacetCouplingGridManager
 {
     // make sure all grids have the same world dimension and are ordered in descending dimension
-    static_assert(Detail::FulfillConditions<false, Grids...>::value, "All grids must have the same world dimension!");
-    static_assert(Detail::FulfillConditions<true, Grids...>::value, "Grids must be ordered w.r.t the dimension in descending order!");
+    static_assert(FCGridManagerChecks::FulfillConditions<false, Grids...>::value, "All grids must have the same world dimension!");
+    static_assert(FCGridManagerChecks::FulfillConditions<true, Grids...>::value, "Grids must be ordered w.r.t the dimension in descending order!");
 
     // we use a wrapper class for the grid data containing the data on all grids
     using GridDataWrapper = FacetCouplingGridDataWrapper<Grids...>;
