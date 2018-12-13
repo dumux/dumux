@@ -326,8 +326,12 @@ public:
     /*!
      * \brief Evaluates the coupling element residual of a lower-dimensional domain element
      *        with respect to a dof in the bulk domain (dofIdxGlobalJ). This is essentially
-     *        the fluxes across the facets of the neighboring bulk element that coincide with
+     *        the fluxes across the facets of the neighboring bulk elements that coincide with
      *        the given element.
+     *
+     * \note The coupling residual in this case is always the entire transfer flux from bulk
+     *       to the lowDim domain. It is therefore independent of the given dof index in the
+     *       bulk domain, which is why we directly forward to the index-independent function.
      */
     template< class LowDimLocalAssembler >
     typename LocalResidual<lowDimId>::ElementResidualVector
@@ -335,6 +339,16 @@ public:
                          const LowDimLocalAssembler& lowDimLocalAssembler,
                          BulkIdType,
                          GridIndexType<bulkId> dofIdxGlobalJ)
+    { return evalCouplingResidual(lowDimId, lowDimLocalAssembler, bulkId); }
+
+    /*!
+     * \brief Evaluates the coupling element residual of a lower-dimensional domain element
+     *        with respect to a dof in the bulk domain (dofIdxGlobalJ). This is essentially
+     *        the fluxes across the facets of the neighboring bulk elements.
+     */
+    template< class LowDimLocalAssembler >
+    typename LocalResidual<lowDimId>::ElementResidualVector
+    evalCouplingResidual(LowDimIdType, const LowDimLocalAssembler& lowDimLocalAssembler, BulkIdType)
     {
         // make sure this is called for the element for which the context was set
         assert(lowDimContext_.isSet);
