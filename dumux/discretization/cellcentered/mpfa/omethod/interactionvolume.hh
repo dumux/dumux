@@ -31,9 +31,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/reservedvector.hh>
 
-#include <dumux/common/math.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
-#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 #include <dumux/discretization/cellcentered/mpfa/localfacedata.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 
