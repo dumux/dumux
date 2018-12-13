@@ -263,7 +263,7 @@ public:
 
                 for (auto globalJ : couplingStencil)
                 {
-                    if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+                    if (lowDimUsesBox)
                     {
                         for (int i = 0; i < element.subEntities(lowDimDim); ++i)
                             pattern.add(lowDimFVGridGeometry.vertexMapper().subIndex(element, i, lowDimDim), globalJ);
@@ -319,7 +319,7 @@ public:
             const auto& element = this->problem(lowDimId).fvGridGeometry().element(elemIdx);
 
             // if low dim domain uses the box scheme, we have to create interpolated vol vars
-            if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+            if (lowDimUsesBox)
             {
                 const auto elemGeom = element.geometry();
                 FacetCoupling::makeInterpolatedVolVars(volVars, this->problem(lowDimId), ldSol, fvGeom, element, elemGeom, elemGeom.center());
@@ -394,7 +394,7 @@ private:
 
             // container of dofs within the other element
             std::vector< std::decay_t<decltype(couplingStencil[0])> > elemDofsJ;
-            if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+            if (lowDimUsesBox)
             {
                 const auto& elemJ = lowDimFVGridGeometry.element(couplingElemIdx);
                 for (int i = 0; i < elemJ.subEntities(lowDimDim); ++i)

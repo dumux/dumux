@@ -97,6 +97,8 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     static constexpr auto bulkGridId = CouplingMapper::template gridId<bulkDim>();
     static constexpr auto lowDimGridId = CouplingMapper::template gridId<lowDimDim>();
 
+    static constexpr bool lowDimUsesBox = FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box;
+
     /*!
      * \brief The coupling context of the bulk domain. Contains all data of the lower-
      *        dimensional domain which is required for the computation of a bulk element
@@ -399,7 +401,7 @@ public:
                                       bulkMap.find(embedment.first)->second.elementToScvfMap.at(lowDimContext_.elementIdx));
 
         // if lowdim domain uses box, we distribute the sources equally among the scvs
-        if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+        if (lowDimUsesBox)
             sources /= fvGeometry.numScv();
 
         return sources;
@@ -443,7 +445,7 @@ public:
                 VolumeVariables<lowDimId> volVars;
 
                 // if low dim domain uses the box scheme, we have to create interpolated vol vars
-                if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+                if (lowDimUsesBox)
                 {
                     const auto elemGeom = elemJ.geometry();
                     FacetCoupling::makeInterpolatedVolVars(volVars, ldProblem, ldSol, fvGeom, elemJ, elemGeom, elemGeom.center());
@@ -546,7 +548,7 @@ public:
             // find the low-dim elements in coupling stencil, where this dof is contained in
             const auto couplingElements = [&] ()
             {
-                if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+                if (lowDimUsesBox)
                 {
                     std::vector< Element<lowDimId> > lowDimElems;
                     std::for_each( couplingElemStencil.begin(), couplingElemStencil.end(),
@@ -578,7 +580,7 @@ public:
                 auto& volVars = bulkContext_.lowDimVolVars[idxInContext];
                 const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
                 // if low dim domain uses the box scheme, we have to create interpolated vol vars
-                if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+                if (lowDimUsesBox)
                 {
                     const auto elemGeom = element.geometry();
                     FacetCoupling::makeInterpolatedVolVars(volVars, ldProblem, ldSol, fvGeom, element, elemGeom, elemGeom.center());
@@ -699,7 +701,7 @@ public:
             const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
             const auto& element = lowDimLocalAssembler.element();
             // if low dim domain uses the box scheme, we have to create interpolated vol vars
-            if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+            if (lowDimUsesBox)
             {
                 const auto elemGeom = element.geometry();
                 FacetCoupling::makeInterpolatedVolVars(volVars, ldProblem, ldSol, fvGeom, element, elemGeom, elemGeom.center());
