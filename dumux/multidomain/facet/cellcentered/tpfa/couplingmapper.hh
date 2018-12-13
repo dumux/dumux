@@ -49,6 +49,7 @@ class FacetCouplingMapper<BulkFVG, LowDimFVG, bulkId, lowDimId, DiscretizationMe
 {
     using ParentType = FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkId, lowDimId>;
     using LowDimElement = typename LowDimFVG::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename LowDimElement::Geometry::GlobalCoordinate;
 
 public:
     //! export domain ids
@@ -113,8 +114,7 @@ public:
                         const auto eps = lowDimGeometry.volume()*1e-8;
                         const auto diffVec = lowDimGeometry.center()-scvf.center();
 
-                        using std::abs;
-                        if ( std::all_of(diffVec.begin(), diffVec.end(), [eps] (auto coord) { return abs(coord) < eps; }) )
+                        if ( Dune::FloatCmp::eq<GlobalPosition, Dune::FloatCmp::CmpStyle::absolute>(diffVec, GlobalPosition(0.0), eps) )
                         {
                             embeddedScvfIdx = scvf.index();
                             found = true; break;
