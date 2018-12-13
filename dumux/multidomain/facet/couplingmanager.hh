@@ -32,6 +32,7 @@
 #include <dumux/discretization/evalsolution.hh>
 
 namespace Dumux {
+namespace FacetCoupling{
 
 /*!
  * \ingroup FacetCoupling
@@ -69,6 +70,7 @@ void makeInterpolatedVolVars(VolumeVariables& volVars,
     // of this function has to be provided!
     volVars.update(elemSol, problem, element, *scvs(fvGeometry).begin());
 }
+} // end namespace FacetCoupling
 
 /*!
  * \ingroup FacetCoupling

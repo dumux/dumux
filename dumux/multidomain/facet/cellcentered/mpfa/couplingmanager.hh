@@ -322,7 +322,7 @@ public:
             if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
             {
                 const auto elemGeom = element.geometry();
-                makeInterpolatedVolVars(volVars, this->problem(lowDimId), ldSol, fvGeom, element, elemGeom, elemGeom.center());
+                FacetCoupling::makeInterpolatedVolVars(volVars, this->problem(lowDimId), ldSol, fvGeom, element, elemGeom, elemGeom.center());
             }
             // if low dim domain uses a cc scheme we can directly update the vol vars
             else
