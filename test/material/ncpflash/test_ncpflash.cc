@@ -18,14 +18,15 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup MaterialTests
  * \brief This is a program to test the flash calculation which uses
- *        non-linear complementarity problems (NCP)
+ *        non-linear complementarity problems (NCP).
  *
  * A flash calculation determines the pressures, saturations and
  * composition of all phases given the total mass (or, as in this case
  * the total number of moles) in a given amount of pore space.
  */
+
 #include <config.h>
 
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
