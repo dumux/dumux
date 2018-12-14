@@ -287,7 +287,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * This is the method for the case where the Neumann condition is
      * potentially solution dependent and requires some quantities that
@@ -296,7 +296,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
@@ -332,7 +332,7 @@ public:
 
     /*!
      * \brief Evaluates the source term for all phases within a given
-     *        sub control volume.
+     *        sub-control volume.
      *
      * For this method, the \a priVars parameter stores the rate mass
      * of a component is generated or annihilated per volume
@@ -377,6 +377,6 @@ private:
         std::vector<Scalar> temperatureExact_;
     };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

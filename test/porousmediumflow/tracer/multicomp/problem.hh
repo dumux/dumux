@@ -22,6 +22,7 @@
  * \brief Definition of a problem for the MaxwellStefan problem:
  * A rotating velocity field mixes a MaxwellStefan band in a porous groundwater reservoir.
  */
+
 #ifndef DUMUX_MAXWELL_STEFAN_TEST_PROBLEM_HH
 #define DUMUX_MAXWELL_STEFAN_TEST_PROBLEM_HH
 
@@ -367,7 +368,7 @@ public:
      * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
-     * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
+     * The units must be according to either using mole or mass fractions (mole/(m^2*s) or kg/(m^2*s)).
      */
     NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
     { return NumEqVector(0.0); }

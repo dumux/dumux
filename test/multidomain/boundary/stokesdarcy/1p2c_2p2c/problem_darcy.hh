@@ -283,8 +283,8 @@ public:
      */
     // \{
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub control volume.
      *
      * \param element The element for which the source term is set
      * \param fvGeometry The fvGeometry

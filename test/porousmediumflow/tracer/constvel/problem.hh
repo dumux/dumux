@@ -22,6 +22,7 @@
  * \brief Definition of a problem for the tracer problem:
  * A rotating velocity field mixes a tracer band in a porous groundwater reservoir.
  */
+
 #ifndef DUMUX_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TRACER_TEST_PROBLEM_HH
 
@@ -249,6 +250,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

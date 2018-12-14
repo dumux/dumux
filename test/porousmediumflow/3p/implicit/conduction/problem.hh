@@ -22,6 +22,7 @@
  * \brief Definition of a 3pni problem:
  *        Component transport of nitrogen dissolved in the water phase.
  */
+
 #ifndef DUMUX_3PNI_CONDUCTION_PROBLEM_HH
 #define DUMUX_3PNI_CONDUCTION_PROBLEM_HH
 
@@ -283,7 +284,7 @@ public:
      * per volume unit. Positive values mean that mass is created,
      * negative ones mean that it vanishes.
      *
-     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
+     * The units must be according to either using mole or mass fractions (mole/(m^3*s) or kg/(m^3*s)).
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
@@ -315,5 +316,5 @@ private:
     std::vector<Scalar> temperatureExact_;
 };
 
-} //end namespace
+} // end namespace Dumux
 #endif

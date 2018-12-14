@@ -196,7 +196,7 @@ public:
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::MaxwellStefanNCTest> { using type = MaxwellStefanFluidSystem<TypeTag>; };
 
-} //end namespace Properties
+} // end namespace Properties
 
 /*!
  * \ingroup NavierStokesNCTests

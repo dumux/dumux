@@ -289,14 +289,14 @@ public:
 
     /*!
      * \brief Evaluates the source term for all phases within a given
-     *        sub control volume.
+     *        sub-control volume.
      *
      * For this method, the \a priVars parameter stores the rate mass
      * of a component is generated or annihilated per volume
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      *
-     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
+     * The units must be according to either using mole or mass fractions (mole/(m^3*s) or kg/(m^3*s)).
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     { return NumEqVector(0.0); }
@@ -329,6 +329,6 @@ private:
         std::vector<Scalar> temperatureExact_;
     };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

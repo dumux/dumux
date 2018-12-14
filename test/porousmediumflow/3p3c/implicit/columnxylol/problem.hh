@@ -22,6 +22,7 @@
  * \brief Non-isothermal injection problem where water is injected into a
  *        sand column with a NAPL contamination.
  */
+
 #ifndef DUMUX_COLUMNXYLOLPROBLEM_HH
 #define DUMUX_COLUMNXYLOLPROBLEM_HH
 
@@ -350,6 +351,6 @@ private:
     std::vector<Scalar> Kxx_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

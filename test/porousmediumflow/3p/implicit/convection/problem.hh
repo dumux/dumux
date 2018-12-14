@@ -21,6 +21,7 @@
  * \ingroup ThreePTests
  * \brief Test for the ThreePModel in combination with the NI model for a convection problem.
  */
+
 #ifndef DUMUX_3PNI_CONVECTION_PROBLEM_HH
 #define DUMUX_3PNI_CONVECTION_PROBLEM_HH
 
@@ -327,6 +328,6 @@ private:
     std::vector<Scalar> temperatureExact_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

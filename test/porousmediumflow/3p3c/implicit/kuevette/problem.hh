@@ -23,6 +23,7 @@
  *        is injected into a unsaturated porous medium with a residually
  *        trapped NAPL contamination.
  */
+
 #ifndef DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 #define DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 
@@ -322,6 +323,6 @@ private:
     std::vector<Scalar> Kxx_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

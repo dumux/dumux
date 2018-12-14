@@ -83,6 +83,6 @@ private:
    Scalar eps_;
 };
 
-}//end namespace
+} // end namespace Dumux
 
 #endif

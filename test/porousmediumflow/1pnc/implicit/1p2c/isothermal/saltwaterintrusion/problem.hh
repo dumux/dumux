@@ -191,6 +191,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

@@ -87,7 +87,7 @@ struct UseMoles<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value 
  * Here, a quadratic two-dimensional domain with closed and non-moving walls at
  * all sides is considered. Initially, the domain is filled with pure water.
  * At the top, a fixed concentration of the air component is set.
- * The air slowly dissolves in the water which leads to an local increase of density.
+ * The air slowly dissolves in the water which leads to a local increase of density.
  * Due to the influence of gravity and
  * small numerical instabilities, fingers of denser water will form and sink downwards.
  */

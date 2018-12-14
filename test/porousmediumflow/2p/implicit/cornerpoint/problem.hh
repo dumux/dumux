@@ -131,7 +131,7 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param element The finite element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      */
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolumeFace &scvf) const
@@ -163,7 +163,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param values Stores the Neumann values for the conservation equations in
      *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$

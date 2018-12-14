@@ -64,7 +64,7 @@ public:
      * \brief Returns the intrinsic permeability for the current sub-control volume in [m^2].
      *
      * \param element The element
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */

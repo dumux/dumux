@@ -21,6 +21,7 @@
  * \ingroup TwoPNCTests
  * \brief Definition of a problem for water management in PEM fuel cells.
  */
+
 #ifndef DUMUX_FUELCELL_PROBLEM_HH
 #define DUMUX_FUELCELL_PROBLEM_HH
 
@@ -358,6 +359,6 @@ private:
     std::vector<double> Kyy_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

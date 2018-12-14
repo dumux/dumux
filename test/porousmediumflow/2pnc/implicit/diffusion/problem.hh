@@ -199,7 +199,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * For this method, the \a priVars parameter stores the mass flux
      * in normal direction of each component. Negative values mean influx.
@@ -259,6 +259,6 @@ private:
 
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

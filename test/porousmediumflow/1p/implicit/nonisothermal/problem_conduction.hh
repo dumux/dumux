@@ -286,6 +286,6 @@ private:
     std::vector<Scalar> temperatureExact_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif // DUMUX_1PNI_CONDUCTION_PROBLEM_HH

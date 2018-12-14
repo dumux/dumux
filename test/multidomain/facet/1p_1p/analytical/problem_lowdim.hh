@@ -162,7 +162,7 @@ public:
     Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
     { return aperture_; }
 
-    //! evaluate the initial conditions
+    //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(1.0); }
 

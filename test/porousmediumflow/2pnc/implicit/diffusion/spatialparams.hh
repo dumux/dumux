@@ -124,6 +124,6 @@ private:
     MaterialLawParams materialParams_;
 };
 
-}//end namespace
+} // end namespace Dumux
 
 #endif

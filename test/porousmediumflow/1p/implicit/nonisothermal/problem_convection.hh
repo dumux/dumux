@@ -333,6 +333,6 @@ private:
     std::vector<Scalar> temperatureExact_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif // DUMUX_1PNI_CONVECTION_PROBLEM_HH

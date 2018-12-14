@@ -149,7 +149,7 @@ public:
                         const SubControlVolumeFace& scvf) const
     { return NumEqVector(0.0); }
 
-    //! evaluate the initial conditions
+    //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
         const auto g = this->gravityAtPos(globalPos)[dimWorld-1];

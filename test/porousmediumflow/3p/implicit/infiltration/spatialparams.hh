@@ -22,6 +22,7 @@
  * \brief Definition of the spatial parameters for the kuevette problem, which
  *        uses the three-phase fully implicit model.
  */
+
 #ifndef DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
 #define DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
 
@@ -113,7 +114,7 @@ public:
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
      * \param element The element
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      * \param elemSol The element solution vector
      * \return The intrinsic permeability
      */

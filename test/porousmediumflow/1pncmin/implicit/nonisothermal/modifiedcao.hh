@@ -29,8 +29,7 @@
 
 #include <dumux/material/components/cao.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 namespace Components {
 /*!
  * \ingroup OnePNCMinTests
@@ -55,7 +54,7 @@ public:
     }
 
 };
-} //end namespace components
-} // end namespace
+} // end namespace Components
+} // end namespace Dumux
 
 #endif

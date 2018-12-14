@@ -185,7 +185,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
@@ -241,6 +241,6 @@ private:
 
     static constexpr Scalar eps_ = 1e-6;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

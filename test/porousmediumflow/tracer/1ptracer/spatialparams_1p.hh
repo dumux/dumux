@@ -77,7 +77,7 @@ public:
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
      * \param element The element
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */

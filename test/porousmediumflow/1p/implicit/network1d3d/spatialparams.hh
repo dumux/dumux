@@ -67,7 +67,7 @@ public:
      * \brief Returns the radius of the circular pipe for the current
      * sub-control volume in [m].
      *
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      */
     Scalar radius(const SubControlVolume &scv) const
     {
@@ -81,7 +81,7 @@ public:
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
      * \param element The element
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      * \param elemSol The element solution vector
      * \return The intrinsic permeability
      */

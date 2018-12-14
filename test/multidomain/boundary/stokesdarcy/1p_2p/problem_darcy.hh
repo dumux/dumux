@@ -200,8 +200,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
      *
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeometry The fvGeometry

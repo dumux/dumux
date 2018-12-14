@@ -197,7 +197,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param globalPos The position of the integration point of the boundary segment.
      *

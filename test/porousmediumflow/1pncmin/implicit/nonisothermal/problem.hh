@@ -411,6 +411,6 @@ private:
     Scalar timeStepSize_;
 };
 
-} //end namespace
+} // end namespace Dumux
 
 #endif

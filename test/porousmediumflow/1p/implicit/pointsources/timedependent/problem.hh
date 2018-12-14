@@ -124,6 +124,6 @@ private:
     Scalar time_ = 0.0;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

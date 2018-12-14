@@ -392,6 +392,6 @@ private:
     std::string name_;
     Scalar time_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

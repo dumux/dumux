@@ -107,7 +107,7 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields

@@ -21,6 +21,7 @@
  * \ingroup ThreePWaterOilTests
  * \brief Non-isothermal SAGD problem.
  */
+
 #ifndef DUMUX_SAGDPROBLEM_HH
 #define DUMUX_SAGDPROBLEM_HH
 
@@ -190,7 +191,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param elemVolVars The element volume variables
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * Negative values mean influx.
      */
@@ -292,7 +293,7 @@ private:
         values[pressureIdx] = 101300.0 + (maxDepth_ - globalPos[1])*densityW*9.81;
 
         values[switch1Idx] = 295.13;   // temperature
-        values[switch2Idx] = 0.3;   //NAPL saturation
+        values[switch2Idx] = 0.3;   // NAPL saturation
         return values;
     }
 
@@ -308,6 +309,6 @@ private:
 
     std::string name_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

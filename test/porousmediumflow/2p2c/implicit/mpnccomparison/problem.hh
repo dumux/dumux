@@ -23,6 +23,7 @@
  *
  * This test compares a mpnc problem with a 2p2c problem.
  */
+
 #ifndef DUMUX_TWOPTWOC_MPNC_PROBLEM_HH
 #define DUMUX_TWOPTWOC_MPNC_PROBLEM_HH
 
@@ -258,6 +259,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

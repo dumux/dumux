@@ -33,7 +33,11 @@ namespace Dumux {
 /*!
  * \ingroup OnePTests
  * \brief  Multidomain test problem for the incompressible one-phase model
- * \todo doc me!
+ *
+ * The circular model domain consists of two subdomains:
+ * an inner circle and an outer ring.
+ * Methane is injected in the center and spreads over the
+ * coupling boundary into the outer domain.
  */
 template<class TypeTag, std::size_t tag>
 class OnePTestProblem

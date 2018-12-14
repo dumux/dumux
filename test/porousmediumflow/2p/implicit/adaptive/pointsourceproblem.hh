@@ -64,6 +64,6 @@ public:
     }
 };
 
-} //end namespace
+} // end namespace Dumux
 
 #endif

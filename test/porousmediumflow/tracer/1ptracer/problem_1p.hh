@@ -112,7 +112,7 @@ public:
      *        used for which equation on a given boundary control volume.
      *
      * \param element The finite element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      */
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolumeFace &scvf) const
@@ -133,7 +133,7 @@ public:
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param element The finite element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores primary variables.
      */

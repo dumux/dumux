@@ -211,7 +211,7 @@ public:
      *        parametrization of the surface between wetting and non-Wetting phase.
      *
      * The position is determined based on the coordinate of
-     * the vertex belonging to the considered sub control volume.
+     * the vertex belonging to the considered sub-control volume.
      *
      * \param element The finite element
      * \param scv The sub-control volume
@@ -234,7 +234,7 @@ public:
      *        parametrization of the surface between non-Wetting and solid phase.
      *
      *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
+     *        the vertex belonging to the considered sub-control volume.
      * \param element The finite element
      * \param scv The sub-control volume
      * \param elemSol The element solution

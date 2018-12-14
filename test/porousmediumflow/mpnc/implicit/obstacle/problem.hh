@@ -244,7 +244,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
      * \param elemVolVars The volume variables of the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * Negative values mean influx.
      */
@@ -401,6 +401,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

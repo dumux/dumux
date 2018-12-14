@@ -331,7 +331,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param elemVolVars The volume variables of the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.

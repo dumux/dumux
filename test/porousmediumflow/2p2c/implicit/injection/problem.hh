@@ -275,7 +275,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
      * \param elemVolVars All volume variables for the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * This method is used for cases, when the Neumann condition depends on the
      * solution and requires some quantities that are specific to the fully-implicit method.

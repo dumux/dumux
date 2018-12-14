@@ -246,7 +246,7 @@ public:
 
     /*!
      * \brief Evaluates the source term for all phases within a given
-     *        sub-control-volume.
+     *        sub-control volume.
      *
      * This is the method for the case where the source term is
      * potentially solution dependent and requires some quantities that
@@ -255,10 +255,10 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      *
      * For this method, the \a values parameter stores the conserved quantity rate
-     * generated or annihilate per volume unit. Positive values mean
+     * generated or annihilated per volume unit. Positive values mean
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
@@ -356,6 +356,6 @@ private:
     typename Dune::PQkLocalFiniteElementCache<Scalar, Scalar, dim, 1> feCache_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

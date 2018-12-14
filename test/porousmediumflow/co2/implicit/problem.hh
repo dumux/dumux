@@ -348,7 +348,7 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param element The finite element
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      */
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolume &scv) const
@@ -359,7 +359,7 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param element The finite element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      */
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolumeFace &scvf) const
@@ -398,7 +398,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
@@ -512,6 +512,6 @@ private:
     ScvfToScvBoundaryTypes<BoundaryTypes, discMethod> scvfToScvBoundaryTypes_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

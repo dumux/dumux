@@ -92,6 +92,6 @@ private:
     std::vector<PrimaryVariables> initialValues_;
 };
 
-} //end namespace
+} // end namespace Dumux
 
 #endif

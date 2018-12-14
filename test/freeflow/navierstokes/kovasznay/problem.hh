@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief Test for the staggered grid Navier-Stokes model with analytical solution (Kovasznay 1947).
+ * \brief Test for the staggered grid Navier-Stokes model with analytical solution (Kovasznay 1948, \cite Kovasznay1948)
  */
 
 #ifndef DUMUX_KOVASZNAY_TEST_PROBLEM_HH
@@ -72,8 +72,11 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::KovasznayTest> { static con
 
 /*!
  * \ingroup NavierStokesTests
- * \brief  Test problem for the staggered grid (Kovasznay 1947)
- * \todo doc me!
+ * \brief  Test problem for the staggered grid (Kovasznay 1948, \cite Kovasznay1948)
+ *
+ * A two-dimensional Navier-Stokes flow with a periodicity in one direction
+ * is considered. The set-up represents a wake behind a two-dimensional grid
+ * and is chosen in a way such that an exact solution is available.
  */
 template <class TypeTag>
 class KovasznayTestProblem : public NavierStokesProblem<TypeTag>

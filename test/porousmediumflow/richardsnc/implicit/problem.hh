@@ -23,6 +23,7 @@
  *        embedded into a high-permeability domain which uses the
  *        Richards box model.
  */
+
 #ifndef DUMUX_RICHARDS_NC_WELL_TRACER_PROBLEM_HH
 #define DUMUX_RICHARDS_NC_WELL_TRACER_PROBLEM_HH
 
@@ -358,6 +359,6 @@ private:
     Scalar accumulatedSource_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

@@ -271,6 +271,6 @@ private:
     std::string name_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

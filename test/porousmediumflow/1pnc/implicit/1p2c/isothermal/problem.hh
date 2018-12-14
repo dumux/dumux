@@ -241,7 +241,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
@@ -330,20 +330,20 @@ public:
 
     /*!
      * \brief Evaluates the source term for all phases within a given
-     *        sub control volume.
+     *        sub-control volume.
      *
      * For this method, the \a priVars parameter stores the rate mass
      * of a component is generated or annihilated per volume
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      *
-     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
+     * The units must be according to either using mole or mass fractions (mole/(m^3*s) or kg/(m^3*s)).
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     { return NumEqVector(0.0); }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *
@@ -368,6 +368,6 @@ private:
         bool useNitscheTypeBc_;
     };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

@@ -22,6 +22,7 @@
  * \brief Non-isothermal gas injection problem where a gas (e.g. air)
  *        is injected into a fully water saturated medium.
  */
+
 #ifndef DUMUX_WATER_AIR_PROBLEM_HH
 #define DUMUX_WATER_AIR_PROBLEM_HH
 
@@ -324,6 +325,6 @@ private:
     bool useDirichlet_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

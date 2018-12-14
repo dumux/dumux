@@ -97,8 +97,12 @@ struct UseMoles<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = tr
 
 /*!
  * \ingroup NavierStokesNCTests
- * \brief  Test problem for the one-phase model.
- * \todo doc me!
+ * \brief  Test problem for the one-phase (Navier-)Stokes model.
+ *
+ * Flow from left to right in a channel is considered. A parabolic velocity
+ * profile is set at the left boundary, while the pressure is set to
+ * a fixed value on the right boundary. The top and bottom boundaries
+ * represent solid walls with no-slip/no-flow conditions.
  */
 template <class TypeTag>
 class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
