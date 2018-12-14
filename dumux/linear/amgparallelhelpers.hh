@@ -109,7 +109,7 @@ class ParallelISTLHelper
     };
 
 
-    /**
+    /*!
      * \brief Writes 1<<24 to each data item (of the container) that is gathered or scattered
      * and is neither interior nor border.
      *
@@ -165,7 +165,7 @@ class ParallelISTLHelper
         std::vector<std::size_t>& ranks_;
     };
 
-    /**
+    /*!
      * \brief GatherScatter handle that sets 1<<24 for data items neither associated to
      * the interior or border and take the minimum when scattering.
      *
@@ -226,7 +226,7 @@ class ParallelISTLHelper
         std::vector<std::size_t>& ranks_;
     };
 
-    /**
+    /*!
      * \brief GatherScatter handle for finding out about neighbouring processor ranks.
      *
      */
@@ -275,7 +275,7 @@ class ParallelISTLHelper
     };
 
 
-    /**
+    /*!
      * \brief GatherScatter handle for finding out about neighbouring processor ranks.
      *
      */
@@ -325,7 +325,7 @@ class ParallelISTLHelper
         std::vector<int>& shared_;
     };
 
-    /**
+    /*!
      * \brief GatherScatter handle for finding out about neighbouring processor ranks.
      *
      */
@@ -444,9 +444,8 @@ public:
 
 #if HAVE_MPI
 
-    /**
+    /*!
      * \brief Creates a matrix suitable for parallel AMG and the parallel information
-     *
      *
      * \tparam MatrixType The type of the ISTL matrix used.
      * \tparam Comm The type of the OwnerOverlapCopyCommunication
@@ -523,7 +522,7 @@ public:
         }
     }
 
-    /**
+    /*!
      * \brief A DataHandle class to exchange matrix sparsity patterns.
      *
      *  We look at a 2D example with a nonoverlapping grid,
@@ -568,21 +567,24 @@ public:
               sparsity_(A.N()), A_(A), helper_(helper)
         {}
 
-        /** \brief Returns true if data for given valid codim should be communicated
+        /*!
+         * \brief Returns true if data for given valid codim should be communicated
          */
         bool contains (int dim, int codim) const
         {
             return (codim==dofCodim);
         }
 
-        /** \brief Returns true if size of data per entity of given dim and codim is a constant
+        /*!
+         * \brief Returns true if size of data per entity of given dim and codim is a constant
          */
         bool fixedsize (int dim, int codim) const
         {
             return false;
         }
 
-        /** \brief How many objects of type DataType have to be sent for a given entity
+        /*!
+         * \brief How many objects of type DataType have to be sent for a given entity
          */
         template<class EntityType>
         size_t size (EntityType& e) const
@@ -599,7 +601,8 @@ public:
             return n;
         }
 
-        /** \brief Pack data from user to message buffer
+        /*!
+         * \brief Pack data from user to message buffer
          */
         template<class MessageBuffer, class EntityType>
         void gather (MessageBuffer& buff, const EntityType& e) const
@@ -614,7 +617,8 @@ public:
 
         }
 
-        /** \brief Unpack data from message buffer to user
+        /*!
+         * \brief Unpack data from message buffer to user
          */
         template<class MessageBuffer, class EntityType>
         void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
@@ -633,9 +637,9 @@ public:
             }
         }
 
-        /**
+        /*!
          * \brief Get the communicated sparsity pattern
-         * @return the vector with the sparsity pattern
+         * \return the vector with the sparsity pattern
          */
         std::vector<std::set<int> >& sparsity ()
         {
@@ -671,33 +675,37 @@ public:
         //! Export type of data for message buffer
         using DataType = MatEntry;
 
-        /** \brief Constructor
-            \param[in] mapper The local dof mapper.
-            \param[in] g2i Global to local index map.
-            \param[in] i2g Local to global index map.
-            \param[in] A Matrix to operate on.
-        */
+        /*!
+         * \brief Constructor
+         * \param[in] mapper The local dof mapper.
+         * \param[in] g2i Global to local index map.
+         * \param[in] i2g Local to global index map.
+         * \param[in] A Matrix to operate on.
+         */
         MatEntryExchange (const DofMapper& mapper, const std::map<IdType,int>& g2i,
                           const std::map<int,IdType>& i2g,
                           Matrix& A)
             : mapper_(mapper), gid2Index_(g2i), index2GID_(i2g), A_(A)
         {}
 
-        /** \brief Returns true if data for given valid codim should be communicated
+        /*!
+         * \brief Returns true if data for given valid codim should be communicated
          */
         bool contains (int dim, int codim) const
         {
             return (codim==dofCodim);
         }
 
-        /** \brief Returns true if size of data per entity of given dim and codim is a constant
+        /*!
+         * \brief Returns true if size of data per entity of given dim and codim is a constant
          */
         bool fixedsize (int dim, int codim) const
         {
             return false;
         }
 
-        /** \brief How many objects of type DataType have to be sent for a given entity
+        /*!
+         * \brief How many objects of type DataType have to be sent for a given entity
          */
         template<class EntityType>
         size_t size (EntityType& e) const
@@ -714,7 +722,8 @@ public:
             return n;
         }
 
-        /** \brief Pack data from user to message buffer
+        /*!
+         * \brief Pack data from user to message buffer
          */
         template<class MessageBuffer, class EntityType>
         void gather (MessageBuffer& buff, const EntityType& e) const
@@ -729,7 +738,8 @@ public:
 
         }
 
-        /** \brief Unpack data from message buffer to user
+        /*!
+         * \brief Unpack data from message buffer to user
          */
         template<class MessageBuffer, class EntityType>
         void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
@@ -755,10 +765,11 @@ public:
 
     }; // class MatEntryExchange
 
-    /** \brief communicates values for the sparsity pattern of the new matrix.
-        \param A Matrix to operate on.
-        \param helper ParallelelISTLHelper.
-    */
+    /*!
+     * \brief communicates values for the sparsity pattern of the new matrix.
+     * \param A Matrix to operate on.
+     * \param helper ParallelelISTLHelper.
+     */
     void getExtendedMatrix (Matrix& A, const ParallelISTLHelper<GridView, AmgTraits>& helper)
     {
         if (gridView_.comm().size() > 1)
@@ -802,9 +813,10 @@ public:
         }
     }
 
-    /** \brief Sums up the entries corresponding to border vertices.
-        \param A Matrix to operate on.
-    */
+    /*!
+     * \brief Sums up the entries corresponding to border vertices.
+     * \param A Matrix to operate on.
+     */
     void sumEntries (Matrix& A)
     {
         if (gridView_.comm().size() > 1)
@@ -816,7 +828,7 @@ public:
     }
 
 #if HAVE_MPI
-    /**
+    /*!
      * \brief Extends the sparsity pattern of the discretization matrix for AMG.
      * \param A A reference to the matrix to change.
      */

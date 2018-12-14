@@ -19,7 +19,6 @@
 /*!
  * \file
  * \ingroup Linear
- *
  * \brief Define traits for the AMG backend.
  */
 #ifndef DUMUX_AMG_TRAITS_HH
