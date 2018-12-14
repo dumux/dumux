@@ -110,11 +110,11 @@ public:
 
             a.clear();
             // treat the velocities parallel to the self face
-            for(int j = 0; j < scvf.pairData(i).parallelDofs.size(); j++)
+            for(int j = 0; j < subFaceData.parallelDofs.size(); j++)
             {
                 if(scvf.hasParallelNeighbor(i,j))
                 {
-                    a.push_back(faceSol[scvf.pairData(i).parallelDofs[j]]);
+                    a.push_back(faceSol[subFaceData.parallelDofs[j]]);
                 }
             }
             velocityParallel_[i] = a;
