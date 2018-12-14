@@ -86,12 +86,13 @@ struct PointSource<TypeTag, TTag::RichardsWellTracer> { using type = SolDependen
  *        Richards model.
  *
  * The domain is box shaped. Left and right boundaries are Dirichlet
- * boundaries with fixed water pressure (hydostatic, gradient from right to left),
+ * boundaries with fixed water pressure (hydrostatic, gradient from right to left),
  * bottom boundary is closed (Neumann 0 boundary), the top boundary
  * (Neumann 0 boundary) is also closed. Water is extracted at a point in
  * the middle of the domain.
+ * This problem is very similar to the LensProblem
  * which uses the TwoPBoxModel, with the main difference being that
- * the domain is initally fully saturated by gas instead of water and
+ * the domain is initially fully saturated by gas instead of water and
  * water instead of a %DNAPL infiltrates from the top.
  *
  * This problem uses the \ref RichardsNCModel
@@ -132,11 +133,6 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
 public:
-    /*!
-     * \brief Constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     RichardsWellTracerProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -244,8 +240,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the Dirichlet value is set
      *
@@ -255,8 +250,7 @@ public:
     { return initial_(globalPos); }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
@@ -272,8 +266,7 @@ public:
     // \{
 
     /*!
-     * \brief Applies a vector of point sources. The point sources
-     *        are possibly solution dependent.
+     * \brief Applies a vector of point sources which are possibly solution dependent.
      *
      * \param pointSources A vector of PointSource s that contain
               source values for all phases and space positions.
@@ -305,7 +298,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial values for a control volume.
+     * \brief Evaluates the initial values for a control volume.
      *
      * For this method, the \a values parameter stores primary
      * variables.
@@ -330,7 +323,7 @@ private:
         }();
 
         PrimaryVariables values(0.0);
-        //! hydrostatic pressure profile
+        //! Hydrostatic pressure profile
         values[pressureIdx] = (nonWettingReferencePressure() - pcTop_)
                                - 9.81*1000*(globalPos[dimWorld-1] - this->fvGridGeometry().bBoxMax()[dimWorld-1]);
         values[compIdx] = xTracer;

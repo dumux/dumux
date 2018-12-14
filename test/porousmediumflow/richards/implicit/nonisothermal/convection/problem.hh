@@ -23,6 +23,7 @@
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.
  */
+
 #ifndef DUMUX_RICHARDS_CONVECTION_PROBLEM_HH
 #define DUMUX_RICHARDS_CONVECTION_PROBLEM_HH
 
@@ -141,7 +142,7 @@ public:
     RichardsNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        //initialize fluid system
+        // initialize fluid system
         FluidSystem::init();
 
         name_ =  getParam<std::string>("Problem.Name");
@@ -153,19 +154,13 @@ public:
         temperatureExact_.resize(fvGridGeometry->numDofs());
     }
 
-
-   /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
-     */
-    //! get the analytical temperature
+    //! Get the analytical temperature
     const std::vector<Scalar>& getExactTemperature()
     {
         return temperatureExact_;
     }
 
-  //! udpate the analytical temperature
+    //! Update the analytical temperature
     void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
@@ -250,8 +245,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      *
@@ -263,13 +257,12 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param elemVolVars The element volume variables
-     * \param scvf The subcontrolvolume face
+     * \param scvf The sub-control volume face
      *  Negative values mean influx.
      */
     NumEqVector neumann(const Element &element,
@@ -299,7 +292,7 @@ public:
 
     /*!
      * \brief Returns the reference pressure [Pa] of the non-wetting
-     *        fluid phase within a finite volume
+     *        fluid phase within a finite volume.
      *
      * This problem assumes a constant reference pressure of 1 bar.
      */
@@ -307,7 +300,7 @@ public:
     { return 1e5; };
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *
@@ -341,5 +334,5 @@ private:
     std::vector<Scalar> temperatureExact_;
 };
 
-} //end namespace
+} // end namespace
 #endif // DUMUX_RICHARDSNI_CONVECTION_PROBLEM_HH

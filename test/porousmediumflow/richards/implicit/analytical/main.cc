@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup RichardsTests
  * \brief Test for the Richards CC model.
  */
+
 #include <config.h>
 
 #include "problem.hh"
