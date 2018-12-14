@@ -22,6 +22,7 @@
  * \brief Definition of a problem, for the tracer problem:
  * A rotating velocity field mixes a tracer band in a porous groundwater reservoir.
  */
+
 #ifndef DUMUX_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TRACER_TEST_PROBLEM_HH
 
@@ -117,7 +118,7 @@ public:
     static Scalar molarMass(unsigned int compIdx)
     { return 0.300; }
 
-    //! binary diffusion coefficient
+    //! Binary diffusion coefficient
     //! (might depend on spatial parameters like pressure / temperature)
     static Scalar binaryDiffusionCoefficient(unsigned int compIdx,
                                              const Problem& problem,
@@ -200,7 +201,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *

@@ -19,7 +19,7 @@
 /**
  * \file
  * \ingroup TracerTest
- * \brief Definition of a problem, for the MaxwellStefan problem:
+ * \brief Definition of a problem for the MaxwellStefan problem:
  * A rotating velocity field mixes a MaxwellStefan band in a porous groundwater reservoir.
  */
 #ifndef DUMUX_MAXWELL_STEFAN_TEST_PROBLEM_HH
@@ -128,7 +128,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
-    //! binary diffusion coefficient
+    //! Binary diffusion coefficient
     //! (might depend on spatial parameters like pressure / temperature)
     static Scalar binaryDiffusionCoefficient(unsigned int compIdx,
                                              const Problem& problem,
@@ -146,7 +146,7 @@ public:
                        << compIdx <<" is undefined!\n");
     }
 
-    //! binary diffusion coefficient
+    //! Binary diffusion coefficient
     //! (might depend on spatial parameters like pressure / temperature)
     static Scalar binaryDiffusionCoefficient(unsigned int compIIdx,
                                              unsigned int compJIdx,
@@ -194,7 +194,8 @@ struct FluidSystem<TypeTag, TTag::MaxwellStefanTest> { using type = H2N2CO2Fluid
 
 /*!
  * \ingroup TracerTest
- * \brief Definition of a problem, for the MaxwellStefan problem *
+ * \brief Definition of a problem for the MaxwellStefan problem.
+ *
  * This problem uses the MaxwellStefan equations.
  *
  * To run the simulation execute the following line in shell:
@@ -363,8 +364,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
@@ -380,7 +380,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *
@@ -426,6 +426,6 @@ private:
     bool plotOutput_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

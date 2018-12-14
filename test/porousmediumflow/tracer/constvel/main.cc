@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the tracer CC model
+ * \ingroup TracerTests
+ * \brief Test for the tracer CC model.
  */
 #include <config.h>
 

@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup TracerTests
- * \brief Definition of the spatial parameters for the tracer problem
+ * \brief Definition of the spatial parameters for the tracer problem.
  */
+
 #ifndef DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 
@@ -31,7 +32,7 @@ namespace Dumux {
 
 /*!
  * \ingroup TracerTests
- * \brief Definition of the spatial parameters for the tracer problem
+ * \brief Definition of the spatial parameters for the tracer problem.
  */
 template<class FVGridGeometry, class Scalar>
 class TracerTestSpatialParams
@@ -55,7 +56,7 @@ public:
     : ParentType(fvGridGeometry) {}
 
     /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
+     * \brief Defines the porosity \f$\mathrm{[-]}\f$.
      *
      * \param globalPos The global position
      */
@@ -63,7 +64,7 @@ public:
     { return 0.2; }
 
     /*!
-     * \brief Define the dispersivity.
+     * \brief Defines the dispersivity.
      *
      * \param element The finite element
      * \param scv The sub-control volume
@@ -75,15 +76,15 @@ public:
                         const ElementSolution& elemSol) const
     { return 0; }
 
-    //! Fluid properties that are spatial params in the tracer model
-    //! They can possible vary with space but are usually constants
+    //! Fluid properties that are spatial parameters in the tracer model
+    //! They can possibly vary with space but are usually constants
 
-    //! fluid density
+    //! Fluid density
     Scalar fluidDensity(const Element &element,
                         const SubControlVolume& scv) const
     { return 1000; }
 
-    //! fluid molar mass
+    //! Fluid molar mass
     Scalar fluidMolarMass(const Element &element,
                           const SubControlVolume& scv) const
     { return 18.0; }
@@ -91,7 +92,7 @@ public:
     Scalar fluidMolarMass(const GlobalPosition &globalPos) const
     { return 18.0; }
 
-    //! velocity field
+    //! Velocity field
     GlobalPosition velocity(const SubControlVolumeFace& scvf) const
     {
         GlobalPosition vel(1e-5);
@@ -105,7 +106,7 @@ public:
         return vel;
     }
 
-    //! velocity field
+    //! Velocity field
     template<class ElementVolumeVariables>
     Scalar volumeFlux(const Element &element,
                       const FVElementGeometry& fvGeometry,
