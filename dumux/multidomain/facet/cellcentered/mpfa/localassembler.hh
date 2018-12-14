@@ -120,7 +120,161 @@ public:
     template< class DataHandle, class IV, class GetRho >
     void assembleGravity(DataHandle& handle, const IV& iv, const GetRho& getRho)
     {
-        DUNE_THROW(Dune::NotImplemented, "mpfa facet coupling with gravity");
+        using GridView = typename IV::Traits::GridView;
+        static constexpr int dim = GridView::dimension;
+        static constexpr int dimWorld = GridView::dimensionworld;
+        static constexpr bool isSurfaceGrid = dim < dimWorld;
+
+        // resize the gravity vectors
+        auto& g = handle.g();
+        auto& deltaG = handle.deltaG();
+        auto& outsideG = handle.gOutside();
+        Helper::resizeVector(g, iv.numFaces());
+        Helper::resizeVector(deltaG, iv.numUnknowns());
+        if (isSurfaceGrid)
+            Helper::resizeVector(outsideG, iv.numFaces());
+
+        //! For each face, we...
+        //! - arithmetically average the phase densities
+        //! - compute the term \f$ \alpha := \mathbf{A} \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
+        //! - compute \f$ \alpha^* = \sum{\alpha_{outside, i}} - \alpha_{inside} \f$
+        using Scalar = typename IV::Traits::MatVecTraits::TMatrix::value_type;
+        using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
+
+        // xi factor for coupling conditions
+        static const Scalar xi = getParamFromGroup<Scalar>(this->problem().paramGroup(), "FacetCoupling.Xi", 1.0);
+
+        for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
+        {
+            // gravitational acceleration on this face
+            const auto& curLocalScvf = iv.localScvf(faceIdx);
+            const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.gridScvfIndex());
+            const auto& gravity = this->problem().gravityAtPos(curGlobalScvf.ipGlobal());
+            const auto curIsInteriorBoundary = curLocalScvf.isOnInteriorBoundary();
+            const Scalar curXiFactor = curIsInteriorBoundary ? (curGlobalScvf.boundary() ? 1.0 : xi) : 1.0;
+
+            // get permeability tensor in "positive" sub volume
+            const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
+            const auto& posGlobalScv = this->fvGeometry().scv(iv.localScv(neighborScvIndices[0]).gridScvIndex());
+            const auto& posVolVars = this->elemVolVars()[posGlobalScv];
+            const auto alpha_inside = posVolVars.extrusionFactor()*vtmv(curGlobalScvf.unitOuterNormal(),
+                                                                        posVolVars.permeability(),
+                                                                        gravity);
+
+            const auto numOutsideFaces = !curGlobalScvf.boundary() ? curGlobalScvf.numOutsideScvs() : 0;
+            using OutsideAlphaStorage = std::conditional_t< isSurfaceGrid,
+                                                            std::vector<Scalar>,
+                                                            Dune::ReservedVector<Scalar, 1> >;
+            OutsideAlphaStorage alpha_outside; alpha_outside.resize(numOutsideFaces);
+            std::fill(alpha_outside.begin(), alpha_outside.end(), 0.0);
+            Scalar rho;
+
+            if (isSurfaceGrid && !curIsInteriorBoundary)
+                Helper::resizeVector(outsideG[faceIdx], numOutsideFaces);
+
+            if (!curLocalScvf.isDirichlet())
+            {
+                const auto localDofIdx = curLocalScvf.localDofIndex();
+                const Scalar curOneMinusXi = curIsInteriorBoundary ?  -(1.0 - xi) : 1.0;
+
+                rho = getRho(posVolVars);
+                deltaG[localDofIdx] = 0.0;
+
+                if (!curGlobalScvf.boundary())
+                {
+                    for (unsigned int idxInOutside = 0; idxInOutside < curGlobalScvf.numOutsideScvs(); ++idxInOutside)
+                    {
+                        // obtain outside tensor
+                        const auto negLocalScvIdx = neighborScvIndices[idxInOutside+1];
+                        const auto& negGlobalScv = this->fvGeometry().scv(iv.localScv(negLocalScvIdx).gridScvIndex());
+                        const auto& negVolVars = this->elemVolVars()[negGlobalScv];
+                        const auto& flipScvf = !isSurfaceGrid ? curGlobalScvf
+                                                              : this->fvGeometry().flipScvf(curGlobalScvf.index(), idxInOutside);
+
+                        alpha_outside[idxInOutside] = negVolVars.extrusionFactor()*vtmv(flipScvf.unitOuterNormal(),
+                                                                                        negVolVars.permeability(),
+                                                                                        gravity);
+                        if (isSurfaceGrid)
+                            alpha_outside[idxInOutside] *= -1.0;
+
+                        if (!curIsInteriorBoundary)
+                            rho += getRho(negVolVars);
+
+                        deltaG[localDofIdx] += curOneMinusXi*alpha_outside[idxInOutside];
+                    }
+                }
+
+                if (curIsInteriorBoundary)
+                {
+                    const auto posElement = this->fvGeometry().fvGridGeometry().element(posGlobalScv.elementIndex());
+                    const auto& facetVolVars = this->problem().couplingManager().getLowDimVolVars(posElement, curGlobalScvf);
+                    rho += getRho(facetVolVars);
+                    rho /= 2.0;
+                    const auto alphaFacet = posVolVars.extrusionFactor()*vtmv(curGlobalScvf.unitOuterNormal(),
+                                                                              facetVolVars.permeability(),
+                                                                              gravity);
+                    deltaG[localDofIdx] += alphaFacet;
+                }
+                else
+                    rho /= numOutsideFaces + 1;
+
+                deltaG[localDofIdx] -= curXiFactor*alpha_inside;
+                deltaG[localDofIdx] *= rho*curGlobalScvf.area();
+            }
+            // use average density between facet and cell density on interior Dirichlet boundaries
+            else if (curIsInteriorBoundary)
+            {
+                const auto posElement = this->fvGeometry().fvGridGeometry().element(posGlobalScv.elementIndex());
+                const auto& facetVolVars = this->problem().couplingManager().getLowDimVolVars(posElement, curGlobalScvf);
+                rho = 0.5*(getRho(facetVolVars) + getRho(posVolVars));
+            }
+            // use density resulting from Dirichlet BCs
+            else
+                rho = getRho(this->elemVolVars()[curGlobalScvf.outsideScvIdx()]);
+
+            // add "inside" & "outside" alphas to gravity containers
+            g[faceIdx] = alpha_inside*rho*curGlobalScvf.area();
+
+            if (isSurfaceGrid && !curIsInteriorBoundary)
+            {
+                unsigned int i = 0;
+                for (const auto& alpha : alpha_outside)
+                    outsideG[faceIdx][i++] = alpha*rho*curGlobalScvf.area();
+            }
+        }
+
+        // add iv-wide contributions to gravity vectors
+        handle.CA().umv(deltaG, g);
+        if (isSurfaceGrid)
+        {
+            using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
+            FaceVector AG;
+            Helper::resizeVector(AG, iv.numUnknowns());
+            handle.A().mv(deltaG, AG);
+
+            // compute gravitational accelerations
+            for (const auto& localFaceData : iv.localFaceData())
+            {
+                // continue only for "outside" faces
+                if (!localFaceData.isOutsideFace())
+                    continue;
+
+                const auto localScvIdx = localFaceData.ivLocalInsideScvIndex();
+                const auto localScvfIdx = localFaceData.ivLocalScvfIndex();
+                const auto idxInOutside = localFaceData.scvfLocalOutsideScvfIndex();
+                const auto& posLocalScv = iv.localScv(localScvIdx);
+                const auto& wijk = handle.omegas()[localScvfIdx][idxInOutside+1];
+
+                // add contributions from all local directions
+                for (LocalIndexType localDir = 0; localDir < dim; localDir++)
+                {
+                    // the scvf corresponding to this local direction in the scv
+                    const auto& curLocalScvf = iv.localScvf(posLocalScv.localScvfIndex(localDir));
+                    if (!curLocalScvf.isDirichlet())
+                        outsideG[localScvfIdx][idxInOutside] -= wijk[localDir]*AG[curLocalScvf.localDofIndex()];
+                }
+            }
+        }
     }
 
 private:
