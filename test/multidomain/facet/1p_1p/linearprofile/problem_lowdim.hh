@@ -54,6 +54,9 @@ struct OnePLowDim { using InheritsFrom = std::tuple<OneP>; };
 struct OnePLowDimTpfa { using InheritsFrom = std::tuple<OnePLowDim, CCTpfaModel>; };
 } // end namespace TTag
 
+// for the test using mpfa in the bulk domain we need an additional type tag
+NEW_TYPE_TAG(OnePLowDimMpfa, INHERITS_FROM(CCTpfaModel, OnePLowDim));
+
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::OnePLowDim> { using type = LOWDIMGRIDTYPE; };
