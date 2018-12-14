@@ -19,7 +19,8 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief Test for the instationary staggered grid Navier-Stokes model with analytical solution (Angeli et al., 2017).
+ * \brief Test for the instationary staggered grid Navier-Stokes model
+ *        with analytical solution (Angeli et al. 2017, \cite Angeli2017).
  */
 
 #include <config.h>

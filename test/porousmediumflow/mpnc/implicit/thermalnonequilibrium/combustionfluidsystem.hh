@@ -44,8 +44,7 @@ namespace FluidSystems {
  *
  * \brief A two-phase fluid system with water as sole component.
  *
- * Values are taken from Shi & Wang, A numerical investigation of transpiration
- * cooling with liquid coolant phase change, Transport in Porous Media, 2011
+ * Values are taken from Shi and Wang, 2011 \cite Shi2011.
  */
 template <class Scalar>
 class CombustionFluidsystem

@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief Stationary test for the staggered grid Navier-Stokes model (Kovasznay 1947).
+ * \brief Stationary test for the staggered grid Navier-Stokes model (Kovasznay 1948, \cite Kovasznay1948).
  */
 
 #include <config.h>

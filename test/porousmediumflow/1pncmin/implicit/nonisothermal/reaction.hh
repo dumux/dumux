@@ -21,7 +21,7 @@
  * \ingroup OnePNCMinTests
  * \brief Class for the evaluation of the reaction rate of Calciumoxide to Halciumhydroxide
  *
- * It contains simple and advanced reaction kinetics according to Nagel et al. (2014).
+ * It contains simple and advanced reaction kinetics according to Nagel et al. (2014) \cite nagel2014.
  */
 
 #ifndef DUMUX_THERMOCHEM_REACTION_HH
@@ -33,13 +33,13 @@ namespace Dumux {
  * \ingroup OnePNCMinTests
  * \brief Class for the evaluation of the reaction rate of Calciumoxide to Halciumhydroxide
  *
- * It contains simple and advanced reaction kinetics according to Nagel et al. (2014).
+ * It contains simple and advanced reaction kinetics according to Nagel et al. (2014) \cite nagel2014.
  */
 class ThermoChemReaction {
 
 public:
     /*!
-     * \brief Evaluates the reaction kinetics (see Nagel et al. 2014)
+     * \brief Evaluates the reaction kinetics (see Nagel et al. 2014  \cite nagel2014).
      */
     template<class VolumeVariables>
     typename VolumeVariables::PrimaryVariables::value_type
@@ -239,6 +239,6 @@ public:
 
 };
 
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif

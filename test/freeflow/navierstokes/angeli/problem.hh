@@ -19,7 +19,8 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief Test for the instationary staggered grid Navier-Stokes model with analytical solution (Angeli et al., 2017)
+ * \brief Test for the instationary staggered grid Navier-Stokes model
+ *        with analytical solution (Angeli et al. 2017, \cite Angeli2017).
  */
 
 #ifndef DUMUX_ANGELI_TEST_PROBLEM_HH
@@ -74,7 +75,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::AngeliTest> { static conste
 
 /*!
  * \ingroup NavierStokesTests
- * \brief  Test problem for the staggered grid (Angeli 1947).
+ * \brief  Test problem for the staggered grid (Angeli et al. 2017, \cite Angeli2017).
  *
  * The unsteady, 2D, incompressible Navier-Stokes equations for a zero source and a Newtonian
  * flow is solved and compared to an analytical solution (sums/products of trigonometric functions).

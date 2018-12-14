@@ -96,13 +96,10 @@ struct FluidSystem<TypeTag, TTag::Kuevette>
  * for the mass components and the enthalpy), aimed at remediating an initial
  * NAPL (Non-Aquoeus Phase Liquid) contamination in the heterogeneous domain.
  * The contamination is initially placed partly into the coarse sand
- * and partly into a fine sand lense.
+ * and partly into a fine sand lens.
  *
  * This simulation can be varied through assigning different boundary conditions
- * at the left boundary as described in Class (2001):
- * Theorie und numerische Modellierung nichtisothermer Mehrphasenprozesse in
- * NAPL-kontaminierten por"osen Medien, Dissertation, Eigenverlag des Instituts
- * f"ur Wasserbau
+ * at the left boundary as described in \cite Class2001.
  *
  * This problem uses the \ref ThreePThreeCModel and \ref NIModel model.
  *
