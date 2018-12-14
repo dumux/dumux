@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Geomechanics
  * \brief Base class for all geomechanical problems
  */
 #ifndef DUMUX_GEOMECHANICS_FV_PROBLEM_HH

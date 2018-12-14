@@ -19,7 +19,6 @@
 /*!
  * \file
  * \ingroup Geomechanics
- * \ingroup Elastic
  * \brief Element-wise calculation of the local residual for problems
  *        using the elastic model considering linear elasticity.
  */
@@ -34,7 +33,6 @@ namespace Dumux {
 
 /*!
  * \ingroup Geomechanics
- * \ingroup Elastic
  * \brief Element-wise calculation of the local residual for problems
  *        using the elastic model considering linear elasticity.
  */
