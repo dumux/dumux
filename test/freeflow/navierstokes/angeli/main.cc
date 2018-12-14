@@ -144,10 +144,10 @@ int main(int argc, char** argv) try
 
         problem->createAnalyticalSolution();
 
+        problem->postTimeStep(x);
+
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
-
-        problem->postTimeStep(x);
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
