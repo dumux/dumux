@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup InputOutput
  * \brief  A grid creator for dune-subgrid.
  */
 #ifndef DUMUX_SUBGRID_GRID_CREATOR_HH
@@ -36,6 +37,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup InputOutput
  * \brief A grid creator for dune-subgrid.
  */
 template <class HostGrid>

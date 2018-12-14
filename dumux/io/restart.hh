@@ -36,6 +36,7 @@
 #include <sstream>
 
 namespace Dumux {
+
 /*!
  * \ingroup InputOutput
  * \brief Load or save a state of a model to/from the harddisk.

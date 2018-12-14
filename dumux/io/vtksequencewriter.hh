@@ -35,7 +35,6 @@ namespace Dumux {
    * \tparam VTKWriter The VTKWriter class
    *
    */
-
   template<class VTKWriter>
   class VTKSequenceWriter
   {
@@ -45,19 +44,19 @@ namespace Dumux {
     int rank_;
     int size_;
   public:
-    /** \brief Set up the VTKSequenceWriter class
+    /*! \brief Set up the VTKSequenceWriter class
      *
      * \param 				vtkWriter Writer object used to write the individual time step data files
      * \param name 			Base name of the output files.  This should not
-       *                   	contain any directory part and not filename
-       *                   	extensions.  It will be used both for each processes
-       *                   	piece as well as the parallel collection file.
+     *                   	contain any directory part and not filename
+     *                   	extensions.  It will be used both for each processes
+     *                   	piece as well as the parallel collection file.
      * \param path 			Directory where to put the parallel collection
-       *                   	(.pvtu/.pvtp) file.  If it is relative, it is taken
-       *                   	relative to the current directory
+     *                   	(.pvtu/.pvtp) file.  If it is relative, it is taken
+     *                   	relative to the current directory
      * \param extendpath 	Directory where to put the piece file (.vtu/.vtp) of
-       *                   	this process.  If it is relative, it is taken
-       *                   	relative to the directory denoted by path
+     *                   	this process.  If it is relative, it is taken
+     *                   	relative to the directory denoted by path
      * \param rank 			Process number in a multi-process setting
      * \param size 			Total number of processes
      */
@@ -77,7 +76,7 @@ namespace Dumux {
     ~VTKSequenceWriter() {}
 
 
-    /**
+    /*!
      * \brief Writes VTK data for the given time,
      * \param time The time(step) for the data to be written.
      * \param type VTK output type.

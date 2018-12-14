@@ -43,7 +43,6 @@
 #include <dumux/io/vtk/vtkreader.hh>
 #include <dumux/discretization/method.hh>
 
-
 namespace Dumux {
 
 /*!

@@ -211,9 +211,9 @@ private:
     std::shared_ptr<Dune::GridFactory<Grid>> gridFactory_;
 
     /*!
-    * \brief Element and boundary domain markers obtained from Gmsh physical entities
-    *        They map from element indices / boundary ids to the physical entity number
-    */
+     * \brief Element and boundary domain markers obtained from Gmsh physical entities
+     *        They map from element indices / boundary ids to the physical entity number
+     */
     std::vector<int> elementMarkers_;
     std::vector<int> boundaryMarkers_;
     std::vector<int> faceMarkers_;

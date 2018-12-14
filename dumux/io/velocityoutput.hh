@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup InputOutput
  * \brief Default velocity output policy for porous media models
  */
 #ifndef DUMUX_IO_VELOCITYOUTPUT_HH
@@ -33,6 +33,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup InputOutput
  * \brief Velocity output for implicit (porous media) models
  */
 template<class GridVariables>

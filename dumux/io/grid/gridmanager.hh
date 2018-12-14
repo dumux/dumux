@@ -296,14 +296,14 @@ protected:
     }
 
     /*!
-    * \brief A state variable if the DGF Dune::GridPtr has been enabled.
-    *        It is always enabled if a DGF grid file was used to create the grid.
-    */
+     * \brief A state variable if the DGF Dune::GridPtr has been enabled.
+     *        It is always enabled if a DGF grid file was used to create the grid.
+     */
     bool enableDgfGridPointer_ = false;
 
     /*!
-    * \brief A state variable if domain markers have been read from a Gmsh file.
-    */
+     * \brief A state variable if domain markers have been read from a Gmsh file.
+     */
     bool enableGmshDomainMarkers_ = false;
 
     std::shared_ptr<Grid> gridPtr_;

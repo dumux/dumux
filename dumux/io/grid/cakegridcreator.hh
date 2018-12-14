@@ -21,7 +21,6 @@
  * \ingroup InputOutput
  * \brief Provides a grid creator for a piece of cake grid
  */
-
 #ifndef DUMUX_CAKE_GRID_CREATOR_HH
 #define DUMUX_CAKE_GRID_CREATOR_HH
 
@@ -35,8 +34,7 @@
 #include <dune/grid/common/gridfactory.hh>
 #include <dumux/common/parameters.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup InputOutput
@@ -75,25 +73,25 @@ public:
     }
 
     /*!
-    * \brief Create vectors containing polar coordinates of all points.
-    *
-    * All keys are expected to be in group GridParameterGroup.
-    * The following keys are recognized:
-    * - Radial : min/max value for radial coordinate
-    * - Angular : min/max value for angular coordinate
-    * - Axial : min/max value for axial coordinate
-    *   Adding 0, 1 (or 2 in 3D) specifies in which direction (x, y and z, respectively)
-    *   the radial, angular and axial direction are oriented
-    * - Cells : number of cells array for x-coordinate (Again, an added 0, 1 or 3 specifies x, y or z
-    * - Grading : grading factor array for x-coordinate (Same here)
-    * - Verbosity : whether the grid construction should output to standard out
-    *
-    * The grading factor \f$ g \f$ specifies the ratio between the next and the current cell size:
-    * \f$ g = \frac{h_{i+1}}{h_i} \f$.
-    * Negative grading factors are converted to
-    * \f$ g = -\frac{1}{g_\textrm{negative}} \f$
-    * to avoid issues with imprecise fraction numbers.
-    */
+     * \brief Create vectors containing polar coordinates of all points.
+     *
+     * All keys are expected to be in group GridParameterGroup.
+     * The following keys are recognized:
+     * - Radial : min/max value for radial coordinate
+     * - Angular : min/max value for angular coordinate
+     * - Axial : min/max value for axial coordinate
+     *   Adding 0, 1 (or 2 in 3D) specifies in which direction (x, y and z, respectively)
+     *   the radial, angular and axial direction are oriented
+     * - Cells : number of cells array for x-coordinate (Again, an added 0, 1 or 3 specifies x, y or z
+     * - Grading : grading factor array for x-coordinate (Same here)
+     * - Verbosity : whether the grid construction should output to standard out
+     *
+     * The grading factor \f$ g \f$ specifies the ratio between the next and the current cell size:
+     * \f$ g = \frac{h_{i+1}}{h_i} \f$.
+     * Negative grading factors are converted to
+     * \f$ g = -\frac{1}{g_\textrm{negative}} \f$
+     * to avoid issues with imprecise fraction numbers.
+     */
     static void createVectors(std::array<std::vector<Scalar>, dim> &polarCoordinates,
                               Dune::FieldVector<int, dim> &indices,
                               const std::string& modelParamGroup,
@@ -260,7 +258,7 @@ public:
                        [](Scalar s){ return s*M_PI/180; });
     }
 
-     /*!
+    /*!
      * \brief Creates cartesian grid from polar coordinates.
      *
      * \param polarCoordinates Vector containing radial, angular and axial coordinates (in this order)
