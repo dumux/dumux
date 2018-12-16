@@ -16,10 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
+/*!
  * \file
- * \brief Definition of a test problem for the poro-elastic model
+ * \ingroup GeomechanicsTests
+ * \brief Definition of a test problem for the poro-elastic model.
  */
+
 #ifndef DUMUX_POROELASTIC_PROBLEM_HH
 #define DUMUX_POROELASTIC_PROBLEM_HH
 
@@ -65,13 +67,11 @@ struct SpatialParams<TypeTag, TTag::TestPoroElastic>
     using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
                                            GetPropType<TypeTag, Properties::FVGridGeometry> >;
 };
-}
+} // end namespace Properties
 
 /*!
- * \ingroup Geomechanics
- * \ingroup PoroElastic
- *
- * \brief Problem definition for the deformation of a poro-elastic body
+ * \ingroup GeomechanicsTests
+ * \brief Problem definition for the deformation of a poro-elastic body.
  */
 template<class TypeTag>
 class PoroElasticProblem : public GeomechanicsFVProblem<TypeTag>
@@ -100,25 +100,25 @@ class PoroElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using GradU = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
 public:
-    //! The constructor
     PoroElasticProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {}
 
-    //! The temperature in the domain
+    //! Returns the temperature in the domain.
     static constexpr Scalar temperature()
     { return 273.15; }
 
-    //! Evaluate the initial value for a control volume.
+    //! Evaluates the initial value for a control volume.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
 
-    //! Evaluate the boundary conditions for a Dirichlet boundary segment.
+    //! Evaluates the boundary conditions for a Dirichlet boundary segment.
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
 
     /*!
-     * \brief Returns the effective fluid density
+     * \brief Returns the effective fluid density.
+     *
      * \param globalPos The global position
      */
     Scalar effectiveFluidDensityAtPos(const GlobalPosition& globalPos) const
@@ -131,6 +131,7 @@ public:
 
     /*!
      * \brief Returns the effective pore pressure
+     *
      * \note We use the x-displacement as pressure solution. The shift to
      *       higher values is done to see a mor pronounced effect in stresses.
      *
@@ -142,6 +143,7 @@ public:
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
+     *
      * \param globalPos The global position
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
@@ -152,8 +154,8 @@ public:
     }
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-control volume.
      */
     NumEqVector source(const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -195,7 +197,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the exact displacement to this problem at a given position.
+     * \brief Evaluates the exact displacement to this problem at a given position.
      */
     PrimaryVariables exactSolution(const GlobalPosition& globalPos) const
     {
@@ -211,7 +213,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the exact displacement gradient to this problem at a given position.
+     * \brief Evaluates the exact displacement gradient to this problem at a given position.
      */
     GradU exactGradient(const GlobalPosition& globalPos) const
     {
@@ -236,6 +238,6 @@ private:
     static constexpr Scalar eps_ = 3e-6;
 };
 
-} //end namespace
+} // end namespace Dumux
 
 #endif
