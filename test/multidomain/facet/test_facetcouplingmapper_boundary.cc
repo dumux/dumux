@@ -18,8 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup FacetTests
  * \brief Tests the grid creator class for models using facet coupling.
  */
+
 #include <config.h>
 #include <iostream>
 
@@ -39,7 +41,7 @@
 #define BULKGRIDTYPE Dune::UGGrid<2>
 #endif
 
-//! tests whether two positions are equal
+//! Tests whether two positions are equal.
 template<typename Pos1, typename Pos2>
 bool checkEquality(const Pos1& p1, const Pos2& p2, typename Pos1::value_type eps)
 {

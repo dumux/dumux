@@ -18,10 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup EmbeddedTests
  * \brief Test for the 1d-3d embedded mixed-dimension model coupling two
- *        one-phase porous medium flow problems
+ *        one-phase porous medium flow problems.
  */
+
 #include <config.h>
 
 #include <ctime>
@@ -78,7 +79,7 @@ struct PointSourceHelper<TypeTag, TTag::Root> { using type = typename GetPropTyp
 
 } // end namespace Properties
 
-//! helper function for mass balance evaluations
+//! Helper function for mass balance evaluations
 template<class Problem, class SolutionVector, class GridVariables>
 double computeSourceIntegral(const Problem& problem, const SolutionVector& sol, const GridVariables& gridVars)
 {
@@ -110,7 +111,7 @@ double computeSourceIntegral(const Problem& problem, const SolutionVector& sol, 
     return source[Problem::Indices::conti0EqIdx];
 }
 
-//! helper function for mass balance evaluations
+//! Helper function for mass balance evaluations
 template<class Problem, class SolutionVector, class GridVariables>
 double computeGlobalMass(const Problem& problem, const SolutionVector& sol, const GridVariables& gridVars)
 {
@@ -138,7 +139,7 @@ double computeGlobalMass(const Problem& problem, const SolutionVector& sol, cons
     return mass;
 }
 
-//! helper function for mass balance evaluations
+//! Helper function for mass balance evaluations
 template<class Problem, class SolutionVector, class GridVariables>
 double computeGlobalBoundaryMass(const Problem& problem, const SolutionVector& sol, const GridVariables& gridVars, double dt)
 {

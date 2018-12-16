@@ -18,8 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A fluid system for one phase with the components h2, n2 and co2
+ * \ingroup BoundaryTests
+ * \brief A fluid system for one phase with the components h2, n2 and co2.
  */
+
 #ifndef DUMUX_THREE_GAS_COMPONENT_FLUID_SYSTEM_HH
 #define DUMUX_THREE_GAS_COMPONENT_FLUID_SYSTEM_HH
 
@@ -28,8 +30,8 @@
 namespace Dumux {
 namespace FluidSystems {
 /*!
- * \ingroup FluidSystems
- * \brief  A simple fluid system with one MaxwellStefan component.
+ * \ingroup BoundaryTests
+ * \brief A simple fluid system with one Maxwell-Stefan component.
  */
 template<class Scalar>
 class H2N2CO2FluidSystem: public Base<Scalar, H2N2CO2FluidSystem<Scalar>>
@@ -71,7 +73,7 @@ public:
     using Base::binaryDiffusionCoefficient;
    /*!
      * \brief Given a phase's composition, temperature and pressure,
-     *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
+     *        returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
      *        \f$i\f$ and \f$j\f$ in this phase.
      *
      * \param fluidState An arbitrary fluid state
@@ -104,7 +106,7 @@ public:
     using Base::density;
    /*!
      * \brief Given a phase's composition, temperature, pressure, and
-     *        the partial pressures of all components, return its
+     *        the partial pressures of all components, returns its
      *        density \f$\mathrm{[kg/m^3]}\f$.
      * \param phaseIdx index of the phase
      * \param fluidState the fluid state
@@ -119,7 +121,8 @@ public:
 
     using Base::viscosity;
    /*!
-     * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
+     * \brief Calculates the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
+     *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */

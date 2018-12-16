@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup BoundaryTests
  * \brief A simple Darcy test problem (cell-centered finite volume method).
  */
+
 #ifndef DUMUX_DARCY2P2C_SUBPROBLEM_HH
 #define DUMUX_DARCY2P2C_SUBPROBLEM_HH
 
@@ -36,13 +37,11 @@
 
 #include "spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class DarcySubProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 #if !NONISOTHERMAL
@@ -84,7 +83,7 @@ struct SpatialParams<TypeTag, TTag::DarcyTwoPTwoC>
     using type = TwoPTwoCSpatialParams<FVGridGeometry, Scalar>;
 };
 
-}
+} // end namespace Properties
 
 template <class TypeTag>
 class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
@@ -183,8 +182,7 @@ public:
     }
 
     /*!
-     * \brief Returns true if a restart file should be written to
-     *        disk.
+     * \brief Returns true if a restart file should be written to disk.
      */
     bool shouldWriteRestartFile() const
     { return false; }
@@ -198,7 +196,7 @@ public:
     { return true; }
 
     /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      */
     Scalar temperature() const
     { return temperature_; }
@@ -227,10 +225,10 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Dirichlet control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param element The element for which the Dirichlet boundary condition is set
-     * \param scvf The boundary subcontrolvolumeface
+     * \param scvf The boundary sub control volume face
      *
      * For this method, the \a values parameter stores primary variables.
      */
@@ -243,8 +241,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
      *
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeometry The fvGeometry
@@ -289,10 +286,10 @@ public:
      * \param element The element for which the source term is set
      * \param fvGeometry The fvGeometry
      * \param elemVolVars The element volume variables
-     * \param scv The subcontrolvolume
+     * \param scv The sub control volume
      *
      * For this method, the \a values variable stores the rate mass
-     * of a component is generated or annihilate per volume
+     * of a component is generated or annihilated per volume
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      */
@@ -305,7 +302,7 @@ public:
     // \}
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * For this method, the \a priVars parameter stores primary
      * variables.
@@ -326,9 +323,7 @@ public:
 
     // \}
 
-    /*!
-     * \brief Get the coupling manager
-     */
+    //! Get the coupling manager
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
@@ -355,6 +350,6 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
     DiffusionCoefficientAveragingType diffCoeffAvgType_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif //DUMUX_DARCY2P2C_SUBPROBLEM_HH

@@ -16,13 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
+/*!
  * \file
- * \ingroup MultiDomain
- * \ingroup Geomechanics
- * \ingroup PoroElastic
+ * \ingroup PoromechanicsTests
  * \brief The poro-elastic sub-problem in the el1p coupled problem.
  */
+
 #ifndef DUMUX_POROELASTIC_SUBPROBLEM_HH
 #define DUMUX_POROELASTIC_SUBPROBLEM_HH
 
@@ -72,10 +71,7 @@ struct SpatialParams<TypeTag, TTag::PoroElasticSub>
 } // end namespace Properties
 
 /*!
- * \ingroup MultiDomain
- * \ingroup Geomechanics
- * \ingroup PoroElastic
- *
+ * \ingroup PoromechanicsTests
  * \brief The poro-elastic sub-problem in the el1p coupled problem.
  */
 template<class TypeTag>
@@ -103,7 +99,6 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
     using GradU = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
 public:
-    //! The constructor
     PoroElasticSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                           std::shared_ptr<CouplingManager> couplingManagerPtr,
                           const std::string& paramGroup = "PoroElastic")
@@ -121,24 +116,24 @@ public:
         return problemName_;
     }
 
-    //! The temperature in the domain
+    //! Returns the temperature in the domain.
     static constexpr Scalar temperature()
     { return 273.15; }
 
-    //! Evaluate the initial value for a control volume.
+    //! Evaluates the initial value for a control volume.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
 
-    //! Evaluate the boundary conditions for a Dirichlet boundary segment.
+    //! Evaluates the boundary conditions for a Dirichlet boundary segment.
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
 
-    //! Evaluate the boundary conditions for a Neumannboundary segment.
+    //! Evaluates the boundary conditions for a Neumann boundary segment.
     PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
 
     /*!
-     * \brief Returns the effective fluid density
+     * \brief Returns the effective fluid density.
      */
     Scalar effectiveFluidDensity(const Element& element,
                                  const SubControlVolume& scv) const
@@ -151,7 +146,7 @@ public:
     }
 
     /*!
-     * \brief Returns the effective pore pressure
+     * \brief Returns the effective pore pressure.
      */
     template< class FluxVarsCache >
     Scalar effectivePorePressure(const Element& element,
@@ -170,6 +165,7 @@ public:
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
+     *
      * \param globalPos The global position
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
@@ -180,8 +176,8 @@ public:
     }
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-control volume.
      */
     PrimaryVariables source(const Element& element,
                             const FVElementGeometry& fvGeometry,
@@ -189,7 +185,7 @@ public:
                             const SubControlVolume& scv) const
     { return PrimaryVariables(0.0); }
 
-    //! returns reference to the coupling manager.
+    //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 
@@ -199,6 +195,6 @@ private:
     std::string problemName_;
 };
 
-} //end namespace
+} // end namespace Dumux
 
 #endif

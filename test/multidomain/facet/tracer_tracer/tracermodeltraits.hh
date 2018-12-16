@@ -16,11 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
+/*!
  * \file
- * \ingroup TracerTests
- * \brief The model traits usedin the tracer facet coupling test
+ * \ingroup FacetTests
+ * \brief The model traits used in the tracer facet coupling test.
  */
+
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_TRACER_MODELTRAITS_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_MODELTRAITS_HH
 
@@ -28,13 +29,13 @@
 
 namespace Dumux {
 
-//! custom model traits disabling diffusion
+//! Custom model traits disabling diffusion
 template<int nComp, bool useMol>
 struct TracerTestModelTraits : public TracerModelTraits<nComp, useMol>
 {
     static constexpr bool enableMolecularDiffusion() { return false; }
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

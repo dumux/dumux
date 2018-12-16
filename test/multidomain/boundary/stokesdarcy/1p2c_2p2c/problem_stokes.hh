@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesTests
+ * \ingroup BoundaryTests
  * \brief A simple Stokes test problem for the staggered grid (Navier-)Stokes model.
  */
+
 #ifndef DUMUX_STOKES1P2C_SUBPROBLEM_HH
 #define DUMUX_STOKES1P2C_SUBPROBLEM_HH
 
@@ -34,13 +35,11 @@
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class StokesSubProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 #if !NONISOTHERMAL
@@ -81,12 +80,11 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
-
-}
+} // end namespace Properties
 
 /*!
- * \ingroup NavierStokesTests
- * \brief  Test problem for the one-phase (Navier-) Stokes problem.
+ * \ingroup BoundaryTests
+ * \brief Test problem for the one-phase (Navier-) Stokes problem.
  *
  * Horizontal flow from left to right with a parabolic velocity profile.
  */
@@ -149,13 +147,13 @@ public:
     // \{
 
    /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      */
     Scalar temperature() const
     { return refTemperature_; }
 
    /*!
-     * \brief Return the sources within the domain.
+     * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
      */
@@ -215,7 +213,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Dirichlet control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& pos) const
     {
@@ -226,7 +224,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann control volume.
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
      *
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeometry The fvGeometry
@@ -279,9 +277,7 @@ public:
 
     // \}
 
-    /*!
-     * \brief Get the coupling manager
-     */
+    //! Get the coupling manager
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
@@ -291,7 +287,7 @@ public:
     // \{
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -314,19 +310,19 @@ public:
         return values;
     }
 
-    //! \brief Returns the reference velocity.
+    //! Returns the reference velocity.
     const Scalar refVelocity() const
     { return refVelocity_ ;}
 
-    //! \brief Returns the reference pressure.
+    //! Returns the reference pressure.
     const Scalar refPressure() const
     { return refPressure_; }
 
-    //! \brief Returns the reference mass fraction.
+    //! Returns the reference mass fraction.
     const Scalar refMoleFrac() const
     { return refMoleFrac_; }
 
-    //! \brief Returns the reference temperature.
+    //! Returns the reference temperature.
     const Scalar refTemperature() const
     { return refTemperature_; }
 
@@ -338,7 +334,8 @@ public:
     { return timeLoop_->time(); }
 
     /*!
-     * \brief Returns the intrinsic permeability of required as input parameter for the Beavers-Joseph-Saffman boundary condition
+     * \brief Returns the intrinsic permeability of required as input parameter
+     *        for the Beavers-Joseph-Saffman boundary condition.
      */
     Scalar permeability(const Element& element, const SubControlVolumeFace& scvf) const
     {
@@ -346,7 +343,8 @@ public:
     }
 
     /*!
-     * \brief Returns the alpha value required as input parameter for the Beavers-Joseph-Saffman boundary condition
+     * \brief Returns the alpha value required as input parameter for the
+     *        Beavers-Joseph-Saffman boundary condition.
      */
     Scalar alphaBJ(const SubControlVolumeFace& scvf) const
     {
@@ -368,7 +366,7 @@ private:
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
 
-    //! \brief updates the fluid state to obtain required quantities for IC/BC
+    //! Updates the fluid state to obtain required quantities for IC/BC
     void updateFluidStateForBC_(FluidState& fluidState, const Scalar pressure) const
     {
         fluidState.setTemperature(refTemperature());
@@ -390,7 +388,7 @@ private:
         fluidState.setEnthalpy(0, enthalpy);
     }
 
-    //! \brief set the profile of the inflow velocity (horizontal direction)
+    //! Set the profile of the inflow velocity (horizontal direction).
     const Scalar xVelocity_(const GlobalPosition &globalPos) const
     {
         const Scalar vmax = refVelocity();
@@ -415,6 +413,6 @@ private:
 
     DiffusionCoefficientAveragingType diffCoeffAvgType_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif // DUMUX_STOKES1P2C_SUBPROBLEM_HH

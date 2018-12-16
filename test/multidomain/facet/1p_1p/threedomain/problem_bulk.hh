@@ -18,10 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
- * \ingroup FacetCoupling
- * \brief The problem for the bulk domain in the single-phase facet coupling test
+ * \ingroup FacetTests
+ * \brief The problem for the bulk domain in the single-phase facet coupling test.
  */
+
 #ifndef DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_BULKPROBLEM_HH
 #define DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_BULKPROBLEM_HH
 
@@ -76,9 +76,9 @@ public:
 } // end namespace Properties
 
 /*!
- * \ingroup OnePTests
+ * \ingroup FacetTests
  * \brief Test problem for the incompressible one-phase model
- *        with coupling across the bulk grid facets
+ *        with coupling across the bulk grid facets.
  */
 template<class TypeTag>
 class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
@@ -144,7 +144,7 @@ public:
         return values;
     }
 
-    //! Evaluate the Dirichlet boundary conditions at a given position
+    //! Evaluates the Dirichlet boundary conditions at a given position.
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         const auto y = globalPos[1];
@@ -154,15 +154,15 @@ public:
         return PrimaryVariables( {2.0 - (y-yMin)/(yMax-yMin)} );
     }
 
-    //! Evaluat the initial conditions
+    //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(1.0); }
 
-    //! Return the temperature in \f$\mathrm{[K]}\f$ in the domain
+    //! Returns the temperature in \f$\mathrm{[K]}\f$ in the domain.
     Scalar temperature() const
     { return 283.15; /*10°C*/ }
 
-    //! Return const reference to the coupling manager.
+    //! Returns const reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 

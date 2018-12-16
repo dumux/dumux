@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TracerTests
- * \brief Definition of the spatial parameters for the tracer problem
+ * \ingroup FacetTests
+ * \brief Definition of the spatial parameters for the tracer problem.
  */
+
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_TRACER_SPATIALPARAMS_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_SPATIALPARAMS_HH
 
@@ -30,8 +31,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup TracerTests
- * \brief Definition of the spatial parameters for the tracer problem
+ * \ingroup FacetTests
+ * \brief Definition of the spatial parameters for the tracer problem.
  */
 template<class FVGridGeometry, class Scalar>
 class TracerSpatialParams
@@ -61,21 +62,21 @@ public:
     {}
 
     /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
+     * \brief Defines the porosity \f$\mathrm{[-]}\f$.
      *
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
 
-    //! Fluid properties that are spatial params in the tracer model
-    //! They can possible vary with space but are usually constants
-    //! fluid density
+    //! Fluid properties that are spatial parameters in the tracer model.
+    //! They can possibly vary with space but are usually constants.
+    //! Fluid density
     Scalar fluidDensity(const Element &element,
                         const SubControlVolume& scv) const
     { return 1000; }
 
-    //! fluid molar mass
+    //! Fluid molar mass
     Scalar fluidMolarMass(const Element &element,
                           const SubControlVolume& scv) const
     { return 18.0; }
@@ -83,7 +84,7 @@ public:
     Scalar fluidMolarMass(const GlobalPosition &globalPos) const
     { return 18.0; }
 
-    //! velocity field
+    //! Velocity field
     template<class ElementVolumeVariables>
     Scalar volumeFlux(const Element &element,
                       const FVElementGeometry& fvGeometry,

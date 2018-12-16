@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePTests
- * \brief The properties for the incompressible test
+ * \ingroup BoundaryTests
+ * \brief The properties for the incompressible test.
  */
+
 #ifndef DUMUX_ONEP_SUB_TEST_PROBLEM_HH
 #define DUMUX_ONEP_SUB_TEST_PROBLEM_HH
 
@@ -31,8 +32,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
- * \brief  Multidomain test problem for the incompressible one-phase model
+ * \ingroup BoundaryTests
+ * \brief Multidomain test problem for the incompressible one-phase model.
  *
  * Two possibilities to divide the model domain are given:
  * half: a horizontal interface splits the domain in two equally sized subdomains
@@ -103,11 +104,10 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * This is the method for the case where the Neumann condition is
-     * potentially solution dependent
+     * potentially solution dependent.
      *
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
@@ -132,8 +132,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      *
@@ -159,7 +158,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */

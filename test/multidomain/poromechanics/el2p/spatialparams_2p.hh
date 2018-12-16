@@ -18,11 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
- * \ingroup TwoPTests
- * \ingroup PoroElastic
- * \brief The spatial parameters class for the two-phase sub problem in the el2p test problem
+ * \ingroup PoromechanicsTests
+ * \brief The spatial parameters class for the two-phase sub problem in the el2p test problem.
  */
+
 #ifndef DUMUX_2P_TEST_SPATIALPARAMS_HH
 #define DUMUX_2P_TEST_SPATIALPARAMS_HH
 
@@ -38,10 +37,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
- * \ingroup TwoPTests
- * \ingroup PoroElastic
- * \brief The spatial parameters class for the two-phase sub problem in the el2p test problem
+ * \ingroup PoromechanicsTests
+ * \brief The spatial parameters class for the two-phase sub problem in the el2p test problem.
  */
 template<class FVGridGeometry, class Scalar, class CouplingManager>
 class TwoPSpatialParams : public FVSpatialParams<FVGridGeometry, Scalar,
@@ -84,8 +81,8 @@ public:
         myMaterialParams_.setLambda(brooksCoreyLambda);
     }
 
-    //! Return the porosity for a sub-control volume
-    template<class ElementSolution>
+    //! Returns the porosity for a sub-control volume.
+    template< class ElementSolution >
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
@@ -99,7 +96,7 @@ public:
         return PorosityDeformation<Scalar>::evaluatePorosity(poroMechGridGeom, element, scv.center(), poroMechElemSol, initPorosity_);
     }
 
-    //! Function for defining the (intrinsic) permeability \f$[m^2]\f$.
+    //! Functions for defining the (intrinsic) permeability \f$[m^2]\f$.
      template< class ElementSolution >
      PermeabilityType permeability(const Element& element,
                                    const SubControlVolume& scv,
@@ -111,12 +108,13 @@ public:
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law.
-     *        In this test, we use element-wise distributed material parameters.
+     *
+     * In this test, we use element-wise distributed material parameters.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return the material parameters object
+     * \return The material parameters object
      */
     template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
@@ -139,7 +137,7 @@ public:
         return FluidSystem::phase0Idx;
     }
 
-    //! returns reference to the coupling manager.
+    //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 

@@ -18,8 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief test for the one-phase facet coupling model
+ * \ingroup FacetTests
+ * \brief Test for the one-phase facet coupling model.
  */
+
 #include <config.h>
 
 #include <iostream>

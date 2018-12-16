@@ -18,8 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup FacetTests
  * \brief Tests the grid creator class for models using facet coupling.
  */
+
 #include <config.h>
 #include <iostream>
 
@@ -90,7 +92,6 @@ GlobalPosition getDisplacement(const GlobalPosition& pos)
         DUNE_THROW(Dune::InvalidStateException, "Invalid position provided: " << pos);
 }
 
-//! main function
 int main (int argc, char *argv[]) try
 {
     // initialize mpi

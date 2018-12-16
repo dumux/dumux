@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief A test problem for the isothermal coupled Stokes/Darcy problem (1p2c/2p2c)
+ * \ingroup BoundaryTests
+ * \brief A test problem for the isothermal coupled Stokes/Darcy problem (1p2c/2p2c).
  */
+
 #include <config.h>
 
 #include <ctime>

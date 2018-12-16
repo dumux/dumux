@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the equal dimension boundary coupling model
+ * \ingroup BoundaryTests
+ * \brief Test for the equal dimension boundary coupling model.
  */
+
 #include <config.h>
 
 #include <ctime>
