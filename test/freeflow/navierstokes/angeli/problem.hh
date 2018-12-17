@@ -106,26 +106,7 @@ public:
     AngeliTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
-    }
-
-    void postTimeStep(const SolutionVector& curSol) const
-    {
-        if(printL2Error_)
-        {
-            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-            const auto l2error = L2Error::calculateL2Error(*this, curSol);
-            const int numCellCenterDofs = this->fvGridGeometry().numCellCenterDofs();
-            const int numFaceDofs = this->fvGridGeometry().numFaceDofs();
-            std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
-                    << std::scientific
-                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
-                    << ", L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                    << ", L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
-                    << std::endl;
-        }
     }
 
    /*!
@@ -315,7 +296,6 @@ private:
     Scalar kinematicViscosity_;
     Scalar time_ = 0;
     Scalar timeStepSize_ = 0;
-    bool printL2Error_;
     std::vector<Scalar> analyticalPressure_;
     std::vector<VelocityVector> analyticalVelocity_;
     std::vector<VelocityVector> analyticalVelocityOnFace_;

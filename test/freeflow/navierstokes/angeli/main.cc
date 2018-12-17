@@ -131,6 +131,7 @@ int main(int argc, char** argv) try
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
+    const bool printL2Error = getParam<bool>("Problem.PrintL2Error");
     timeLoop->start(); do
     {
         // set previous solution for storage evaluations
@@ -145,7 +146,24 @@ int main(int argc, char** argv) try
 
         problem->createAnalyticalSolution();
 
-        problem->postTimeStep(x);
+        if (printL2Error)
+        {
+            using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+            using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+            using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+
+            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
+            const auto l2error = L2Error::calculateL2Error(*problem, x);
+            const int numCellCenterDofs = fvGridGeometry->numCellCenterDofs();
+            const int numFaceDofs = fvGridGeometry->numFaceDofs();
+            std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
+                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
+                    << std::scientific
+                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
+                    << ", L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
+                    << ", L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
+                    << std::endl;
+        }
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
