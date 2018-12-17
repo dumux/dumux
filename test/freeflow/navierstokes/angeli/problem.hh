@@ -110,16 +110,6 @@ public:
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
     }
 
-   /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    bool shouldWriteRestartFile() const
-    {
-        return false;
-    }
-
     void postTimeStep(const SolutionVector& curSol) const
     {
         if(printL2Error_)
