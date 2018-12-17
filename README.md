@@ -15,8 +15,8 @@ description of the goals and motivations behind DuMuX.
 Installation
 ===============
 
-Have a look at the [installation guide][3] or use the [DuMuX handbook]
-[4], chapter 2.
+Have a look at the [installation guide][3] or use the [DuMuX handbook][4],
+Chapter 2.
 
 
 License
