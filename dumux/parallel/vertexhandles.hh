@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Parallel
+ * \ingroup Assembly
  * \brief Provides data handles for parallel communication which operate on vertices
  * \note This is useful for schemes with degrees of freedom on vertices (box scheme)
  */
@@ -31,7 +31,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Parallel
+ * \ingroup Assembly
  * \brief Data handle for parallel communication which sums up all
  *        values are attached to vertices
  */
