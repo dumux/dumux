@@ -21,6 +21,7 @@
  * \ingroup SequentialTwoPModel
  * \brief Properties for the MPFA-O method.
  */
+
 #ifndef DUMUX_FVMPFAL3DPROPERTIES2P_HH
 #define DUMUX_FVMPFAL3DPROPERTIES2P_HH
 
@@ -29,25 +30,21 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 NEW_TYPE_TAG(FvMpfaL3dPressureTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties));
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/3dpressurevelocity.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/velocityintransport.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 SET_TYPE_PROP(FvMpfaL3dPressureTwoP, MPFAInteractionVolume, FvMpfaL3dInteractionVolume<TypeTag>);
 SET_TYPE_PROP(FvMpfaL3dPressureTwoP, MPFAInteractionVolumeContainer, FvMpfaL3dInteractionVolumeContainer<TypeTag>);
 SET_TYPE_PROP(FvMpfaL3dPressureTwoP, PressureModel, FvMpfaL3dPressureVelocity2p<TypeTag>);
 SET_TYPE_PROP( FvMpfaL3dPressureTwoP, Velocity, FvMpfaVelocityInTransport<TypeTag> );
-}
-}// end of Dune namespace
+} // end namespace Properties
+} // end namespace Dumux
 #endif

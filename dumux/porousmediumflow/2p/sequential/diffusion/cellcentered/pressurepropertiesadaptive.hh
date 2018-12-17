@@ -28,19 +28,17 @@
 //Dumux-includes
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 ////////////////////////////////
-// forward declarations
+// Forward declarations
 ////////////////////////////////
 
 
 ////////////////////////////////
-// properties
+// Properties
 ////////////////////////////////
-namespace Properties
-{
+namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
@@ -52,16 +50,14 @@ NEW_TYPE_TAG(FVPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP));
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #include "velocityadaptive.hh"
 #include "pressureadaptive.hh"
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
@@ -72,8 +68,7 @@ SET_TYPE_PROP( FVPressureTwoPAdaptive, Velocity, FVVelocity2PAdaptive<TypeTag> )
 SET_TYPE_PROP(FVPressureTwoPAdaptive, PressureModel, FVPressure2PAdaptive<TypeTag>);
 //! Allow assembling algorithm for the pressure matrix to assemble only from one side of a cell-cell interface
 SET_BOOL_PROP(FVPressureTwoPAdaptive, VisitFacesOnlyOnce, true);
-}
-
-}
+} // end namespace Properties
+} // end namespace Dumnux
 
 #endif

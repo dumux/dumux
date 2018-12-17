@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Finite volume discretization of the component transport equation.
+ */
 #ifndef DUMUX_FV3DTRANSPORT2P2C_ADAPTIVE_HH
 #define DUMUX_FV3DTRANSPORT2P2C_ADAPTIVE_HH
 
@@ -28,16 +33,11 @@
 #include "adaptiveproperties.hh"
 #include "fvtransport.hh"
 
-/**
- * @file
- * @brief  Finite Volume discretization of the component transport equation
- * @author Benjamin Faigle
- */
-
-namespace Dumux
-{
-//! Compositional Transport step in a Finite Volume discretization
-/*! \ingroup multiphase Adaptive2p2c
+namespace Dumux {
+/*!
+ * \ingroup SequentialTwoPModel
+ * \brief Compositional transport step in a finite volume discretization
+ *
  *  The finite volume model for the solution of the transport equation for compositional
  *  two-phase flow.
  *  \f[

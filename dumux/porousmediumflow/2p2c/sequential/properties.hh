@@ -18,11 +18,8 @@
  *****************************************************************************/
 
 /*!
- * \ingroup IMPEC
- * \ingroup IMPETProperties
- *
  * \file
- *
+ * \ingroup SequentialTwoPModel
  * \brief Defines the properties required for the sequential 2p2c models.
  */
 #ifndef DUMUX_2P2CPROPERTIES_HH
@@ -34,8 +31,7 @@
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 //****** forward declarations  ******//
 template<class TypeTag>
@@ -53,8 +49,7 @@ struct SequentialTwoPTwoCIndices;
 ////////////////////////////////
 // properties
 ////////////////////////////////
-namespace Properties
-{
+namespace Properties {
 
 //////////////////////////////////////////////////////////////////
 // Type tags

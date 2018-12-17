@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Class including the variables and data of discretized data of the constitutive relations for one element
+ */
 #ifndef DUMUX_ELEMENTDATA2P2C_ADAPTIVE_HH
 #define DUMUX_ELEMENTDATA2P2C_ADAPTIVE_HH
 
@@ -24,21 +29,16 @@
 
 #include <dumux/porousmediumflow/2p2c/sequential/celldata.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/celldatamultiphysics.hh>
-/**
- * @file
- * @brief  Class including the variables and data of discretized data of the constitutive relations for one element
- * @author Benjamin Faigle, Markus Wolff
- */
-namespace Dumux
-{
+
+namespace Dumux {
 /*!
- * \ingroup Adaptive2p2c
- */
-//! Class including the data of a grid cell needed if an adaptive grid is used.
-/*! The class provides model-specific functions needed to adapt the stored cell data to a new (adapted) grid.
+ * \ingroup SequentialTwoPModel
+ * \brief Class including the data of a grid cell needed if an adaptive grid is used.
+ *
+ * The class provides model-specific functions needed to adapt the stored cell data to a new (adapted) grid.
  * Additionally, it provides the storage-infrastructure for explicit front tracking.
  *
- * @tparam TypeTag The Type Tag
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class CellData2P2CAdaptive: public CellData2P2CMultiPhysics<TypeTag>

@@ -19,10 +19,11 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  3-d finite Volume-MPFAL implementation of a two-phase pressure equation
+ * \brief  3-d finite Volume-MPFAL implementation of a two-phase pressure equation.
  *
  * Remark1: only for 3-D hexahedrons of quadrilaterals.
  */
+
 #ifndef DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_HH
 #define DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_HH
 
@@ -35,8 +36,8 @@
 namespace Dumux
 {
 /*!
- * \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model
  * \ingroup SequentialTwoPModel
+ * \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model.
  *
  * Finite Volume-MPFAL-Implementation of the equation
  * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\,

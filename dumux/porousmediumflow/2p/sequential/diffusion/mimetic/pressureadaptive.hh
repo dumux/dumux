@@ -21,6 +21,7 @@
  * \ingroup SequentialTwoPModel
  * \brief Model for the pressure equation discretized by mimetic FD.
  */
+
 #ifndef DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
 #define DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
 
@@ -31,12 +32,11 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/operatoradaptive.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/mimeticadaptive.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \brief mimetic method for the pressure equation
  * \ingroup SequentialTwoPModel
+ * \brief Mimetic method for the pressure equation
  *
  * Provides a mimetic implementation for the evaluation
  * of equations of the form
@@ -118,10 +118,10 @@ template<class TypeTag> class MimeticPressure2PAdaptive
     using Matrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
     using Vector = typename GET_PROP_TYPE(TypeTag, PressureRHSVector);
 
-    //! initializes the matrix to store the system of equations
+    //! Initializes the matrix to store the system of equations
     void initializeMatrix();
 
-    //! function which assembles the system of equations to be solved
+    //! Function which assembles the system of equations to be solved
     void assemble(bool first)
     {
         Scalar timeStep = problem_.timeManager().timeStepSize();
@@ -155,10 +155,10 @@ template<class TypeTag> class MimeticPressure2PAdaptive
         return;
     }
 
-    //! solves the system of equations to get the spatial distribution of the pressure
+    //! Solves the system of equations to get the spatial distribution of the pressure
     void solve();
 
-    //! calculates pressure (postprocessing)
+    //! Calculates pressure (postprocessing)
     void postprocess()
     {
             A_.calculatePressure(lstiff_, pressTrace_, problem_);
@@ -167,16 +167,16 @@ template<class TypeTag> class MimeticPressure2PAdaptive
     }
 
 public:
-    //! constitutive functions are initialized and stored in the variables object
+    //! Constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
 
     /*!
      * \brief Initializes the model
      *
      * Function initializes the sparse matrix to solve the global system of
-     * equations and sets/calculates the initial pressure
+     * equations and sets/calculates the initial pressure.
      *
-     * \param solveTwice indicates if more than one iteration is allowed to get an initial pressure solution
+     * \param solveTwice Indicates if more than one iteration is allowed to get an initial pressure solution
      */
     void initialize(bool solveTwice = true)
     {
@@ -218,7 +218,7 @@ public:
     /*!
      * \brief Velocity update
      *
-     * Reset the velocities in the cellData
+     * Reset the velocities in the cellData.
      */
     void updateVelocity()
     {
@@ -424,7 +424,7 @@ public:
     }
 
     /*!
-     * \brief general method for serialization, output
+     * \brief General method for serialization, output
      *
      * Function needed for restart option.
      *
@@ -441,8 +441,8 @@ public:
         }
     }
 
-        /*!
-     * \brief general method for deserialization
+    /*!
+     * \brief General method for deserialization
      *
      * \param instream The input stream
      * \param element The grid element
@@ -459,6 +459,7 @@ public:
 
     /*!
      * \brief Constructs a MimeticPressure2PAdaptive object
+     *
      * \param problem The Dumux problem
      */
     MimeticPressure2PAdaptive(Problem& problem) :
@@ -488,7 +489,7 @@ public:
 
 private:
     Problem& problem_;
-    TraceType pressTrace_; //!< vector of pressure traces
+    TraceType pressTrace_; // vector of pressure traces
     TraceType f_;
     OperatorAssembler A_;
     LocalStiffness lstiff_;
@@ -499,7 +500,7 @@ private:
     int vtkOutputLevel_;
 };
 
-//! solves the system of equations to get the spatial distribution of the pressure
+//! Solves the system of equations to get the spatial distribution of the pressure
 template<class TypeTag>
 void MimeticPressure2PAdaptive<TypeTag>::solve()
 {
@@ -519,7 +520,7 @@ void MimeticPressure2PAdaptive<TypeTag>::solve()
     return;
 }
 
-//! constitutive functions are updated once if new saturations are calculated and stored in the variables object
+//! Constitutive functions are updated once if new saturations are calculated and stored in the variables object
 template<class TypeTag>
 void MimeticPressure2PAdaptive<TypeTag>::updateMaterialLaws()
 {
@@ -550,6 +551,5 @@ void MimeticPressure2PAdaptive<TypeTag>::updateMaterialLaws()
 }
 
 
-
-}
+} // end namespace Dumux
 #endif

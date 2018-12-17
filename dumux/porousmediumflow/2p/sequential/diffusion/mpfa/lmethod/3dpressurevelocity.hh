@@ -21,6 +21,7 @@
  * \ingroup SequentialTwoPModel
  * \brief  3d Velocity Field from a finite volume solution of a pressure equation using a MPFA L-method.
  */
+
 #ifndef DUMUX_FVMPFAL2PFABOUND3DVELOCITIES2P_HH
 #define DUMUX_FVMPFAL2PFABOUND3DVELOCITIES2P_HH
 
@@ -28,11 +29,10 @@
 #include "3dpressure.hh"
 #include "3dvelocity.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief Class for the calculation of 3d velocities from the  pressure solution of an IMPES scheme using a MPFA L-method.
  * \ingroup SequentialTwoPModel
+ * \brief Class for the calculation of 3d velocities from the  pressure solution of an IMPES scheme using a MPFA L-method.
  *
  * Can be used for calculating the complete velocity field before the solution of the transport equation (more efficient),
  * or for face-wise velocity calculation directly in the transport solution (less efficient).
@@ -94,6 +94,7 @@ template<class TypeTag> class FvMpfaL3dPressureVelocity2p: public FvMpfaL3dPress
 public:
     /*!
      * \brief Constructs a FvMpfaL3dPressureVelocity2p object
+     *
      * \param problem A problem class object
      */
     FvMpfaL3dPressureVelocity2p(Problem& problem) :

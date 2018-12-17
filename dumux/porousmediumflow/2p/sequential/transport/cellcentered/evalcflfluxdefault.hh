@@ -21,17 +21,17 @@
  * \ingroup SequentialTwoPModel
  * \brief  Fluxes to evaluate a CFL-Condition
  */
+
 #ifndef DUMUX_EVALCFLFLUX_DEFAULT_HH
 #define DUMUX_EVALCFLFLUX_DEFAULT_HH
 
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include "evalcflflux.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief  Default implementation of cfl-fluxes to evaluate a CFL-Condition
  * \ingroup SequentialTwoPModel
+ * \brief  Default implementation of cfl-fluxes to evaluate a CFL-Condition
  *
  * Compares the maximum of inflow and outflow to the element volume weighted by relative permeability and viscosity ratios.
  *

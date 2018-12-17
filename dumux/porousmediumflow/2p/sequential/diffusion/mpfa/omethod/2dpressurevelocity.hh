@@ -17,8 +17,9 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Velocity Field from a finite volume solution of a pressure equation using a MPFA O-method.
+ * \brief  Velocity field from a finite volume solution of a pressure equation using a MPFA O-method.
  */
+
 #ifndef DUMUX_MPFAO2DPRESSUREVELOCITIES2P_HH
 #define DUMUX_MPFAO2DPRESSUREVELOCITIES2P_HH
 
@@ -26,11 +27,10 @@
 #include "2dpressure.hh"
 #include "2dvelocity.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief Class for the calculation of velocities from the  pressure solution of an IMPES scheme using a MPFA O-method.
  * \ingroup SequentialTwoPModel
+ * \brief Class for the calculation of velocities from the  pressure solution of an IMPES scheme using a MPFA O-method.
  *
  * Can be used for calculating the complete velocity field before the solution of the transport equation (more efficient),
  * or for face-wise velocity calculation directly in the transport solution (less efficient).
@@ -98,6 +98,7 @@ template<class TypeTag> class FvMpfaO2dPressureVelocity2p: public FvMpfaO2dPress
 public:
     /*!
      * \brief Constructs a FvMpfaO2dPressureVelocity2p object
+     *
      * \param problem A problem class object
      */
     FvMpfaO2dPressureVelocity2p(Problem& problem) :

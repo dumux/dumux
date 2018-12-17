@@ -21,6 +21,7 @@
  * \ingroup SequentialTwoPModel
  * \brief An assembler for the Jacobian matrix based on mimetic FD.
  */
+
 #ifndef DUMUX_MIMETICOPERATOR2PADAPTIVE_HH
 #define DUMUX_MIMETICOPERATOR2PADAPTIVE_HH
 
@@ -31,8 +32,8 @@
 namespace Dumux
 {
 /*!
- * \brief Levelwise assembler
  * \ingroup SequentialTwoPModel
+ * \brief Levelwise assembler
  *
  * This class serves as a base class for local assemblers. It provides
  * space and access to the local stiffness matrix. The actual assembling is done
@@ -106,7 +107,7 @@ public:
         Scalar viscosityW = FluidSystem::viscosity(fluidState, wPhaseIdx);
         Scalar viscosityNw = FluidSystem::viscosity(fluidState, nPhaseIdx);
 
-        //reset velocity
+        // reset velocity
         for (int i = 0; i < problem.gridView().size(0); i++)
         {
             problem.variables().cellData(i).fluxData().resetVelocity();
@@ -198,8 +199,8 @@ public:
             }
             }
 
-            //velocity reconstruction: !!! The velocity which is not reconstructed from the primary
-            //pressure variable can be slightly wrong and not conservative!!!!
+            // velocity reconstruction: !!! The velocity which is not reconstructed from the primary
+            // pressure variable can be slightly wrong and not conservative!!!!
             // -> Should not be used for transport!!
             loc.constructVelocity(element, velocityW, pressTraceW, cellData.potential(wPhaseIdx));
             loc.constructVelocity(element, velocityNw, pressTraceNw, cellData.potential(nPhaseIdx));
@@ -295,5 +296,5 @@ public:
         }
     }
 };
-}
+} // end namespace Dumux
 #endif

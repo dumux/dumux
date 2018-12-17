@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Base class holding the variables for sequential models.
+ */
+
 #ifndef DUMUX_VARIABLECLASS2P2C_ADAPTIVE_HH
 #define DUMUX_VARIABLECLASS2P2C_ADAPTIVE_HH
 
@@ -24,26 +30,18 @@
 // for  parallelization
 #include <dumux/porousmediumflow/sequential/variableclassadaptive.hh>
 
-/**
- * @file
- * @brief  Base class holding the variables for sequential models.
- * @author Markus Wolff
- */
-
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \ingroup Adaptive2p2c mpfa
- */
-//! Class holding additionally mpfa data of adaptive compositional models.
-/*!
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Class holding additionally mpfa data of adaptive compositional models.
+ *
  * This class provides the possibility to store and load the transmissibilities (and associated infos)
  * of the mpfa method per irregular face. This class provides the storage container and access methods
  * for both 2D and 3D implementation.
  * Note that according to the number of half-edges (sub-faces) regarded, one ore more transmissibility
  * can be stored and loaded.
  *
- * @tparam TypeTag The Type Tag
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class VariableClass2P2CAdaptive: public VariableClassAdaptive<TypeTag>

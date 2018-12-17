@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Base class for compositional pressure equations
+ */
 #ifndef DUMUX_FVPRESSURECOMPOSITIONAL_HH
 #define DUMUX_FVPRESSURECOMPOSITIONAL_HH
 
@@ -29,36 +34,31 @@
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 
-
-/**
- * @file
- * @brief  Base Class for compositional pressure Equations
- */
-
-namespace Dumux
-{
-//! The finite volume model for the solution of the compositional pressure equation
-/*! \ingroup multiphase
- *  Provides the common ground to solve compositional pressure equations of the form
- *  \f[
-         c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}}
-         \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
-          = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
- *  \f]
- *  where \f$\bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
- *  \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields
- *  \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
- *  \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability,
- *  \f$ \lambda_{\alpha} \f$ the phase mobility,
- *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and
- *  \f$ C^{\kappa} \f$ the total Component concentration.
+namespace Dumux {
+/*!
+ * \ingroup SequentialTwoPModel
+ * \brief The finite volume model for the solution of the compositional pressure equation
+ *
+ * Provides the common ground to solve compositional pressure equations of the form
+ * \f[
+        c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}}
+        \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
+         = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
+ * \f]
+ * where \f$\bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
+ * \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields
+ * \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
+ * \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability,
+ * \f$ \lambda_{\alpha} \f$ the phase mobility,
+ * \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and
+ * \f$ C^{\kappa} \f$ the total Component concentration.
  * See paper SPE 99619 or "Analysis of a Compositional Model for Fluid
  * Flow in Porous Media" by Chen, Qin and Ewing for derivation.
  *
- *  Common functions such as output and the initialization procedure are provided here. Also,
- *  private vector (the update estimate for the volume derivatives) are stored in this class,
- *  as only derived classes (other compositional pressure models) need acess to it.
- *  The partial derivatives of the actual fluid volume \f$ v_{total} \f$ are gained by using a secant method.
+ * Common functions such as output and the initialization procedure are provided here. Also,
+ * private vector (the update estimate for the volume derivatives) are stored in this class,
+ * as only derived classes (other compositional pressure models) need acess to it.
+ * The partial derivatives of the actual fluid volume \f$ v_{total} \f$ are gained by using a secant method.
  *
  * \tparam TypeTag The Type Tag
  */

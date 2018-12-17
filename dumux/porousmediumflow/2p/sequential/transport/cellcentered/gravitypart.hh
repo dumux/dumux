@@ -21,17 +21,17 @@
  * \ingroup SequentialTwoPModel
  * \brief  Class for defining the gravity term of a two-phase flow saturation equation
  */
+
 #ifndef DUMUX_GRAVITYPART_HH
 #define DUMUX_GRAVITYPART_HH
 
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/convectivepart.hh>
 #include "properties.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief  Class for defining the gravity term of  a two-phase flow saturation equation
  * \ingroup SequentialTwoPModel
+ * \brief Class for defining the gravity term of  a two-phase flow saturation equation
  *
  * Defines the gravity term of the form
  *

@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Interactionvolume container for 3-d MPFA L-method
+ * \brief Interactionvolume container for 3-d MPFA L-method.
  */
+
 #ifndef DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_HH
 #define DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_HH
 
@@ -33,8 +34,8 @@
 namespace Dumux {
 
 /*!
- * \brief Interactionvolume container for 3-d MPFA L-method
  * \ingroup SequentialTwoPModel
+ * \brief Interactionvolume container for 3-d MPFA L-method.
  *
  * Container class which stores MPFA-interaction-volume information for each vertex of a DUNE grid.
  * Each <tt>InteractionVolume</tt> object stores the information which is necessary to calculate MPFA transmissibility matrices:
@@ -137,6 +138,7 @@ public:
 
     /*!
      * \brief Returns an interaction volume
+     *
      * \param vertexIdx Global index of a vertex in the DUNE grid
      */
     InteractionVolume& interactionVolume(int vertexIdx)
@@ -146,6 +148,7 @@ public:
 
     /*!
      * \brief Returns an interaction volume
+     *
      * \param vertexIdx Global index of a vertex in the DUNE grid
      */
     InteractionVolume& interactionVolume(int vertexIdx) const
@@ -267,6 +270,7 @@ public:
 
     /*!
      * \brief Constructs a FvMpfaL3dInteractionVolumeContainer object
+     *
      * \param problem A problem class object
      */
     FvMpfaL3dInteractionVolumeContainer(Problem& problem) :

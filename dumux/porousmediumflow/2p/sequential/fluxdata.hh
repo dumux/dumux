@@ -21,16 +21,17 @@
  * \ingroup SequentialTwoPModel
  * \brief  Class storing data assigned to a cell-cell interfaces, so-called flux-data
  */
+
 #ifndef DUMUX_FLUXDATA2P_HH
 #define DUMUX_FLUXDATA2P_HH
 
 #include "properties.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief Class storing data assigned to a cell-cell interfaces, so-called flux-data.
  * \ingroup SequentialTwoPModel
+ * \brief Class storing data assigned to a cell-cell interfaces, so-called flux-data.
+ *
  * Stores velocities and potentials at cell-cell interfaces.
  * Further it provides methods which interpret stored phase potentials for upwind decisions.
  *
@@ -269,5 +270,5 @@ public:
         upwindPotential_[indexInInside][phaseIdx] += pot;
     }
 };
-}
+} // end namespace Dumux
 #endif

@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Interaction volume container for compositional adaptive 3-d (using MPFA L-method).
+ */
 #ifndef DUMUX_FVMPFAL3D_2P2CINTERACTIONVOLUMECONTAINER_ADAPTIVE_HH
 #define DUMUX_FVMPFAL3D_2P2CINTERACTIONVOLUMECONTAINER_ADAPTIVE_HH
 
@@ -23,17 +28,11 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/3dinteractionvolumecontaineradaptive.hh>
 #include <dumux/linear/vectorexchange.hh>
 
-/**
- * @file
- * @brief  Interactionvolume container for compositional adaptive 3-d (using MPFA L-method)
- * @author Benjamin Faigle
- */
+namespace Dumux {
 
-namespace Dumux
-{
-
-/*! \ingroup Adaptive2p2c mpfa
- * \brief Interactionvolume container for compositional adaptive 3-d (using MPFA L-method) Model
+/*!
+ * \ingroup SequentialTwoPModel
+ * \brief Interaction volume container for compositional adaptive 3-d (using MPFA L-method) Model
  *
  * Container class which stores MPFA-interaction-volume information for each vertex of a DUNE grid.
  *

@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Storage container for discretized data for multi-physics models.
+ */
+
 #ifndef DUMUX_ELEMENTDATA2P2C_MULTYPHYSICS_HH
 #define DUMUX_ELEMENTDATA2P2C_MULTYPHYSICS_HH
 
@@ -23,18 +29,13 @@
 #include "properties.hh"
 #include "celldata.hh"
 
-/**
- * @file
- * @brief  Storage container for discretized data for multiphysics models
- */
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \ingroup multiphysics multiphase
- */
-//! Storage container for discretized data for multiphysics models
-/*! For multiphysics models, we divide the model in seperate sub-domains. Being a cell-based
+ * \ingroup SequentialTwoPModel
+ * \brief Storage container for discretized data for multiphysics models.
+ *
+ * For multi-physics models, we divide the model in separate sub-domains. Being a cell-based
  * information, this is also stored in the cellData. In addition, a simpler version of a
  * fluidState can be stored in cells being in the simpler subdomain.
  * Hence, acess functions either direct to the full fluidstate, or to the simple fluidstate.

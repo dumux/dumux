@@ -21,23 +21,23 @@
  * \ingroup SequentialTwoPModel
  * \brief  Class including data of one grid cell
  */
+
 #ifndef DUMUX_ELEMENTDATA2P_HH
 #define DUMUX_ELEMENTDATA2P_HH
 
 #include "properties.hh"
 #include "fluxdata.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 template<class TypeTag>
 class FluxData2P;
 
 /*!
- * \brief Class including data of one grid cell.
  * \ingroup SequentialTwoPModel
+ * \brief Class including data of one grid cell.
  *
  * The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
- *Further, resulting cell values for constitutive relationships like
+ * Further, resulting cell values for constitutive relationships like
  * mobilities, fractional flow functions and capillary pressure are stored.
  * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
  *
@@ -48,10 +48,11 @@ template<class TypeTag, bool enableCompressibility>
 class CellData2P;
 
 /*!
- * \brief Class including the variables and data of discretized data of the constitutive relations for one grid cell.
  * \ingroup SequentialTwoPModel
+ * \brief Class including the variables and data of discretized data of the constitutive relations for one grid cell.
+ *
  * The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
- *Further, resulting cell values for constitutive relationships like
+ * Further, resulting cell values for constitutive relationships like
  * mobilities, fractional flow functions and capillary pressure are stored.
  * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
  *

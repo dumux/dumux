@@ -16,14 +16,9 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
- * \ingroup IMPEC
- * \ingroup Adaptive2p2c mpfa
- * \ingroup IMPETProperties
- *
  * \file
- *
+ * \ingroup SequentialTwoPModel
  * \brief Defines the properties required for the adaptive sequential 2p2c models.
  */
 #ifndef DUMUX_2P2CADAPTIVE_PROPERTIES_HH

@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup TwoPNCModel
- * \brief The primary variable switch for the 2pnc model
+ * \brief The primary variable switch for the 2pnc model.
  */
+
 #ifndef DUMUX_2PNC_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_2PNC_PRIMARY_VARIABLE_SWITCH_HH
 
@@ -33,7 +34,7 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPNCModel
- * \brief The primary variable switch controlling the phase presence state variable
+ * \brief The primary variable switch controlling the phase presence state variable.
  */
 class TwoPNCPrimaryVariableSwitch
 : public PrimaryVariableSwitch<TwoPNCPrimaryVariableSwitch>

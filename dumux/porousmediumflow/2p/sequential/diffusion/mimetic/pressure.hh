@@ -21,6 +21,7 @@
  * \ingroup SequentialTwoPModel
  * \brief Model for the pressure equation discretized by mimetic FD.
  */
+
 #ifndef DUMUX_MIMETICPRESSURE2P_HH
 #define DUMUX_MIMETICPRESSURE2P_HH
 
@@ -31,12 +32,11 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/operator.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/mimetic.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- *\brief mimetic method for the pressure equation
  * \ingroup SequentialTwoPModel
+ * \brief Mimetic method for the pressure equation.
  *
  * Provides a mimetic implementation for the evaluation
  * of equations of the form
@@ -117,10 +117,10 @@ template<class TypeTag> class MimeticPressure2P
 
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
-    //! initializes the matrix to store the system of equations
+    //! Initializes the matrix to store the system of equations
     void initializeMatrix();
 
-    //! function which assembles the system of equations to be solved
+    //! Function which assembles the system of equations to be solved
     void assemble(bool first)
     {
         Scalar timeStep = problem_.timeManager().timeStepSize();
@@ -154,7 +154,7 @@ template<class TypeTag> class MimeticPressure2P
         return;
     }
 
-    //!solves the system of equations to get the spatial distribution of the pressure
+    //! Solves the system of equations to get the spatial distribution of the pressure
     void solve();
 
     void postprocess()
@@ -165,13 +165,14 @@ template<class TypeTag> class MimeticPressure2P
     }
 
 public:
-    //! constitutive functions are initialized and stored in the variables object
+    //! Constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
 
-    /*! \brief Initializes the model
+    /*!
+     * \brief Initializes the model
      *
      * Function initializes the sparse matrix to solve the global system of
-     * equations and sets/calculates the initial pressure
+     * equations and sets/calculates the initial pressure.
      *
      * \param solveTwice indicates if more than one iteration is allowed to get an initial pressure solution
      */
@@ -209,7 +210,7 @@ public:
     /*!
      * \brief Velocity update
      *
-     * Reset the velocities in the cellData
+     * Reset the velocities in the cellData.
      */
     void updateVelocity()
     {
@@ -409,7 +410,7 @@ public:
     }
 
     /*!
-     * \brief general method for serialization, output
+     * \brief General method for serialization, output
      *
      * Function needed for restart option.
      *
@@ -427,7 +428,7 @@ public:
     }
 
     /*!
-     * \brief general method for deserialization
+     * \brief General method for deserialization
      *
      * \param instream The input stream
      * \param element The grid element
@@ -444,6 +445,7 @@ public:
 
     /*!
      * \brief Constructs a MimeticPressure2P object
+     *
      * \param problem The Dumux problem
      */
     MimeticPressure2P(Problem& problem) :
@@ -473,7 +475,7 @@ public:
 
 private:
     Problem& problem_;
-    TraceType pressTrace_; //!< vector of pressure traces
+    TraceType pressTrace_; // vector of pressure traces
     TraceType f_;
     OperatorAssembler A_;
     LocalStiffness lstiff_;
@@ -484,7 +486,7 @@ private:
     int vtkOutputLevel_;
 };
 
-//! solves the system of equations to get the spatial distribution of the pressure
+//! Solves the system of equations to get the spatial distribution of the pressure.
 template<class TypeTag>
 void MimeticPressure2P<TypeTag>::solve()
 {
@@ -501,7 +503,7 @@ void MimeticPressure2P<TypeTag>::solve()
     return;
 }
 
-//! constitutive functions are updated once if new saturations are calculated and stored in the variables object
+//! Constitutive functions are updated once if new saturations are calculated and stored in the variables object.
 template<class TypeTag>
 void MimeticPressure2P<TypeTag>::updateMaterialLaws()
 {
@@ -524,12 +526,12 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
             cellData.setMobility(wPhaseIdx, mobilityW);
             cellData.setMobility(nPhaseIdx, mobilityNw);
 
-            //initialize fractional flow functions
+            // initialize fractional flow functions
             cellData.setFracFlowFunc(wPhaseIdx, mobilityW / (mobilityW + mobilityNw));
             cellData.setFracFlowFunc(nPhaseIdx, mobilityNw / (mobilityW + mobilityNw));
         }
         return;
 }
 
-}
+} // end namespace Dumux
 #endif

@@ -28,7 +28,7 @@
  *
  * The model implements the flow of two phases and one component, i.e. a pure liquid (e.g. water)
  * and its vapor (e.g. steam),
- * \f$\alpha \in \{ w, n \}\f$ using a standard multiphase Darcy
+ * \f$\alpha \in \{ w, n \}\f$ using a standard multi-phase Darcy
  * approach as the equation for the conservation of momentum, i.e.
  \f[
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}

@@ -18,8 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for sequential 2p2c compositional problems
+ * \ingroup SequentialTwoPModel
+ * \brief Base class for sequential 2p2c compositional problems.
  */
+
 #ifndef DUMUX_IMPETPROBLEM_2P2C_HH
 #define DUMUX_IMPETPROBLEM_2P2C_HH
 
@@ -28,11 +30,9 @@
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \ingroup IMPEC
- * \ingroup IMPETproblems
+ * \ingroup SequentialTwoPModel
  * \brief  Base class for all compositional 2-phase problems which use an impet algorithm
  *
  * Extends IMPESProblem2P by the compositional the boundary formulation and initial conditions.

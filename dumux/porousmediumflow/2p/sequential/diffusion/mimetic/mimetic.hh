@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief Local stiffness matrix for the diffusion equation discretized by mimetic FD
+ * \brief Local stiffness matrix for the diffusion equation discretized by mimetic FD.
  */
+
 #ifndef DUMUX_MIMETIC2P_HH
 #define DUMUX_MIMETIC2P_HH
 
@@ -45,6 +46,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup SequentialTwoPModel
  * \brief compute local stiffness matrix for conforming finite elements for the full 2-phase pressure equation
  */
 template<class TypeTag>
@@ -157,14 +159,14 @@ public:
     }
 
     /*!
-     * \brief assemble local stiffness matrix for given element and order
+     * \brief Assembles local stiffness matrix for given element and order
      *
      * On exit the following things have been done:
      * - The stiffness matrix for the given entity and polynomial degree has been assembled and is
      * accessible with the mat() method.
      * - The boundary conditions have been evaluated and are accessible with the bc() method
      * - The right hand side has been assembled. It contains either the value of the essential boundary
-     * condition or the assembled source term and neumann boundary condition. It is accessible via the rhs() method.
+     * condition or the assembled source term and Neumann boundary condition. It is accessible via the rhs() method.
      *
      * \param  element a codim 0 entity reference
      * \param  k order of CR basis (only k = 1 is implemented)
@@ -198,7 +200,7 @@ public:
     }
 
     /*!
-     * \brief assemble only boundary conditions for given element
+     * \brief Assembles only boundary conditions for given element
      *
      * On exit the following things have been done:
      * - The boundary conditions have been evaluated and are accessible with the bc() method
@@ -387,9 +389,9 @@ private:
     std::vector<Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim> > W_;
     Scalar maxError_;
     Scalar timeStep_;
-    Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
-    Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
-    Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
+    Scalar ErrorTermFactor_; // Handling of error term: relaxation factor
+    Scalar ErrorTermLowerBound_; // Handling of error term: lower bound for error dampening
+    Scalar ErrorTermUpperBound_; //S Handling of error term: upper bound for error dampening
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
@@ -470,7 +472,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
 
     //       std::cout << "element " << elemId << ": center " << centerGlobal << std::endl;
 
-    //collect information needed for calculation of fluxes due to capillary-potential (pc + gravity!)
+    // collect information needed for calculation of fluxes due to capillary-potential (pc + gravity!)
     Scalar gravPotFace[2*dim];
 
     Scalar gravPot = (problem_.bBoxMax() - centerGlobal) * problem_.gravity() * (density_[nPhaseIdx] - density_[wPhaseIdx]);
@@ -611,7 +613,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
     Pi.umv(Wc, F);
     //      std::cout << "Pi = \dim" << Pi << "c = " << c << ", F = " << F << std::endl;
 
-    //accumulate fluxes due to capillary potential (pc + gravity!)
+    // accumulate fluxes due to capillary potential (pc + gravity!)
     for (const auto& intersection : intersections(gridView_, element))
     {
         int idx = intersection.indexInInside();

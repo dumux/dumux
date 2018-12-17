@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief 2-d velocity calculation using a 3-d MPFA L-method
+ * \brief 2-d velocity calculation using a 3-d MPFA L-method.
  */
+
 #ifndef DUMUX_FVMPFAL2PVELOCITY2P_HH
 #define DUMUX_FVMPFAL2PVELOCITY2P_HH
 
@@ -29,11 +30,10 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include "3dtransmissibilitycalculator.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief Class for calculating 3-d velocities from cell-wise constant pressure values.
  * \ingroup SequentialTwoPModel
+ * \brief Class for calculating 3-d velocities from cell-wise constant pressure values.
  *
  * Calculates phase velocities or total velocity from a known pressure field applying a finite volume discretization and a MPFA L-method.
  * At Dirichlet boundaries a two-point flux approximation is used.
@@ -134,6 +134,7 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
 public:
     /*!
      * \brief Constructs a FvMpfaL3dVelocity2p object
+     *
      * \param problem A problem class object
      */
     FvMpfaL3dVelocity2p(Problem& problem) :

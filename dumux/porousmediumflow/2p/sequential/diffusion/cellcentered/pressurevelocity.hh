@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Two Phase Finite Volume Model
+ * \brief Two-phase finite volume model
  */
+
 #ifndef DUMUX_FVPRESSUREVELOCITY2P_HH
 #define DUMUX_FVPRESSUREVELOCITY2P_HH
 
@@ -32,11 +33,10 @@
 
 
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief Two Phase Finite Volume Model
  * \ingroup SequentialTwoPModel
+ * \brief Two-phase finite volume model
  *
  * \tparam TypeTag The Type Tag
  */
@@ -95,5 +95,5 @@ private:
     FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
 };
 
-}
+} // end namespace Dumux
 #endif

@@ -18,8 +18,9 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief Provides methods for transmissibility calculation in 3-d
+ * \brief Provides methods for transmissibility calculation in 3-d.
  */
+
 #ifndef DUMUX_FVMPFAL3D_TRANSMISSIBILITYCALCULATOR_HH
 #define DUMUX_FVMPFAL3D_TRANSMISSIBILITYCALCULATOR_HH
 
@@ -27,11 +28,10 @@
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief Provides methods for transmissibility calculation in 3-d.
  * \ingroup SequentialTwoPModel
+ * \brief Provides methods for transmissibility calculation in 3-d.
  *
  *  The transmissibilities are calculated using the MPFA L-method.
  *
@@ -121,6 +121,7 @@ public:
 
     /*!
      * \brief Constructs a FvMpfaL3dTransmissibilityCalculator object
+     *
      * \param problem A problem class object
      */
     FvMpfaL3dTransmissibilityCalculator(Problem& problem) :

@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief base class for assembling local stiffness matrices
+ * \brief Base class for assembling local stiffness matrices.
  */
+
 #ifndef DUMUX_LOCAL_STIFFNESS_HH
 #define DUMUX_LOCAL_STIFFNESS_HH
 
@@ -42,18 +43,18 @@
 #include<dumux/common/boundaryconditions.hh>
 #include<dumux/porousmediumflow/sequential/properties.hh>
 
-namespace Dumux
-{
-    /*!
-     *\brief Base class for local assemblers
-     *
-     * This class serves as a base class for local assemblers. It provides space
-     * and access to the local stiffness matrix. The actual assembling is done
-     * in a derived class via the virtual assemble method.
-     *
-     * \tparam TypeTag The problem TypeTag
-     * \tparam m number of degrees of freedom per node (system size)
-     */
+namespace Dumux {
+
+ /*!
+  *\brief Base class for local assemblers.
+  *
+  * This class serves as a base class for local assemblers. It provides space
+  * and access to the local stiffness matrix. The actual assembling is done
+  * in a derived class via the virtual assemble method.
+  *
+  * \tparam TypeTag The problem TypeTag
+  * \tparam m number of degrees of freedom per node (system size)
+  */
   template<class TypeTag, int m>
   class LocalStiffness
   {
@@ -75,7 +76,7 @@ namespace Dumux
     }
 
     /*!
-     * \brief assemble local stiffness matrix including boundary conditions for given element and order
+     * \brief Assembles local stiffness matrix including boundary conditions for given element and order
      *
      * On exit the following things have been done:
      * - The stiffness matrix for the given entity and polynomial degree has been assembled and is
@@ -106,14 +107,14 @@ namespace Dumux
        * - The stiffness matrix for the given entity and polynomial degree has been assembled and is
        * accessible with the mat() method.
        * - The boundary conditions have been evaluated and are accessible with the bc() method.
-       *  The boundary conditions are either neumann, process or dirichlet. Neumann indicates
+       *  The boundary conditions are either Neumann, process or Dirichlet. Neumann indicates
        * that the corresponding node (assuming a nodal basis) is at the Neumann boundary, process
        * indicates that the node is at a process boundary (arising from the parallel decomposition of the mesh).
        * Process boundaries are treated as homogeneous Dirichlet conditions, i.e. the corresponding value
        * in the right hand side is set to 0. Finally, Dirichlet indicates that the node is at the Dirichlet
        * boundary.
        * - The right hand side has been assembled. It contains either the value of the essential boundary
-       * condition or the assembled source term and neumann boundary condition.
+       * condition or the assembled source term and Neumann boundary condition.
        * It is accessible via the rhs() method.
        *
        *\param  e a codim 0 entity reference
@@ -127,7 +128,7 @@ namespace Dumux
      *
      * On exit the following things have been done:
      * - The boundary conditions have been evaluated and are accessible with the bc() method.
-     *  The boundary conditions are either neumann, process or dirichlet. Neumann indicates
+     *  The boundary conditions are either Neumann, process or Dirichlet. Neumann indicates
      * that the corresponding node (assuming a nodal basis) is at the Neumann boundary, process
      * indicates that the node is at a process boundary (arising from the parallel decomposition of the mesh).
      * Process boundaries are treated as homogeneous Dirichlet conditions, i.e. the corresponding value
@@ -135,7 +136,7 @@ namespace Dumux
      * boundary.
      * - The right hand side has been assembled as far as boundary conditions are concerned.
      * It contains either the value of the essential boundary
-     * condition or the assembled neumann boundary condition.
+     * condition or the assembled Neumann boundary condition.
      * It is accessible via the rhs() method.
      *
      * \param  e a codim 0 entity reference
@@ -144,7 +145,7 @@ namespace Dumux
       virtual void assembleBoundaryCondition (const Entity& e, int k=1) = 0;
 
       /*!
-       * \brief print contents of local stiffness matrix
+       * \brief Prints contents of local stiffness matrix
        *
        * \param s output stream
        * \param width the width
@@ -185,7 +186,7 @@ namespace Dumux
     }
 
     /*!
-     * \brief access local stiffness matrix
+     * \brief Accesses the local stiffness matrix
      *
      * Access elements of the local stiffness matrix. Elements are
      * undefined without prior call to the assemble method.
@@ -200,7 +201,7 @@ namespace Dumux
 
 
     /*!
-     * \brief access right hand side
+     * \brief Accesses right hand side
      *
      * Access elements of the right hand side vector. Elements are
      * undefined without prior call to the assemble method.
@@ -213,7 +214,7 @@ namespace Dumux
     }
 
     /*!
-     * \brief access boundary condition for each dof
+     * \brief Accesses boundary condition for each dof
      *
      * Access boundary condition type for each degree of freedom. Elements are
      * undefined without prior call to the assemble method.
@@ -226,7 +227,7 @@ namespace Dumux
      }
 
     /*!
-     * \brief set the current size of the local stiffness matrix
+     * \brief Sets the current size of the local stiffness matrix
      *
      * \param s size which is to be set
      */
@@ -238,7 +239,7 @@ namespace Dumux
     }
 
     /*!
-     * \brief get the current size of the local stiffness matrix
+     * \brief Gets the current size of the local stiffness matrix
      */
     int currentsize ()
     {
@@ -279,7 +280,7 @@ namespace Dumux
       using VBlockType = Dune::FieldVector<Scalar, m>;                        // one entry in the global vectors
       using BCBlockType = std::array<BoundaryConditions::Flags, m>;    // componentwise boundary conditions
 
-    /*! initialize local stiffness matrix */
+    /*! Initialize local stiffness matrix */
       LinearLocalStiffness ()
       {}
 
@@ -288,7 +289,7 @@ namespace Dumux
       }
 
       /*!
-       * \brief assemble local stiffness matrix including boundary conditions for given element and order
+       * \brief Assembles local stiffness matrix including boundary conditions for given element and order
        *
        * On exit the following things have been done:
        * - The stiffness matrix for the given entity and polynomial degree has been assembled and is
@@ -310,7 +311,7 @@ namespace Dumux
       virtual void assemble (const Entity& e, int k=1) = 0;
 
       /*!
-       * \brief assemble local stiffness matrix including boundary conditions for given element and order
+       * \brief Assembles local stiffness matrix including boundary conditions for given element and order
        *
        * Since this is a base class for linear assemblers, the local solution will be ignored.
        *

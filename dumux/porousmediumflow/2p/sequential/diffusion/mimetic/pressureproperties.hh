@@ -21,25 +21,24 @@
  * \ingroup SequentialTwoPModel
  * \brief Defines the properties required for (immiscible) twophase sequential models.
  */
+
 #ifndef DUMUX_MIMETICPROPERTIES2P_SEQUENTIAL_HH
 #define DUMUX_MIMETICPROPERTIES2P_SEQUENTIAL_HH
 
 //Dumux-includes
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>
-namespace Dumux
-{
+namespace Dumux {
 
 ////////////////////////////////
-// forward declarations
+// Forward declarations
 ////////////////////////////////
 
 
 ////////////////////////////////
-// properties
+// Properties
 ////////////////////////////////
-namespace Properties
-{
+namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
@@ -50,19 +49,17 @@ NEW_TYPE_TAG(MimeticPressureTwoP, INHERITS_FROM(PressureTwoP, Mimetic));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/pressure.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/mimetic.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 SET_TYPE_PROP(MimeticPressureTwoP, PressureModel, MimeticPressure2P<TypeTag>);
 SET_TYPE_PROP(MimeticPressureTwoP, LocalStiffness, MimeticTwoPLocalStiffness<TypeTag>);
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

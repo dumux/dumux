@@ -16,22 +16,22 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Finite volume discretization of the component transport equation.
+ */
 #ifndef DUMUX_FVTRANSPORT2P2C_MULTIPHYSICS_HH
 #define DUMUX_FVTRANSPORT2P2C_MULTIPHYSICS_HH
 
 #include <dumux/porousmediumflow/2p2c/sequential/fvtransport.hh>
 #include <dumux/linear/vectorexchange.hh>
 
-/**
- * @file
- * @brief  Finite Volume discretization of the component transport equation
- */
-
-namespace Dumux
-{
-//! Compositional Transport Step in a Finite Volume discretization
+namespace Dumux {
 /*!
- * \ingroup multiphysics
+ * \ingroup SequentialTwoPModel
+ * \brief Compositional transport step in a finite volume discretization.
+ *
  *  The finite volume model for the solution of the transport equation for compositional
  *  two-phase flow.
  *  \f[

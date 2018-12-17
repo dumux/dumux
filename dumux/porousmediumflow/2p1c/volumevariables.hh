@@ -21,6 +21,7 @@
  * \ingroup TwoPOneCModel
  * \copydoc Dumux::TwoPOneCVolumeVariables
  */
+
 #ifndef DUMUX_2P1C_VOLUME_VARIABLES_HH
 #define DUMUX_2P1C_VOLUME_VARIABLES_HH
 
@@ -89,14 +90,14 @@ public:
     using FluidSystem = typename Traits::FluidSystem;
     //! The type of the indices
     using Indices = typename Traits::ModelTraits::Indices;
-    //! export type of solid state
+    //! Export type of solid state
     using SolidState = typename Traits::SolidState;
-    //! export type of solid system
+    //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
-    //! export the primary variable switch
+    //! Export the primary variable switch
     using PrimaryVariableSwitch = TwoPOneCPrimaryVariableSwitch;
 
-    //! return the two-phase formulation used here
+    //! Return the two-phase formulation used here
     static constexpr TwoPFormulation priVarFormulation() { return formulation; }
 
     // check for permissive combinations
@@ -105,7 +106,7 @@ public:
     static_assert((formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0), "Chosen TwoPFormulation not supported!");
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -156,7 +157,7 @@ public:
     }
 
     /*!
-     * \brief Set complete fluid state
+     * \brief Sets complete fluid state
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -396,10 +397,10 @@ protected:
     SolidState solidState_;
 
 private:
-    Scalar pc_;                     //!< The capillary pressure
-    PermeabilityType permeability_; //!< Effective permeability within the control volume
+    Scalar pc_;                     // The capillary pressure
+    PermeabilityType permeability_; // Effective permeability within the control volume
 
-    //!< Relative permeability within the control volume
+    // Relative permeability within the control volume
     std::array<Scalar, numFluidPhases> relativePermeability_;
 };
 

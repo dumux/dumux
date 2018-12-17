@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Finite Volume discretization of a saturation transport equation
+ * \brief  Finite volume discretization of a saturation transport equation.
  */
+
 #ifndef DUMUX_FVSATURATION2P_HH
 #define DUMUX_FVSATURATION2P_HH
 
@@ -30,8 +31,8 @@
 namespace Dumux
 {
 /*!
- * \brief The finite volume discretization of a saturation transport equation
  * \ingroup SequentialTwoPModel
+ * \brief The finite volume discretization of a saturation transport equation.
  *
  * This model solves equations of the form
  *

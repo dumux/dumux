@@ -19,16 +19,17 @@
 /*!
  * \file
  * \ingroup TwoPNCModel
- * \brief Defines the indices required for the two-phase n-component model
+ * \brief Defines the indices required for the two-phase n-component model.
  */
+
 #ifndef DUMUX_2PNC_INDICES_HH
 #define DUMUX_2PNC_INDICES_HH
 
 namespace Dumux {
 
 /*!
- * \brief The indices for the isothermal two-phase n-component model
  * \ingroup TwoPNCModel
+ * \brief The indices for the isothermal two-phase n-component model.
  */
 struct TwoPNCIndices
 {

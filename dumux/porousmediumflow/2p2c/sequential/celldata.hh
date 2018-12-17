@@ -16,24 +16,24 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Storage container for discretized data of the constitutive relations for one element
+ */
+
 #ifndef DUMUX_ELEMENTDATA2P2C_HH
 #define DUMUX_ELEMENTDATA2P2C_HH
 
 #include <dumux/material/fluidstates/2p2c.hh>
 #include "fluxdata.hh"
 
-/**
- * @file
- * @brief  Storage container for discretized data of the constitutive relations for one element
- */
-
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \ingroup multiphysics multiphase
- */
-//! Storage container for discretized data of the constitutive relations for one element
-/*! This class stores all cell-centered (FV-Scheme) values for sequential compositional two-phase flow
+ * \ingroup SequentialTwoPModel
+ * \brief Storage container for discretized data of the constitutive relations for one element
+ *
+ * This class stores all cell-centered (FV-Scheme) values for sequential compositional two-phase flow
  * models that are used by both pressure and transport model. All fluid data are already stored in the
  * fluidstate, so the CellData contains the fluidstate object for the current element.
  * At the moment, the compositional model does not use fluxVariables that are stored on the interfaces.

@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Cfl-flux-function to evaluate a Cfl-Condition after Coats 2003
+ * \brief Cfl-flux-function to evaluate a Cfl-Condition after Coats 2003.
  */
+
 #ifndef DUMUX_EVALCFLFLUX_COATS_HH
 #define DUMUX_EVALCFLFLUX_COATS_HH
 
@@ -28,11 +29,10 @@
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include "evalcflflux.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief  Cfl-flux-function to evaluate a Cfl-Condition after Coats 2003
  * \ingroup SequentialTwoPModel
+ * \brief Cfl-flux-function to evaluate a Cfl-Condition after Coats 2003.
  *
  * tparam TypeTag The problem TypeTag
  */
@@ -85,7 +85,7 @@ private:
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    //! \brief Initializes the cfl-flux-model
+    //! Initializes the cfl-flux-model
     void initialize()
     {
         const auto element = *problem_.gridView().template begin<0>();

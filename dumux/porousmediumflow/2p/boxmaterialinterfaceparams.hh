@@ -21,6 +21,7 @@
  * \ingroup TwoPModel
  * \brief copydoc Dumux::BoxMaterialInterfaceParams
  */
+
 #ifndef DUMUX_2P_BOX_MATERIAL_INTERFACE_PARAMS_HH
 #define DUMUX_2P_BOX_MATERIAL_INTERFACE_PARAMS_HH
 
@@ -35,9 +36,11 @@ namespace Dumux {
  * \ingroup TwoPModel
  * \brief Class that determines the material with the lowest capillary
  *        pressure (under fully water-saturated conditions) around the nodes
- *        of a grid. These parameters are then associated with the global degree
- *        of freedom. On the basis of these parameters, the saturations in the
- *        remaining sub-control volumes connected to the vertex can be reconstructed.
+ *        of a grid.
+ *
+ * These parameters are then associated with the global degree
+ * of freedom. On the basis of these parameters, the saturations in the
+ * remaining sub-control volumes connected to the vertex can be reconstructed.
  */
 template<class SpatialParams>
 class BoxMaterialInterfaceParams
@@ -46,7 +49,7 @@ public:
     using MaterialLawParams = typename SpatialParams::MaterialLaw::Params;
 
     /*!
-     * \brief Update the scv -> dofparameter map
+     * \brief Updates the scv -> dofparameter map
      *
      * \param fvGridGeometry The finite volume grid geometry
      * \param spatialParams Class encapsulating the spatial parameters
@@ -104,12 +107,12 @@ public:
         }
     }
 
-    //! Return if this scv is connected to a material interface
+    //! Returns if this scv is connected to a material interface
     template<class Scv>
     bool isOnMaterialInterface(const Scv& scv) const
     { assert(isUpdated_); return isOnMaterialInterface_[scv.dofIndex()]; }
 
-    //! Return the material parameters associated with the dof
+    //! Returns the material parameters associated with the dof
     template<class Scv>
     const MaterialLawParams& getDofParams(const Scv& scv) const
     { assert(isUpdated_); return *(dofParams_[scv.dofIndex()]); }
@@ -120,6 +123,6 @@ private:
     std::vector<const MaterialLawParams*> dofParams_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

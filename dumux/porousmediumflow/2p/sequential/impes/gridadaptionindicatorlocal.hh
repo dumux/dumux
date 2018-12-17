@@ -19,19 +19,19 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Class defining a standard, saturation dependent indicator for grid adaption
+ * \brief  Class defining a standard, saturation dependent indicator for grid adaption.
  */
+
 #ifndef DUMUX_GRIDADAPTIONINDICATOR2PLOCAL_HH
 #define DUMUX_GRIDADAPTIONINDICATOR2PLOCAL_HH
 
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief  Class defining a standard, saturation dependent indicator for grid adaption
  * \ingroup SequentialTwoPModel
+ * \brief  Class defining a standard, saturation dependent indicator for grid adaption.
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -304,10 +304,10 @@ private:
     Scalar coarsenBound_;
     ScalarSolutionType indicatorVector_;
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
-    bool refineAtDirichletBC_; //!< switch for refinement at Dirichlet BC's
-    bool refineAtFluxBC_; //!< switch for refinement at Neumann BC's
-    bool refineAtSource_; //!< switch for refinement at sources
+    bool refineAtDirichletBC_; // switch for refinement at Dirichlet BC's
+    bool refineAtFluxBC_; // switch for refinement at Neumann BC's
+    bool refineAtSource_; // switch for refinement at sources
 };
-}
+} // end namespace Dumux
 
 #endif

@@ -21,6 +21,7 @@
  * \ingroup SequentialTwoPModel
  * \brief Properties for the adaptive MPFA-L method.
  */
+
 #ifndef DUMUX_FVMPFAL2DPROPERTIES2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL2DPROPERTIES2P_ADAPTIVE_HH
 
@@ -28,24 +29,20 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 NEW_TYPE_TAG(FvMpfaL2dPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP, MPFAProperties));
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #include "2dpressurevelocityadaptive.hh"
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/velocityintransport.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 SET_TYPE_PROP(FvMpfaL2dPressureTwoPAdaptive, PressureModel, FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>);
 //! Set velocity reconstruction implementation standard cell centered finite volume schemes as default
 SET_TYPE_PROP( FvMpfaL2dPressureTwoPAdaptive, Velocity, FvMpfaVelocityInTransport<TypeTag> );
-}
-}// end of Dune namespace
+} // end namespace Properties
+} // end namespace Dumux
 #endif

@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Velocity calculation using a 2-d MPFA O-method
+ * \brief Velocity calculation using a 2-d MPFA O-method.
  */
+
 #ifndef DUMUX_FVMPFAO2DVELOCITY2P_HH
 #define DUMUX_FVMPFAO2DVELOCITY2P_HH
 
@@ -29,11 +30,10 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/ointeractionvolume.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief Class for calculating velocities from cell-wise constant pressure values.
  * \ingroup SequentialTwoPModel
+ * \brief Class for calculating velocities from cell-wise constant pressure values.
  *
  * Calculates phase velocities or total velocity from a known pressure field applying
  * a finite volume discretization and a MPFA O-method.
@@ -121,7 +121,8 @@ template<class TypeTag> class FvMpfaO2dVelocity2P
 
 public:
     /*
-     * \brief Constructs a FvMpfaO2dVelocity2P object!
+     * \brief Constructs a FvMpfaO2dVelocity2P object
+     *
      * \param problem A problem class object
      */
     FvMpfaO2dVelocity2P(Problem& problem) :
@@ -135,7 +136,7 @@ public:
         vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");
     }
 
-    //! Calculate velocities for all flux faces of an interaction volume
+    //! Calculates velocities for all flux faces of an interaction volume
     void calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData1,
                                                  CellData& cellData2, CellData& cellData3, CellData& cellData4,
                                                  InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces);
@@ -741,5 +742,5 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
 }
 
 }
-// end of Dune namespace
+// end namespace Dumux
 #endif

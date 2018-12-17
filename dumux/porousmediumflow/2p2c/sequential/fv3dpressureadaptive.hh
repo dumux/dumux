@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Finite volume diffusion model.
+ */
+
 #ifndef DUMUX_FV3DPRESSURE2P2C_ADAPTIVE_HH
 #define DUMUX_FV3DPRESSURE2P2C_ADAPTIVE_HH
 
@@ -36,35 +42,30 @@
 #include <dumux/porousmediumflow/2p2c/sequential/fvmpfal3dinteractionvolumecontaineradaptive.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/3dtransmissibilitycalculator.hh>
 
-/**
- * @file
- * @brief  Finite Volume Diffusion Model
- * @author Benjamin Faigle, Bernd Flemisch, Jochen Fritz, Markus Wolff
- */
-
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, MPFAInteractionVolume, FvMpfaL3dInteractionVolumeAdaptive<TypeTag>);
 SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, MPFAInteractionVolumeContainer, FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>);
-}
+} // end namespace Properties
 
-//! The finite volume model for the solution of the compositional pressure equation
-/*! \ingroup Adaptive2p2c
- *  Provides a Finite Volume implementation for the pressure equation of a compressible
- *  system with two components. An IMPES-like method is used for the sequential
- *  solution of the problem.  Diffusion is neglected, capillarity can be regarded.
- *  Isothermal conditions and local thermodynamic
- *  equilibrium are assumed.  Gravity is included.
- *  \f[
-         c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
-          = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
- *  \f]
- *  where \f$\bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
- *  \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
- *  \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
- *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
+
+/*!
+ * \ingroup SequentialTwoPModel
+ * \brief The finite volume model for the solution of the compositional pressure equation
+ *
+ * Provides a Finite Volume implementation for the pressure equation of a compressible
+ * system with two components. An IMPES-like method is used for the sequential
+ * solution of the problem.  Diffusion is neglected, capillarity can be regarded.
+ * Isothermal conditions and local thermodynamic
+ * equilibrium are assumed.  Gravity is included.
+ * \f[
+        c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
+         = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
+ * \f]
+ * where \f$\bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
+ * \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
+ * \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
+ * \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
  * See paper SPE 99619 or "Analysis of a Compositional Model for Fluid
  * Flow in Porous Media" by Chen, Qin and Ewing for derivation.
  *

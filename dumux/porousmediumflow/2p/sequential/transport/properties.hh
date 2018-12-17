@@ -21,16 +21,15 @@
  * \ingroup SequentialTwoPModel
  * \brief Specifies the properties for immiscible 2p transport
  */
+
 #ifndef DUMUX_TRANSPORT_PROPERTIES_2P_HH
 #define DUMUX_TRANSPORT_PROPERTIES_2P_HH
 
 #include <dumux/porousmediumflow/sequential/transportproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 // \{
 
 //////////////////////////////////////////////////////////////////
@@ -45,7 +44,7 @@ NEW_TYPE_TAG(TransportTwoP, INHERITS_FROM(Transport, SequentialTwoP));
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG(CapillaryFlux); //!< The type of the diffusive part in a transport equation
 NEW_PROP_TAG(GravityFlux); //!< The type of a convective part in a transport equation
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

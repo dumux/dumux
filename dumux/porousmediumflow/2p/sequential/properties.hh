@@ -21,27 +21,26 @@
  * \ingroup SequentialTwoPModel
  * \brief Defines the properties required for (immiscible) two-phase sequential models.
  */
+
 #ifndef DUMUX_2PPROPERTIES_SEQUENTIAL_HH
 #define DUMUX_2PPROPERTIES_SEQUENTIAL_HH
 
-//Dumux-includes
+// Dumux-includes
 #include <dumux/porousmediumflow/sequential/properties.hh>
 #include "indices.hh"
 #include <dumux/material/spatialparams/sequentialfv.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 ////////////////////////////////
-// forward declarations
+// Forward declarations
 ////////////////////////////////
 template <class TypeTag, bool enableCompressibility>
 class CellData2P;
 
 ////////////////////////////////
-// properties
+// Properties
 ////////////////////////////////
-namespace Properties
-{
+namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
@@ -55,18 +54,16 @@ NEW_TYPE_TAG(SequentialTwoP, INHERITS_FROM(SequentialModel));
 NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the saturation model
 NEW_PROP_TAG( VelocityFormulation); //!< The type of velocity reconstructed for the transport model
 NEW_PROP_TAG( EnableCompressibility);//!< Returns whether compressibility is allowed
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #include <dumux/porousmediumflow/sequential/variableclass.hh>
 #include <dumux/porousmediumflow/2p/sequential/celldata.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidstates/isothermalimmiscible.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
@@ -127,8 +124,7 @@ public:
 //! The spatial parameters to be employed. Use SequentialFVSpatialParams by default.
 SET_TYPE_PROP(SequentialTwoP, SpatialParams, SequentialFVSpatialParams<TypeTag>);
 // \}
-}
-
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

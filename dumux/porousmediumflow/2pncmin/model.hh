@@ -18,8 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \ingroup TwoPNCMinModel, Mineralization
+ * \ingroup TwoPNCMinModel
  * \brief Adaption of the fully implicit scheme to the
  *        two-phase n-component fully implicit model with additional solid/mineral phases.
  *
@@ -186,7 +185,7 @@ public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
-//! non-isothermal vtkoutput
+//! Non-isothermal vtkoutput
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::TwoPNCMinNI>
 {

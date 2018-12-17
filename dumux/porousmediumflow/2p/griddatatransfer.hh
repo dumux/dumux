@@ -21,6 +21,7 @@
  * \ingroup TwoPModel
  * \brief Performs the transfer of data on a grid from before to after adaptation.
  */
+
 #ifndef DUMUX_TWOP_GRIDDATA_TRANSFER_HH
 #define DUMUX_TWOP_GRIDDATA_TRANSFER_HH
 
@@ -104,12 +105,13 @@ class TwoPGridDataTransfer : public GridDataTransfer
     static_assert(formulation == p0s1 || formulation == p1s0, "Chosen formulation not known to the TwoPGridDataTransfer");
 
 public:
-    /*! \brief Constructor
+    /*!
+     * \brief Constructor
      *
-     *  \param problem The DuMuX problem to be solved
-     *  \param fvGridGeometry The finite volume grid geometry
-     *  \param gridVariables The secondary variables on the grid
-     *  \param sol The solution (primary variables) on the grid
+     * \param problem The DuMuX problem to be solved
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridVariables The secondary variables on the grid
+     * \param sol The solution (primary variables) on the grid
      */
     TwoPGridDataTransfer(std::shared_ptr<const Problem> problem,
                          std::shared_ptr<FVGridGeometry> fvGridGeometry,
@@ -123,12 +125,13 @@ public:
     , adaptionMap_(fvGridGeometry->gridView().grid(), 0)
     {}
 
-    /*! \brief Stores primary variables and additional data
+    /*!
+     * \brief Stores primary variables and additional data
      *
-     *  To reconstruct the solution in father elements, problem properties might
-     *  need to be accessed. From upper level on downwards, the old solution is stored
-     *  into a container object, before the grid is adapted. Father elements hold averaged
-     *  information from the son cells for the case of the sons being coarsened.
+     * To reconstruct the solution in father elements, problem properties might
+     * need to be accessed. From upper level on downwards, the old solution is stored
+     * into a container object, before the grid is adapted. Father elements hold averaged
+     * information from the son cells for the case of the sons being coarsened.
      */
     void store() override
     {
@@ -185,15 +188,16 @@ public:
         }
     }
 
-    /*! \brief Reconstruct missing primary variables (where elements are created/deleted)
+    /*!
+     * \brief Reconstruct missing primary variables (where elements are created/deleted)
      *
-     *  To reconstruct the solution in father elements, problem properties might
-     *  need to be accessed.
-     *  Starting from the lowest level, the old solution is mapped on the new grid:
-     *  Where coarsened, new cells get information from old father element.
-     *  Where refined, a new solution is reconstructed from the old father cell,
-     *  and then a new son is created. That is then stored into the general data
-     *  structure (AdaptedValues).
+     * To reconstruct the solution in father elements, problem properties might
+     * need to be accessed.
+     * Starting from the lowest level, the old solution is mapped on the new grid:
+     * Where coarsened, new cells get information from old father element.
+     * Where refined, a new solution is reconstructed from the old father cell,
+     * and then a new son is created. That is then stored into the general data
+     * structure (AdaptedValues).
      */
     void reconstruct() override
     {
@@ -387,14 +391,15 @@ public:
 
   private:
 
-    /*! \brief Stores sons entries into father element for averaging
+    /*!
+     * \brief Stores sons entries into father element for averaging
      *
-     *  Sum up the adaptedValues (sons values) into father element. We store from leaf
-     *  upwards, so sons are stored first, then cells on the next leaf (=fathers)
-     *  can be averaged.
+     * Sum up the adaptedValues (sons values) into father element. We store from leaf
+     * upwards, so sons are stored first, then cells on the next leaf (=fathers)
+     * can be averaged.
      *
-     *  \param adaptedValues Container for model-specific values to be adapted
-     *  \param adaptedValuesFather Values to be adapted of father cell
+     * \param adaptedValues Container for model-specific values to be adapted
+     * \param adaptedValuesFather Values to be adapted of father cell
      */
     static void storeAdaptionValues(AdaptedValues& adaptedValues,
                                     AdaptedValues& adaptedValuesFather)

@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief Base class for two-phase transport problems
+ * \brief Base class for two-phase transport problems.
  */
+
 #ifndef DUMUX_TRANSPORTPROBLEM_2P_HH
 #define DUMUX_TRANSPORTPROBLEM_2P_HH
 
@@ -28,10 +29,8 @@
 #include <dumux/porousmediumflow/sequential/onemodelproblem.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/velocitydefault.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 // Set the model properties
 template<class TypeTag>
 struct Model<TypeTag, TTag::TransportTwoP>
@@ -40,11 +39,11 @@ struct Model<TypeTag, TTag::TransportTwoP>
 };
 //this Property should be set by the pressure model, only for a pure transport it is set here for the transportproblem!
 SET_TYPE_PROP(TransportTwoP, Velocity, FVVelocityDefault<TypeTag>);
-}
+} // end namespace Properties
 
 /*!
- * \brief  Base class for a sequential two-phase transport problem
  * \ingroup SequentialTwoPModel
+ * \brief Base class for a sequential two-phase transport problem.
  *
  * \tparam TypeTag The problem Type Tag
  */
