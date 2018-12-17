@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup SequentialOnePModel
- * \brief Base class for all single phase diffusion problem
+ * \brief Base class for all single phase diffusion problems.
  */
+
 #ifndef DUMUX_DIFFUSIONPROBLEM_1P_HH
 #define DUMUX_DIFFUSIONPROBLEM_1P_HH
 
@@ -29,15 +30,13 @@
 #include <dumux/porousmediumflow/1p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/1p/sequential/celldata.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 SET_TYPE_PROP(PressureOneP, Model, typename GET_PROP_TYPE(TypeTag, PressureModel));
 }
 /*!
  * \ingroup SequentialOnePModel
- * \brief  Base class for all single phase diffusion problem
+ * \brief  Base class for all single phase diffusion problems.
  *
  * \tparam TypeTag The Type Tag
  */
@@ -135,7 +134,7 @@ public:
     //! \cond \private
     void timeIntegration()
     {
-        //end simulation -> no time dependent problem!
+        // end simulation -> no time dependent problem!
         this->timeManager().setFinished();
 
         return;
@@ -156,7 +155,6 @@ public:
      * \brief Returns the temperature within the domain.
      *
      * \param element The element
-     *
      */
     Scalar temperature(const Element& element) const
     {
@@ -167,7 +165,6 @@ public:
      * \brief Returns the temperature within the domain.
      *
      * \param globalPos The position of the center of an element
-     *
      */
     Scalar temperatureAtPos(const GlobalPosition& globalPos) const
     {
@@ -181,7 +178,6 @@ public:
      * \brief Returns the reference pressure for evaluation of constitutive relations.
      *
      * \param element The element
-     *
      */
     Scalar referencePressure(const Element& element) const
     {
@@ -192,7 +188,6 @@ public:
      * \brief Returns the reference pressure for evaluation of constitutive relations.
      *
      * \param globalPos The position of the center of an element
-     *
      */
     Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
     {
@@ -246,6 +241,6 @@ private:
     std::shared_ptr<SpatialParams> spatialParams_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

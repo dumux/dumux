@@ -21,6 +21,7 @@
  * \ingroup OnePModel
  * \brief Quantities required by the one-phase fully implicit model defined on a vertex.
  */
+
 #ifndef DUMUX_1P_VOLUME_VARIABLES_HH
 #define DUMUX_1P_VOLUME_VARIABLES_HH
 
@@ -52,17 +53,17 @@ class OnePVolumeVariables
     using PermeabilityType = typename Traits::PermeabilityType;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 public:
-    //! export the underlying fluid system
+    //! Export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
-    //! export the fluid state type
+    //! Export the fluid state type
     using FluidState = typename Traits::FluidState;
-    //! export type of solid state
+    //! Export type of solid state
     using SolidState = typename Traits::SolidState;
-    //! export type of solid system
+    //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -88,7 +89,7 @@ public:
     }
 
     /*!
-     * \brief Set complete fluid state
+     * \brief Sets complete fluid state
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -132,7 +133,7 @@ public:
     }
 
     /*!
-     * \brief Return temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
      * temperatures of the rock matrix and of all fluid phases are
@@ -148,27 +149,27 @@ public:
     { return solidState_; }
 
     /*!
-     * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
+     * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      */
     Scalar pressure(int phaseIdx = 0) const
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
-     * \brief Return the saturation
+     * \brief Returns the saturation.
      */
     Scalar saturation(int phaseIdx = 0) const
     { return 1.0; }
 
     /*!
-     * \brief Return the mass density \f$\mathrm{[kg/m^3]}\f$ of a given phase within the
+     * \brief Returns the mass density \f$\mathrm{[kg/m^3]}\f$ of a given phase within the
      *        control volume.
      */
     Scalar density(int phaseIdx = 0) const
     { return fluidState_.density(phaseIdx); }
 
     /*!
-     * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
+     * \brief Returns the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      */
     Scalar viscosity(int phaseIdx = 0) const
@@ -187,7 +188,7 @@ public:
     { return 1.0/fluidState_.viscosity(phaseIdx); }
 
     /*!
-     * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
+     * \brief Returns the average porosity \f$\mathrm{[-]}\f$ within the control volume.
      */
     Scalar porosity() const
     { return solidState_.porosity(); }
@@ -199,7 +200,7 @@ public:
     { return permeability_; }
 
     /*!
-     * \brief Return the fluid state of the control volume.
+     * \brief Returns the fluid state of the control volume.
      */
     const FluidState &fluidState() const
     { return fluidState_; }
@@ -210,6 +211,6 @@ protected:
     PermeabilityType permeability_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

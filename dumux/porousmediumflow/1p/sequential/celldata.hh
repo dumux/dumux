@@ -16,28 +16,31 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_CELLDATA1P_HH
-#define DUMUX_CELLDATA1P_HH
-
-#include "properties.hh"
-#include "fluxdata.hh"
-
 /*!
  * \file
  * \ingroup SequentialOnePModel
  * \brief  Class including data of one grid cell.
  */
 
-namespace Dumux
-{
+#ifndef DUMUX_CELLDATA1P_HH
+#define DUMUX_CELLDATA1P_HH
+
+#include "properties.hh"
+#include "fluxdata.hh"
+
+
+namespace Dumux {
 template<class TypeTag>
 class FluxData1P;
 
 /*!
  * \ingroup SequentialOnePModel
- * Class including data of one grid cell.
- * The variables of one-phase flow, which are the pressure as well as additional data assigned to
- * cell-cell interfaces, so-called flux-data, are stored.
+ *
+ * \brief Class including data of one grid cell.
+ *
+ * The variables of one-phase flow, which are the pressure as well as
+ * additional data assigned to cell-cell interfaces,
+ * so-called flux-data, are stored.
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -74,22 +77,22 @@ public:
     // functions returning primary variables
     ////////////////////////////////////////////////////////////
 
-    //!\brief Returns the cell pressure
+    //! Returns the cell pressure
     Scalar pressure()
     {
         return pressure_;
     }
-    //!\brief Returns the cell pressure
+    //! Returns the cell pressure
     Scalar pressure() const
     {
         return pressure_;
     }
-    //!Sets the cell pressure
+    //! Sets the cell pressure
     void setPressure(Scalar press)
     {
         pressure_ = press;
     }
 };
 
-}
+} // end namespace Dumux
 #endif

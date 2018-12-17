@@ -16,7 +16,6 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
  * \ingroup SequentialOnePModel
@@ -30,8 +29,7 @@
 #include <dumux/porousmediumflow/sequential/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 ////////////////////////////////
 // forward declarations
@@ -42,8 +40,7 @@ class CellData1P;
 ////////////////////////////////
 // properties
 ////////////////////////////////
-namespace Properties
-{
+namespace Properties {
 
 //////////////////////////////////////////////////////////////////
 // Type tags
@@ -55,19 +52,17 @@ NEW_TYPE_TAG(SequentialOneP, INHERITS_FROM(SequentialModel));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( Fluid );          //!< The fluid for one-phase models
-}
-}
+NEW_PROP_TAG( Fluid );          // The fluid for one-phase models
+} // end namespace Properties
+} // end namespace Dumux
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/porousmediumflow/sequential/variableclass.hh>
 #include <dumux/porousmediumflow/1p/sequential/celldata.hh>
 #include <dumux/porousmediumflow/1p/sequential/indices.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
@@ -92,6 +87,6 @@ SET_TYPE_PROP(SequentialOneP, CellData, CellData1P<TypeTag>);
 
 //! The spatial parameters to be employed. Use BoxSpatialParams by default.
 SET_TYPE_PROP(SequentialOneP, SpatialParams, SequentialFVSpatialParamsOneP<TypeTag>);
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 #endif

@@ -16,22 +16,24 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_FLUXDATA1P_HH
-#define DUMUX_FLUXDATA1P_HH
-
-#include "properties.hh"
-
 /*!
  * \file
  * \ingroup SequentialOnePModel
  * \brief  Class storing data assigned to a cell-cell interfaces, so-called flux-data.
  */
 
-namespace Dumux
-{
+#ifndef DUMUX_FLUXDATA1P_HH
+#define DUMUX_FLUXDATA1P_HH
+
+#include "properties.hh"
+
+
+namespace Dumux {
 /*!
  * \ingroup SequentialOnePModel
- * Class storing data assigned to a cell-cell interfaces, so-called flux-data.
+ *
+ * \brief Class storing data assigned to a cell-cell interfaces, so-called flux-data.
+ *
  * Stores velocities and potentials at cell-cell interfaces.
  * Further it provides methods which interpret stored phase potentials for upwind decisions.
  *
@@ -73,7 +75,8 @@ public:
     // functions returning the vectors of the primary variables
     ////////////////////////////////////////////////////////////
 
-    /*! \brief Returns the velocity vector at a cell-cell interface
+    /*!
+     * \brief Returns the velocity vector at a cell-cell interface
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      */
@@ -82,7 +85,8 @@ public:
         return velocity_[indexInInside];
     }
 
-    /*! \brief Returns the velocity vector at a cell-cell interface
+    /*!
+     * \brief Returns the velocity vector at a cell-cell interface
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      */
@@ -91,7 +95,8 @@ public:
         return velocity_[indexInInside];
     }
 
-    /*! \brief Sets the velocity vector at a cell-cell interface
+    /*!
+     * \brief Sets the velocity vector at a cell-cell interface
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      * \param velocity Velocity vector which is stored
@@ -112,7 +117,9 @@ public:
         }
     }
 
-    /*! \brief Sets the velocity marker at a cell-cell interface
+    /*!
+     * \brief Sets the velocity marker at a cell-cell interface
+     *
      * This marker can be used to check if a velocity has already been stored for this interface
      *
      * \param indexInInside Index of the cell-cell interface in this cell
@@ -122,7 +129,9 @@ public:
         velocityMarker_[indexInInside] = true;
     }
 
-    /*! \brief Check the velocity marker
+    /*!
+     * \brief Check the velocity marker
+     *
      * Returns <tt>true</tt> if a velocity marker was set, otherwise <tt>false</tt>
      *
      * \param indexInInside Index of the cell-cell interface in this cell
@@ -139,8 +148,10 @@ public:
             velocityMarker_[i] = false;
     }
 
-    /*! \brief Checks for upwind direction
-     *Returns <tt>true</tt> if the cell is the upwind cell, otherwise <tt>false</tt>
+    /*!
+     * \brief Checks for upwind direction
+     *
+     * Returns <tt>true</tt> if the cell is the upwind cell, otherwise <tt>false</tt>
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      */
@@ -160,7 +171,8 @@ public:
         return (potential_[indexInInside] >= 0.);
     }
 
-    /*! \brief Returns the potential at a cell-cell interface
+    /*!
+     * \brief Returns the potential at a cell-cell interface
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      */
@@ -169,7 +181,8 @@ public:
         return potential_[indexInInside];
     }
 
-    /*! \brief Returns the potential at a cell-cell interface
+    /*!
+     * \brief Returns the potential at a cell-cell interface
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      */
@@ -178,7 +191,8 @@ public:
         return potential_[indexInInside];
     }
 
-    /*! \brief Sets the potential at a cell-cell interface
+    /*!
+     * \brief Sets the potential at a cell-cell interface
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      * \param pot Phase potential which is stored
@@ -189,5 +203,5 @@ public:
     }
 
 };
-}
+} // end namespace Dumux
 #endif
