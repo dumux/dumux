@@ -1,82 +1,82 @@
 \section{Input and Output}
 \label{sec:inputandoutput}
 
-This section summarizes some ideas about grid generation and grid formats that can be used by \Dumux
-for input and output formats.
-In general,
-\Dumux can read grids from files and construct grids inside the code with a \texttt{GridCreator}.
-All grids are constructed inside a so called \texttt{GridManger}.  
-Note that some \texttt{GridCreator}s are already available in \Dumux, so e.g.
-construction of a structured grid is fairly easy. We will subsequently introduce the supported file formats,
-the standard \texttt{GridCreator} and its capabilities
-and briefly mention how to customize and deal with common other grid formats.
+This section briefly explains grid generation in \Dumux, summarizes
+the grid formats that can be used by \Dumux and introduces the \Dumux \texttt{GridManager}.
+Finally, this section informs about handling output in \Dumux.
 
 \subsection{Supported grid file formats}
-\Dumux can read grids from file using the Dune Grid Format (DGF) or the Gmsh mesh format.
+\Dumux can read grids from file using the Dune Grid Format (DGF) or the Gmsh mesh format (MSH).
 
 \subsubsection{Dune Grid Format}
-Most of our \Dumux tests and tutorials use the Dune Grid Format (DGF) to read in grids. A detailed description
+Most of our \Dumux tests use the Dune Grid Format (DGF) to read in grids. A detailed description
 of the DGF format and some examples can be found in the \Dune doxygen documentation
 \textbf{(Modules $\rightarrow$ I/O $\rightarrow$ Dune Grid Format (DGF)}). To generate larger or more
-complex DGF files, we recommend to write your own scripts, e.g in \Cplusplus, Matlab or Python.
+complex DGF files, we recommend to write your own scripts, e.g, in \Cplusplus, Matlab or Python.
 
-The DGF format can also used to read in spatial parameters defined on the grid. These parameters can
+The DGF format can also be used to read in spatial parameters defined on the grid. These parameters can
 be defined on nodes as well as on the elements. An example for predefined parameters on a grid
-can be found in the  \texttt{dumux/test/porousmediumflow/co2/implicit/} folder.
+can be found in \texttt{dumux/test/porousmediumflow/co2/implicit/}.
 
 \subsubsection{Gmsh Mesh Format}
 Gmsh is an open-source flexible grid generator for unstructured finite-element meshes (\cite{GEUZAINE2009}, \url{http://geuz.org/gmsh/}).
-\Dumux supports the default Gmsh mesh format (MSH). For the format specifics and how to create grids with Gmsh, e.g. using
+\Dumux supports the default Gmsh mesh format (MSH). For the format specifics and how to create grids with Gmsh, e.g., using
 the provided GUI, we refer to the Gmsh documentation (\url{http://geuz.org/gmsh/doc/texinfo/gmsh.html}).
 
-The MSH format can contain element and boundary markers defined in the grid. Thus, boundaries can be easily marked as e.g. inflow boundaries
-using Gmsh. Further, the format supports higher order elements. They can be used to create boundary parameterization supported by e.g. the grid
+The MSH format can contain element and boundary markers defined on the grid. Thus, boundaries can be easily marked as, e.g., inflow boundaries
+using Gmsh. Further, the format supports higher order elements. They can be used to create boundary parameterization supported by, e.g., the grid
 manager \texttt{UGGrid}.
-An example can be found in \texttt{dumux/test\allowbreak/io/gridcreator}.
+An example can be found in \texttt{dumux/test\allowbreak/io/gridmanager}.
 
 \subsubsection{Other Grid Formats}
-Grid formats other than .DGF and .MSH grids will have to be converted to the .DGF or .MSH format before they can be used in \Dumux.
-If conversion is not an option, another possibility would be to write your own \texttt{GridCreator}. Examples of other grid formats,
+Grid formats other than DGF and MSH will have to be converted to the DGF or MSH format before they can be used in \Dumux.
+If conversion is not an option, another possibility would be to write your own \texttt{GridManager}. Examples of other grid formats,
 which have previously been either converted or custom-created in \Dumux, are Petrel grids (cornerpoint grids),
 ArtMesh grids (fractured network grids), and ICEM grids (CAD developed grids).
 
-\subsection{The default \texttt{GridCreator}}
-The default \texttt{GridCreator} is called \texttt{GridCreator} and is automatically avaible in all problems.
-It can construct grids from a DGF file (*.dgf) by simply providing the filename to the grid in the \texttt{Grid} group~\footnote{Note
+\subsection{The \Dumux \texttt{GridManager}}
+The \Dumux \texttt{GridManager} constructs the grid from information in the input file and handles the data.
+Currently, supported grid managers are \texttt{YaspGrid}, \texttt{OneDGrid}, \texttt{UGGrid}, \texttt{ALUGrid}, \texttt{FoamGrid} and \texttt{SPGrid}.
+Grids can be constructed from a DGF or MSH file by simply providing the filename to the grid in the \texttt{Grid} group~\footnote{Note,
 that group name \texttt{Grid} is the default group name and can be customized in your problem changing the string property \texttt{GridParameterGroup}.
-This way it is possible, e.g. for problems with more than one grid, to set different group names for each grid, thus configuring them separately.}
+This way, it is possible, e.g., for problems with more than one grid, to set different group names for each grid, thus configuring them separately.}
 of the input file:
 \begin{lstlisting}[style=DumuxParameterFile]
 [Grid]
 File = mydgfgrid.dgf
 \end{lstlisting}
-If you are using an unstructured grid manager like \texttt{UGGrid} or \texttt{ALUGrid}, constructing a grid from a Gmsh mesh file (*.msh) is just changing a line:
+
+If you are using an unstructured grid manager like \texttt{UGGrid} or \texttt{ALUGrid}, constructing a grid from a MSH is just changing a line:
 \begin{lstlisting}[style=DumuxParameterFile]
 [Grid]
 File = mygmshgrid.msh
 \end{lstlisting}
-\Dumux will tell you in case your selected grid manager does not support reading Gmsh files. You want to intially refine your grid? It's just adding a line:
+\Dumux will tell you in case your selected grid manager does not support reading MSH files. 
+
+You want to intially refine your grid? It's just adding a line:
 \begin{lstlisting}[style=DumuxParameterFile]
 [Grid]
 File = mydgfgrid.dgf
 Refinement = 4
 \end{lstlisting}
-When reading a Gmsh file, further parameters are recognized. \texttt{Verbose} enables verbose output on grid construction when set to $1$.
-\texttt{BoundarySegments} enables reading parametrized boundaries. \texttt{PhysicalEntities} enables reading boundary and element flags.
 
-\subsubsection{Grid manager specific parameters}
-The default \texttt{GridCreator} supports also a selection of grid specific parameters.
-To give an example we look at the commonly used unstructured grid manager \texttt{UGGrid}.
-\texttt{UGGrid}s support red-green refinement per default. One can turn off the green closure by setting the grid's closure type
+When reading a MSH file, further parameters are recognized. \texttt{Verbose} enables verbose output on grid construction when set to $1$.
+\texttt{BoundarySegments} enables reading parameterized boundaries. \texttt{PhysicalEntities} enables reading boundary and element flags.
+
+\subsubsection{Parameters specific to the grid manager}
+The \Dumux \texttt{GridManager} supports also a selection of parameters that are specific to the chosen grid manager.
+To give an example, we take a look at the unstructured grid manager \texttt{UGGrid}.
+\texttt{UGGrid} supports red-green refinement per default. One can turn off the green closure by setting the grid's closure type
 \begin{lstlisting}[style=DumuxParameterFile]
 [Grid]
 File = mydgfgrid.dgf
 ClosureType = None # or Green
 \end{lstlisting}
+
 For all available parameters see the Doxygen documentation.
 
 \subsubsection{Structured grids}
-If you want to construct a structured grid with the default grid creator instead of the \texttt{File} key supply
+If you want to construct a structured grid without using a specific grid file, insert the following into the input file:
 \begin{lstlisting}[style=DumuxParameterFile]
 [Grid]
 LowerLeft = 0 0 0
@@ -84,12 +84,12 @@ UpperRight = 1 1 1
 Cells = 10 10 20
 \end{lstlisting}
 where \texttt{LowerLeft} is a vector to the lower left corner of the grid and \texttt{UpperRight} a vector to the upper right corner.
-\texttt{Cells} is a vector with the number of cells in each coordinate direction. Note that for a grid in a two-dimensional world, the
+\texttt{Cells} is a vector with the number of cells in each coordinate direction. Note,  that for a grid in a two-dimensional world, the
 vectors only have two entries.
 
-Depending on the grid manager further parameters are recognized.
-\texttt{UGGrid}s, for example, supports simplex elements as well as hexahedral elements
-(called simplified ``cube'' in \Dune). When creating a structured grid, we can select the cell type as follows
+Depending on the grid manager, further parameters are recognized.
+\texttt{UGGrid}, for example, supports simplex elements as well as hexahedral elements
+(called ``cube'' in \Dune). When creating a structured grid, we can select the cell type as follows
 \begin{lstlisting}[style=DumuxParameterFile]
 [Grid]
 LowerLeft = 0 0 0
@@ -97,6 +97,7 @@ UpperRight = 1 1 1
 Cells = 10 10 20
 CellType = Cube # or Simplex
 \end{lstlisting}
+
 For all available parameters see the Doxygen documentation.
 
 % \subsubsection{Cornerpoint grids}
@@ -107,23 +108,23 @@ The default output format for \Dumux is the VTK file format. Additionally it is 
 to generate plots with gnuplot directly from \Dumux.
 
 \subsubsection{VTK file format}
-Dumux allows to write out simulation results via the \texttt{vtkWirter}.
-For every print out step, a single *.vtu file is created. For parallel simulations one file
-per print out step is generated for each processor. 
+Dumux allows to write out simulation results via the \texttt{vtkWriter}.
+For every print-out step, a single *.vtu file is created. For parallel simulations one file
+per print-out step is generated for each processor.
 The *.pvd file groups the single *.vtu files and contains additionally the time step information.
-Also it is the main file for the visualisation with ParaView.
+Also, it is the main file for the visualisation with ParaView.
 The VTK file format is also supported by other common visualisation programs like Visit and Tecplot. 
 
 \subsubsection{Customize the VTK output}
-Using the respective \texttt{initOutputModule} function of the model \texttt{IOFields} a default
-set of variables is stored in the VTK files. But it's also possible to add further variables.
-For that you can use the method \texttt{addField} of the \texttt{vtkWriter}. E.g. add a variable called temperatureExact:
+Using the respective \texttt{initOutputModule} function of the model \texttt{IOFields}, a default
+set of variables is stored in the VTK files. It is also possible to add further variables,
+using the method \texttt{addField} of the \texttt{vtkWriter}. For example, to add a variable called temperatureExact:
 \begin{lstlisting}[style=DumuxCode]
 vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
 \end{lstlisting}
 
 The first input argument of this method is the value of the additional variable, provided by a method of the corresponding problem.
-If it doesn't already exists, the user has to provide this method.
+If it does not already exists, the user has to provide this method.
 \begin{lstlisting}[style=DumuxCode]
 //! get the analytical temperature
 const std::vector<Scalar>& getExactTemperature()
@@ -133,9 +134,8 @@ const std::vector<Scalar>& getExactTemperature()
 \end{lstlisting}
 
 The second input argument is the name of the additional variable (as it should be written in the VTK files).
-The example above is taken from:\\ \texttt{test/porousmediumflow/1pnc/implicit/test\_1p2cni\_convection\_fv.cc}
+The example above is taken from: \\ \texttt{test/porousmediumflow/1pnc/implicit/test\_1p2cni\_convection\_fv.cc}
 
 \subsubsection{Gnuplot interface}
 \Dumux provides a gnuplot interface, which can be used to plot results and generate 
-image files (e.g. png). To use the gnuplot interface gnuplot has to be installed. For more information see \ref{gnuplot}.
-
+image files (e.g., png). To use the gnuplot interface, gnuplot has to be installed. For more information see \ref{gnuplot}.
