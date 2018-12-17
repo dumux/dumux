@@ -27,12 +27,13 @@
 
 #include <ctime>
 #include <iostream>
+#include <type_traits>
+#include <tuple>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -46,6 +47,62 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include "problem.hh"
+
+/*!
+* \brief Creates analytical solution.
+* Returns a tuple of the analytical solution for the pressure, the velocity and the velocity at the faces
+* \param time the time at which to evaluate the analytical solution
+* \param problem the problem for which to evaluate the analytical solution
+*/
+template<class Scalar, class Problem>
+auto createAnalyticalSolution(const Scalar time, const Problem& problem)
+{
+    const auto& fvGridGeometry = problem.fvGridGeometry();
+    using GridView = typename std::decay_t<decltype(fvGridGeometry)>::GridView;
+
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto dimWorld = GridView::dimensionworld;
+
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+
+    std::vector<Scalar> analyticalPressure;
+    std::vector<VelocityVector> analyticalVelocity;
+    std::vector<VelocityVector> analyticalVelocityOnFace;
+
+    analyticalPressure.resize(fvGridGeometry.numCellCenterDofs());
+    analyticalVelocity.resize(fvGridGeometry.numCellCenterDofs());
+    analyticalVelocityOnFace.resize(fvGridGeometry.numFaceDofs());
+
+    using Indices = typename Problem::Indices;
+    for (const auto& element : elements(fvGridGeometry.gridView()))
+    {
+        auto fvGeometry = localView(fvGridGeometry);
+        fvGeometry.bindElement(element);
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            auto ccDofIdx = scv.dofIndex();
+            auto ccDofPosition = scv.dofPosition();
+            auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition, time);
+
+            // velocities on faces
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                const auto faceDofIdx = scvf.dofIndex();
+                const auto faceDofPosition = scvf.center();
+                const auto dirIdx = scvf.directionIndex();
+                const auto analyticalSolutionAtFace = problem.analyticalSolution(faceDofPosition, time);
+                analyticalVelocityOnFace[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
+            }
+
+            analyticalPressure[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
+
+            for(int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                analyticalVelocity[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
+        }
+    }
+
+    return std::make_tuple(analyticalPressure, analyticalVelocity, analyticalVelocityOnFace);
+}
 
 int main(int argc, char** argv) try
 {
@@ -94,7 +151,6 @@ int main(int argc, char** argv) try
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
     problem->updateTimeStepSize(timeLoop->timeStepSize());
-    problem->createAnalyticalSolution();
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -113,9 +169,11 @@ int main(int argc, char** argv) try
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-    vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
-    vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");
-    vtkWriter.addFaceField(problem->getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
+
+    auto analyticalSolution = createAnalyticalSolution(timeLoop->time(), *problem);
+    vtkWriter.addField(std::get<0>(analyticalSolution), "pressureExact");
+    vtkWriter.addField(std::get<1>(analyticalSolution), "velocityExact");
+    vtkWriter.addFaceField(std::get<2>(analyticalSolution), "faceVelocityExact");
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
@@ -144,8 +202,6 @@ int main(int argc, char** argv) try
         xOld = x;
         gridVariables->advanceTimeStep();
 
-        problem->createAnalyticalSolution();
-
         if (printL2Error)
         {
             using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -168,6 +224,7 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
         problem->updateTime(timeLoop->time());
+        analyticalSolution = createAnalyticalSolution(timeLoop->time(), *problem);
 
         // write vtk output
         vtkWriter.write(timeLoop->time());

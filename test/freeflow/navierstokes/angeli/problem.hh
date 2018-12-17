@@ -89,7 +89,6 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -103,6 +102,8 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
     AngeliTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -169,7 +170,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition & globalPos) const
     {
         // use the values of the analytical solution
-        return analyticalSolution(globalPos, time_);
+        return analyticalSolution(globalPos, time_+timeStepSize_);
     }
 
     /*!
@@ -183,7 +184,7 @@ public:
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
 
-        const Scalar t = time + timeStepSize_;
+        const Scalar t = time;
 
         PrimaryVariables values;
 
@@ -208,31 +209,7 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        return analyticalSolution(globalPos, -timeStepSize_);
-    }
-
-   /*!
-     * \brief Returns the analytical solution for the pressure.
-     */
-    auto& getAnalyticalPressureSolution() const
-    {
-        return analyticalPressure_;
-    }
-
-   /*!
-     * \brief Returns the analytical solution for the velocity.
-     */
-    auto& getAnalyticalVelocitySolution() const
-    {
-        return analyticalVelocity_;
-    }
-
-   /*!
-     * \brief Returns the analytical solution for the velocity at the faces.
-     */
-    auto& getAnalyticalVelocitySolutionOnFace() const
-    {
-        return analyticalVelocityOnFace_;
+        return analyticalSolution(globalPos, 0);
     }
 
     /*!
@@ -251,54 +228,12 @@ public:
         timeStepSize_ = timeStepSize;
     }
 
-   /*!
-     * \brief Adds additional VTK output data to the VTKWriter.
-     *
-     * Function is called by the output module on every write.
-     */
-    void createAnalyticalSolution()
-    {
-        analyticalPressure_.resize(this->fvGridGeometry().numCellCenterDofs());
-        analyticalVelocity_.resize(this->fvGridGeometry().numCellCenterDofs());
-        analyticalVelocityOnFace_.resize(this->fvGridGeometry().numFaceDofs());
-
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(this->fvGridGeometry());
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                auto ccDofIdx = scv.dofIndex();
-                auto ccDofPosition = scv.dofPosition();
-                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition, time_);
-
-                // velocities on faces
-                for (auto&& scvf : scvfs(fvGeometry))
-                {
-                    const auto faceDofIdx = scvf.dofIndex();
-                    const auto faceDofPosition = scvf.center();
-                    const auto dirIdx = scvf.directionIndex();
-                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition, time_);
-                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
-                }
-
-                analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
-
-                for(int dirIdx = 0; dirIdx < ModelTraits::dim(); ++dirIdx)
-                    analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
-            }
-        }
-    }
-
 private:
     static constexpr Scalar eps_ = 1e-6;
 
     Scalar kinematicViscosity_;
     Scalar time_ = 0;
     Scalar timeStepSize_ = 0;
-    std::vector<Scalar> analyticalPressure_;
-    std::vector<VelocityVector> analyticalVelocity_;
-    std::vector<VelocityVector> analyticalVelocityOnFace_;
 };
 } // end namespace Dumux
 
