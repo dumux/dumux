@@ -134,6 +134,7 @@ public:
     {
         timeStepIdx_++;
         time_ += timeStepSize_;
+        previousTimeStepSize_ = timeStepSize_;
     }
 
     /*!
@@ -197,7 +198,6 @@ public:
     {
         using std::min;
         computeMaxTimeStepSize_();
-        previousTimeStepSize_ = timeStepSize_;
         timeStepSize_ = min(dt, maxTimeStepSize_);
     }
 
@@ -300,7 +300,6 @@ public:
                       << "Wall time: " << cpuTime_
                       << ", time: " << time_
                       << ", time step size: " << timeStepSize_
-                      << ", previous time step size: " << previousTimeStepSize_
                       << std::endl;
         }
 
