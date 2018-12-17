@@ -22,6 +22,7 @@
  * \brief Adds I/O fields specific to the models considering
  *        mineralization processes.
  */
+
 #ifndef DUMUX_MINERALIZATION_IO_FIELDS_HH
 #define DUMUX_MINERALIZATION_IO_FIELDS_HH
 
@@ -32,7 +33,7 @@ namespace Dumux {
 
 /*!
  * \ingroup MineralizationModel
- * \brief Adds I/O fields specific to a NCMin model
+ * \brief Adds I/O fields specific to a NCMin model.
  */
 template<class NonMineralizationIOFields>
 class MineralizationIOFields

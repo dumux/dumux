@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup CO2Model
  * \brief The primary variable switch for the 2p2c-CO2 model
  */
+
 #ifndef DUMUX_2P2C_CO2_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_2P2C_CO2_PRIMARY_VARIABLE_SWITCH_HH
 
@@ -33,7 +34,8 @@ namespace Dumux
 {
 /*!
  * \ingroup CO2Model
- * \brief The primary variable switch for the 2p2c-CO2 model controlling the phase presence state variable
+ * \brief The primary variable switch for the 2p2c-CO2 model controlling the phase presence state variable.
+ *
  * The phase switch occurs when the equilibrium concentration
  * of a component in a phase is exceeded, instead of the sum of the components in the virtual phase
  * (the phase which is not present) being greater that unity as done in the 2p2c model.
