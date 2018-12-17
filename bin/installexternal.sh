@@ -58,7 +58,7 @@ installEcl()
     cd $TOPDIR
 
     if [ ! -e libecl ]; then
-        git clone -b 2018.04 https://github.com/Statoil/libecl.git
+        git clone -b 2018.10 https://github.com/Statoil/libecl.git
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -288,11 +288,11 @@ installOPM()
     fi
 
     if [ ! -e opm-common ]; then
-        git clone -b release/2018.04 https://github.com/OPM/opm-common
+        git clone -b release/2018.10 https://github.com/OPM/opm-common
     fi
 
     if [ ! -e opm-grid ]; then
-        git clone -b release/2018.04 https://github.com/OPM/opm-grid
+        git clone -b release/2018.10 https://github.com/OPM/opm-grid
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -304,15 +304,6 @@ installOPM()
         rm -rf opm-grid
         return
     fi
-
-    # apply patches
-    echo "Applying patch for opm-common"
-    cd $TOPDIR/opm-common
-    patch -p1 < $TOPDIR/dumux/patches/opm-common-2018.04.patch
-
-    echo "Applying patch for opm-grid"
-    cd $TOPDIR/opm-grid
-    patch -p1 < $TOPDIR/dumux/patches/opm-grid-2018.04.patch
 
     # show additional information
     echo "In addition, it might be necessary to set manually some"
