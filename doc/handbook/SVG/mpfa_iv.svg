@@ -17,7 +17,10 @@
    id="svg4484"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="mpfa_iv.svg">
+   sodipodi:docname="mpfa_iv.svg"
+   inkscape:export-filename="/temp/martins/DUMUX-3.0/dumux/doc/handbook/PNG/mpfa_iv.png"
+   inkscape:export-xdpi="600"
+   inkscape:export-ydpi="600">
   <sodipodi:namedview
      inkscape:current-layer="svg4484"
      fit-margin-bottom="0"
@@ -30,9 +33,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="8.0000004"
-     inkscape:cx="38.463381"
-     inkscape:cy="45.078373"
+     inkscape:zoom="5.6568545"
+     inkscape:cx="29.562883"
+     inkscape:cy="47.337235"
      inkscape:document-units="px"
      showgrid="false"
      inkscape:window-width="1920"
@@ -624,7 +627,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>

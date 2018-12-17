@@ -173,27 +173,11 @@ flow and transport equations:
 Equation \eqref{eq:discfin} has to be fulfilled for each box $B_j$.
 
 \subsection{Cell Centered Finite Volume Methods -- A Short Introduction}\label{cc}
+Cell-centered finite volume methods use the elements of the grid as control volumes.
+For each control volume the discrete values are determined at the element/control
+volume center (not required to be the barycenters). 
 
-The cell-centered finite volume method uses the elements of the grid as control volumes.
-For each control volume all discrete values are determined at the element/control
-volume center (see Figure~\ref{pc:cc}).
-The mass or energy fluxes are evaluated at the integration points ($x_{ij}$),
-which are located at the midpoints of the control
-volume faces. This is a two point flux approximation since the flux between
-the element/control volume centers $i$ and $j$ is calculated
-only with information from these two points. In contrast the box method uses
-a multi-point flux approximation where all nodes of the
-element influence the flux between two specific nodes. \par
-Neumann boundary conditions are applied at the boundary control volume faces
-and Dirichlet boundary conditions at the boundary control volumes. \par
-The cell centered finite volume method is robust and mass conservative but
-should only be applied for structured grids
-(the control volume face normal vector ($n_{ij}$) should be parallel to the
-direction of the gradient between the two element/control
-volume centers).
-
-We consider a domain $\Omega \in \mathbb{R}^d$, $d \in \{ 2, 3 \}$ with boundary $\Gamma = \bar{\Omega} / \Omega$ and the following elliptic model problem:
-
+We consider a domain $\Omega \subset \mathbb{R}^d$, $d \in \{ 2, 3 \}$ with boundary $\Gamma = \partial \Omega$. Within this section, we consider the following elliptic problem
 \begin{equation}
   \begin{aligned}
                    \nabla \cdot \left( - \mathbf{\Lambda} \nabla u \right) &= q   &&\mathrm{in} \, \Omega \\
@@ -203,25 +187,28 @@ We consider a domain $\Omega \in \mathbb{R}^d$, $d \in \{ 2, 3 \}$ with boundary
   \end{aligned}
 \end{equation}
 
-Here, $\mathbf{\Lambda} = \mathbf{\Lambda}(\mathbf{x}, \mathbf{u})$ is a symmetric and positive definite tensor of second rank, $u = u (\mathbf{x})$ is unknown and $q = q(\mathbf{x}, \mathbf{u})$ is a source/sink. For the derivation of the finite-volume formulation we integrate the first equation of \eqref{eq:elliptic} over $\Omega$ and apply the Gauss divergence theorem:
+Here, $\mathbf{\Lambda} = \mathbf{\Lambda}(\mathbf{x}, \mathbf{u})$ is a symmetric and positive definite tensor of second rank (e.g. permeability, diffusivity, etc.), $u = u (\mathbf{x})$ is unknown and $q = q(\mathbf{x}, \mathbf{u})$ is a source/sink. 
+We denote by $\mathcal{M}$ the mesh that results from the division of the domain $\Omega$ into $n_e$ control volumes $K \subset \Omega$. Each $K$ is a polygonal open set such that $K \cap L = \emptyset, \forall{K \neq L}$ and $\overline{\Omega} = \cup_{K \in \mathcal{M}} \overline{K}$. 
+
+For the derivation of the finite-volume formulation we integrate the first equation of \eqref{eq:elliptic} over a control volume $K$ and apply the Gauss divergence theorem:
 
 \begin{equation}
-    \int_{\Gamma} \left( - \mathbf{\Lambda} \nabla u \right) \cdot \mathbf{n} \mathrm{d} \Gamma = \int_\Omega q \mathrm{d}\Omega.
+    \int_{\partial K} \left( - \mathbf{\Lambda} \nabla u \right) \cdot \mathbf{n} \, \mathrm{d} \Gamma = \int_K q \, \mathrm{d}\Omega.
     \label{eq:ellipticIntegrated}
 \end{equation}
 
-We denote by $\mathcal{M}$ the mesh that results from the division of the domain $\Omega$ into $n_e$ control volumes $K_i$. Each $K_i$ is a polygonal open set and $\mathring{K_i} \mathring{\cap K_j} = \emptyset, \forall{i \neq j}$ and $\Omega = \cup_i^{n_e} K_i$. We then enforce equation \eqref{eq:ellipticIntegrated} to be fulfilled in each control volume, which leads to
-
+Splitting the control volume boundary $\partial K$ into a finite number of faces $\sigma \subset \partial K$ (such that $\sigma = \overline{K} \cap \overline{L}$ for some neighboring control volume $L$) and replacing the exact fluxes by an approximation, i.e. $F_{K, \sigma} \approx \int_{\sigma} \left( - \mathbf{\Lambda} \nabla u \right) \cdot \mathbf{n} \mathrm{d} \Gamma$, yield
 \begin{equation}
-    \sum_{\sigma \in K} F_{K, \sigma} = Q_K, \forall_{K \in \mathcal{M}}
+    \sum_{\sigma \subset \partial K} F_{K, \sigma} = Q_K, \quad \forall \, {K \in \mathcal{M}},
+\label{eq:ccdisc}
 \end{equation}
-
-where $F_{K, \sigma} \approx \int_{\sigma} \left( - \mathbf{\Lambda} \nabla u \right) \cdot \mathbf{n} \mathrm{d} \Gamma$ is the discrete flux through a face $\sigma$ of cell $K$ and $Q_k = \int_K q \mathrm{d}x$ is the integrated source/sink term. 
-
-Cell-centered finite-volume schemes differ in the way how the term 
-$(\mathbf{\Lambda} \nabla u ) \cdot \mathbf{n} $ is approximated. Using the symmetry of the tensor $\mathbf{\Lambda}$, this term can be rewritten as 
+where $F_{K, \sigma}$ is the discrete flux through face $\sigma$ flowing out of cell $K$ and $Q_K := \int_K q \, \mathrm{d}x$ is the integrated source/sink term. Equation \eqref{eq:ccdisc} is the typical cell-centered finite-volume formulation. 
+Finite-volume schemes differ in the way how the term 
+$(\mathbf{\Lambda} \nabla u ) \cdot \mathbf{n} $ is approximated (i.e. the choice of the fluxes $F_{K, \sigma}$). Using the symmetry of the tensor $\mathbf{\Lambda}$, this term can be rewritten as 
 $\nabla u  \cdot \mathbf{\Lambda}\mathbf{n}$, which corresponds to the directional derivative of $u$ in co-normal direction $\mathbf{\Lambda}\mathbf{n}$. 
 In the following, the main ideas of the two-point flux approximation and the multi-point flux approximation methods are briefly described. Hereby, we restrict the discussion to the two-dimensional case.
+
+Please also note that other types of equations, e.g. instationary parabolic problems, can be discretized by applying some time discretization scheme to the time derivatives and by using the finite-volume scheme for the flux discretization. For simplicity the discussion is restricted to the elliptic problem \eqref{eq:elliptic}.
 
 \subsubsection{Tpfa Method}\label{cc_tpfa}
 The linear two-point flux approximation is a simple but robust cell-centered finite-volume scheme, which is commonly used in commercial software. 
@@ -230,7 +217,15 @@ This scheme can be derived by using the conormal decomposition, which reads
 \mathbf{\Lambda}_K \mathbf{n}_{K, \sigma} = t_{K,\sigma} \mathbf{d}_{K,\sigma} + \mathbf{d}^{\bot}_{K,\sigma}, \quad  t_{K,\sigma} = \frac{\mathbf{n}_{K, \sigma}^T \mathbf{\Lambda}_K \mathbf{d}_{K,\sigma} }{\mathbf{d}_{K,\sigma}^T \mathbf{d}_{K,\sigma}}, \; \mathbf{d}^{\bot}_{K,\sigma} = \mathbf{\Lambda}_K \mathbf{n}_{K, \sigma} - t_{K,\sigma} \mathbf{d}_{K,\sigma},
 \label{eq:conormalDecTpfa}
 \end{equation}
-with the distance vector $\mathbf{d}_{K,\sigma} := \mathbf{x}_\sigma - \mathbf{x}_K$ and $\mathbf{d}_{K,\sigma}^T \mathbf{d}^{\bot}_{K,\sigma} = 0$. The same can be done for the conormal $\mathbf{\Lambda}_L \mathbf{n}_{L, \sigma}$. The $t_{K,\sigma}$ and $t_{L,\sigma}$ are the transmissibilities associated with the face $\sigma$. These transmissibilities are calculated in \Dumux by using the function \texttt{computeTpfaTransmissibility}.
+with the distance vector $\mathbf{d}_{K,\sigma} := \mathbf{x}_\sigma - \mathbf{x}_K$ and $\mathbf{d}_{K,\sigma}^T \mathbf{d}^{\bot}_{K,\sigma} = 0$, see Figure \ref{pc:cctpfa} for the used notations. The same can be done for the conormal $\mathbf{\Lambda}_L \mathbf{n}_{L, \sigma}$. The $t_{K,\sigma}$ and $t_{L,\sigma}$ are the transmissibilities associated with the face $\sigma$. These transmissibilities are calculated in \Dumux by using the function \texttt{computeTpfaTransmissibility}.
+
+\begin{figure} [ht]
+\centering
+\includegraphics[width=0.4\linewidth,keepaspectratio]{PNG/cctpfa.png}
+\caption{Two neighboring control volumes sharing the face $\sigma$.}
+\label{pc:cctpfa}
+\end{figure}
+
 
 With these notations, it follows that for each cell $K$ and face $\sigma$ 
 \begin{equation}
