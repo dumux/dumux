@@ -23,7 +23,7 @@ License
 ========
 
 DuMuX is licensed under the terms and conditions of the GNU General
-Public License (GPL) version 2 or - at your option - any later
+Public License (GPL) version 3 or - at your option - any later
 version. The GPL can be [read online][5] or in the [LICENSE.md](LICENSE.md) file
 provided in the topmost directory of the DuMuX source code tree.
 
@@ -65,10 +65,10 @@ If you decide to update from version 2.12, please have a look at our small
 [guide](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/wikis/Updating-programs-from-version-2.12-to-version-3.0)
 on how to update an application to the new version.
 
-[0]: http://dumux.org
-[1]: http://dune-project.org
-[2]: http://dumux.org/documents/dumux_awrpaper.pdf
-[3]: http://www.dumux.org/installation.php
-[4]: http://www.dumux.org/documents/dumux-handbook-2.12.pdf
-[5]: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+[0]: https://dumux.org
+[1]: https://dune-project.org/
+[2]: https://dumux.org/documents/dumux_awrpaper.pdf
+[3]: https://dumux.org/installation
+[4]: https://dumux.org/documents/dumux-handbook-master.pdf
+[5]: https://www.gnu.org/licenses/gpl-3.0.en.html
 [6]: http://www.hydrosys.uni-stuttgart.de/index.en.php
