@@ -20,7 +20,6 @@
  * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
  * This parametrization is a second order polynomial.
  */
-
 #ifndef AWN_SURFACE_POLYNOMIAL_2ND_ORDER_HH
 #define AWN_SURFACE_POLYNOMIAL_2ND_ORDER_HH
 
@@ -32,8 +31,8 @@
 #include <cmath>
 #include <assert.h>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the polynomial of second order relating
@@ -72,7 +71,8 @@ public:
     }
 
 
-    /*! \brief the derivative of specific interfacial area function w.r.t. capillary pressure
+    /*!
+     * \brief the derivative of specific interfacial area function w.r.t. capillary pressure
      *
      * \param  params parameter container for the coefficients of the surface
      * \param  Sw Effective saturation of the wetting phase
@@ -84,7 +84,8 @@ public:
         return value;
     }
 
-    /*! \brief the derivative of specific interfacial area function w.r.t. saturation
+    /*!
+     * \brief the derivative of specific interfacial area function w.r.t. saturation
      *
      * \param  params parameter container for the coefficients of the surface
      * \param  Sw Effective saturation of the wetting phase
@@ -97,8 +98,6 @@ public:
     }
 
 };
-}
+} // end namespace Dumux
 
 #endif
-
-

@@ -29,9 +29,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup SpatialParameters

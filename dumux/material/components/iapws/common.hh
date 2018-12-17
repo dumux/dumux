@@ -35,14 +35,11 @@
 #include <cmath>
 #include <iostream>
 
-namespace Dumux
-{
-namespace IAPWS
-{
+namespace Dumux {
+namespace IAPWS {
 
 /*!
- *
- *  \ingroup IAPWS
+ * \ingroup IAPWS
  * \brief Implements relations which are common for all regions of the IAPWS '97
  *        formulation.
  *
@@ -238,6 +235,6 @@ public:
 };
 
 } // end namespace IAPWS
-} // end namespace Dune
+} // end namespace Dumux
 
 #endif

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for water and methane.
  */
 #ifndef DUMUX_BINARY_COEFF_H2O_CH4_HH
@@ -30,10 +30,8 @@
 #include <dumux/material/components/ch4.hh>
 #include <dumux/material/components/h2o.hh>
 
-namespace Dumux
-{
-namespace BinaryCoeff
-{
+namespace Dumux {
+namespace BinaryCoeff {
 
 /*!
  * \ingroup Binarycoefficients
@@ -106,7 +104,7 @@ public:
     }
 };
 
-}
-} // end namespace
+} // end namespace BinaryCoeff
+} // end namespace Dumux
 
 #endif

@@ -30,16 +30,13 @@
 
 #include <dumux/common/valgrind.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
+ * \ingroup Fluidmatrixinteractions
  * \brief Specification of the material parameters
  *       for the Brooks Corey constitutive relations.
- *
- * \ingroup Fluidmatrixinteractions
- *
- *\see BrooksCorey
+ * \see BrooksCorey
  */
 template <class ScalarT>
 class BrooksCoreyParams

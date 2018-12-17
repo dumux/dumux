@@ -23,8 +23,8 @@
 #ifndef AWN_SURFACE_EXP_FCT_PARAMS_HH
 #define AWN_SURFACE_EXP_FCT_PARAMS_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief implementation of interfacial area surface params

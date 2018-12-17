@@ -28,12 +28,10 @@
 #include "linearmaterial.hh"
 #include "regularizedlinearmaterialparams.hh"
 
-
-
 #include <dumux/common/spline.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Implements a linear saturation-capillary pressure relation
@@ -205,6 +203,6 @@ private:
         return lowS/2 + m*(S - lowS);
     }
 };
-}
+} // end namespace Dumux
 
 #endif

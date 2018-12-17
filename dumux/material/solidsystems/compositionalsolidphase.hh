@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SolidSystems
- * \brief @copybrief Dumux::SolidSystems::InertSolidPhase
+ * \brief A solid phase consisting of multiple inert solid components.
  */
 #ifndef DUMUX_SOLIDSYSTEMS_COMPOSITIONAL_SOLID_PHASE_HH
 #define DUMUX_SOLIDSYSTEMS_COMPOSITIONAL_SOLID_PHASE_HH
@@ -32,9 +32,9 @@ namespace SolidSystems {
 
 /*!
  * \ingroup SolidSystems
- * \brief A solid phase consisting of a single inert solid component
- * \note a solid is considered inert if it can't dissolve in a liquid and
- *       and can't increase its mass by precipitation from a fluid phase.
+ * \brief A solid phase consisting of multiple inert solid components.
+ * \note a solid is considered inert if it cannot dissolve in a liquid and
+ *       and cannot increase its mass by precipitation from a fluid phase.
  * \note inert components have to come after all non-inert components
  */
 template <class Scalar, class Component1, class Component2, int numInert = 0>

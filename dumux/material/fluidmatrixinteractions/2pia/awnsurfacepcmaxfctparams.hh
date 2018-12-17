@@ -23,11 +23,11 @@
 #ifndef AWN_SURFACE_PCMAX_FCT_PARAMS_HH
 #define AWN_SURFACE_PCMAX_FCT_PARAMS_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief implementation of interfacial area surface params
+ * \brief Implementation of interfacial area surface params
  */
 template<class ScalarT>
 class AwnSurfacePcMaxFctParams

@@ -346,7 +346,6 @@ public:
 };
 
 } // end namespace Components
-
 } // end namespace Dumux
 
 #endif

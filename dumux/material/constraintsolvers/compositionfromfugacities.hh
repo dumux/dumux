@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ConstraintSolver
+ * \ingroup ConstraintSolvers
  * \brief Determines the fluid composition given the component
  *        fugacities and an arbitary equation of state.
  */
@@ -35,7 +35,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup ConstraintSolver
+ * \ingroup ConstraintSolvers
  * \brief Calculates the chemical equilibrium from the component
  *        fugacities \f$ f^\kappa \f$ in the phase \f$ \alpha \f$.
  *

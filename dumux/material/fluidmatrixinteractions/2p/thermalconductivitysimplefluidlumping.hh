@@ -40,7 +40,7 @@ class ThermalConductivitySimpleFluidLumping
 
 public:
     /*!
-     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     * \brief Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      *
      * \param volVars volume variables
      * \param spatialParams spatial parameters
@@ -107,5 +107,5 @@ public:
         return keff ;
     }
 };
-}
+} // end namespace Dumux
 #endif

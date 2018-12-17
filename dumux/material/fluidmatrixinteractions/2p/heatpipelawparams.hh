@@ -18,15 +18,15 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslparams
+ * \ingroup Fluidmatrixinteractions
  * \brief Specification of the material params for the heat pipe's capillary
  *        pressure model.
  */
 #ifndef DUMUX_HEATPIPELAWPARAMS_HH
 #define DUMUX_HEATPIPELAWPARAMS_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Reference implementation of a params for the heat pipe's

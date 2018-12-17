@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of linear elastic geomechanical problems
  */
 #ifndef DUMUX_GEOMECHANICS_ELASTIC_FV_SPATIAL_PARAMS_HH
@@ -48,7 +49,7 @@ struct hasLameParamsAtPos
 #endif
 
 /*!
- * \ingroup Geomechanics
+ * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of linear elastic geomechanical problems
  */
 template<class Scalar, class FVGridGeometry, class Implementation>
@@ -149,5 +150,5 @@ protected:
 private:
     std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
 };
-}
+} // end namespace Dumuxs
 #endif

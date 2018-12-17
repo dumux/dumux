@@ -26,8 +26,8 @@
 #include "awnsurfacepcmaxfctparams.hh"
 #include <dune/common/exceptions.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of an interfacial area surface.
@@ -69,7 +69,8 @@ public:
         return aAlphaBeta;
     }
 
-    /*! \brief the derivative of specific interfacial area function w.r.t. capillary pressure
+    /*!
+     * \brief the derivative of specific interfacial area function w.r.t. capillary pressure
      *
      * \param  params parameter container for the coefficients of the surface
      * \param  Sw Effective saturation of the wetting phase
@@ -81,7 +82,8 @@ public:
         DUNE_THROW(Dune::NotImplemented, __FILE__ << "  dawndpc()");
     }
 
-    /*! \brief the derivative of specific interfacial area function w.r.t. saturation
+    /*!
+     * \brief the derivative of specific interfacial area function w.r.t. saturation
      *
      * \param  params parameter container for the coefficients of the surface
      * \param  Sw Effective saturation of the wetting phase
@@ -92,8 +94,6 @@ public:
         DUNE_THROW(Dune::NotImplemented, __FILE__ << "  dawndSw()");
     }
 };
-}
+} // end namespace Dumux
 
 #endif
-
-

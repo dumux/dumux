@@ -39,8 +39,7 @@
 
 #include <iostream>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup EOS

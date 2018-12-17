@@ -31,8 +31,8 @@
 #include <cmath>
 #include <cassert>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the van Genuchten capillary pressure <->

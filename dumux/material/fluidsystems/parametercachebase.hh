@@ -24,8 +24,8 @@
 #ifndef DUMUX_PARAMETER_CACHE_BASE_HH
 #define DUMUX_PARAMETER_CACHE_BASE_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidsystems
  * \brief The base class of the parameter cache classes for fluid systems

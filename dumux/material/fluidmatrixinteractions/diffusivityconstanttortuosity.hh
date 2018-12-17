@@ -26,8 +26,8 @@
 
 #include <dumux/common/parameters.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Relation for the saturation-dependent effective diffusion coefficient

@@ -26,11 +26,8 @@
 
 #include <cmath>
 
-
-namespace Dumux
-{
-namespace BinaryCoeff
-{
+namespace Dumux {
+namespace BinaryCoeff {
 
 /*!
  * \ingroup Binarycoefficients
@@ -109,7 +106,7 @@ public:
     }
 };
 
-}
-} // end namespace
+} // end namespace BinaryCoeff
+} // end namespace Dumux
 
 #endif

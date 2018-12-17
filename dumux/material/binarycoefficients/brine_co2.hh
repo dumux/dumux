@@ -620,7 +620,7 @@ private:
     }
 
 };
-}
-} // end namespace
+} // end namespace BinaryCoeff
+} // end namespace Dumux
 
 #endif

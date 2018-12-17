@@ -31,12 +31,12 @@
 #include <math.h>
 #include <assert.h>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the polynomial of second order relating
- *             specific interfacial  area to wetting phase saturation and capillary pressure.
+ *        specific interfacial  area to wetting phase saturation and capillary pressure.
  */
 template <class ParamsT>
 class AwnSurfacePolynomialEdgeZero2ndOrder
@@ -68,7 +68,8 @@ public:
     }
 
 
-    /*! \brief the derivative of specific interfacial area function w.r.t. capillary pressure
+    /*!
+     * \brief the derivative of specific interfacial area function w.r.t. capillary pressure
      *
      * \param  params parameter container for the coefficients of the surface
      * \param  Sw Effective saturation of the wetting phase
@@ -84,7 +85,8 @@ public:
         return value;
     }
 
-    /*! \brief the derivative of specific interfacial area function w.r.t. saturation
+    /*!
+     * \brief the derivative of specific interfacial area function w.r.t. saturation
      *
      * \param  params parameter container for the coefficients of the surface
      * \param  Sw Effective saturation of the wetting phase
@@ -105,5 +107,3 @@ public:
 } // namespace Dumux
 
 #endif
-
-

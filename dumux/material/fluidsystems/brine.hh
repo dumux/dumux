@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Fluidsystems
  * \brief A fluid system for brine, i.e. H2O with dissolved NaCl.
  */
 #ifndef DUMUX_BRINE_FLUID_SYSTEM_HH

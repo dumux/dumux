@@ -32,6 +32,10 @@
 namespace Dumux {
 namespace Components {
 
+/*!
+ * \ingroup Components
+ * \brief Interface for components that have a gas state
+ */
 template<class Scalar, class Component>
 class Gas
 {

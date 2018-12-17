@@ -30,11 +30,10 @@
 
 #include <algorithm>
 
-
 #include <dumux/common/spline.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the regularized  van Genuchten's
@@ -203,19 +202,19 @@ public:
     { return 0.0; }
 
     /*!
-    * \brief A regularized version of the partial derivative
-    *        of the \f$\mathrm{p_c(\overline{S}_w)}\f$ w.r.t. effective saturation
-    *        according to van Genuchten.
-    *
-    * regularized part:
-    *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-    *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-    *                       by a straight line and use that slope (yes, there is a kink :-( ).
-    *
-    *        For not-regularized part:
-    *
-    * \copydetails VanGenuchten::dpc_dswe()
-    */
+     * \brief A regularized version of the partial derivative
+     *        of the \f$\mathrm{p_c(\overline{S}_w)}\f$ w.r.t. effective saturation
+     *        according to van Genuchten.
+     *
+     * regularized part:
+     *    - low saturation:  use the slope of the regularization point (i.e. no kink).
+     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
+     *                       by a straight line and use that slope (yes, there is a kink :-( ).
+     *
+     *        For not-regularized part:
+     *
+     * \copydetails VanGenuchten::dpc_dswe()
+     */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
         // retrieve the low and the high threshold saturations for the
@@ -465,6 +464,6 @@ private:
     }
 };
 
-}
+} // end namespace Dumux
 
 #endif

@@ -25,8 +25,8 @@
 #ifndef MP_LINEAR_MATERIAL_PARAMS_HH
 #define MP_LINEAR_MATERIAL_PARAMS_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Reference implementation of params for the linear M-phase

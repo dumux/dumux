@@ -26,8 +26,7 @@
 
 #include <dumux/material/constants.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Material

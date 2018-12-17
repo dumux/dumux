@@ -33,10 +33,8 @@
 #include <cmath>
 #include <iostream>
 
-namespace Dumux
-{
-namespace IAPWS
-{
+namespace Dumux {
+namespace IAPWS {
 
 /*!
  * \ingroup IAPWS
@@ -118,6 +116,6 @@ public:
 };
 
 } // end namespace IAPWS
-} // end namespace Dune
+} // end namespace Dumux
 
 #endif

@@ -19,9 +19,7 @@
 /*!
  * \file
  * \ingroup SolidStates
- * \brief Represents all relevant thermodynamic quantities of a
- *        multi-phase fluid system assuming immiscibility and
- *        thermodynamic equilibrium.
+ * \brief Represents all relevant thermodynamic quantities of a inert solid system.
  */
 #ifndef DUMUX_INERT_SOLID_STATE_HH
 #define DUMUX_INERT_SOLID_STATE_HH
@@ -30,8 +28,7 @@ namespace Dumux {
 
 /*!
  * \ingroup SolidStates
- * \brief Represents all relevant thermodynamic quantities of a inert
- *        solid system
+ * \brief Represents all relevant thermodynamic quantities of a inert solid system.
  */
 template <class Scalar, class SolidSystemType>
 class InertSolidState
@@ -91,9 +88,10 @@ public:
     //! The volume fraction of a solid component within the solid phase
     Scalar volumeFraction(const int compIdx) const { return volumeFraction_[compIdx]; }
 
+
     /*!
      * \brief The molar density \f$\rho_{mol,\alpha}\f$
-     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *   of a solid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
      *
      * The molar density is defined by the mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
      *
@@ -109,10 +107,10 @@ public:
      *****************************************************/
 
     /*!
-     * \brief Retrieve all parameters from an arbitrary fluid state.
+     * \brief Retrieve all parameters from an arbitrary solid state.
      * \param sst The inert solid state
      *
-     * \note If the other fluid state object is inconsistent with the
+     * \note If the other solid state object is inconsistent with the
      *       thermodynamic equilibrium, the result of this method is
      *       undefined.
      */
@@ -128,7 +126,7 @@ public:
     }
 
     /*!
-     * \brief Set the temperature \f$\mathrm{[K]}\f$ of a fluid phase
+     * \brief Set the temperature \f$\mathrm{[K]}\f$  of the solid phase
      */
     void setTemperature(Scalar value)
     { temperature_ = value; }

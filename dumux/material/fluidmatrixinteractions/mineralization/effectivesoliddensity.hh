@@ -29,7 +29,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/evalsolution.hh>
 
-
 namespace Dumux {
 
 /*!

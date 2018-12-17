@@ -140,5 +140,5 @@ public:
 
     }
 };
-}
+} // end namespace Dumux
 #endif

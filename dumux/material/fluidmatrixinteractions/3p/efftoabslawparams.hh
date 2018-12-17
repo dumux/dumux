@@ -26,8 +26,8 @@
 #ifndef DUMUX_EFF_TO_ABS_LAW_PARAMS_HH
 #define DUMUX_EFF_TO_ABS_LAW_PARAMS_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief A default implementation of the parameters for the adapter
@@ -104,6 +104,6 @@ public:
     }
 };
 
-}
+} // end namespace Dumux
 
 #endif

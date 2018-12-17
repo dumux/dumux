@@ -28,12 +28,10 @@
 #include "brookscorey.hh"
 #include "regularizedbrookscoreyparams.hh"
 
-
-
 #include <dumux/common/spline.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the regularized  Brooks-Corey
@@ -289,6 +287,6 @@ public:
         return BrooksCorey::krn(params, swe);
     }
 };
-}
+} // end namespace Dumux
 
 #endif

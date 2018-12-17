@@ -30,10 +30,8 @@
 #include <dumux/material/components/n2.hh>
 #include <dumux/material/components/h2o.hh>
 
-namespace Dumux
-{
-namespace BinaryCoeff
-{
+namespace Dumux {
+namespace BinaryCoeff {
 
 /*!
  * \ingroup Binarycoefficients
@@ -105,7 +103,7 @@ public:
     }
 };
 
-}
-} // end namespace
+} // end namespace BinaryCoeff
+} // end namespace Dumux
 
 #endif

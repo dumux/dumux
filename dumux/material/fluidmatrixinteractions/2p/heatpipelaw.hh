@@ -34,8 +34,8 @@
 #include <math.h>
 #include <assert.h>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the capillary pressure <-> saturation
@@ -165,6 +165,6 @@ private:
     }
 };
 
-}
+} // end namespace Dumux
 
 #endif

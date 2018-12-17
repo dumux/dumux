@@ -31,8 +31,8 @@
 #include <dune/common/fvector.hh>
 #include <iostream>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Reference implementation of a van Genuchten params
