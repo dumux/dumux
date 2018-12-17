@@ -201,7 +201,7 @@ private:
                                                        : dataHandle.gOutside()[localFaceIdx][idxInOutside]);
 
         // switch the sign if necessary
-        if (cache.advectionSwitchFluxSign())
+        if (switchSign)
             scvfFlux *= -1.0;
 
         return scvfFlux;

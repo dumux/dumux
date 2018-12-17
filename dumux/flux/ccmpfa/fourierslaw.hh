@@ -178,7 +178,7 @@ private:
                         const FluxVarsCache& cache,
                         const DataHandle& dataHandle)
     {
-        const bool switchSign = cache.advectionSwitchFluxSign();
+        const bool switchSign = cache.heatConductionSwitchFluxSign();
 
         const auto localFaceIdx = cache.ivLocalFaceIndex();
         const auto idxInOutside = cache.indexInOutsideFaces();
@@ -189,7 +189,7 @@ private:
         Scalar scvfFlux = tij*Tj;
 
         // switch the sign if necessary
-        if (cache.advectionSwitchFluxSign())
+        if (switchSign)
             scvfFlux *= -1.0;
 
         return scvfFlux;

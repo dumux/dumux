@@ -234,7 +234,7 @@ private:
         Scalar scvfFlux = tij*xj;
 
         // switch the sign if necessary
-        if (cache.advectionSwitchFluxSign())
+        if (switchSign)
             scvfFlux *= -1.0;
 
         return scvfFlux;
