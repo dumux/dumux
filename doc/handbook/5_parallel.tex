@@ -12,11 +12,11 @@ approaches. The parallelization in \Dumux is based on the
 It is the MPI parallelization that allows the user to run
 \Dumux applications in parallel on a desktop computer, the users laptop or 
 large high performance clusters. However, the chosen \Dumux 
-model must support parallel computations, which is the case for the most \Dumux applications.
+model must support parallel computations, which is the case for most \Dumux applications.
 
 The main idea behind the MPI parallelization is the concept of \textit{domain 
 decomposition}. For parallel simulations, the computational domain is split into 
-subdomains and one process (\textit{rank}) is used to solves the local problem of each 
+subdomains and one process (\textit{rank}) is used to solve the local problem of each 
 subdomain. During the global solution process, some data exchange between the 
 ranks/subdomains is needed. MPI is used to send data to other ranks and to receive 
 data from other ranks. 
@@ -24,12 +24,12 @@ Most grid managers contain own domain decomposition methods to split the
 computational domain  into subdomains. Some grid managers also support external 
 tools like METIS, ParMETIS, PTScotch or ZOLTAN for partitioning.
 
-Before \Dumux can be started in parallel, a 
+Before \Dumux can be started in parallel, an 
 MPI library (e.g. OpenMPI, MPICH or IntelMPI) 
 must be installed on the system and all \Dune modules and \Dumux must be recompiled.  
 
 
-\subsection{Prepare an Parallel Application}
+\subsection{Prepare a Parallel Application}
 Not all parts of \Dumux can be used in parallel. One example are the linear solvers
 of the sequential backend. However, with the AMG backend \Dumux provides 
 a parallel solver backend based on Algebraic Multi Grid (AMG) that can be used in
@@ -58,7 +58,7 @@ using LinearSolver = Dumux::AMGBackend<TypeTag>;
 
 and the application must be compiled. 
 
-\subsection{Run an Parallel Application}
+\subsection{Run a Parallel Application}
 The starting procedure for parallel simulations depends on the chosen MPI library. 
 Most MPI implementations use the \textbf{mpirun} command
 
@@ -67,33 +67,33 @@ mpirun -np <n_cores> <executable_name>
 \end{lstlisting}
 
 where \textit{-np} sets the number of cores (\texttt{n\_cores}) that should be used for the 
-computation. On a cluster you usually have to use a queuing system (e.g. slurm) to 
+computation. On a cluster you usually have to use a queueing system (e.g. slurm) to 
 submit a job. 
 
 \subsection{Handling Parallel Results}
 For most models, the results should not differ between parallel and serial 
 runs. However, parallel computations are not naturally deterministic. 
-A typical case where one can not assume a deterministic behaviour are models where
+A typical case where one can not assume a deterministic behavior are models where
 small differences in the solution can cause large differences in the results 
 (e.g. for some turbulent flow problems). Nevertheless, it is useful to expect that
 the simulation results do not depend on the number of cores. Therefore you should double check 
-the model, if it is really not deterministic. Typical reasons for a wrong non deterministic
-behaviour are errors in the parallel computation of boundary conditions or missing/reduced
-data exchange in higher order gradient approximations. Also you should keep in mind, that 
-for iterative solvers there can occur differences in the solution due to the error threshold.
+the model, if it is really not deterministic. Typical reasons for a wrong non-deterministic
+behavior are errors in the parallel computation of boundary conditions or missing/reduced
+data exchange in higher order gradient approximations. Also, you should keep in mind that 
+for iterative solvers differences in the solution can occur due to the error threshold.
 
 
-For serial computations \Dumux produces single vtu-files as default output format. 
+For serial computations, \Dumux produces single vtu-files as default output format. 
 During a simulation, one vtu-file is written for every output step. 
 In the parallel case, one vtu-file for each step and processor is created. 
-For parallel computations an additional variable "process rank" is written 
+For parallel computations, an additional variable "process rank" is written 
 into the file. The process rank allows the user to inspect the subdomains 
 after the computation.
 
 \subsection{MPI scaling}
-For parallel computations the number of cores must be chosen 
+For parallel computations, the number of cores must be chosen 
 carefully. Using too many cores will not always lead to more performance, but 
-can produce a bad efficiency. One reason is that for small subdomains, the 
-communication between the subdomains gets the limiting factor for parallel computations. 
+can lead to inefficiency. One reason is that for small subdomains, the 
+communication between the subdomains becomes the limiting factor for parallel computations. 
 The user should test the MPI scaling (relation between the number of cores and the computation time) 
 for each specific application to ensure a fast and efficient use of the given resources.   
