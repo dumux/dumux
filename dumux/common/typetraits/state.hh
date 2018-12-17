@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Typetraits
  * \brief Type traits to be used with matrix types
  */
 #ifndef DUMUX_TYPETRAITS_STATE_HH

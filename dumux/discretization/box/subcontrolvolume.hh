@@ -190,6 +190,6 @@ private:
     GridIndexType dofIndex_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

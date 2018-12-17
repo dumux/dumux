@@ -31,8 +31,8 @@
 
 #include <algorithm>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Implements a linear saturation-capillary pressure relation
@@ -96,6 +96,6 @@ public:
             values[phaseIdx] = max(min(state.saturation(phaseIdx),1.0),0.0);
     }
 };
-}
+} // end namespace Dumux
 
 #endif

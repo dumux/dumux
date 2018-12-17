@@ -26,9 +26,9 @@
 
 #include <dumux/material/components/h2o.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
+ * \ingroup Binarycoefficients
  * \brief The Henry constants in liquid water using the IAPWS 2004
  *        formulation.
  * \param E Correlation parameter

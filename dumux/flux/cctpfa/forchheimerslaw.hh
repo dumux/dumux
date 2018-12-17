@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Forchheimers's law for cell-centered finite volume schemes with two-point flux approximation
  */
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FORCHHEIMERS_LAW_HH
@@ -42,7 +42,7 @@ template<class TypeTag, DiscretizationMethod discMethod>
 class ForchheimersLawImplementation;
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Forchheimer's law for cell-centered finite volume schemes with two-point flux approximation
  * \note Forchheimer's law is specialized for network and surface grids (i.e. if grid dim < dimWorld)
  * \tparam Scalar the scalar type for scalar physical quantities
@@ -53,7 +53,7 @@ template<class Scalar, class FVGridGeometry, bool isNetwork>
 class CCTpfaForchheimersLaw;
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Forchheimer's law for cell-centered finite volume schemes with two-point flux approximation
  * \note Forchheimer's law is specialized for network and surface grids (i.e. if grid dim < dimWorld)
  */
@@ -65,7 +65,7 @@ class ForchheimersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 {};
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Class that fills the cache corresponding to tpfa Forchheimer's Law
  */
 template<class FVGridGeometry>
@@ -93,7 +93,7 @@ public:
 };
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief The cache corresponding to tpfa Forchheimer's Law
  */
 template<class AdvectionType, class FVGridGeometry>
@@ -132,7 +132,7 @@ private:
 };
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Specialization of the CCTpfaForchheimersLaw grids where dim=dimWorld
  */
 template<class ScalarType, class FVGridGeometry>
@@ -544,7 +544,7 @@ private:
 };
 
 /*!
- * \ingroup CCTpfaDiscretization
+ * \ingroup CCTpfaFlux
  * \brief Specialization of the CCTpfaForchheimersLaw grids where dim<dimWorld
  */
 template<class ScalarType, class FVGridGeometry>

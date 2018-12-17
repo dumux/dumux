@@ -30,8 +30,8 @@
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 //! Forward declaration of method specific implementation of the assembly map
 template<class FVGridGeometry, MpfaMethods method>
 class CCMpfaConnectivityMap;
@@ -39,6 +39,6 @@ class CCMpfaConnectivityMap;
 //! The o-method can use the simple (symmetric) assembly map
 template<class FVGridGeometry>
 class CCMpfaConnectivityMap<FVGridGeometry, MpfaMethods::oMethod> : public CCSimpleConnectivityMap<FVGridGeometry> {};
-}
+} // end namespace Dumux
 
 #endif

@@ -28,8 +28,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/staggered/fluxvariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>

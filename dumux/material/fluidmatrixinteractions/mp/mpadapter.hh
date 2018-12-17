@@ -31,8 +31,8 @@
 #include <cassert>
 #include <dumux/common/typetraits/typetraits.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief An adapter for mpnc to use the capillary pressure-saturation relationships
@@ -88,6 +88,6 @@ public:
         values[nPhaseIdx] = MaterialLaw::krn(params, state.saturation(wPhaseIdx));
     }
 };
-}
+} // end namespace Dumux
 
 #endif

@@ -28,8 +28,8 @@
 
 #include "parkervangen3pparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of van Genuchten's capillary pressure <->
@@ -340,6 +340,6 @@ private:
     }
 
 };
-}
+} // end namespace Dumux
 
 #endif

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief The effective stress law specialized for different discretization schemes.
  *        This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
  */
@@ -30,7 +30,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
  * \note Specializations are provided for the different discretization methods.
  * These specializations are found in the headers included below.

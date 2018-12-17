@@ -29,6 +29,10 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup Common
+ * \brief A arithmetic block vector type based on DUNE's reserved vector
+ */
 template<class BlockType, int capacity>
 class ReservedBlockVector : public Dune::ReservedVector<BlockType, capacity>
 {

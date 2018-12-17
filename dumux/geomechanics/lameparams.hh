@@ -18,17 +18,16 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Geomechanics
  * \brief \copydoc Dumux::LameParams
  */
 #ifndef DUMUX_GEOMECHANICS_LAME_PARAMS_HH
 #define DUMUX_GEOMECHANICS_LAME_PARAMS_HH
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Geomechanics
- * \ingroup Elastic
  * \brief Structure encapsulating the lame parameters
  */
 template<class Scalar>
@@ -62,5 +61,5 @@ private:
     Scalar lambda_;
     Scalar mu_;
 };
-}
+} // end namespace Dumux
 #endif

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ConstraintSolver
+ * \ingroup ConstraintSolvers
  * \brief Determines the pressures and saturations of all fluid phases
  *        given the total mass of all components.
  */
@@ -29,8 +29,8 @@
 
 #include <dumux/material/fluidstates/pseudo1p2c.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ConstraintSolver
  * \brief Flash calculation routines for compositional sequential models
@@ -60,7 +60,8 @@ public:
  * \name Concentration flash for a given feed fraction
  */
 //@{
-    /*! 2p2c Flash for constant p & t if concentrations (feed mass fraction) is given.
+    /*!
+     * \brief 2p2c Flash for constant p & t if concentrations (feed mass fraction) is given.
      *
      * Routine goes as follows:
      * - determination of the equilibrium constants from the fluid system
@@ -173,7 +174,8 @@ public:
         fluidState.setSaturation(phase0Idx, sw);
     }
 
-    /*! The simplest possible update routine for 1p2c "flash" calculations
+    /*!
+     * \brief The simplest possible update routine for 1p2c "flash" calculations
      *
      * Routine goes as follows:
      * - Check if we are in single phase condition
@@ -245,7 +247,8 @@ public:
  * \name Saturation flash for a given saturation (e.g. at boundary)
  */
 //@{
-    /*! a flash routine for 2p2c systems if the saturation instead of total concentration is known.
+    /*!
+     * \brief A flash routine for 2p2c systems if the saturation instead of total concentration is known.
      *
      * Routine goes as follows:
      * - determination of the equilibrium constants from the fluid system

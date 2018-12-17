@@ -29,7 +29,8 @@
 
 namespace Dumux {
 
-/**
+/*!
+ * \ingroup SpatialParameters
  * \brief Definition of the spatial parameters for non-equilibrium
  */
 template<class FVGridGeometry, class Scalar, class Implementation>
@@ -128,6 +129,6 @@ public:
     }
 };
 
-}
+} // end namespace Dumux
 
 #endif // GUARDIAN

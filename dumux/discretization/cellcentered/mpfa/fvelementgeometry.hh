@@ -34,8 +34,8 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered mpfa models

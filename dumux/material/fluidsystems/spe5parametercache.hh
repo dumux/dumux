@@ -32,11 +32,10 @@
 #include <dumux/material/eos/pengrobinson.hh>
 #include <dumux/material/eos/pengrobinsonparamsmixture.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidsystems
- * \ingroup ParameterCache
  * \brief Specifies the parameters required by the SPE5 problem which
  *        are despondent on the thermodynamic state.
  */

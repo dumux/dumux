@@ -25,7 +25,6 @@
  * The data sets for a specific window have to be passed by the addDataSet function
  * and then plotted by using the plot function.
  */
-
 #ifndef DUMUX_GNUPLOT_INTERFACE_HH
 #define DUMUX_GNUPLOT_INTERFACE_HH
 
@@ -46,8 +45,8 @@
 #include <dune/common/deprecated.hh>
 #include <dune/common/stdstreams.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup InputOutput
  * \brief Interface for passing data sets to a file and plotting them, if gnuplot

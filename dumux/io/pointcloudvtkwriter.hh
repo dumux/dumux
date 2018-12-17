@@ -158,19 +158,19 @@ public:
         file.close();
     }
 
-     /*!
+    /*!
      * \brief Create an output file in parallel
      *
      * \param name 			Base name of the output files.  This should not
-       *                   	contain any directory part and not filename
-       *                   	extensions.  It will be used both for each processes
-       *                   	piece as well as the parallel collection file
+     *                   	contain any directory part and not filename
+     *                   	extensions.  It will be used both for each processes
+     *                   	piece as well as the parallel collection file
      * \param path  		Directory where to put the parallel collection
-       *                    (.pvtu/.pvtp) file.  If it is relative, it is taken
-       *                    relative to the current directory
+     *                      (.pvtu/.pvtp) file.  If it is relative, it is taken
+     *                      relative to the current directory
      * \param extendpath 	Directory where to put the piece file (.vtu/.vtp) of
-       *                   	this process.  If it is relative, it is taken
-       *                   	relative to the directory denoted by path
+     *                   	this process.  If it is relative, it is taken
+     *                   	relative to the directory denoted by path
      * \param type			How to encode the data in the file
      */
     void pwrite(const std::string & name,  const std::string & path, const std::string & extendpath,
@@ -179,7 +179,7 @@ public:
         DUNE_THROW(Dune::NotImplemented, "parallel point cloud vtk output not supported yet");
     }
 
-     /*!
+    /*!
      * \brief Add a vector of scalar data that live on arbitrary points to the visualization.
      *
      * \param v The vector containing the data
@@ -191,7 +191,7 @@ public:
         scalarPointData_.push_back(ScalarFunction(v, name, 1));
     }
 
-     /*!
+    /*!
      * \brief Add a vector of vector data that live on arbitrary points to the visualization.
      *
      * \param v The vector containing the data
@@ -203,7 +203,7 @@ public:
         vectorPointData_.push_back(VectorFunction(v, name, 3));
     }
 
-     /*!
+    /*!
      * \brief Clears the data lists
      */
     void clear()
@@ -212,7 +212,7 @@ public:
         vectorPointData_.clear();
     }
 
-     /*!
+    /*!
      * \brief Return name of a serial header file
      *
      * \param name     Base name of the VTK output.  This should be without
@@ -231,7 +231,7 @@ public:
       return Dune::concatPaths(path, name+extension);
     }
 
-     /*!
+    /*!
      * \brief Return name of a parallel header file
      *
      * \param name     Base name of the VTK output.  This should be without
@@ -261,7 +261,7 @@ public:
 
 
 private:
-     /*!
+    /*!
      * \brief Writes the header to the file
      */
     void writeHeader_(std::ostream& file)
@@ -273,7 +273,7 @@ private:
         file << header;
     }
 
-     /*!
+    /*!
      * \brief Writes information about the data to the file
      */
     void writeDataInfo_(std::ostream& file)
@@ -319,7 +319,7 @@ private:
             return;
     }
 
-     /*!
+    /*!
      * \brief Writes the coordinates to the file
      *
      * \param file The output file
@@ -353,7 +353,7 @@ private:
         file << "</Points>\n";
     }
 
-     /*!
+    /*!
      * \brief Writes data to the file
      *
      * \param file The output file
@@ -379,7 +379,7 @@ private:
         file << "\n</DataArray>\n";
     }
 
-     /*!
+    /*!
      * \brief Writes a scalar to the file
      *
      * \param file The output file
@@ -390,7 +390,7 @@ private:
         file << s << " ";
     }
 
-     /*!
+    /*!
      * \brief Writes a vector to the file
      *
      * \param file The output file

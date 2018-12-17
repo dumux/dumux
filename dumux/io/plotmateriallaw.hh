@@ -35,7 +35,7 @@ template<class Scalar> class GnuplotInterface;
 
 /*!
  * \ingroup InputOutput
- *\brief Interface for plotting the two-phase fluid-matrix-interaction laws
+ * \brief Interface for plotting the two-phase fluid-matrix-interaction laws
  */
 template<class Scalar, class MaterialLaw>
 class PlotMaterialLaw

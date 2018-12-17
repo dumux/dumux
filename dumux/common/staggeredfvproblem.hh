@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Common
- * \brief Base class for all problems
+ * \brief Base class for all staggered fv problems
  */
 #ifndef DUMUX_STAGGERD_FV_PROBLEM_HH
 #define DUMUX_STAGGERD_FV_PROBLEM_HH
@@ -32,9 +32,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup Problems
  * \ingroup Common
- * \brief Base class for all finite-volume problems
+ * \brief Base class for all staggered finite-volume problems
  *
  * \note All quantities (regarding the units) are specified assuming a
  *       three-dimensional world. Problems discretized using 2D grids

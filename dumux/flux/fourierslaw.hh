@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief Fourier's law specialized for different discretization schemes
  *        This file contains the data which is required to calculate
  *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
@@ -37,7 +37,7 @@ class FouriersLawImplementation
 {};
 
 /*!
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief Evaluates the heat conduction flux according to Fouriers's law
  */
 template <class TypeTag>

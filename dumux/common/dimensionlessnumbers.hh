@@ -53,8 +53,8 @@ enum class SherwoodFormulation
 };
 
 /*!
- * \brief Collection of functions which calculate dimensionless numbers.
  * \ingroup Common
+ * \brief Collection of functions which calculate dimensionless numbers.
  * Each number has it's own function.
  * All the parameters for the calculation have to be handed over.
  * Rendering this collection generic in the sense that it can be used by any model.

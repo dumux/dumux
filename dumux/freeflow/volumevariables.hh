@@ -227,6 +227,6 @@ public:
         return FluidSystem::enthalpy(fluidState, paramCache, 0);
     }
 };
-}
+} // end namespace Dumux
 
 #endif // DUMUX_FREEFLOW_VOLUME_VARIABLES_HH

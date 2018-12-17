@@ -29,12 +29,12 @@
 
 #include "brookscoreyparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
+ * \ingroup Fluidmatrixinteractions
  * \brief   Parameters that are necessary for the \em regularization of
  *          the Brooks-Corey capillary pressure model.
- * \ingroup Fluidmatrixinteractions
  */
 template <class ScalarT>
 class RegularizedBrooksCoreyParams : public BrooksCoreyParams<ScalarT>

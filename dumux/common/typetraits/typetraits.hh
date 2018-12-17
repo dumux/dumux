@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
  * \ingroup TypeTraits
  */
 #ifndef DUMUX_TYPE_TRAITS_HH
@@ -29,10 +28,9 @@
 #include <dune/common/version.hh>
 #include <dune/common/typetraits.hh>
 
-namespace Dumux
-{
+namespace Dumux {
     /*!
-     * \brief template which always yields a false value
+     * \brief Template which always yields a false value
      * \tparam T Some type.
      */
     template<typename T>
@@ -49,5 +47,5 @@ namespace Dumux
     #else
         typename Dune::is_indexable<T, I>;
     #endif
-}
+} // end namespace Dumux
 #endif

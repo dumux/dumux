@@ -27,8 +27,7 @@
 #include <cmath>
 #include <algorithm>
 
-namespace Dumux
-{
+namespace Dumux {
 
 struct JohansenIndices
 {
@@ -137,5 +136,5 @@ public:
         return lDry + Ke * (lSat - lDry); // equation 14
     }
 };
-}
+} // end namespace Dumux
 #endif

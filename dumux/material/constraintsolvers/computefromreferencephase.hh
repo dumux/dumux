@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ConstraintSolver
+ * \ingroup ConstraintSolvers
  * \brief Computes all quantities of a generic fluid state if a
  *        reference phase has been specified.
  *
@@ -40,7 +40,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup ConstraintSolver
+ * \ingroup ConstraintSolvers
  * \brief Computes all quantities of a generic fluid state if a
  *        reference phase has been specified.
  *

@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxDiscretization
  * \brief The grid volume variables class for box models
  */
 #ifndef DUMUX_DISCRETIZATION_BOX_GRID_VOLUMEVARIABLES_HH
@@ -43,7 +44,7 @@ struct BoxDefaultGridVolumeVariablesTraits
 };
 
 /*!
- * \ingroup BoxModel
+ * \ingroup BoxDiscretization
  * \brief Base class for the grid volume variables
  */
 template<class Problem,

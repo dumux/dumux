@@ -26,8 +26,8 @@
 
 #include <dune/grid/common/datahandleif.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Linear
  * \todo why is this needed? is parallel/vectorexhange.hh not the same?
@@ -54,9 +54,10 @@ public:
         return true;
   }
 
-  /*! \brief how many objects of type DataType have to be sent for a given entity
-  * \note Only the sender side needs to know this size.
-  */
+  /*!
+   * \brief how many objects of type DataType have to be sent for a given entity
+   * \note Only the sender side needs to know this size.
+   */
   template<class Entity>
   size_t size (Entity& entity) const
   {

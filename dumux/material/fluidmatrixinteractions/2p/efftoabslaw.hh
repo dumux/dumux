@@ -28,11 +28,10 @@
 
 #include "efftoabslawparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
- *
  * \brief This material law takes a material law defined for effective
  *        saturations and converts it to a material law defined on absolute
  *        saturations.
@@ -272,6 +271,6 @@ public:
     static Scalar dsw_dswe_(const Params &params)
     { return 1. - params.swr() - params.snr(); }
 };
-}
+} // end namespace Dumux
 
 #endif

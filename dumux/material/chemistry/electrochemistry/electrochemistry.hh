@@ -42,6 +42,7 @@ namespace Dumux {
 enum ElectroChemistryModel { Ochs, Acosta };
 
 /*!
+ * \ingroup Chemistry
  * \brief This class calculates source terms and current densities for fuel cells
  * with the electrochemical models suggested by Ochs (2008) \cite ochs2008 or Acosta et al. (2006) \cite A3:acosta:2006
  * \todo TODO: Scalar type should be extracted from VolumeVariables!
@@ -281,6 +282,6 @@ private:
     }
 };
 
-}// end namespace
+} // end namespace Dumux
 
 #endif

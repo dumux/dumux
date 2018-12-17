@@ -31,8 +31,8 @@
 
 #include <dumux/common/valgrind.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup EOS
  * \brief Stores and provides access to the Peng-Robinson parameters

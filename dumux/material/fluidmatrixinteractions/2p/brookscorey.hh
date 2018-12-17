@@ -21,7 +21,6 @@
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the capillary pressure and
  * relative permeability <-> saturation relations according to Brooks and Corey.
- *
  */
 #ifndef DUMUX_BROOKS_COREY_HH
 #define DUMUX_BROOKS_COREY_HH
@@ -31,8 +30,8 @@
 #include <algorithm>
 #include <cmath>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  *

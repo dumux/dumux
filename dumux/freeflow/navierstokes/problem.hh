@@ -53,7 +53,7 @@ using NavierStokesParentProblem =
  *
  * This implements gravity (if desired) and a function returning the temperature.
  * Includes a specialized method used only by the staggered grid discretization.
-  *
+ *
  */
 template<class TypeTag>
 class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>

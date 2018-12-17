@@ -27,8 +27,7 @@
 #include <algorithm>
 #include <array>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Common

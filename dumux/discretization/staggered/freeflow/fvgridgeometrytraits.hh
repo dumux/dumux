@@ -61,6 +61,6 @@ struct StaggeredFreeFlowDefaultFVGridGeometryTraits
     using LocalView = StaggeredFVElementGeometry<FVGridGeometry, cachingEnabled>;
 };
 
-}
+} //end namespace Dumux
 
 #endif

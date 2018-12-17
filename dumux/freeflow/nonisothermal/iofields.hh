@@ -28,8 +28,7 @@
 
 #include <dumux/io/name.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup FreeflowNIModel

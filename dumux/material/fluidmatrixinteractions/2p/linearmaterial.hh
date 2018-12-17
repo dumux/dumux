@@ -29,8 +29,8 @@
 
 #include <algorithm>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Linear capillary pressure and
@@ -166,6 +166,6 @@ public:
         return max(min(sne,1.0),0.0);
     }
 };
-}
+} // end namespace Dumux
 
 #endif

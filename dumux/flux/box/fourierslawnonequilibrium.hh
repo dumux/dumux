@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxFlux
  * \brief This file contains the data which is required to calculate
  *        energy fluxes due to molecular diffusion with Fourier's law.
  */

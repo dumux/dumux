@@ -27,8 +27,7 @@
 
 #include <cmath>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Material

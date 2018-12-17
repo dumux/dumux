@@ -28,8 +28,8 @@
 
 #include <dune/common/float_cmp.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief A default implementation of the parameters for the adapter
@@ -87,6 +87,6 @@ private:
     Scalar snr_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

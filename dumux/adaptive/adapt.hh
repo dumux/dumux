@@ -26,8 +26,7 @@
 
 #include "griddatatransfer.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Adaptive

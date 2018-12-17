@@ -23,11 +23,11 @@
 #ifndef AWN_SURFACE_EXP_SW_PC_TO_3_PARAMS
 #define AWN_SURFACE_EXP_SW_PC_TO_3_PARAMS
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief implementation of interfacial area surface params
+ * \brief Implementation of interfacial area surface params
  */
 template<class ScalarT>
 class AwnSurfaceExpSwPcTo3Params

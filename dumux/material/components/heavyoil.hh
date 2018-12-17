@@ -20,7 +20,6 @@
  * \file
  * \ingroup Components
  * \brief Properties of the component heavyoil.
- *
  */
 #ifndef DUMUX_HEAVYOIL_HH
 #define DUMUX_HEAVYOIL_HH
@@ -222,7 +221,7 @@ public:
         return refComponentCriticalPressure() * pow((1 + 2*perbutationFactorCriticalPressure())/(1 - 2*perbutationFactorCriticalPressure()),2);
     }
 
-  /*!
+    /*!
      * \brief The saturation vapor pressure in \f$\mathrm{[Pa]}\f$ of
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$

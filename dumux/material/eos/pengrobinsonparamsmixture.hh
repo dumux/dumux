@@ -40,8 +40,7 @@
 
 #include "pengrobinsonparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup EOS

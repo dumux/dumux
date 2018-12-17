@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxFlux
  * \brief This file contains the data which is required to calculate
  *        diffusive molar fluxes due to molecular diffusion with Fick's law.
  */
@@ -28,14 +29,14 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
 class FicksLawImplementation;
 
 /*!
- * \ingroup BoxFicksLaw
+ * \ingroup BoxFlux
  * \brief Specialization of Fick's Law for the box method.
  */
 template <class TypeTag>

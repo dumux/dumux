@@ -27,8 +27,7 @@
 #include <dune/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Linear

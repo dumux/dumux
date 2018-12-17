@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
  * \ingroup TypeTraits
  * \brief Utilities for template meta programming
  */

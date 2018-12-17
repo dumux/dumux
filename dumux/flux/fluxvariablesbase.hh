@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief Base class for the flux variables living on a sub control volume face
  */
 #ifndef DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
@@ -29,7 +29,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief Base class for the flux variables living on a sub control volume face
  *
  * \tparam Problem the problem type to solve (for boundary conditions)

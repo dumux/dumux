@@ -16,11 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup OneEqModel
-  * \copydoc Dumux::OneEqFluxVariablesImpl
-  */
+/*!
+ * \file
+ * \ingroup OneEqModel
+ * \copydoc Dumux::OneEqFluxVariablesImpl
+ */
 #ifndef DUMUX_ONEEQ_STAGGERED_FLUXVARIABLES_HH
 #define DUMUX_ONEEQ_STAGGERED_FLUXVARIABLES_HH
 
@@ -31,8 +31,7 @@
 #include <dumux/freeflow/navierstokes/fluxvariables.hh>
 #include <dumux/freeflow/rans/oneeq/fluxvariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
@@ -77,8 +76,8 @@ class OneEqFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::s
 public:
 
     /*!
-    * \brief Computes the flux for the cell center residual.
-    */
+     * \brief Computes the flux for the cell center residual.
+     */
     CellCenterPrimaryVariables computeMassFlux(const Problem& problem,
                                                const Element &element,
                                                const FVElementGeometry& fvGeometry,

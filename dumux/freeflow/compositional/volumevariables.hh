@@ -245,7 +245,7 @@ public:
         return FluidSystem::molarMass(compIdx);
     }
 
-    /*!
+   /*!
     * \brief Returns the diffusion coefficient \f$\mathrm{[m^2/s]}\f$
     *
     * \param compIIdx the index of the component which diffusive
@@ -258,7 +258,7 @@ public:
        return diffCoefficient_[compIIdx][compJIdx];
    }
 
-    /*!
+   /*!
     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
     *
     * \param compIIdx the index of the component which diffusive

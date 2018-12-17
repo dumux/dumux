@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Provides the magic behind the DuMuX property system.
  * \ingroup Properties
+ * \brief Provides the magic behind the DuMuX property system.
  *
  * Properties allow to associate arbitrary data types to
  * identifiers. A property is always defined on a pair (TypeTag,
@@ -100,6 +100,7 @@ struct GetTypeTagInheritance<std::tuple<FirstTypeTag, OtherTypeTags...>>
 } // end namespace Detail
 
 /*!
+ * \ingroup Properties
  * \brief Define a new type tag.
  *
  * A type tag can inherit the properties defined on up to five parent
@@ -127,6 +128,7 @@ struct GetTypeTagInheritance<std::tuple<FirstTypeTag, OtherTypeTags...>>
     } extern int semicolonHack_
 
 /*!
+ * \ingroup Properties
  * \brief Syntactic sugar for NEW_TYPE_TAG.
  *
  * See the documentation for NEW_TYPE_TAG.
@@ -134,6 +136,7 @@ struct GetTypeTagInheritance<std::tuple<FirstTypeTag, OtherTypeTags...>>
 #define INHERITS_FROM(...) __VA_ARGS__
 
 /*!
+ * \ingroup Properties
  * \brief Define a property tag.
  *
  * A property tag is the unique identifier for a property. It may only
@@ -153,6 +156,7 @@ struct GetTypeTagInheritance<std::tuple<FirstTypeTag, OtherTypeTags...>>
     extern int semicolonHack_
 
 /*!
+ * \ingroup Properties
  * \brief Set a property for a specific type tag.
  *
  * After this macro, you must to specify a complete body of a class
@@ -186,6 +190,7 @@ struct GetTypeTagInheritance<std::tuple<FirstTypeTag, OtherTypeTags...>>
     struct PropTagName<TypeTag, TTAG(EffTypeTagName)>
 
 /*!
+ * \ingroup Properties
  * \brief Set a property to a simple constant integer value.
  *
  * The constant can be accessed by the 'value' attribute.
@@ -199,6 +204,7 @@ struct GetTypeTagInheritance<std::tuple<FirstTypeTag, OtherTypeTags...>>
     }
 
 /*!
+ * \ingroup Properties
  * \brief Set a property to a simple constant boolean value.
  *
  * The constant can be accessed by the 'value' attribute.
@@ -212,6 +218,7 @@ struct GetTypeTagInheritance<std::tuple<FirstTypeTag, OtherTypeTags...>>
     }
 
 /*!
+ * \ingroup Properties
  * \brief Set a property which defines a type.
  *
  * The type can be accessed by the 'type' attribute.
@@ -224,6 +231,7 @@ struct GetTypeTagInheritance<std::tuple<FirstTypeTag, OtherTypeTags...>>
     }
 
 /*!
+ * \ingroup Properties
  * \brief Set a property to a simple constant scalar value.
  *
  * The constant can be accessed by the 'value' attribute. In order to
@@ -244,6 +252,7 @@ struct GetTypeTagInheritance<std::tuple<FirstTypeTag, OtherTypeTags...>>
     PropTagName<TypeTag, TTAG(EffTypeTagName)>::value(__VA_ARGS__)
 
 /*!
+ * \ingroup Properties
  * \brief Set a property to a simple constant string value.
  *
  * The constant can be accessed by the 'value' attribute and is of

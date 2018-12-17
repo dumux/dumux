@@ -29,8 +29,8 @@
 #include <dune/common/exceptions.hh>
 #include "efftoabslawparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief This material law takes a material law defined for effective
@@ -249,14 +249,14 @@ public:
       return EffLaw::kr(params, phaseIdx, swToSwe(params, sw), sn, stToSte(params, st));
     }
 
-   /*!
-    * \brief the basis for calculating adsorbed NAPL in storage term
-    * \param params Array of parameters
-    */
-   static Scalar bulkDensTimesAdsorpCoeff(const Params &params)
-   {
-       return EffLaw::bulkDensTimesAdsorpCoeff(params);
-   }
+    /*!
+     * \brief the basis for calculating adsorbed NAPL in storage term
+     * \param params Array of parameters
+     */
+    static Scalar bulkDensTimesAdsorpCoeff(const Params &params)
+    {
+        return EffLaw::bulkDensTimesAdsorpCoeff(params);
+    }
 
     /*!
      * \brief Convert an absolute wetting saturation to an effective one.
@@ -364,6 +364,6 @@ public:
        DUNE_THROW(Dune::NotImplemented, "dsw_dswe for three phases not implemented!");
     }
 };
-}
+} // end namespace Dumux
 
 #endif

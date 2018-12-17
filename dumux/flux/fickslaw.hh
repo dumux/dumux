@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief Fick's law specilized for different discretization schemes.
  *        This file contains the data which is required to calculate
  *        diffusive mass fluxes due to molecular diffusion with Fick's law.
@@ -29,14 +29,14 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template <class TypeTag, DiscretizationMethod discMethod>
 class FicksLawImplementation;
 
 /*!
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief Evaluates the diffusive mass flux according to Fick's law
  */
 template <class TypeTag>

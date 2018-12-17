@@ -25,8 +25,7 @@
 #ifndef BALANCE_EQUATION_OPTIONS_HH
 #define BALANCE_EQUATION_OPTIONS_HH
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Common

@@ -27,8 +27,7 @@
 #include <dumux/freeflow/navierstokes/iofields.hh>
 #include <dune/common/deprecated.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup RANSModel

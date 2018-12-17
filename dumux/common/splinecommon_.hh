@@ -686,6 +686,6 @@ protected:
     { return asImp_().numSamples(); }
 };
 
-}
+} // end namespace Dumux
 
 #endif

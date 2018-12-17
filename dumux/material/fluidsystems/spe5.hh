@@ -30,10 +30,9 @@
 #include <dumux/material/eos/pengrobinsonmixture.hh>
 #include <dumux/io/name.hh>
 
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
+
 /*!
  * \ingroup Fluidsystems
  * \brief The fluid system for the SPE-5 benchmark problem.
@@ -583,7 +582,7 @@ private:
     }
 };
 
-} // end namespace
-} // end namespace
+} // end namespace FluidSystems
+} // end namespace Dumux
 
 #endif

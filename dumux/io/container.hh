@@ -34,6 +34,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup InputOutput
  * \brief Writes a container to file
  * \param v The container, requires begin() and end() method
  * \param filename The filename to write to

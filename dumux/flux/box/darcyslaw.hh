@@ -18,9 +18,12 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        volume and mass fluxes of fluid phases over a face of a finite volume by means
- *        of the Darcy approximation. Specializations are provided for the different discretization methods.
+ * \ingroup BoxFlux
+ * \brief Specialization of Darcy's Law for the box method.
+ *
+ * This file contains the data which is required to calculate
+ * volume and mass fluxes of fluid phases over a face of a finite volume by means
+ * of the Darcy approximation.
  */
 #ifndef DUMUX_DISCRETIZATION_BOX_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_DARCYS_LAW_HH
@@ -41,7 +44,7 @@ template<class Scalar, class FVGridGeometry>
 class BoxDarcysLaw;
 
 /*!
- * \ingroup DarcysLaw
+ * \ingroup BoxFlux
  * \brief Specialization of Darcy's Law for the box method.
  */
 template<class TypeTag>
@@ -50,7 +53,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::box>
 { };
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup BoxFlux
  * \brief Darcy's law for box schemes
  * \tparam Scalar the scalar type for scalar physical quantities
  * \tparam FVGridGeometry the grid geometry

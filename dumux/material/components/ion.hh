@@ -31,6 +31,10 @@
 namespace Dumux {
 namespace Components {
 
+/*!
+ * \ingroup Components
+ * \brief Interface for components that are ions.
+ */
 template<class Scalar, class Component>
 class Ion
 {

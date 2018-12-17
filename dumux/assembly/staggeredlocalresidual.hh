@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup StaggeredDiscretization
  * \ingroup Assembly
+ * \ingroup StaggeredDiscretization
  * \brief Calculates the element-wise residual for the staggered FV scheme
  */
 #ifndef DUMUX_STAGGERED_LOCAL_RESIDUAL_HH
@@ -31,8 +31,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup StaggeredDiscretization
  * \ingroup Assembly
+ * \ingroup StaggeredDiscretization
  * \brief Calculates the element-wise residual for the staggered FV scheme
  */
 template<class TypeTag>
@@ -348,6 +348,6 @@ private:
 
 };
 
-}
+} // end namespace Dumux
 
 #endif   // DUMUX_CC_LOCAL_RESIDUAL_HH

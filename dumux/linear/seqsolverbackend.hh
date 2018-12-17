@@ -832,7 +832,8 @@ private:
 // \{
 
 /*!
- * A simple ilu0 block diagonal preconditioner
+ * \ingroup Linear
+ * \brief A simple ilu0 block diagonal preconditioner
  */
 template<class M, class X, class Y, int blockLevel = 2>
 class BlockDiagILU0Preconditioner : public Dune::Preconditioner<X, Y>
@@ -904,7 +905,8 @@ private:
 };
 
 
-/*
+/*!
+ * \ingroup Linear
  * \brief A simple ilu0 block diagonal preconditioned BiCGSTABSolver
  * \note expects a system as a multi-type block-matrix
  * | A  B |
@@ -942,8 +944,9 @@ private:
     Dune::InverseOperatorResult result_;
 };
 
-/*
- * A simple ilu0 block diagonal preconditioner
+/*!
+ * \ingroup Linear
+ * \brief A simple ilu0 block diagonal preconditioner
  */
 template<class M, class X, class Y, int blockLevel = 2>
 class BlockDiagAMGPreconditioner : public Dune::Preconditioner<X, Y>
@@ -1070,7 +1073,8 @@ private:
     AMGTuple amg_;
 };
 
-/*
+/*!
+ * \ingroup Linear
  * \brief A simple ilu0 block diagonal preconditioned BiCGSTABSolver
  * \note expects a system as a multi-type block-matrix
  * | A  B |

@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SolidSystems
- * \brief @copybrief Dumux::SolidSystems::InertSolidPhase
+ * \brief A solid phase consisting of a single inert solid component.
  */
 #ifndef DUMUX_SOLIDSYSTEMS_INERT_SOLID_PHASE_HH
 #define DUMUX_SOLIDSYSTEMS_INERT_SOLID_PHASE_HH
@@ -32,7 +32,7 @@ namespace SolidSystems {
 
 /*!
  * \ingroup SolidSystems
- * \brief A solid phase consisting of a single inert solid component
+ * \brief A solid phase consisting of a single inert solid component.
  * \note a solid is considered inert if it can't dissolve in a liquid and
  *       and can't increase its mass by precipitation from a fluid phase.
  */

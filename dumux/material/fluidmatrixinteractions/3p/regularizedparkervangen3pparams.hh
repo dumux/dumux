@@ -27,8 +27,8 @@
 
 #include "parkervangen3pparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief   Parameters that are necessary for the \em regularization of

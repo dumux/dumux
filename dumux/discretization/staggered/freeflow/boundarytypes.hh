@@ -27,8 +27,7 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -140,6 +139,6 @@ protected:
     std::array<StaggeredFreeFlowBoundaryInfo, numEq> boundaryInfo_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

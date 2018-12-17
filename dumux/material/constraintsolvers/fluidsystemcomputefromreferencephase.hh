@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ConstraintSolver
+ * \ingroup ConstraintSolvers
  * \brief Computes the composition of all phases of a N-phase,
  *        N-component fluid system assuming that all N phases are
  *        present. The composition is actually retrieved from a
@@ -37,7 +37,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup ConstraintSolver
+ * \ingroup ConstraintSolvers
  * \brief Computes the composition of all phases from a function in the fluidsystem.
  *
  *        This is basically an interface in order to use ConstraintSolver with fluidsystems,

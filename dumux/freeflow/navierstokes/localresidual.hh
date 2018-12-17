@@ -28,8 +28,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/staggered/localresidual.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
@@ -45,6 +44,6 @@ class NavierStokesResidualImpl;
 template<class TypeTag>
 using NavierStokesResidual = NavierStokesResidualImpl<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
 
-}
+} // end namespace Dumux
 
 #endif   // DUMUX_NAVIERSTOKES_LOCAL_RESIDUAL_HH

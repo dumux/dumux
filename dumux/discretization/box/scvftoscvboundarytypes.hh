@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxDiscretization
  * \brief Convert intersection boundary types to vertex boundary types
  */
 #ifndef DUMUX_SCVF_TO_SCV_BCTYPES_HH
@@ -27,11 +28,10 @@
 #include <dune/common/exceptions.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup BoxModel
+ * \ingroup BoxDiscretization
  * \brief Convert intersection boundary types to vertex boundary types
  */
 template<class BoundaryTypes, DiscretizationMethod discMethod>

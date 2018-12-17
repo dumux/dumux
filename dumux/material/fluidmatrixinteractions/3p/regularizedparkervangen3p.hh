@@ -30,10 +30,10 @@
 
 #include <dumux/common/spline.hh>
 
-namespace Dumux
-{
-/*!\ingroup Fluidmatrixinteractions
- *
+namespace Dumux {
+
+/*!
+ * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the regularized van Genuchten's
  *        capillary pressure <-> saturation relation.
  *        This class bundles the "raw" curves
@@ -194,6 +194,7 @@ public:
         // range, we use the real van genuchten law...
         return ParkerVanGen3P::pcnw(params, swe);
     }
+
     /*!
      * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
      * \param params Array of parameters
@@ -424,6 +425,6 @@ public:
    }
 
 };
-}
+} // end namespace Dumux
 
 #endif

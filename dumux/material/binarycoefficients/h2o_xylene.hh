@@ -27,10 +27,8 @@
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/xylene.hh>
 
-namespace Dumux
-{
-namespace BinaryCoeff
-{
+namespace Dumux {
+namespace BinaryCoeff {
 
 /*!
  * \ingroup Binarycoefficients
@@ -120,7 +118,7 @@ public:
     }
 };
 
-}
-} // end namespace
+} // end namespace BinaryCoeff
+} // end namespace Dumux
 
 #endif

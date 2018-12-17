@@ -16,9 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/** \file
-  * \brief This file contains different functions for estimating turbulence properties.
-  */
+/*!
+ * \file
+ * \ingroup FreeflowModels
+ * \brief This file contains different functions for estimating turbulence properties.
+ */
 
 #ifndef DUMUX_TURBULENCE_PROPERTIES_HH
 #define DUMUX_TURBULENCE_PROPERTIES_HH
@@ -29,17 +31,17 @@
 
 namespace Dumux {
 
-/**
-  * \brief This class contains different functions for estimating turbulence properties.
-  */
+/*!
+ * \brief This class contains different functions for estimating turbulence properties.
+ */
 template<class Scalar, unsigned dim, bool verbose = false>
 class TurbulenceProperties
 {
 public:
-    /**
-      * \brief Estimates dimensionless wall distance \f$ y^+ \f$ based on a formula given in
-      *        http://www.cfd-online.com/Wiki/Y_plus_wall_distance_estimation
-      */
+    /*!
+     * \brief Estimates dimensionless wall distance \f$ y^+ \f$ based on a formula given in
+     *        http://www.cfd-online.com/Wiki/Y_plus_wall_distance_estimation
+     */
     Scalar yPlusEstimation(const Scalar velocity,
                            const Dune::FieldVector<Scalar, dim> position,
                            const Scalar kinematicViscosity,
@@ -71,9 +73,9 @@ public:
         return yPlus;
     }
 
-    /**
-      * \brief Estimates the entrance length for this pipe
-      */
+    /*!
+     * \brief Estimates the entrance length for this pipe
+     */
     Scalar entranceLength(const Scalar velocity,
                           const Scalar diameter,
                           const Scalar kinematicViscosity,
@@ -91,9 +93,9 @@ public:
         return entranceLength;
     }
 
-    /**
-      * \brief Calculates the Reynolds number
-      */
+    /*!
+     * \brief Calculates the Reynolds number
+     */
     Scalar reynoldsNumber(const Scalar velocity,
                           const Scalar charLengthScale/*e.g. diameter*/,
                           const Scalar kinematicViscosity,
@@ -103,10 +105,10 @@ public:
         return abs(velocity * charLengthScale / kinematicViscosity);
     }
 
-    /**
-      * \brief Estimates the turbulence intensity based on a formula given
-      *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
-      */
+    /*!
+     * \brief Estimates the turbulence intensity based on a formula given
+     *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
+     */
     Scalar turbulenceIntensity(const Scalar reynoldsNumber,
                                bool print=verbose) const
     {
@@ -119,10 +121,10 @@ public:
         return turbulenceIntensity;
     }
 
-    /**
-      * \brief Estimates the turbulence length scale based on a formula given
-      *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
-      */
+    /*!
+     * \brief Estimates the turbulence length scale based on a formula given
+     *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
+     */
     Scalar turbulenceLengthScale(const Scalar charLengthScale/*e.g. diameter*/,
                                  bool print=verbose) const
     {
@@ -134,10 +136,10 @@ public:
         return turbulenceLengthScale;
     }
 
-    /**
-      * \brief Estimates the turbulent kinetic energy based on a formula given
-      *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
-      */
+    /*!
+     * \brief Estimates the turbulent kinetic energy based on a formula given
+     *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
+     */
     Scalar turbulentKineticEnergy(const Scalar velocity,
                                   const Scalar diameter,
                                   const Scalar kinematicViscosity,
@@ -153,10 +155,10 @@ public:
         return k;
     }
 
-    /**
-      * \brief Estimates the dissipation based on a formula given
-      *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
-      */
+    /*!
+     * \brief Estimates the dissipation based on a formula given
+     *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
+     */
     Scalar dissipation(const Scalar velocity,
                        const Scalar diameter,
                        const Scalar kinematicViscosity,
@@ -173,11 +175,11 @@ public:
         return epsilon;
     }
 
-    /**
-      * \brief Estimates the dissipation rate based on a formula given
-      *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
-      * \f[ \omega = \frac{k^{1/2}}{C_{\mu}^{1/4}L} \f]
-      */
+    /*!
+     * \brief Estimates the dissipation rate based on a formula given
+     *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
+     * \f[ \omega = \frac{k^{1/2}}{C_{\mu}^{1/4}L} \f]
+     */
     Scalar dissipationRate(const Scalar velocity,
                            const Scalar diameter,
                            const Scalar kinematicViscosity,
@@ -196,10 +198,10 @@ public:
         return omega;
     }
 
-    /**
-      * \brief Estimates the viscosity tilde based on a formula given in
-      *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
-      */
+    /*!
+     * \brief Estimates the viscosity tilde based on a formula given in
+     *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
+     */
     Scalar viscosityTilde(const Scalar velocity,
                           const Scalar diameter,
                           const Scalar kinematicViscosity,

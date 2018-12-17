@@ -33,10 +33,8 @@
 #include <iostream>
 #include <dumux/common/exceptions.hh>
 
-namespace Dumux
-{
-namespace IAPWS
-{
+namespace Dumux {
+namespace IAPWS {
 /*!
  * \ingroup IAPWS
  * \brief Implements the equations for region 1 of the IAPWS '97 formulation.
@@ -348,6 +346,6 @@ private:
 };
 
 } // end namespace IAPWS
-} // end namespace Dune
+} // end namespace Dumux
 
 #endif

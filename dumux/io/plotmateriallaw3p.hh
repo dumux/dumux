@@ -28,14 +28,14 @@
 #include <string>
 #include <vector>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template<class Scalar> class GnuplotInterface;
 
 /*!
- *\brief Interface for plotting the three-phase fluid-matrix-interaction laws
  * \ingroup InputOutput
+ * \brief Interface for plotting the three-phase fluid-matrix-interaction laws
  * TODO: add theta head pressure plot (porosity and density is needed)
  */
 template<class Scalar, class MaterialLaw>

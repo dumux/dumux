@@ -16,11 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup KepsilonModel
-  * \copydoc Dumux::KEpsilonResidualImpl
-  */
+/*!
+ * \file
+ * \ingroup KepsilonModel
+ * \copydoc Dumux::KEpsilonResidualImpl
+ */
 #ifndef DUMUX_STAGGERED_KEPSILON_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_KEPSILON_LOCAL_RESIDUAL_HH
 
@@ -135,9 +135,9 @@ public:
     }
 
 protected:
-     /*!
-      * \brief Evaluate boundary conditions for a cell center dof
-      */
+    /*!
+     * \brief Evaluate boundary conditions for a cell center dof
+     */
     template<class ElementBoundaryTypes>
     void evalBoundaryForCellCenter_(CellCenterResidual& residual,
                                     const Problem& problem,
@@ -172,6 +172,6 @@ protected:
         }
     }
 };
-}
+} // end namespace Dumux
 
 #endif

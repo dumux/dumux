@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup CCMpfaDiscretization
  * \brief Data handle class for interaction volumes of mpfa methods.
  *        This class is passed to interaction volumes to store the necessary data in it.
  */

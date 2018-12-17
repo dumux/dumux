@@ -20,8 +20,7 @@
  * \file
  * \ingroup SolidStates
  * \brief Represents all relevant thermodynamic quantities of a
- *        multi-phase fluid system assuming immiscibility and
- *        thermodynamic equilibrium.
+ *        compositional solid system.
  */
 #ifndef DUMUX_SOLID_STATE_COMPOSITIONAL_HH
 #define DUMUX_SOLID_STATE_COMPOSITIONAL_HH
@@ -30,8 +29,8 @@ namespace Dumux {
 
 /*!
  * \ingroup SolidStates
- * \brief Represents all relevant thermodynamic quantities of a inert
- *        solid system
+ * \brief Represents all relevant thermodynamic quantities of a
+ *        compositional solid system
  */
 template <class Scalar, class SolidSystemType>
 class CompositionalSolidState
@@ -67,22 +66,22 @@ public:
         Scalar porosity = 1-sumVolumeFraction;
         return porosity;
     }
-    /*!
-     * \brief The mass density \f$\rho_\alpha\f$ of the fluid phase
-     *  \f$\alpha\f$ in \f$\mathrm{[kg/m^3]}\f$
-     */
+
+    //! The mass density of the solid phase in \f$\mathrm{[kg/m^3]}\f$
     Scalar density() const
     { return density_; }
 
+    //! The heat capacity of the solid phase in \f$\mathrm{[J/(kg*K)}\f$
     Scalar heatCapacity() const
     { return heatCapacity_; }
 
+    //! The heat capacity of the solid phase in \f$\mathrm{[J/(kg*K)}\f$
     Scalar thermalConductivity() const
     { return thermalConducivity_; }
 
     /*!
      * \brief The molar density \f$\rho_{mol,\alpha}\f$
-     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *   of a solid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
      *
      * The molar density is defined by the mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
      *
@@ -91,12 +90,11 @@ public:
     Scalar molarDensity() const
     { return density_/averageMolarMass(); }
 
-    /*!
-     * \brief The temperature within the domain \f$\mathrm{[K]}\f$
-     */
+    //! The temperature of the solid phase in \f$\mathrm{[K]}\f$
     Scalar temperature() const
     { return temperature_; }
 
+    //! The volume fraction of a solid component within the solid phase
     Scalar volumeFraction(const int compIdx) const
     { return volumeFraction_[compIdx]; }
 
@@ -107,11 +105,11 @@ public:
      *****************************************************/
 
     /*!
-     * \brief Retrieve all parameters from an arbitrary fluid
+     * \brief Retrieve all parameters from an arbitrary solid
      *        state.
      * \param sst CompositionalSolidState
      *
-     * \note If the other fluid state object is inconsistent with the
+     * \note If the other solid state object is inconsistent with the
      *       thermodynamic equilibrium, the result of this method is
      *       undefined.
      */
@@ -150,6 +148,9 @@ public:
     void setHeatCapacity(Scalar value)
     { heatCapacity_ = value; }
 
+    /*!
+     * \brief Set the volume fraction of a solid component
+     */
     void setVolumeFraction(const int compIdx, Scalar value)
     { volumeFraction_[compIdx] = value; }
 

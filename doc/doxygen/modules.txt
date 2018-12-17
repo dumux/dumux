@@ -16,17 +16,17 @@
      * \brief Single-phase (immiscible) Darcy flow
      * \copydetails ./porousmediumflow/1p/model.hh
      */
-       /*!
-        * \ingroup OnePModel
-        * \defgroup SequentialOnePModel Sequential
-        * \brief Sequential single-phase (immiscible) Darcy flow
-        *
-        * # Pressure
-        * \copydetails ./porousmediumflow/1p/sequential/diffusion/cellcentered/pressure.hh
-        *
-        * # Velocity
-        * \copydetails ./porousmediumflow/1p/sequential/diffusion/cellcentered/velocity.hh
-        */
+        /*!
+         * \ingroup OnePModel
+         * \defgroup SequentialOnePModel Sequential
+         * \brief Sequential single-phase (immiscible) Darcy flow
+         *
+         * # Pressure
+         * \copydetails Dumux::FVPressure1P
+         *
+         * # Velocity
+         * \copydetails Dumux::FVVelocity1P
+         */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup OnePNCModel 1pnc
@@ -51,10 +51,10 @@
          * \brief Sequential two-phase (immiscible) Darcy flow
          *
          * # Pressure
-         * \copydetails ./porousmediumflow/2p/sequential/diffusion/cellcentered/pressure.hh
+         * \copydetails Dumux::FVPressure2P
          *
          * # Velocity
-         * \copydetails ./porousmediumflow/2p/sequential/diffusion/cellcentered/velocity.hh
+         * \copydetails Dumux::FVVelocity2P
          */
     /*!
      * \ingroup PorousmediumflowModels
@@ -74,10 +74,10 @@
          * \brief Sequential two-phase, two-component Darcy flow
          *
          * # Pressure
-         * \copydetails ./porousmediumflow/2p2c/sequential/fvpressure.hh
+         * \copydetails Dumux::FVPressure2P2C
          *
          * # Velocity
-         * \copydetails ./porousmediumflow/2p2c/sequential/fvtransport.hh
+         * \copydetails Dumux::FVTransport2P2C
          */
     /*!
      * \ingroup PorousmediumflowModels
@@ -184,23 +184,23 @@
      * \brief Single-phase Reynolds-Averaged Navier-Stokes flow
      * \copydetails ./freeflow/rans/model.hh
      */
-      /*!
-       * \ingroup RANSModel
-       * \defgroup ZeroEqModel 0-Eq. Models
-       * \brief Zero-equation or algebraic turbulence models
-       * \copydetails ./freeflow/rans/zeroeq/model.hh
-       */
-      /*!
-       * \ingroup RANSModel
-       * \defgroup OneEqModel 1-Eq. Models
-       * \brief One-equation turbulence model by Spalart-Allmaras
-       * \copydetails ./freeflow/rans/oneeq/model.hh
-       */
-      /*!
-       * \ingroup RANSModel
-       * \defgroup TwoEqModel 2-Eq. Models
-       * \brief Two-equation turbulence models
-       */
+        /*!
+         * \ingroup RANSModel
+         * \defgroup ZeroEqModel 0-Eq. Models
+         * \brief Zero-equation or algebraic turbulence models
+         * \copydetails ./freeflow/rans/zeroeq/model.hh
+         */
+        /*!
+         * \ingroup RANSModel
+         * \defgroup OneEqModel 1-Eq. Models
+         * \brief One-equation turbulence model by Spalart-Allmaras
+         * \copydetails ./freeflow/rans/oneeq/model.hh
+         */
+        /*!
+         * \ingroup RANSModel
+         * \defgroup TwoEqModel 2-Eq. Models
+         * \brief Two-equation turbulence models
+         */
         /*!
          * \ingroup TwoEqModel
          * \defgroup KEpsilonModel K-epsilon model
@@ -253,111 +253,151 @@
  * \defgroup BenchmarksAndTests Benchmarks and Tests
  * \brief Benchmarks and tests used for (automated) testing and demonstration purposes
  */
-     /*!
-      * \ingroup BenchmarksAndTests
-      * \defgroup PorousmediumflowTests Porous-Medium Flow Tests
-      * \brief Single and multi-phase tests for flow and transport in porous materials
-      */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup OnePTests 1p (one phase) benchmarks and tests
-          * \brief Various tests using a OnePModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup OnePNCTests 1pnc (one phase, multi-component) benchmarks and tests
-          * \brief Various tests using a OnePNCModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup OnePNCMinTests 1pncmin (one phase, multi-component mineralization) benchmarks and tests
-          * \brief Various tests using the OnePNCMinModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup TwoPTests 2p (two phase) benchmarks and tests
-          * \brief Various tests using a TwoPModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup TwoPOneCTests 2p1c (two phase, one component) benchmarks and tests
-          * \brief Various tests using the TwoPOneCModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup TwoPTwoCTests 2p2c (two phase, two component) benchmarks and tests
-          * \brief Various tests using a TwoPTwoCModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup TwoPNCTests 2pnc (two phase, multi-component) benchmarks and tests
-          * \brief A fuel cell test problem using the TwoPNCModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup TwoPNCMinTests 2pncmin (two phase, multi-component mineralization) benchmarks and tests
-          * \brief A salt dissolution test problem using the TwoPNCMinModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup ThreePTests 3p (three phase) benchmarks and tests
-          * \brief Various tests using a ThreePModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup ThreePThreeCTests 3p3c (three phase, three component) benchmarks and tests
-          * \brief Various tests using a ThreePThreeCModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup ThreePWaterOilTests 3pwateroil (three phase, water oil) benchmarks and tests
-          * \brief A SAGD test problem using the ThreePWaterOilModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup CO2Tests CO2 (two phase, two component) benchmarks and tests
-          * \brief A CO2 injection test problem using the TwoPTwoCModel and heterogeneous spatial parameters. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup MPNCTests MPNC (multi-phase, multi-component) benchmarks and tests
-          * \brief Various tests using the MPNCModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup RichardsTests Richards benchmarks and tests
-          * \brief Various tests using a RichardsModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup RichardsNCTests Richards multi-component benchmarks and tests
-          * \brief A multi-component transport problem in the unsaturated zone using the RichardsNCModel. The files are listed below.
-          */
-         /*!
-          * \ingroup PorousmediumflowTests
-          * \defgroup TracerTests Tracer benchmarks and tests
-          * \brief Various tests using a TracerModel. The files are listed below.
-          */
     /*!
-      * \ingroup BenchmarksAndTests
-      * \defgroup FreeflowTests Free Flow Tests
-      * \brief Varios tests for single-phase Navier-Stokes / Stokes tests
-      */
-         /*!
-          * \ingroup FreeflowTests
-          * \defgroup NavierStokesTests Single-phase Navier-Stokes tests
-          * \brief Various tests using a Single-phase Navier-Stokes flow. The files are listed below.
-          */
-         /*!
-          * \ingroup FreeflowTests
-          * \defgroup NavierStokesNCTests Single-phase Navier-Stokes nc tests
-          * \brief Various tests using a Single-phase Navier-Stokes flow. The files are listed below.
-          */
+     * \ingroup BenchmarksAndTests
+     * \defgroup PorousmediumflowTests Porous-Medium Flow Tests
+     * \brief Single and multi-phase tests for flow and transport in porous materials
+     */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup OnePTests 1p (one phase) benchmarks and tests
+         * \brief Various tests using a OnePModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup OnePNCTests 1pnc (one phase, multi-component) benchmarks and tests
+         * \brief Various tests using a OnePNCModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup OnePNCMinTests 1pncmin (one phase, multi-component mineralization) benchmarks and tests
+         * \brief Various tests using the OnePNCMinModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup TwoPTests 2p (two phase) benchmarks and tests
+         * \brief Various tests using a TwoPModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup TwoPOneCTests 2p1c (two phase, one component) benchmarks and tests
+         * \brief Various tests using the TwoPOneCModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup TwoPTwoCTests 2p2c (two phase, two component) benchmarks and tests
+         * \brief Various tests using a TwoPTwoCModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup TwoPNCTests 2pnc (two phase, multi-component) benchmarks and tests
+         * \brief A fuel cell test problem using the TwoPNCModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup TwoPNCMinTests 2pncmin (two phase, multi-component mineralization) benchmarks and tests
+         * \brief A salt dissolution test problem using the TwoPNCMinModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup ThreePTests 3p (three phase) benchmarks and tests
+         * \brief Various tests using a ThreePModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup ThreePThreeCTests 3p3c (three phase, three component) benchmarks and tests
+         * \brief Various tests using a ThreePThreeCModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup ThreePWaterOilTests 3pwateroil (three phase, water oil) benchmarks and tests
+         * \brief A SAGD test problem using the ThreePWaterOilModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup CO2Tests CO2 (two phase, two component) benchmarks and tests
+         * \brief A CO2 injection test problem using the TwoPTwoCModel and heterogeneous spatial parameters. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup MPNCTests MPNC (multi-phase, multi-component) benchmarks and tests
+         * \brief Various tests using the MPNCModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup RichardsTests Richards benchmarks and tests
+         * \brief Various tests using a RichardsModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup RichardsNCTests Richards multi-component benchmarks and tests
+         * \brief A multi-component transport problem in the unsaturated zone using the RichardsNCModel. The files are listed below.
+         */
+        /*!
+         * \ingroup PorousmediumflowTests
+         * \defgroup TracerTests Tracer benchmarks and tests
+         * \brief Various tests using a TracerModel. The files are listed below.
+         */
+    /*!
+     * \ingroup BenchmarksAndTests
+     * \defgroup FreeflowTests Free Flow Tests
+     * \brief Various tests for single-phase Navier-Stokes / Stokes tests
+     */
+        /*!
+         * \ingroup FreeflowTests
+         * \defgroup NavierStokesTests Single-phase Navier-Stokes tests
+         * \brief Various tests using a single-phase Navier-Stokes flow. The files are listed below.
+         */
+        /*!
+         * \ingroup FreeflowTests
+         * \defgroup NavierStokesNCTests Single-phase Navier-Stokes nc tests
+         * \brief Various tests using a single-phase Navier-Stokes flow with n components. The files are listed below.
+         */
+        /*!
+         * \ingroup FreeflowTests
+         * \defgroup RANSTests Reynolds-Averaged Navier-Stokes tests
+         * \brief  Various tests using a single-phase Reynolds-Averaged Navier-Stokes flow. The files are listed below.
+         */
+        /*!
+         * \ingroup FreeflowTests
+         * \defgroup RANSNCTests Reynolds-Averaged Navier-Stokes nc tests
+         * \brief  Various tests using a single-phase Reynolds-Averaged Navier-Stokes flow with n components. The files are listed below.
+         */
+    /*!
+     * \ingroup BenchmarksAndTests
+     * \defgroup GeomechanicsTests Geomechanics Tests
+     * \brief Various tests using the geomechanics elastic or poroelastic models. The files are listed below.
+     */
     /*!
       * \ingroup BenchmarksAndTests
       * \defgroup MaterialTests Material system tests
       * \brief Benchmarks and Test(s) for the material system.
       */
+    /*!
+     * \ingroup BenchmarksAndTests
+     * \defgroup MultiDomainTests MultiDomain tests
+     * \brief Various tests for multidomain problems.
+     */
+        /*!
+         * \ingroup MultiDomainTests
+         * \defgroup BoundaryTests MultiDomain boundary tests
+         * \brief Various tests using a boundary as coupling interface: Darcy-Stokes coupling or PNM (pore network model)-Darcy. The files are listed below.
+         */
+        /*!
+         * \ingroup MultiDomainTests
+         * \defgroup EmbeddedTests Embedded MultiDomain tests
+         * \brief Various tests for embedded coupling problems with different dimensions: Root-soil interaction or embedded fracture models. The files are listed below.
+         */
+        /*!
+         * \ingroup MultiDomainTests
+         * \defgroup FacetTests Facet MultiDomain tests
+         * \brief Various tests for facet coupling problems with different dimensions: Discrete facet conforming fracture models and problems with physics on a domain surface. The files are listed below.
+         */
+        /*!
+         * \ingroup MultiDomainTests
+         * \defgroup PoromechanicsTests Facet MultiDomain tests
+         * \brief Various tests coupling poromechanics and fluid flow. The files are listed below.
+         */
 
 /* ***************** Discretization ******************/
 /*!
@@ -390,10 +430,35 @@
      * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets.
      */
 /* ***************** Flux ******************/
-     /*!
-      * \defgroup Flux Flux
-      * \brief All flux related things available in DuMu<sup>x</sup>
-      */
+/*!
+ * \defgroup Flux Flux
+ * \brief All flux related things available in DuMu<sup>x</sup>
+ */
+    /*!
+     * \ingroup Flux
+     * \defgroup BoxFlux Flux related to the Box scheme
+     * \brief Flux related to the box scheme
+     */
+    /*!
+     * \ingroup Flux
+     * \defgroup CCFlux Flux related to the cell-centered schemes
+     * \brief Flux related to the cell-centered schemes
+     */
+        /*!
+         * \ingroup Flux
+         * \defgroup CCTpfaFlux Flux related to the cell-centered two-point flux approximation schemes
+         * \brief Flux related to the cell-centered two-point flux approximation schemes
+         */
+        /*!
+         * \ingroup Flux
+         * \defgroup CCMpfaFlux Flux related to the cell-centered multi-point flux approximation schemes
+         * \brief Flux related to the cell-centered multi-point flux approximation schemes
+         */
+    /*!
+     * \ingroup Flux
+     * \defgroup StaggeredFlux Flux related to the staggered scheme
+     * \brief Flux related to the staggered scheme
+     */
 /* ***************** Material ******************/
 /*!
  * \defgroup Material Material and Fluid Framework
@@ -404,10 +469,11 @@
  *  - __Binary coefficient:__ <br>  @copydoc Binarycoefficients
  *  - __Chemistry:__ <br> @copydoc Chemistry
  *  - __Component:__ <br> @copydoc Components
- *  - __Constraint solver:__ <br> @copydoc ConstraintSolver
+ *  - __Constraint solvers:__ <br> @copydoc ConstraintSolvers
  *  - __Equation of state:__ <br> @copydoc EOS
  *  - __Fluid-Matrix Interactions:__ <br> @copydoc Fluidmatrixinteractions
  *  - __Fluid state:__ <br> @copydoc FluidStates
+ *  - __Solid state:__ <br> @copydoc SolidStates
  *  - __Fluid system:__ <br> @copydoc Fluidsystems
  *  - __Spatial Parameters:__ <br> @copydoc SpatialParameters
  */
@@ -449,7 +515,7 @@
          */
     /*!
      * \ingroup Material
-     * \defgroup ConstraintSolver Constraint Solver
+     * \defgroup ConstraintSolvers Constraint Solvers
      * \brief Constraint solvers converting primary to secondary variables
      *
      * Constraint solvers are auxiliary tools to
@@ -511,6 +577,30 @@
      */
     /*!
      * \ingroup Material
+     * \defgroup SolidStates Solid States
+     * \brief Solid states are responsible for representing all relevant
+     * thermodynamic quantities of solid systems.
+     *
+     * A solid state provides access methods
+     * to __all__ thermodynamic quantities, but the concept of a solid state does not
+     * mandate what assumptions are made to store these thermodynamic
+     * quantities. What solid states also do __not__ do is to make sure
+     * that the thermodynamic state which they represent is physically
+     * possible.
+     */
+    /*!
+     * \ingroup Material
+     * \defgroup SolidSystems Solid Systems
+     * \brief Solid systems express the thermodynamic relations (functions).
+     *
+     * Since functions do
+     *  not exhibit any internal state, solid systems are stateless classes,
+     *  i.e. all member functions are static. This is a conscious
+     *  decision since the thermodynamic state of the system is expressed by
+     *  a solid state!
+     */
+    /*!
+     * \ingroup Material
      * \defgroup SpatialParameters Spatial Parameters
      * \brief Parameters of the porous matrix and other parameter varying with position (e.g. porosity)
      *
@@ -558,11 +648,21 @@
  * \defgroup Common Common
  * \brief Common classes, functions, properties and concepts
  */
-      /*!
-       * \ingroup Common
-       * \defgroup Properties Properties
-       * \brief Basic properties of all models in DuMu<sup>x</sup>
-       */
+    /*!
+     * \ingroup Common
+     * \defgroup Geometry Geometry
+     * \brief Basic geometries in DuMu<sup>x</sup>
+     */
+    /*!
+     * \ingroup Common
+     * \defgroup Properties Properties
+     * \brief Basic properties of all models in DuMu<sup>x</sup>
+     */
+    /*!
+     * \ingroup Common
+     * \defgroup Typetraits Typetraits
+     * \brief Basic Type traits in DuMu<sup>x</sup>
+     */
 
 /* ***************** InputOutput ******************/
 /*!
@@ -578,21 +678,11 @@
  * The multi domain module allows to couple regular DuMu<sup>x</sup> problems.
  * Several coupling modes are currently available.
  */
-     /*!
-      * \ingroup MultiDomain
-      * \defgroup EmbeddedCoupling Embedded mixed-dimension coupling mode
-      * \brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) are embedded in a          higher-dimensional domain (bulk). Examples are embedded one-dimensional networks for the simulation of blood tissue perfusion, or root-soil interaction, and embedded fracture models.
-      */
-     /*!
-      * \ingroup MultiDomain
-      * \defgroup FacetCoupling Conforming mixed-dimension facet coupling mode
-      * \brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) live on the facets of the          higher-dimensional domain (bulk). Examples are discrete facet conforming fracture models and problems with physics on a domain surface.
-      */
-     /*!
-      * \ingroup MultiDomain
-      * \defgroup BoundaryCoupling Boundary coupling mode
-      * \brief Couples problems of different or equal dimension that touch at the domain boundary. Examples are equal-dimension multi-physics problems like Darcy-Stokes coupling or PNM (pore network model)-Darcy coupling.
-      */
+    /*!
+     * \ingroup MultiDomain
+     * \defgroup BoundaryCoupling Boundary coupling mode
+     * \brief Couples problems of different or equal dimension that touch at the domain boundary. Examples are equal-dimension multi-physics problems like Darcy-Stokes coupling or PNM (pore network model)-Darcy coupling.
+     */
         /*!
          * \ingroup BoundaryCoupling
          * \defgroup DarcyDarcyCoupling Darcy-Darcy domain coupling
@@ -603,3 +693,13 @@
          * \defgroup StokesDarcyCoupling Stokes-Darcy domain coupling
          * \brief Couples domains with equal-dimension multi-physics problems in a Stokes-Darcy coupling.
          */
+    /*!
+     * \ingroup MultiDomain
+     * \defgroup EmbeddedCoupling Embedded mixed-dimension coupling mode
+     * \brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) are embedded in a          higher-dimensional domain (bulk). Examples are embedded one-dimensional networks for the simulation of blood tissue perfusion, or root-soil interaction, and embedded fracture models.
+     */
+    /*!
+     * \ingroup MultiDomain
+     * \defgroup FacetCoupling Conforming mixed-dimension facet coupling mode
+     * \brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) live on the facets of the          higher-dimensional domain (bulk). Examples are discrete facet conforming fracture models and problems with physics on a domain surface.
+     */

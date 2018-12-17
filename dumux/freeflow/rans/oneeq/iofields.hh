@@ -26,8 +26,7 @@
 
 #include <dumux/freeflow/rans/iofields.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup OneEqModel

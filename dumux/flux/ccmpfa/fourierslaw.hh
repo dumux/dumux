@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CCMpfaDiscretization
+ * \ingroup CCMpfaFlux
  * \brief Fourier's law for cell-centered finite volume schemes with multi-point flux approximation
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FOURIERS_LAW_HH
@@ -30,16 +30,16 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 //! forward declaration of the method-specific implementation
 template<class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawImplementation;
 
 /*!
-* \ingroup CCMpfaDiscretization
-* \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
-*/
+ * \ingroup CCMpfaFlux
+ * \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
+ */
 template <class TypeTag>
 class FouriersLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 {

@@ -23,11 +23,11 @@
 #ifndef AWN_SURFACE_POLYNOMIAL_2ND_ORDER_PARAMS_HH
 #define AWN_SURFACE_POLYNOMIAL_2ND_ORDER_PARAMS_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief implementation of interfacial area surface params
+ * \brief Implementation of interfacial area surface params
  */
 template<class ScalarT>
 class AwnSurfacePolynomial2ndOrderParams

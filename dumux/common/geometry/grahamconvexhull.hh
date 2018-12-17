@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Geometry
  * \brief A function to compute the convex hull of a point cloud
  *        and a function to triangulate the polygon area spanned by the convex hull
  */
@@ -35,6 +35,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup Geometry
  * \brief Returns the orientation of a sequence a-->b-->c in one plane (defined by normal vector)
  * \return -1   if a-->b-->c forms a counter-clockwise turn (given the normal vector)
  *         +1   for a clockwise turn,
@@ -54,6 +55,7 @@ int getOrientation(const Dune::FieldVector<ctype, 3>& a,
 }
 
 /*!
+ * \ingroup Geometry
  * \brief Compute the points making up the convex hull around the given set of unordered points
  * \note We assume that all points are coplanar and there are no indentical points in the list
  */
@@ -66,6 +68,7 @@ grahamConvexHull2d3d(const std::vector<Dune::FieldVector<ctype, 3>>& points)
 }
 
 /*!
+ * \ingroup Geometry
  * \brief Compute the points making up the convex hull around the given set of unordered points
  * \note We assume that all points are coplanar and there are no indentical points in the list
  * \note This algorithm changes the order of the given points a bit
@@ -171,6 +174,7 @@ grahamConvexHull2d3d(std::vector<Dune::FieldVector<ctype, 3>>& points)
 }
 
 /*!
+ * \ingroup Geometry
  * \brief Triangulate area given points of the convex hull
  * \note Assumes all points of the convex hull are coplanar
  * \note This inserts a mid point and connects all corners with that point to triangles

@@ -26,8 +26,7 @@
 
 #include <array>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -145,6 +144,6 @@ private:
     std::array<Scalar, numPairs> velocityNormalOutside_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -16,11 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup KOmegaModel
-  * \copydoc Dumux::KOmegaResidualImpl
-  */
+/*!
+ * \file
+ * \ingroup KOmegaModel
+ * \copydoc Dumux::KOmegaResidualImpl
+ */
 #ifndef DUMUX_STAGGERED_KOMEGA_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_KOMEGA_LOCAL_RESIDUAL_HH
 
@@ -36,8 +36,8 @@ template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod
 class KOmegaResidualImpl;
 
 /*!
-  * \ingroup KOmegaModel
-  * \brief Element-wise calculation of the residual for k-omega models using the staggered discretization
+ * \ingroup KOmegaModel
+ * \brief Element-wise calculation of the residual for k-omega models using the staggered discretization
  */
 template<class TypeTag, class BaseLocalResidual>
 class KOmegaResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
@@ -129,6 +129,6 @@ public:
         return source;
     }
 };
-}
+} // end namespace Dumux
 
 #endif

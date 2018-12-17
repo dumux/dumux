@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup CCTpfaFlux
  * \brief This file contains the data which is required to calculate
  *        diffusive molar fluxes due to molecular diffusion with Maxwell Stefan
  */
@@ -39,7 +40,7 @@ template <class TypeTag, DiscretizationMethod discMethod>
 class MaxwellStefansLawImplementation;
 
 /*!
- * \ingroup CCTpfaMaxwellStefansLaw
+ * \ingroup CCTpfaFlux
  * \brief Specialization of Maxwell Stefan's Law for the CCTpfa method.
  */
 template <class TypeTag>

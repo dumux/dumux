@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Algorithms that finds which geometric entites intersect
  */
 #ifndef DUMUX_INTERSECTING_ENTITIES_HH
@@ -34,7 +34,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Compute all intersections between entities and a point
  */
 template<class EntitySet, class ctype, int dimworld>
@@ -50,7 +50,7 @@ intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Compute intersections with point for all nodes of the bounding box tree recursively
  */
 template<class EntitySet, class ctype, int dimworld>
@@ -92,7 +92,7 @@ void intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Compute all intersections between two bounding box trees
  */
 template<class EntitySet0, class EntitySet1>
@@ -117,7 +117,7 @@ intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Compute all intersections between two all bounding box tree nodes recursively
  */
 template<class EntitySet0, class EntitySet1>

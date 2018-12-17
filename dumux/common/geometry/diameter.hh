@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Geometry
  * \brief A function to compute a geometry's diameter, i.e.
  *        the longest distance between points of a geometry
  */
@@ -28,7 +28,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief Computes the longest distance between points of a geometry
  * \note Useful e.g. to compute the maximum cell diameter of a grid
  */

@@ -31,10 +31,9 @@
 #include <cmath>
 #include <assert.h>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \ingroup material
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of a exponential function relating
  * specific interfacial  area to wetting phase saturation and capillary pressure.
@@ -69,7 +68,8 @@ public:
         return aAlphaBeta;
     }
 
-    /*! \brief the derivative of specific interfacial area function w.r.t. capillary pressure
+    /*!
+     * \brief the derivative of specific interfacial area function w.r.t. capillary pressure
      *
      * \param  params parameter container for the coefficients of the surface
      * \param  Sw Effective saturation of the wetting phase
@@ -80,7 +80,8 @@ public:
         DUNE_THROW(Dune::NotImplemented, __FILE__ << "  dawndpc()");
     }
 
-    /*! \brief the derivative of specific interfacial area function w.r.t. saturation
+    /*!
+     * \brief the derivative of specific interfacial area function w.r.t. saturation
      *
      * \param  params parameter container for the coefficients of the surface
      * \param  Sw Effective saturation of the wetting phase
@@ -92,8 +93,6 @@ public:
     }
 
 };
-}
+} // end namespace Dumux
 
 #endif
-
-

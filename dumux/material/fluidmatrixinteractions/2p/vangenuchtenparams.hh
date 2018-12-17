@@ -27,8 +27,8 @@
 
 #include <dune/common/float_cmp.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Specification of the material parameters

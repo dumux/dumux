@@ -123,6 +123,6 @@ private:
     int numComp_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

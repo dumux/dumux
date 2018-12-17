@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxDiscretization
  * \brief The local element solution class for the box method
  */
 #ifndef DUMUX_BOX_ELEMENT_SOLUTION_HH
@@ -30,7 +31,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoxModel
+ * \ingroup BoxDiscretization
  * \brief The element solution vector
  */
 template<class FVElementGeometry, class PV>

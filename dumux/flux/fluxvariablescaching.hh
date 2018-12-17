@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief Classes related to flux variables caching
  */
 #ifndef DUMUX_DISCRETIZATION_FLUXVAR_CACHING_HH

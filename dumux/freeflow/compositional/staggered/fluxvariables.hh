@@ -30,8 +30,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/fluxvariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
@@ -61,8 +60,8 @@ public:
     using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
 
     /*!
-    * \brief Computes the flux for the cell center residual.
-    */
+     * \brief Computes the flux for the cell center residual.
+     */
     template<class ElementVolumeVariables, class ElementFaceVariables, class FluxVariablesCache>
     CellCenterPrimaryVariables computeMassFlux(const Problem& problem,
                                                const Element& element,

@@ -33,6 +33,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup FacetCoupling
  * \brief The element-wise residual for the box scheme
  * \tparam TypeTag the TypeTag
  */

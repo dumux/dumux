@@ -33,8 +33,7 @@
 
 #include "model.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup LowReKEpsilonModel

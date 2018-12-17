@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Common
  * \file
+ * \ingroup Common
  * \brief Provides 3rd order polynomial splines.
  */
 #ifndef DUMUX_SPLINE_HH
@@ -28,8 +28,8 @@
 #include "variablelengthspline_.hh"
 #include "splinecommon_.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Common
  * \brief A 3rd order polynomial spline.
@@ -112,6 +112,7 @@ public:
 };
 
 /*!
+ * \ingroup Common
  * \brief Specialization of a spline with the number of sampling
  *        points only known at run time.
  *
@@ -130,7 +131,7 @@ public:
     s''(x_1)   & = 0 \\
     s''(x_n)   & = 0
  \f}
-*/
+ */
 template<class Scalar>
 class Spline<Scalar, /*numSamples=*/-1> : public VariableLengthSpline_<Scalar>
 {
@@ -265,6 +266,7 @@ class Spline<Scalar, /*numSamples=*/1>
 { private: Spline() { }; };
 
 /*!
+ * \ingroup Common
  * \brief Spline for two sampling points.
  *
  * For this type of spline there is no natural spline.
@@ -525,6 +527,6 @@ protected:
     Vector m_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

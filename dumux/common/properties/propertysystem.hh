@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Properties
  * \ingroup TypeTraits
  * \author Timo Koch
  * \brief The Dumux property system, traits with inheritance

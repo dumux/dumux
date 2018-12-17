@@ -30,11 +30,8 @@
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/constant.hh>
 
-namespace Dumux
-{
-
-namespace BinaryCoeff
-{
+namespace Dumux {
+namespace BinaryCoeff {
 
 /*!
  * \ingroup Binarycoefficients
@@ -52,6 +49,7 @@ class H2O_Component
 };
 
 /*!
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for water and a constant component
  */
 template<class Scalar, int id>
@@ -105,7 +103,6 @@ public:
 };
 
 } // end namespace BinaryCoeff
-
 } // end namespace Dumux
 
 #endif

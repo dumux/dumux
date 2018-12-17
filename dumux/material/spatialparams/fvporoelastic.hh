@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of poro-elastic geomechanical problems
  */
 #ifndef DUMUX_GEOMECHANICS_POROELASTIC_FV_SPATIAL_PARAMS_HH
@@ -69,7 +70,7 @@ struct hasBiotCoeffAtPos
 #endif
 
 /*!
- * \ingroup Geomechanics
+ * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of poro-elastic geomechanical problems
  */
 template<class Scalar, class FVGridGeometry, class Implementation>
@@ -304,5 +305,5 @@ protected:
 private:
     std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
 };
-}
+} // end namespace Dumux
 #endif

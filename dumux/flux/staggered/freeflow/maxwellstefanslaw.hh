@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup StaggeredDiscretization
+ * \ingroup StaggeredFlux
  * \brief Specialization of Maxwell Stefan's Law for the Staggered method.
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_MAXWELL_STEFAN_LAW_HH
@@ -39,7 +39,7 @@ template <class TypeTag, DiscretizationMethod discMethod>
 class MaxwellStefansLawImplementation;
 
 /*!
- * \ingroup StaggeredDiscretization
+ * \ingroup StaggeredFlux
  * \brief Specialization of Maxwell Stefan's Law for the Staggered method.
  */
 template <class TypeTag>

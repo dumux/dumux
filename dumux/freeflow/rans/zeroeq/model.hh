@@ -32,7 +32,6 @@
  *  -# Van-Driest modification, \cite vanDriest1956a and \cite Hanna1981a
  *  -# Baldwin-Lomax, \cite Baldwin1978a
  */
-
 #ifndef DUMUX_ZEROEQ_MODEL_HH
 #define DUMUX_ZEROEQ_MODEL_HH
 

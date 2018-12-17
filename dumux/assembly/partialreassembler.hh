@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Assembly
- * \brief detects which entries in the Jacobian have to be recomputed
+ * \brief Detects which entries in the Jacobian have to be recomputed
  */
 #ifndef DUMUX_PARTIAL_REASSEMBLER_HH
 #define DUMUX_PARTIAL_REASSEMBLER_HH
@@ -91,7 +91,10 @@ public:
     void resetColors(Args&&... args) {}
 };
 
-//! the partial reassembler engine specialized for the box method
+/*!
+ * \ingroup Assembly
+ * \brief The partial reassembler engine specialized for the box method
+ */
 template<class Assembler>
 class PartialReassemblerEngine<Assembler, DiscretizationMethod::box>
 {
@@ -294,7 +297,10 @@ private:
     std::vector<EntityColor> vertexColor_;
 };
 
-//! the partial reassembler engine specialized for the box method
+/*!
+ * \ingroup Assembly
+ * \brief The partial reassembler engine specialized for the cellcentered TPFA method
+ */
 template<class Assembler>
 class PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>
 {
@@ -388,7 +394,10 @@ private:
     std::vector<EntityColor> elementColor_;
 };
 
-//! the partial reassembler engine specialized for the mpfa method
+/*!
+ * \ingroup Assembly
+ * \brief The partial reassembler engine specialized for the cellcentered MPFA method
+ */
 template<class Assembler>
 class PartialReassemblerEngine<Assembler, DiscretizationMethod::ccmpfa>
 : public PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>

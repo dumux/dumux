@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup StaggeredDiscretization
  * \file
+ * \ingroup StaggeredDiscretization
  *
  * \brief Defines a type tag and some properties for ree-flow models using the staggered scheme.
            This scheme features degrees of freedom at the elements' centers and intersections (faces).
@@ -42,11 +42,8 @@
 #include "fvgridgeometrytraits.hh"
 #include "gridvolumevariables.hh"
 
-namespace Dumux
-{
-
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 
 //! Type tag for the staggered scheme specialized for free flow.
 // Create new type tags

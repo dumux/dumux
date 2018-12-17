@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Properties
  * \ingroup Geomechanics
  * \brief Defines a type tag and some properties for geomechanical DuMuX models.
  */

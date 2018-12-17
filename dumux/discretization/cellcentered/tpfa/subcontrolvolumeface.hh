@@ -38,7 +38,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup CCDiscretization
+ * \ingroup CCTpfaDiscretization
  * \brief Default traits class to be used for the sub-control volume faces
  *        for the cell-centered finite volume scheme using TPFA
  * \tparam GV the type of the grid view

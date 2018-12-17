@@ -25,12 +25,12 @@
 #ifndef LINEAR_MATERIAL_PARAMS_HH
 #define LINEAR_MATERIAL_PARAMS_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
+ * \ingroup Fluidmatrixinteractions
  * \brief Reference implementation of params for the linear material
  *        law.
- * \ingroup Fluidmatrixinteractions
  */
 template<class ScalarT>
 class LinearMaterialParams

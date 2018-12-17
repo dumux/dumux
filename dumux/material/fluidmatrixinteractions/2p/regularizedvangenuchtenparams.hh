@@ -22,7 +22,6 @@
  * \brief   Parameters that are necessary for the \em regularization of
  *          VanGenuchten "material law".
  */
-
 #ifndef REGULARIZED_VAN_GENUCHTEN_PARAMS_HH
 #define REGULARIZED_VAN_GENUCHTEN_PARAMS_HH
 
@@ -30,8 +29,8 @@
 
 #include "vangenuchtenparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief   Parameters that are necessary for the \em regularization of

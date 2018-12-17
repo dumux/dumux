@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SolidStates
- * \brief update the solid volume fractions (inert and reacitve) and set them in the solidstate
+ * \brief Update the solid volume fractions (inert and reacitve) and set them in the solidstate
  */
 #ifndef DUMUX_UPDATE_SOLID_VOLUME_FRACTION_HH
 #define DUMUX_UPDATE_SOLID_VOLUME_FRACTION_HH

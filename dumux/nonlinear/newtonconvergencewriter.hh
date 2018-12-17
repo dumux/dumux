@@ -29,8 +29,7 @@
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 #include <dumux/common/parameters.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 //! provide an interface as a form of type erasure
 //! this is the minimal requirements a convergence write passed to a newton method has to fulfill

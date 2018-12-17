@@ -438,6 +438,6 @@ private:
     std::vector<VolumeVariables> volumeVariables_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

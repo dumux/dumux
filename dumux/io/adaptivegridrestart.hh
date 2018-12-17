@@ -34,8 +34,8 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup InputOutput
  * \brief Indices denoting the different grid types.

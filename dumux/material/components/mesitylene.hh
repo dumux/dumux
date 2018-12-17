@@ -20,7 +20,6 @@
  * \file
  * \ingroup Components
  * \brief Properties of mesitylene.
- *
  */
 #ifndef DUMUX_MESITYLENE_HH
 #define DUMUX_MESITYLENE_HH

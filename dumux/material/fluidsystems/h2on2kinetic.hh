@@ -24,7 +24,6 @@
 #ifndef DUMUX_H2O_N2_FLUID_SYSTEM_KINETIC_HH
 #define DUMUX_H2O_N2_FLUID_SYSTEM_KINETIC_HH
 
-#include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/n2.hh>
@@ -33,14 +32,12 @@
 
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 
-
 #include <dumux/material/fluidsystems/base.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+namespace FluidSystems {
 
-namespace FluidSystems
-{
 /*!
  * \ingroup Fluidsystems
  * \brief A two-phase fluid system with two components water \f$(\mathrm{H_2O})\f$

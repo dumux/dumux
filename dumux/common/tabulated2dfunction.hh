@@ -209,6 +209,6 @@ private:
 
 };
 
-}
+} // end namespace Dumux
 
 #endif

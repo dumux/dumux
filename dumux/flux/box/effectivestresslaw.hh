@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxFlux
  * \brief Specialization of the effective stress law for the box scheme. This computes the stress
  *        tensor and surface forces resulting from mechanical deformation and the pore pressure.
  */
@@ -30,7 +31,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup BoxFlux
  * \brief Effective stress law for box scheme
  * \tparam StressType type used for the computation of
  *         purely mechanical stresses (i.e. material law)

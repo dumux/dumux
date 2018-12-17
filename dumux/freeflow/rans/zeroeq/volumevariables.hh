@@ -19,7 +19,6 @@
 /*!
  * \file
  * \ingroup ZeroEqModel
- *
  * \copydoc Dumux::ZeroEqVolumeVariables
  */
 #ifndef DUMUX_ZEROEQ_VOLUME_VARIABLES_HH
@@ -30,8 +29,7 @@
 #include <dune/common/exceptions.hh>
 #include <dumux/freeflow/rans/volumevariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ZeroEqModel

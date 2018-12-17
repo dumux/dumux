@@ -29,9 +29,8 @@
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include "efftoabslawiaparams.hh"
 
+namespace Dumux {
 
-namespace Dumux
-{
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief This material law takes a material law (interfacial area surface) defined for effective
@@ -101,6 +100,6 @@ protected:
         return (sw - params.swr())/(1. - params.swr() - params.snr());
     }
 };
-}
+} // end namespace Dumux
 
 #endif

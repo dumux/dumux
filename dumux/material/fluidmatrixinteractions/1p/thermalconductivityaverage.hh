@@ -27,8 +27,8 @@
 #include <algorithm>
 
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Relation for a simple effective thermal conductivity
@@ -63,5 +63,5 @@ public:
         return lambdaSolid*(1-porosity) + lambdaW*porosity;
     }
 };
-}
+} // end namespace Dumux
 #endif

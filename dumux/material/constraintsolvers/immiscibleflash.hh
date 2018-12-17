@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ConstraintSolver
+ * \ingroup ConstraintSolvers
  * \brief Determines the pressures and saturations of all fluid phases
  *        given the total mass of all components.
  */
@@ -35,7 +35,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup ConstraintSolver
+ * \ingroup ConstraintSolvers
  * \brief Determines the pressures and saturations of all fluid phases
  *        given the total mass of all components.
  *

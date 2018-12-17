@@ -29,8 +29,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/io/name.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup NavierStokesModel

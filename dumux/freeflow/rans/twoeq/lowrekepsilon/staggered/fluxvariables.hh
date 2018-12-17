@@ -16,11 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup LowReKEpsilonModel
-  * \copydoc Dumux::LowReKEpsilonFluxVariablesImpl
-  */
+/*!
+ * \file
+ * \ingroup LowReKEpsilonModel
+ * \copydoc Dumux::LowReKEpsilonFluxVariablesImpl
+ */
 #ifndef DUMUX_LOWREKEPSILON_STAGGERED_FLUXVARIABLES_HH
 #define DUMUX_LOWREKEPSILON_STAGGERED_FLUXVARIABLES_HH
 
@@ -31,8 +31,7 @@
 #include <dumux/freeflow/navierstokes/fluxvariables.hh>
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/fluxvariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>

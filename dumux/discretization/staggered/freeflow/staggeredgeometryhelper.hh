@@ -31,8 +31,7 @@
 #include <type_traits>
 #include <algorithm>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization

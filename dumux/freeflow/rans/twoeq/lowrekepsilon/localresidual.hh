@@ -16,11 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup LowReKEpsilonModel
-  * \copydoc Dumux::LowReKEpsilonResidual
-  */
+/*!
+ * \file
+ * \ingroup LowReKEpsilonModel
+ * \copydoc Dumux::LowReKEpsilonResidual
+ */
 #ifndef DUMUX_LOWREKEPSILON_LOCAL_RESIDUAL_HH
 #define DUMUX_LOWREKEPSILON_LOCAL_RESIDUAL_HH
 
@@ -29,8 +29,7 @@
 #include <dumux/freeflow/navierstokes/localresidual.hh>
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/staggered/localresidual.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>

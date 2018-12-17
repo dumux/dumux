@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Geometry
  * \brief A class for collision detection of two geometries
  *        and computation of intersection corners
  */
@@ -35,7 +35,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Geometry
  * \brief A class for geometry collision detection and intersection calculation
  * The class can be specialized for combinations of dimworld, dim1, dim2, where
  * dimworld is the world dimension embedding a grid of dim1 and a grid of dim2.
@@ -58,7 +58,10 @@ public:
     }
 };
 
-//! polyhedron--segment intersection in 3d space
+/*!
+ * \ingroup Geometry
+ * \brief A class for polyhedron--segment intersection in 3d space
+ */
 template <class Geometry1, class Geometry2>
 class GeometryIntersection<Geometry1, Geometry2, 3, 3, 1>
 {
@@ -173,7 +176,10 @@ public:
     }
 };
 
-//! polyhedron--polygon intersection in 3d space
+/*!
+ * \ingroup Geometry
+ * \brief A class for polyhedron--polygon intersection in 3d space
+ */
 template <class Geometry1, class Geometry2>
 class GeometryIntersection<Geometry1, Geometry2, 3, 3, 2>
 {
@@ -315,7 +321,10 @@ public:
     }
 };
 
-//! polygon--segment intersection in 3d space
+/*!
+ * \ingroup Geometry
+ * \brief A class for polygon--segment intersection in 3d space
+ */
 template <class Geometry1, class Geometry2>
 class GeometryIntersection<Geometry1, Geometry2, 3, 2, 1>
 {
