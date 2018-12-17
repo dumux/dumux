@@ -1,3 +1,127 @@
+Differences Between DuMuX 2.12 and DuMuX 3.0
+=============================================
+
+* __IMPORTANT NOTES:__
+    - DuMuX 3.0 is a major version update. Hence, it is not backward compatible in all aspect to 2.12.
+      The following minor version updated will be, as before for the DuMuX 2-series, always backward compatible
+      to at least the last minor version update.
+
+    - DuMuX 3.0 is based on Dune 2.6 and is expected to run with the current Dune master.
+      We will try to keep the compatibility with the Dune master
+      as long as it is technically feasible and our resources allow it.
+
+    - DuMux 3.0 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
+      However, we suggest to use newer compiler versions, as we cannot test against all previous compiler versions.
+
+    - For employing corner-point grids by means of opm-grid, the OPM release 2018.04 has to be used.
+
+* __IMPROVEMENTS and ENHANCEMENTS:__
+    - Support for grid managers dune-subgrid (a meta grid selecting only certain elements from a host grid)
+      and dune-spgrid (a structured parallel grid manager, supporting periodic boundaries)
+    - __New style main files:__ 3.0 comes which a major overhaul of how the sequence of simulation steps is specified.
+      Until 2.12 there was the start.hh header including the free function `start` that contained a predefined sequence of
+      steps. Customization of the sequence was possible by many hooks implemented in classes used in this sequence. This
+      made it hard to follow the course of the program and hard to implement customization at points where this was not previously envisioned.
+      In contrast, in the new approach the sequence of simulation steps was linearized, meaning that each step is visible
+      in the program's main file. In the new main files, one can clearly see the io, initialization, assembly, solving, update, time loop, etc.,
+      of the program. Many parts of the simulation that were previously mandatory, i.e. simulations in 2.12 always contained a time loop,
+      are now optional (instationary simulations just don't need a time loop). The new style main files make it easier two follow the course
+      of the program, easier to customize, and offer more flexibility concerning the customization of steps and components of a simulation.
+      All tests and examples in the dumux repository have been adapted to the new style main files.
+    - __The grid geometry concept:__ In version 3.0, discretization methods use grid geometries which are wrapper or adapters around a `Dune::GridView`,
+      providing data structures and interfaces necessary to implement these discretization methods easily. In particular, the
+      abstraction of sub-control-volumes (scv) and sub-control-volume-faces (scvf) are now separate classes and the grid geometry provides means to iterate
+      over all scvs and scvfs of an element, using range-based-for loops.
+    - __The caching concept:__ Version 3.0 introduces a caching concept for the new grid geometry, the volume variables and the flux variables.
+      There are classes with a `Grid` prefix, that store data for the current grid view, and classes with the `Element` prefix that store data locally
+      for an element or element stencil. Depending on the caching concept used, data will be either stored completely in the `Grid` objects
+      (e.g. `GridGeometry`) and the `Element` object (e.g. `ElementGeometry`) are mere accessor objects, or, data will be partly only cached locally.
+      The local caching uses less memory but might result in a more runtime, the grid caching is memory intensive
+      but can provide a significant run-time speedup. Choose whatever concept fits your available resources.
+    - __MPFA schemes:__ The new design of the DuMux core facilitates the incorporation of new finite-volume schemes. In particular, the new core comes with
+      a framework for MPFA schemes, in which currently the only available scheme is the MPFA-O scheme. It can be used in conjunction with any DuMux model and
+      also works on surface grids. More schemes will be added in the future.
+    - __Interface solver:__ For the two-phase flow model in conjunction with the box scheme, an interface solver can now be used to reconstruct the saturations
+      in the sub-control volumes adjacent to vertices that lie on material discontinuities. This allows a sharper representation of the saturation front evolving
+      in heterogeneous porous media.
+    - __Box-dfm:__ The `2pdfm` model from version 2.12 has been generalized such that it can be used on any DuMux model and in both two and three dimensions.
+    - __MPNC:__ The general m-phase n-component model has been adapted in structure to the other porous medium flow models.
+    - __Tracer transport__: A new model for tracer transport with a given flow field has been added. The model can be also used to implement sequentially
+      coupled simulations, or iterative solvers where flow and transport are decoupled / weakly coupled.
+    - __Mineralization__: An adapter model for mineralization has been added and can be used with all porousmediumflow models. A balance for the solid
+      volume fraction of precipitating, adsorbed, or absorbed substances is added to the existing equations.
+    - __Multidomain:__ DuMux 3.0 introduces a new multidomain framework which does no longer depend on `dune-multidomain` and can be used for the coupling
+      of an arbitrary number of subdomains. The sub-domains can be regions in which a different set of equations are solved and/or which have different
+      dimensionalities. The implementation is such that any of the existing DuMux models can be used in the subdomains, while the data and functionality
+      required for the coupling of the sub-domains is implemented in a `CouplingManger` class. Three different coupling concepts are available, for which
+      there are a number of available `CouplingManager` class implementations:
+      - _Boundary:_ coupling across sub-domain boundaries
+      - _Embedded:_ Coupling between a bulk domain and an embedded lower-dimensional sub-domain which has an independent grid
+      - _Facet:_ Coupling betweeen a bulk domain and a codimension-one sub-domain, which is conforming with the element facets of the bulk domain
+    - __Free-flow models:__ The previous Navier-Stokes model using the box method has been replaced by one that employs a staggered grid discretization.
+      The latter does not  require any stabilization techniques while those were necessary for the box method in order to avoid spurious oscillations.
+      The free-flow models in DuMux 3.0 consider single phase flow with or without component/energy transport. So far, only regular cartesian grids are supported
+      but local grid refinement will be added in a future release.
+      Several RANS models for turbulent flow have been added: k-omega, k-epsilon, low-Re-k-epsilon, one-eq, zero-eq. The RANS models might be subject to further (interface)
+      changes.
+    - __Runtime parameters:__ Runtime parameters are no longer accessed with preprocessor macros. They have been replaced by C++ function templates
+      `Dumux::getParam`, `Dumux::hasParam`, `Dumux::getParamFromGroup`. The `..FromGroup` version has been redesigned to allow the specification
+      of parameters for different models in one input file. The concept of a parameter group string was extended to make it possible to
+      use a single input file for complex multidomain simulation setups.
+    - __Property system:__ The property system is now usable without preprocessor macros. To this end it was completely reimplemented using C++14 techniques and
+      variadic templates. The hierarchies can now be arbitrarily deep instead of being limited to 5 levels. The new implementation does not use
+      C++ inheritance. Properties and TypeTag now have to be properly qualified with the namespaces `Properties::`, `TTag::`. Types that share the
+      name with properties have to properly qualified with the `Dumux::` namespace. This update makes it hopefully more readable
+      and removes the "magic" part from the property system.
+    - __TypeTag templates:__ Implementers of code in DuMuX 3.0 are advised to avoid TypeTag as a template argument for class templates.
+      Many classes in the DuMuX core have been changed to have a small number of specific template arguments, including `GridGeometry`,
+      `TimeLoop`, `Newton`, `LinearSolver`, `SpatialParams`. This makes it possible to share objects of these types between models using
+      different TypeTags. This was not possible before as `Class<TypeTag1>` and `Class<TypeTag2>` are different types, even if they contain
+      exactly the implementation code otherwise.
+      Furthermore, having TypeTag as a template argument leads to bad programming, and unnecessary dependencies that should be avoided in
+      every object-oriented code.
+    - __Restarting simulations:__ The old restart module was replaced by an implementation based on a VTK backend (other formats might be added later such as HDF5).
+      Restarted simulations can read solutions from vtk files. In parallel, there is currently the restriction that the number of processors has be the same
+      as before the restart. Restarted simulations can read grids from vtk (currently only sequential, non-adaptive grids, support for parallel and adaptive
+      will be added in future version).
+    - __Components:__ Components can now derive from different base classes, `Base`, `Liquid`, `Solid`, `Gas`, depending on which
+      phase states are implemented. This can be used to determine at compile time if a component support a certain phase state.
+    - __Solid systems:__ DuMuX 3.0 introduces solid systems similar to fluid systems but for solid components. This allows a consistent
+      implementation of mineralization models including reactions, dissolution, precipitation and other processes altering the solid
+      phase of the porous medium.
+    - __Tabulation of fluid parameter laws:__ The tabulation of fluid parameter laws has been improved to only tabulate those functions actually used during the
+      simulation. To this end, the tabulation is done on the first call of certain fluid parameter.
+    - __Assembly__: The assembler can now assemble implicit and explicit Euler time discretizations. An interface for implementing analytical Jacobians was added.
+      The CCTpfa assembler has been significantly improved for complex models that spend a lot of time computing constitutive laws. Also the numerical
+      differentiation scheme was improved by altering the order in which derivatives are computed.
+    - __Solution-dependent spatial params:__ A redesign of the spatial params interface allows now to define spatial parameters such as permeability
+      and porosity that depend on the solution. This makes it easier to implement mineralization models altering the solid structure of the porous medium.
+    - __Different wettability:__ The 2p models can now model materials with different wettability (hydrophobic, hydrophilic) in different parts of the domain.
+    - __Thermal and chemical non-equilibrium:__ The possibility to consider thermal and/or chemical non-equilibrium of several types has been enabled for all
+      porous medium models.
+    - __Maxwell-Stefan-diffusion:__ Most models can now use Maxwell-Stefan diffusion for multi-component diffusion instead of Fickian diffusion.
+      There is also a few tests demonstrating how to use it.
+
+* __IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:__
+    - Many classes have been completely redesigned. See the numerous example applications included in 3.0 showcasing all new classes.
+    - The `GridCreator` has been replaced by the `GridManager`, which no longer uses a singleton for the grid object.
+      This makes it possible to create two grids of the exact same type. The `GridManager` also handles user data provided in grid files.
+
+* __Deprecated CLASSES/FILES, to be removed after 3.0:__
+    - All classes of the sequential models are deprecated. The sequential models will be ported to the new structure
+      of porous medium models (formerly called implicit models). This way sequential and implicit model implementations
+      no longer differ and use the same numerical infrastructure.
+    - The `TimeManager` class is to be replaced by the class `TimeLoop`.
+    - The `VtkMultiWriter` class is to be replaced by the class `VtkOutputModule`.
+    - The file `start.hh` is replaced by new style main files.
+
+* __Deprecated MEMBER FUNCTIONS, to be removed after 3.0:__
+
+* __DELETED classes/files, property names, constants/enums,
+  member functions, which have been deprecated in DuMuX 2.12:__
+  - Everything listed as deprecated below has been removed.
+
+
 Differences Between DuMuX 2.11 and DuMuX 2.12
 =============================================
 
@@ -129,8 +253,8 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
     - Using the geostatistical tool gstat for generating random fields has been
       facilitated. See `test_cc1pwithgstat` in `test/porousmediumflow/1p/implicit`.
       This tool can be installed using the `bin/installexternal.sh` script.
-      If cmake does not find gstat, one has to specify the GSTAT_ROOT variable, 
-      see the standard optim.opts or debug.opts. 
+      If cmake does not find gstat, one has to specify the GSTAT_ROOT variable,
+      see the standard optim.opts or debug.opts.
 
     - The multidomain models should now run with all compilers without
       segfaults, both with optimization and debug options.
@@ -246,7 +370,7 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
       ```
       find . -name '*.[ch][ch]' -exec bash ../dumux/bin/fix_includes.sh {} \;
       ```
-      inside the folder that contains your files.  
+      inside the folder that contains your files.
       A patch is available to remove deprecated header files:
       ```
       patch -p1 < patches/dumux-2.9-no-deprecated-headers.patch
@@ -270,7 +394,7 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
           ```
           with the new
           ```
-          #include <dumux/multidomain/2cnistokes2p2cni/localoperator.hh> 
+          #include <dumux/multidomain/2cnistokes2p2cni/localoperator.hh>
           ```
       The structure change is reflected in the `test` folder:
         + The tests from`test/implicit/particular_model` have been moved to
@@ -324,7 +448,7 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
       constructors are deprecated, model implementers might be required to make
       their flux variables default-constructible too. In particular, this affects
       you if you develop your own flux variables that
-        + inherit from flux variables from dumux-stable, such as the 
+        + inherit from flux variables from dumux-stable, such as the
           `ImplicitDaryFluxVariables`,
         + and/or are used in a local residual from dumux-stable.
       See the
@@ -642,7 +766,7 @@ Differences Between DuMuX 2.6 and DuMuX 2.7
     classes FVSpatialParamsOneP and ImplicitSpatialParamsOneP.
 
 * Deprecated protected MEMBER VARIABLES, to be removed after 2.7: BEWARE: Older
-  compilers will not print any warning if a deprecated protected member variable 
+  compilers will not print any warning if a deprecated protected member variable
   is used.
   - In dumux/nonlinear/newtoncontroller.hh:
     "error_" -> "shift_"
@@ -743,7 +867,7 @@ Differences Between DuMuX 2.5 and DuMuX 2.6
     have been deprecated: subProblemX, subModelX, subIDX, gridViewX with X=1,2.
     They are replaced by sdProblemX, sdModelX, sdIDX, sdGridViewX.
 
-* DELETED classes/files, property names, constants/enums, 
+* DELETED classes/files, property names, constants/enums,
   member functions, which have been deprecated in DuMuX 2.5:
   Everything listed as deprecated below has been removed.
 
@@ -756,11 +880,11 @@ Differences Between DuMuX 2.4 and DuMuX 2.5
     available for the decoupled compositional 2p2c models. It also allows
     for simulation on an adaptive grid.
   - Coupling of 2c2p with stokesnc and 2p2cNI with Stokesncni was
-    added. The stokes2c and stokes2cni are now DEPRECATED and will be kicked 
-    out by the next release. Instead generalized stokesnc and stokesncni 
-    models are introduced. Unlike 2c models the transport equations in 
+    added. The stokes2c and stokes2cni are now DEPRECATED and will be kicked
+    out by the next release. Instead generalized stokesnc and stokesncni
+    models are introduced. Unlike 2c models the transport equations in
     the nc models are capapable of using both mass and mole fractions.
-    NOTE: For coupling test examples be aware of the harsh version 
+    NOTE: For coupling test examples be aware of the harsh version
     restrictions mentioned in dumux/test/modelcoupling/README.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
@@ -770,7 +894,7 @@ Differences Between DuMuX 2.4 and DuMuX 2.5
   - Stokes2cModel was replaced by StokesNCModel, similar for more
     Stokes2c* classes.
 
-* DELETED classes/files, property names, constants/enums, 
+* DELETED classes/files, property names, constants/enums,
   member functions, which have been deprecated in DuMuX 2.4:
   Everything listed as deprecated below has been removed.
 
@@ -785,8 +909,8 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
     error is thrown during compilation if the flag is not set. For reference see
     the commented part in optim.opts and debug.opts.
 
-  - All two-component models (1p2c, 2p2c, 2p2cni, co2, co2ni) can now be used 
-    with either mole or mass fractions. The property useMoles has to be set in 
+  - All two-component models (1p2c, 2p2c, 2p2cni, co2, co2ni) can now be used
+    with either mole or mass fractions. The property useMoles has to be set in
     the problem file and the boundary conditions have to be choosen accordingly.
     . 1p2c, 2p2c, 2p2cni use MOLE fractions by default.
     . co2, co2ni use MASS fractions by default.
@@ -830,7 +954,7 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
 
   - All fully-implicit porous-media models now provide the possibility to write
     the velocities to the VTK output. This can be achieved by setting the
-    parameter "AddVelocity" of the group "Vtk" or the corresponding property 
+    parameter "AddVelocity" of the group "Vtk" or the corresponding property
     "VtkAddVelocity." See test/implicit/1p2c for an example.
 
   - The CMake build system support uses the experimental mechanisms from DUNE.
@@ -845,7 +969,7 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
     have been replaced by more generic ones. See the deprecation listings below
     or FS#194 for details.
 
-  - The ...FVElementGeometry classes have been cleaned up a bit. See the 
+  - The ...FVElementGeometry classes have been cleaned up a bit. See the
     deprecation listings below or FS#192 for details.
 
   - Added compiler support for Clang 3.2, Clang 3.3, and GCC 4.8.
@@ -854,23 +978,23 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
   - OnePBoxModel, OnePTwoCBoxModel -> OnePModel, OnePTwoCModel
 
   - Headers containing capitalized letters are replaced by their non-capitalized
-    analogs. 
-    In dumux/decoupled: 1p/cellData1p.hh, 1p/fluxData1p.hh, 
+    analogs.
+    In dumux/decoupled: 1p/cellData1p.hh, 1p/fluxData1p.hh,
     2p/cellData2padaptive.hh, 2p/fluxData2p.hh, 2p/cellData2p.hh,
     2p2c/cellData2p2c.hh, 2p2c/cellData2p2cadaptive.hh, 2p2c/fluxData2p2c.hh,
     2p2c/cellData2p2cmultiphysics.hh.
     In dumux/material/fluidmatrixinteractions/3p: parkerVanGen3p.hh,
     parkerVanGen3pparams.hh.
 
-* Deprecated CONSTANTS/ENUMS, to be removed after 2.4: BEWARE: Older compilers 
+* Deprecated CONSTANTS/ENUMS, to be removed after 2.4: BEWARE: Older compilers
   will not print any warning if a deprecated constant/enum is used.
-  - saturation indices: S0Idx, SnIdx, SnOrXIdx, SOrX1Idx, SOrX2Idx, SwIdx, 
+  - saturation indices: S0Idx, SnIdx, SnOrXIdx, SOrX1Idx, SOrX2Idx, SwIdx,
     SwOrXIdx
     -> s0Idx, snIdx, snOrXIdx, sOrX1Idx, sOrX2Idx, swIdx, swOrXIdx
 
   - two-phase formulations: pnSn, pnSw, pwSn, pwSw -> pnsn, pnsw, pwsn, pwsw
 
-  - DecoupledTwoPCommonIndices: pressureNW, saturationNW, velocityNW 
+  - DecoupledTwoPCommonIndices: pressureNW, saturationNW, velocityNW
     -> pressureNw, saturationNw, velocityNw
 
   - DecoupledTwoPIndices: pressEqIdx -> pressureEqIdx
@@ -879,7 +1003,7 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
     -> numPrimaryEnergyVars, numPrimaryVars
 
 * Deprecated public MEMBER VARIABLES, to be removed after 2.4: BEWARE: Older
-  compilers will not print any warning if a deprecated public member variable 
+  compilers will not print any warning if a deprecated public member variable
   is used.
   - ...FVElementGeometry: numEdges, numFaces, numFap, numVertices
     -> numScvf, -, numFap of each subcontrolvolume face, numScv
@@ -896,33 +1020,33 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
   - ImplicitProblem: boxSDNeumann(), boxSDSource()
     -> solDependentNeumann(), solDependentSource()
 
-  - ImplicitPorousMediaProblem: boxGravity(), boxTemperature() 
+  - ImplicitPorousMediaProblem: boxGravity(), boxTemperature()
     -> gravityAtPos(), temperatureAtPos() (different signatures!)
 
-  - fluid-matrix-interactions: dkrn_dSw(), dkrw_dSw(), dpc_dSw(), pC(), 
+  - fluid-matrix-interactions: dkrn_dSw(), dkrw_dSw(), dpc_dSw(), pC(),
     dSw_dpC(), Sgr(), Snr(), SnToSne(), Sw(), Swr(), SwToSwe()
-    -> dkrn_dsw(), dkrw_dsw(), dpc_dsw(), pc(), dsw_dpc(), sgr(), snr(), 
+    -> dkrn_dsw(), dkrw_dsw(), dpc_dsw(), pc(), dsw_dpc(), sgr(), snr(),
     snToSne(), sw(), swr(), swToSwe()
 
-  - LinearMaterial(Params): entryPC(), maxPC(), setEntryPC(), setMaxPC() 
+  - LinearMaterial(Params): entryPC(), maxPC(), setEntryPC(), setMaxPC()
     -> entryPc(), maxPc(), setEntryPc(), setMaxPc()
 
-  - RegularizedVanGenuchten(Params): pCHighSw(), pCLowSw() 
+  - RegularizedVanGenuchten(Params): pCHighSw(), pCLowSw()
     -> pcHighSw(), pcLowSw()
 
   - VanGenuchtenParams, ParkerVanGen3PParams: setVgM(), setVgN(), vgM(), vgN()
     -> setVgm(), setVgn(), vgm(), vgn()
 
-  - ParkerVanGen3P(Params): betaGN(), betaGW(), betaNW(), pCAlpha(), pCGN(), 
+  - ParkerVanGen3P(Params): betaGN(), betaGW(), betaNW(), pCAlpha(), pCGN(),
     pCGW(), pCNW(), setBeta..., setkrRegardsSnr(), Swrx()
-    -> betaGn(), betaGw(), betaNw(), pcAlpha(), pcgn(), pcgw(), pcnw(), 
+    -> betaGn(), betaGw(), betaNw(), pcAlpha(), pcgn(), pcgw(), pcnw(),
     setBeta..., setKrRegardsSnr(), swrx()
 
   - MPLinearMaterialParams: Sreg() -> sReg()
 
   - EvalCflFlux...: getCFLFluxFunction() -> getCflFluxFunction
 
-  - FVMPFAOInteractionVolume: getNTKNu_by_dF(), getNTKNu(), getNTKrKNu_by_dF(), 
+  - FVMPFAOInteractionVolume: getNTKNu_by_dF(), getNTKNu(), getNTKrKNu_by_dF(),
     getNTKrKNu()
     -> getNtkNu_df(), getNtkNu(), getNtkrkNu_df(), getNtkrkNu()
 
@@ -930,12 +1054,12 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
 
   - Stokes...Variables: viscosity() -> dynamicViscosity()
 
-  - IAPWS water: ddgamma_ddpi, ddgamma_ddtau, ddgamma_dtaudpi, dgamma_dpi, 
-    dgamma_dtau, dp_dpi, dpi_dp, dtau_dt 
-    -> ddGamma_ddPi, ddGamma_ddTau, ddGamma_dTaudPi, dGamma_dPi, dGamma_dTau, 
+  - IAPWS water: ddgamma_ddpi, ddgamma_ddtau, ddgamma_dtaudpi, dgamma_dpi,
+    dgamma_dtau, dp_dpi, dpi_dp, dtau_dt
+    -> ddGamma_ddPi, ddGamma_ddTau, ddGamma_dTaudPi, dGamma_dPi, dGamma_dTau,
     dp_dPi, dPi_dp, dTau_dt
 
-* DELETED classes/files, property names, constants/enums, 
+* DELETED classes/files, property names, constants/enums,
   member functions/variables, which have been deprecated in DuMuX 2.3:
   Everything listed as deprecated below has been removed.
 
@@ -944,7 +1068,7 @@ Differences Between DuMuX 2.2 and DuMuX 2.3
 ===================================================
 
 * IMPROVEMENTS and ENHANCEMENTS:
-  - A fully implicit two-phase discrete-fracture-matrix model has been added, 
+  - A fully implicit two-phase discrete-fracture-matrix model has been added,
     see test/implicit/2pdfm.
 
   - Almost all porous media fully implicit models now can either use a
@@ -952,10 +1076,10 @@ Differences Between DuMuX 2.2 and DuMuX 2.3
     of the spatial discretization method is controlled by deriving the problem
     type tag either from BoxModel or CCModel. This allows for a uniform problem
     description, as long as the boundaryTypesAtPos and dirichletAtPos methods
-    can be used. By evaluating the compile-time property ImplicitIsBox, it is 
-    easily possible to separately handle the different discretizations inside 
-    am common method. See the tests in test/implicit for examples. 
-    Correspondingly, the directory structure has been adapted. 
+    can be used. By evaluating the compile-time property ImplicitIsBox, it is
+    easily possible to separately handle the different discretizations inside
+    am common method. See the tests in test/implicit for examples.
+    Correspondingly, the directory structure has been adapted.
     Old:             New:
     dumux/           dumux/
       boxmodels/       implicit/
@@ -972,71 +1096,71 @@ Differences Between DuMuX 2.2 and DuMuX 2.3
                          ...
 
   - A backend for the ISTL AMG solver has been included, based on the
-    corresponding DUNE-PDELab backends. It can be used for the fully 
-    implicit and the decoupled models, see test_*1pwithamg in 
-    test/implicit/1p and test_impeswithamg in test/decoupled/2p. 
-    DUNE-PDELab and possibly DUNE-ISTL have to be patched, see the file 
-    README in the patches directory. 
+    corresponding DUNE-PDELab backends. It can be used for the fully
+    implicit and the decoupled models, see test_*1pwithamg in
+    test/implicit/1p and test_impeswithamg in test/decoupled/2p.
+    DUNE-PDELab and possibly DUNE-ISTL have to be patched, see the file
+    README in the patches directory.
 
-  - The decoupled models have been parallelized, see test_impeswithamg in 
-    test/decoupled/2p. They work in parallel only if the AMGBackend is used 
-    as linear solver. No dynamic loadbalancing can be done yet. 
+  - The decoupled models have been parallelized, see test_impeswithamg in
+    test/decoupled/2p. They work in parallel only if the AMGBackend is used
+    as linear solver. No dynamic loadbalancing can be done yet.
 
   - The MPNC model can use either the most wetting or the most non-wetting phase
-    pressure as primary variable. This is controlled via the property 
+    pressure as primary variable. This is controlled via the property
     "PressureFormulation."
 
-  - The table of available parameters has been improved, see 
+  - The table of available parameters has been improved, see
     http://www.dumux.org/doxygen-stable/html-2.2/a00838.php
 
-  - Improved handling of the conductive heat fluxes in the non-isothermal implicit  
+  - Improved handling of the conductive heat fluxes in the non-isothermal implicit
     two-phase models, see the problem files in test/implicit/2p(2c)ni.
 
   - Introduced new selection of start/stop messages.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
-  - The property Salinity used in the BrineCO2FluidSystem 
-    has been renamed to ProblemSalinity. 
+  - The property Salinity used in the BrineCO2FluidSystem
+    has been renamed to ProblemSalinity.
 
   - The matrixHeatFlux(...) and boundaryMatrixHeatFlux(...) methods in the spatial
     parameters of nonisothermal implicit twophase models have been removed.
-    Instead, the computation of the effective thermal conductivity has been sourced 
-    out to the fluidmatrixinteractions in a separate file 
+    Instead, the computation of the effective thermal conductivity has been sourced
+    out to the fluidmatrixinteractions in a separate file
     dumux/material/fluidmatrixinteractions/thermalconductivitysomerton.hh, which
-    can be exchanged. The spatial parameters file needs a method 
+    can be exchanged. The spatial parameters file needs a method
     thermalConductivitySolid(...), where the thermal conductivity of the solid
     material only is specified. The rest is computed in the respective
     flux variables.
 
 * Deprecated CLASSES/FILES, to be removed after 2.3:
-  - The following headers in dumux/boxmodels/ have been deprecated and forward 
-    to the corresponding headers in dumux/implicit/box: 
+  - The following headers in dumux/boxmodels/ have been deprecated and forward
+    to the corresponding headers in dumux/implicit/box:
     boxassembler.hh, boxelementvolumevariables.hh, boxlocalresidual.hh,
     boxpropertydefaults.hh, boxelementboundarytypes.hh, boxfvelementgeometry.hh,
     boxproperties.hh, intersectiontovertexbc.hh
 
-  - All headers in the following subdirectories of dumux/boxmodels have been 
-    deprecated and forward to the headers in the corresponding subdirectories 
+  - All headers in the following subdirectories of dumux/boxmodels have been
+    deprecated and forward to the headers in the corresponding subdirectories
     of dumux/implicit:
-    1p, 1p2c, 2p, 2p2c, 2p2cni, 2pdfm, 2pni, 
+    1p, 1p2c, 2p, 2p2c, 2p2cni, 2pdfm, 2pni,
     3p3c, 3p3cni, co2, co2ni, mpnc, richards
 
-  - Some box-specific classes "Box..." in dumux/boxmodels/common could be 
-    completely replaced by unified "Implicit..." classes in 
-    dumux/implicit/common: 
-    ...DarcyFluxVariables, ...darcyfluxvariables.hh 
-    ...ForchheimerFluxVariables, ...forchheimerfluxvariables.hh 
+  - Some box-specific classes "Box..." in dumux/boxmodels/common could be
+    completely replaced by unified "Implicit..." classes in
+    dumux/implicit/common:
+    ...DarcyFluxVariables, ...darcyfluxvariables.hh
+    ...ForchheimerFluxVariables, ...forchheimerfluxvariables.hh
     ...LocalJacobian, ...localjacobian.hh
     ...Model, ...model.hh
     ...PorousMediaProblem, ...porousmediaproblem.hh
     ...Problem, ...problem.hh
     ...VolumeVariables, ...volumevariables.hh
 
-  - The box-specific spatial parameter classes BoxSpatialParams... in 
-    dumux/material/boxspatialparams....hh have been deprecated in favor of 
+  - The box-specific spatial parameter classes BoxSpatialParams... in
+    dumux/material/boxspatialparams....hh have been deprecated in favor of
     ImplicitSpatialParams... in dumux/material/implicitspatialparams....hh.
 
-  - The GridCreatorheaders from dumux/common have been moved to dumux/io: 
+  - The GridCreatorheaders from dumux/common have been moved to dumux/io:
     cubegridcreator.hh, dgfgridcreator.hh, simplexgridcreator.hh
 
 * Deprecated PROPERTY NAMES, to be removed after 2.3: BEWARE: The compiler will
@@ -1044,19 +1168,19 @@ Differences Between DuMuX 2.2 and DuMuX 2.3
   - CompositionFromFugacitiesSolver has been renamed to Constraintsolver.
 
 * Deprecated public MEMBER VARIABLES, to be removed after 2.3: BEWARE: The
-  compiler will not print any warning if a deprecated public member variable 
+  compiler will not print any warning if a deprecated public member variable
   is used.
-  - numFAP and numSCV in Box(CC)FVElementGeometry have been renamed to 
+  - numFAP and numSCV in Box(CC)FVElementGeometry have been renamed to
     numFap and numScv, respectively.
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.3:
-  - boundaryMatrixHeatFlux, markVertexRed and relativeErrorVertex 
-    from ImplicitSpatialParams, ImplicitAssembler and ImplicitModel, 
-    respectively. In favor of using 
-    thermalConductivitySolid (see above), markDofRed and relativeErrorDof, 
-    respectively. 
+  - boundaryMatrixHeatFlux, markVertexRed and relativeErrorVertex
+    from ImplicitSpatialParams, ImplicitAssembler and ImplicitModel,
+    respectively. In favor of using
+    thermalConductivitySolid (see above), markDofRed and relativeErrorDof,
+    respectively.
 
-* DELETED classes/files, property names, constants/enums, 
+* DELETED classes/files, property names, constants/enums,
   member functions, which have been deprecated in DuMuX 2.2:
   Everything listed as deprecated below has been removed.
 
@@ -1064,41 +1188,41 @@ Differences Between DuMuX 2.2 and DuMuX 2.3
 Differences Between DuMuX 2.1 and DuMuX 2.2
 ===================================================
 
-* IMPROVEMENTS and ENHANCEMENTS: 
+* IMPROVEMENTS and ENHANCEMENTS:
   - Two new fully implicit models dedicated to simulate compositional
-    (non-isothermal) CO2-brine systems have been added, together with 
-    corresponding components and a fluid system. See test/boxmodels/co2(ni) 
-    for details. These tests also illustrate the usage of element and vertex 
-    parameters as well as boundary ids provided by DGF files for setting 
+    (non-isothermal) CO2-brine systems have been added, together with
+    corresponding components and a fluid system. See test/boxmodels/co2(ni)
+    for details. These tests also illustrate the usage of element and vertex
+    parameters as well as boundary ids provided by DGF files for setting
     permeability and porosity as well as boundary conditions.
 
   - Decoupled Models: An h-adaptive model using an MPFA L-method was added
-    that simulates 2p and 2p2c flow on unstructured grids with hanging nodes 
+    that simulates 2p and 2p2c flow on unstructured grids with hanging nodes
     in two dimensions. See test/decoupled/2p(2c) for details.
 
-  - All fully implicit porous media models are now capable of employing 
-    the Forchheimer equation as an alternative to the commonly used 
-    Darcy law. See test_forchheimer*p in test/boxmodels/mpnc for details. 
+  - All fully implicit porous media models are now capable of employing
+    the Forchheimer equation as an alternative to the commonly used
+    Darcy law. See test_forchheimer*p in test/boxmodels/mpnc for details.
 
-  - The Stokes models are now able to simulate the full Navier-Stokes 
-    equations for momentum transport. See test/freeflow/navierstokes 
+  - The Stokes models are now able to simulate the full Navier-Stokes
+    equations for momentum transport. See test/freeflow/navierstokes
     for details.
 
-  - The fully implicit models have been (partially) generalized to allow 
-    for a cell-centered discretization in addition to the default 
-    vertex-centered (box) one. Cell-centered fully implicit 2p and 2p2c 
-    models are already available in the developers part of Dumux. Further 
-    generalizations and the inclusion in the stable part are planned for 
+  - The fully implicit models have been (partially) generalized to allow
+    for a cell-centered discretization in addition to the default
+    vertex-centered (box) one. Cell-centered fully implicit 2p and 2p2c
+    models are already available in the developers part of Dumux. Further
+    generalizations and the inclusion in the stable part are planned for
     Dumux 2.3.
 
-  - Several model-specific features and classes have been unified, like 
-    the calculation of the Darcy velocity for the fully implicit flux 
-    variables, or the temperature, gravity, and spatial parameter 
+  - Several model-specific features and classes have been unified, like
+    the calculation of the Darcy velocity for the fully implicit flux
+    variables, or the temperature, gravity, and spatial parameter
     functionalities of the fully implicit problems. Moreover, many
-    names have been made more consistent. This includes the naming 
-    and grouping of several parameters and corresponding properties, 
-    the indexing of phases and components, and the preference of the 
-    partial name "params" over "parameters." For details, see also the 
+    names have been made more consistent. This includes the naming
+    and grouping of several parameters and corresponding properties,
+    the indexing of phases and components, and the preference of the
+    partial name "params" over "parameters." For details, see also the
     deprecations listed below.
 
   - Added compiler support for GCC 4.7 and Clang 3.1.
@@ -1107,23 +1231,23 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
   - From Dune 2.2 on, FieldVector::size is a method rather than an enum value.
     It is mandatory to add the flag --enable-fieldvector-size-is-method to the
     CONFIGURE_FLAGS. An example is given in the opts file dumux/debug.opts.
-  - Implicit models: TwoPIndices, TwoPNIIndices, and RichardsIndices 
-    additionally get TypeTag as template parameter. If the Indices are not 
+  - Implicit models: TwoPIndices, TwoPNIIndices, and RichardsIndices
+    additionally get TypeTag as template parameter. If the Indices are not
     obtained via the property, this has to be adapted.
 
-  - Implicit models: All model-specific computeFlux functions in 
-    ...localresidual.hh have to get an additional bool parameter onBoundary, 
-    which is by default set to false. If outflow conditions should 
-    be properly implemented, also the constructor of the flux variables in 
-    ...fluxvariables.hh has to get the additional argument and the 
+  - Implicit models: All model-specific computeFlux functions in
+    ...localresidual.hh have to get an additional bool parameter onBoundary,
+    which is by default set to false. If outflow conditions should
+    be properly implemented, also the constructor of the flux variables in
+    ...fluxvariables.hh has to get the additional argument and the
     class has to be adapted to deal with boundary faces. See FS#117 and #99
     for details.
-    
+
 * Deprecated CLASSES/FILES, to be removed after 2.2:
-  - Model specific base box problems: The common functionality has been 
-    collected in PorousMediaBoxProblem in 
-    dumux/boxmodels/common/porousmediaboxproblem.hh. The problem can be derived 
-    from PorousMediaBoxProblem, instead of the model specific base problem: 
+  - Model specific base box problems: The common functionality has been
+    collected in PorousMediaBoxProblem in
+    dumux/boxmodels/common/porousmediaboxproblem.hh. The problem can be derived
+    from PorousMediaBoxProblem, instead of the model specific base problem:
     OnePBoxProblem, dumux/boxmodels/1p/1pproblem.hh,
     OnePTwoCBoxProblem, dumux/boxmodels/1p2c/1p2cproblem.hh,
     TwoPProblem, dumux/boxmodels/2p/2pproblem.hh,
@@ -1133,83 +1257,83 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
     ThreePThreeCProblem, dumux/boxmodels/3p3c/3p3cproblem.hh,
     ThreePThreeCNIProblem, dumux/boxmodels/3p3cni/3p3cniproblem.hh,
     MPNCProblem, dumux/boxmodels/mpnc/mpncproblem.hh.
-    
-  - All "...SpatialParameters" base classes have been replaced by 
+
+  - All "...SpatialParameters" base classes have been replaced by
     "...SpatialParams" classes:
     BoxSpatialParameters, dumux/material/spatialparameters/boxspatialparameters.hh,
     BoxSpatialParametersOneP, dumux/material/spatialparameters/boxspatialparameters1p.hh,
     FVSpatialParameters, dumux/material/spatialparameters/fvspatialparameters.hh,
     FVSpatialParametersOneP, dumux/material/spatialparameters/fvspatialparameters1p.hh.
 
-  - Due to the unification of flux variables for the fully implicit models, 
-    some model-specific flux variables have become obsolete: 
+  - Due to the unification of flux variables for the fully implicit models,
+    some model-specific flux variables have become obsolete:
     OnePFluxVariables, dumux/boxmodels/1p/1pfluxvariables.hh,
     TwoPFluxVariables, dumux/boxmodels/2p/2pfluxvariables.hh,
     RichardsFluxVariables, dumux/boxmodels/richards/richardsfluxvariables.hh.
 
-  - Two components have new names and locations in dumux/material/components: 
+  - Two components have new names and locations in dumux/material/components:
     SimpleDNAPL, simplednapl.hh -> DNAPL, napl.hh
     Oil, oil.hh -> LNAPL, lnapl.hh
 
-  - Some MPFA-O method files/classes have been moved to a new subdirectory 
-    "omethod" in dumux/decoupled/2p/diffusion/fvmpfa: 
+  - Some MPFA-O method files/classes have been moved to a new subdirectory
+    "omethod" in dumux/decoupled/2p/diffusion/fvmpfa:
     fvmpfaopressure2p.hh, fvmpfaovelocity2p.hh, fvmpfaopressureproperties2p.hh
 
-  - DUMUX_UNUSED is deprecated and will be removed after 2.2. It should be 
+  - DUMUX_UNUSED is deprecated and will be removed after 2.2. It should be
     replaced by the upstream version DUNE_UNUSED.
-  
+
   - DUMUX_DEPRECATED_MSG is deprecated and will be removed after 2.2. It should
     be replaced by the upstream version DUNE_DEPRECATED_MSG.
 
 * Deprecated PROPERTY NAMES, to be removed after 2.2: BEWARE: The compiler will
-  not print any warning if a deprecated property name is used. 
+  not print any warning if a deprecated property name is used.
   - The "SpatialParameters" property has been renamed to "SpatialParams".
-  
+
   - The model specific "...Indices" property has been renamed to "Indices".
 
 * Deprecated CONSTANTS/ENUMS, to be removed after 2.2: BEWARE: The compiler will
   not print any warning if a deprecated constant/enum is used.
-  - In the 2p2c/ni and 3p3c/ni models, all indices related to phase and 
-    components can be pre/suffixed with "w", "n" and, 
-    for three phases, with "g". 
+  - In the 2p2c/ni and 3p3c/ni models, all indices related to phase and
+    components can be pre/suffixed with "w", "n" and,
+    for three phases, with "g".
     boxmodels/2p2c/...: "l", "g" pre/suffixes have been replaced by "w", "n".
     boxmodels/3p3c/...: "c", "a" pre/suffixes have been replaced by "n", "g".
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.2:
-  - Spatial parameters: The spatialParameters member functions of the base 
-    problems have been replaced by spatialParams: 
-    dumux/boxmodels/common/porousmediaboxproblem.hh, 
+  - Spatial parameters: The spatialParameters member functions of the base
+    problems have been replaced by spatialParams:
+    dumux/boxmodels/common/porousmediaboxproblem.hh,
     dumux/decoupled/1p/diffusion/diffusionproblem...hh,
     dumux/decoupled/2p/impes/impesproblem2p.hh,
     dumux/decoupled/2p/transport/transportproblem2p.hh.
-  
-  - Flux variables: Renaming of members 
-    "...AtIP" -> "...", 
+
+  - Flux variables: Renaming of members
+    "...AtIP" -> "...",
     "concentration..." -> "massFraction...",
     "molarConc..." -> "moleFraction..."
-    The "massFraction..." members have been deprecated, instead 
+    The "massFraction..." members have been deprecated, instead
     "moleFraction..." should be used.
     Affected files:
-    dumux/boxmodels/1p2c/1p2cfluxvariables.hh, 
+    dumux/boxmodels/1p2c/1p2cfluxvariables.hh,
     dumux/boxmodels/2p2c/2p2cfluxvariables.hh,
     dumux/boxmodels/mpnc/.../...fluxvariables.hh,
     dumux/freeflow/stokes.../stokes...fluxvariables.hh.
 
-  - Box models: The primaryVarWeight() functions are no longer used for the 
-    evaluation of the relative error. 
+  - Box models: The primaryVarWeight() functions are no longer used for the
+    evaluation of the relative error.
 
   - Element and FVElementGeometry: The elem_() and fvElemGeom_() member function
-    of BoxLocalResidual have been replaced by element_() and fvGeometry_(). 
-    
+    of BoxLocalResidual have been replaced by element_() and fvGeometry_().
+
   - Primary variables: All "...primaryVar/s" member functions have been replaced
-    by "...priVar/s": 
-    dumux/boxmodels/common/boxlocalresidual.hh, 
+    by "...priVar/s":
+    dumux/boxmodels/common/boxlocalresidual.hh,
     dumux/boxmodels/common/boxvolumevariables.hh.
 
-  - Start functionality in dumux/common/start.hh: printUsageDGF and 
+  - Start functionality in dumux/common/start.hh: printUsageDGF and
     printUsageGrid are no longer needed.
-  
-* DELETED member functions, which have been deprecated in DuMuX 2.1: 
+
+* DELETED member functions, which have been deprecated in DuMuX 2.1:
   - dumux/material/spatialparameters/boxspatialparameters1p.hh:
     extrusionFactorScv and extrusionFactorScvf, now part of the volume variables
 
@@ -1242,7 +1366,7 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
     IMPETProblem2P2C(..., SpatialParameters&, ...) replaced by IMPETProblem2P2C(TimeManager&, ...),
     initSat(const GlobalPosition&, const Element&) replaced by initSat(const Element&)
     initConcentration(const GlobalPosition&, const Element&) replaced by initConcentration(const Element&)
-    
+
   - DUMUX_DEPRECATED has been removed.
 
 
