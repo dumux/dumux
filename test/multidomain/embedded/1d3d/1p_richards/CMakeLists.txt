@@ -26,4 +26,3 @@ dune_add_test(NAME test_md_embedded1d3d_1p_richards_tpfabox
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p_richards_tpfabox params.input \
                                    -Vtk.OutputName test_md_embedded1d3d_1p_richards_tpfabox")
 dune_symlink_to_source_files(FILES "params.input")
-set(CMAKE_BUILD_TYPE Release)

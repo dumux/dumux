@@ -17,10 +17,3 @@ dune_add_test(NAME test_3p3cni_kuevette_tpfa
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_3p3cni_kuevette_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_3p3cni_kuevette_tpfa-00004.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3p3cni_kuevette_tpfa params.input -Problem.Name test_3p3cni_kuevette_tpfa")
-
-#install sources
-install(FILES
-main.cc
-spatialparams.hh
-problem.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/3p3c/kuevette)

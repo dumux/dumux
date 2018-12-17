@@ -18,10 +18,3 @@ dune_add_test(NAME test_tracer_maxwellstefan_box
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_maxwellstefan_box-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_maxwellstefan_box-00026.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_maxwellstefan_box params.input -Problem.Name test_tracer_maxwellstefan_box")
-#install sources
-install(FILES
-problem.hh
-spatialparams.hh
-main.cc
-params.input
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/tracer/multicomp)

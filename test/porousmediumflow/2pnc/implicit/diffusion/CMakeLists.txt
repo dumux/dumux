@@ -17,12 +17,3 @@ dune_add_test(NAME test_2pnc_fickslaw_tpfa
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pnc_diffusion_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fickslaw_tpfa-00026.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fickslaw_tpfa params.input -Problem.Name test_2pnc_fickslaw_tpfa")
-
-
-#install sources
-install(FILES
-main.cc
-problem.hh
-spatialparams.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2pnc/diffusion)
-set(CMAKE_BUILD_TYPE Release)

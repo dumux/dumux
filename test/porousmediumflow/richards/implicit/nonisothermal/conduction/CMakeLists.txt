@@ -8,8 +8,7 @@ dune_add_test(NAME test_richardsni_conduction_box
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richardsni_conduction_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_conduction_box-00024.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_conduction_box params.input -Problem.Name test_richardsni_conduction_box"
-                        )
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_conduction_box params.input -Problem.Name test_richardsni_conduction_box")
 
 dune_add_test(NAME test_richardsni_conduction_tpfa
               SOURCES main.cc
@@ -18,11 +17,4 @@ dune_add_test(NAME test_richardsni_conduction_tpfa
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richardsni_conduction_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_conduction_tpfa-00024.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_conduction_tpfa params.input -Problem.Name test_richardsni_conduction_tpfa"
-                      )
-
-#install sources
-install(FILES
-problem.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/richards/nonisothermal/conduction)
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_conduction_tpfa params.input -Problem.Name test_richardsni_conduction_tpfa")

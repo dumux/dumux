@@ -41,16 +41,3 @@ dune_add_test(NAME test_md_facet_tracertracer_box
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_box_tracer_lowdim-00010.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_box params.input \
                                                               -Vtk.OutputName test_md_facet_tracertracer_box")
-
-set(CMAKE_BUILD_TYPE Release)
-
-#install sources
-install(FILES
-main.cc
-problem_1p_bulk.hh
-problem_1p_lowdim.hh
-problem_tracer_bulk.hh
-problem_tracer_lowdim.hh
-spatialparams_1p.hh
-spatialparams_tracer.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/multidomain/facet/tracer_tracer)

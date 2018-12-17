@@ -135,5 +135,3 @@ dune_add_test(NAME test_1p_incompressible_mpfa_extrude_distorted
                                     -Problem.CheckIsConstantVelocity true
                                     -Problem.EnableGravity false
                                     -Grid.File ./grids/randomlydistorted.dgf)
-
-set(CMAKE_BUILD_TYPE Release)

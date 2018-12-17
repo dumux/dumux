@@ -15,12 +15,3 @@ dune_add_test(NAME test_md_facet_1p1p_box_convergence
               COMPILE_DEFINITIONS BULKTYPETAG=OnePBulkBox LOWDIMTYPETAG=OnePLowDimBox
               COMMAND ./convergencetest.py
               CMD_ARGS test_md_facet_1p1p_box_convergence 1e-4 )
-
-#install sources
-install(FILES
-main.cc
-problem_bulk.hh
-problem_lowdim.hh
-spatialparams.hh
-convergencetest.py
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/multidomain/facet/1p_1p/analytical)

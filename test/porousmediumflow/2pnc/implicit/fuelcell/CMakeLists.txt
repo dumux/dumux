@@ -28,11 +28,3 @@ dune_add_test(NAME test_2pncni_fuelcell_box
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncni_fuelcell_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pncni_fuelcell_box-00015.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncni_fuelcell_box -ParameterFile params.input -Problem.Name test_2pncni_fuelcell_box")
-
-#install sources
-install(FILES
-main.cc
-problem.hh
-spatialparams.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2pnc/fuelcell)
-set(CMAKE_BUILD_TYPE Release)

@@ -45,5 +45,3 @@ dune_add_test(NAME test_2p_adaptive_box
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_adaptive_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_adaptive_box-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_adaptive_box params.input -Problem.Name test_2p_adaptive_box")
-
-set(CMAKE_BUILD_TYPE Release)

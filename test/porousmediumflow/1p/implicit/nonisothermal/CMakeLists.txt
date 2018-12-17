@@ -1,6 +1,5 @@
 add_input_file_links()
 
-
 # non-isothermal tests
 dune_add_test(NAME test_1pni_conduction_box
               SOURCES main.cc
@@ -63,11 +62,3 @@ dune_add_test(NAME test_1pni_conduction_mpfa
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pni_conduction_mpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pni_conduction_mpfa-00005.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pni_conduction_mpfa params_conduction.input -Problem.Name test_1pni_conduction_mpfa")
-
-#install sources
-install(FILES
-problem_conduction.hh
-problem_convection.hh
-spatialparams.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/1p)

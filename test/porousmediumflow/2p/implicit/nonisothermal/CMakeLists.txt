@@ -41,12 +41,3 @@ dune_add_test(NAME test_2pni_tpfa_cube
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pni_tpfa_cube-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_tpfa_cube-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_tpfa_cube params.input -Problem.Name test_2pni_tpfa_cube")
-
-
-set(CMAKE_BUILD_TYPE Release)
-
-#install sources
-install(FILES
-problem.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2p/nonisothermal)

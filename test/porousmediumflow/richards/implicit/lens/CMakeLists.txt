@@ -98,10 +98,3 @@ dune_add_test(NAME test_richards_lens_tpfa_parallel_alu
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_parallel_alu-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_parallel_alu params.input -Problem.Name test_richards_lens_tpfa_parallel_alu")
-
-#install sources
-install(FILES
-problem.hh
-spatialparams.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/richards/lens)

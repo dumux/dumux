@@ -65,10 +65,3 @@ dune_add_test(NAME test_2p2c_injection_mpfa_caching
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_injection_cc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_mpfa_caching-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_mpfa_caching params.input -Problem.Name test_2p2c_injection_mpfa_caching")
-
-#install sources
-install(FILES
-problem.hh
-spatialparams.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2p2c/injection)

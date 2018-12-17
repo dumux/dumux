@@ -12,14 +12,3 @@ dune_add_test(NAME test_md_poromechanics_el2p
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el2p_poroelastic-00010.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el2p params.input
                        -Vtk.OutputName test_md_poromechanics_el2p")
-
-set(CMAKE_BUILD_TYPE Release)
-
-#install sources
-install(FILES
-problem_2p.hh
-spatialparams_2p.hh
-problem_poroelastic.hh
-spatialparams_poroelastic.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/multidomain/poromechanics/el2p)

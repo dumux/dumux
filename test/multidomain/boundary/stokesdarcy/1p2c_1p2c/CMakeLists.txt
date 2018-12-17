@@ -1,4 +1,4 @@
-add_subdirectory("diffusionlawcomparison")
+add_subdirectory(diffusionlawcomparison)
 
 add_input_file_links()
 

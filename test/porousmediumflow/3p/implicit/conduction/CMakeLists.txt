@@ -19,10 +19,3 @@ dune_add_test(NAME test_3pni_conduction_tpfa
                             ${CMAKE_CURRENT_BINARY_DIR}/test_3pni_conduction_tpfa-00005.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_3pni_conduction_tpfa params.input -Problem.Name test_3pni_conduction_tpfa"
                             --zeroThreshold {"velocity_aq \(m/s\)_1":1e-8})
-
-#install sources
-install(FILES
-main.cc
-spatialparams.hh
-problem.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/3p/conduction)

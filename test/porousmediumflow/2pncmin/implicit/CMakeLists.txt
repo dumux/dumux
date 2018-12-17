@@ -29,12 +29,3 @@ dune_add_test(NAME test_2pncmin_dissolution_tpfa
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncmin_dissolution_tpfa-reference.vtu
                                     ${CMAKE_CURRENT_BINARY_DIR}/test_2pncmin_dissolution_tpfa-00043.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncmin_dissolution_tpfa -ParameterFile params.input -Problem.Name test_2pncmin_dissolution_tpfa")
-
-set(CMAKE_BUILD_TYPE Release)
-
-#install sources
-install(FILES
-problem.hh
-spatialparams.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2pncmin)

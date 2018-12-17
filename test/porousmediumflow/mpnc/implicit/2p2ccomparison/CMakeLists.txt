@@ -19,10 +19,3 @@ dune_add_test(NAME test_mpnc_2p2c_comparison_tpfa
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_mpnc_2p2c_comparison_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_mpnc_2p2c_comparison_tpfa-00009.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpnc_2p2c_comparison_tpfa params.input -Problem.Name test_mpnc_2p2c_comparison_tpfa")
-
-#install sources
-install(FILES
-problem.hh
-spatialparams.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/mpnc/2p2ccomparison)

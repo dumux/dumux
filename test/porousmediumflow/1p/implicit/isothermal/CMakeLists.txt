@@ -47,10 +47,3 @@ dune_add_test(NAME test_1p_gstat
               CMAKE_GUARD HAVE_GSTAT
               COMMAND ./test_1p_gstat
               CMD_ARGS params_gstat.input)
-
-#install sources
-install(FILES
-problem.hh
-spatialparams.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/1p)

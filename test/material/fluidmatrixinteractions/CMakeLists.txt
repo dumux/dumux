@@ -1,4 +1,4 @@
-add_subdirectory("2p")
+add_subdirectory(2p)
 
 dune_add_test(SOURCES test_effectivediffusivitymillingtonquirk.cc
               LABELS unit
@@ -15,9 +15,3 @@ dune_add_test(SOURCES test_effectivediffusivityconstanttortuosity.cc
                        --files ${CMAKE_SOURCE_DIR}/test/references/effectivediffusivityconstanttau-reference.dat
                                ${CMAKE_CURRENT_BINARY_DIR}/constant_d_eff.dat
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_effectivediffusivityconstanttortuosity -SpatialParams.Tortuosity 0.3")
-
-#install sources
-install(FILES
-test_effectivediffusivityconstanttortuosity.cc
-test_effectivediffusivitymillingtonquirk.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/material/fluidmatrixinteractions)

@@ -26,4 +26,3 @@ dune_add_test(NAME test_md_embedded2d3d_fracture1p_tpfa_nonlinearsolver
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded2d3d_fracture1p_tpfa params.input \
                                    -Vtk.OutputName test_md_embedded2d3d_fracture1p_tpfa_nonlinearsolver -Problem.SolverType nonlinear")
 dune_symlink_to_source_files(FILES "fracture.msh" "params.input")
-set(CMAKE_BUILD_TYPE Release)

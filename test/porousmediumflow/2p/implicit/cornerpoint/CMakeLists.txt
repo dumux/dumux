@@ -10,12 +10,3 @@ dune_add_test(NAME test_2p_cornerpoint
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_cornerpoint-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_cornerpoint-00005.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_cornerpoint params.input -Problem.Name test_2p_cornerpoint")
-
-set(CMAKE_BUILD_TYPE Release)
-
-#install sources
-install(FILES
-problem.hh
-spatialparams.hh
-test_2p_cornerpoint.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2p/cornerpoint)

@@ -9,10 +9,3 @@ dune_add_test(NAME test_richards_analytical_tpfa
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_analytical_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richards_analytical_tpfa-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_analytical_tpfa params.input -Problem.Name test_richards_analytical_tpfa")
-
-#install sources
-install(FILES
-problem.hh
-spatialparams.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/richards/analytical)
