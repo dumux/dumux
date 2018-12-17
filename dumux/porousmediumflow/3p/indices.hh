@@ -21,6 +21,7 @@
  * \ingroup ThreePModel
  * \brief Defines the indices for the three-phase model.
  */
+
 #ifndef DUMUX_3P_INDICES_HH
 #define DUMUX_3P_INDICES_HH
 

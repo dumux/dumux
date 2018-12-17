@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup ThreePModel
- * \brief Adds I/O fields specific to the three-phase model
+ * \brief Adds I/O fields specific to the three-phase model.
  */
+
 #ifndef DUMUX_THREEP_IO_FIELDS_HH
 #define DUMUX_THREEP_IO_FIELDS_HH
 
@@ -31,7 +32,7 @@ namespace Dumux {
 
 /*!
  * \ingroup ThreePModel
- * \brief Adds I/O fields specific to the three-phase model
+ * \brief Adds I/O fields specific to the three-phase model.
  */
 class ThreePIOFields
 {
