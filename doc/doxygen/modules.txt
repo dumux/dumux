@@ -231,6 +231,22 @@
      * \brief An energy equation adaptor for isothermal free-flow models
      * \copydetails ./freeflow/nonisothermal/model.hh
      */
+/*!
+ * \defgroup Geomechanics Geomechanics Models
+ * \brief Models for taking into account solid deformation
+ */
+    /*!
+     * \ingroup Geomechanics
+     * \defgroup Elastic Solid mechanics w/o fluid pressure
+     * \brief Models linear elastic deformation of a solid. Disregards fluid pressure.
+     * \copydetails ./geomechanics/elastic/model.hh
+     */
+    /*!
+     * \ingroup Geomechanics
+     * \defgroup PoroElastic Solid mechanics with fluid pressure
+     * \brief Models linear elastic deformation of a solid. Takes fluid pressure into account.
+     * \copydetails ./geomechanics/poroelastic/model.hh
+     */
 
 /* ***************** Benchmarks and Tests ******************/
 /*!
@@ -510,13 +526,34 @@
  * \brief Adaptive grids
  */
 
+/* ***************** Assembly and Solvers ******************/
+/*!
+ * \defgroup AssemblyAndSolvers Assembly and Solvers
+ * \brief Assembling matrices and vectors, solvers for linear and nonlinear equations
+ */
+
 /* ***************** Assembly ******************/
 /*!
+ * \ingroup AssemblyAndSolvers
  * \defgroup Assembly Assembly
  * \brief Assembly of linear systems (Jacobian and residual)
  */
 
-/* ***************** Common ******************/
+/* ***************** Linear ******************/
+/*!
+ * \ingroup AssemblyAndSolvers
+ * \defgroup Linear Linear
+ * \brief Linear solvers and helpers
+ */
+
+/* ***************** Nonlinear ******************/
+/*!
+ * \ingroup AssemblyAndSolvers
+ * \defgroup Nonlinear Nonlinear
+ * \brief Nonlinear solvers: Newton method
+ */
+
+ /* ***************** Common ******************/
 /*!
  * \defgroup Common Common
  * \brief Common classes, functions, properties and concepts
@@ -531,24 +568,6 @@
 /*!
  * \defgroup InputOutput Input Output
  * \brief Classes and functions dealing with input and output of data and grids
- */
-
-/* ***************** Linear ******************/
-/*!
- * \defgroup Linear Linear
- * \brief Linear solvers and helpers
- */
-
-/* ***************** Nonlinear ******************/
-/*!
- * \defgroup Nonlinear Nonlinear
- * \brief Nonlinear solvers: Newton method
- */
-
-/* ***************** Parallel ******************/
-/*!
- * \defgroup Parallel Parallel
- * \brief Helpers for parallel runs with MPI
  */
 
 /* ***************** MultiDomain ******************/
