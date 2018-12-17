@@ -114,7 +114,7 @@ int main(int argc, char** argv) try
     // initialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(restartTime);
 
     // the assembler with time loop for instationary problem

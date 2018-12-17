@@ -151,7 +151,7 @@ int main(int argc, char** argv) try
                                                              "", Dune::VTK::conforming);
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     problem->addFieldsToWriter(vtkWriter); //!< Add some more problem dependent fields
     vtkWriter.write(0.0);
 

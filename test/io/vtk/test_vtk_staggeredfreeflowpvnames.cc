@@ -242,7 +242,7 @@ void testWriteAndReadVtk(std::shared_ptr<FVGridGeometry> fvGridGeometry,
     // initialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, writeFrom, fileName);
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0);
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;

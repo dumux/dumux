@@ -110,7 +110,7 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addField(problem->getDeltaP(), "deltaP");
     vtkWriter.write(0.0);
 

@@ -228,7 +228,7 @@ int main(int argc, char** argv) try
     //! intialize the vtk output module
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, tracerProblem->name());
     using IOFields = GetPropType<TracerTypeTag, Properties::IOFields>;
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     using VelocityOutput = GetPropType<TracerTypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     vtkWriter.write(0.0);
