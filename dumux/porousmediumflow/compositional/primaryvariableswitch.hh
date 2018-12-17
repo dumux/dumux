@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumCompositional
- * \brief The primary variable switch base class for compositional models
+ * \ingroup PorousmediumflowModels
+ * \brief The primary variable switch base class for compositional models.
  */
+
 #ifndef DUMUX_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_PRIMARY_VARIABLE_SWITCH_HH
 
@@ -34,8 +35,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Empty class for models without pri var switch
+ * \ingroup PorousmediumflowModels
+ * \brief Empty class for models without pri var switch.
  */
 class NoPrimaryVariableSwitch
 {
@@ -51,8 +52,8 @@ public:
 };
 
 /*!
- * \ingroup PorousmediumCompositional
- * \brief The primary variable switch controlling the phase presence state variable
+ * \ingroup PorousmediumflowModels
+ * \brief The primary variable switch controlling the phase presence state variable.
  */
 template<class Implementation>
 class PrimaryVariableSwitch
@@ -75,7 +76,7 @@ public:
     }
 
     /*!
-     * \brief Update the variable switch / phase presence
+     * \brief Updates the variable switch / phase presence.
      *
      * \param curSol The current solution to be updated / modified
      * \param gridVariables The secondary variables on the grid
@@ -136,8 +137,10 @@ public:
     }
 
     /*!
-     * \brief Update the volume variables whose primary variables were
-              switched. Required when volume variables are cached globally.
+     * \brief Updates the volume variables whose primary variables were
+     *        switched.
+     *
+     * Required when volume variables are cached globally.
      */
     template<class Problem, class GridVariables, class SolutionVector,
              std::enable_if_t<GridVariables::GridVolumeVariables::cachingEnabled, int> = 0>
@@ -165,8 +168,10 @@ public:
     }
 
     /*!
-     * \brief Update the fluxVars cache for dof whose primary variables were
-              switched. Required when flux variables are cached globally (not for box method).
+     * \brief Updates the fluxVars cache for dof whose primary variables were
+     *        switched.
+     *
+     * Required when flux variables are cached globally (not for box method).
      */
     template<class Problem, class GridVariables, class SolutionVector,
              std::enable_if_t<(GridVariables::GridFluxVariablesCache::cachingEnabled &&
@@ -192,8 +197,9 @@ public:
     }
 
     /*!
-     * \brief Update the the primary variables state at the boundary.
-     *        Required when a Dirichlet BC differes from the initial conditon (only for box method).
+     * \brief Updates the the primary variables state at the boundary.
+     *
+     * Required when a Dirichlet BC differes from the initial conditon (only for box method).
      */
     template<class Problem, class GridVariables, class SolutionVector,
              std::enable_if_t<(GridVariables::GridGeometry::discMethod == DiscretizationMethod::box), int> = 0>
@@ -275,7 +281,7 @@ public:
                       << fvGridGeometry.gridView().comm().rank() << "." << std::endl;
     }
 
-    //! brief Do nothing when volume variables are not cached globally.
+    //! Do nothing when volume variables are not cached globally.
     template<class Problem, class GridVariables, class SolutionVector,
              std::enable_if_t<!GridVariables::GridVolumeVariables::cachingEnabled, int> = 0>
     void updateSwitchedVolVars(const Problem& problem,
@@ -284,7 +290,7 @@ public:
                                GridVariables& gridVariables,
                                const SolutionVector &uCurrentIter) const {}
 
-    //! brief Do nothing when flux variables are not cached globally or the box method is used.
+    //! Do nothing when flux variables are not cached globally or the box method is used.
     template<class Problem, class GridVariables, class SolutionVector,
              std::enable_if_t<(!GridVariables::GridFluxVariablesCache::cachingEnabled ||
                                GridVariables::GridGeometry::discMethod == DiscretizationMethod::box), int> = 0>
@@ -294,7 +300,7 @@ public:
                                GridVariables& gridVariables,
                                const SolutionVector& sol) const {}
 
-    //! brief Do nothing when the box method is not used.
+    //! Do nothing when the box method is not used.
     template<class Problem, class GridVariables, class SolutionVector,
              std::enable_if_t<(GridVariables::GridGeometry::discMethod != DiscretizationMethod::box), int> = 0>
     void updateBoundary(const Problem& problem,
@@ -308,15 +314,15 @@ public:
 
 protected:
 
-    //! return actual implementation (static polymorphism)
+    //! Return actual implementation (static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
-    //! return actual implementation (static polymorphism)
+    //! Return actual implementation (static polymorphism)
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    // perform variable switch at a degree of freedom location
+    // Perform variable switch at a degree of freedom location
     template<class VolumeVariables, class GlobalPosition>
     bool update_(typename VolumeVariables::PrimaryVariables& priVars,
                  const VolumeVariables& volVars,

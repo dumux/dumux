@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all porous media problems
+ * \ingroup PorousmediumflowModels
+ * \brief Base class for all porous media problems.
  */
 #ifndef DUMUX_POROUS_MEDIUM_FLOW_PROBLEM_HH
 #define DUMUX_POROUS_MEDIUM_FLOW_PROBLEM_HH
@@ -28,8 +29,9 @@
 namespace Dumux {
 
 /*!
- * \ingroup PorousmediumFlow
- * \brief Base class for all fully implicit porous media problems
+ * \ingroup PorousmediumflowModels
+ * \brief Base class for all fully implicit porous media problems.
+ *
  * TODO: derive from base problem property?
  */
 template<class TypeTag>
@@ -52,11 +54,11 @@ class PorousMediumFlowProblem : public FVProblem<TypeTag>
 
 
 public:
-    //! export spatial parameter type
+    //! Export spatial parameter type
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
 
     /*!
-     * \brief Constructor, passing the spatial parameters
+     * \brief Constructor, passing the spatial parameters.
      *
      * \param fvGridGeometry The finite volume grid geometry
      * \param spatialParams The spatial parameter class
@@ -75,7 +77,7 @@ public:
     }
 
     /*!
-     * \brief Constructor, constructing the spatial parameters
+     * \brief Constructor, constructing the spatial parameters.
      *
      * \param fvGridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumImmiscible
+ * \ingroup PorousmediumflowModels
  * \brief Element-wise calculation of the residual for problems
  *        using the n-phase immiscible fully implicit models.
  */
@@ -27,10 +27,10 @@
 
 #include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \ingroup PorousmediumImmiscible
+ * \ingroup PorousmediumflowModels
  * \brief Element-wise calculation of the residual for problems
  *        using the n-phase immiscible fully implicit models.
  */
@@ -60,9 +60,10 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Evaluate the rate of change of all conservation
+     * \brief Evaluatex the rate of change of all conservation
      *        quantites (e.g. phase mass) within a sub-control
      *        volume of a finite volume element for the immiscible models.
+     *
      * \param problem TODO docme!
      * \param scv The sub control volume
      * \param volVars The current or previous volVars
@@ -95,14 +96,14 @@ public:
 
 
     /*!
-     * \brief Evaluate the mass flux over a face of a sub control volume
+     * \brief Evaluatex the mass flux over a face of a sub control volume.
      *
-     * \param problem TODO docme!
+     * \param problem The problem
      * \param element The element
      * \param fvGeometry The finite volume geometry context
      * \param elemVolVars The volume variables for all flux stencil elements
      * \param scvf The sub control volume face to compute the flux on
-     * \param elemFluxVarsCache The cache related to flux compuation
+     * \param elemFluxVarsCache The cache related to flux computation
      */
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
