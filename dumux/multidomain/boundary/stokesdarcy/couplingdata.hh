@@ -36,13 +36,15 @@ namespace Dumux {
 
 /*!
  * \ingroup StokesDarcyCoupling
- * \brief This structs holds a set of options which allow to modify the Stokes-Darcy coupling mechanism during runtime.
+ * \brief This structs holds a set of options which allow to modify the Stokes-Darcy
+ *        coupling mechanism during runtime.
  */
 struct StokesDarcyCouplingOptions
 {
     /*!
-     * \brief Defines which kind of averanging of diffusion coefficiencients (moleculat diffusion or thermal conductance)
-     *        at the interface between free flow and porous medium shall be used.
+     * \brief Defines which kind of averanging of diffusion coefficiencients
+     *        (moleculat diffusion or thermal conductance) at the interface
+     *        between free flow and porous medium shall be used.
      */
     enum class DiffusionCoefficientAveragingType
     {
@@ -272,7 +274,7 @@ public:
         return stokesContext.volVars.permeability();
     }
 
-     /*!
+    /*!
      * \brief Returns the momentum flux across the coupling boundary.
      *
      * For the normal momentum coupling, the porous medium side of the coupling condition
