@@ -146,17 +146,6 @@ public:
     Scalar temperature() const
     { return 298.0; }
 
-
-   /*!
-     * \brief Returns the sources within the domain.
-     *
-     * \param globalPos The global position
-     */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return NumEqVector(0.0);
-    }
-
     // \}
    /*!
      * \name Boundary conditions
