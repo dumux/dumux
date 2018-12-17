@@ -104,7 +104,7 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
 
 public:
     AngeliTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), eps_(1e-6)
+    : ParentType(fvGridGeometry)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
@@ -209,7 +209,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition & globalPos) const
     {
         // use the values of the analytical solution
-        return analyticalSolution(globalPos, time());
+        return analyticalSolution(globalPos, time_);
     }
 
     /*!
@@ -223,7 +223,7 @@ public:
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
 
-        const Scalar t = time + timeLoop_->timeStepSize();
+        const Scalar t = time + timeStepSize_;
 
         PrimaryVariables values;
 
@@ -248,7 +248,7 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        return analyticalSolution(globalPos, -timeLoop_->timeStepSize());
+        return analyticalSolution(globalPos, -timeStepSize_);
     }
 
    /*!
@@ -275,15 +275,20 @@ public:
         return analyticalVelocityOnFace_;
     }
 
-    void setTimeLoop(TimeLoopPtr timeLoop)
+    /*!
+     * \brief Updates the time
+     */
+    void updateTime(const Scalar time)
     {
-        timeLoop_ = timeLoop;
-        createAnalyticalSolution();
+        time_ = time;
     }
 
-    Scalar time() const
+    /*!
+     * \brief Updates the time step size
+     */
+    void updateTimeStepSize(const Scalar timeStepSize)
     {
-        return timeLoop_->time();
+        timeStepSize_ = timeStepSize;
     }
 
    /*!
@@ -305,7 +310,7 @@ public:
             {
                 auto ccDofIdx = scv.dofIndex();
                 auto ccDofPosition = scv.dofPosition();
-                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition, time());
+                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition, time_);
 
                 // velocities on faces
                 for (auto&& scvf : scvfs(fvGeometry))
@@ -313,7 +318,7 @@ public:
                     const auto faceDofIdx = scvf.dofIndex();
                     const auto faceDofPosition = scvf.center();
                     const auto dirIdx = scvf.directionIndex();
-                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition, time());
+                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition, time_);
                     analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
                 }
 
@@ -326,11 +331,11 @@ public:
     }
 
 private:
-
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
 
     Scalar kinematicViscosity_;
-    TimeLoopPtr timeLoop_;
+    Scalar time_ = 0;
+    Scalar timeStepSize_ = 0;
     bool printL2Error_;
     std::vector<Scalar> analyticalPressure_;
     std::vector<VelocityVector> analyticalVelocity_;

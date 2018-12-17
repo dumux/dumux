@@ -93,7 +93,8 @@ int main(int argc, char** argv) try
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
-    problem->setTimeLoop(timeLoop);
+    problem->updateTimeStepSize(timeLoop->timeStepSize());
+    problem->createAnalyticalSolution();
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -148,6 +149,7 @@ int main(int argc, char** argv) try
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
+        problem->updateTime(timeLoop->time());
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
@@ -157,6 +159,7 @@ int main(int argc, char** argv) try
 
         // set new dt as suggested by newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        problem->updateTimeStepSize(timeLoop->timeStepSize());
 
     } while (!timeLoop->finished());
 
