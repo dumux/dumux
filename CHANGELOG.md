@@ -99,7 +99,8 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
     - __Different wettability:__ The 2p models can now model materials with different wettability (hydrophobic, hydrophilic) in different parts of the domain.
     - __Thermal and chemical non-equilibrium:__ The possibility to consider thermal and/or chemical non-equilibrium of several types has been enabled for all
       porous medium models.
-
+    - __Maxwell-Stefan-diffusion:__ Most models can now use Maxwell-Stefan diffusion for multi-component diffusion instead of Fickian diffusion.
+      There is also a few tests demonstrating how to use it.
 
 * __IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:__
     - Many classes have been completely redesigned. See the numerous example applications included in 3.0 showcasing all new classes.
