@@ -17,10 +17,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumThermalNonEquilibriumModel
+ * \ingroup ThermalNonEquilibriumModel
  * \brief This file contains the parts of the local residual to
  *        calculate the heat conservation in the thermal non-equilibrium model.
  */
+
 #ifndef DUMUX_ENERGY_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 #define DUMUX_ENERGY_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 
@@ -32,7 +33,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup PorousmediumThermalNonEquilibriumModel
+ * \ingroup ThermalNonEquilibriumModel
  * \brief This file contains the parts of the local residual to
  *        calculate the heat conservation in the thermal non-equilibrium  model.
  */
@@ -87,7 +88,7 @@ public:
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars)
     {
-         //heat conduction for the fluid phases
+         // heat conduction for the fluid phases
        for(int sPhaseIdx=0; sPhaseIdx<numEnergyEqSolid; ++sPhaseIdx)
        {
             storage[energyEqSolidIdx+sPhaseIdx] += volVars.temperatureSolid()
@@ -151,7 +152,7 @@ public:
     }
 
     /*!
-     * \brief Calculate the source term of the equation
+     * \brief Calculates the source term of the equation.
      *
      * \param source The source which ought to be simulated
      * \param element An element which contains part of the control volume
@@ -165,15 +166,15 @@ public:
                                     const ElementVolumeVariables& elemVolVars,
                                     const SubControlVolume &scv)
     {
-        //specialization for 2 fluid phases
+        // specialization for 2 fluid phases
         const auto& volVars = elemVolVars[scv];
         const Scalar characteristicLength = volVars.characteristicLength()  ;
 
-        //interfacial area
+        // interfacial area
         // Shi & Wang, Transport in porous media (2011)
         const Scalar as = volVars.fluidSolidInterfacialArea();
 
-        //temperature fluid is the same for both fluids
+        // temperature fluid is the same for both fluids
         const Scalar TFluid     = volVars.temperatureFluid(0);
         const Scalar TSolid     = volVars.temperatureSolid();
 
@@ -201,8 +202,8 @@ public:
                 DUNE_THROW(Dune::NotImplemented,
                         "wrong index");
             } // end switch
-        }// end energyEqIdx
-    }// end source
+        } // end energyEqIdx
+    } // end source
 };
 
 template<class TypeTag>
@@ -264,10 +265,10 @@ public:
         auto upwindTerm = [phaseIdx](const auto& volVars)
         { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.enthalpy(phaseIdx); };
 
-        //in case we have one energy equation for more than one fluid phase, add up advective parts on the one energy equation
+        // in case we have one energy equation for more than one fluid phase, add up advective parts on the one energy equation
         flux[energyEq0Idx+phaseIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
-        //add the diffusiv part
+        // add the diffusiv part
         const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
@@ -276,10 +277,10 @@ public:
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            //no diffusion of the main component, this is a hack to use normal fick's law which computes both diffusions (main and component). We only add the part from the component here
+            // no diffusion of the main component, this is a hack to use normal fick's law which computes both diffusions (main and component). We only add the part from the component here
             if (phaseIdx == compIdx)
                 continue;
-            //we need the upwind enthapy. Even better would be the componentEnthalpy
+            // we need the upwind enthapy. Even better would be the componentEnthalpy
             auto enthalpy = 0.0;
             if (diffusiveFluxes[compIdx] > 0)
                 enthalpy += insideEnthalpy;
@@ -304,7 +305,7 @@ public:
        }
     }
     /*!
-     * \brief Calculate the source term of the equation
+     * \brief Calculates the source term of the equation.
      *
      * \param source The source term which ought to be simulated
      * \param element An element which contains part of the control volume
@@ -318,7 +319,7 @@ public:
                                     const ElementVolumeVariables& elemVolVars,
                                     const SubControlVolume &scv)
     {
-        //specialization for 2 fluid phases
+        // specialization for 2 fluid phases
         const auto &volVars = elemVolVars[scv];
 
         const Scalar awn = volVars.interfacialArea(phase0Idx, phase1Idx);
@@ -372,7 +373,7 @@ public:
 
         }// end phases
 
-        //we only need to do this for when there is more than 1 fluid phase
+        // we only need to do this for when there is more than 1 fluid phase
         if (enableChemicalNonEquilibrium)
         {
             // Here comes the catch: We are not doing energy conservation for the whole
@@ -418,9 +419,9 @@ public:
                     DUNE_THROW(Dune::NotImplemented,
                                 "wrong index");
                 } // end switch
-            }// end phases
-        }// EnableChemicalNonEquilibrium
-    }// end source
+            } // end phases
+        } // EnableChemicalNonEquilibrium
+    } // end source
 };
 } // end namespace Dumux
 

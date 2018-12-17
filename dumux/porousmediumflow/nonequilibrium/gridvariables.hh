@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumNonEquilibriumModel
- * \brief Class storing scv and scvf variables
+ * \ingroup NonEquilibriumModel
+ * \brief Class storing scv and scvf variables.
  */
+
 #ifndef DUMUX_NONEQUILIBRIUM_GRID_VARIABLES_HH
 #define DUMUX_NONEQUILIBRIUM_GRID_VARIABLES_HH
 
@@ -34,8 +35,9 @@
 namespace Dumux {
 
 /*!
- * \ingroup PorousmediumNonEquilibriumModel
- * \brief This class stores the velocities which are used to compute reynoldsnumbers for the source terms of nonequilibrium models
+ * \ingroup NonEquilibriumModel
+ * \brief This class stores the velocities which are used to compute Reynolds
+ *        numbers for the source terms of non-equilibrium models.
  */
 template<class TypeTag>
 class NonEquilibriumGridVariables
@@ -58,7 +60,7 @@ class NonEquilibriumGridVariables
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
 
 public:
-    //! export the type used for scalar values
+    //! Export the type used for scalar values
     using typename ParentType::Scalar;
 
     //! Constructor
@@ -121,7 +123,6 @@ public:
      *
      * \param phaseIdx The index of the fluid phase
      * \param dofIdxGlobal The global index of the degree of freedom
-     *
      */
     const Scalar volumeDarcyMagVelocity(const unsigned int phaseIdx,
                                         const unsigned int dofIdxGlobal) const

@@ -16,12 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup NonEquilibriumModel
  * \brief This specifies models which are able to capture non-equilibrium mass and / or energy transfer.
  */
+
 #ifndef DUMUX_NONEQUILIBRIUM_MODEL_HH
 #define DUMUX_NONEQUILIBRIUM_MODEL_HH
 
@@ -39,15 +39,10 @@
 #include "gridvariables.hh"
 #include "iofields.hh"
 
-/*!
- * \ingroup PorousmediumNonEquilibriumModel
- * \brief Defines the properties required for non-equilibrium models
- */
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup NonEquilibriumModel
  * \brief Specifies a number properties of porous-medium flow non-equilibrium models.
  *
  * \tparam ET The model traits of the underlying model assuming equilibrium

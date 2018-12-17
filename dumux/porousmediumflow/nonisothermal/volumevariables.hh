@@ -22,6 +22,7 @@
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.
  */
+
 #ifndef DUMUX_ENERGY_VOLUME_VARIABLES_HH
 #define DUMUX_ENERGY_VOLUME_VARIABLES_HH
 
@@ -76,8 +77,9 @@ class EnergyVolumeVariablesImplementation;
 /*!
  * \ingroup NIModel
  * \brief Base class for the model specific class which provides
- *        access to all volume averaged quantities. The volume variables base class
- *        is specialized for isothermal and non-isothermal models.
+ *        access to all volume averaged quantities.
+ *
+ * The volume variables base class is specialized for isothermal and non-isothermal models.
  */
 template<class IsothermalTraits, class Impl>
 using EnergyVolumeVariables = EnergyVolumeVariablesImplementation<IsothermalTraits,Impl, IsothermalTraits::ModelTraits::enableEnergyBalance()>;
@@ -175,7 +177,7 @@ public:
 
         else
         {
-            //if numEnergyEq == 2 this means we have 1 temp for fluid phase, one for solid
+            // if numEnergyEq == 2 this means we have 1 temp for fluid phase, one for solid
             if (numEnergyEq == 2)
             {
                 const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx];
@@ -184,7 +186,7 @@ public:
                     fluidState.setTemperature(phaseIdx, T);
                 }
             }
-            //this is for numEnergyEqFluid > 1
+            // this is for numEnergyEqFluid > 1
             else
             {
                 for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
@@ -308,7 +310,8 @@ private:
     // \{
 
     /*!
-     * \brief get the solid heat capacity in an scv
+     * \brief Gets the solid heat capacity in an scv.
+     *
      * \param elemSol the element solution vector
      * \param problem the problem to solve
      * \param element the element (codim-0-entity) the scv belongs to
@@ -328,7 +331,8 @@ private:
     }
 
     /*!
-     * \brief get the solid density in an scv
+     * \brief Gets the solid density in an scv.
+     *
      * \param elemSol the element solution vector
      * \param problem the problem to solve
      * \param element the element (codim-0-entity) the scv belongs to
@@ -348,7 +352,8 @@ private:
     }
 
     /*!
-     * \brief get the solid's thermal conductivity in an scv
+     * \brief Gets the solid's thermal conductivity in an scv.
+     *
      * \param elemSol the element solution vector
      * \param problem the problem to solve
      * \param element the element (codim-0-entity) the scv belongs to
@@ -376,7 +381,8 @@ private:
     // \{
 
     /*!
-     * \brief get the solid heat capacity in an scv
+     * \brief Gets the solid heat capacity in an scv.
+     *
      * \param elemSol the element solution vector
      * \param problem the problem to solve
      * \param element the element (codim-0-entity) the scv belongs to
@@ -400,7 +406,8 @@ private:
     }
 
     /*!
-     * \brief get the solid density in an scv
+     * \brief Gets the solid density in an scv.
+     *
      * \param elemSol the element solution vector
      * \param problem the problem to solve
      * \param element the element (codim-0-entity) the scv belongs to
@@ -424,7 +431,8 @@ private:
     }
 
     /*!
-     * \brief get the solid's heat capacity in an scv
+     * \brief Gets the solid's heat capacity in an scv.
+     *
      * \param elemSol the element solution vector
      * \param problem the problem to solve
      * \param element the element (codim-0-entity) the scv belongs to

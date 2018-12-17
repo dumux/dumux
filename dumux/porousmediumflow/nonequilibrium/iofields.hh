@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup NonEquilibriumModel
  * \brief Adds I/O fields specific to non-isothermal models
  */
+
 #ifndef DUMUX_NONEQUILBRIUM_OUTPUT_FIELDS_HH
 #define DUMUX_NONEQUILBRIUM_OUTPUT_FIELDS_HH
 
@@ -30,7 +31,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup NonEquilibriumModel
  * \brief Adds I/O fields specific to non-isothermal models
  */
 template<class ModelTraits, class EquilibriumIOFields>
