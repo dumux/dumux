@@ -10,13 +10,3 @@ dune_add_test(NAME test_1ptracer
                                ${CMAKE_SOURCE_DIR}/test/references/test_1ptracer_pressure-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/1p.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1ptracer params.input -Problem.Name test_1ptracer")
-
-#install sources
-install(FILES
-problem_1p.hh
-spatialparams_1p.hh
-problem_tracer.hh
-spatialparams_tracer.hh
-main.cc
-params.input
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/tracer/1ptracer)

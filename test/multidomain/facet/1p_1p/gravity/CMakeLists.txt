@@ -32,13 +32,3 @@ dune_add_test(NAME test_facet_1p1p_tpfa_gravity_xi066_tpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_xi066_lowdim-00001.vtp
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_tpfa params.input  \
                                                                -FacetCoupling.Xi 0.66 -Vtk.OutputName test_md_facet_1p1p_gravity_xi066")
-
-set(CMAKE_BUILD_TYPE Release)
-
-#install sources
-install(FILES
-main.cc
-problem_bulk.hh
-problem_lowdim.hh
-spatialparams.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/multidomain/facet/1p_1p/gravity)

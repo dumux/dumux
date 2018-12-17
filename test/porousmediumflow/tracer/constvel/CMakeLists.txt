@@ -62,11 +62,3 @@ dune_add_test(NAME test_tracer_implicit_box
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_implicit_box-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_box-00010.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_box params.input -Problem.Name test_tracer_implicit_box")
-
-#install sources
-install(FILES
-problem.hh
-spatialparams.hh
-main.cc
-params.input
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/tracer/constvel)

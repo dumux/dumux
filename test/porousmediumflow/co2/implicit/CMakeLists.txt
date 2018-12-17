@@ -53,11 +53,3 @@ dune_add_test(NAME test_co2ni_tpfa
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_tpfa-00018.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_tpfa paramsni.input -Problem.Name test_co2ni_tpfa")
-
-#install sources
-install(FILES
-co2tables.hh
-problem.hh
-spatialparams.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/co2)

@@ -77,12 +77,3 @@ dune_add_test(NAME test_2p_boxdfm_tets_ug
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_boxdfm_3d_tets-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_tets_ug-00013.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_tets_ug params.input -Problem.Name test_2p_boxdfm_tets_ug -Grid.File grids/tets_3d.msh -TimeLoop.TEnd 450")
-
-set(CMAKE_BUILD_TYPE Release)
-
-#install sources
-install(FILES
-problem.hh
-spatialparams.hh
-test_2p_fv.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2p/incompressible)

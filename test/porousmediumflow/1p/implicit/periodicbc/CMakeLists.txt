@@ -1,7 +1,5 @@
 dune_symlink_to_source_files(FILES "params.input" "periodic.dgf")
 
-set(CMAKE_BUILD_TYPE Release)
-
 # test using periodic boundary conditions
 dune_add_test(NAME test_1p_periodic_tpfa
               SOURCES main.cc

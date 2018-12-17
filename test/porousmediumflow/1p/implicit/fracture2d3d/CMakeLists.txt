@@ -32,10 +32,3 @@ dune_add_test(NAME test_1p_fracture2d3d_mpfa
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_fracture2d3d_cc-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/test_1p_fracture2d3d_mpfa-00001.vtu
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_fracture2d3d_mpfa params.input -Problem.Name test_1p_fracture2d3d_mpfa")
-
-#install sources
-install(FILES
-problem.hh
-spatialparams.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/1p)

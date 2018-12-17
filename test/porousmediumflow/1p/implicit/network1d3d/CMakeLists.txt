@@ -18,10 +18,3 @@ dune_add_test(NAME test_1p_network1d3d_box
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ./convergencetest.py
               CMD_ARGS test_1p_network1d3d_box params.input -Problem.Name test_1p_network1d3d_box)
-
-#install sources
-install(FILES
-problem.hh
-spatialparams.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/1p)

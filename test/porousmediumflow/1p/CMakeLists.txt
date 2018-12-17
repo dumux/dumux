@@ -1,2 +1,2 @@
-add_subdirectory("implicit")
-add_subdirectory("sequential")
+add_subdirectory(implicit)
+add_subdirectory(sequential)

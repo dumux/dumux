@@ -19,9 +19,3 @@ dune_add_test(NAME test_3pni_convection_tpfa
                             ${CMAKE_CURRENT_BINARY_DIR}/test_3pni_convection_tpfa-00009.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_3pni_convection_tpfa params.input -Problem.Name test_3pni_convection_tpfa"
                             --zeroThreshold {"velocity_aq \(m/s\)_1":1e-8})
-
-#install sources
-install(FILES
-main.cc
-problem.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/3p/convection)

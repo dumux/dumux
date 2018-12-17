@@ -8,8 +8,7 @@ dune_add_test(NAME test_richardsni_evaporation_tpfa
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richardsni_evaporation_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_evaporation_tpfa-00043.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_evaporation_tpfa params.input -Problem.Name test_richardsni_evaporation_tpfa"
-                      )
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_evaporation_tpfa params.input -Problem.Name test_richardsni_evaporation_tpfa")
 
 dune_add_test(NAME test_richardsni_evaporation_box
               SOURCES main.cc
@@ -18,11 +17,4 @@ dune_add_test(NAME test_richardsni_evaporation_box
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richardsni_evaporation_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_evaporation_box-00043.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_evaporation_box params.input -Problem.Name test_richardsni_evaporation_box"
-                      )
-
-#install sources
-install(FILES
-problem.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/richards/nonisothermal/evaporation)
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_evaporation_box params.input -Problem.Name test_richardsni_evaporation_box")

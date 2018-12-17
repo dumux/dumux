@@ -11,14 +11,3 @@ dune_add_test(NAME test_md_poromechanics_el1p
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el1p_poroelastic-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el1p params.input
                        -Vtk.OutputName test_md_poromechanics_el1p")
-
-set(CMAKE_BUILD_TYPE Release)
-
-#install sources
-install(FILES
-problem_1p.hh
-spatialparams_1p.hh
-problem_poroelastic.hh
-spatialparams_poroelastic.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/multidomain/poromechanics/el1p)

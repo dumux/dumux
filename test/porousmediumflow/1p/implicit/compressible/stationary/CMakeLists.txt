@@ -27,5 +27,3 @@ dune_add_test(NAME test_1p_compressible_stationary_box
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_stationary_box-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_stationary_box params.input -Problem.Name test_1p_compressible_stationary_box")
-
-set(CMAKE_BUILD_TYPE Release)

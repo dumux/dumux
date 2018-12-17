@@ -14,14 +14,3 @@ dune_add_test(NAME test_md_facet_1p1p_threedomain_tpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_tpfa_edge-00001.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_tpfa params.input
                        -Vtk.OutputName test_md_facet_1p1p_threedomain_tpfa")
-
-set(CMAKE_BUILD_TYPE Release)
-
-#install sources
-install(FILES
-main.cc
-problem_bulk.hh
-problem_facet.hh
-problem_edge.hh
-spatialparams.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/multidomain/facet/1p_1p/threedomain)

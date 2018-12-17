@@ -80,4 +80,3 @@ dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_kernel
               CMD_ARGS params.input)
 
 dune_symlink_to_source_files(FILES "params.input")
-set(CMAKE_BUILD_TYPE Release)

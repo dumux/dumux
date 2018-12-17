@@ -8,8 +8,7 @@ dune_add_test(NAME test_richardsni_convection_box
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richardsni_convection_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_convection_box-00044.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_convection_box params.input -Problem.Name test_richardsni_convection_box"
-                      )
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_convection_box params.input -Problem.Name test_richardsni_convection_box")
 
 dune_add_test(NAME test_richardsni_convection_tpfa
               SOURCES main.cc
@@ -19,9 +18,3 @@ dune_add_test(NAME test_richardsni_convection_tpfa
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richardsni_convection_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_convection_tpfa-00043.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_convection_tpfa params.input -Problem.Name test_richardsni_convection_tpfa")
-
-#install sources
-install(FILES
-problem.hh
-main.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/richards/nonisothermal/convection)

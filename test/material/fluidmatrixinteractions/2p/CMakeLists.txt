@@ -13,9 +13,3 @@ dune_add_test(SOURCES test_thermalconductivitysomerton.cc
                       --files ${CMAKE_SOURCE_DIR}/test/references/thermalconductivitysomerton-reference.dat
                               ${CMAKE_CURRENT_BINARY_DIR}/somerton_lambda_eff.dat
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_thermalconductivitysomerton")
-
-#install sources
-install(FILES
-test_thermalconductivityjohansen.cc
-test_thermalconductivitysomerton.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/material/fluidmatrixinteractions/2p)

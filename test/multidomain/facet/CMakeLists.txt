@@ -86,11 +86,3 @@ dune_add_test(NAME test_vertexmapper_alu_2d
               SOURCES test_vertexmapper.cc
               COMMAND ./test_vertexmapper_alu_2d
               CMD_ARGS test_vertexmapper.input)
-
-#install sources
-install(FILES
-test_facetcouplingmapper.cc
-test_facetcouplingmapper_boundary.cc
-test_gridmanager.cc
-test_vertexmapper.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/multidomain/facet)
