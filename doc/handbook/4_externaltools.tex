@@ -34,36 +34,37 @@ The basic Git commands are:
 A gnuplot interface is available to plot or visualize results during a simulation run.
 This is achieved with the help of the class provided in \texttt{io/gnuplotinterface.hh}.
 
-To use the gnuplot interface you have to make some modifications in your problem file.
+To use the gnuplot interface you have to make some modifications in your file, e.g., your main file.
 
-First you have to include the corresponding header file for the gnuplot interface. 
+First, you have to include the corresponding header file for the gnuplot interface. 
 \begin{lstlisting}[style=DumuxCode]
 #include <dumux/io/gnuplotinterface.hh
 \end{lstlisting}
 
-Secondly you have to define an instance of the class GnuplotInterface (e.g. called \texttt{gnuplot\_}) in the private part of your problem class.
+Second, you have to define an instance of the class GnuplotInterface (e.g. called \texttt{gnuplot}).
 \begin{lstlisting}[style=DumuxCode]
-Dumux::GnuplotInterface<double> gnuplot_;
+Dumux::GnuplotInterface<double> gnuplot;
 \end{lstlisting}
 
-Usually with the ploting is dealt within a function \texttt{postTimeStep}, which firstly extracts the variables (in the exapmle below \texttt{x\_} and \texttt{y\_}) which shall be plotted. The actual plotting is done using the method of the gnuplot interface.
+Extract the variables you want to plot (in the example below \texttt{x} and \texttt{y}), e.g., after the time loop. 
+The actual plotting is done using the method of the gnuplot interface.
 
 Example:
 \begin{lstlisting}[style=DumuxCode]
-gnuplot_.resetPlot();                             // reset the plot
-gnuplot_.setXRange(0.0, 72000.0);                 // specify xmin and xmax  
-gnuplot_.setYRange(0.0, 1.0);                     // specify ymin and ymax
-gnuplot_.setXlabel("time [s]");                   // set xlabel
-gnuplot_.setYlabel("mole fraction mol/mol");  // set ylabel
+gnuplot.resetPlot();                             // reset the plot
+gnuplot.setXRange(0.0, 72000.0);                 // specify xmin and xmax  
+gnuplot.setYRange(0.0, 1.0);                     // specify ymin and ymax
+gnuplot.setXlabel("time [s]");                   // set xlabel
+gnuplot.setYlabel("mole fraction mol/mol");  // set ylabel
 
 // set x-values, y-values, the name of the data file and the Gnupot options
-gnuplot_.addDataSetToPlot(x_, y_, "N2_left.dat", options); 
+gnuplot.addDataSetToPlot(x, y, "N2_left.dat", options); 
 
-gnuplot_.plot("mole_fraction_N2");                // set the name of the output file
+gnuplot.plot("mole_fraction_N2");                // set the name of the output file
 \end{lstlisting}
 
-Its also possible to add several data sets to one plot by calling \texttt{addDataSetToPlot()} more than once.
-For more information have a look into a test including the gluplot interface header file or
+It is also possible to add several data sets to one plot by calling \texttt{addDataSetToPlot()} more than once.
+For more information have a look into a test including the gnuplot interface header file or
 the header file itself (\texttt{dumux/io/gnuplotinterface.hh}).
 
 
