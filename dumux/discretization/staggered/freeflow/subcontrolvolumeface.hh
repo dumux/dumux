@@ -73,8 +73,7 @@ public:
                                           const typename Intersection::Geometry& isGeometry,
                                           GridIndexType scvfIndex,
                                           const std::vector<GridIndexType>& scvIndices,
-                                          const GeometryHelper& geometryHelper
-                           )
+                                          const GeometryHelper& geometryHelper)
     : ParentType(),
       geomType_(isGeometry.type()),
       area_(isGeometry.volume()),
@@ -83,9 +82,8 @@ public:
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
       boundary_(is.boundary()),
-      dofIdx_(geometryHelper.dofIndex()),
-      dofIdxOpposingFace_(geometryHelper.dofIndexOpposingFace()),
-      selfToOppositeDistance_(geometryHelper.selfToOppositeDistance()),
+
+      axisData_(geometryHelper.axisData()),
       pairData_(geometryHelper.pairData()),
       localFaceIdx_(geometryHelper.localFaceIndex()),
       dirIdx_(geometryHelper.directionIndex()),
@@ -181,18 +179,6 @@ public:
         return Geometry(geomType_, corners_);
     }
 
-    //! The global index of the dof living on this face
-    GridIndexType dofIndex() const
-    {
-        return dofIdx_;
-    }
-
-    //! The global index of the dof living on the opposing face
-    GridIndexType dofIndexOpposingFace() const
-    {
-        return dofIdxOpposingFace_;
-    }
-
     //! The local index of this sub control volume face
     LocalIndexType localFaceIdx() const
     {
@@ -203,12 +189,6 @@ public:
     unsigned int directionIndex() const
     {
         return dirIdx_;
-    }
-
-    //! The distance between the position of the dof itself and the one of the oppsing dof
-    Scalar selfToOppositeDistance() const
-    {
-        return selfToOppositeDistance_;
     }
 
     //! Returns whether the unitNormal of the face points in positive coordinate direction
@@ -235,20 +215,101 @@ public:
         return pairData_;
     }
 
+    //! Return an array of all pair data
+    const auto& axisData() const
+    {
+        return axisData_;
+    }
+
+    //! Returns @c true if the face is a ghost face
     bool isGhostFace() const
     {
         return isGhostFace_;
     }
 
-    bool hasParallelNeighbor(const int localFaceIdx) const
+   /*!
+    * \brief Check if the face has a parallel neighbor
+    *
+    * \param localSubFaceIdx The local index of the subface
+    * \param parallelDegreeIdx The index describing how many faces away from the self face
+    */
+    bool hasParallelNeighbor(const int localSubFaceIdx, const int parallelDegreeIdx) const
     {
-        return pairData_[localFaceIdx].outerParallelFaceDofIdx >= 0;
+        return !(pairData(localSubFaceIdx).parallelDofs[parallelDegreeIdx] < 0);
     }
 
-    bool hasFrontalNeighbor(const int localFaceIdx) const
+   /*!
+    * \brief Check if the face has an outer normal neighbor
+    *
+    * \param localSubFaceIdx The local index of the subface
+    */
+    bool hasOuterNormal(const int localSubFaceIdx) const
     {
-        return pairData_[localFaceIdx].normalPair.second >= 0;
+        return !(pairData_[localSubFaceIdx].normalPair.second < 0);
     }
+
+   /*!
+    * \brief Check if the face has a backward neighbor
+    *
+    * \param backwardIdx The index describing how many faces backward this dof is from the opposite face
+    */
+    bool hasBackwardNeighbor(const int backwardIdx) const
+    {
+        return !(axisData().inAxisBackwardDofs[backwardIdx] < 0);
+    }
+
+   /*!
+    * \brief Check if the face has a forward neighbor
+    *
+    * \param forwardIdx The index describing how many faces forward this dof is of the self face
+    */
+    bool hasForwardNeighbor(const int forwardIdx) const
+    {
+        return !(axisData().inAxisForwardDofs[forwardIdx] < 0);
+    }
+
+    //! Returns the dof of the face
+    GridIndexType dofIndex() const
+    {
+        return axisData().selfDof;
+    }
+
+    //! Returns the dof of the opposing face
+    GridIndexType dofIndexOpposingFace() const
+    {
+        return axisData().oppositeDof;
+    }
+
+    //! Returns the dof the first forward face
+    GridIndexType dofIndexForwardFace() const
+    {
+        return axisData().inAxisForwardDofs[0];
+    }
+
+    //! Returns the dof of the first backward face
+    GridIndexType dofIndexBackwardFace() const
+    {
+        return axisData().inAxisBackwardDofs[0];
+    }
+
+    //! Returns the distance between the face and the opposite one
+    Scalar selfToOppositeDistance() const
+    {
+        return axisData().selfToOppositeDistance;
+    }
+
+    /*!
+    * \brief Returns the distance between the parallel dofs
+    *
+    * \param localSubFaceIdx The local index of the subface
+    * \param parallelDegreeIdx The index describing how many faces away from the self
+    */
+    Scalar cellCenteredParallelDistance(const int localSubFaceIdx, const int parallelDegreeIdx) const
+    {
+        return (pairData(localSubFaceIdx).parallelDistances[parallelDegreeIdx] +
+                pairData(localSubFaceIdx).parallelDistances[parallelDegreeIdx+1]) * 0.5;
+    }
+
 
 private:
     Dune::GeometryType geomType_;
@@ -261,10 +322,11 @@ private:
     bool boundary_;
 
     int dofIdx_;
-    int dofIdxOpposingFace_;
     Scalar selfToOppositeDistance_;
+    AxisData<Scalar> axisData_;
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
-    LocalIndexType localFaceIdx_;
+
+    int localFaceIdx_;
     unsigned int dirIdx_;
     int outerNormalSign_;
     bool isGhostFace_;
@@ -272,4 +334,4 @@ private:
 
 } // end namespace Dumux
 
-#endif
+#endif // DUMUX_DISCRETIZATION_STAGGERED_FREE_FLOW_SUBCONTROLVOLUMEFACE_HH

@@ -143,7 +143,7 @@ private:
                                          const FVElementGeometry& fvGeometry,
                                          const SubControlVolumeFace& scvf)
     {
-        stencil.push_back(scvf.dofIndex());
+        stencil.push_back(scvf.axisData().selfDof);
     }
 
     /*
@@ -163,8 +163,8 @@ private:
             auto& normalFace = fvGeometry.scvf(eIdx, data.localNormalFaceIdx);
             if(!normalFace.boundary())
             {
-                const auto outerParallelElementDofIdx = normalFace.outsideScvIdx();
-                stencil.push_back(outerParallelElementDofIdx);
+                const auto firstParallelElementDofIdx = normalFace.outsideScvIdx();
+                stencil.push_back(firstParallelElementDofIdx);
             }
         }
     }
@@ -177,21 +177,43 @@ private:
                                    const FVElementGeometry& fvGeometry,
                                    const SubControlVolumeFace& scvf)
     {
-        // the first entries are always the face dofIdx itself and the one of the opposing face
         if(stencil.empty())
         {
-            stencil.push_back(scvf.dofIndex());
-            stencil.push_back(scvf.dofIndexOpposingFace());
+            for(int i = 0; i < scvf.axisData().inAxisBackwardDofs.size(); i++)
+            {
+                if(scvf.hasBackwardNeighbor(i))
+                {
+                    stencil.push_back(scvf.axisData().inAxisBackwardDofs[i]);
+                }
+            }
+
+            stencil.push_back(scvf.axisData().selfDof);
+            stencil.push_back(scvf.axisData().oppositeDof);
+
+            for(int i = 0; i < scvf.axisData().inAxisForwardDofs.size(); i++)
+            {
+                if(scvf.hasForwardNeighbor(i))
+                {
+                    stencil.push_back(scvf.axisData().inAxisForwardDofs[i]);
+                }
+            }
         }
 
         for(const auto& data : scvf.pairData())
         {
+            // add normal dofs
             stencil.push_back(data.normalPair.first);
-            const auto outerParallelFaceDofIdx = data.outerParallelFaceDofIdx;
-            if(outerParallelFaceDofIdx >= 0)
-                stencil.push_back(outerParallelFaceDofIdx);
             if(!scvf.boundary())
                 stencil.push_back(data.normalPair.second);
+
+            // add parallel dofs
+            for (int i = 0; i < data.parallelDofs.size(); i++)
+            {
+                if(!(data.parallelDofs[i] < 0))
+                {
+                    stencil.push_back(data.parallelDofs[i]);
+                }
+            }
         }
     }
 

@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FACEVARIABLES_HH
 
 #include <array>
+#include <vector>
 
 namespace Dumux {
 
@@ -72,7 +73,30 @@ public:
         velocitySelf_ = faceSol[scvf.dofIndex()];
         velocityOpposite_ = faceSol[scvf.dofIndexOpposingFace()];
 
+        // treat the velocity forward of the self face i.e. the face that is
+        // forward wrt the self face by degree i
+        velocityForward_.clear();
+        for (int i = 0; i < scvf.axisData().inAxisForwardDofs.size(); i++)
+        {
+             if(!(scvf.axisData().inAxisForwardDofs[i] < 0))
+             {
+                 velocityForward_.push_back(faceSol[scvf.axisData().inAxisForwardDofs[i]]);
+             }
+        }
+
+        // treat the velocity at the first backward face i.e. the face that is
+        // behind the opposite face by degree i
+        velocityBackward_.clear();
+        for (int i = 0; i < scvf.axisData().inAxisBackwardDofs.size(); i++)
+        {
+             if(!(scvf.axisData().inAxisBackwardDofs[i] < 0))
+             {
+                 velocityBackward_.push_back(faceSol[scvf.axisData().inAxisBackwardDofs[i]]);
+             }
+        }
+
         // handle all sub faces
+        std::vector<Scalar> a;
         for(int i = 0; i < scvf.pairData().size(); ++i)
         {
             const auto& subFaceData = scvf.pairData(i);
@@ -80,12 +104,19 @@ public:
             // treat the velocities normal to the face
             velocityNormalInside_[i] = faceSol[subFaceData.normalPair.first];
 
-            if(scvf.hasFrontalNeighbor(i))
+            if(scvf.hasOuterNormal(i))
                 velocityNormalOutside_[i] = faceSol[subFaceData.normalPair.second];
 
-            // treat the velocity parallel to the face
-            if(scvf.hasParallelNeighbor(i))
-                velocityParallel_[i] = faceSol[subFaceData.outerParallelFaceDofIdx];
+            a.clear();
+            // treat the velocities parallel to the self face
+            for(int j = 0; j < subFaceData.parallelDofs.size(); j++)
+            {
+                if(scvf.hasParallelNeighbor(i,j))
+                {
+                    a.push_back(faceSol[subFaceData.parallelDofs[j]]);
+                }
+            }
+            velocityParallel_[i] = a;
         }
     }
 
@@ -106,13 +137,34 @@ public:
     }
 
     /*!
-    * \brief Returns the velocity at the parallel face
+    * \brief Returns the velocity at a backward face
+    *
+    * \param backwardIdx The index describing how many faces backward this dof is from the opposite face
+    */
+    Scalar velocityBackward(const int backwardIdx) const
+    {
+        return velocityBackward_[backwardIdx];
+    }
+
+    /*!
+    * \brief Returns the velocity at a forward face
+    *
+    * \param forwardIdx The index describing how many faces forward this dof is of the self face
+    */
+    Scalar velocityForward(const int forwardIdx) const
+    {
+        return velocityForward_[forwardIdx];
+    }
+
+    /*!
+    * \brief Returns the velocity at a parallel face
     *
     * \param localSubFaceIdx The local index of the subface
+    * \param parallelDegreeIdx The index describing how many faces parallel this dof is of the parallel face
     */
-    Scalar velocityParallel(const int localSubFaceIdx) const
+    Scalar velocityParallel(const int localSubFaceIdx, const int parallelDegreeIdx) const
     {
-        return velocityParallel_[localSubFaceIdx];
+        return velocityParallel_[localSubFaceIdx][parallelDegreeIdx];
     }
 
     /*!
@@ -136,12 +188,14 @@ public:
     }
 
 private:
-
     Scalar velocitySelf_;
     Scalar velocityOpposite_;
-    std::array<Scalar, numPairs> velocityParallel_;
-    std::array<Scalar, numPairs> velocityNormalInside_;
-    std::array<Scalar, numPairs> velocityNormalOutside_;
+    std::vector<Scalar> velocityForward_;
+    std::vector<Scalar> velocityBackward_;
+    std::array<std::vector<Scalar>, numPairs> velocityParallel_;
+    std::array<Scalar, numPairs>  velocityNormalInside_;
+    std::array<Scalar, numPairs>  velocityNormalOutside_;
+
 };
 
 } // end namespace Dumux
