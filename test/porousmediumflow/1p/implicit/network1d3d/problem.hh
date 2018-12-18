@@ -22,6 +22,7 @@
  * \brief A test problem for the 1p model. A pipe system with circular cross-section
  *        and a branching point embedded in a three-dimensional world
  */
+
 #ifndef DUMUX_ONEP_TUBES_TEST_PROBLEM_HH
 #define DUMUX_ONEP_TUBES_TEST_PROBLEM_HH
 
@@ -119,7 +120,7 @@ struct FluidSystem<TypeTag, TTag::TubesTest>
 
 /*!
  * \ingroup OnePTests
- * \brief A test problem for the 1p model. A pipe system with circular cross-section
+ * \brief A test problem for the 1p model: A pipe system with circular cross-section
  *        and a branching point embedded in a three-dimensional world
  */
 template <class TypeTag>
@@ -181,14 +182,14 @@ public:
     }
 
     /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      */
     Scalar temperature() const
     { return 273.15 + 37.0; } // Body temperature
 
     /*!
-     * \brief Return how much the domain is extruded at a given sub-control volume.
+     * \brief Returns how much the domain is extruded at a given sub-control volume.
      *
      * This means the factor by which a lower-dimensional (1D or 2D)
      * entity needs to be expanded to get a full dimensional cell. The
@@ -225,8 +226,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      *
@@ -245,8 +245,8 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-control volume.
      *
      * This is the method for the case where the source term is
      * potentially solution dependent and requires some quantities that
@@ -255,10 +255,10 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      *
      * For this method, the \a values parameter stores the conserved quantity rate
-     * generated or annihilate per volume unit. Positive values mean
+     * generated or annihilated per volume unit. Positive values mean
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
@@ -286,7 +286,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * For this method, the \a priVars parameter stores primary
      * variables.
@@ -356,6 +356,6 @@ private:
     typename Dune::PQkLocalFiniteElementCache<Scalar, Scalar, dim, 1> feCache_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

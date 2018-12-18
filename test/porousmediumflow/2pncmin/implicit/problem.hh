@@ -91,7 +91,7 @@ struct SpatialParams<TypeTag, TTag::Dissolution>
     using type = DissolutionSpatialParams<FVGridGeometry, Scalar>;
 };
 
-//Set properties here to override the default property settings
+// Set properties here to override the default property settings
 template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::Dissolution> { static constexpr int value = 1; }; //!< Replace gas balance by total mass balance
 template<class TypeTag>
@@ -101,17 +101,25 @@ struct Formulation<TypeTag, TTag::Dissolution>
 } // end namespace Properties
 
 /*!
- * \ingroup TwoPNCMinModel
- * \ingroup ImplicitTestProblems
- * \brief Problem where water is injected to flush precipitated salt in a gas reservoir clogged due to precipitated salt.
+ * \ingroup TwoPNCMinTests
+ * \brief Problem where water is injected to flush precipitated salt in a gas
+ * reservoir clogged due to precipitated salt.
  *
- * The domain is sized 10m times 20m and contains a vertical low-permeable layer of precipitated salt near an extraction well.
+ * The domain is sized 10m times 20m and contains a vertical low-permeable layer
+ * of precipitated salt near an extraction well.
  *
- * To flush this precipitated salt, water is injected through the gas extraction well in order to dissolve the precipitated salt increasing the permeability and thereby achieving high gas extraction rates later. Here, the system is assumed to be isothermal.
- * Neumann no-flow boundary condition is applied at the top and bottom boundary and Dirichlet boundary condition is used on the right and left sides.
- * The injected water phase migrates downwards due to increase in density as the precipitated salt dissolves.
+ * To flush this precipitated salt, water is injected through the gas extraction
+ * well in order to dissolve the precipitated salt increasing the permeability
+ * and thereby achieving high gas extraction rates later. Here, the system is
+ * assumed to be isothermal.
+ * Neumann no-flow boundary condition is applied at the top and bottom boundary
+ * and Dirichlet boundary condition is used on the right and left sides.
+ * The injected water phase migrates downwards due to increase in density as
+ * the precipitated salt dissolves.
  *
- * The model uses mole fractions of dissolved components and volume fractions of precipitated salt as primary variables. Make sure that the according units are used in the problem setup.
+ * The model uses mole fractions of dissolved components and volume fractions of
+ * precipitated salt as primary variables. Make sure that the according units
+ * are used in the problem set-up.
  *
  * This problem uses the \ref TwoPNCMinModel.
  *
@@ -274,8 +282,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
@@ -305,7 +312,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      *
@@ -334,8 +341,8 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-controlvolume.
      *
      * This is the method for the case where the source term is
      * potentially solution dependent and requires some quantities that
@@ -347,7 +354,7 @@ public:
      * \param scv The subcontrolvolume
      *
      * For this method, the \a values parameter stores the conserved quantity rate
-     * generated or annihilate per volume unit. Positive values mean
+     * generated or annihilated per volume unit. Positive values mean
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
@@ -394,7 +401,9 @@ public:
     }
 
     /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     * \brief Adds additional VTK output data to the VTKWriter.
+     *
+     * Function is called by the output module on every write.
      */
 
     const std::vector<Scalar>& getPermeability()
@@ -424,9 +433,9 @@ public:
 private:
 
     /*!
-     * \brief Returns the molality of NaCl (mol NaCl / kg water) for a given mole fraction
+     * \brief Returns the molality of NaCl (mol NaCl / kg water) for a given mole fraction.
      *
-     * \param XwNaCl the XwNaCl [kg NaCl / kg solution]
+     * \param XwNaCl The XwNaCl [kg NaCl / kg solution]
      */
     static Scalar massToMoleFrac_(Scalar XwNaCl)
     {
@@ -462,6 +471,6 @@ private:
     std::vector<double> permeability_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

@@ -21,6 +21,7 @@
  * \ingroup RichardsTests
  * \brief Definition of the spatial parameters for the non-isothermal Richards problems.
  */
+
 #ifndef DUMUX_RICHARDSNI_SPATIAL_PARAMS_HH
 #define DUMUX_RICHARDSNI_SPATIAL_PARAMS_HH
 
@@ -76,7 +77,7 @@ public:
     }
 
     /*!
-     * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
+     * \brief Defines the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
      * \param globalPos The global position where we evaluate
      */
@@ -86,7 +87,7 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
+     * \brief Defines the porosity \f$\mathrm{[-]}\f$.
      *
      * \param globalPos The global position where we evaluate
      */
@@ -96,7 +97,8 @@ public:
     }
 
         /*!
-     * \brief return the parameter object for the Brooks-Corey material law which depends on the position
+     * \brief Returns the parameter object for the Brooks-Corey material law
+     *  which depends on the position
      *
      * \param globalPos The global position where we evaluate
      */

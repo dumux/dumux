@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup ThreePWaterOilTests
- * \brief Non-isothermal SAGD problem
+ * \brief Non-isothermal SAGD problem.
  */
+
 #ifndef DUMUX_SAGDPROBLEM_HH
 #define DUMUX_SAGDPROBLEM_HH
 
@@ -39,11 +40,6 @@
 
 namespace Dumux {
 
-/*!
- * \file
- * \ingroup ThreePWaterOilTests
- * \brief Non-isothermal SAGD problem
- */
 template <class TypeTag>
 class SagdProblem;
 
@@ -94,13 +90,10 @@ struct SolidSystem<TypeTag, TTag::Sagd>
 
 
 /*!
- * \ingroup ThreePWaterOilBoxModel
- * \ingroup ImplicitTestProblems
- * \brief Non-isothermal problem where ...
- *
- * This problem uses the \ref ThreePWaterOilModel.
- *
- *  */
+ * \file
+ * \ingroup ThreePWaterOilTests
+ * \brief Non-isothermal SAGD problem.
+ */
 template <class TypeTag >
 class SagdProblem : public PorousMediumFlowProblem<TypeTag>
 {
@@ -183,8 +176,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      */
@@ -194,13 +186,12 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param elemVolVars The element volume variables
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * Negative values mean influx.
      */
@@ -243,18 +234,18 @@ public:
             const Scalar effectiveRadius_ = 0.208 * gridHeight_;  //Peaceman's Well Model
 
             using std::log;
-            //divided by molarMass() of water to convert from kg/m s to mol/m s
+            // divided by molarMass() of water to convert from kg/m s to mol/m s
             const Scalar qW = (((2*3.1415*0.5*4e-14)/(log(effectiveRadius_/wellRadius))) *
                                 densityW * elemMobW * ( elemPressW-pOut_))/0.01801528;
-            //divided by molarMass() of HeavyOil to convert from kg/m s to mol/m s
+            // divided by molarMass() of HeavyOil to convert from kg/m s to mol/m s
             const Scalar qN = (((2*3.1415*0.5*4e-14)/(log(effectiveRadius_/wellRadius))) *
                                 densityN * elemMobN  * (elemPressN-pOut_))/0.35;
 
             Scalar qE;
-            //without cooling:
+            // without cooling:
             // qE = qW*0.018*enthW + qN*enthN*0.350;
 
-            //with cooling: see Diplomarbeit Stefan Roll, Sept. 2015
+            // with cooling: see Diplomarbeit Stefan Roll, Sept. 2015
             Scalar wT = elemVolVars[scvf.insideScvIdx()].temperature(); // well temperature
             if ( wT > 495. )
             {
@@ -282,7 +273,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      */
@@ -302,7 +293,7 @@ private:
         values[pressureIdx] = 101300.0 + (maxDepth_ - globalPos[1])*densityW*9.81;
 
         values[switch1Idx] = 295.13;   // temperature
-        values[switch2Idx] = 0.3;   //NAPL saturation
+        values[switch2Idx] = 0.3;   // NAPL saturation
         return values;
     }
 
@@ -318,6 +309,6 @@ private:
 
     std::string name_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

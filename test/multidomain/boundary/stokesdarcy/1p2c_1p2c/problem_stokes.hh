@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesTests
+ * \ingroup BoundaryTests
  * \brief A simple Navier-Stokes test problem for the staggered grid (Navier-)Stokes model.
  */
+
 #ifndef DUMUX_STOKES_SUBPROBLEM_HH
 #define DUMUX_STOKES_SUBPROBLEM_HH
 
@@ -33,13 +34,11 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class StokesSubProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct StokesOnePTwoC { using InheritsFrom = std::tuple<NavierStokesNC, StaggeredFreeFlowModel>; };
@@ -76,11 +75,11 @@ struct UseMoles<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = t
 // Do not replace one equation with a total mass balance
 template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::StokesOnePTwoC> { static constexpr int value = 3; };
-}
+} // end namespace Properties
 
 /*!
- * \ingroup NavierStokesTests
- * \brief  Test problem for the one-phase (Navier-) Stokes problem.
+ * \ingroup BoundaryTests
+ * \brief Test problem for the one-phase (Navier-) Stokes problem.
  *
  * Horizontal flow from left to right with a parabolic velocity profile.
  */
@@ -128,7 +127,7 @@ public:
     // \{
 
    /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
@@ -136,7 +135,7 @@ public:
     { return 273.15 + 10; } // 10°C
 
    /*!
-     * \brief Return the sources within the domain.
+     * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
      */
@@ -217,7 +216,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Dirichlet control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
@@ -260,7 +259,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann control volume.
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
      *
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeometry The fvGeometry
@@ -300,7 +299,7 @@ public:
     // \{
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -328,7 +327,8 @@ public:
     }
 
     /*!
-     * \brief Returns the intrinsic permeability of required as input parameter for the Beavers-Joseph-Saffman boundary condition
+     * \brief Returns the intrinsic permeability of required as input parameter
+     *        for the Beavers-Joseph-Saffman boundary condition.
      */
     Scalar permeability(const Element& element, const SubControlVolumeFace& scvf) const
     {
@@ -336,7 +336,8 @@ public:
     }
 
     /*!
-     * \brief Returns the alpha value required as input parameter for the Beavers-Joseph-Saffman boundary condition
+     * \brief Returns the alpha value required as input parameter for the
+     *        Beavers-Joseph-Saffman boundary condition.
      */
     Scalar alphaBJ(const SubControlVolumeFace& scvf) const
     {
@@ -344,13 +345,13 @@ public:
     }
 
     /*!
-     * \brief Sets the time loop pointer
+     * \brief Sets the time loop pointer.
      */
     void setTimeLoop(TimeLoopPtr timeLoop)
     { timeLoop_ = timeLoop; }
 
     /*!
-     * \brief Returns the time
+     * \brief Returns the time.
      */
     Scalar time() const
     { return timeLoop_->time(); }
@@ -376,6 +377,6 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
     TimeLoopPtr timeLoop_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif // DUMUX_STOKES_SUBPROBLEM_HH

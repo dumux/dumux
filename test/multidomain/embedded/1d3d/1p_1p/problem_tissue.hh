@@ -18,10 +18,11 @@
  *****************************************************************************/
 /**
  * \file
- * \ingroup OnePTests
+ * \ingroup EmbeddedTests
  * \brief Definition of a problem, for the 1p2c problem:
  * Component transport of oxygen in interstitial fluid.
  */
+
 #ifndef DUMUX_TISSUE_PROBLEM_HH
 #define DUMUX_TISSUE_PROBLEM_HH
 
@@ -106,7 +107,9 @@ struct SpatialParams<TypeTag, TTag::Tissue>
 
 
 /*!
- * \ingroup OnePTests
+ * \ingroup EmbeddedTests
+ * \brief Definition of a problem, for the 1p2c problem:
+ * Component transport of oxygen in interstitial fluid.
  */
 template <class TypeTag>
 class TissueProblem : public PorousMediumFlowProblem<TypeTag>
@@ -135,7 +138,7 @@ public:
     : ParentType(fvGridGeometry, "Tissue")
     , couplingManager_(couplingManager)
     {
-        //read parameters from input file
+        // read parameters from input file
         name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
 
         exactPressure_.resize(this->fvGridGeometry().numDofs());
@@ -186,8 +189,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      *
@@ -208,8 +210,7 @@ public:
     // \{
 
     /*!
-     * \brief Applies a vector of point sources. The point sources
-     *        are possibly solution dependent.
+     * \brief Applies a vector of point sources which are possibly solution dependent.
      *
      * \param pointSources A vector of Dumux::PointSource s that contain
               source values for all phases and space positions.
@@ -222,8 +223,8 @@ public:
     { pointSources = this->couplingManager().bulkPointSources(); }
 
     /*!
-     * \brief Evaluate the point sources (added by addPointSources)
-     *        for all phases within a given sub-control-volume.
+     * \brief Evaluates the point sources (added by addPointSources)
+     *        for all phases within a given sub control volume.
      *
      * This is the method for the case where the point source is
      * solution dependent and requires some quantities that
@@ -236,7 +237,7 @@ public:
      * \param scv The sub-control volume within the element
      *
      * For this method, the \a values() method of the point sources returns
-     * the absolute rate mass generated or annihilate in kg/s. Positive values mean
+     * the absolute rate mass generated or annihilated in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
     template<class ElementVolumeVariables>
@@ -258,8 +259,8 @@ public:
     }
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub control volume.
      *
      * This is the method for the case where the source term is
      * potentially solution dependent and requires some quantities that
@@ -271,7 +272,7 @@ public:
      * \param scv The sub control volume
      *
      * For this method, the return parameter stores the conserved quantity rate
-     * generated or annihilate per volume unit. Positive values mean
+     * generated or annihilated per volume unit. Positive values mean
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
@@ -314,7 +315,7 @@ public:
         return source;
     }
 
-    //! other methods
+    //! Other methods
     template<class ElementVolumeVariables,
              bool enable = (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel),
              std::enable_if_t<!enable, int> = 0>
@@ -324,8 +325,8 @@ public:
                        const SubControlVolume &scv) const
     { return NumEqVector(0.0); }
 
-    //! evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
-    //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
+    //! Evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
+    //! We only need to evaluate the part of the residual that will be influence by the low dim DOF
     template<class MatrixBlock, class VolumeVariables>
     void addSourceDerivatives(MatrixBlock& block,
                               const Element& element,
@@ -349,7 +350,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *
@@ -414,7 +415,9 @@ public:
     }
 
     /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     * \brief Adds additional VTK output data to the VTKWriter.
+     *
+     * Function is called by the output module on every write.
      */
     template<class VtkOutputModule>
     void addVtkOutputFields(VtkOutputModule& vtk) const
@@ -435,6 +438,6 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

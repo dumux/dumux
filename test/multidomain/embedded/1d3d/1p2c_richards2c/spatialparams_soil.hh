@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OneTests
- * \brief Definition of the spatial parameters for the tissue problem
+ * \ingroup EmbeddedTests
+ * \brief Definition of the spatial parameters for the soil problem.
  */
+
 #ifndef DUMUX_SOIL_SPATIAL_PARAMS_HH
 #define DUMUX_SOIL_SPATIAL_PARAMS_HH
 
@@ -32,8 +33,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
- * \brief Definition of the spatial parameters for the tissue problem
+ * \ingroup EmbeddedTests
+ * \brief Definition of the spatial parameters for the soil problem.
  */
 template<class FVGridGeometry, class Scalar>
 class SoilSpatialParams
@@ -72,11 +73,11 @@ public:
     }
 
     /*!
-     * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
+     * \brief Defines the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
      * \param element The element
      * \param scv The sub control volume
-     * \param elemSol the element solution vector
+     * \param elemSol The element solution vector
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
@@ -87,7 +88,7 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
+     * \brief Defines the porosity \f$\mathrm{[-]}\f$.
      *
      * \param element The current finite element
      * \param scv The sub control volume

@@ -16,12 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
+/*!
  * \file
- * \ingroup OnePTests
+ * \ingroup EmbeddedTests
  * \brief Definition of a problem, for the 1p2c problem:
  * Component transport of oxygen in interstitial fluid.
  */
+
 #ifndef DUMUX_TISSUE_PROBLEM_HH
 #define DUMUX_TISSUE_PROBLEM_HH
 
@@ -86,7 +87,9 @@ struct SpatialParams<TypeTag, TTag::Soil>
 
 
 /*!
- * \ingroup OnePTests
+ * \ingroup EmbeddedTests
+ * \brief Definition of a problem, for the 1p2c problem:
+ * Component transport of oxygen in interstitial fluid.
  */
 template <class TypeTag>
 class SoilProblem : public PorousMediumFlowProblem<TypeTag>
@@ -113,7 +116,7 @@ public:
     : ParentType(fvGridGeometry, "Soil")
     , couplingManager_(couplingManager)
     {
-        //read parameters from input file
+        // read parameters from input file
         name_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         initPressure_ = getParam<Scalar>("BoundaryConditions.InitialSoilPressure");
     }
@@ -141,7 +144,7 @@ public:
 
     /*
       * \brief Returns the reference pressure [Pa] of the non-wetting
-     *        fluid phase within a finite volume
+     *        fluid phase within a finite volume.
      *
      * This problem assumes a constant reference pressure of 1 bar.
      */
@@ -177,8 +180,7 @@ public:
     // \{
 
     /*!
-     * \brief Applies a vector of point sources. The point sources
-     *        are possibly solution dependent.
+     * \brief Applies a vector of point sources which are possibly solution dependent.
      *
      * \param pointSources A vector of Dumux::PointSource s that contain
               source values for all phases and space positions.
@@ -191,8 +193,8 @@ public:
     { pointSources = this->couplingManager().bulkPointSources(); }
 
     /*!
-     * \brief Evaluate the point sources (added by addPointSources)
-     *        for all phases within a given sub-control-volume.
+     * \brief Evaluates the point sources (added by addPointSources)
+     *        for all phases within a given sub control volume.
      *
      * This is the method for the case where the point source is
      * solution dependent and requires some quantities that
@@ -205,7 +207,7 @@ public:
      * \param scv The sub-control volume within the element
      *
      * For this method, the \a values() method of the point sources returns
-     * the absolute rate mass generated or annihilate in kg/s. Positive values mean
+     * the absolute rate mass generated or annihilated in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
     template<class ElementVolumeVariables>
@@ -232,7 +234,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *
@@ -285,6 +287,6 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

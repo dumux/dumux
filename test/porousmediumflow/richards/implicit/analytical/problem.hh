@@ -19,12 +19,13 @@
 /*!
  * \file
  * \ingroup RichardsTests
- * \brief A one-dimensional infiltration problem with a smoth, given solution.
+ * \brief A one-dimensional infiltration problem with a smooth, given solution.
  *
  * The source term is calculated analytically. Thus, this example can be used
- * to calclate the L2 error and to show convergence for grid and time-step
+ * to calculate the L2 error and to show convergence for grid and time-step
  * refinement.
  */
+
 #ifndef DUMUX_RICHARDS_ANALYTICALPROBLEM_HH
 #define DUMUX_RICHARDS_ANALYTICALPROBLEM_HH
 
@@ -46,10 +47,10 @@ namespace Dumux {
 
 /*!
  * \ingroup RichardsTests
- * \brief A one-dimensional infiltration problem with a smoth, given solution.
+ * \brief A one-dimensional infiltration problem with a smooth, given solution.
  *
  * The source term is calculated analytically. Thus, this example can be used
- * to calclate the L2 error and to show convergence for grid and time-step
+ * to calculate the L2 error and to show convergence for grid and time-step
  * refinement.
  */
 template <class TypeTag>
@@ -124,11 +125,6 @@ class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
     using Geometry = typename GridView::template Codim<0>::Entity::Geometry;
 
 public:
-    /*!
-     * \brief Constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     RichardsAnalyticalProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -171,12 +167,12 @@ public:
     { return pnRef_; }
 
    /*!
-     * \brief Evaluate the source values for a control volume.
+     * \brief Evaluates the source values for a control volume.
      *
      * For this method, the \a values parameter stores primary
      * variables. For this test case, the analytical solution is
      * used to calculate the source term. See the Matlab script
-     * Richards.m which uses Matlab's Symbolic Toolbox to calclate
+     * Richards.m which uses Matlab's Symbolic Toolbox to calculate
      * the source term.
      *
      * \param globalPos The position for which the source term is set
@@ -189,7 +185,7 @@ public:
         const Scalar pwBottom = 95641.1;
 
         // linear model with complex solution
-        // calcluated with Matlab script "Richards.m"
+        // calculated with Matlab script "Richards.m"
         using std::pow;
         using std::tanh;
 
@@ -231,8 +227,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the Dirichlet value is set
      *
@@ -254,8 +249,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
@@ -274,7 +268,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial values for a control volume.
+     * \brief Evaluates the initial values for a control volume.
      *
      * For this method, the \a values parameter stores primary
      * variables.
@@ -292,9 +286,9 @@ public:
     // \}
 
     /*!
-     * \brief Evaluate the analytical solution.
+     * \brief Evaluates the analytical solution.
      *
-     * \param values The dirichlet values for the primary variables
+     * \param values The Dirichlet values for the primary variables
      * \param time The time at which the solution should be evaluated
      * \param globalPos The position for which the Dirichlet value is set
      *
@@ -322,7 +316,7 @@ public:
      * \note Works for cell-centered FV only because the numerical
      *       approximation is only evaluated in the cell center (once).
      *       To extend this function to the box method the evaluation
-     *       has to be extended to box' subvolumes.
+     *       has to be extended to box' sub-volumes.
      */
     Scalar calculateL2Error(const SolutionVector& curSol)
     {
@@ -361,7 +355,7 @@ public:
     }
 
     /*!
-     * \brief Write the relevant secondary variables of the current
+     * \brief Writes the relevant secondary variables of the current
      *        solution into an VTK output file.
      */
     void writeOutput(const SolutionVector& curSol)
@@ -381,13 +375,13 @@ public:
 
 private:
 
-    // evalutates if global position is at lower boundary
+    // evaluates if global position is at lower boundary
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
         return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_;
     }
 
-    // evalutates if global position is at upper boundary
+    // evaluates if global position is at upper boundary
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
         return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
@@ -398,6 +392,6 @@ private:
     std::string name_;
     Scalar time_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

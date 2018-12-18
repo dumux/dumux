@@ -23,6 +23,7 @@
  *        embedded into a high-permeability domain which uses the
  *        Richards box model.
  */
+
 #ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
 #define DUMUX_RICHARDS_LENSPROBLEM_HH
 
@@ -46,12 +47,6 @@
 
 namespace Dumux {
 
-/*!
- * \ingroup RichardsTests
- * \brief A water infiltration problem with a low-permeability lens
- *        embedded into a high-permeability domain which uses the
- *        Richards box model.
- */
 template <class TypeTag>
 class RichardsLensProblem;
 
@@ -99,9 +94,9 @@ struct SpatialParams<TypeTag, TTag::RichardsLens>
  * bottom boundary is closed (Neumann 0 boundary), the top boundary
  * (Neumann 0 boundary) is also closed except for infiltration
  * section, where water is infiltrating into an initially unsaturated
- * porous medium. This problem is very similar the the LensProblem
+ * porous medium. This problem is very similar to the LensProblem
  * which uses the TwoPBoxModel, with the main difference being that
- * the domain is initally fully saturated by gas instead of water and
+ * the domain is initially fully saturated by gas instead of water and
  * water instead of a %DNAPL infiltrates from the top.
  *
  * This problem uses the \ref RichardsModel
@@ -138,11 +133,6 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    /*!
-     * \brief Constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     RichardsLensProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -203,8 +193,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the Dirichlet value is set
      *
@@ -216,8 +205,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
@@ -238,7 +226,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial values for a control volume.
+     * \brief Evaluates the initial values for a control volume.
      *
      * For this method, the \a values parameter stores primary
      * variables.
@@ -296,6 +284,6 @@ private:
     std::string name_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

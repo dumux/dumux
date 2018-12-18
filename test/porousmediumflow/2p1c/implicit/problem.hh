@@ -20,8 +20,8 @@
  * \file
  * \ingroup TwoPOneCTests
  * \brief Non-isothermal steam injection test problem for the 2p1cni model.
- *
  */
+
 #ifndef DUMUX_STEAM_INJECTIONPROBLEM_HH
 #define DUMUX_STEAM_INJECTIONPROBLEM_HH
 
@@ -88,9 +88,8 @@ struct UseBlockingOfSpuriousFlow<TypeTag, TTag::InjectionProblem> { static const
  * \ingroup TwoPOneCTests
  * \brief Non-isothermal 2D problem where steam is injected on the lower left side of the domain.
  *
- * This problem uses the \ref TwoPOneCModel .
- *
- *  */
+ * This problem uses the \ref TwoPOneCModel.
+ */
 template <class TypeTag>
 class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
 {
@@ -126,11 +125,6 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-
-    /*!
-     * \brief The constructor
-     *
-     */
     InjectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     { FluidSystem::init(); }
@@ -172,8 +166,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The global position
      */
@@ -183,8 +176,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * This is the method for the case where the Neumann condition is
      * potentially solution dependent and requires some quantities that
@@ -193,7 +185,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
@@ -228,7 +220,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume.
      *
      * \param globalPos The global position
      */
@@ -249,6 +241,6 @@ private:
 
     static constexpr Scalar eps_ = 1e-6;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

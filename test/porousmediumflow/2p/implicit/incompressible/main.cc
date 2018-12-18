@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the two-phase porousmedium flow model
+ * \ingroup TwoPTests
+ * \brief Test for the two-phase porousmedium flow model.
  */
 #include <config.h>
 
@@ -165,7 +165,7 @@ int main(int argc, char** argv) try
                                                              ncOutput ? Dune::VTK::nonconforming : Dune::VTK::conforming);
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(restartTime);
 
     // instantiate time loop

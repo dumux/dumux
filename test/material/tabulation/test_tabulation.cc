@@ -18,13 +18,14 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup MaterialTests
  * \brief This is a program to test the tabulation class for of
  *        individual components.
  *
  * It either prints "success" or "error", it does not do anything
  * else.
  */
+
 #include <config.h>
 
 #include <dumux/material/components/h2o.hh>

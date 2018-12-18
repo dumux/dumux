@@ -18,10 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup EmbeddedTests
  * \brief A test problem for the one-phase root model:
  * Sap is flowing through a 1d network root xylem.
  */
+
 #ifndef DUMUX_ROOT_PROBLEM_HH
 #define DUMUX_ROOT_PROBLEM_HH
 
@@ -94,8 +95,8 @@ struct SpatialParams<TypeTag, TTag::Root>
 } // end namespace Properties
 
 /*!
- * \ingroup OnePTests
- * \brief Exact solution 1D-3D
+ * \ingroup EmbeddedTests
+ * \brief Exact solution 1D-3D.
  */
 template <class TypeTag>
 class RootProblem : public PorousMediumFlowProblem<TypeTag>
@@ -127,15 +128,15 @@ public:
     : ParentType(fvGridGeometry, spatialParams, "Root")
     , couplingManager_(couplingManager)
     {
-        //read parameters from input file
+        // read parameters from input file
         name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         transpirationRate_ = getParam<Scalar>("BoundaryConditions.TranspirationRate");
     }
 
     /*!
-     * \brief Return how much the domain is extruded at a given sub-control volume.
+     * \brief Returns how much the domain is extruded at a given sub-control volume.
      *
-     * The extrusion factor here makes extrudes the 1d line to a circular tube with
+     * The extrusion factor here extrudes the 1d line to a circular tube with
      * cross-section area pi*r^2.
      */
     template<class ElementSolution>
@@ -162,7 +163,7 @@ public:
     { return name_; }
 
     /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      */
     Scalar temperature() const
     { return 273.15 + 10.0; }
@@ -187,8 +188,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The global position
      *
@@ -199,8 +199,7 @@ public:
 
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * For this method, the \a priVars parameter stores the mass flux
      * in normal direction of each component. Negative values mean
@@ -230,8 +229,7 @@ public:
     // \{
 
      /*!
-     * \brief Applies a vector of point sources. The point sources
-     *        are possibly solution dependent.
+     * \brief Applies a vector of point sources which are possibly solution dependent.
      *
      * \param pointSources A vector of PointSource s that contain
               source values for all phases and space positions.
@@ -244,8 +242,8 @@ public:
     { pointSources = this->couplingManager().lowDimPointSources(); }
 
     /*!
-     * \brief Evaluate the point sources (added by addPointSources)
-     *        for all phases within a given sub-control-volume.
+     * \brief Evaluates the point sources (added by addPointSources)
+     *        for all phases within a given sub control volume.
      *
      * This is the method for the case where the point source is
      * solution dependent and requires some quantities that
@@ -255,10 +253,10 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param scv The sub-control volume within the element
+     * \param scv The sub control volume within the element
      *
      * For this method, the \a values() method of the point sources returns
-     * the absolute rate mass generated or annihilate in kg/s. Positive values mean
+     * the absolute rate mass generated or annihilated in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
     template<class ElementVolumeVariables>
@@ -283,7 +281,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * For this method, the \a priVars parameter stores primary
      * variables.
@@ -319,7 +317,9 @@ public:
     }
 
     /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     * \brief Adds additional VTK output data to the VTKWriter.
+     *
+     * Function is called by the output module on every write.
      */
     template<class VtkOutputModule>
     void addVtkOutputFields(VtkOutputModule& vtk) const
@@ -340,6 +340,6 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

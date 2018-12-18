@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief test for the one-phase CC model
+ * \brief Test for the one-phase CC model
  */
+
 #include <config.h>
 
 #include <ctime>
@@ -54,7 +55,7 @@
 
 #include "problem.hh"
 
-//! function to write out the scv-wise velocities (overload for mpfa)
+//! Function to write out the scv-wise velocities (overload for mpfa)
 template<class FVGridGeometry, class GridVariables, class Sol,
          std::enable_if_t<FVGridGeometry::discMethod == Dumux::DiscretizationMethod::ccmpfa, int> = 0>
 void writeMpfaVelocities(const FVGridGeometry& fvGridGeometry,
@@ -70,7 +71,7 @@ void writeMpfaVelocities(const FVGridGeometry& fvGridGeometry,
     writer.write("mpfa_scv_velocities");
 }
 
-//! function to write out the scv-wise velocities (overload for NOT mpfa)
+//! Function to write out the scv-wise velocities (overload for NOT mpfa)
 template<class FVGridGeometry, class GridVariables, class Sol,
          std::enable_if_t<FVGridGeometry::discMethod != Dumux::DiscretizationMethod::ccmpfa, int> = 0>
 void writeMpfaVelocities(const FVGridGeometry& fvGridGeometry,
@@ -131,7 +132,7 @@ int main(int argc, char** argv) try
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 
     // make assemble and attach linear system

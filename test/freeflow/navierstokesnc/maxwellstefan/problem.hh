@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup NavierStokesNCTests
- * \brief Channel flow test for the multi-component staggered grid (Navier-)Stokes model
+ * \brief Channel flow test for the multi-component staggered grid (Navier-)Stokes model.
  */
+
 #ifndef DUMUX_CHANNEL_MAXWELL_STEFAN_TEST_PROBLEM_HH
 #define DUMUX_CHANNEL_MAXWELL_STEFAN_TEST_PROBLEM_HH
 
@@ -37,8 +38,7 @@
 
 #include <dumux/io/gnuplotinterface.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class MaxwellStefanNCTestProblem;
 
@@ -79,7 +79,7 @@ struct MolecularDiffusionType<TypeTag, TTag::MaxwellStefanNCTest> { using type =
 
 /*!
  * \ingroup NavierStokesNCTests
- * \brief  A simple fluid system with three components for testing the  multicompoent diffusion with the Maxwell Stefan formulation.
+ * \brief  A simple fluid system with three components for testing the  multi-component diffusion with the Maxwell-Stefan formulation.
  */
 template<class TypeTag>
 class MaxwellStefanFluidSystem
@@ -115,7 +115,7 @@ public:
     using Base::binaryDiffusionCoefficient;
    /*!
      * \brief Given a phase's composition, temperature and pressure,
-     *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
+     *        returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
      *        \f$i\f$ and \f$j\f$ in this phase.
      *
      * \param fluidState An arbitrary fluid state
@@ -148,8 +148,9 @@ public:
     using Base::density;
    /*!
      * \brief Given a phase's composition, temperature, pressure, and
-     *        the partial pressures of all components, return its
+     *        the partial pressures of all components, returns its
      *        density \f$\mathrm{[kg/m^3]}\f$.
+     *
      * \param phaseIdx index of the phase
      * \param fluidState the fluid state
      *
@@ -163,7 +164,8 @@ public:
 
     using Base::viscosity;
    /*!
-     * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
+     * \brief Calculates the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
+     *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
@@ -194,10 +196,11 @@ public:
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::MaxwellStefanNCTest> { using type = MaxwellStefanFluidSystem<TypeTag>; };
 
-} //end namespace Property
+} // end namespace Properties
+
 /*!
  * \ingroup NavierStokesNCTests
- * \brief  Test problem for the maxwell stefan model
+ * \brief Test problem for the Maxwell-Stefan model
  */
 template <class TypeTag>
 class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
@@ -235,7 +238,7 @@ public:
     // \{
 
    /*!
-     * \brief Output the diffusion rates from left to right
+     * \brief Writes out the diffusion rates from left to right
      *
      * Called after every time step
      *
@@ -334,7 +337,7 @@ public:
     }
 
    /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
@@ -342,7 +345,7 @@ public:
     { return 273.15 + 10; } // 10C
 
    /*!
-     * \brief Return the sources within the domain.
+     * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
      */
@@ -375,8 +378,7 @@ public:
     }
 
    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      */
@@ -391,7 +393,7 @@ public:
     // \{
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -434,6 +436,6 @@ private:
     std::vector<Scalar> y5_;
     std::vector<Scalar> y6_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

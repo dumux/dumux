@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePTests
- * \brief The spatial params the single-phase facet coupling test
+ * \ingroup FacetTests
+ * \brief The spatial parameters for the single-phase facet coupling test.
  */
+
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_THREEDOMAIN_ONEP_SPATIALPARAMS_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_THREEDOMAIN_ONEP_SPATIALPARAMS_HH
 
@@ -29,8 +30,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
- * \brief The spatial params the single-phase facet coupling test
+ * \ingroup FacetTests
+ * \brief The spatial parameters for the single-phase facet coupling test.
  */
 template<class FVGridGeometry, class Scalar>
 class OnePSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar,
@@ -44,10 +45,9 @@ class OnePSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar,
     using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
 
 public:
-    //! export the type used for permeability
+    //! Export the type used for permeability
     using PermeabilityType = Scalar;
 
-    //! the constructor
     OnePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry)
     {
@@ -58,7 +58,7 @@ public:
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     { return permeability_; }
 
-    //! Return the porosity
+    //! Returns the porosity.
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 1.0; }
 

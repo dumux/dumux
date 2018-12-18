@@ -18,13 +18,13 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup NavierStokesTests
  * \brief Channel flow test for the staggered grid (Navier-)Stokes model.
  *
  * The channel is either modeled in 3D or in 2D, using an additional wall friction term
  * to mimic the 3D behavior of the flow.
- *
  */
+
 #ifndef DUMUX_3D_CHANNEL_PROBLEM_HH
 #define DUMUX_3D_CHANNEL_PROBLEM_HH
 
@@ -42,15 +42,12 @@
 #define DIM_3D 0
 #endif
 
-namespace Dumux
-{
-
+namespace Dumux {
 
 template <class TypeTag>
 class ThreeDChannelTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct ThreeDChannelTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
@@ -83,11 +80,18 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };
-}
+} // end namespace Properties
 
 /*!
- * \brief  Test problem for the one-phase model:
-   \todo doc me!
+ * \brief Test problem for the one-phase (Navier-) Stokes model in a 3D or pseudo 3D channel.
+ *
+ * Flow from left to right in a three-dimensional channel is considered. At the inlet (left)
+ * and outlet (right) fixed values for pressure are set.
+ * The channel is confined by solid walls at all other sides of the domain which corresponds
+ * to no-slip/no-flow conditions.
+ * The value of an analytical solution for the given flow configuration is furthermore provided.
+ * For sake of efficiency, the 3D problem can be reduced to a two-dimensional one by including
+ * an additional wall friction term to the momentum balance (Flekkoy et al., 1995 \cite flekkoy1995a).
  */
 template <class TypeTag>
 class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
@@ -142,7 +146,7 @@ public:
     // \{
 
     /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
@@ -151,8 +155,8 @@ public:
 
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume face.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-control volume face.
      */
     using ParentType::source;
     template<class ElementVolumeVariables, class ElementFaceVariables>
@@ -208,8 +212,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      */
@@ -229,7 +232,7 @@ public:
     // \}
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -270,6 +273,6 @@ private:
     Scalar rho_;
     Scalar nu_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

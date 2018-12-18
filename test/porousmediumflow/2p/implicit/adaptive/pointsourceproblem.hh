@@ -28,9 +28,13 @@
 
 #include "problem.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
+/*!
+ * \ingroup TwoPTests
+ * \brief Soil contamination problem where DNAPL infiltrates a fully
+ *        water saturated medium.
+ */
 template <class TypeTag >
 class PointSourceTestProblem : public TwoPTestProblemAdaptive<TypeTag>
 {
@@ -42,11 +46,10 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \ingroup TwoPTests
      * \brief Applies a vector of point sources. The point sources
      *        are possibly solution dependent.
      *
-     * \param pointSources A vector of PointSource s that contain
+     * \param pointSources A vector of PointSources that contain
               source values for all phases and space positions.
      *
      * For this method, the \a values method of the point source
@@ -61,6 +64,6 @@ public:
     }
 };
 
-} //end namespace
+} // end namespace Dumux
 
 #endif

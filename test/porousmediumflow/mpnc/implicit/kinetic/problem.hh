@@ -19,14 +19,16 @@
 /*!
  * \file
  * \ingroup MPNCTests
- *
  * \brief Problem showcasing the capabilities of the kinetic model.
  *
- *        The whole domain is porous medium, but the upper half has properties mimicing the ones of a free-flow domain.
- *        This way a poor man's coupling approach is accomplished: Without the complications of coupling,
- *        the main characteristics a porous and a free-flow domain are depicted.
+ * The whole domain is porous medium, but the upper half has properties mimicing
+ * the ones of a free-flow domain.
+ * This way a poor man's coupling approach is accomplished: Without the
+ * complications of coupling, the main characteristics a porous and a free-flow
+ * domain are depicted.
  *
- *        The porous domain is bypassed with dry air. This way the equilibration process on top of the porous domain can be studied.
+ * The porous domain is bypassed with dry air. This way the equilibration
+ * process on top of the porous domain can be studied.
  *
  * \author Philipp Nuske
  */
@@ -66,7 +68,6 @@
 namespace Dumux {
 /*!
  * \ingroup MPNCTests
- *
  * \brief Problem showcasing the capabilities of the kinetic model.
  */
 template <class TypeTag>
@@ -129,7 +130,8 @@ struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere>
 /*!
  * \ingroup MPNCTests
  *
- * \brief Problem that simulates the coupled heat and mass transfer processes resulting form the evaporation of liquid water from
+ * \brief Problem that simulates the coupled heat and mass transfer processes
+           resulting from the evaporation of liquid water from
  *        a porous medium sub-domain into a gas filled "quasi-freeflow" sub-domain.
  */
 template <class TypeTag>
@@ -180,11 +182,6 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     static constexpr auto leastWettingFirst = MpNcPressureFormulation::leastWettingFirst;
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     EvaporationAtmosphereProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
@@ -252,8 +249,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The global position
      *
@@ -345,7 +341,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -355,8 +351,8 @@ public:
     }
 
     /*!
-     * \brief Evaluate the source term for all balance equations within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all balance equations within a given
+     *        sub-controlvolume.
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
@@ -411,7 +407,7 @@ private:
         const auto &materialParams =
             this->spatialParams().materialLawParamsAtPos(globalPos);
         std::vector<Scalar> capPress(numPhases);
-        //obtain pc according to saturation
+        // obtain pc according to saturation
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
 
@@ -506,19 +502,19 @@ private:
     }
 
     /*!
-     * \brief Give back whether the tested position (input) is a specific region (left) in the domain
+     * \brief Returns whether the tested position is on the left boundary of the domain.
      */
     bool onLeftBoundary_(const GlobalPosition & globalPos) const
     {  return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;   }
 
     /*!
-     * \brief Give back whether the tested position (input) is a specific region (right) in the domain
+     * \brief Returns whether the tested position is on the right boundary of the domain.
      */
     bool onRightBoundary_(const GlobalPosition & globalPos) const
     { return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;    }
 
     /*!
-     * \brief Give back whether the tested position (input) is a specific region (down, (gravityDir)) in the domain
+     * \brief Returns whether the tested position is on the lower boundary of the domain.
      */
     bool onLowerBoundary_(const GlobalPosition & globalPos) const
     { return globalPos[dimWorld-1] < this->fvGridGeometry().bBoxMin()[dimWorld-1] + eps_;    }
@@ -551,6 +547,6 @@ public:
     { return inputParameters_; }
 };
 
-} //end namespace
+} // end namespace
 
 #endif

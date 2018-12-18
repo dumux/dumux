@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief The spatial params the incompressible test
+ * \brief The spatial parameters for the incompressible test.
  */
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
@@ -32,7 +32,7 @@ namespace Dumux {
 /*!
  * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
- *        incompressible 1p model
+ *        incompressible 1p model.
  */
 template<class TypeTag>
 class OnePTestSpatialParams
@@ -67,7 +67,7 @@ public:
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
      * \param element The element
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
@@ -83,7 +83,7 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
+     * \brief Defines the porosity \f$\mathrm{[-]}\f$.
      *
      * \param globalPos The global position
      */

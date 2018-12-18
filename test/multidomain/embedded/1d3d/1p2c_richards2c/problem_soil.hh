@@ -18,10 +18,11 @@
  *****************************************************************************/
 /**
  * \file
- * \ingroup OnePTests
+ * \ingroup EmbeddedTests
  * \brief Definition of a problem, for the 1p2c problem:
  * Component transport of oxygen in interstitial fluid.
  */
+
 #ifndef DUMUX_TISSUE_PROBLEM_HH
 #define DUMUX_TISSUE_PROBLEM_HH
 
@@ -106,7 +107,9 @@ struct UseMoles<TypeTag, TTag::Soil> { static constexpr bool value = true; };
 
 
 /*!
- * \ingroup OnePTests
+ * \ingroup EmbeddedTests
+ * \brief Definition of a problem, for the 1p2c problem:
+ * Component transport of oxygen in interstitial fluid.
  */
 template <class TypeTag>
 class SoilProblem : public PorousMediumFlowProblem<TypeTag>
@@ -182,7 +185,7 @@ public:
 
     /*
       * \brief Returns the reference pressure [Pa] of the non-wetting
-     *        fluid phase within a finite volume
+     *        fluid phase within a finite volume.
      *
      * This problem assumes a constant reference pressure of 1 bar.
      */
@@ -211,8 +214,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      *
@@ -229,8 +231,7 @@ public:
     // \{
 
     /*!
-     * \brief Applies a vector of point sources. The point sources
-     *        are possibly solution dependent.
+     * \brief Applies a vector of point sources which are possibly solution dependent.
      *
      * \param pointSources A vector of Dumux::PointSource s that contain
               source values for all phases and space positions.
@@ -243,8 +244,8 @@ public:
     { pointSources = this->couplingManager().bulkPointSources(); }
 
     /*!
-     * \brief Evaluate the point sources (added by addPointSources)
-     *        for all phases within a given sub-control-volume.
+     * \brief Evaluates the point sources (added by addPointSources)
+     *        for all phases within a given sub control volume.
      *
      * This is the method for the case where the point source is
      * solution dependent and requires some quantities that
@@ -254,10 +255,10 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param scv The sub-control volume within the element
+     * \param scv The sub control volume within the element
      *
      * For this method, the \a values() method of the point sources returns
-     * the absolute rate mass generated or annihilate in kg/s. Positive values mean
+     * the absolute rate mass generated or annihilated in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
     template<class ElementVolumeVariables>
@@ -287,14 +288,14 @@ public:
         const Scalar x3D = priVars3D[transportCompIdx];
         const Scalar x1D = priVars1D[transportCompIdx];
 
-        //! advective transport over root wall
+        //! Advective transport over root wall
         // compute correct upwind concentration
         if (sourceValues[conti0EqIdx] > 0)
             sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]*x1D;
         else
             sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]*x3D;
 
-        //! diffusive transport over root wall
+        //! Diffusive transport over root wall
         const auto molarDensityD20 = 1000 / 0.020;
         sourceValues[transportEqIdx] += 2 * M_PI * rootRadius * 1.0e-8 * (x1D - x3D) * molarDensityD20;
 
@@ -303,7 +304,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *
@@ -329,7 +330,7 @@ public:
         }();
 
         PrimaryVariables priVars(0.0);
-        //! hydrostatic pressure profile
+        //! Hydrostatic pressure profile
         priVars[pressureIdx] = (nonWettingReferencePressure() - pcTop_)
                                 -9.81*1000*(globalPos[dimWorld-1] - gg.bBoxMax()[dimWorld-1]);
         priVars[transportCompIdx] = xTracer;
@@ -349,6 +350,6 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

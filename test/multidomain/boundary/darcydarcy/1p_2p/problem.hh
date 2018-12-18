@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePTests
- * \brief The properties for the incompressible test
+ * \ingroup BoundaryTests
+ * \brief The properties for the incompressible test.
  */
+
 #ifndef DUMUX_ONEP_SUB_TEST_PROBLEM_HH
 #define DUMUX_ONEP_SUB_TEST_PROBLEM_HH
 
@@ -31,9 +32,13 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
- * \brief  Multidomain test problem for the incompressible one-phase model
- * \todo doc me!
+ * \ingroup BoundaryTests
+ * \brief  Multidomain test problem for the incompressible one-phase model.
+ *
+ * The circular model domain consists of two subdomains:
+ * an inner circle and an outer ring.
+ * Methane is injected in the center and spreads over the
+ * coupling boundary into the outer domain.
  */
 template<class TypeTag, std::size_t tag>
 class OnePTestProblem
@@ -95,11 +100,10 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * This is the method for the case where the Neumann condition is
-     * potentially solution dependent
+     * potentially solution dependent.
      *
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
@@ -124,8 +128,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      *
@@ -141,8 +144,7 @@ public:
     }
 
     /*!
-     * \brief Applies a vector of point sources. The point sources
-     *        are possibly solution dependent.
+     * \brief Applies a vector of point sources which are possibly solution dependent.
      *
      * \param pointSources A vector of PointSource s that contain
               source values for all phases and space positions.
@@ -176,7 +178,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */

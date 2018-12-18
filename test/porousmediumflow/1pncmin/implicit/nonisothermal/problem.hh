@@ -19,8 +19,10 @@
 /*!
  * \file
  * \ingroup OnePNCMinTests
- * \brief Definition of a problem for thermochemical heat storage using \f$ \textnormal{CaO},   \textnormal{Ca} \left( \textnormal{OH} \right)_2\f$.
+ * \brief Definition of a problem for thermochemical heat storage using \f$ \textnormal{CaO},
+ * \textnormal{Ca} \left( \textnormal{OH} \right)_2\f$.
  */
+
 #ifndef DUMUX_THERMOCHEM_PROBLEM_HH
 #define DUMUX_THERMOCHEM_PROBLEM_HH
 
@@ -104,7 +106,8 @@ struct UseMoles<TypeTag, TTag::ThermoChem> { static constexpr bool value = true;
  * \brief Test for the 1pncmin model in combination with the NI model for a quasi batch
  * reaction of Calciumoxyde to Calciumhydroxide.
  *
- * The boundary conditions of the batch test are such, that there are no gradients for temperature, pressure and gas water concentration within the reactor.
+ * The boundary conditions of the batch test are such, that there are no gradients
+ * for temperature, pressure and gas water concentration within the reactor.
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_1pncminni_box -ParameterFile </tt>
@@ -157,11 +160,6 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     ThermoChemProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
@@ -223,8 +221,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment
      *
      * \param globalPos The global position
      */
@@ -299,8 +296,8 @@ public:
     }
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume in units of \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-control volume in units of \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$.
      *
      * This is the method for the case where the source term is
      * potentially solution dependent and requires some quantities that
@@ -312,7 +309,7 @@ public:
      * \param scv The subcontrolvolume
      *
      * For this method, the \a values parameter stores the conserved quantity rate
-     * generated or annihilate per volume unit. Positive values mean
+     * generated or annihilated per volume unit. Positive values mean
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
@@ -347,7 +344,7 @@ public:
 
 
    /*!
-     * \brief Return the permeability
+     * \brief Returns the permeability.
      */
     const std::vector<Scalar>& getPerm()
     {
@@ -355,7 +352,7 @@ public:
     }
 
    /*!
-     * \brief Return the porosity
+     * \brief Returns the porosity.
      */
     const std::vector<Scalar>& getPoro()
     {
@@ -363,7 +360,7 @@ public:
     }
 
      /*!
-     * \brief Return the reaction rate
+     * \brief Returns the reaction rate.
      */
     const std::vector<Scalar>& getRRate()
     {
@@ -371,7 +368,9 @@ public:
     }
 
     /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     * \brief Adds additional VTK output data to the VTKWriter.
+     *
+     * Function is called by the output module on every write.
      */
     void updateVtkOutput(const SolutionVector& curSol)
     {
@@ -412,6 +411,6 @@ private:
     Scalar timeStepSize_;
 };
 
-} //end namespace
+} // end namespace Dumux
 
 #endif

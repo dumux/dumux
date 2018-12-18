@@ -18,12 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
- * \ingroup OnePTests
- * \ingroup PoroElastic
+ * \ingroup PoromechanicsTests
  * \brief The spatial parameters class for the test problem using the
- *        1p box model
+ *        1p box model.
  */
+
 #ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
 #define DUMUX_1P_TEST_SPATIALPARAMS_HH
 
@@ -36,11 +35,9 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
- * \ingroup OnePTests
- * \ingroup PoroElastic
+ * \ingroup PoromechanicsTests
  * \brief The spatial parameters class for the test problem using the
- *        1p box model
+ *        1p box model.
  */
 template<class FVGridGeometry, class Scalar, class CouplingManager>
 class OnePSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar,
@@ -66,11 +63,11 @@ public:
     , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
     {}
 
-    //! Return the permeability at a given position
+    //! Returns the permeability at a given position.
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPoss) const
     { return permeability_; }
 
-    //! Return the porosity for a sub-control volume
+    //! Returns the porosity for a sub-control volume.
     template<class ElementSolution>
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
@@ -85,7 +82,7 @@ public:
         return PorosityDeformation<Scalar>::evaluatePorosity(poroMechGridGeom, element, scv.center(), poroMechElemSol, initPorosity_);
     }
 
-    //! returns reference to the coupling manager.
+    //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 

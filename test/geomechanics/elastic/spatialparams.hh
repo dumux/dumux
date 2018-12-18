@@ -18,21 +18,21 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Definition of the spatial parameters for the linear elasticity problem
+ * \ingroup GeomechanicsTests
+ * \brief Definition of the spatial parameters for the linear elasticity problem.
  */
+
 #ifndef DUMUX_ELASTIC_SPATIAL_PARAMS_HH
 #define DUMUX_ELASTIC_SPATIAL_PARAMS_HH
 
 #include <dumux/geomechanics/lameparams.hh>
 #include <dumux/material/spatialparams/fvelastic.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup Geomechanics
- * \ingroup Elastic
- * \brief Definition of the spatial parameters for the linear elasticity problem
+ * \ingroup GeomechanicsTests
+ * \brief Definition of the spatial parameters for the linear elasticity problem.
  */
 template<class Scalar, class FVGridGeometry>
 class ElasticSpatialParams : public FVSpatialParamsElastic< Scalar,
@@ -48,10 +48,9 @@ class ElasticSpatialParams : public FVSpatialParamsElastic< Scalar,
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    //! export the type of the lame parameters
+    //! Export the type of the lame parameters
     using LameParams = Dumux::LameParams<Scalar>;
 
-    //! The constructor
     ElasticSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -59,12 +58,12 @@ public:
         lameParams_.setMu(3e9);
     }
 
-    //! Define the Lame parameters
+    //! Defines the Lame parameters.
     const LameParams& lameParamsAtPos(const GlobalPosition& globalPos) const
     { return lameParams_; }
 
 private:
     LameParams lameParams_;
 };
-}
+} // end namespace Dumux
 #endif

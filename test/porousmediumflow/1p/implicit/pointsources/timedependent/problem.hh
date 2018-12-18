@@ -22,18 +22,17 @@
  * \brief A test problem for the one-phase model:
  * Water is injected in one single point in the middle of the domain.
  */
+
 #ifndef DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_HH
 #define DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_HH
 
 #include "../timeindependent/problem.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class OnePSingularityProblemTimeDependent;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct OnePSingularityTimeDependentCCTpfa { using InheritsFrom = std::tuple<OnePSingularityCCTpfa>; };
@@ -89,7 +88,7 @@ public:
     // \{
 
     /*!
-     * \brief Applies a vector of point sources. The point sources
+     * \brief Applies a vector of point sources which
      *        are possibly solution dependent.
      *
      * \param pointSources A vector of PointSource s that contain
@@ -125,6 +124,6 @@ private:
     Scalar time_ = 0.0;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

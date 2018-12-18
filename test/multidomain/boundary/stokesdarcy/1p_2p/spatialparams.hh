@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePTests
- * \brief The spatial parameters class for the test problem using the 1p cc model
+ * \ingroup BoundaryTests
+ * \brief The spatial parameters class for the test problem using the 1p cc model.
  */
+
 #ifndef DUMUX_CONSERVATION_SPATIAL_PARAMS_HH
 #define DUMUX_CONSERVATION_SPATIAL_PARAMS_HH
 
@@ -29,15 +30,13 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup TwoPModel
- * \ingroup ImplicitTestProblems
+ * \ingroup BoundaryTests
  *
  * \brief The spatial parameters class for the test problem using the
- *        1p cc model
+ *        1p cc model.
  */
 template<class FVGridGeometry, class Scalar>
 class ConservationSpatialParams
@@ -83,14 +82,14 @@ public:
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     { return permeability_; }
 
-    /*! \brief Define the porosity in [-].
+    /*! \brief Defines the porosity in [-].
      *
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
 
-    /*! \brief Define the Beavers-Joseph coefficient in [-].
+    /*! \brief Defines the Beavers-Joseph coefficient in [-].
      *
      * \param globalPos The global position
      */
@@ -99,12 +98,13 @@ public:
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law.
-     *        In this test, we use element-wise distributed material parameters.
+     *
+     * In this test, we use element-wise distributed material parameters.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return the material parameters object
+     * \return The material parameters object
      */
     template<class ElementSolutionVector>
     const MaterialLawParams& materialLawParams(const Element& element,
@@ -115,8 +115,8 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
      * \param globalPos The global position
+     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
@@ -130,6 +130,6 @@ private:
     static constexpr Scalar eps_ = 1.0e-7;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

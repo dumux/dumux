@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup TracerTests
- * \brief The spatial params the incompressible test
+ * \brief The spatial parameters for the incompressible test
  */
+
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 
@@ -32,7 +33,7 @@ namespace Dumux {
 
 /*!
  * \ingroup TracerTests
- * \brief The spatial params the incompressible test
+ * \brief The spatial parameters for the incompressible test
  */
 template<class FVGridGeometry, class Scalar>
 class OnePTestSpatialParams
@@ -76,7 +77,7 @@ public:
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
      * \param element The element
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
@@ -94,8 +95,7 @@ public:
     }
 
     /*!
-     * \brief Function for defining the porosity.
-     *        That is possibly solution dependent.
+     * \brief Function for defining the porosity which is possibly solution dependent.
      *
      * \return the porosity
      */

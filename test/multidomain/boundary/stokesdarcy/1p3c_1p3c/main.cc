@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief A test problem for the coupled Stokes/Darcy problem (1p)
+ * \ingroup BoundaryTests
+ * \brief A test problem for the coupled Stokes/Darcy problem (1p).
  */
+
 #include <config.h>
 
 #include <ctime>

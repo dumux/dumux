@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup RichardsTests
- * \brief spatial parameters for the RichardsAnalyticalProblem
+ * \brief Spatial parameters for the RichardsAnalyticalProblem.
  */
+
 #ifndef DUMUX_RICHARDS_ANALYTICAL_SPATIAL_PARAMETERS_HH
 #define DUMUX_RICHARDS_ANALYTICAL_SPATIAL_PARAMETERS_HH
 
@@ -38,7 +39,7 @@ namespace Dumux {
 /*!
  * \ingroup RichardsModel
  * \ingroup ImplicitTestProblems
- * \brief The spatial parameters for the RichardsAnalyticalProblem
+ * \brief The spatial parameters for the RichardsAnalyticalProblem.
  */
 template<class FVGridGeometry, class Scalar>
 class RichardsAnalyticalSpatialParams

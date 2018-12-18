@@ -20,7 +20,7 @@
  * \file
  * \ingroup TwoPNCTests
  * \brief Definition of the spatial parameters for the fuel cell
- *        problem which uses the isothermal/non-insothermal 2pnc box model
+ *        problem which uses the isothermal/non-insothermal 2pnc box model.
  */
 
 #ifndef DUMUX_FUELCELL_SPATIAL_PARAMS_HH
@@ -35,9 +35,9 @@
 
 namespace Dumux {
 /*!
- * \ingroup TwoPNCMinModel
+ * \ingroup TwoPNCTests
  * \brief Definition of the spatial parameters for the FuelCell
- *        problem which uses the isothermal 2p2c box model
+ *        problem which uses the isothermal 2p2c box model.
  */
 template<class FVGridGeometry, class Scalar>
 class FuelCellSpatialParams
@@ -62,11 +62,6 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     FuelCellSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), K_(0)
     {
@@ -95,7 +90,7 @@ public:
     { return K_; }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the spatial parameters
+     * \brief Defines the porosity \f$[-]\f$ of the spatial parameters
      *
      * \param globalPos The global position
      */
@@ -108,7 +103,8 @@ public:
     }
 
     /*!
-     * \brief return the parameter object for the Brooks-Corey material law which depends on the position
+     * \brief Returns the parameter object for the Brooks-Corey material law
+     * which depends on the position.
      *
      * \param globalPos The global position
      */
@@ -118,9 +114,9 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
      * \param globalPos The position of the center of the element
-     * \note we set a hydrophobic material
+     * \return The wetting phase index
+     * \note We set a hydrophobic material.
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const

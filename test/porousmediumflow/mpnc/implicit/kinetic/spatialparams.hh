@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup MPNCTests
- * \brief spatialparameters for the kinetic test-case of the mpnc model. "Poor-mans" coupling of free-flow and porous medium.
+ * \brief Spatial parameters for the kinetic test-case of the mpnc model.
  *
+ * "Poor-mans" coupling of free-flow and porous medium.
  */
 #ifndef DUMUX_EVAPORATION_ATMOSPHERE_SPATIALPARAMS_HH
 #define DUMUX_EVAPORATION_ATMOSPHERE_SPATIALPARAMS_HH
@@ -61,14 +62,14 @@ class EvaporationAtmosphereSpatialParams
 
     static constexpr auto dimWorld = GridView::dimensionworld;
 public:
-    //! export the type used for the permeability
+    //! Export the type used for the permeability
     using PermeabilityType = Scalar;
-    //! export the material law type used
+    //! Export the material law type used
     using MaterialLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
-    //! convenience aliases of the law parameters
+    //! Convenience aliases of the law parameters
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    //! export the types used for interfacial area calculations
+    //! Export the types used for interfacial area calculations
     using EffectiveIALawAws = AwnSurfacePolynomial2ndOrder<Scalar>;
     using EffectiveIALawAwn = AwnSurfacePcMaxFct<Scalar>;
     using EffectiveIALawAns = AwnSurfaceExpSwPcTo3<Scalar>;
@@ -174,7 +175,7 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return the porosity
+     * \return The porosity
      */
     template<class ElementSolution>
     Scalar porosity(const Element& element,
@@ -206,11 +207,11 @@ public:
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
-    /*!\brief Return a reference to the container object for the
+    /*!\brief Returns a reference to the container object for the
      *        parametrization of the surface between wetting and non-Wetting phase.
      *
      * The position is determined based on the coordinate of
-     * the vertex belonging to the considered sub control volume.
+     * the vertex belonging to the considered sub-control volume.
      *
      * \param element The finite element
      * \param scv The sub-control volume
@@ -229,11 +230,11 @@ public:
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
      }
 
-    /*!\brief Return a reference to the container object for the
+    /*!\brief Returns a reference to the container object for the
      *        parametrization of the surface between non-Wetting and solid phase.
      *
      *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
+     *        the vertex belonging to the considered sub-control volume.
      * \param element The finite element
      * \param scv The sub-control volume
      * \param elemSol The element solution
@@ -251,15 +252,15 @@ public:
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
      }
 
-    /*!\brief Return the maximum capillary pressure for the given pc-Sw curve
+    /*!\brief Returns the maximum capillary pressure for the given pc-Sw curve
      *
-     *        Of course physically there is no such thing as a maximum capillary pressure.
-     *        The parametrization (VG/BC) goes to infinity and physically there is only one pressure
-     *        for single phase conditions.
-     *        Here, this is used for fitting the interfacial area surface: the capillary pressure,
-     *        where the interfacial area is zero.
-     *        Technically this value is obtained as the capillary pressure of saturation zero.
-     *        This value of course only exists for the case of a regularized pc-Sw relation.
+     * Of course physically there is no such thing as a maximum capillary pressure.
+     * The parametrization (VG/BC) goes to infinity and physically there is only one pressure
+     * for single phase conditions.
+     * Here, this is used for fitting the interfacial area surface: the capillary pressure,
+     * where the interfacial area is zero.
+     * Technically this value is obtained as the capillary pressure of saturation zero.
+     * This value of course only exists for the case of a regularized pc-Sw relation.
      * \param element The finite element
      * \param scv The sub-control volume
      * \param elemSol The element solution
@@ -270,8 +271,10 @@ public:
                        const ElementSolution &elemSol) const
     { return aWettingNonWettingSurfaceParams_.pcMax() ; }
 
-    /*!\brief Return the characteristic length for the mass transfer.
-     * \param globalPos The position in global coordinates.*/
+    /*!
+     * \brief Returns the characteristic length for the mass transfer.
+     * \param globalPos The position in global coordinates.
+     */
     const Scalar characteristicLengthAtPos(const  GlobalPosition & globalPos) const
     {
         if (inFF_(globalPos) )
@@ -281,8 +284,10 @@ public:
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
-    /*!\brief Return the pre factor the the energy transfer
-     * \param globalPos The position in global coordinates.*/
+    /*!
+     * \brief Return the pre factor the the energy transfer
+     * \param globalPos The position in global coordinates.
+     */
     const Scalar factorEnergyTransferAtPos(const  GlobalPosition & globalPos) const
     {
         if (inFF_(globalPos) )
@@ -292,8 +297,10 @@ public:
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
-    /*!\brief Return the pre factor the the mass transfer
-     * \param globalPos The position in global coordinates.*/
+    /*!
+     * \brief Return the pre factor the the mass transfer
+     * \param globalPos The position in global coordinates.
+     */
     const Scalar factorMassTransferAtPos(const  GlobalPosition & globalPos) const
     {
         if (inFF_(globalPos) )
@@ -306,8 +313,8 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
      * \param globalPos The global position
+     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
@@ -315,27 +322,32 @@ public:
         return FluidSystem::phase0Idx;
     }
 
-    /*!\brief Give back whether the tested position (input) is a specific region (porous medium part) in the domain
+    /*!
+     * \brief Returns whether the tested position is in the porous medium part of the domain
      *
-     * This setting ensures, that the boundary between the two domains has porous medium properties.
-     * This is desirable, because I want to observe the boundary of the porous domain.
-     * However, the position has to be the coordinate of the vertex and not the integration point
-     * of the boundary flux. If the position is the ip of the neumann flux this leads to a situation
-     * where the vertex belongs to porous medium and there is nonetheless injection over the boundary.
-     * That does not work.
+     * This setting ensures that the boundary between the two domains has porous
+     * medium properties. This is desirable, because I want to observe the
+     * boundary of the porous domain.
+     * However, the position has to be the coordinate of the vertex and not the
+     * integration point of the boundary flux. If the position is the ip of the
+     * Neumann flux this leads to a situation
+     * where the vertex belongs to porous medium and there is nonetheless
+     * injection over the boundary. That does not work.
      * -> be careful with neumannAtPos
      */
     bool inPM_(const GlobalPosition & globalPos) const
     { return ( (globalPos[dimWorld-1] > 0. - eps_) and (globalPos[dimWorld-1] < (heightPM_ + eps_) ) );   }
 
     /*!
-     * \brief Give back whether the tested position (input) is a specific region (above PM / "free flow") in the domain
+     * \brief Returns whether the tested position is above PM / "free flow" in the domain.
      *
-     * This setting ensures, that the boundary between the two domains has porous medium properties.
-     * This is desirable, because I want to observe the boundary of the porous domain.
-     * However, the position has to be the coordinate of the vertex and not the integration point
-     * of the boundary flux. If the position is the ip of the neumann flux this leads to a situation
-     * where the vertex belongs to porous medium and there is nonetheless injection over the boundary.
+     * This setting ensures that the boundary between the two domains has porous
+     * medium properties. This is desirable, because I want to observe the
+     * boundary of the porous domain.
+     * However, the position has to be the coordinate of the vertex and not the
+     * integration point of the boundary flux. If the position is the ip of the
+     * Neumann flux this leads to a situation where the vertex belongs to porous
+     * medium and there is nonetheless injection over the boundary.
      * That does not work.
      * -> be careful with neumannAtPos
      */

@@ -44,11 +44,7 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup ThreePTests
- * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
- *        the unsaturated and the saturated groundwater zone.
- */
+
 template <class TypeTag>
 class InfiltrationThreePProblem;
 
@@ -99,7 +95,7 @@ struct SpatialParams<TypeTag, TTag::InfiltrationThreeP>
  * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
  *        the unsaturated and the saturated groundwater zone.
  *
- * The 2D domain of this test problem is 500 m long and 10 m deep, where
+ * The 2D domain of this test problem is 500m long and 10m deep, where
  * the lower part represents a slightly inclined groundwater table, and the
  * upper part is the vadose zone.
  * A LNAPL (Non-Aqueous Phase Liquid which is lighter than water) infiltrates
@@ -117,7 +113,7 @@ struct SpatialParams<TypeTag, TTag::InfiltrationThreeP>
  * This problem uses the \ref ThreePModel.
  *
  * This problem should typically be simulated for 30 days.
- * A good choice for the initial time step size is 60 s.
+ * A good choice for the initial time step size is 60s.
  * To adjust the simulation time it is necessary to edit the file naplinfiltrationexercise.input
  *
  * To run the simulation execute the following line in shell:
@@ -151,11 +147,6 @@ class InfiltrationThreePProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     InfiltrationThreePProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -222,8 +213,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      *
@@ -236,8 +226,7 @@ public:
         return values;
     }
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param globalPos The position of the integration point of the boundary segment.
      *
@@ -270,7 +259,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *

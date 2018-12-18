@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief Test for the staggered grid Navier-Stokes model with analytical solution (Kovasznay 1947)
+ * \brief Test for the staggered grid Navier-Stokes model with analytical solution (Kovasznay 1948, \cite Kovasznay1948)
  */
+
 #ifndef DUMUX_KOVASZNAY_TEST_PROBLEM_HH
 #define DUMUX_KOVASZNAY_TEST_PROBLEM_HH
 
@@ -34,13 +35,11 @@
 #include <dumux/freeflow/navierstokes/model.hh>
 #include "../l2error.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class KovasznayTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct KovasznayTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
@@ -69,12 +68,15 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
-}
+} // end namespace Properties
 
 /*!
  * \ingroup NavierStokesTests
- * \brief  Test problem for the staggered grid (Kovasznay 1947)
- * \todo doc me!
+ * \brief  Test problem for the staggered grid (Kovasznay 1948, \cite Kovasznay1948)
+ *
+ * A two-dimensional Navier-Stokes flow with a periodicity in one direction
+ * is considered. The set-up represents a wake behind a two-dimensional grid
+ * and is chosen in a way such that an exact solution is available.
  */
 template <class TypeTag>
 class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
@@ -140,7 +142,7 @@ public:
     }
 
    /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
@@ -149,7 +151,7 @@ public:
 
 
    /*!
-     * \brief Return the sources within the domain.
+     * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
      */
@@ -209,7 +211,7 @@ public:
     }
 
    /*!
-     * \brief Return dirichlet boundary values at a given position
+     * \brief Returns Dirichlet boundary values at a given position.
      *
      * \param globalPos The global position
      */
@@ -220,7 +222,7 @@ public:
     }
 
    /*!
-     * \brief Return the analytical solution of the problem at a given position
+     * \brief Returns the analytical solution of the problem at a given position.
      *
      * \param globalPos The global position
      */
@@ -245,7 +247,7 @@ public:
     // \{
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -260,7 +262,7 @@ public:
     }
 
    /*!
-     * \brief Returns the analytical solution for the pressure
+     * \brief Returns the analytical solution for the pressure.
      */
     auto& getAnalyticalPressureSolution() const
     {
@@ -276,7 +278,7 @@ public:
     }
 
    /*!
-     * \brief Returns the analytical solution for the velocity at the faces
+     * \brief Returns the analytical solution for the velocity at the faces.
      */
     auto& getAnalyticalVelocitySolutionOnFace() const
     {
@@ -286,7 +288,9 @@ public:
 private:
 
    /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     * \brief Adds additional VTK output data to the VTKWriter.
+     *
+     * Function is called by the output module on every write.
      */
     void createAnalyticalSolution_()
     {
@@ -331,6 +335,6 @@ private:
     std::vector<VelocityVector> analyticalVelocity_;
     std::vector<VelocityVector> analyticalVelocityOnFace_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif
