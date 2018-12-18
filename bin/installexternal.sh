@@ -308,9 +308,12 @@ installOPM()
     # show additional information
     echo "In addition, it might be necessary to set manually some"
     echo "CMake variables in the CMAKE_FLAGS section of the .opts-file:"
-    echo "  -DOPM_COMMON_ROOT=/path/to/opm-common \\"
-    echo "  -Decl_DIR=/path/to/libecl/build \\"
-    echo "  -DUSE_MPI=ON \\"
+    echo "  -Decl_DIR=$TOPDIR/libecl/build"
+    echo "  -DUSE_MPI=ON"
+
+    # show some opm prerequisites
+    echo "Maybe you also have to install the following packages (see the opm prerequisites at opm-project.org): "
+    echo "  BLAS, LAPACK, Boost, SuperLU, SuiteSparse"
 
     cd $TOPDIR
 }
@@ -435,7 +438,7 @@ usage()
     echo "  multidomain      Download dune-multidomain."
     echo "  multidomaingrid  Download and patch dune-multidomaingrid."
     echo "  nlopt            Download and install nlopt."
-    echo "  opm              Download opm modules required for dune-cornerpoint."
+    echo "  opm              Download opm modules required for cornerpoint grids."
     echo "  pdelab           Download dune-pdelab."
     echo "  typetree         Download dune-typetree."
     echo "  ug               Install the UG grid library."
