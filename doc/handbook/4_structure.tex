@@ -15,7 +15,6 @@
       \texttt{*.cc}, the problem definition \texttt{*problem.hh}, and an input file \texttt{*.input}.
       If necessary, spatially dependent parameters are defined in \texttt{*spatialparameters.hh}.
       For more detailed descriptions of the tests, please have a look at the Doxygen documentation.
-\item \texttt{tutorial}: contains the tutorials.
 \end{itemize}
 
 \begin{figure}
@@ -71,26 +70,27 @@
     [.\node[SecondLevel] {properties};
       \node[ThirdLevel] {Base properties for all models.};
     ]
+    [.\node[SecondLevel] {typetraits};
+      \node[ThirdLevel] {Helper classes to query type information on compile-time. };
+    ]
   ]
   [.\node[FirstLevel] {discretization};
-%     [.\node[SecondLevel] {\emph{models}};
-      \node[ThirdLevel] {Common methods for all discretizations: variable caching, advective and diffusive fluxes, upwinding...};
-%     ]
-    [.\node[SecondLevel] {box};
-      \node[ThirdLevel] {Specific files for the box finite volume method:
-                         specifications for advective and diffusive fluxes...};
-    ]
-    [.\node[SecondLevel] {cellcentered};
-      \node[ThirdLevel] {Specific files for cell centered finite volume methods.};
-    ]
-    [.\node[SecondLevel] {staggered};
-      \node[ThirdLevel] {Specific files for staggered finite volume method.};
+      \node[ThirdLevel] {Common methods for all discretizations (box, cell-centered TPFA/MPFA, staggered grid): variable caching, advective and diffusive fluxes, ...};
+  ]
+  [.\node[FirstLevel] {flux};
+    [\node[ThirdLevel] {
+            Collection of classes used to calculate advective and diffusive fluxes.};
     ]
   ]
   [.\node[FirstLevel] {freeflow};
     [.\node[SecondLevel] {\emph{models}};
       \node[ThirdLevel] {Single-phase free flow models using Navier-Stokes
                          and eddy-viscosity based Reynolds-averaged Navier-Stokes turbulence models.};
+    ]
+  ]
+  [.\node[FirstLevel] {geomechanics};
+    [.\node[SecondLevel] {\emph{models}};
+      \node[ThirdLevel] {Elastic and poro-elastic geomechanics models.};
     ]
   ]
   [.\node[FirstLevel] {io};
@@ -126,10 +126,17 @@
     ]
     [.\node[SecondLevel] {fluidstates};
       \node[ThirdLevel] {Fluid states are responsible for caching the thermodynamic
-                         configuration of a system at a given spatial and temporal position.};
+                         configuration of a fluid system at a given spatial and temporal position.};
     ]
     [.\node[SecondLevel] {fluidsystems};
       \node[ThirdLevel] {Fluid systems express the thermodynamic relations between quantities.};
+    ]
+    [.\node[SecondLevel] {solidstates};
+      \node[ThirdLevel] {Solid states are responsible for caching the thermodynamic
+                         configuration of a solid system at a given spatial and temporal position.};
+    ]
+    [.\node[SecondLevel] {solidsystems};
+      \node[ThirdLevel] {Solid systems express the thermodynamic properties of a solid.};
     ]
     [.\node[SecondLevel] {spatialparams};
       \node[ThirdLevel] {Base class for all spatially dependent variables, like permeability and
@@ -137,17 +144,17 @@
                          specified in the specific files of the respective models.};
     ]
   ]
-  [.\node[FirstLevel] {mixeddimension};
+  [.\node[FirstLevel] {multidomain};
     \node[ThirdLevel] {
-          Coupled model with different dimensions.};
+          Common infrastructure to couple multiple domains, models or physics.};
     [.\node[SecondLevel] {embedded};
-      \node[ThirdLevel] {Embedded mixed dimension method.};
+      \node[ThirdLevel] {Embedding of a lower-dimensional model into a higher-dimensional one};
     ]
     [.\node[SecondLevel] {facet};
-      \node[ThirdLevel] {Facet mixed dimension method.};
+      \node[ThirdLevel] {Mixed-dimensional coupling at facets.};
     ]
-    [.\node[SecondLevel] {glue};
-      \node[ThirdLevel] {Grid glue backend.};
+    [.\node[SecondLevel] {boundary};
+      \node[ThirdLevel] {Coupling at the domain boundaries.};
     ]
   ]
   [.\node[FirstLevel] {nonlinear};

@@ -5,9 +5,7 @@ A list of all available parameters is provided in the Doxygen documentation: \te
 
 After having run the example application from section \ref{quick-start-guide} you will
 get the following output at the end of the simulation run
-\footnote{If you did not get the output, restart the application the following way:
-\texttt{./test{\_}2p{\_}incompressible{\_}tpfa test{\_}2p.input -PrintParameters true},
-this will print the parameters once your simulation is finished}:
+\footnote{If you did not get the output, add \texttt{Parameters::print();} to your main file.}:
 \begin{lstlisting}[style=Bash]
 # Runtime-specified parameters used:
 [ Grid ]
@@ -24,8 +22,9 @@ DtInitial = "250"
 TEnd = "3000"
 
 # Default parameters used:
-[ Implicit ]
+[ Assembly ]
 NumericDifferenceMethod = "1"
+[ Flux ]
 UpwindWeight = "1.0"
 [ LinearSolver ]
 MaxIterations = "250"
@@ -64,20 +63,33 @@ A number of things can be learned:
 
 
 \subsection{Parameter Values}
-If you want to get the value of a parameter please use:
+To get the value of an input parameter please use:
 \begin{lstlisting}[name=propsyscars,style=DumuxCode]
-paramname_ = getParam<TYPE>("GROUPNAME.PARAMNAME");
+static const TYPE paramname = getParam<TYPE>("GROUPNAME.PARAMNAME");
 \end{lstlisting}
 
 If you also want to set a default value for a parameter, just add it like this:
 
 \begin{lstlisting}[name=propsyscars,style=DumuxCode]
-paramname_ = getParam<TYPE>("GROUPNAME.PARAMNAME", default);
+static const TYPE paramname = getParam<TYPE>("GROUPNAME.PARAMNAME", default);
 \end{lstlisting}
 
-For further information you can also look at the \Dumux tutorial, especially exercise 1. 
+As this function call is relatively expensive, the respective variables should always be \texttt{static} (e.g., if used in a loop). When dealing with multiple group names, e.g., in the context of coupled models, the fowolling methods might be more convenient:
 
-All applications have a help message which you can read by giving
-\texttt{--help} as a command line argument to the application.
-For further details, please have a look at \texttt{Dune::ParameterTree}
-in the \Dune documentation.
+\begin{lstlisting}[name=propsyscars,style=DumuxCode]
+auto modelParamGroup0 = "Model0";
+static const TYPE paramname0 = getParamFromGroup<TYPE>(modelParamGroup0, "GROUPNAME.PARAMNAME");
+auto modelParamGroup1 = "Model1";
+static const TYPE paramname1 = getParamFromGroup<TYPE>(modelParamGroup1, "GROUPNAME.PARAMNAME");
+\end{lstlisting}
+
+The \texttt{FVProblem} class provides a convenience function \texttt{paramGroup()}.
+
+The parameters can then be specified in the input file:
+
+\begin{lstlisting}[style=Bash]
+[ Model0.Grid ]
+File = file0.dgf
+[ Model1.Grid ]
+File = file1.dgf
+\end{lstlisting}

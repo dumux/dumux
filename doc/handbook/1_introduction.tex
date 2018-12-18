@@ -25,7 +25,7 @@ libraries\footnote{In fact, the performance penalty resulting from the
 use of \Dune's grid interface is usually negligible~\cite{BURRI2006}.}.
 \begin{figure}[hbt]
   \centering
-  \includegraphics[width=.5\linewidth, keepaspectratio]{PNG/dunedesign.png}
+  \includegraphics[width=.5\linewidth, keepaspectratio]{png/dunedesign.png}
   \caption{
     \label{fig:dune-design}
     A high-level overview of \Dune's design is available on the project's
@@ -49,7 +49,10 @@ entity can be thought of as a prototype for the actual grid
 entity. For example, if we used a grid which applied hexahedrons as cells,
 the reference element for each cell would be the unit cube $[0, 1]^3$
 and the geometry function would scale and translate the cube so that
-it matches the grid's cell. For a more thorough description of \Dune's
+it matches the grid's cell. A quick overview of reference elements and the
+related numbering can be gotten from the DUNE cheat sheet
+(\url{https://www.dune-project.org/pdf/dune-cheat-sheet.pdf}).
+For a more thorough description of \Dune's
 grid definition, see~\cite{BASTIAN2008}.
 
 In addition to the grid interface, \Dune also provides quite a few
@@ -71,3 +74,17 @@ spatial and temporal discretization schemes as well as nonlinear solvers,
 to general concepts for model coupling.
 Moreover, \Dumux includes ready to use numerical models and a few example applications.
 
+This is the handbook to a new major version update of \Dumux: version 3.0.
+The release contains considerable improvements and many new features compared to the 2.x versions. 
+Due to the major update, backwards compatibility with the last release 2.12 cannot be assured.
+To facilitate the transition for our users, we have created a
+git wiki entry describing how to update programs from version 2.12 to version 3.0.
+It is available online:
+\url{https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/wikis/Updating-programs-from-version-2.12-to-version-3.0}.
+The guide leads in detail through the interface changes from 2.12 to 3.0,
+concerning the \texttt{Problem} class, the \texttt{SpatialParams} class,
+the \texttt{Parameters} and \texttt{Properties}, i.e. the main user interface.
+Starting with version 3.0.0, all minor
+version updates will certainly be backward compatible again with at least the last minor version.
+We highly recommend all our users to transition with us to \Dumux-3.0
+and wish everyone a brand-new and exciting simulation experience.
