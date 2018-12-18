@@ -1,97 +1,70 @@
 \section{Parallel Computation}
 \label{sec:parallelcomputation}
-Multicore processors are standard nowadays and parallel programming is the key to gain
-performance from modern computers. This section explains how \Dumux can be used 
-on multicore systems, ranging from the users desktop computer to high performance
-computing clusters.  
+This section explains how \Dumux can be used
+on multicore / multinode systems.
 
-There are different concepts and methods for parallel programming, they are
-often grouped in \textit{shared-memory} and \textit{distributed-memory}  
-apporaches. The parallelization in \Dumux is based on the 
-\textit{Message Passing Interface} (MPI), which is usually called MPI parallelization (distributed-memory approach). 
-It is the MPI parallelization that allows the user to run
-\Dumux applications in parallel on a desktop computer, the users laptop or 
-large high performance clusters. However, the chosen \Dumux 
-model must support parallel computations, which is the case for the most \Dumux applications.
+There are different concepts and methods for parallel programming, which are
+often grouped in \textit{shared-memory} and \textit{distributed-memory}
+approaches. The parallelization in \Dumux is based on the model supported by Dune which is currently based on
+\textit{Message Passing Interface} (MPI) (distributed-memory approach).
 
-The main idea behind the MPI parallelization is the concept of \textit{domain 
-decomposition}. For parallel simulations, the computational domain is splitted into 
-subdomains and one process (\textit{rank}) is used to solves the local problem of each 
-subdomain. During the global solution process, some data exchange between the 
-ranks/subdomains is needed. MPI is used to send data to other ranks and to receive 
-data from other ranks. 
-Most grid managers contain own domain decomposition methods to split the 
-computational domain  into subdomains. Some grid managers also support external 
-tools like METIS or ParMETIS for partitioning.
+The main idea behind the MPI parallelization is the concept of \textit{domain
+decomposition}. For parallel simulations, the computational domain is split into
+subdomains and one process (\textit{rank}) is used to solve the local problem of each
+subdomain. During the global solution process, some data exchange between the
+ranks/subdomains is needed. MPI is used to send data to other ranks and to receive
+data from other ranks. The domain decomposition in Dune is handled by the grid managers.
+The grid is partitioned and distributed on several nodes. Most grid managers contain own domain decomposition methods to split the
+computational domain  into subdomains. Some grid managers also support external
+tools like METIS, ParMETIS, PTScotch or ZOLTAN for partitioning.
+On the other hand linear algebra types such as matrices and vectors
+do not know that they are in a parallel environment. Communication is then handled by the components of the
+parallel solvers. Currently, the only parallel solver backend is \texttt{Dumux::AMGBackend}, a parallel AMG-preconditioned
+BiCGSTAB solver.
 
-Before \Dumux can be started in parallel, a 
-MPI library (e.g. OpenMPI, MPICH or IntelMPI) 
-must be installed on the system and all \Dune modules and \Dumux must be recompiled.  
+In order for \Dumux simulation to run in parallel, an
+MPI library (e.g. OpenMPI, MPICH or IntelMPI) implementation
+must be installed on the system.
 
-
-\subsection{Prepare an Parallel Application}
-Not all parts of \Dumux can be used in parallel. One example are the linear solvers
-of the sequential backend. However, with the AMG backend \Dumux provides 
-a parallel solver backend based on Algebraic Multi Grid (AMG) that can be used in
-parallel. 
-If an application uses not allready the AMG backend, the 
-backend must be switched by the user to run the application also in parallel.
-
-First, the header files for the parallel AMG backend must be included.
+\subsection{Prepare a Parallel Application}
+Not all parts of \Dumux can be used in parallel. In order to switch to the parallel \texttt{Dumux::AMGBackend}
+solver backend include the respective header
 
 \begin{lstlisting}[style=DumuxCode]
 #include <dumux/linear/amgbackend.hh>
 \end{lstlisting}
 
-so that the backend can be used. The header files of the sequential backend
-
-\begin{lstlisting}[style=DumuxCode]
-#include <dumux/linear/seqsolverbackend.hh>
-\end{lstlisting}
-can be removed.
-
-Second, the linear solver must be switched to the AMG backend 
+Second, the linear solver must be switched to the AMG backend
 
 \begin{lstlisting}[style=DumuxCode]
 using LinearSolver = Dumux::AMGBackend<TypeTag>;
 \end{lstlisting}
 
-and the application must be compiled. 
+and the application must be recompiled. The parallel \texttt{Dumux::AMGBackend} instance has to be
+constructed with a \texttt{Dune::GridView} object and a mapper, in order to construct the
+parallel index set needed for communication.
 
-\subsection{Run an Parallel Application}
-The parallel simulation is started with the \textbf{mpirun} command.
+\begin{lstlisting}[style=DumuxCode]
+auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+\end{lstlisting}
+
+\subsection{Run a Parallel Application}
+The starting procedure for parallel simulations depends on the chosen MPI library.
+Most MPI implementations use the \textbf{mpirun} command
 
 \begin{lstlisting}[style=Bash]
 mpirun -np <n_cores> <executable_name>
 \end{lstlisting}
 
-\textit{np} sets the number of cores (\texttt{n\_cores}) that should be used for the 
-computation. On a cluster you usually have to use a queuing system (e.g. slurm) to 
-submit a job. 
+where \textit{-np} sets the number of cores (\texttt{n\_cores}) that should be used for the
+computation. On a cluster you usually have to use a queuing system (e.g. slurm) to
+submit a job. Check with your cluster administrator how to run parallel applications on the cluster.
 
 \subsection{Handling Parallel Results}
-For most models, the results should not differ between parallel and serial 
-runs. However, parallel computations are not naturally deterministic. 
-A typical case where one can not assume a deterministic behavior are models where
-small differences in the solution can cause large differences in the results 
-(e.g. for some turbulent flow problems). Nevertheless, it is useful to expect that
-the simulation results do not depend on the number of cores. Therefore one should question
-when a model is not deterministic. Typical reasons for a wrong non deterministic
-behaviour are errors in the parallel computation of boundary conditions or missing/reduced
-data exchange in higher order gradient approximations. 
-
-
-For serial computations \Dumux produces single vtu-files as default output format. 
-During a simulation, one vtu-file is written for every output step. 
-In the parallel case, one vtu-file for each step and processor is created. 
-For parallel computations an additional variable "process rank" is written 
-into the file. The process rank allows the user to inspect the subdomains 
-after the computation.
-
-\subsection{MPI scaling}
-For parallel computations the number of cores must be choosen 
-carefully. Using too many cores will not always lead to more performance, but 
-can produce a bad efficiency. One reason is that for small subdomains, the 
-communication between the subdomains gets the limiting factor for parallel computations. 
-The user should test the MPI scaling (realtion between the number of cores and the computation time) 
-for each specific application to ensure a fast and efficient use of the given resources.   
+For serial computations, \Dumux produces single vtu-files as default output format.
+During a simulation, one vtu-file is written for every output step.
+In the parallel case, one vtu-file for each step and processor is created.
+For parallel computations, an additional variable \texttt{"process rank"} is written
+into the file. The process rank allows the user to inspect the subdomains
+after the computation. The parallel vtu-files are combined in a single pvd file
+like in sequential simulations that can be opened with e.g. ParaView.
