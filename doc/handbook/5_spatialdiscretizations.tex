@@ -45,13 +45,13 @@ In the following, the discretization of the balance equation is going to be deri
 From the \textsc{Reynolds} transport theorem follows the general balance equation:
 
 \begin{equation}
-	\underbrace{\int_\Omega \frac{\partial}{\partial t} \: u \: dx}_{1}
-	+ \underbrace{\int_{\partial\Omega} (\mathbf{v} u + \mathbf w) \cdot \textbf n \: d\varGamma}_{2} = \underbrace{\int_\Omega q \: dx}_{3}
+	\underbrace{\int_\Omega \frac{\partial}{\partial t} \: u \, \mathrm{d}x}_{1}
+	+ \underbrace{\int_{\partial\Omega} (\mathbf{v} u + \mathbf w) \cdot \textbf n \, \mathrm{d}\Gamma}_{2} = \underbrace{\int_\Omega q \, \mathrm{d}x}_{3}
 \end{equation}
 
 \begin{equation}
-	f(u) = \int_\Omega \frac{\partial u}{\partial t} \: dx + \int_{\Omega} \nabla \cdot
-	\underbrace{\left[  \mathbf{v} u + \mathbf w(u)\right] }_{F(u)}  \: dx - \int_\Omega q \: dx = 0
+	f(u) = \int_\Omega \frac{\partial u}{\partial t} \, \mathrm{d}x + \int_{\Omega} \nabla \cdot
+	\underbrace{\left[  \mathbf{v} u + \mathbf w(u)\right] }_{F(u)}  \, \mathrm{d}x - \int_\Omega q \, \mathrm{d}x = 0
 \end{equation}
 where term 1 describes the changes of entity $u$ within a control volume over
 time, term 2 the advective, diffusive and dispersive fluxes over the interfaces
@@ -106,14 +106,14 @@ of the residual $\varepsilon$ with a weighting function $W_j$  and claiming that
 this product has to vanish within the whole domain,
 
 \begin{equation}
-	\int_\Omega W_j \cdot \varepsilon \: \overset {!}{=} \: 0 \qquad \textrm{with} \qquad \sum_j W_j =1
+	\int_\Omega W_j \cdot \varepsilon \, \mathrm{d}x \overset {!}{=} \: 0 \qquad \textrm{with} \qquad \sum_j W_j =1
 \end{equation}
 yields the following equation:
 
 \begin{equation}
-	\int_\Omega W_j \frac{\partial \tilde u}{\partial t} \: dx + \int_\Omega W_j
-	\cdot \left[ \nabla \cdot F(\tilde u) \right]  \: dx - \int_\Omega W_j
-	\cdot q \: dx = \int_\Omega W_j \cdot \varepsilon \: dx \: \overset {!}{=} \: 0.	
+	\int_\Omega W_j \frac{\partial \tilde u}{\partial t} \, \mathrm{d}x + \int_\Omega W_j
+	\cdot \left[ \nabla \cdot F(\tilde u) \right]  \, \mathrm{d}x - \int_\Omega W_j
+	\cdot q \, \mathrm{d}x = \int_\Omega W_j \cdot \varepsilon \, \mathrm{d}x \: \overset {!}{=} \: 0.	
 \label{eq:weightedResidual}	
 \end{equation}
 
@@ -133,17 +133,17 @@ Thus, the Box method is a Petrov-Galerkin scheme, where the weighting functions 
 
 Inserting definition \eqref{eq:weightingFunctions} into equation \eqref{eq:weightedResidual} and using the \textsc{Green-Gaussian} integral theorem results in
 \begin{equation}
-	\int_{B_j} \frac{\partial \tilde u}{\partial t} \: dx + \int_{\partial B_j}  F(\tilde u) \cdot \mathbf n \: d\varGamma_{B_j} - \int_{B_j} q \: dx  \overset {!}{=} \: 0, 	
+	\int_{B_j} \frac{\partial \tilde u}{\partial t} \, \mathrm{d}x + \int_{\partial B_j}  F(\tilde u) \cdot \mathbf n \, \mathrm{d}\Gamma_{B_j} - \int_{B_j} q \, \mathrm{d}x  \overset {!}{=} \: 0, 	
 \label{eq:BoxMassBlance}	
 \end{equation}
 which has to hold for every box $B_j$. 
 
 The first term in equation \eqref{eq:BoxMassBlance} can be written as
 \begin{equation}
-\int_{B_j} \frac{\partial \tilde u}{\partial t} \: dx = \frac{d}{dt} \int_{B_j} \sum_i \hat u_i N_i  \: dx = \sum_i \frac{\partial \hat u_i}{\partial t} \int_{B_j}  N_i  \: dx.
+\int_{B_j} \frac{\partial \tilde u}{\partial t} \, \mathrm{d}x = \frac{d}{dt} \int_{B_j} \sum_i \hat u_i N_i  \, \mathrm{d}x = \sum_i \frac{\partial \hat u_i}{\partial t} \int_{B_j}  N_i  \, \mathrm{d}x.
 \end{equation} 
 Here, a mass lumping technique is applied by assuming that the storage capacity is
-reduced to the nodes. This means that the integrals $M_{i,j} = \int_{B_j}  N_i \: dx$
+reduced to the nodes. This means that the integrals $M_{i,j} = \int_{B_j}  N_i \, \mathrm{d}x$
 are replaced by some mass lumped terms $M^{lump}_{i,j}$ which are defined as
 \begin{equation}
 	 M^{lump}_{i,j} =\begin{cases}  |B_j| &j = i\\
@@ -156,9 +156,9 @@ The application of this assumption yields
 \begin{equation}
 \label{eq:disc1}
 	|B_j| \frac{\partial \hat u_j}{\partial t}
-	+  \int_{\partial B_j}  F(\tilde u) \cdot \mathbf n \: d\varGamma_{B_j} - Q_j = 0,
+	+  \int_{\partial B_j}  F(\tilde u) \cdot \mathbf n \, \mathrm{d}\Gamma_{B_j} - Q_j = 0,
 \end{equation}
-where $Q_j$ is an approximation (using some quadrature rule) of the integrated source/sink term $\int_{B_j} q \: dx$.
+where $Q_j$ is an approximation (using some quadrature rule) of the integrated source/sink term $\int_{B_j} q \, \mathrm{d}x$.
 
 Using an implicit Euler time discretization finally
 leads to the discretized form which will be applied to the mathematical
@@ -168,7 +168,7 @@ flow and transport equations:
 \label{eq:discfin}
 	|B_j| \frac{\hat u_j^{n+1} - \hat u_j^{n}}{\Delta t}
 	+ \int_{\partial B_j}  F(\tilde u^{n+1}) \cdot \mathbf n
-	\;  d{\varGamma}_{B_j} - Q_j^{n+1} \: = 0.
+	\;   \mathrm{d}\Gamma_{B_j} - Q_j^{n+1} \: = 0.
 \end{equation}
 Equation \eqref{eq:discfin} has to be fulfilled for each box $B_j$.
 
@@ -193,7 +193,7 @@ We denote by $\mathcal{M}$ the mesh that results from the division of the domain
 For the derivation of the finite-volume formulation we integrate the first equation of \eqref{eq:elliptic} over a control volume $K$ and apply the Gauss divergence theorem:
 
 \begin{equation}
-    \int_{\partial K} \left( - \mathbf{\Lambda} \nabla u \right) \cdot \mathbf{n} \, \mathrm{d} \Gamma = \int_K q \, \mathrm{d}\Omega.
+    \int_{\partial K} \left( - \mathbf{\Lambda} \nabla u \right) \cdot \mathbf{n} \, \mathrm{d} \Gamma = \int_K q \, \mathrm{d}x.
     \label{eq:ellipticIntegrated}
 \end{equation}
 
