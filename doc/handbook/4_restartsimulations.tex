@@ -1,26 +1,19 @@
 \section{Restart \Dumux Simulations}
 \label{sc_restartsimulations}
-Restart is currently not available in the \DumuxVersion~release. We are working on it!
 
-% You can restart the simulation
-% from a specific point in time or extend the simulation beyond the originally
-% end of simulation. What you need is a \texttt{*.drs} file (which contains the
-% all necessary restart information.
-% Then you can simply restart a simulation via
-% \begin{lstlisting}[style=Bash]
-% ./test_program -TimeManager.Restart RESTART_TIME
-% \end{lstlisting}
-% To test restart behavior, use the \texttt{test\_box1p2cni} problem
-% in the \texttt{test/implicit/1p2c} folder.
-% You get the \texttt{RESTART\_TIME} from the name of your \texttt{.drs} file.
-% Restarting will only work when the exact time from an existing restart file is given.
-% If you need more restart files, you can change the frequency
-% by including the function into your problem:
-% \begin{lstlisting}[style=DumuxCode]
-% // Writes a restart file every 5th time step
-% bool shouldWriteRestartFile() const
-% {
-%   return (this->timeManager().timeStepIndex() % 5 == 0);
-% }
-% \end{lstlisting}
+\Dumux has some experimental support for check-pointing (restarting paused/stopped/crashed simulations).
+You can restart a \Dumux simulation from any time point where a VTK file was written out.
+This is currently only supported for sequential, non-adaptive simulations. For adaptive simulation
+the full hierarchical grid has to be stored. This is usually done with the grid's \texttt{BackupRestoreFacility}.
+There is currently no special support by \Dumux for that, but it is possible to implement
+a restart using \texttt{BackupRestoreFacility} with plain Dune.
 
+For VTK files the output can be read with the free function \texttt{loadSolution}. Grids can be read with
+the \texttt{Dumux::VTKReader} or you can simply recreate the grid as you did in the first simulation run.
+
+Unfortunately, writing double-precision floating point numbers to VTK files is only available with Dune master (will be in 2.7).
+That's why we currently only support single precision restart, meaning some information will be lost if you are computing
+in double precision.
+
+The restart capabilities will hopefully be improved in future versions of \Dumux 3.
+We are happy about any contributions (especially HDF5 / XDMF support, improvement of VTK support).
