@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the tracer CC model
+ * \ingroup TracerTests
+ * \brief Test for the tracer CC model.
  */
 #include <config.h>
 
@@ -123,7 +123,7 @@ int main(int argc, char** argv) try
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 
     /////////////////////////////////////////////////////////////////////////////////////////////////

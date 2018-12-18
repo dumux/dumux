@@ -18,23 +18,21 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePTests
- * \brief The spatial parameters class for the test problem using the 1p cc model
+ * \ingroup BoundaryTests
+ * \brief The spatial parameters class for the test problem using the 1p cc model.
  */
+
 #ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
 #define DUMUX_1P_TEST_SPATIALPARAMS_HH
 
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup OnePModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup BoundaryTests
  * \brief The spatial parameters class for the test problem using the
- *        1p cc model
+ *        1p cc model.
  */
 template<class FVGridGeometry, class Scalar>
 class OnePSpatialParams
@@ -64,19 +62,19 @@ public:
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
      * \param globalPos The global position
-     * \return the intrinsic permeability
+     * \return The intrinsic permeability
      */
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     { return permeability_; }
 
-    /*! \brief Define the porosity in [-].
+    /*! \brief Defines the porosity in [-].
      *
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
 
-    /*! \brief Define the Beavers-Joseph coefficient in [-].
+    /*! \brief Defines the Beavers-Joseph coefficient in [-].
      *
      * \param globalPos The global position
      */
@@ -90,6 +88,6 @@ private:
     Scalar alphaBJ_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

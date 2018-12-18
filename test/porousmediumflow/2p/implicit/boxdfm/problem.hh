@@ -18,8 +18,9 @@
  *****************************************************************************/
 /*!
  * \ingroup TwoPTests
- * \brief The properties for the incompressible 2p-boxdfm test
+ * \brief The properties for the incompressible 2p-boxdfm test.
  */
+
 #ifndef DUMUX_INCOMPRESSIBLE_TWOPBOXDFM_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_TWOPBOXDFM_TEST_PROBLEM_HH
 
@@ -143,14 +144,12 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
-
-    //! The constructor
     TwoPTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {}
 
     /*!
-     * \brief Return how much the domain is extruded at a given sub-control volume.
+     * \brief Returns how much the domain is extruded at a given sub-control volume.
      *
      * Here, we extrude the fracture scvs by half the aperture
      */
@@ -185,8 +184,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The global position
      */
@@ -199,8 +197,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param globalPos The position of the integration point of the boundary segment.
      *
@@ -211,7 +208,7 @@ public:
     { return NumEqVector(0.0); }
 
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume.
      *
      * \param globalPos The global position
      */

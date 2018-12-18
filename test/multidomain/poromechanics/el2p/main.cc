@@ -18,8 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief test for a single-phase elastic coupled model.
+ * \ingroup PoromechanicsTests
+ * \brief Test for a single-phase elastic coupled model.
  */
+
 #include <config.h>
 #include <ctime>
 #include <iostream>

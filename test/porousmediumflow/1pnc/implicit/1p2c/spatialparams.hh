@@ -19,9 +19,9 @@
 /*!
  * \file
  * \ingroup OnePNCTests
- * \brief Definition of the spatial parameters for the 1pnc
- *        problems.
+ * \brief Definition of the spatial parameters for the 1pnc problems.
  */
+
 #ifndef DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
 
@@ -32,8 +32,7 @@ namespace Dumux {
 
 /*!
  * \ingroup OnePNCTests
- * \brief Definition of the spatial parameters for the 1pnc
- *        test problems.
+ * \brief Definition of the spatial parameters for the 1pnc test problems.
  */
 template<class FVGridGeometry, class Scalar>
 class OnePNCTestSpatialParams
@@ -62,7 +61,7 @@ public:
     }
 
     /*!
-     * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
+     * \brief Defines the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
      * \param globalPos The global position
      */
@@ -70,7 +69,7 @@ public:
     { return permeability_; }
 
     /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
+     * \brief Defines the porosity \f$\mathrm{[-]}\f$.
      *
      * \param globalPos The global position
      */
@@ -78,7 +77,7 @@ public:
     { return porosity_; }
 
     /*!
-     * \brief Define the dispersivity.
+     * \brief Defines the dispersivity.
      *
      * \param element The finite element
      * \param scv The sub-control volume

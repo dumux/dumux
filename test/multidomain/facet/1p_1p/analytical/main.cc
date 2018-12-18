@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the one-phase facet coupling model
+ * \ingroup FacetTests
+ * \brief Test for the one-phase facet coupling model.
  */
+
 #include <config.h>
 
 #include <iostream>
@@ -86,7 +87,7 @@ struct CouplingManager<TypeTag, TTag::OnePLowDimTpfa> { using type = typename Tp
 } // end namespace Properties
 } // end namespace Dumux
 
-//! container to store the L2 errors
+//! Container to store the L2 errors
 template< class Scalar >
 struct L2NormData
 {
@@ -94,7 +95,7 @@ struct L2NormData
     Scalar norm;    // The L2 norm of the error
 };
 
-//! computes the L2 norm of the error of a sub-problem
+//! Computes the L2 norm of the error of a sub-problem
 template< class GridView, class Problem, class SolutionVector >
 L2NormData< typename SolutionVector::field_type >
 computeL2Norm(const GridView& gridView,
@@ -152,10 +153,14 @@ computeL2Norm(const GridView& gridView,
     return l2Data;
 }
 
-// updates the finite volume grid geometry. This is necessary as the finite volume
-// grid geometry for the box scheme with facet coupling requires additional data for
-// the update. The reason is that we have to create additional faces on interior
-// boundaries, which wouldn't be created in the standard scheme.
+/*!
+ * \brief Updates the finite volume grid geometry for the box scheme.
+ *
+ * This is necessary as the finite volume grid geometry for the box scheme with
+ * facet coupling requires additional data for the update. The reason is that
+ * we have to create additional faces on interior boundaries, which wouldn't be
+ * created in the standard scheme.
+ */
 template< class FVGridGeometry,
           class GridManager,
           class LowDimGridView,
@@ -169,7 +174,9 @@ void updateBulkFVGridGeometry(FVGridGeometry& fvGridGeometry,
     fvGridGeometry.update(lowDimGridView, facetGridAdapter);
 }
 
-// specialization for cell-centered schemes
+/*!
+ * \brief Updates the finite volume grid geometry for the cell-centered schemes.
+ */
 template< class FVGridGeometry,
           class GridManager,
           class LowDimGridView,

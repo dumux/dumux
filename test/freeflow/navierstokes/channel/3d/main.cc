@@ -16,11 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  *
-  * \brief 3D Channel flow test for the staggered grid (Navier-)Stokes model
-  */
+/*!
+ * \file
+ * \ingroup NavierStokesTests
+ * \brief 3D Channel flow test for the staggered grid (Navier-)Stokes model
+ */
+
 #include <config.h>
 
 #include <ctime>
@@ -97,7 +98,7 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem

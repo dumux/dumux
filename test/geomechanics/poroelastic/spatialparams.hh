@@ -18,8 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Definition of the spatial parameters for the poro-elastic problem
+ * \ingroup GeomechanicsTests
+ * \brief Definition of the spatial parameters for the poro-elastic problem.
  */
+
 #ifndef DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
 #define DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
 
@@ -30,9 +32,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup Geomechanics
- * \ingroup PoroElastic
- * \brief Definition of the spatial parameters for the poro-elastic problem
+ * \ingroup GeomechanicsTests
+ * \brief Definition of the spatial parameters for the poro-elastic problem.
  */
 template<class Scalar, class FVGridGeometry>
 class PoroElasticSpatialParams : public FVSpatialParamsPoroElastic< Scalar,
@@ -48,10 +49,9 @@ class PoroElasticSpatialParams : public FVSpatialParamsPoroElastic< Scalar,
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    //! export the type of the lame parameters
+    //! Export the type of the lame parameters
     using LameParams = Dumux::LameParams<Scalar>;
 
-    //! The constructor
     PoroElasticSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -59,11 +59,11 @@ public:
         lameParams_.setMu(2);
     }
 
-    //! Define the Lame parameters
+    //! Defines the Lame parameters.
     const LameParams& lameParamsAtPos(const GlobalPosition& globalPos) const
     { return lameParams_; }
 
-    //! Return the porosity of the porous medium
+    //! Returns the porosity of the porous medium.
     template< class ElemSol >
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
@@ -73,7 +73,7 @@ public:
         return poroLaw.evaluatePorosity(this->fvGridGeometry(), element, scv, elemSol, /*refPoro*/0.3);
     }
 
-    //! Return the biot coefficient of the porous medium
+    //! Returns the Biot coefficient of the porous medium.
     Scalar biotCoefficientAtPos(const GlobalPosition& globalPos) const
     { return 1.0; }
 

@@ -21,6 +21,7 @@
  * \ingroup OnePTests
  * \brief Definition of the spatial parameters for the 1pni problems.
  */
+
 #ifndef DUMUX_TEST_1PNI_SPATIAL_PARAMS_HH
 #define DUMUX_TEST_1PNI_SPATIAL_PARAMS_HH
 
@@ -54,7 +55,7 @@ public:
     : ParentType(fvGridGeometry) {}
 
     /*!
-     * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
+     * \brief Defines the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
      * \param globalPos The global position
      */
@@ -62,7 +63,7 @@ public:
     { return 1e-10; }
 
     /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
+     * \brief Defines the porosity \f$\mathrm{[-]}\f$.
      *
      * \param globalPos The global position
      */

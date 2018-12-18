@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief test for the one-phase CC model
+ * \brief Test for the one-phase CC model
  */
+
 #include <config.h>
 
 #include <ctime>
@@ -135,7 +136,7 @@ int main(int argc, char** argv) try
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 
     // instantiate time loop

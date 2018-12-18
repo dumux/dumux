@@ -20,7 +20,8 @@
  * \file
  * \ingroup OnePTests
  * \brief A discrete fracture network embedded in an impermeable matrix.
- *        The fracture is a 2D network embedded in 3D.
+ *
+ * The fracture is a 2D network embedded in 3D.
  */
 
 #ifndef DUMUX_ONEP_FRACTURE_TEST_PROBLEM_HH
@@ -93,8 +94,8 @@ struct SpatialParams<TypeTag, TTag::Fracture>
 /*!
  * \ingroup OnePTests
  * \brief A discrete fracture network embedded in an impermeable matrix.
- *        The fracture is a 2D network embedded in 3D.
  *
+ * The fracture is a 2D network embedded in 3D.
  * This problem uses the \ref OnePModel.
  */
 template <class TypeTag>
@@ -119,11 +120,6 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -233,6 +229,6 @@ private:
     std::string name_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

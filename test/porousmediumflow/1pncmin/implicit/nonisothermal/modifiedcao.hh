@@ -22,22 +22,22 @@
  * \brief Corrected material properties of pure Calcium-Oxide \f$CaO\f$ without considering a porosity
  * change in the reaction of Calciumoxyde and Calciumhydroxyde.
  */
+
 #ifndef DUMUX_MODIFIED_CAO_HH
 #define DUMUX_MODIFIED_CAO_HH
 
 
 #include <dumux/material/components/cao.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 namespace Components {
 /*!
  * \ingroup OnePNCMinTests
- * \brief A class for the ModifiedCaO properties
+ * \brief A class for the ModifiedCaO properties.
  *
- * This class uses a different CaO density. It is to be  used for calculating the chemical
- * reaction of CaO to Ca(OH)2 without considering the porosity change according to See Shao et
- * al. (2013).
+ * This class uses a different CaO density. It is to be used for calculating the
+ * chemical reaction of CaO to Ca(OH)2 without considering the porosity change
+ * according to Shao et al. (2013) \cite shao2013.
  */
 template <class Scalar>
 class ModifiedCaO : public  Components::CaO<Scalar>
@@ -46,15 +46,18 @@ public:
 
     /*!
      * \brief The corrected mass density \f$\mathrm{[kg/m^3]}\f$ of CaO.
+     *
+     * This density is to be used for calculating the chemical reaction
+     * of CaO to Ca(OH)2 without considering the solid volume change.
+     * See Shao et al. (2013) \cite shao2013.
      */
     static Scalar solidDensity(Scalar temperature)
     {
         return 1656;
-        // This density is to be used for calculating the chemical reaction of CaO to Ca(OH)2 without considering the solid volume change. See Shao et al. (2013)
     }
 
 };
-} //end namespace components
-} // end namespace
+} // end namespace Components
+} // end namespace Dumux
 
 #endif

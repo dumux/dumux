@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief Test for the staggered grid (Navier-)Stokes model with analytical solution (Donea et al., 2003)
+ * \brief Test for the staggered grid (Navier-)Stokes model with analytical solution (Donea 2003, \cite Donea2003).
  */
 #ifndef DUMUX_DONEA_TEST_PROBLEM_HH
 #define DUMUX_DONEA_TEST_PROBLEM_HH
@@ -79,8 +79,11 @@ struct EnableGridFaceVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr
 
 /*!
  * \ingroup NavierStokesTests
- * \brief  Test problem for the staggered grid (Donea et al., 2003)
- * \todo doc me!
+ * \brief  Test problem for the staggered grid (Donea 2003, \cite Donea2003).
+ *
+ * A two-dimensional Stokes flow in a square domain is considered.
+ * With the source terms as given in Donea 2003 \cite Donea2003, an analytical solution
+ * is available and can be compared to the numerical solution.
  */
 template <class TypeTag>
 class DoneaTestProblem : public NavierStokesProblem<TypeTag>
@@ -244,7 +247,7 @@ public:
     // \{
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -327,6 +330,6 @@ private:
     std::vector<VelocityVector> analyticalVelocity_;
     std::vector<VelocityVector> analyticalVelocityOnFace_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

@@ -18,10 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup MPNCTests
  * \brief Plot variables over a line specified by two arguments.
  *        These output files are meant for visualization with another
  *        program (matlab, gnuplot...)
- *
  */
 #ifndef DUMUX_PLOTOVERLINE_2D_HH
 #define DUMUX_PLOTOVERLINE_2D_HH
@@ -38,6 +38,12 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup MPNCTests
+ * \brief Plot variables over a line specified by two arguments.
+ *        These output files are meant for visualization with another
+ *        program (matlab, gnuplot...)
+ */
 template<class TypeTag>
 class PlotOverLine2D
 {
@@ -70,12 +76,12 @@ public:
     /*!
      * \brief A function that writes results over a line (like paraview's plotOverline into a text file.)
      *
-     *        The writer needs to be called in postTimeStep().
+     * The writer needs to be called in postTimeStep().
      *
-     *        This function puts output variables (TemperaturePhase, Saturation, t, tIndex, ...)
-     *        over space (1D, over a line) into a text file,
-     *        so they can be read in by another program like matlab.
-     *        The file can be found by the extension: dat
+     * This function puts output variables (TemperaturePhase, Saturation, t, tIndex, ...)
+     * over space (1D, over a line) into a text file,
+     * so they can be read in by another program like matlab.
+     * The file can be found by the extension: dat
      */
     void write(const Problem & problem,
                const GlobalPosition & pointOne,
@@ -186,7 +192,7 @@ public:
     }
 
     /*!
-     * \brief   Check whether the current point is on a line between two points
+     * \brief Checks whether the current point is on a line between two points
      */
     bool isBetween(const GlobalPosition & globalPosCurrent,
                          const GlobalPosition & pointOne,

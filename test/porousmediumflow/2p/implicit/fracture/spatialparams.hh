@@ -20,8 +20,9 @@
  * \file
  * \ingroup TwoPTests
  * \brief The spatial parameters for the LensProblem which uses the
- *        two-phase fully implicit model
+ *        two-phase fully implicit model.
  */
+
 #ifndef DUMUX_TWOP_FRACTURE_TEST_SPATIALPARAMS_HH
 #define DUMUX_TWOP_FRACTURE_TEST_SPATIALPARAMS_HH
 
@@ -37,7 +38,7 @@ namespace Dumux {
 /*!
  * \ingroup TwoPTests
  * \brief The spatial parameters for the LensProblem which uses the
- *        two-phase fully implicit model
+ *        two-phase fully implicit model.
  */
 template<class FVGridGeometry, class Scalar>
 class FractureSpatialParams
@@ -102,8 +103,8 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
      * \param globalPos The global position
+     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const

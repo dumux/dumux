@@ -23,6 +23,7 @@
  *        is injected into a unsaturated porous medium with a residually
  *        trapped NAPL contamination.
  */
+
 #ifndef DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 #define DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 
@@ -89,24 +90,21 @@ struct FluidSystem<TypeTag, TTag::Kuevette>
  *        trapped NAPL contamination.
  *
  * The domain is a quasi-two-dimensional container (kuevette). Its dimensions
- * are 1.5 m x 0.74 m. The top and bottom boundaries are closed, the right
+ * are 1.5m x 0.74m. The top and bottom boundaries are closed, the right
  * boundary is a Dirichlet boundary allowing fluids to escape. From the left,
  * an injection of a hot water-air mixture is applied (Neumann boundary condition
  * for the mass components and the enthalpy), aimed at remediating an initial
  * NAPL (Non-Aquoeus Phase Liquid) contamination in the heterogeneous domain.
  * The contamination is initially placed partly into the coarse sand
- * and partly into a fine sand lense.
+ * and partly into a fine sand lens.
  *
  * This simulation can be varied through assigning different boundary conditions
- * at the left boundary as described in Class (2001):
- * Theorie und numerische Modellierung nichtisothermer Mehrphasenprozesse in
- * NAPL-kontaminierten por"osen Medien, Dissertation, Eigenverlag des Instituts
- * f"ur Wasserbau
+ * at the left boundary as described in \cite Class2001.
  *
  * This problem uses the \ref ThreePThreeCModel and \ref NIModel model.
  *
  * To see the basic effect and the differences to scenarios with pure steam or
- * pure air injection, it is sufficient to simulated for about 2-3 hours (10000 s).
+ * pure air injection, it is sufficient to simulate for about 2-3 hours (10000 s).
  * Complete remediation of the domain requires much longer (about 10 days simulated time).
  * To adjust the simulation time it is necessary to edit the input file.
  *
@@ -156,11 +154,6 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    /*!
-     * \brief The constructor.
-     *
-     * \param fvGridGeometry The finite volumes grid geometry
-     */
     KuevetteProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -205,8 +198,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      *
@@ -218,8 +210,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a N eumann boundary segment.
      *
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
@@ -256,7 +247,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *
@@ -269,9 +260,11 @@ public:
     }
 
     /*!
-     * \brief Append all quantities of interest which can be derived
+     * \brief Appends all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
-     *        writer. Adjust this in case of anisotropic permeabilities.
+     *        writer.
+     *
+     * Adjust this in case of anisotropic permeabilities.
      */
     template<class VTKWriter>
     void addVtkFields(VTKWriter& vtk)
@@ -327,6 +320,6 @@ private:
     std::vector<Scalar> Kxx_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

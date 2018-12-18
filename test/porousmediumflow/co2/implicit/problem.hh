@@ -21,6 +21,7 @@
  * \ingroup CO2Tests
  * \brief Definition of a problem, where CO2 is injected in a reservoir.
  */
+
 #ifndef DUMUX_HETEROGENEOUS_PROBLEM_HH
 #define DUMUX_HETEROGENEOUS_PROBLEM_HH
 
@@ -48,10 +49,7 @@
 #endif
 
 namespace Dumux {
-/*!
- * \ingroup CO2Tests
- * \brief Definition of a problem, where CO2 is injected in a reservoir.
- */
+
 template <class TypeTag>
 class HeterogeneousProblem;
 
@@ -138,21 +136,27 @@ struct UseMoles<TypeTag, TTag::HeterogeneousNI> { static constexpr bool value = 
  * \brief Definition of a problem, where CO2 is injected in a reservoir.
  *
  * The domain is sized 200m times 100m and consists of four layers, a
- * permeable reservoir layer at the bottom, a barrier rock layer with reduced permeability, another reservoir layer
- * and at the top a barrier rock layer with a very low permeablility.
+ * permeable reservoir layer at the bottom, a barrier rock layer with reduced
+ * permeability, another reservoir layer and at the top a barrier rock layer
+ * with a very low permeablility.
  *
- * CO2 is injected at the permeable bottom layer
- * from the left side. The domain is initially filled with brine.
+ * CO2 is injected at the permeable bottom layer from the left side.
+ * The domain is initially filled with brine.
  *
- * The grid is unstructered and permeability and porosity for the elements are read in from the grid file. The grid file
- * also contains so-called boundary ids which can be used assigned during the grid creation in order to differentiate
+ * The grid is unstructered and permeability and porosity for the elements are
+ * read in from the grid file. The grid file also contains so-called boundary
+ * IDs which can be used assigned during the grid creation in order to differentiate
  * between different parts of the boundary.
- * These boundary ids can be imported into the problem where the boundary conditions can then be assigned accordingly.
+ * These boundary ids can be imported into the problem where the boundary
+ * conditions can then be assigned accordingly.
  *
- * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
- * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is false.
+ * The model is able to use either mole or mass fractions. The property useMoles
+ * can be set to either true or false in the problem file. Make sure that the
+ * according units are used in the problem setup.
+ * The default setting for useMoles is false.
  *
- * To run the simulation execute the following line in shell (works with the box and cell centered spatial discretization method):
+ * To run the simulation execute the following line in shell (works with the
+ * box and cell centered spatial discretization method):
  * <tt>./test_ccco2 </tt> or <tt>./test_boxco2 </tt>
  */
 template <class TypeTag >
@@ -206,7 +210,7 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
 
     using CO2 = Components::CO2<Scalar, HeterogeneousCO2Tables::CO2Tables>;
 
-    //! property that defines whether mole or mass fractions are used
+    //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = ModelTraits::useMoles();
 
     // the discretization method we are using
@@ -216,12 +220,6 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     * \param spatialParams The spatial params
-     */
     template<class SpatialParams>
     HeterogeneousProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, std::shared_ptr<SpatialParams> spatialParams)
     : ParentType(fvGridGeometry, spatialParams)
@@ -256,7 +254,7 @@ public:
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
 
-        //stating in the console whether mole or mass fractions are used
+        // stating in the console whether mole or mass fractions are used
         if(useMoles)
             std::cout<<"problem uses mole fractions"<<std::endl;
         else
@@ -267,7 +265,7 @@ public:
     }
 
     /*!
-     * \brief Append all quantities of interest which can be derived
+     * \brief Appends all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
      *        writer.
      */
@@ -350,7 +348,7 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param element The finite element
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      */
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolume &scv) const
@@ -361,7 +359,7 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param element The finite element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      */
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolumeFace &scvf) const
@@ -381,8 +379,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \return the Dirichlet values for the conservation equations in
      *               \f$ [ \textnormal{unit of primary variable} ] \f$
@@ -392,8 +389,7 @@ public:
     { return initial_(globalPos); }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * This is the method for the case where the Neumann condition is
      * potentially solution dependent and requires some quantities that
@@ -402,7 +398,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
@@ -438,11 +434,11 @@ public:
     // \{
 
     /*!
-     * \brief Evaluates the initial values at a position
+     * \brief Evaluates the initial values at a position.
      *
-     * \return the initial values for the conservation equations in
-     *           \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
+     * \return The initial values for the conservation equations in
+     *           \f$ [ \textnormal{unit of primary variables} ] \f$
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
@@ -453,7 +449,7 @@ public:
 
 private:
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume.
      *
      * The internal method for the initial condition
      *
@@ -516,6 +512,6 @@ private:
     ScvfToScvBoundaryTypes<BoundaryTypes, discMethod> scvfToScvBoundaryTypes_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

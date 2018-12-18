@@ -18,12 +18,13 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Pipe flow test for the staggered grid RANS model
+ * \ingroup RANSTests
+ * \brief Pipe flow test for the staggered grid RANS model,
  *
  * This test simulates is based on pipe flow experiments by
  * John Laufers experiments in 1954 \cite Laufer1954a.
  */
+
 #include <config.h>
 
 #include <ctime>
@@ -136,7 +137,7 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem

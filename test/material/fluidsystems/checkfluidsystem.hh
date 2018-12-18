@@ -18,13 +18,13 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief This file provides the actual code for the fluid systems
- *        test.
+ * \ingroup MaterialTests
+ * \brief This file provides the actual code for the fluid systems test.
  *
  * It is not directly in test_fluidsystems.cc so that external modules
- * like dumux-devel can use it easily
+ * like dumux-devel can use it easily.
  */
+
 #ifndef DUMUX_CHECK_FLUIDSYSTEM_HH
 #define DUMUX_CHECK_FLUIDSYSTEM_HH
 
@@ -62,14 +62,14 @@
 namespace Dumux
 {
 
-/*! \brief This fluid state ensures that only the allowed quantities
- * are accessed
+/*!
+ * \brief This fluid state ensures that only the allowed quantities are accessed.
  */
 template<class ScalarType, class FluidSystem, class BaseFluidState = CompositionalFluidState<ScalarType, FluidSystem> >
 class HairSplittingFluidState: protected BaseFluidState
 {
 public:
-    //! export the type used for scalars
+    //! Export the type used for scalars
     using typename BaseFluidState::Scalar;
 
     static constexpr int numPhases = FluidSystem::numPhases;
@@ -395,6 +395,7 @@ int checkFluidState(const BaseFluidState &fs)
 
 /*!
  * \brief This is a consistency check for FluidSystems.
+ *
  * \param enablePhaseRestriction Parameter passed to the fluidState. If set to true,
  *        the fluidState will only allow calls to properties of the current phase.
  * \note While this is very common, it is not necessarily the case for all FluidSystems.

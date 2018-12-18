@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePTests
- * \brief The spatial params the incompressible test
+ * \ingroup BoundaryTests
+ * \brief The spatial parameters for the incompressible test.
  */
+
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 
@@ -30,11 +31,11 @@
 namespace Dumux {
 namespace LensSpatialParams {
 /*!
- * \brief If a point is in a lens with a given bounding box
+ * \brief Returns if a point is in a lens with a given bounding box
  *
- * \param globalPos the position of the point
- * \param lensLowerLeft the lower left corner of the lens
- * \param lensUpperRight the upper right corner of the lens
+ * \param globalPos The position of the point
+ * \param lensLowerLeft The lower left corner of the lens
+ * \param lensUpperRight The upper right corner of the lens
  */
 template<class GlobalPosition>
 bool pointInLens(const GlobalPosition& globalPos,
@@ -51,9 +52,9 @@ bool pointInLens(const GlobalPosition& globalPos,
 } // end namespace LensSpatialParams
 
 /*!
- * \ingroup OnePTests
+ * \ingroup BoundaryTests
  * \brief The spatial parameters class for the test problem using the
- *        incompressible 1p model
+ *        incompressible 1p model.
  */
 template<class FVGridGeometry, class Scalar>
 class OnePTestSpatialParams
@@ -82,13 +83,14 @@ public:
 
     /*!
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
-     * \return the intrinsic permeability
+     *
+     * \return The intrinsic permeability
      */
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     { return isInLens_(globalPos) ? permeabilityLens_ : permeability_; }
 
     /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
+     * \brief Defines the porosity \f$\mathrm{[-]}\f$.
      *
      * \param globalPos The global position
      */

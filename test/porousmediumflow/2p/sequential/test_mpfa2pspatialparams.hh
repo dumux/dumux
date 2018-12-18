@@ -56,7 +56,7 @@ public:
 
 /*!
  * \ingroup SequentialTwoPTests
- * \brief Test problem for the sequential 2p models \todo Please doc me!
+ * \brief Test problem for the sequential 2p models
  */
 template<class TypeTag>
 class Test2PSpatialParams: public SequentialFVSpatialParams<TypeTag>

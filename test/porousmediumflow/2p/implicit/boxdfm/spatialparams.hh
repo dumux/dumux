@@ -18,8 +18,9 @@
  *****************************************************************************/
 /*!
  * \ingroup TwoPTests
- * \brief The spatial params for the incompressible 2p test
+ * \brief The spatial params for the incompressible 2p test.
  */
+
 #ifndef DUMUX_INCOMPRESSIBLE_TWOPBOXDFM_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_INCOMPRESSIBLE_TWOPBOXDFM_TEST_SPATIAL_PARAMS_HH
 
@@ -36,7 +37,7 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPTests
- * \brief The spatial params for the incompressible 2p test
+ * \brief The spatial params for the incompressible 2p test.
  */
 template<class FVGridGeometry, class Scalar>
 class TwoPTestSpatialParams : public FVSpatialParams< FVGridGeometry, Scalar, TwoPTestSpatialParams<FVGridGeometry, Scalar> >
@@ -80,7 +81,7 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return permeability
+     * \return The permeability
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
@@ -114,12 +115,13 @@ public:
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law.
-     *        In this test, we use element-wise distributed material parameters.
+     *
+     * In this test, we use element-wise distributed material parameters.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return the material parameters object
+     * \return The material parameters object
      */
     template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
@@ -135,8 +137,8 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
      * \param globalPos The global position
+     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const

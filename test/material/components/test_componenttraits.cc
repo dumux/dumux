@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test the compoent traits
+ * \ingroup MaterialTests
+ * \brief Test the component traits.
  */
 
 #include "config.h"

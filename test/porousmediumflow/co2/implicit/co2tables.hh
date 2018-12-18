@@ -20,8 +20,9 @@
  * \file
  * \ingroup CO2Tests
  * \brief Provides the class with the tabulated values of CO2 density
- *        and enthalpy
+ *        and enthalpy.
  */
+
 #ifndef DUMUX_HETEROGENEOUS_CO2TABLES_HH
 #define DUMUX_HETEROGENEOUS_CO2TABLES_HH
 

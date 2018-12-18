@@ -20,8 +20,9 @@
  * \file
  * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
- *        1p box model
+ *        1p box model.
  */
+
 #ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
 #define DUMUX_1P_TEST_SPATIALPARAMS_HH
 
@@ -34,7 +35,7 @@ namespace Dumux {
 /*!
  * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
- *        1p box model
+ *        1p box model.
  */
 template<class FVGridGeometry, class Scalar>
 class OnePTestSpatialParams
@@ -80,9 +81,9 @@ public:
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
      * \param element The element
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      * \param elemSol The element solution vector
-     * \return the intrinsic permeability
+     * \return The intrinsic permeability
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
@@ -100,7 +101,7 @@ public:
             return permeability_;
     }
 
-    /*! \brief Define the porosity in [-].
+    /*! \brief Defines the porosity in [-].
    *
    * \param globalPos The global position where we evaluate
    */
@@ -110,7 +111,7 @@ public:
     /*!
      * \brief This method allows the generation of a statistical field using gstat
      *
-     * \param gg The finite-volume grid Geometry used by the problem
+     * \param gg The finite-volume grid geometry used by the problem
      */
     void initRandomField(const FVGridGeometry& gg)
     {

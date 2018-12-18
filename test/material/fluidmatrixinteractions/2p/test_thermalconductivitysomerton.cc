@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the Somerton thermal conductivity law
+ * \ingroup MaterialTests
+ * \brief Test for the Somerton thermal conductivity law.
  */
+
  #include <config.h>
 
  #include <dumux/io/gnuplotinterface.hh>

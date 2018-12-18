@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the 1pnc model
+ * \ingroup TwoPOneCTests
+ * \brief Test for the 2p1c model.
 */
+
 #include <config.h>
 
 #include "problem.hh"
@@ -112,7 +113,7 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 
     // instantiate time loop

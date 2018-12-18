@@ -18,13 +18,13 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief This file provides the actual code for the solid systems
- *        test.
+ * \ingroup MaterialTests
+ * \brief This file provides the actual code for the solid systems test.
  *
  * It is not directly in test_solidsystems.cc so that external modules
  * like dumux-devel can use it easily
  */
+
 #ifndef DUMUX_CHECK_SOLIDSYSTEM_HH
 #define DUMUX_CHECK_SOLIDSYSTEM_HH
 

@@ -19,7 +19,9 @@
 /*!
  * \file
  * \ingroup MPNCTests
- * \brief Problem where air is injected in a unsaturated porous medium. This test compares a mpnc problem with a 2p2c problem
+ * \brief Problem where air is injected in a unsaturated porous medium.
+ *
+ * This test compares a mpnc problem with a 2p2c problem.
  */
 #ifndef DUMUX_MPNC_TWOPTWOC_COMPARISON_OBSTACLEPROBLEM_HH
 #define DUMUX_MPNC_TWOPTWOC_COMPARISON_OBSTACLEPROBLEM_HH
@@ -44,7 +46,9 @@ namespace Dumux {
 
 /*!
  * \ingroup MPNCTests
- * \brief Problem where air is injected in a unsaturated porous medium. This test compares a mpnc problem with a 2p2c problem
+ * \brief Problem where air is injected in a unsaturated porous medium.
+ *
+ * This test compares a mpnc problem with a 2p2c problem.
  */
 template <class TypeTag>
 class MPNCComparisonProblem;
@@ -93,7 +97,9 @@ struct IOFields<TypeTag, TTag::MPNCComparison> { using type = TwoPTwoCMPNCIOFiel
 
 /*!
  * \ingroup MPNCTests
- * \brief Problem where air is injected in a unsaturated porous medium. This test compares a mpnc problem with a 2p2c problem
+ * \brief Problem where air is injected in a unsaturated porous medium.
+ *
+ * This test compares a mpnc problem with a 2p2c problem.
  *
  */
 template <class TypeTag>
@@ -131,10 +137,6 @@ class MPNCComparisonProblem
     static constexpr bool isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box;
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     */
     MPNCComparisonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
@@ -196,8 +198,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The global position
      */
@@ -207,8 +208,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
@@ -241,7 +241,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      *
@@ -324,6 +324,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
-} //end namespace
+} // end namespace
 
 #endif

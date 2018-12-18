@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the two-phase porousmedium flow model
+ * \ingroup TracerTests
+ * \brief Test for the multi-component tracer porous medium flow model
  */
 #include <config.h>
 

@@ -17,7 +17,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumThermalNonEquilibriumModel
+ * \ingroup MPNCTests
  * \brief This file contains the parts of the local residual to
  *        calculate the heat conservation in the thermal non-equilibrium model.
  */
@@ -34,7 +34,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup PorousmediumThermalNonEquilibriumModel
+ * \ingroup MPNCTests
  * \brief This file contains the parts of the local residual to
  *        calculate the heat conservation in the thermal non-equilibrium  model.
  */
@@ -62,7 +62,7 @@ class CombustionEnergyLocalResidual
 
 public:
     /*!
-     * \brief Calculate the source term of the equation
+     * \brief Calculates the source term of the equation
      *
      * \param source The source term
      * \param element An element which contains part of the control volume
@@ -171,7 +171,7 @@ public:
     }// end source
 
 
-  /*! \brief Calculate the energy transfer during boiling, i.e. latent heat
+  /*! \brief Calculates the energy transfer during boiling, i.e. latent heat
    *
    * \param volVars The volume variables
    * \param satW The wetting phase saturation. Not taken from volVars, because we regularize.
@@ -203,7 +203,7 @@ public:
         return QBoil;
     }
 
-    /*! \brief Calculate the derivative of the energy transfer function during boiling. Needed for regularization.
+    /*! \brief Calculates the derivative of the energy transfer function during boiling. Needed for regularization.
    *
    * \param volVars The volume variables
    * \param satW The wetting phase saturation. Not taken from volVars, because we regularize.

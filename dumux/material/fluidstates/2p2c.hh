@@ -55,12 +55,10 @@ public:
     int wettingPhase() const
     { return phase0Idx; }
 
-    /*!
-     * \name access functions
-     * \todo doc me!
-     */
-    //@{
-
+    /*****************************************************
+     * Generic access to fluid properties (No assumptions
+     * on thermodynamic equilibrium required)
+     *****************************************************/
     /*!
      * \brief Returns the saturation \f$S_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
      *
@@ -197,10 +195,11 @@ public:
         return phaseMassFraction(phaseIdx);
     }
 
-    /*!
-     * \name Functions to set Data
-     */
-    //@{
+    /*****************************************************
+     * Setter methods. Note that these are not part of the
+     * generic FluidState interface but specific for each
+     * implementation...
+     *****************************************************/
     /*!
      * \brief Sets the viscosity of a phase \f$\mathrm{[Pa*s]}\f$.
      * \param phaseIdx the index of the phase

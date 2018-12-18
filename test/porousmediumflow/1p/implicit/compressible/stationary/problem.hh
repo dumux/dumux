@@ -21,6 +21,7 @@
  * \ingroup OnePTests
  * \brief The properties for the incompressible test
  */
+
 #ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 #define DUMUX_COMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 
@@ -39,13 +40,11 @@
 
 #include "spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 // forward declarations
 template<class TypeTag> class OnePTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 // create the type tag nodes
 // Create new type tags
 namespace TTag {
@@ -89,13 +88,13 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
-
 } // end namespace Properties
+
 /*!
  * \ingroup OnePTests
- * \brief  Test problem for the compressible one-phase model:
- *\todo doc me!
- * <tt>./test_box1pfv</tt> or
+ * \brief  Test problem for the compressible one-phase model.
+ *
+ * Can be run as <tt>./test_box1pfv</tt> or
  * <tt>./test_cc1pfv</tt>
  */
 template<class TypeTag>
@@ -139,8 +138,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      *
@@ -154,7 +152,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial conditions
+     * \brief Evaluates the initial conditions
      *
      * \param globalPos The center of the finite volume which ought to be set.
      */

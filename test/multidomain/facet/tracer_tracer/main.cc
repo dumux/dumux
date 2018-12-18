@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the one-phase facet coupling model
+ * \ingroup FacetTests
+ * \brief Test for the one-phase facet coupling model.
  */
+
 #include <config.h>
 
 #include <iostream>
@@ -99,10 +100,14 @@ struct CouplingManager<TypeTag, TTag::TracerLowDimTpfa> { using type = typename 
 } // end namespace Properties
 } // end namespace Dumux
 
-// updates the finite volume grid geometry. This is necessary as the finite volume
-// grid geometry for the box scheme with facet coupling requires additional data for
-// the update. The reason is that we have to create additional faces on interior
-// boundaries, which wouldn't be created in the standard scheme.
+/*!
+ * \brief Updates the finite volume grid geometry for the box scheme.
+ *
+ * This is necessary as the finite volume grid geometry for the box scheme with
+ * facet coupling requires additional data for the update. The reason is that we
+ * have to create additional faces on interior boundaries, which wouldn't be
+ * created in the standard scheme.
+ */
 template< class FVGridGeometry,
           class GridManager,
           class LowDimGridView,
@@ -116,8 +121,10 @@ void updateBulkFVGridGeometry(FVGridGeometry& fvGridGeometry,
     fvGridGeometry.update(lowDimGridView, facetGridAdapter);
 }
 
-// specialization for cell-centered schemes
-template< class FVGridGeometry,
+/*!
+ * \brief Updates the finite volume grid geometry for the cell centered schemes.
+ */
+ template< class FVGridGeometry,
           class GridManager,
           class LowDimGridView,
           std::enable_if_t<FVGridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
@@ -128,7 +135,7 @@ void updateBulkFVGridGeometry(FVGridGeometry& fvGridGeometry,
     fvGridGeometry.update();
 }
 
-//! computes the volume fluxes on all scvfs for a sub-domain
+//! Computes the volume fluxes on all scvfs for a sub-domain.
 template<class FV, class Storage, class CM, class Assembler, class Prob, class GV, class Sol, std::size_t id>
 void computeVolumeFluxes(Storage& volumeFluxes,
                          CM& couplingManager,
