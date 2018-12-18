@@ -18,10 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup EmbeddedTests
  * \brief Test for the 1d-3d embedded mixed-dimension model coupling two
- *        one-phase porous medium flow problems
+ *        one-phase porous medium flow problems.
  */
+
 #include <config.h>
 
 #include <ctime>

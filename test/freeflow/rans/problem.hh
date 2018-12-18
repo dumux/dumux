@@ -24,6 +24,7 @@
  * This test simulates is based on pipe flow experiments by
  * John Laufer's experiments in 1954 \cite Laufer1954a.
  */
+
 #ifndef DUMUX_PIPE_LAUFER_PROBLEM_HH
 #define DUMUX_PIPE_LAUFER_PROBLEM_HH
 
@@ -51,13 +52,11 @@
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class PipeLauferProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 #if NONISOTHERMAL
@@ -101,7 +100,7 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::PipeLauferProblem> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::PipeLauferProblem> { static constexpr bool value = true; };
-}
+} // end namespace Properties
 
 /*!
  * \ingroup NavierStokesTests
@@ -211,13 +210,13 @@ public:
     }
 
    /*!
-     * \brief Return the temperature [K] within the domain for the isothermal model.
+     * \brief Returns the temperature [K] within the domain for the isothermal model.
      */
     Scalar temperature() const
     { return inletTemperature_; }
 
    /*!
-     * \brief Return the sources within the domain.
+     * \brief Returns the sources within the domain.
      *
      * \param globalPos The global position
      */
@@ -303,7 +302,7 @@ public:
 #endif
 
      /*!
-      * \brief Evaluate the boundary conditions for a dirichlet values at the boundary.
+      * \brief Evaluates the boundary conditions for a Dirichlet values at the boundary.
       *
       * \param element The finite element
       * \param scvf the sub control volume face
@@ -327,7 +326,7 @@ public:
     }
 
      /*!
-      * \brief Evaluate the boundary conditions for fixed values at cell centers
+      * \brief Evaluates the boundary conditions for fixed values at cell centers.
       *
       * \param element The finite element
       * \param scv the sub control volume
@@ -348,7 +347,7 @@ public:
     }
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The global position
      */
@@ -427,6 +426,6 @@ private:
     Scalar dissipation_;
     TimeLoopPtr timeLoop_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

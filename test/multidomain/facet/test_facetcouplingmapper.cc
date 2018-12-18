@@ -18,8 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup FacetTests
  * \brief Tests the grid creator class for models using facet coupling.
  */
+
 #include <config.h>
 #include <iostream>
 #include <type_traits>
@@ -47,7 +49,7 @@
 #define USEBOXINBULK 0
 #endif
 
-//! computes the average distance of corners to the center of a geometry
+//! Computes the average distance of corners to the center of a geometry.
 template<class Geometry>
 typename Geometry::ctype averageCornerDistance(const Geometry& geometry)
 {
@@ -59,7 +61,7 @@ typename Geometry::ctype averageCornerDistance(const Geometry& geometry)
     return avgDistance;
 }
 
-//! checks if an scvf lies on a low dim element geometry
+//! Checks if an scvf lies on a low dim element geometry.
 template<class Scvf, class LowDimGeom>
 void checkScvfEmbedment(const Scvf& scvf, const LowDimGeom& lowDimGeom)
 {
@@ -72,7 +74,7 @@ void checkScvfEmbedment(const Scvf& scvf, const LowDimGeom& lowDimGeom)
         DUNE_THROW(Dune::InvalidStateException, "Scvf does not coincide with low dim element");
 }
 
-// update a tpfa finite volume grid geometry
+//! Updates a tpfa finite volume grid geometry.
 template< class BulkFVG, class FacetFVG, class GridManager,
           std::enable_if_t<BulkFVG::discMethod == Dumux::DiscretizationMethod::cctpfa, int> = 0 >
 void updateBulkFvGeometry(BulkFVG& bulkFVG, const FacetFVG& facetFVG, const GridManager& gm)
@@ -80,7 +82,7 @@ void updateBulkFvGeometry(BulkFVG& bulkFVG, const FacetFVG& facetFVG, const Grid
     bulkFVG.update();
 }
 
-// update a box finite volume grid geometry
+//! Updates a box finite volume grid geometry.
 template< class BulkFVG, class FacetFVG, class GridManager,
           std::enable_if_t<BulkFVG::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
 void updateBulkFvGeometry(BulkFVG& bulkFVG, const FacetFVG& facetFVG, const GridManager& gm)

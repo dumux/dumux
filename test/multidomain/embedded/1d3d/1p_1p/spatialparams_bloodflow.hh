@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OneTests
- * \brief The spatial parameters class blood flow problem
+ * \ingroup EmbeddedTests
+ * \brief Definition of the spatial parameters for the blood flow problem.
  */
+
 #ifndef DUMUX_BlOOD_FLOW_SPATIALPARAMS_HH
 #define DUMUX_BlOOD_FLOW_SPATIALPARAMS_HH
 
@@ -29,8 +30,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup OneTests
- * \brief Definition of the spatial parameters for the blood flow problem
+ * \ingroup EmbeddedTests
+ * \brief Definition of the spatial parameters for the blood flow problem.
  */
 template<class FVGridGeometry, class Scalar>
 class BloodFlowSpatialParams
@@ -51,7 +52,7 @@ public:
     }
 
     /*!
-     * \brief Return the intrinsic permeability for the current sub-control volume in [m^2].
+     * \brief Returns the intrinsic permeability for the current sub-control volume in [m^2].
      *
      * \param ipGlobal The integration point
      */
@@ -65,7 +66,7 @@ public:
     { return true; }
 
     /*!
-     * \brief Return the radius of the circular pipe for the current sub-control volume in [m].
+     * \brief Returns the radius of the circular pipe for the current sub-control volume in [m].
      *
      * \param eIdxGlobal the index of the element
      */
@@ -75,7 +76,7 @@ public:
     }
 
     /*!
-     * \brief Returns the porosity \f$[-]\f$
+     * \brief Returns the porosity \f$[-]\f$.
      *
      * \param globalPos the scv center
      */

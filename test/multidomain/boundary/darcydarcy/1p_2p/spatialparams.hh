@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePTests
- * \brief The spatial params the incompressible test
+ * \ingroup BoundaryTests
+ * \brief The spatial parameters for the incompressible test.
  */
+
 #ifndef DUMUX_MULTIDOMAIN_1P_2P_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_MULTIDOMAIN_1P_2P_TEST_SPATIAL_PARAMS_HH
 
@@ -31,9 +32,9 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
+ * \ingroup BoundaryTests
  * \brief The spatial parameters class for the test problem using the
- *        incompressible 1p model
+ *        incompressible 1p model.
  */
 template<class FVGridGeometry, class Scalar>
 class TestSpatialParams
@@ -74,7 +75,7 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
+     * \brief Defines the porosity \f$\mathrm{[-]}\f$.
      *
      * \param globalPos The global position
      */

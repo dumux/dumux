@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the Millington and Quirk effective diffusivity model
+ * \ingroup MaterialTests
+ * \brief Test for the Millington and Quirk effective diffusivity model.
  */
+
 #include <config.h>
 
 #include <dumux/common/parameters.hh>

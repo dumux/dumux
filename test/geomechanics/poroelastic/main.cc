@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the one-phase CC model
+ * \ingroup GeomechanicsTests
+ * \brief Test for the poro-elastic model.
  */
+
 #include <config.h>
 
 #include <ctime>

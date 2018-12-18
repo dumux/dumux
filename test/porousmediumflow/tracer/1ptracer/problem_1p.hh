@@ -21,6 +21,7 @@
  * \ingroup TracerTests
  * \brief The properties for the incompressible test
  */
+
 #ifndef DUMUX_ONEP_TRACER_TEST_PROBLEM_HH
 #define DUMUX_ONEP_TRACER_TEST_PROBLEM_HH
 
@@ -111,7 +112,7 @@ public:
      *        used for which equation on a given boundary control volume.
      *
      * \param element The finite element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      */
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolumeFace &scvf) const
@@ -129,11 +130,10 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param element The finite element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores primary variables.
      */

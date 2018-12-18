@@ -18,10 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup MaterialTests
  * \brief This is test for the SPE5 fluid system (which uses the
  *        Peng-Robinson EOS) and the NCP flash solver.
  */
+
 #include <config.h>
 #include <iomanip>
 
@@ -57,7 +58,7 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
         matParams.setPcMaxSat(phaseIdx, 0.0);
     }
 
-    // retieve the global volumetric component molarities
+    // retrieve the global volumetric component molarities
     surfaceFluidState.setTemperature(273.15 + 20);
 
     ComponentVector molarities;
@@ -84,7 +85,7 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
     paramCache.updateAll(surfaceFluidState);
 
     // increase volume until we are at surface pressure. use the
-    // newton method for this
+    // Newton method for this
     ComponentVector tmpMolarities;
     for (int i = 0; ; ++i) {
         if (i >= 20)

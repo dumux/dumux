@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the staggered grid multi-component (Navier-)Stokes model
+ * \ingroup NavierStokesNCTests
+ * \brief Test for the staggered grid multi-component (Navier-)Stokes model.
  */
+
 #include <config.h>
 
 #include <ctime>
@@ -108,7 +109,7 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addField(problem->getDeltaRho(), "deltaRho");
     vtkWriter.write(0.0);
 

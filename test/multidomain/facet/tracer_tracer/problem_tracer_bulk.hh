@@ -16,11 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
+/*!
  * \file
- * \ingroup TracerTests
- * \brief The problem for the bulk domain of the tracer facet coupling test
+ * \ingroup FacetTests
+ * \brief The problem for the bulk domain of the tracer facet coupling test.
  */
+
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_TRACER_BULK_PROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_BULK_PROBLEM_HH
 
@@ -97,9 +98,8 @@ struct FluidSystem<TypeTag, TTag::TracerTestBulk> { using type = TracerFluidSyst
 
 
 /*!
- * \ingroup MultiDomain
- * \ingroup TracerModel
- * \brief The problem for the bulk domain of the tracer facet coupling test
+ * \ingroup FacetTests
+ * \brief The problem for the bulk domain of the tracer facet coupling test.
  */
 template <class TypeTag>
 class TracerBulkProblem : public PorousMediumFlowProblem<TypeTag>
@@ -147,6 +147,7 @@ public:
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
+     *
      * \param globalPos The position for which the bc type should be evaluated
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -157,7 +158,8 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
+     *
      * \param globalPos The position for which the initial condition should be evaluated
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
@@ -168,8 +170,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
@@ -197,7 +198,7 @@ public:
         return NumEqVector(0.0);
     }
 
-    //! returns reference to the coupling manager.
+    //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 
@@ -213,6 +214,6 @@ private:
     std::string problemName_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

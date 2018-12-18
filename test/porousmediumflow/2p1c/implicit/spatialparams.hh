@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPOneCTests
- * \brief Definition of the spatial parameters for the steam injection problem
+ * \brief Definition of the spatial parameters for the steam injection problem.
  */
 
 #ifndef DUMUX_STEAMINJECTION_SPATIAL_PARAMS_HH
@@ -33,7 +33,7 @@
 namespace Dumux {
 /*!
  * \ingroup TwoPOneCTests
- * \brief Definition of the spatial parameters for various steam injection problems
+ * \brief Definition of the spatial parameters for various steam injection problems.
  */
 template<class FVGridGeometry, class Scalar>
 class InjectionProblemSpatialParams
@@ -60,11 +60,6 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     InjectionProblemSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -94,7 +89,7 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the spatial parameters
+     * \brief Defines the porosity \f$[-]\f$ of the spatial parameters
      *
      * \param globalPos The global position
      */
@@ -105,7 +100,7 @@ public:
 
     /*!
      * \brief Returns the parameter object for the capillary-pressure/
-     *        saturation material law
+     *        saturation material law.
      *
      * \param globalPos The global position
      */
@@ -118,7 +113,7 @@ public:
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
      * \param globalPos The position of the center of the element
-     * \return the wetting phase index
+     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const

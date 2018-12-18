@@ -16,9 +16,9 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
+/*!
  * \file
- *
+ * \ingroup PoromechanicsTests
  * \brief Provides the class with the tabulated values of CO2
  */
 #ifndef DUMUX_EL2P_CO2TABLES_HH

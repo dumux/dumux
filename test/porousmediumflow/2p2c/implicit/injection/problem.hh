@@ -21,6 +21,7 @@
  * \ingroup TwoPTwoCTests
  * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
  */
+
 #ifndef DUMUX_INJECTION_PROBLEM_HH
 #define DUMUX_INJECTION_PROBLEM_HH
 
@@ -116,18 +117,22 @@ public:
  * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
  *
  * The domain is sized 60m times 40m and consists of two layers, a moderately
- * permeable one (\f$ K=10e-12\f$) for \f$ y<22m\f$ and one with a lower permeablility (\f$ K=10e-13\f$)
- * in the rest of the domain.
+ * permeable one (\f$ K=10e-12\f$) for \f$ y<22m\f$ and one with a lower
+ * permeablility (\f$ K=10e-13\f$) in the rest of the domain.
  *
- * A mixture of Nitrogen and Water vapor, which is composed according to the prevailing conditions (temperature, pressure)
- * enters a water-filled aquifer. This is realized with a solution-dependent Neumann boundary condition at the right boundary
- * (\f$ 5m<y<15m\f$). The aquifer is situated 2700m below sea level. The injected fluid phase migrates upwards due to buoyancy.
+ * A mixture of Nitrogen and Water vapor, which is composed according to the
+ * prevailing conditions (temperature, pressure) enters a water-filled aquifer.
+ * This is realized with a solution-dependent Neumann boundary condition at the
+ * right boundary (\f$ 5m<y<15m\f$). The aquifer is situated 2700m below sea level.
+ * The injected fluid phase migrates upwards due to buoyancy.
  * It accumulates and partially enters the lower permeable aquitard.
  *
- * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
- * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is true.
+ * The model is able to use either mole or mass fractions. The property useMoles
+ * can be set to either true or false in the problem file. Make sure that the
+ * according units are used in the problem set-up.
+ * The default setting for useMoles is true.
  *
- * This problem uses the \ref TwoPTwoCModel .
+ * This problem uses the \ref TwoPTwoCModel.
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_box2p2c</tt> or
@@ -179,15 +184,10 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    //! property that defines whether mole or mass fractions are used
+    //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = ModelTraits::useMoles();
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     InjectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -209,7 +209,7 @@ public:
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
 
-        //stateing in the console whether mole or mass fractions are used
+        // stating in the console whether mole or mass fractions are used
         if(useMoles)
             std::cout<<"problem uses mole-fractions"<<std::endl;
         else
@@ -259,8 +259,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment
      *
      * \param globalPos The global position
      */
@@ -276,7 +275,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
      * \param elemVolVars All volume variables for the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * This method is used for cases, when the Neumann condition depends on the
      * solution and requires some quantities that are specific to the fully-implicit method.
@@ -310,7 +309,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume.
      *
      * \param globalPos The global position
      */
@@ -321,7 +320,7 @@ public:
 
 private:
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume.
      *
      * The internal method for the initial condition
      *

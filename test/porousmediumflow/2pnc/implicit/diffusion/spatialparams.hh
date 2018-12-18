@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TwoPNCTest
+ * \ingroup TwoPNCTests
  * \brief Definition of the spatial parameters for the fuel cell
- *        problem which uses the isothermal/non-insothermal 2pnc box model
+ *        problem which uses the isothermal/non-insothermal 2pnc box model.
  */
 
 #ifndef DUMUX_TWOPNC_DIFFUSION_SPATIAL_PARAMS_HH
@@ -35,9 +35,9 @@
 
 namespace Dumux {
 /*!
- * \ingroup TwoPNCTest
+ * \ingroup TwoPNCTests
  * \brief Definition of the spatial parameters for the TwoPNCDiffusion
- *        problem which uses the isothermal 2p2c box model
+ *        problem which uses the isothermal 2p2c box model.
  */
 template<class FVGridGeometry, class Scalar>
 class TwoPNCDiffusionSpatialParams
@@ -63,11 +63,6 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     TwoPNCDiffusionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), K_(0)
     {
@@ -82,7 +77,7 @@ public:
         materialParams_.setSwr(0.02);
         materialParams_.setSnr(0.0);
 
-        //parameters for the vanGenuchten law
+        // parameters for the vanGenuchten law
         materialParams_.setPe(1e2); // alpha = 1/pcb
         materialParams_.setLambda(1.3);
     }
@@ -96,7 +91,7 @@ public:
     { return K_; }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the spatial parameters
+     * \brief Defines the porosity \f$[-]\f$ of the spatial parameters
      *
      * \param globalPos The global position
      */
@@ -104,7 +99,8 @@ public:
     { return 0.2; }
 
     /*!
-     * \brief return the parameter object for the Brooks-Corey material law which depends on the position
+     * \brief Returns the parameter object for the Brooks-Corey material law
+     * which depends on the position.
      *
      * \param globalPos The global position
      */
@@ -114,8 +110,8 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
      * \param globalPos The position of the center of the element
+     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
@@ -128,6 +124,6 @@ private:
     MaterialLawParams materialParams_;
 };
 
-}//end namespace
+} // end namespace Dumux
 
 #endif

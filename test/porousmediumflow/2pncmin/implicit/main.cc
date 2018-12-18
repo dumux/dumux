@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPNCMinTests
  * \brief Test for the two-phase n-component finite volume model used to model e.g. salt dissolution.
  */
 #include <config.h>
@@ -149,7 +149,7 @@ int main(int argc, char** argv) try
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     //add specific output
     vtkWriter.addField(problem->getPermeability(), "Permeability");
     // update the output fields before write

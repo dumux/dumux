@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the staggered grid multi-component RANS model
+ * \ingroup RANSNCTests
+ * \brief Test for the staggered grid multi-component RANS model.
  */
+
 #include <config.h>
 
 #include <ctime>
@@ -132,7 +133,7 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem

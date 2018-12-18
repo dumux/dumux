@@ -36,13 +36,11 @@
 
 #include "../spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class OnePSingularityProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct OnePSingularity { using InheritsFrom = std::tuple<OneP>; };
@@ -135,7 +133,7 @@ public:
     }
 
     /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
@@ -162,8 +160,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      *
@@ -182,7 +179,7 @@ public:
     // \{
 
     /*!
-     * \brief Applies a vector of point sources. The point sources
+     * \brief Applies a vector of point sources which
      *        are possibly solution dependent.
      *
      * \param pointSources A vector of PointSource s that contain
@@ -200,7 +197,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * For this method, the \a priVars parameter stores primary
      * variables.
@@ -218,6 +215,6 @@ private:
     std::string name_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

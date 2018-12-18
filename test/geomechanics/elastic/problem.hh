@@ -16,10 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
+/*!
  * \file
- * \brief Definition of a test problem for the linear elastic model
+ * \ingroup GeomechanicsTests
+ * \brief Definition of a test problem for the linear elastic model.
  */
+
 #ifndef DUMUX_ELASTICPROBLEM_HH
 #define DUMUX_ELASTICPROBLEM_HH
 
@@ -54,13 +56,11 @@ struct SpatialParams<TypeTag, TTag::TestElastic>
 { using type = ElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
                                      GetPropType<TypeTag, Properties::FVGridGeometry> >;
 };
-}
+} // end namespace Properties
 
 /*!
- * \ingroup Geomechanics
- * \ingroup Elastic
- *
- * \brief Problem definition for the deformation of an elastic body
+ * \ingroup GeomechanicsTests
+ * \brief Problem definition for the deformation of an elastic body.
  */
 template<class TypeTag>
 class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
@@ -89,19 +89,18 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using GradU = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
 public:
-    //! The constructor
     ElasticProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry) {}
 
-    //! The temperature in the domain
+    //! Returns the temperature in the domain.
     static constexpr Scalar temperature()
     { return 273.15; }
 
-    //! Evaluate the initial value for a control volume.
+    //! Evaluates the initial value for a control volume.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
 
-    //! Evaluate the boundary conditions for a Dirichlet boundary segment.
+    //! Evaluates the boundary conditions for a Dirichlet boundary segment.
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
 
@@ -124,6 +123,7 @@ public:
         return values;
     }
 
+    //! Evaluates the boundary conditions for a Neumann boundary segment.
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolvars,
@@ -152,8 +152,8 @@ public:
     }
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-control volume.
      */
     NumEqVector source(const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -195,7 +195,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the exact displacement to this problem at a given position.
+     * \brief Evaluates the exact displacement to this problem at a given position.
      */
     PrimaryVariables exactSolution(const GlobalPosition& globalPos) const
     {
@@ -211,7 +211,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the exact displacement gradient to this problem at a given position.
+     * \brief Evaluates the exact displacement gradient to this problem at a given position.
      */
     GradU exactGradient(const GlobalPosition& globalPos) const
     {
@@ -236,6 +236,6 @@ private:
     static constexpr Scalar eps_ = 3e-6;
 };
 
-} //end namespace
+} // end namespace Dumux
 
 #endif

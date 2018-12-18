@@ -19,9 +19,10 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief A test problem for the 1p model. A pipe system with circular cross-section
+ * \brief A test problem for the 1p model: A pipe system with circular cross-section
  *        and a branching point embedded in a three-dimensional world
  */
+
 #ifndef DUMUX_ONEP_TUBES_TEST_SPATIALPARAMS_HH
 #define DUMUX_ONEP_TUBES_TEST_SPATIALPARAMS_HH
 
@@ -32,7 +33,7 @@ namespace Dumux {
 
 /*!
  * \ingroup OnePTests
- * \brief A test problem for the 1p model. A pipe system with circular cross-section
+ * \brief A test problem for the 1p model: A pipe system with circular cross-section
  *        and a branching point embedded in a three-dimensional world
  */
 template<class FVGridGeometry, class Scalar>
@@ -63,9 +64,10 @@ public:
     }
 
     /*!
-     * \brief Return the radius of the circular pipe for the current sub-control volume in [m].
+     * \brief Returns the radius of the circular pipe for the current
+     * sub-control volume in [m].
      *
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      */
     Scalar radius(const SubControlVolume &scv) const
     {
@@ -79,9 +81,9 @@ public:
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
      * \param element The element
-     * \param scv The sub control volume
+     * \param scv The sub-control volume
      * \param elemSol The element solution vector
-     * \return the intrinsic permeability
+     * \return The intrinsic permeability
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,

@@ -16,10 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
+/*!
  * \file
- * \brief Fluid system for the tracer facet coupling test
+ * \ingroup FacetTests
+ * \brief Fluid system for the tracer facet coupling test.
  */
+
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_TRACER_FLUIDSYSTEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_FLUIDSYSTEM_HH
 
@@ -64,7 +66,7 @@ public:
     static Scalar molarMass(unsigned int compIdx)
     { return 0.300; }
 
-    //! binary diffusion coefficient
+    //! Binary diffusion coefficient
     //! (might depend on spatial parameters like pressure / temperature)
     static Scalar binaryDiffusionCoefficient(unsigned int compIdx,
                                              const Problem& problem,
@@ -73,6 +75,6 @@ public:
     { return 0.0; }
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

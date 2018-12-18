@@ -18,11 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
- * \ingroup FacetCoupling
+ * \ingroup FacetTests
  * \brief The problem for the (d-1)-dimensional facet domain in the single-phase
  *        facet coupling test involving three domains.
  */
+
 #ifndef DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_FACETPROBLEM_HH
 #define DUMUX_TEST_FACETCOUPLING_THREEDOMAIN_ONEP_FACETPROBLEM_HH
 
@@ -77,9 +77,9 @@ public:
 } // end namespace Properties
 
 /*!
- * \ingroup OnePTests
+ * \ingroup FacetTests
  * \brief The (d-1)-dimensional test problem for the incompressible
- *        one-phase model with coupling across the bulk grid facets
+ *        one-phase model with coupling across the bulk grid facets.
  */
 template<class TypeTag>
 class OnePFacetProblem : public PorousMediumFlowProblem<TypeTag>
@@ -104,7 +104,6 @@ class OnePFacetProblem : public PorousMediumFlowProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    //! The constructor
     OnePFacetProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                      std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                      std::shared_ptr<CouplingManager> couplingManagerPtr,
@@ -124,7 +123,7 @@ public:
         return problemName_;
     }
 
-    //! Specifies the kind of boundary condition at a boundary position
+    //! Specifies the kind of boundary condition at a boundary position.
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
@@ -148,8 +147,8 @@ public:
     }
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-control volume.
      */
     NumEqVector source(const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -162,11 +161,11 @@ public:
         return source;
     }
 
-    //! Set the aperture as extrusion factor.
+    //! Sets the aperture as extrusion factor.
     Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
     { return aperture_; }
 
-    //! Evaluate the initial conditions
+    //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(1.0); }
 
@@ -174,7 +173,7 @@ public:
     Scalar temperature() const
     { return 283.15; /*10°*/ }
 
-    //! Return const reference to the coupling manager.
+    //! Returns const reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 

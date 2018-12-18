@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup MPNCTests
- * \brief The spatial parameters for the ObstacleProblem
+ * \brief The spatial parameters for the ObstacleProblem.
  */
 
 #ifndef DUMUX_OBSTACLE_SPATIAL_PARAMS_HH
@@ -34,7 +34,7 @@ namespace Dumux {
 
 /**
  * \ingroup MPNCTests
- * \brief Definition of the spatial params properties for the obstacle problem
+ * \brief Definition of the spatial params properties for the obstacle problem.
  *
  */
 template<class FVGridGeometry, class Scalar>
@@ -54,13 +54,12 @@ class ObstacleSpatialParams
     using EffectiveLaw = RegularizedLinearMaterial<Scalar>;
 
 public:
-    //! export the type used for the permeability
+    //! Export the type used for the permeability
     using PermeabilityType = Scalar;
-    //! export the material law type used
+    //! Export the material law type used
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    //! the constructor
     ObstacleSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
@@ -96,7 +95,7 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the soil
+     * \brief Defines the porosity \f$[-]\f$ of the soil
      *
      * \param globalPos The global position
      */
@@ -107,7 +106,7 @@ public:
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
      * \param globalPos The global position of the sub-control volume.
-     * \return the material parameters object
+     * \return The material parameters object
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
@@ -120,8 +119,8 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
      * \param globalPos The global position
+     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const

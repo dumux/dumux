@@ -19,8 +19,11 @@
 /*!
  * \file
  * \ingroup MPNCTests
- * \brief Spatialparameters for the combustionproblem1c. Parameters for the actual simulation domain and an outflow region are provided.
+ * \brief Spatialparameters for the combustionproblem1c.
+ *
+ * Parameters for the actual simulation domain and an outflow region are provided.
  */
+
 #ifndef DUMUX_COMBUSTION_SPATIALPARAMS_HH
 #define DUMUX_COMBUSTION_SPATIALPARAMS_HH
 
@@ -38,7 +41,6 @@ namespace Dumux {
 
 /**
  * \brief Definition of the spatial parameters for the one component combustion problem
- *
  */
 template<class FVGridGeometry, class Scalar>
 class CombustionSpatialParams
@@ -58,9 +60,9 @@ class CombustionSpatialParams
     using EffectiveLaw = HeatPipeLaw<Scalar>;
 
 public:
-    //! export the type used for the permeability
+    //! Export the type used for the permeability
     using PermeabilityType = Scalar;
-    //! export the material law type used
+    //! Export the material law type used
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     using FluidSolidInterfacialAreaFormulation = FluidSolidInterfacialAreaShiWang<Scalar>;
@@ -106,13 +108,12 @@ public:
     }
 
     /*!
-     * \brief Function for defining the porosity.
-     *        That is possibly solution dependent.
+     * \brief Function for defining the porosity which is possibly solution dependent.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return the porosity
+     * \return The porosity
      */
     template<class ElementSolution>
     Scalar porosity(const Element& element,
@@ -126,14 +127,13 @@ public:
     }
 
     /*!
-     * \brief Function for defining the porosity.
-     *        That is possibly solution dependent.
+     * \brief Function for defining the porosity which is possibly solution dependent.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      * \param compIdx The index of the component
-     * \return the porosity
+     * \return The porosity
      */
     template<class SolidSystem, class ElementSolution>
     Scalar inertVolumeFraction(const Element& element,
@@ -160,8 +160,8 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
      * \param globalPos The global position
+     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
@@ -170,26 +170,31 @@ public:
     }
 
     /*!
-     * \brief Return a reference to the material parameters of the material law.
-     * \param globalPos The position in global coordinates. */
+     * \brief Returns a reference to the material parameters of the material law.
+     * \param globalPos The position in global coordinates.
+     */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition & globalPos) const
     { return materialParams_ ; }
 
-    /*!\brief Return the characteristic length for the mass transfer.
-     * \param globalPos The position in global coordinates.*/
+    /*!
+     * \brief Returns the characteristic length for the mass transfer.
+     * \param globalPos The position in global coordinates.
+     */
     const Scalar characteristicLengthAtPos(const  GlobalPosition & globalPos) const
     { return characteristicLength_ ; }
 
-    /*!\brief Return the pre factor the the energy transfer
-     * \param globalPos The position in global coordinates.*/
+    /*!
+     * \brief Returns the pre factor the the energy transfer
+     * \param globalPos The position in global coordinates.
+     */
     const Scalar factorEnergyTransferAtPos(const  GlobalPosition & globalPos) const
     { return factorEnergyTransfer_; }
 
-    //! Return if the tested position (input) is a specific region (right end of porous medium) in the domain
+    //! Returns if the tested position is at the right end of the porous medium.
     bool inOutFlow(const GlobalPosition & globalPos) const { return globalPos[0] > (lengthPM_ - eps_) ;    }
-    //! Return the length of the porous medium domain
+    //! Returns the length of the porous medium domain
     Scalar lengthPM() const { return lengthPM_ ; }
-    //! Return the interfacial tension
+    //! Returns the interfacial tension
     Scalar interfacialTension() const { return interfacialTension_ ; }
 
 private:

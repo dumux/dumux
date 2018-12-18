@@ -18,20 +18,19 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePTests
- * \brief The spatial params the single-phase facet coupling test
+ * \ingroup FacetTests
+ * \brief The spatial parameters for the single-phase facet coupling test.
  */
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEP_SPATIALPARAMS_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_ONEP_SPATIALPARAMS_HH
 
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup OnePTests
- * \brief The spatial params the single-phase facet coupling test
+ * \ingroup FacetTests
+ * \brief The spatial parameters for the single-phase facet coupling test.
  */
 template< class FVGridGeometry, class Scalar >
 class OnePSpatialParams
@@ -45,10 +44,9 @@ class OnePSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    //! export the type used for permeabilities
+    //! Export the type used for permeabilities
     using PermeabilityType = Scalar;
 
-    //! the constructor
     OnePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry)
     {
@@ -59,7 +57,7 @@ public:
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     { return permeability_; }
 
-    //! Return the porosity
+    //! Returns the porosity
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 1.0; }
 

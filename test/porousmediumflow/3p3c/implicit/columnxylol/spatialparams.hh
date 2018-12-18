@@ -34,7 +34,7 @@ namespace Dumux {
 
 /*!
  * \ingroup ThreePThreeCModel
- * \brief Definition of the spatial parameters for the column problem
+ * \brief Definition of the spatial parameters for the column problem.
  */
 template<class FVGridGeometry, class Scalar>
 class ColumnSpatialParams
@@ -57,11 +57,6 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     ColumnSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -107,7 +102,7 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return permeability
+     * \return The permeability
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
@@ -120,7 +115,7 @@ public:
         return coarseK_;
     }
 
-    /*! \brief Define the porosity in [-].
+    /*! \brief Defines the porosity in [-].
    *
    * \param globalPos The global position where we evaluate
    */
@@ -135,7 +130,7 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return the material parameters object
+     * \return The material parameters object
      */
     template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
@@ -150,13 +145,13 @@ public:
     }
 
     /*!
-     * \brief User-defined solid heat capacity.
+     * \brief Returns the user-defined solid heat capacity.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      * \param solidState The solid state
-     * \return the solid heat capacity
+     * \return The solid heat capacity
      */
     template <class ElementSolution, class SolidState>
     Scalar solidHeatCapacity(const Element& element,

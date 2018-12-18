@@ -64,23 +64,17 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     * \param gridData The grid data
-     */
     HeterogeneousSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                                std::shared_ptr<const GridData<Grid>> gridData)
     : ParentType(fvGridGeometry), gridData_(gridData)
     {
 
-        //Set the permeability for the layers
+        // Set the permeability for the layers
         barrierTopK_ = 1e-17; //sqm
         barrierMiddleK_ = 1e-15; //sqm
         reservoirK_ = 1e-14; //sqm
 
-        //Set the effective porosity of the layers
+        // Set the effective porosity of the layers
         barrierTopPorosity_ = 0.001;
         barrierMiddlePorosity_ = 0.05;
         reservoirPorosity_ = 0.2;
@@ -94,7 +88,6 @@ public:
 
     /*!
      * \brief Reads layer information from the grid
-     *
      */
     void getParamsFromGrid()
     {
@@ -116,7 +109,7 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      *
-     * \return instrinsic permeability
+     * \return The instrinsic permeability
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
@@ -151,7 +144,7 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The element solution
      * \param compIdx The solid component index
-     * \return solid volume fraction
+     * \return The solid volume fraction
      */
     template<class SolidSystem, class ElementSolution>
     Scalar inertVolumeFraction(const Element& element,
@@ -184,8 +177,8 @@ public:
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
-     * \return the material parameters object
      * \param globalPos The position of the center of the element
+     * \return The material parameters object
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
@@ -195,8 +188,8 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
      * \param globalPos The position of the center of the element
+     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const

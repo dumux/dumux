@@ -20,9 +20,9 @@
  * \file
  * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the kuevette problem
- *        which uses the isothermal two-phase two component
- *        fully implicit model.
+ *        which uses the isothermal two-phase two component fully implicit model.
  */
+
 #ifndef DUMUX_INFILTRATION_THREEPTHREEC_SPATIAL_PARAMETERS_HH
 #define DUMUX_INFILTRATION_THREEPTHREEC_SPATIAL_PARAMETERS_HH
 
@@ -60,11 +60,6 @@ public:
    using MaterialLawParams = typename MaterialLaw::Params;
    using PermeabilityType = Scalar;
 
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     InfiltrationThreePThreeCSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -97,7 +92,7 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return permeability
+     * \return The permeability
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
@@ -122,7 +117,7 @@ public:
 
 
     /*!
-     * \brief return the parameter object for the material law which depends on the position
+     * \brief Returns the parameter object for the material law which depends on the position
      *
      * \param globalPos The position for which the material law should be evaluated
      */

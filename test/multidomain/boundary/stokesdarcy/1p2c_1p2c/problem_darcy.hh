@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup BoundaryTests
  * \brief A simple Darcy test problem (cell-centered finite volume method).
  */
+
 #ifndef DUMUX_DARCY_SUBPROBLEM_HH
 #define DUMUX_DARCY_SUBPROBLEM_HH
 
@@ -37,13 +38,11 @@
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class DarcySubProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct DarcyOnePTwoC { using InheritsFrom = std::tuple<OnePNC, CCTpfaModel>; };
@@ -87,7 +86,7 @@ struct SpatialParams<TypeTag, TTag::DarcyOnePTwoC>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePSpatialParams<FVGridGeometry, Scalar>;
 };
-}
+} // end namespace Dumux
 
 template <class TypeTag>
 class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
@@ -130,7 +129,7 @@ public:
     }
 
     /*!
-     * \brief Return the temperature within the domain in [K].
+     * \brief Returns the temperature within the domain in [K].
      *
      */
     Scalar temperature() const
@@ -167,7 +166,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Dirichlet control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param element The element for which the Dirichlet boundary condition is set
      * \param scvf The boundary subcontrolvolumeface
@@ -201,7 +200,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann control volume.
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
      *
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeometry The fvGeometry
@@ -231,13 +230,13 @@ public:
      */
     // \{
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub control volume.
      *
      * \param element The element for which the source term is set
      * \param fvGeometry The fvGeometry
      * \param elemVolVars The element volume variables
-     * \param scv The subcontrolvolume
+     * \param scv The sub control volume
      */
     template<class ElementVolumeVariables>
     NumEqVector source(const Element &element,
@@ -249,7 +248,7 @@ public:
     // \}
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param element The element
      *
@@ -271,13 +270,13 @@ public:
     { return *couplingManager_; }
 
     /*!
-     * \brief Sets the time loop pointer
+     * \brief Sets the time loop pointer.
      */
     void setTimeLoop(TimeLoopPtr timeLoop)
     { timeLoop_ = timeLoop; }
 
     /*!
-     * \brief Returns the time
+     * \brief Returns the time.
      */
     Scalar time() const
     { return timeLoop_->time(); }
@@ -301,6 +300,6 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
     TimeLoopPtr timeLoop_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif //DUMUX_DARCY_SUBPROBLEM_HH

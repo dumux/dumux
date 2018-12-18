@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup RichardsNCTests
- * \brief spatial parameters for the RichardsWellTracerProblem
+ * \brief The spatial parameters for the RichardsWellTracerProblem.
  */
+
 #ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 #define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 
@@ -38,7 +39,7 @@ namespace Dumux {
 /*!
  * \ingroup RichardsModel
  * \ingroup ImplicitTestProblems
- * \brief The spatial parameters for the RichardsWellTracerProblem
+ * \brief The spatial parameters for the RichardsWellTracerProblem.
  */
 template<class FVGridGeometry, class Scalar>
 class RichardsWellTracerSpatialParams

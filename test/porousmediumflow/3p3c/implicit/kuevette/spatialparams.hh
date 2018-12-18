@@ -21,6 +21,7 @@
  * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the kuevette problem.
  */
+
 #ifndef DUMUX_KUEVETTE3P3CNI_SPATIAL_PARAMS_HH
 #define DUMUX_KUEVETTE3P3CNI_SPATIAL_PARAMS_HH
 
@@ -60,11 +61,6 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     KuevetteSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -107,7 +103,7 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return permeability
+     * \return The permeability
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
@@ -140,7 +136,7 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return the material parameters object
+     * \return The material parameters object
      */
     template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,

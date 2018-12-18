@@ -21,6 +21,7 @@
  * \ingroup TwoPNCTests
  * \brief Definition of a problem for water management in PEM fuel cells.
  */
+
 #ifndef DUMUX_FUELCELL_PROBLEM_HH
 #define DUMUX_FUELCELL_PROBLEM_HH
 
@@ -95,8 +96,7 @@ public:
 } // end namespace Properties
 
 /*!
- * \ingroup TwoPNCModel
- * \ingroup ImplicitTestProblems
+ * \ingroup TwoPNCTests
  * \brief Problem or water management in PEM fuel cells.
  *
  * To run the simulation execute the following line in shell:
@@ -134,11 +134,6 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
 
     enum { dofCodim = isBox ? dim : 0 };
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     FuelCellProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -226,8 +221,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The global position
      */
@@ -255,7 +249,7 @@ public:
 
 
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume.
      *
      * \param globalPos The global position
      */
@@ -264,7 +258,9 @@ public:
 
 
     /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     * \brief Adds additional VTK output data to the VTKWriter.
+     *
+     * Function is called by the output module on every write.
      */
     template<class VTKWriter>
     void addVtkFields(VTKWriter& vtk)
@@ -363,6 +359,6 @@ private:
     std::vector<double> Kyy_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

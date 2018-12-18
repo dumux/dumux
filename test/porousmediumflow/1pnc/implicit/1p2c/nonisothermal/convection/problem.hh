@@ -19,9 +19,11 @@
 /**
  * \file
  * \ingroup OnePNCTests
- * \brief Test for the OnePNCModel in combination with the NI model for a conduction problem:
- * The simulation domain is a tube where with an elevated temperature on the left hand side.
+ * \brief Test for the OnePNCModel in combination with the NI model for a conduction problem.
+ *
+ * The simulation domain is a tube with an elevated temperature on the left hand side.
  */
+
 #ifndef DUMUX_1P2CNI_CONVECTION_TEST_PROBLEM_HH
 #define DUMUX_1P2CNI_CONVECTION_TEST_PROBLEM_HH
 
@@ -42,14 +44,12 @@
 #include <dumux/material/components/h2o.hh>
 #include "../../spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class OnePTwoCNIConvectionProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct OnePTwoCNIConvection { using InheritsFrom = std::tuple<OnePNCNI>; };
@@ -92,16 +92,16 @@ struct SpatialParams<TypeTag, TTag::OnePTwoCNIConvection>
 // Define whether mole(true) or mass (false) fractions are used
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::OnePTwoCNIConvection> { static constexpr bool value = true; };
-}
-
+} // end namespace Properties
 
 /*!
  * \ingroup OnePNCTests
- * \brief Test for the OnePTwoCModel in combination with the NI model for a convection problem:
+ * \brief Test for the OnePTwoCModel in combination with the NI model for a convection problem.
+ *
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.
  *
- * Initially the domain is fully saturated with water at a constant temperature.
+ * Initially, the domain is fully saturated with water at a constant temperature.
  * On the left hand side water is injected at a constant rate and on the right hand side
  * a Dirichlet boundary with constant pressure, saturation and temperature is applied.
  *
@@ -157,7 +157,7 @@ class OnePTwoCNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
-    //! property that defines whether mole or mass fractions are used
+    //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
@@ -185,13 +185,13 @@ public:
         pressureLow_ = 1e5;
     }
 
-    //! get the analytical temperature
+    //! Get the analytical temperature
     const std::vector<Scalar>& getExactTemperature()
     {
         return temperatureExact_;
     }
 
-    //! udpate the analytical temperature
+    //! Udpate the analytical temperature
     void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
@@ -276,8 +276,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet Sboundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      */
@@ -288,8 +287,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * This is the method for the case where the Neumann condition is
      * potentially solution dependent and requires some quantities that
@@ -298,7 +296,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
@@ -333,21 +331,21 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-control volume.
      *
      * For this method, the \a priVars parameter stores the rate mass
-     * of a component is generated or annihilate per volume
+     * of a component is generated or annihilated per volume
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      *
-     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
+     * The units must be according to either using mole or mass fractions (mole/(m^3*s) or kg/(m^3*s)).
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     { return NumEqVector(0.0); }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *
@@ -379,6 +377,6 @@ private:
         std::vector<Scalar> temperatureExact_;
     };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

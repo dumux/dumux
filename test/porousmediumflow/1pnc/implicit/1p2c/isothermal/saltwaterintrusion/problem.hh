@@ -22,6 +22,7 @@
  * \brief Definition of a problem involving salt
  *        water intrusion into a fresh water aquifer.
  */
+
 #ifndef DUMUX_SALTWATERINTRUSION_TEST_PROBLEM_HH
 #define DUMUX_SALTWATERINTRUSION_TEST_PROBLEM_HH
 
@@ -74,8 +75,10 @@ struct UseMoles<TypeTag, TTag::SaltWaterIntrusionTest> { static constexpr bool v
 /*!
  * \ingroup OnePNCTests
  * \brief Definition of a problem involving salt water intrusion into a
- *        fresh water aquifer. The aquifer is in contact with salt water
- *        with a salinity of 0.03 on the right boundary.
+ *        fresh water aquifer.
+ *
+ * The aquifer is in contact with salt water with a salinity of 0.03 on the
+ * right boundary.
  * \note To run the simulation execute the following line in shell:
  * <tt>./test_saltwaterintrusion -parameterFile saltwaterintrusion.input</tt> or
  */
@@ -130,6 +133,7 @@ public:
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
+     *
      * \param globalPos The position for which the bc type should be evaluated
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
@@ -145,7 +149,8 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
+     *
      * \param globalPos The position for which the bc type should be evaluated
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
@@ -167,7 +172,8 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
+     *
      * \param globalPos The position for which the initial condition should be evaluated
      */
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
@@ -185,6 +191,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

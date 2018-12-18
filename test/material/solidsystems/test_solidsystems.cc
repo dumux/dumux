@@ -18,10 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup MaterialTests
  * \brief This test makes sure that the programming interface is
- *        observed by all solid systems
+ *        observed by all solid systems.
  */
+
 #include <config.h>
 #include <iostream>
 #include <vector>

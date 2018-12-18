@@ -18,9 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief A test problem for the coupled Stokes/Darcy problem (1p2c) comparing different diffusion laws
+ * \ingroup BoundaryTests
+ * \brief A test problem for the coupled Stokes/Darcy problem (1p2c)
+ *        comparing different diffusion laws.
  */
+
 #include <config.h>
 
 #include <ctime>

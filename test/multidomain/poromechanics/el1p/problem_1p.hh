@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
- * \ingroup OnePTests
- * \ingroup PoroElastic
+ * \ingroup PoromechanicsTests
  * \brief Definition of the spatial parameters for the single-phase flow
  *        sub-problem in the coupled poro-mechanical el1p problem.
  */
@@ -77,10 +75,7 @@ struct SpatialParams<TypeTag, TTag::OnePSub>
 } // end namespace Properties
 
 /*!
- * \ingroup MultiDomain
- * \ingroup OnePTests
- * \ingroup PoroElastic
- *
+ * \ingroup PoromechanicsTests
  * \brief The single-phase sub problem in the el1p coupled problem.
  */
 template <class TypeTag>
@@ -118,19 +113,19 @@ public:
         return problemName_;
     }
 
-    //! Return the temperature within the domain in [K].
+    //! Returns the temperature within the domain in [K].
     Scalar temperature() const
     { return 273.15 + 10; } // 10C
 
-    //! Evaluate the boundary conditions for a Dirichlet boundary segment.
+    //! Evaluates the boundary conditions for a Dirichlet boundary segment.
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     { return initialAtPos(globalPos); }
 
-    //! Evaluate the initial value for a control volume.
+    //! Evaluates the initial value for a control volume.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(1.0e5); }
 
-    //! Evaluate source terms
+    //! Evaluates source terms.
     NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
     {
         static const Scalar source = getParam<Scalar>("Problem.InjectionRate");
@@ -142,6 +137,7 @@ public:
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
+     *
      * \param globalPos The global position
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -156,6 +152,6 @@ private:
     std::string problemName_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

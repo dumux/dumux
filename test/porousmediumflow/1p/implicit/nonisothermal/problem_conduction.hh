@@ -19,9 +19,11 @@
 /**
  * \file
  * \ingroup OnePTests
- * \brief Test for the OnePModel in combination with the NI model for a conduction problem:
- * The simulation domain is a tube where with an elevated temperature on the left hand side.
+ * \brief Test for the OnePModel in combination with the NI model for a conduction problem.
+ *
+ * The simulation domain is a tube with an elevated temperature on the left hand side.
  */
+
 #ifndef DUMUX_1PNI_CONDUCTION_PROBLEM_HH
 #define DUMUX_1PNI_CONDUCTION_PROBLEM_HH
 
@@ -41,14 +43,12 @@
 
 #include "spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class OnePNIConductionProblem;
 
-namespace Properties
-{
+namespace Properties {
 // Create new type tags
 namespace TTag {
 struct OnePNIConduction { using InheritsFrom = std::tuple<OnePNI>; };
@@ -56,7 +56,6 @@ struct OnePNIConductionBox { using InheritsFrom = std::tuple<OnePNIConduction, B
 struct OnePNIConductionCCTpfa { using InheritsFrom = std::tuple<OnePNIConduction, CCTpfaModel>; };
 struct OnePNIConductionCCMpfa { using InheritsFrom = std::tuple<OnePNIConduction, CCMpfaModel>; };
 } // end namespace TTag
-
 
 // Set the grid type
 template<class TypeTag>
@@ -84,15 +83,16 @@ struct SpatialParams<TypeTag, TTag::OnePNIConduction>
 };
 }
 
-
 /*!
  * \ingroup OnePTests
- * \brief Test for the OnePModel in combination with the NI model for a conduction problem:
- * The simulation domain is a tube where with an elevated temperature on the left hand side.
+ * \brief Test for the OnePModel in combination with the NI model for a conduction problem.
+ *
+ * The simulation domain is a tube with an elevated temperature on the left hand side.
  *
  * Initially the domain is fully saturated with water at a constant temperature.
- * On the left hand side there is a Dirichlet boundary condition with an increased temperature and on the right hand side
- * a Dirichlet boundary with constant pressure, saturation and temperature is applied.
+ * On the left hand side there is a Dirichlet boundary condition with an increased
+ * temperature and on the right hand side a Dirichlet boundary with constant pressure,
+ * saturation and temperature is applied.
  *
  * The results are compared to an analytical solution for a diffusion process:
   \f[
@@ -145,13 +145,13 @@ public:
         temperatureExact_.resize(fvGridGeometry->numDofs());
     }
 
-    //! get the analytical temperature
+    //! Get the analytical temperature
     const std::vector<Scalar>& getExactTemperature()
     {
         return temperatureExact_;
     }
 
-    //! udpate the analytical temperature
+    //! Udpate the analytical temperature
     void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
@@ -234,8 +234,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      *
@@ -257,7 +256,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *
@@ -287,6 +286,6 @@ private:
     std::vector<Scalar> temperatureExact_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif // DUMUX_1PNI_CONDUCTION_PROBLEM_HH

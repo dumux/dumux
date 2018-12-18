@@ -18,10 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
- * \ingroup FacetCoupling
- * \brief The problem for the lower-dimensional domain in the single-phase facet coupling test
+ * \ingroup FacetTests
+ * \brief The problem for the lower-dimensional domain in the single-phase facet coupling test.
  */
+
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEP_LOWDIMPROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_ONEP_LOWDIMPROBLEM_HH
 
@@ -77,9 +77,9 @@ public:
 } // end namespace Properties
 
 /*!
- * \ingroup OnePTests
+ * \ingroup FacetTests
  * \brief The lower-dimensional test problem for the incompressible
- *        one-phase model with coupling across the bulk grid facets
+ *        one-phase model with coupling across the bulk grid facets.
  */
 template<class TypeTag>
 class OnePLowDimProblem : public PorousMediumFlowProblem<TypeTag>
@@ -122,7 +122,7 @@ public:
         return problemName_;
     }
 
-    //! Specifies the type of boundary condition at a given position
+    //! Specifies the type of boundary condition at a given position.
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
@@ -130,7 +130,7 @@ public:
         return values;
     }
 
-    //! Evaluate the source term at a given position
+    //! Evaluates the source term at a given position.
     NumEqVector source(const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
@@ -142,7 +142,7 @@ public:
         return source;
     }
 
-    //! evaluates the exact solution at a given position.
+    //! Evaluates the exact solution at a given position.
     Scalar exact(const GlobalPosition& globalPos) const
     {
         using std::cos;
@@ -154,23 +154,23 @@ public:
         return cos(x)*cosh(y);
     }
 
-    //! evaluates the Dirichlet boundary condition for a given position
+    //! Evaluates the Dirichlet boundary condition for a given position.
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(exact(globalPos)); }
 
-    //! Set the aperture as extrusion factor.
+    //! Sets the aperture as extrusion factor.
     Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
     { return aperture_; }
 
-    //! evaluate the initial conditions
+    //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(1.0); }
 
-    //! returns the temperature in \f$\mathrm{[K]}\f$ in the domain
+    //! Returns the temperature in \f$\mathrm{[K]}\f$ in the domain.
     Scalar temperature() const
     { return 283.15; /*10°*/ }
 
-    //! returns reference to the coupling manager.
+    //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 

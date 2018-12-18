@@ -20,8 +20,7 @@
  * \file
  * \ingroup TwoPTwoCTests
  * \brief Definition of the spatial parameters for the injection problem
- *        which uses the isothermal two-phase two-component
- *        fully implicit model.
+ *        which uses the isothermal two-phase two-component fully implicit model.
  */
 
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMS_HH
@@ -37,8 +36,7 @@ namespace Dumux {
 /*!
  * \ingroup TwoPTwoCTests
  * \brief Definition of the spatial parameters for the injection problem
- *        which uses the isothermal two-phase two-component
- *        fully implicit model.
+ *        which uses the isothermal two-phase two-component fully implicit model.
  */
 template<class FVGridGeometry, class Scalar>
 class InjectionSpatialParams
@@ -58,17 +56,12 @@ class InjectionSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    //! export the type used for the permeability
+    //! Export the type used for the permeability
     using PermeabilityType = Scalar;
-    //! export the material law type used
+    //! Export the material law type used
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     InjectionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -136,8 +129,8 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
      * \param globalPos The position of the center of the element
+     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const

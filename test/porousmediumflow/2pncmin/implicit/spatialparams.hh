@@ -19,9 +19,10 @@
 /*!
  * \file
  * \ingroup TwoPNCMinTests
- * \brief Spatial parameters for the dissolution problem
- * where water is injected in a for flushing precipitated salt clogging a gas reservoir.
+ * \brief Spatial parameters for the dissolution problem where water is injected
+ * in a for flushing precipitated salt clogging a gas reservoir.
  */
+
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 #define DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 
@@ -59,7 +60,7 @@ class DissolutionSpatialParams
 public:
     // type used for the permeability (i.e. tensor or scalar)
     using PermeabilityType = Scalar;
-    //! export the material law type used
+    //! Export the material law type used
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
@@ -84,7 +85,7 @@ public:
     }
 
     /*!
-     *  \brief Define the minimum porosity \f$[-]\f$ distribution
+     *  \brief Defines the minimum porosity \f$[-]\f$ distribution
      *
      *  \param element The finite element
      *  \param scv The sub-control volume
@@ -93,7 +94,7 @@ public:
     { return 1e-5; }
 
     /*!
-     *  \brief Define the volume fraction of the inert component
+     *  \brief Defines the volume fraction of the inert component
      *
      *  \param globalPos The global position in the domain
      *  \param compIdx The index of the inert solid component
@@ -103,7 +104,8 @@ public:
     { return 1.0-referencePorosity_; }
 
     /*!
-     *  \brief Define the reference porosity \f$[-]\f$ distribution.
+     *  \brief Defines the reference porosity \f$[-]\f$ distribution.
+     *
      *  This is the porosity of the porous medium without any of the
      *  considered solid phases.
      *

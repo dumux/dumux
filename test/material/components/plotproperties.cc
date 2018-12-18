@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Plot properties of components and fluids
+ * \ingroup MaterialTests
+ * \brief Plot properties of components and fluids.
  */
 
 #include "config.h"
@@ -71,9 +71,9 @@ struct DisableStaticAssert {};
  */
 template<>
 struct AlwaysFalse<DisableStaticAssert> : public std::true_type {};
-}
+} // end namespace Dumux
 
-//! helper structs for detecting if a component has certain functions overloaded
+//! Helper structs for detecting if a component has certain functions overloaded
 struct checkLiqDen { template<class C> auto operator()(C&& c) -> decltype(C::template liquidDensity<DisableStaticAssert>(0.0, 0.0)) {} };
 struct checkLiqEnth { template<class C> auto operator()(C&& c) -> decltype(C::template liquidEnthalpy<DisableStaticAssert>(0.0, 0.0)) {} };
 struct checkLiqHeatCap { template<class C> auto operator()(C&& c) -> decltype(C::template liquidHeatCapacity<DisableStaticAssert>(0.0, 0.0)) {} };
@@ -89,7 +89,7 @@ struct checkSolHeatCap { template<class C> auto operator()(C&& c) -> decltype(C:
 struct checkSolThermCond { template<class C> auto operator()(C&& c) -> decltype(C::template solidThermalConductivity<DisableStaticAssert>(0.0, 0.0)) {} };
 struct checkIonCharge { template<class C> auto operator()(C&& c) -> decltype(C::template charge<DisableStaticAssert>(0.0, 0.0)) {} };
 
-//! plot given values
+//! Plot given values
 template<class Functor>
 void plot(Functor&& f,
           const vector<double>& T,
@@ -287,7 +287,7 @@ template<class C, class hasNoChargeOverload = checkIonCharge>
 auto plotIonCharge(const vector<double>& T, double p, bool openPlot)
 -> typename std::enable_if_t<decltype(isValid(hasNoChargeOverload{})(declval<C>()))::value || !ComponentTraits<C>::isIon, void> {}
 
-//! a number of properties of a component
+//! A number of properties of a component
 template<class Component>
 void plotStuff(bool openPlotWindow)
 {

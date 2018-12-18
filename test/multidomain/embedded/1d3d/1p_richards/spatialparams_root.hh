@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OneTests
- * \brief The spatial parameters class blood flow problem
+ * \ingroup EmbeddedTests
+ * \brief The spatial parameters class blood flow problem.
  */
+
 #ifndef DUMUX_ROOT_SPATIALPARAMS_HH
 #define DUMUX_ROOT_SPATIALPARAMS_HH
 
@@ -32,8 +33,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup OneTests
- * \brief Definition of the spatial parameters for the blood flow problem
+ * \ingroup EmbeddedTests
+ * \brief Definition of the spatial parameters for the blood flow problem.
  */
 template<class FVGridGeometry, class Scalar>
 class RootSpatialParams
@@ -83,7 +84,7 @@ public:
     }
 
     /*!
-     * \brief Return the intrinsic permeability for the current sub-control volume in [m^2].
+     * \brief Returns the intrinsic permeability for the current sub-control volume in [m^2].
      *
      * \note Kx has units [m^4/(Pa*s)] so we have to divide by the cross-section area
      *       and multiply with a characteristic viscosity
@@ -98,7 +99,7 @@ public:
     }
 
     /*!
-     * \brief Return the radius of the circular pipe for the current sub-control volume in [m].
+     * \brief Returns the radius of the circular pipe for the current sub-control volume in [m].
      *
      * \param eIdxGlobal the index of the element
      */
@@ -108,7 +109,7 @@ public:
     }
 
     /*!
-     * \brief The radial permeability
+     * \brief Returns the radial permeability.
      *
      * \param eIdxGlobal the index of the element
      */
@@ -121,7 +122,7 @@ public:
     { return radii_; }
 
     /*!
-     * \brief Returns the porosity \f$[-]\f$
+     * \brief Returns the porosity \f$[-]\f$.
      *
      * \param globalPos the scv center
      */

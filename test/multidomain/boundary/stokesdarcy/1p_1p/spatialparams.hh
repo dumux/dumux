@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePTests
- * \brief The spatial parameters class for the test problem using the 1p cc model
+ * \ingroup BoundaryTests
+ * \brief The spatial parameters class for the test problem using the 1p cc model.
  */
+
 #ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
 #define DUMUX_1P_TEST_SPATIALPARAMS_HH
 
@@ -30,11 +31,9 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup BoundaryTests
  * \brief The spatial parameters class for the test problem using the
- *        1p cc model
+ *        1p cc model.
  */
 template<class FVGridGeometry, class Scalar>
 class OnePSpatialParams
@@ -68,14 +67,14 @@ public:
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     { return permeability_; }
 
-    /*! \brief Define the porosity in [-].
+    /*! \brief Defines the porosity in [-].
      *
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
-    /*! \brief Define the Beavers-Joseph coefficient in [-].
+    /*! \brief Defines the Beavers-Joseph coefficient in [-].
      *
      * \param globalPos The global position
      */
@@ -88,6 +87,6 @@ private:
     Scalar alphaBJ_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

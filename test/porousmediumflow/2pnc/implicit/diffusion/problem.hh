@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TwoPNCTest
+ * \ingroup TwoPNCTests
  * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
  */
 #ifndef DUMUX_TWOPNC_DIFFUSION_PROBLEM_HH
@@ -93,8 +93,8 @@ struct Formulation<TypeTag, TTag::TwoPNCDiffusion>
 
 
 /*!
- * \ingroup TwoPNCTest
- * \brief DOC_ME
+ * \ingroup TwoPNCTests
+ * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
  */
 template <class TypeTag>
 class TwoPNCDiffusionProblem : public PorousMediumFlowProblem<TypeTag>
@@ -118,15 +118,10 @@ class TwoPNCDiffusionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 
-    //! property that defines whether mole or mass fractions are used
+    //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     TwoPNCDiffusionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -135,7 +130,7 @@ public:
 
         name_ = getParam<std::string>("Problem.Name");
 
-        //stateing in the console whether mole or mass fractions are used
+        // stating in the console whether mole or mass fractions are used
         if(useMoles)
         {
             std::cout<<"problem uses mole-fractions"<<std::endl;
@@ -186,8 +181,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The global position
      */
@@ -205,15 +199,13 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * For this method, the \a priVars parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
+     * in normal direction of each component. Negative values mean influx.
      * \param globalPos The global position
      *
-     * \note The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
+     * \note The units must be according to either using mole or mass fractions (mole/(m^2*s) or kg/(m^2*s)).
      */
     NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
     {
@@ -229,7 +221,7 @@ public:
     // \{
 
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume.
      *
      * \param globalPos The global position
      */
@@ -242,7 +234,7 @@ public:
 
 private:
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume.
      *
      * The internal method for the initial condition
      *
@@ -267,6 +259,6 @@ private:
 
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

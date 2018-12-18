@@ -19,9 +19,10 @@
 /**
  * \file
  * \ingroup OnePNCTests
- * \brief Definition of a problem, for the 1pnc problem:
+ * \brief Definition of a problem for the 1pnc problem:
  * Component transport of nitrogen dissolved in the water phase.
  */
+
 #ifndef DUMUX_1P2C_TEST_PROBLEM_HH
 #define DUMUX_1P2C_TEST_PROBLEM_HH
 
@@ -94,24 +95,24 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::OnePTwoCTest> { static constexpr bool value = true; };
 }
 
-
 /*!
  * \ingroup OnePNCTests
- * \brief Definition of a problem, for the 1pnc problem:
- * Nitrogen is dissolved in the water phase and
- * is transported with the water flow from the left side to the right.
+ * \brief Definition of a problem for the 1pnc problem:
+ *  Component transport of nitrogen dissolved in the water phase.
  *
- * The model domain is 1 m times 1 m with a discretization length of 0.05 m
+ * Nitrogen is dissolved in the water phase and is transported with the
+ * water flow from the left side to the right.
+ *
+ * The model domain is 1m times 1m with a discretization length of 0.05m
  * and homogeneous soil properties (\f$ \mathrm{K=10e-10, \Phi=0.4, \tau=0.28}\f$).
- * Initially the domain is filled with pure water.
+ * Initially, the domain is filled with pure water.
  *
  * At the left side, a Dirichlet condition defines a nitrogen mole fraction
- * of 0.3 mol/mol.
+ * of 0.3mol/mol.
  * The water phase flows from the left side to the right due to the applied pressure
- * gradient of 1e5 Pa/m. The nitrogen is transported with the water flow
- * and leaves the domain at the right boundary
- * where again Dirichlet boundary conditions are applied. Here, the nitrogen mole
- * fraction is set to 0.0 mol/mol.
+ * gradient of 1e5Pa/m. The nitrogen is transported with the water flow
+ * and leaves the domain at the right boundary, where again Dirichlet boundary
+ * conditions are applied. Here, the nitrogen mole fraction is set to 0.0mol/mol.
  *
  * This problem uses the \ref OnePNCModel model.
  *
@@ -152,7 +153,7 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
         contiN2EqIdx = Indices::conti0EqIdx + N2Idx
     };
 
-    //! property that defines whether mole or mass fractions are used
+    //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     static const bool isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box;
 
@@ -212,8 +213,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
      */
@@ -231,7 +231,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
+     * \brief Evaluates the boundary conditions for a neumann
      *        boundary segment.
      *
      * This is the method for the case where the Neumann condition is
@@ -241,7 +241,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
@@ -329,21 +329,21 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-control volume.
      *
      * For this method, the \a priVars parameter stores the rate mass
-     * of a component is generated or annihilate per volume
+     * of a component is generated or annihilated per volume
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      *
-     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
+     * The units must be according to either using mole or mass fractions (mole/(m^3*s) or kg/(m^3*s)).
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     { return NumEqVector(0.0); }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
      *
@@ -368,6 +368,6 @@ private:
         bool useNitscheTypeBc_;
     };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

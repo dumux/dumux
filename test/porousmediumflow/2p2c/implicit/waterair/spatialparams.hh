@@ -37,7 +37,7 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPTwoCModel
- * \brief Definition of the spatial parameters for the water-air problem
+ * \brief Definition of the spatial parameters for the water-air problem.
  */
 template<class FVGridGeometry, class Scalar>
 class WaterAirSpatialParams
@@ -58,17 +58,12 @@ class WaterAirSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    //! export the type used for the permeability
+    //! Export the type used for the permeability
     using PermeabilityType = Scalar;
-    //! export the type used for the material law
+    //! Export the type used for the material law
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     WaterAirSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         layerBottom_ = 22.0;
@@ -118,7 +113,7 @@ public:
     }
 
     /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
+     * \brief Applies the intrinsic permeability tensor to a pressure
      *        potential gradient.
      *
      * \param globalPos The global position
@@ -131,7 +126,7 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the spatial parameters
+     * \brief Defines the porosity \f$[-]\f$ of the spatial parameters
      *
      * \param globalPos The global position
      */
@@ -145,7 +140,8 @@ public:
 
 
     /*!
-     * \brief return the parameter object for the Brooks-Corey material law which depends on the position
+     * \brief Returns the parameter object for the Brooks-Corey material law
+     * which depends on the position
      *
      * \param globalPos The global position
      */
@@ -160,8 +156,8 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
      * \param globalPos The position of the center of the element
+     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const

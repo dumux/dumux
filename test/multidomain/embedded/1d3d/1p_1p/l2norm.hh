@@ -18,8 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Helper functions to compute L2-norm
+ * \ingroup EmbeddedTests
+ * \brief Helper functions to compute L2-norm.
  */
+
 #ifndef DUMUX_TEST_L2_NORM_HH
 #define DUMUX_TEST_L2_NORM_HH
 
@@ -103,6 +105,6 @@ struct L2Norm
     }
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif

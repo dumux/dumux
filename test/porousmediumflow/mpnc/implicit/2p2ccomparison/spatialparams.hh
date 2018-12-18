@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TwoPTwoCTests
- * \brief The spatial parameters for the TwoPTwoC MPNC comparison problem
+ * \ingroup MPNCTests
+ * \brief The spatial parameters for the TwoPTwoC MPNC comparison problem.
  */
 
 #ifndef DUMUX_MPNC_COMPARISON_SPATIAL_PARAMS_HH
@@ -60,7 +60,6 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    //! The constructor
     MPNCComparisonSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
@@ -95,7 +94,7 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the soil
+     * \brief Defines the porosity \f$[-]\f$ of the soil
      *
      * \param globalPos The global Position
      */
@@ -108,7 +107,7 @@ public:
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
      * \param globalPos The global position of the sub-control volume.
-     * \return the material parameters object
+     * \return The material parameters object
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
@@ -121,8 +120,8 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
      * \param globalPos The global position
+     * \return The wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const

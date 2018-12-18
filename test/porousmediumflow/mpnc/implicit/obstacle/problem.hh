@@ -19,9 +19,11 @@
 /*!
  * \file
  * \ingroup MPNCTests
- * \brief Problem where liquid water is injected -- by means of a
- *        Dirichlet condition on the lower right of the domain -- which has to go
+ * \brief Problem where liquid water is injected which has to go
  *        around an obstacle with \f$10^3\f$ lower permeability.
+ *
+ * The water is injected by means of a Dirichlet condition on the lower
+ * right of the domain.
  */
 #ifndef DUMUX_OBSTACLEPROBLEM_HH
 #define DUMUX_OBSTACLEPROBLEM_HH
@@ -45,9 +47,11 @@ namespace Dumux {
 
 /*!
  * \ingroup MPNCTests
- * \brief Problem where liquid water is injected -- by means of a
- *        Dirichlet condition on the lower right of the domain -- which has to go
+ * \brief Problem where liquid water is injected which has to go
  *        around an obstacle with \f$10^3\f$ lower permeability.
+ *
+ * The water is injected by means of a Dirichlet condition on the lower
+ * right of the domain.
  */
 template <class TypeTag>
 class ObstacleProblem;
@@ -91,12 +95,13 @@ struct Scalar<TypeTag, TTag::Obstacle> { using type = double; };
 
 }
 
-
 /*!
  * \ingroup MPNCTests
- * \brief Problem where liquid water is injected -- by means of a
- *        Dirichlet condition on the lower right of the domain -- which has to go
+ * \brief Problem where liquid water is injected which has to go
  *        around an obstacle with \f$10^3\f$ lower permeability.
+ *
+ * The water is injected by means of a Dirichlet condition on the lower
+ * right of the domain.
  *
  * The domain is sized 60m times 40m and consists of two media, a
  * moderately permeable soil (\f$ K_0=10e-12 m^2\f$) and an obstacle
@@ -156,11 +161,6 @@ class ObstacleProblem
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param fvGridGeometry The finite volume grid geometry
-     */
     ObstacleProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
@@ -229,8 +229,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The global position
      */
@@ -240,13 +239,12 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
      * \param elemVolVars The volume variables of the element
-     * \param scvf The sub control volume face
+     * \param scvf The sub-control volume face
      *
      * Negative values mean influx.
      */
@@ -266,8 +264,8 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all balance equations within a given
-     *        sub-control-volume.
+     * \brief Evaluates the source term for all balance equations within a given
+     *        sub-control volume.
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
@@ -285,7 +283,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      *
@@ -403,6 +401,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
-} //end namespace
+} // end namespace Dumux
 
 #endif

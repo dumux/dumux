@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup MPNCTests
  * \brief @copybrief Dumux::FluidSystems::CombustionFluidsystem
  */
 #ifndef DUMUX_PURE_WATER_FLUID_SYSTEM_HH
@@ -40,10 +40,11 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup MPNCTests
  *
  * \brief A two-phase fluid system with water as sole component.
- *           Values are taken from Shi & Wang, A numerical investigation of transpiration cooling with liquid coolant phase change, Transport in Porous Media, 2011
+ *
+ * Values are taken from Shi and Wang, 2011 \cite Shi2011.
  */
 template <class Scalar>
 class CombustionFluidsystem
@@ -79,7 +80,7 @@ public:
     static constexpr int comp1Idx = 1; // index of the non-wetting phase
 
     /*!
-     * \brief Return the human readable name of a fluid phase
+     * \brief Returns the human readable name of a fluid phase
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
@@ -95,7 +96,7 @@ public:
     }
 
     /*!
-     * \brief Return whether a phase is gaseous
+     * \brief Returns whether a phase is gaseous
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
@@ -180,7 +181,7 @@ public:
     using N2 = SimpleN2;
 
     /*!
-     * \brief Return the human readable name of a component
+     * \brief Returns the human readable name of a component
      *
      * \param compIdx The index of the component to consider
      */
@@ -196,7 +197,7 @@ public:
     }
 
     /*!
-     * \brief Return the molar mass of a component in \f$\mathrm{[kg/mol]}\f$.
+     * \brief Returns the molar mass of a component in \f$\mathrm{[kg/mol]}\f$.
      *
      * \param compIdx The index of the component to consider
      */
@@ -274,7 +275,7 @@ public:
      ****************************************/
 
     /*!
-     * \brief Initialize the fluid system's static parameters generically
+     * \brief Initializes the fluid system's static parameters generically
      *
      * If a tabulated H2O component is used, we do our best to create
      * tables that always work.
@@ -290,7 +291,7 @@ public:
     }
 
     /*!
-     * \brief Initialize the fluid system's static parameters using
+     * \brief Initializes the fluid system's static parameters using
      *        problem specific temperature and pressure ranges
      *
      * \param tempMin The minimum temperature used for tabulation of water \f$\mathrm{[K]}\f$
@@ -308,7 +309,7 @@ public:
 
     using Base::density;
     /*!
-     * \brief Calculate the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase
+     * \brief Calculates the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -354,7 +355,7 @@ public:
 
     using Base::viscosity;
     /*!
-     * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
+     * \brief Calculates the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -378,7 +379,7 @@ public:
     }
 
     /*!
-     * \brief calculate the temperature \f$\mathrm{[K]}\f$ of vapor at a given pressure on the vapor pressure curve.
+     * \brief Calculates the temperature \f$\mathrm{[K]}\f$ of vapor at a given pressure on the vapor pressure curve.
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -395,7 +396,7 @@ public:
 
     using Base::fugacityCoefficient;
     /*!
-     * \brief Calculate the fugacity coefficient \f$\mathrm{[-]}\f$ of an individual
+     * \brief Calculates the fugacity coefficient \f$\mathrm{[-]}\f$ of an individual
      *        component in a fluid phase
      *
      * The fugacity coefficient \f$\phi^\kappa_\alpha\f$ of
@@ -447,7 +448,7 @@ public:
 
     using Base::diffusionCoefficient;
     /*!
-     * \brief Calculate the molecular diffusion coefficient for a
+     * \brief Calculates the molecular diffusion coefficient for a
      *        component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
      *
      * \param fluidState An arbitrary fluid state
@@ -465,7 +466,7 @@ public:
     using Base::binaryDiffusionCoefficient;
     /*!
      * \brief Given a phase's composition, temperature and pressure,
-     *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
+     *        returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
      *        \f$i\f$ and \f$j\f$ in this phase.
      *
      * \param fluidState An arbitrary fluid state
@@ -485,7 +486,7 @@ public:
 
     using Base::enthalpy;
     /*!
-     * \brief Calculate specific enthalpy \f$\mathrm{[J/kg]}\f$.
+     * \brief Calculates specific enthalpy \f$\mathrm{[J/kg]}\f$.
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider

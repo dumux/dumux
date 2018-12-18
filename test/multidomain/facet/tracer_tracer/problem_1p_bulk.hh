@@ -18,11 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
- * \ingroup FacetCoupling
+ * \ingroup FacetTests
  * \brief The problem for the bulk domain of the single-phase problem
- *        within the tracer facet coupling test
+ *        within the tracer facet coupling test.
  */
+
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_TRACER_ONEP_BULKPROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_TRACER_ONEP_BULKPROBLEM_HH
 
@@ -79,10 +79,9 @@ public:
 } // end namespace Properties
 
 /*!
- * \ingroup MultiDomain
- * \ingroup OnePTests
+ * \ingroup FacetTests
  * \brief The problem for the bulk domain of the single-phase problem
- *        within the tracer facet coupling test
+ *        within the tracer facet coupling test.
  */
 template<class TypeTag>
 class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
@@ -123,7 +122,7 @@ public:
     const std::string& name() const
     { return problemName_; }
 
-    //! Specifies the type of boundary condition at a given position
+    //! Specifies the type of boundary condition at a given position.
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
@@ -133,7 +132,7 @@ public:
         return values;
     }
 
-    //! Specifies the type of interior boundary condition at a given position
+    //! Specifies the type of interior boundary condition at a given position.
     BoundaryTypes interiorBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     {
         BoundaryTypes values;
@@ -141,11 +140,11 @@ public:
         return values;
     }
 
-    //! Evaluate the source term at a given position
+    //! Evaluates the source term at a given position.
     NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
     { return NumEqVector(0.0); }
 
-    //! evaluates the Dirichlet boundary condition for a given position
+    //! Evaluates the Dirichlet boundary condition for a given position.
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         auto values = initialAtPos(globalPos);
@@ -154,7 +153,7 @@ public:
         return values;
     }
 
-    //! evaluates the Neumann boundary condition for a boundary segment
+    //! Evaluates the Neumann boundary condition for a boundary segment.
     template<class ElementVolumeVariables>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
@@ -162,15 +161,15 @@ public:
                         const SubControlVolumeFace& scvf) const
     { return NumEqVector(0.0); }
 
-    //! evaluate the initial conditions
+    //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(1.0e5); }
 
-    //! returns the temperature in \f$\mathrm{[K]}\f$ in the domain
+    //! Returns the temperature in \f$\mathrm{[K]}\f$ in the domain.
     Scalar temperature() const
     { return 283.15; /*10°*/ }
 
-    //! returns reference to the coupling manager.
+    //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 

@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup RichardsTests
- * \brief spatial parameters for the RichardsLensProblem
+ * \brief Spatial parameters for the RichardsLensProblem.
  */
+
 #ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 #define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 
@@ -34,7 +35,7 @@ namespace Dumux {
 
 /*!
  * \ingroup RichardsTests
- * \brief The spatial parameters for the RichardsLensProblem
+ * \brief The spatial parameters for the RichardsLensProblem.
  */
 template<class FVGridGeometry, class Scalar>
 class RichardsLensSpatialParams
@@ -101,7 +102,7 @@ public:
     { return 0.4; }
 
     /*!
-     * \brief Returns the parameters for the material law at a given location
+     * \brief Returns the parameters for the material law for the sub-control volume
      *
      * This method is not actually required by the Richards model, but provided
      * for the convenience of the RichardsLensProblem
@@ -120,6 +121,14 @@ public:
         return materialLawParamsAtPos(globalPos);
     }
 
+    /*!
+     * \brief Returns the parameters for the material law at a given location
+     *
+     * This method is not actually required by the Richards model, but provided
+     * for the convenience of the RichardsLensProblem
+     *
+     * \param globalPos The global coordinates for the given location
+     */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
         if (isInLens_(globalPos))
