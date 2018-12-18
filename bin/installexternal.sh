@@ -58,7 +58,7 @@ installEcl()
     cd $TOPDIR
 
     if [ ! -e libecl ]; then
-        git clone -b 2018.04 https://github.com/Statoil/libecl.git
+        git clone -b 2018.10 https://github.com/Statoil/libecl.git
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -288,11 +288,11 @@ installOPM()
     fi
 
     if [ ! -e opm-common ]; then
-        git clone -b release/2018.04 https://github.com/OPM/opm-common
+        git clone -b release/2018.10 https://github.com/OPM/opm-common
     fi
 
     if [ ! -e opm-grid ]; then
-        git clone -b release/2018.04 https://github.com/OPM/opm-grid
+        git clone -b release/2018.10 https://github.com/OPM/opm-grid
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -305,21 +305,15 @@ installOPM()
         return
     fi
 
-    # apply patches
-    echo "Applying patch for opm-common"
-    cd $TOPDIR/opm-common
-    patch -p1 < $TOPDIR/dumux/patches/opm-common-2018.04.patch
-
-    echo "Applying patch for opm-grid"
-    cd $TOPDIR/opm-grid
-    patch -p1 < $TOPDIR/dumux/patches/opm-grid-2018.04.patch
-
     # show additional information
     echo "In addition, it might be necessary to set manually some"
     echo "CMake variables in the CMAKE_FLAGS section of the .opts-file:"
-    echo "  -DOPM_COMMON_ROOT=/path/to/opm-common \\"
-    echo "  -Decl_DIR=/path/to/libecl/build \\"
-    echo "  -DUSE_MPI=ON \\"
+    echo "  -Decl_DIR=$TOPDIR/libecl/build"
+    echo "  -DUSE_MPI=ON"
+
+    # show some opm prerequisites
+    echo "Maybe you also have to install the following packages (see the opm prerequisites at opm-project.org): "
+    echo "  BLAS, LAPACK, Boost, SuperLU, SuiteSparse"
 
     cd $TOPDIR
 }
@@ -444,7 +438,7 @@ usage()
     echo "  multidomain      Download dune-multidomain."
     echo "  multidomaingrid  Download and patch dune-multidomaingrid."
     echo "  nlopt            Download and install nlopt."
-    echo "  opm              Download opm modules required for dune-cornerpoint."
+    echo "  opm              Download opm modules required for cornerpoint grids."
     echo "  pdelab           Download dune-pdelab."
     echo "  typetree         Download dune-typetree."
     echo "  ug               Install the UG grid library."
