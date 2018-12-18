@@ -46,10 +46,10 @@ Second, you have to define an instance of the class GnuplotInterface (e.g. calle
 Dumux::GnuplotInterface<double> gnuplot;
 \end{lstlisting}
 
-Extract the variables you want to plot (in the example below \texttt{x} and \texttt{y}), e.g., after the time loop. 
-The actual plotting is done using the method of the gnuplot interface.
+As an example, to plot the mole fraction of nitrogen (\texttt{y}) over time (\texttt{x}),
+extract the variables after each time step in the time loop.
+The actual plotting is done using the method of the gnuplot interface:
 
-Example:
 \begin{lstlisting}[style=DumuxCode]
 gnuplot.resetPlot();                             // reset the plot
 gnuplot.setXRange(0.0, 72000.0);                 // specify xmin and xmax  
@@ -57,8 +57,8 @@ gnuplot.setYRange(0.0, 1.0);                     // specify ymin and ymax
 gnuplot.setXlabel("time [s]");                   // set xlabel
 gnuplot.setYlabel("mole fraction mol/mol");  // set ylabel
 
-// set x-values, y-values, the name of the data file and the Gnupot options
-gnuplot.addDataSetToPlot(x, y, "N2_left.dat", options); 
+// set x-values, y-values, the name of the data file and the Gnuplot options
+gnuplot.addDataSetToPlot(x, y, "N2.dat", options); 
 
 gnuplot.plot("mole_fraction_N2");                // set the name of the output file
 \end{lstlisting}
