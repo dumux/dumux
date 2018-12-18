@@ -11,6 +11,7 @@
 \usepackage{enumerate}
 \usepackage{hyperref}
 \usepackage{graphicx}
+
 \usepackage{listings}
 \usepackage{makeidx}
 \usepackage[square,numbers]{natbib}
@@ -72,6 +73,7 @@
 \DeclareMathOperator{\grad}{\mathbf{grad}}
 \DeclareMathOperator{\curl}{curl}
 \DeclareMathOperator{\Div}{div}
+\newcommand{\meas}[1]{\lvert{#1}\rvert}
 
 \pagestyle{scrheadings}
 
@@ -109,31 +111,32 @@ Universit\"at Stuttgart, Paffenwaldring 61, D-70569 Stuttgart, Germany}\\
 \chapter{Introduction}
 \input{1_introduction}
 
-\chapter{Getting started}
+\chapter{Quick Start}\label{quick-install}
 In this chapter we provide a quick start guide to
-your first \Dumux experience.
-The first section contains instructions on how to very quickly install \Dumux.
-More detailed information on how to obtain source code, build and test \Dune and \Dumux
-follows in the second section of this chapter. The second section also contains information on
-how to build the documentation and about external libraries and modules.
+your first \Dumux experience, including an install script with all necessary instructions
+on how to very quickly install the latest release version of \Dumux.
 \input{2_quickinstall}
+
+\chapter{Detailed Installation, Documentation, and Externals}\label{detailed-install}
+In this chapter, we provide more detailed information on how to obtain source code, build and test \Dune and \Dumux.
+It further contains information on
+how to build the documentation and about external libraries and modules.
 \input{2_detailedinstall}
 
-\chapter{Tutorial}\label{chp:tutorial}
-\input{3_tutorial}
+\chapter{Learning to use \Dumux}\label{chp:tutorial}
+\input{3_course}
 \input{3_furtherpractice}
 
 \chapter{Overview and Infrastructure}
 This chapter provides an overview of the general structure in \Dumux \ref{sc_structure}
 and gives help for basic work with \Dumux
-(\ref{sc_newfoldersetup},\ref{sc_parameterfiles},\ref{sc_restartsimulations},\ref{sc_guidelines},\ref{sc_developingdumux}).
+(\ref{sc_newfoldersetup},\ref{sc_parameterfiles},\ref{sc_restartsimulations}, \ref{sc_developingdumux}).
 Further it presents useful external tools \ref{sc_externaltools} and basic
 concepts \ref{sc_linearsystem}.
 \input{4_structure}
 \input{4_newfoldersetup}
 \input{4_parameterfiles}
 \input{4_restartsimulations}
-\input{4_guidelines}
 \input{4_developingdumux}
 \input{4_externaltools}
 \input{4_assemblinglinearsystem}
@@ -145,7 +148,8 @@ in deeper modifications of underlying \Dumux models, classes, functions, etc.
 \input{5_spatialdiscretizations}
 \input{5_stepsofasimulation}
 \input{5_propertysystem}
-\input{5_grids}
+\input{5_inputoutput}
+\input{5_parallel}
 
 \bibliographystyle{plainnat}
 \bibliography{dumux-handbook}

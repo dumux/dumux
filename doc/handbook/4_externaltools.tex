@@ -30,9 +30,42 @@ The basic Git commands are:
 
 
 \subsection{Gnuplot}
+\label{gnuplot}
 A gnuplot interface is available to plot or visualize results during a simulation run.
 This is achieved with the help of the class provided in \texttt{io/gnuplotinterface.hh}.
-Have a look at tests including this header for examples how to use this interface.
+
+To use the gnuplot interface you have to make some modifications in your file, e.g., your main file.
+
+First, you have to include the corresponding header file for the gnuplot interface. 
+\begin{lstlisting}[style=DumuxCode]
+#include <dumux/io/gnuplotinterface.hh
+\end{lstlisting}
+
+Second, you have to define an instance of the class GnuplotInterface (e.g. called \texttt{gnuplot}).
+\begin{lstlisting}[style=DumuxCode]
+Dumux::GnuplotInterface<double> gnuplot;
+\end{lstlisting}
+
+As an example, to plot the mole fraction of nitrogen (\texttt{y}) over time (\texttt{x}),
+extract the variables after each time step in the time loop.
+The actual plotting is done using the method of the gnuplot interface:
+
+\begin{lstlisting}[style=DumuxCode]
+gnuplot.resetPlot();                             // reset the plot
+gnuplot.setXRange(0.0, 72000.0);                 // specify xmin and xmax  
+gnuplot.setYRange(0.0, 1.0);                     // specify ymin and ymax
+gnuplot.setXlabel("time [s]");                   // set xlabel
+gnuplot.setYlabel("mole fraction mol/mol");  // set ylabel
+
+// set x-values, y-values, the name of the data file and the Gnuplot options
+gnuplot.addDataSetToPlot(x, y, "N2.dat", options); 
+
+gnuplot.plot("mole_fraction_N2");                // set the name of the output file
+\end{lstlisting}
+
+It is also possible to add several data sets to one plot by calling \texttt{addDataSetToPlot()} more than once.
+For more information have a look into a test including the gnuplot interface header file or
+the header file itself (\texttt{dumux/io/gnuplotinterface.hh}).
 
 
 \subsection{Gstat}

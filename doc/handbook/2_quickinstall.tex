@@ -1,13 +1,10 @@
-\section{Quick Installation of \Dumux}
-\label{quick-install}
-
-This section only provides one quick way of installing \Dumux.
+This chapter provides one quick way of installing \Dumux.
 You should have a recent working Linux environment and no \Dune core modules should be installed.
 If you need more information or
 have \Dune already installed, please have a look at the detailed installation
-instructions in Section \ref{install}.
+instructions in the more detailed intructions in the next chapter \ref{detailed-install}.
 
-\subsection{Prerequisites} \label{sec:prerequisites}
+\section{Prerequisites} \label{sec:prerequisites}
 For this quick start guide the following software packages are required:
 \begin{itemize}
 \item GitLab client
@@ -17,12 +14,7 @@ For this quick start guide the following software packages are required:
 \item paraview (to visualize the results)
 \end{itemize}
 
-The building of included documentation like this handbook requires \LaTeX{} and auxiliary tools
-\texttt{bibtex}. One usually chooses a \LaTeX{} distribution like \texttt{texlive} for this purpose.
-It is possible to switch off the building of the documentation by setting the switch \texttt{--disable-documentation}
-in the \texttt{CONFIGURE\_FLAGS} of the building options, see Chapter \ref{buildIt}.
-
-\subsection{Obtaining code and configuring all modules with a script}
+\section{Obtaining code and configuring all modules with a script}
 We provide you with a shell-script \texttt{installDumux.sh} that facilitates setting up a {\Dune}/{\Dumux} directory tree
 and configures all modules with CMake.
 % TODO: uncomment/delete the following lines when next is the only release
@@ -36,7 +28,7 @@ root folder \texttt{DUMUX} will be produced, so you do not need to provide one).
 Run the script by typing into the terminal: \texttt{./installDumux.sh}
 
 Configuring \Dune and \Dumux is done by the command-line script \texttt{dunecontrol}
-using optimized configure options, see the line entitled \texttt{\# run build} in the \texttt{installDumux.sh} script. 
+using optimized configure options, see the line entitled \texttt{\# run build} in the \texttt{installDumux.sh} script.
 More details about the build-system can be found in section \ref{buildIt}.
 
 \subsection{A first test run of \Dumux}
@@ -51,4 +43,4 @@ make -B test_1pcctpfa
 paraview *pvd
 \end{lstlisting}
 The script \texttt{test\_dumux.sh} can be executed by typing into the terminal: \texttt{./test\_dumux.sh}.
-If everything works fine, a paraview-window with the result should open automatically.
+If everything works fine, a paraview window with the result should open automatically.

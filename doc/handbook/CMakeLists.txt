@@ -4,31 +4,33 @@ set(TEX_INPUTS
   1_introduction.tex
   2_detailedinstall.tex
   2_quickinstall.tex
-  3_tutorial.tex
+  3_course.tex
   3_furtherpractice.tex
   4_assemblinglinearsystem.tex
-  4_guidelines.tex
   4_developingdumux.tex
   4_externaltools.tex
   4_newfoldersetup.tex
   4_parameterfiles.tex
   4_restartsimulations.tex
   4_structure.tex
-  5_stepsofasimulation.tex
-  5_grids.tex
+  5_inputoutput.tex
   5_models.tex
+  5_parallel.tex
   5_propertysystem.tex
   5_spatialdiscretizations.tex
+  5_stepsofasimulation.tex
   installDumux.sh)
 
 set(TEX_IMAGES
-  PNG/box_disc.png
-  PNG/cc_disc.png
-  PNG/dumux_strucutre_flowchart_horizontal_explained.png
-  PNG/dunedesign.png
+  png/box_disc.png
+  png/cctpfa.png
+  png/dumux_strucutre_flowchart_horizontal_explained.png
+  png/dunedesign.png
   ../logo/dumux_logo_hires_whitebg.png
-  PNG/dalton1.png
-  PNG/dalton2.png)
+  png/dalton1.png
+  png/dalton2.png
+  pdf/staggered_grid.pdf
+  png/mpfa_iv.png)
 
 dune_add_latex_document(0_dumux-handbook.tex
   BIBFILES dumux-handbook.bib
