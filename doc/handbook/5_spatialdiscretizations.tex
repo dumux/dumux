@@ -146,16 +146,16 @@ Here, a mass lumping technique is applied by assuming that the storage capacity 
 reduced to the nodes. This means that the integrals $M_{i,j} = \int_{B_j}  N_i \: dx$
 are replaced by some mass lumped terms $M^{lump}_{i,j}$ which are defined as
 \begin{equation}
-	 M^{lump}_{i,j} =\begin{cases}  V_j &j = i\\
+	 M^{lump}_{i,j} =\begin{cases}  |B_j| &j = i\\
 	0 &j \neq i,\\
 	         \end{cases}
 \end{equation}
-where $V_j$ is the volume of the FV box $B_j$ associated with node $j$.
+where $|B_j|$ is the volume of the FV box $B_j$ associated with node $j$.
 The application of this assumption yields
 
 \begin{equation}
 \label{eq:disc1}
-	V_j \frac{\partial \hat u_j}{\partial t}
+	|B_j| \frac{\partial \hat u_j}{\partial t}
 	+  \int_{\partial B_j}  F(\tilde u) \cdot \mathbf n \: d\varGamma_{B_j} - Q_j = 0,
 \end{equation}
 where $Q_j$ is an approximation (using some quadrature rule) of the integrated source/sink term $\int_{B_j} q \: dx$.
@@ -166,7 +166,7 @@ flow and transport equations:
 
 \begin{equation}
 \label{eq:discfin}
-	V_j \frac{\hat u_j^{n+1} - \hat u_j^{n}}{\Delta t}
+	|B_j| \frac{\hat u_j^{n+1} - \hat u_j^{n}}{\Delta t}
 	+ \int_{\partial B_j}  F(\tilde u^{n+1}) \cdot \mathbf n
 	\;  d{\varGamma}_{B_j} - Q_j^{n+1} \: = 0.
 \end{equation}
