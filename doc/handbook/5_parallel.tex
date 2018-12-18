@@ -12,7 +12,9 @@ approaches. The parallelization in \Dumux is based on the
 It is the MPI parallelization that allows the user to run
 \Dumux applications in parallel on a desktop computer, the users laptop or 
 large high performance clusters. However, the chosen \Dumux 
-model must support parallel computations, which is the case for most \Dumux applications.
+model must support parallel computations. 
+This is the case for most \Dumux applications, except for multidomain and 
+freeflow.
 
 The main idea behind the MPI parallelization is the concept of \textit{domain 
 decomposition}. For parallel simulations, the computational domain is split into 
