@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Finite volume discretization of the component transport equation.
  */
 #ifndef DUMUX_FVTRANSPORT2P2C_MULTIPHYSICS_HH
@@ -29,7 +29,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Compositional transport step in a finite volume discretization.
  *
  *  The finite volume model for the solution of the transport equation for compositional
@@ -97,8 +97,9 @@ public:
     {}
 };
 
-//! \brief Calculate the update vector and determine timestep size
 /*!
+ * \brief Calculate the update vector and determine timestep size
+ *
  *  This method calculates the update vector \f$ u \f$ of the discretized equation
  *  \f[
        C^{\kappa , new} = C^{\kappa , old} + u,
@@ -255,5 +256,5 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
     }
     return;
 }
-}
+} // end namespace Dumux
 #endif

@@ -18,10 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Finite volume discretization of the component transport equation
  */
-
 #ifndef DUMUX_FVTRANSPORT2P2C_HH
 #define DUMUX_FVTRANSPORT2P2C_HH
 
@@ -36,10 +35,9 @@
 #include <dumux/common/math.hh>
 #include <dumux/linear/vectorexchange.hh>
 
-
 namespace Dumux {
 /*!
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Compositional transport step in a Finite Volume discretization.
  *
  *  The finite volume model for the solution of the transport equation for compositional
@@ -1421,5 +1419,5 @@ void FVTransport2P2C<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
     }
 }
 
-}
+} // end namespace Dumux
 #endif

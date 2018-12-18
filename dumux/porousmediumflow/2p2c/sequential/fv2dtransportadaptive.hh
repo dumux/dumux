@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Finite volume discretization of the component transport equation.
  */
 #ifndef DUMUX_FV2DTRANSPORT2P2C_ADAPTIVE_HH
@@ -35,7 +35,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Compositional Transport step in a Finite Volume discretization for a adaptive 2D-grid
  *
  *  The finite volume model for the solution of the transport equation for compositional
@@ -102,8 +102,9 @@ public:
     void getMpfaFlux(Dune::FieldVector<Scalar, 2>&, Dune::FieldVector<Scalar, 2>&,
             const IntersectionIterator&, CellData&);
 
-    //! Constructs a FV2dTransport2P2CAdaptive object
     /*!
+     * \brief Constructs a FV2dTransport2P2CAdaptive object
+     *
      * The compositional transport scheme can not be applied with a global pressure / total velocity
      * formulation. This is a 2D-specific implementation! In case of 3d, use the class
      * FV3dTransport2P2CAdaptive
@@ -128,24 +129,24 @@ protected:
     static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
 };
 
-//! \brief Calculate the update vector and determine timestep size
 /*!
- *  This method calculates the update vector \f$ u \f$ of the discretized equation
- *  \f[
-       C^{\kappa , new} = C^{\kappa , old} + u,
- *  \f]
- *  where \f$ u = \sum_{\gamma} \boldsymbol{v}_{\alpha} * \varrho_{\alpha} * X^{\kappa}_{\alpha} * \boldsymbol{n} * A_{\gamma} \f$,
- *  \f$ \boldsymbol{n} \f$ is the face normal and \f$ A_{\gamma} \f$ is the face area of face \f$ \gamma \f$.
+ * \brief Calculate the update vector and determine timestep size
  *
- *  In addition to the \a update vector, the recommended time step size \a dt is calculated
- *  employing a CFL condition. This method uses a standard \a Tpfa method for regular fluxes,
- *  and a \a MPFA can be used near hanging nodes.
- *  The lengths of the vectors are resized to agree with the current grid resolution.
+ * This method calculates the update vector \f$ u \f$ of the discretized equation
+ * \f[
+      C^{\kappa , new} = C^{\kappa , old} + u,
+ * \f]
+ * where \f$ u = \sum_{\gamma} \boldsymbol{v}_{\alpha} * \varrho_{\alpha} * X^{\kappa}_{\alpha} * \boldsymbol{n} * A_{\gamma} \f$,
+ * \f$ \boldsymbol{n} \f$ is the face normal and \f$ A_{\gamma} \f$ is the face area of face \f$ \gamma \f$.
+ * In addition to the \a update vector, the recommended time step size \a dt is calculated
+ * employing a CFL condition. This method uses a standard \a Tpfa method for regular fluxes,
+ * and a \a MPFA can be used near hanging nodes.
+ * The lengths of the vectors are resized to agree with the current grid resolution.
  *
- *  \param t Current simulation time \f$\mathrm{[s]}\f$
- *  \param[out] dt Time step size \f$\mathrm{[s]}\f$
- *  \param[out] updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
- *  \param impet Flag that determines if it is a real impet step or an update estimate for volume derivatives
+ * \param t Current simulation time \f$\mathrm{[s]}\f$
+ * \param[out] dt Time step size \f$\mathrm{[s]}\f$
+ * \param[out] updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
+ * \param impet Flag that determines if it is a real impet step or an update estimate for volume derivatives
  */
 template<class TypeTag>
 void FV2dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet)
@@ -325,8 +326,10 @@ void FV2dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Tran
     return;
 }
 
-//! Compute flux over an irregular interface using a \a mpfa method
-/** A mpfa l-method is applied to calculate fluxes near hanging nodes, using:
+/*!
+ * \brief Compute flux over an irregular interface using a \a mpfa method
+ *
+ * A mpfa l-method is applied to calculate fluxes near hanging nodes, using:
  * \f[
       - \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha}
         \left( \sum_k \tau_{2k} p^t_{\alpha,k} + \varrho_{\alpha} \sum_k \tau_{2k} \mathbf{g}^T \mathbf{x}_{k} \right)
@@ -622,5 +625,5 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
     return;
 }
 
-}
+} // end namespace Dumux
 #endif

@@ -18,10 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Finite volume diffusion model.
  */
-
 #ifndef DUMUX_FV3DPRESSURE2P2C_ADAPTIVE_HH
 #define DUMUX_FV3DPRESSURE2P2C_ADAPTIVE_HH
 
@@ -48,9 +47,8 @@ SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, MPFAInteractionVolume, FvMpfaL3dIntera
 SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, MPFAInteractionVolumeContainer, FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>);
 } // end namespace Properties
 
-
 /*!
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief The finite volume model for the solution of the compositional pressure equation
  *
  * Provides a Finite Volume implementation for the pressure equation of a compressible
@@ -242,8 +240,8 @@ public:
 #endif
     }
 
-    //! Constructs a FVPressure2P2C object
-    /**
+    /*!
+     * \brief Constructs a FVPressure2P2C object
      * \param problem a problem class object
      */
     FV3dPressure2P2CAdaptive(Problem& problem) : FVPressure2P2CMultiPhysics<TypeTag>(problem),
@@ -1119,8 +1117,11 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
     }
 }
 
-//! Compute single-phase flux through an irregular interface using a \a mpfa method
-/*! A mpfa l-method is applied to calculate fluxes near hanging nodes for
+
+/*!
+ * \brief Compute single-phase flux through an irregular interface using a \a mpfa method
+ *
+ * A mpfa l-method is applied to calculate fluxes near hanging nodes for
  * multiphysics models, using:
  * \f[
       - \lambda_{\alpha}
@@ -1324,8 +1325,10 @@ void FV3dPressure2P2CAdaptive<TypeTag>::updateMaterialLaws(bool fromPostTimestep
     }
 }
 
-//! Computes the transmissibility coefficients for the MPFA-l method in 3D
-/*! For faces with a hanging node in 3D, there are four sub-faces. The first subface
+/*!
+ * \brief Computes the transmissibility coefficients for the MPFA-l method in 3D
+ *
+ * For faces with a hanging node in 3D, there are four sub-faces. The first subface
  * contains a unique interaction volume, with is directly calculated by this method.
  * For the remainder of the sub-faces, the interaction volumes are build and calculated
  * by the common mpfa-l--implementation of the 2p models. The latter is established via the
@@ -1333,13 +1336,13 @@ void FV3dPressure2P2CAdaptive<TypeTag>::updateMaterialLaws(bool fromPostTimestep
  * The calculated Transmissivity Matrices are (along with some geometric information)
  * stored for later use in Variableclass2p2cadaptive .
  *
-* \param isIt Iterator to the current intersection
-* \param T Transmissitivity matrix of the first unique interaction volume
-* \param globalPos4 Position of the 3rd cell (with local Idx 4) of the unique interaction volume
-* \param eIdxGlobal4 Index of the 3rd cell (with local Idx 4) of the unique interaction volume
-* \param globalPos6 Position of the 4th cell (with local Idx 6) of the unique interaction volume
-* \param eIdxGlobal6 Index of the 4th cell (with local Idx 6) of the unique interaction volume
-*/
+ * \param isIt Iterator to the current intersection
+ * \param T Transmissitivity matrix of the first unique interaction volume
+ * \param globalPos4 Position of the 3rd cell (with local Idx 4) of the unique interaction volume
+ * \param eIdxGlobal4 Index of the 3rd cell (with local Idx 4) of the unique interaction volume
+ * \param globalPos6 Position of the 4th cell (with local Idx 6) of the unique interaction volume
+ * \param eIdxGlobal6 Index of the 4th cell (with local Idx 6) of the unique interaction volume
+ */
 template <class TypeTag>
 int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const IntersectionIterator& isIt,
         TransmissivityMatrix& T,
@@ -1816,8 +1819,10 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     return 0;
 }
 
-//! Adapter to use the general implementation of the mpfa-l for the compositional models
-/*! Depending on the subVolumeFaceIdx, the appropriate method in
+/*!
+ * \brief Adapter to use the general implementation of the mpfa-l for the compositional models
+ *
+ * Depending on the subVolumeFaceIdx, the appropriate method in
  * FvMpfaL2dTransmissibilityCalculator (potentially specifying certain cases)
  * gets called and the transmissibility and geometric information of the applied additional
  * cells of the interaction regions are passed back.

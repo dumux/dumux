@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Interaction volume container for compositional adaptive 3-d (using MPFA L-method).
  */
 #ifndef DUMUX_FVMPFAL3D_2P2CINTERACTIONVOLUMECONTAINER_ADAPTIVE_HH
@@ -31,7 +31,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Interaction volume container for compositional adaptive 3-d (using MPFA L-method) Model
  *
  * Container class which stores MPFA-interaction-volume information for each vertex of a DUNE grid.
@@ -120,7 +120,8 @@ private:
     Problem& problem_;
 };
 
-/*! \brief Overwrites the method from the base class FvMpfaL3dInteractionVolumeContainerAdaptive
+/*!
+ * \brief Overwrites the method from the base class FvMpfaL3dInteractionVolumeContainerAdaptive
  * On each boundary, a TPFA is used in compositional models. Therefore we do not need to store interaction
  * volume containers on the boundary cells.
  */
@@ -130,7 +131,8 @@ void FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::storeBoundaryInte
     return;
 }
 
-/*! \brief Determine the subVolumeFaceIdx for a given intersection and interactionVolume with 8 cells
+/*!
+ * \brief Determine the subVolumeFaceIdx for a given intersection and interactionVolume with 8 cells
  *
  * The MPFA is about to be calculated through an intersection, and to do so, its place in the
  * local indexing scheme, i.e. its subVolumeFaceIdx, has to be found. This method
@@ -269,16 +271,17 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
     return subVolumeFaceIdx;
 }
 
-/*! \brief Determine the subVolumeFaceIdx for a given intersection and interactionVolume with 6 cells
+/*!
+ * \brief Determine the subVolumeFaceIdx for a given intersection and interactionVolume with 6 cells
  *
  * The MPFA is about to be calculated through an intersection, and to do so, its place in the
  * local indexing scheme, i.e. its subVolumeFaceIdx, has to be found. This method
  * investigates the case (see FvMpfaL3dInteractionVolumeAdaptive.HangingNodeTypes ) if
  * 6 cells are present in the current interaction region.
- *  \param isIt The iterator of the intersection the mpfa should be calculated for
- *  \param interactionVolume The interaction volume (FvMpfaL3dInteractionVolumeAdaptive) of interest
- *  \param properFluxDirection Indicates whether the flux through the intersection aligns with its normal
- *  \return The Subvolume Face Idx required by the methods in FvMpfaL3dTransmissibilityCalculator
+ * \param isIt The iterator of the intersection the mpfa should be calculated for
+ * \param interactionVolume The interaction volume (FvMpfaL3dInteractionVolumeAdaptive) of interest
+ * \param properFluxDirection Indicates whether the flux through the intersection aligns with its normal
+ * \return The Subvolume Face Idx required by the methods in FvMpfaL3dTransmissibilityCalculator
  */
 template<class TypeTag>
 inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase6cells(const IntersectionIterator& isIt,
@@ -407,7 +410,8 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
     return -1;
 }
 
-/*! \brief Determine the subVolumeFaceIdx for a given intersection and interactionVolume with 2/4 cells
+/*!
+ * \brief Determine the subVolumeFaceIdx for a given intersection and interactionVolume with 2/4 cells
  *
  * The MPFA is about to be calculated through an intersection, and to do so, its place in the
  * local indexing scheme, i.e. its subVolumeFaceIdx, has to be found. This method
@@ -554,5 +558,5 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
 }
 
 
-} // end of Dune namespace
+} // end namespace Dumux
 #endif

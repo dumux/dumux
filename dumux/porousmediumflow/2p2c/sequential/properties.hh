@@ -16,10 +16,9 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Defines the properties required for the sequential 2p2c models.
  */
 #ifndef DUMUX_2P2CPROPERTIES_HH
@@ -195,6 +194,6 @@ public:
 
 // \}
 
-}
+} // end namespace Dumux
 
 #endif

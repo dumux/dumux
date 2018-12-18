@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Base class for compositional pressure equations
  */
 #ifndef DUMUX_FVPRESSURECOMPOSITIONAL_HH
@@ -36,7 +36,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief The finite volume model for the solution of the compositional pressure equation
  *
  * Provides the common ground to solve compositional pressure equations of the form
@@ -119,7 +119,9 @@ public:
     //initialization routine to prepare first timestep
     void initialize(bool solveTwice = false);
 
-    /*! \brief Compositional pressure solution routine: update estimate for secants, assemble, solve.
+    /*!
+     * \brief Compositional pressure solution routine: update estimate for secants, assemble, solve.
+     *
      * An update estime (transport step acoording to old pressure field) determines changes in
      * mass, composition, which is used to calculate volume derivatives entering the pressure
      * equation, as well as an approximate guess for time step size for the storage terms in the
@@ -156,14 +158,16 @@ public:
 
     /*! \name general methods for output */
     //@{
-    //! \brief Write data files
-     /*! Adds pressure-related quantities, including numerical things such as the volume Error
-      * entering the pressure equation. Verobosity of the output can be triggered by
-      * the property / parameter VtkOutputLevel, with 0 putting out only primary
-      * variables and 4 being very verbose.
-      * \tparam MultiWriter Class defining the output writer
-      * \param writer  The output writer (usually a VTKMultiWriter object)
-      */
+    /*!
+     * \brief Write data files
+     *
+     * Adds pressure-related quantities, including numerical things such as the volume Error
+     * entering the pressure equation. Verobosity of the output can be triggered by
+     * the property / parameter VtkOutputLevel, with 0 putting out only primary
+     * variables and 4 being very verbose.
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer  The output writer (usually a VTKMultiWriter object)
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -294,8 +298,9 @@ public:
         return;
     }
 
-    //! \brief Write additional debug info in a special writer.
     /*!
+     * \brief Write additional debug info in a special writer.
+     *
      * To visualize the different steps through the initialization procedure,
      * we use very small pseudo time steps only for the writer!
      * This is only for debugging of the initialization procedure.
@@ -362,8 +367,8 @@ public:
     }
     //@}
 
-    //! Constructs a FVPressureCompositional object
-    /**
+    /*!
+     * \brief Constructs a FVPressureCompositional object
      * \param problem a problem class object
      */
     FVPressureCompositional(Problem& problem) : FVPressure<TypeTag>(problem),
@@ -418,8 +423,9 @@ private:
 };
 
 
-//! initializes the simulation run
 /*!
+ * \brief Initializes the simulation run
+ *
  * Initializes the simulation to gain the initial pressure field.
  * Output throughout initialization procedure is only done in debug mode.
  *
@@ -698,8 +704,9 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
     return;
 }
 
-//! updates secondary variables
 /*!
+ * \brief Updates secondary variables
+ *
  * A loop through all elements updates the secondary variables stored in the variableclass
  * by using the updated primary variables.
  * \param postTimeStep Flag indicating method is called from Problem::postTimeStep()
@@ -727,8 +734,9 @@ void FVPressureCompositional<TypeTag>::updateMaterialLaws(bool postTimeStep)
     return;
 }
 
-//! partial derivatives of the volumes w.r.t. changes in total concentration and pressure
 /*!
+ * \brief Partial derivatives of the volumes w.r.t. changes in total concentration and pressure
+ *
  * This method calculates the volume derivatives via a secant method, where the
  * secants are gained in a pre-computational step via the transport equation and
  * the last TS size.

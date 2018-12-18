@@ -18,10 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Base class for sequential 2p2c compositional problems.
  */
-
 #ifndef DUMUX_IMPETPROBLEM_2P2C_HH
 #define DUMUX_IMPETPROBLEM_2P2C_HH
 
@@ -32,7 +31,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief  Base class for all compositional 2-phase problems which use an impet algorithm
  *
  * Extends IMPESProblem2P by the compositional the boundary formulation and initial conditions.
@@ -129,8 +128,11 @@ public:
      * \name Problem parameters
      */
     // \{
-    //! Saturation initial condition (dimensionless)
-    /*! The problem is initialized with the following saturation. Both
+
+    /*!
+     * \brief Saturation initial condition (dimensionless)
+     *
+     * The problem is initialized with the following saturation. Both
      * phases are assumed to contain an equilibrium concentration of the
      * correspondingly other component.
      * \param element The element.
@@ -139,8 +141,11 @@ public:
     {
         return asImp_().initSatAtPos(element.geometry().center());
     }
-    //! Saturation initial condition (dimensionless) at given position
-    /*! Has to be provided if initSat() is not used in the specific problem.
+
+    /*!
+     * \brief Saturation initial condition (dimensionless) at given position
+     *
+     * Has to be provided if initSat() is not used in the specific problem.
      *  \param globalPos The global position.
      */
     Scalar initSatAtPos(const GlobalPosition& globalPos) const
@@ -150,8 +155,10 @@ public:
         return NAN;
     }
 
-    //! Concentration initial condition (dimensionless)
-    /*! The problem is initialized with a  feed mass fraction:
+    /*!
+     * \brief Concentration initial condition (dimensionless)
+     *
+     * The problem is initialized with a  feed mass fraction:
      * Mass of component 1 per total mass \f$\mathrm{[-]}\f$. This directly
      * enters the flash calucalation.
      * \param element The element.
@@ -160,8 +167,11 @@ public:
     {
         return asImp_().initConcentrationAtPos(element.geometry().center());
     }
-    //! Concentration initial condition (dimensionless)
-    /*! Has to be provided if initConcentration() is not used in the specific problem.
+
+    /*!
+     * \brief Concentration initial condition (dimensionless)
+     *
+     * Has to be provided if initConcentration() is not used in the specific problem.
      *  \param globalPos The global position.
      */
     Scalar initConcentrationAtPos(const GlobalPosition& globalPos) const
@@ -203,6 +213,6 @@ protected:
     }
 };
 
-}
+} // end namespace Dumux
 
 #endif

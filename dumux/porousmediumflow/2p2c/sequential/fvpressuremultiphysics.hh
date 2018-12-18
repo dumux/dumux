@@ -18,10 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Finite volume 2p2c pressure model with multi-physics.
  */
-
 #ifndef DUMUX_FVPRESSURE2P2C_MULTIPHYSICS_HH
 #define DUMUX_FVPRESSURE2P2C_MULTIPHYSICS_HH
 
@@ -34,7 +33,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief The finite volume model for the solution of the compositional pressure equation
  *
  * Provides a Finite Volume implementation for the pressure equation of a gas-liquid
@@ -147,7 +146,8 @@ public:
         ParentType::initialize();
     }
 
-    /*! \brief  Function for serialization of the pressure field.
+    /*!
+     * \brief  Function for serialization of the pressure field.
      *
      *  Function needed for restart option. Writes the pressure of a grid element to a restart file.
      *
@@ -162,7 +162,8 @@ public:
         outstream <<"  "<< cellData.subdomain();
     }
 
-    /*! \brief  Function for deserialization of the pressure field.
+    /*!
+     * \brief  Function for deserialization of the pressure field.
      *
      *  Function needed for restart option. Reads the pressure of a grid element from a restart file.
      *
@@ -186,8 +187,10 @@ public:
     //updates singlephase secondary variables for one cell and stores in the variables object
     void update1pMaterialLawsInElement(const Element& elementI, CellData& cellData, bool postTimeStep);
 
-    //! \brief Write data files
-     /*  \param name file name */
+    /*!
+     * \brief Write data files
+     * \param writer The writer
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -230,12 +233,13 @@ protected:
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
     Dune::Timer timer_; //!< A timer for the time spent on the multiphysics framework.
 
-   /*!
-    * \brief Indices of matrix and rhs entries
-    * During the assembling of the global system of equations get-functions are called (getSource(),
-    * getFlux(), etc.), which return global matrix or right hand side entries in a vector.
-    * These can be accessed using following indices:
-    */
+    /*!
+     * \brief Indices of matrix and rhs entries
+     *
+     * During the assembling of the global system of equations get-functions are called (getSource(),
+     * getFlux(), etc.), which return global matrix or right hand side entries in a vector.
+     * These can be accessed using following indices:
+     */
     enum
     {
         rhs = 1,//!<index for the right hand side entry
@@ -505,7 +509,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
     return;
 }
 
-/*! \brief The compositional single-phase flux in the multiphysics framework
+/*!
+ * \brief The compositional single-phase flux in the multiphysics framework
  *
  * If only single-phase conditions are encountered, the flux expression simplifies to (written for the
  * case where the wetting phase is only present):
@@ -604,7 +609,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
         return;
 }
 
-/*! \brief The compositional single-phase flux in the multiphysics framework
+/*!
+ * \brief The compositional single-phase flux in the multiphysics framework
  *
  * If only single-phase conditions are encountered, the flux expression simplifies to (written for the
  * case where the wetting phase is only present):

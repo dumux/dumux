@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SequentialTwoPModel
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Defines the properties required for the adaptive sequential 2p2c models.
  */
 #ifndef DUMUX_2P2CADAPTIVE_PROPERTIES_HH
@@ -28,8 +28,7 @@
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 //****** forward declarations  ******//
 template<class TypeTag>
@@ -42,8 +41,7 @@ class FV2dTransport2P2CAdaptive;
 ////////////////////////////////
 // properties
 ////////////////////////////////
-namespace Properties
-{
+namespace Properties {
 
 //////////////////////////////////////////////////////////////////
 // Type tags
@@ -78,6 +76,7 @@ SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, PressureModel, FV2dPressure2P2CAdaptiv
 
 
 /*!
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Missing indices to the mpfa2p model.
  *
  * Compositional adaptive models use the 2p implementation with mpfa to
@@ -96,6 +95,6 @@ struct SequentialTwoPTwoCIndicesAdaptive : public SequentialTwoPTwoCIndices<Type
 
 // \}
 
-}
+} // end namespace Dumux
 
 #endif
