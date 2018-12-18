@@ -23,13 +23,14 @@ set(TEX_INPUTS
 
 set(TEX_IMAGES
   png/box_disc.png
-  png/cc_disc.png
+  png/cctpfa.png
   png/dumux_strucutre_flowchart_horizontal_explained.png
   png/dunedesign.png
   ../logo/dumux_logo_hires_whitebg.png
   png/dalton1.png
   png/dalton2.png
-  pdf/staggered_grid.pdf)
+  pdf/staggered_grid.pdf
+  png/mpfa_iv.png)
 
 dune_add_latex_document(0_dumux-handbook.tex
   BIBFILES dumux-handbook.bib
