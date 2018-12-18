@@ -32,6 +32,13 @@ SPECIFIC_GENERATOR=""
 # -DCMAKE_MAKE_PROGRAM='/usr/bin/ninja'
 #"
 
+OPM_FLAGS=""
+# to build opm it might be necessary to set manually the following variables (comment the above line)
+#OPM_FLAGS="
+#-Decl_DIR=[/path/to]/libecl/build
+#-DUSE_MPI=ON
+#"
+
 # set this to "ON" if you want to be able to have the headercheck target
 DUMUX_ENABLE_HEADERCHECK=OFF
 
@@ -39,7 +46,7 @@ DUMUX_ENABLE_HEADERCHECK=OFF
 # you can also do this in any of the CMakeLists.txt in Dumux
 # just rerun cmake again afterwards (run cmake <path-to-build-dir>)
 
-CMAKE_FLAGS="$SPECIFIC_COMPILER $SPECIFIC_GENERATOR
+CMAKE_FLAGS="$SPECIFIC_COMPILER $SPECIFIC_GENERATOR $OPM_FLAGS
 -DCMAKE_CXX_FLAGS_RELEASE='$GXX_RELEASE_OPTS $GXX_RELEASE_WARNING_OPTS'
 -DCMAKE_CXX_FLAGS_DEBUG='-O0 -g -ggdb -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare'
 -DCMAKE_CXX_FLAGS_RELWITHDEBINFO='$GXX_RELEASE_OPTS $GXX_RELEASE_WARNING_OPTS -g -ggdb -Wall'
