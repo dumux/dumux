@@ -35,7 +35,6 @@ class FluxData1P;
 
 /*!
  * \ingroup SequentialOnePModel
- *
  * \brief Class including data of one grid cell.
  *
  * The variables of one-phase flow, which are the pressure as well as

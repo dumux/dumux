@@ -192,13 +192,14 @@ private:
 };
 
 /*!
+ * \ingroup SequentialOnePModel
  * \brief Calculates the velocity at a cell-cell interface.
-*
-* Calculates the velocity at a cell-cell interface from a given pressure field.
-*
-* \param intersection Intersection of two grid cells
-* \param cellData Object containing all model relevant cell data
-*/
+ *
+ * Calculates the velocity at a cell-cell interface from a given pressure field.
+ *
+ * \param intersection Intersection of two grid cells
+ * \param cellData Object containing all model relevant cell data
+ */
 template<class TypeTag>
 void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
 {
@@ -265,13 +266,14 @@ void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, 
 }
 
 /*!
+ * \ingroup SequentialOnePModel
  * \brief Calculates the velocity at a boundary.
-*
-* Calculates the velocity at a boundary from a given pressure field.
-*
-* \param intersection Boundary intersection
-* \param cellData Object containing all model relevant cell data
-*/
+ *
+ * Calculates the velocity at a boundary from a given pressure field.
+ *
+ * \param intersection Boundary intersection
+ * \param cellData Object containing all model relevant cell data
+ */
 template<class TypeTag>
 void FVVelocity1P<TypeTag>::calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData)
 {
