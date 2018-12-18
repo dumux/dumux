@@ -49,6 +49,7 @@ Copyright holders
 | 2012-2014  | Alexandru Tatomir          |
 | 2015-2017  | Larissa de Vries           |
 | 2013       | Katharina Türk             |
+| 2018       | Martin Utz                 |
 | 2010-2014  | Lena Walter                |
 | 2015-2017  | Kilian Weishaupt           |
 | 2010-2011  | David Werner               |
