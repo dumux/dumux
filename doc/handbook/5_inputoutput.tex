@@ -7,6 +7,7 @@ Finally, this section informs about handling output in \Dumux.
 
 \subsection{Supported grid file formats}
 \Dumux can read grids from file using the Dune Grid Format (DGF) or the Gmsh mesh format (MSH).
+Using the class \texttt{Dumux::VTKReader}, \Dumux has experimental support for reading grids and data from VTK files.
 
 \subsubsection{Dune Grid Format}
 Most of our \Dumux tests use the Dune Grid Format (DGF) to read in grids. A detailed description
@@ -29,14 +30,14 @@ manager \texttt{UGGrid}.
 An example can be found in \texttt{dumux/test\allowbreak/io/gridmanager}.
 
 \subsubsection{Other Grid Formats}
-Grid formats other than DGF and MSH will have to be converted to the DGF or MSH format before they can be used in \Dumux.
+Grid formats other than DGF, MSH, VTK will have to be converted to the DGF, MSH, VTK format before they can be used in \Dumux.
 If conversion is not an option, another possibility would be to write your own \texttt{GridManager}. Examples of other grid formats,
 which have previously been either converted or custom-created in \Dumux, are Petrel grids (cornerpoint grids),
 ArtMesh grids (fractured network grids), and ICEM grids (CAD developed grids).
 
 \subsection{The \Dumux \texttt{GridManager}}
 The \Dumux \texttt{GridManager} constructs the grid from information in the input file and handles the data.
-Currently, supported grid managers are \texttt{YaspGrid}, \texttt{OneDGrid}, \texttt{UGGrid}, \texttt{ALUGrid}, \texttt{FoamGrid} and \texttt{SPGrid}.
+Currently, supported grid managers are \texttt{YaspGrid}, \texttt{OneDGrid}, \texttt{dune-uggrid}, \texttt{dune-alugrid}, \texttt{dune-foamgrid}, \texttt{dune-subgrid}, \texttt{opm-grid} (cornerpoint grids) and \texttt{dune-spgrid}.
 Grids can be constructed from a DGF or MSH file by simply providing the filename to the grid in the \texttt{Grid} group~\footnote{Note,
 that group name \texttt{Grid} is the default group name and can be customized in your problem changing the string property \texttt{GridParameterGroup}.
 This way, it is possible, e.g., for problems with more than one grid, to set different group names for each grid, thus configuring them separately.}
@@ -51,7 +52,7 @@ If you are using an unstructured grid manager like \texttt{UGGrid} or \texttt{AL
 [Grid]
 File = mygmshgrid.msh
 \end{lstlisting}
-\Dumux will tell you in case your selected grid manager does not support reading MSH files. 
+\Dumux will tell you in case your selected grid manager does not support reading MSH files.
 
 You want to intially refine your grid? It's just adding a line:
 \begin{lstlisting}[style=DumuxParameterFile]
@@ -100,25 +101,19 @@ CellType = Cube # or Simplex
 
 For all available parameters see the Doxygen documentation.
 
-% \subsubsection{Cornerpoint grids}
-% TODO
-
-\subsection{Output formats}
-The default output format for \Dumux is the VTK file format. Additionally it is possible 
-to generate plots with gnuplot directly from \Dumux.
+\subsection{Input and Output formats}
 
 \subsubsection{VTK file format}
-Dumux allows to write out simulation results via the \texttt{vtkWriter}.
-For every print-out step, a single *.vtu file is created. For parallel simulations one file
+Dumux allows to write out simulation results via the \texttt{VtkOutputModule}.
+For every print-out step, a single \texttt{*.vtu} file is created. For parallel simulations one file
 per print-out step is generated for each processor.
-The *.pvd file groups the single *.vtu files and contains additionally the time step information.
-Also, it is the main file for the visualisation with ParaView.
-The VTK file format is also supported by other common visualisation programs like Visit and Tecplot. 
+The \texttt{*.pvd} file groups the single \texttt{*.vtu} files and contains additionally the time step information.
+The VTK file format is supported by common visualisation programs like ParaView, VisIt, and Tecplot.
 
 \subsubsection{Customize the VTK output}
 Using the respective \texttt{initOutputModule} function of the model \texttt{IOFields}, a default
 set of variables is stored in the VTK files. It is also possible to add further variables,
-using the method \texttt{addField} of the \texttt{vtkWriter}. For example, to add a variable called temperatureExact:
+using the member function \texttt{addField} of the \texttt{VtkOutputModule}. For example, to add a variable called \texttt{temperatureExact}:
 \begin{lstlisting}[style=DumuxCode]
 vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
 \end{lstlisting}
@@ -132,10 +127,23 @@ const std::vector<Scalar>& getExactTemperature()
     return temperatureExact_;
 }
 \end{lstlisting}
+It is important that the life-time of the added field exceeds the life-time of the writer. That means you can't pass temporaries
+to the \texttt{addField} function. The vector has to be stored somewhere, e.g. in the program main file.
 
 The second input argument is the name of the additional variable (as it should be written in the VTK files).
 The example above is taken from: \\ \texttt{test/porousmediumflow/1pnc/implicit/test\_1p2cni\_convection\_fv.cc}
 
+\subsubsection{VTK as input format}
+There is experimental support for reading data and grids from VTK files. Have a look at the \texttt{Dumux::VTKReader} class.
+
 \subsubsection{Gnuplot interface}
-\Dumux provides a gnuplot interface, which can be used to plot results and generate 
-image files (e.g., png). To use the gnuplot interface, gnuplot has to be installed. For more information see \ref{gnuplot}.
+\Dumux provides a small interface to GNUPlot, which can be used to plot results and generate
+image files (e.g., png). To use the gnuplot, gnuplot has to be installed. For more information see \ref{gnuplot}.
+
+\subsubsection{Container I/O}
+\Dumux supports writing to file from and reading to some standard \Cplusplus containers like \texttt{std::vector<double>} or \texttt{std::vector<Dune::FieldVector>}.
+If you want to read and write simple vectors, have a look at the header \texttt{dumux/io/container.hh}.
+
+\subsubsection{Matrix and Vector I/O}
+\texttt{dune-istl} supports writing and reading vectors and matrices to/from different format. For example you can write a matrix in a sparse matrix format that
+can be read by Matlab (see \texttt{dune/istl/io.hh}).
