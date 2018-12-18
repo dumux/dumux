@@ -25,6 +25,13 @@ You can subscribe to the mailing list via
 \url{https://listserv.uni-stuttgart.de/mailman/listinfo/dumux}, then you
 will be informed about upcoming releases or events.
 
+\subsection{Coding Guidelines}
+Writing code in a readable manner is very important, especially
+for future code developers (e.g. for adding features, debugging, etc.).
+For the style guide and instructions how to contribute to \Dumux visit
+\url{https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md}.
+
+
 \subsection{Tips and Tricks}
 \Dumux users and developers at the LH2 are also referred to the internal Wiki for
 more information.
@@ -34,7 +41,7 @@ more information.
 The options needed to be specified for that are provided using option files like
 \texttt{debug.opts} and \texttt{optim.opts}. These two compile \Dune and \Dumux
 either for debugging or for fast simulation. Programs compiled with optimization options
-can lead to a speedup of factor up to ten!\\
+can lead to a speedup of factor up to ten!\par
 In contrast programs that are compiled with optimization can hardly be debugged.
 You can modify the files and change the compiler, the name of the build director,
 add third-party dependencies, add additional compiler flags, ... .
@@ -64,7 +71,10 @@ To apply a patch in the same directory type:
 \begin{lstlisting}[style=Bash]
 $ patch -p1 < PATCHFILE
 \end{lstlisting}
-See \ref{sc:patchingDUNE} if you need to apply patches to \Dumux or \Dune.
+
+%TODO: currently, no DUNE patches necessary! Thus, this section is commented and the missing refrence would be bad.
+% Uncomment the following statement again when patches might be necessary.
+% See \ref{sc:patchingDUNE} if you need to apply patches to \Dumux or \Dune.
 
 \paragraph{File Name and Line Number by Predefined Macro}
 If you want to  know where some output or debug information came from, use the predefined
@@ -98,9 +108,3 @@ To check one header file for all necessary includes to compile the contained cod
 Include the option \texttt{-DENABLE\_HEADERCHECK=1} in your opts file and run \texttt{dunecontrol}.
 Then go to the top level in your build-directory and type \texttt{make headercheck} to check all headers
 or press 'tab' to use the auto-completion to search for a specific header.
-
-\paragraph{Naming conventions}
-General guidelines for naming conventions are specified in Section \ref{sc_guidelines}.
-However, in order to avoid ambiguity a list of proposed names for variables, types,
-functions etc is provided where users and mainly \Dumux developers can refer for
-standards (check \texttt{dumux-devel/\allowbreak doc/\allowbreak naminglist/\allowbreak naming-conventions.odt}).
