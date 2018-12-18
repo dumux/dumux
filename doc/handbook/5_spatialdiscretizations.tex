@@ -106,14 +106,13 @@ of the residual $\varepsilon$ with a weighting function $W_j$  and claiming that
 this product has to vanish within the whole domain,
 
 \begin{equation}
-	\int_\Omega W_j \cdot \varepsilon \, \mathrm{d}x \overset {!}{=} \: 0 \qquad \textrm{with} \qquad \sum_j W_j =1
+	\int_\Omega \varepsilon W_j \, \mathrm{d}x \overset {!}{=} \: 0 \qquad \textrm{with} \qquad \sum_j W_j =1
 \end{equation}
 yields the following equation:
 
 \begin{equation}
-	\int_\Omega W_j \frac{\partial \tilde u}{\partial t} \, \mathrm{d}x + \int_\Omega W_j
-	\cdot \left[ \nabla \cdot F(\tilde u) \right]  \, \mathrm{d}x - \int_\Omega W_j
-	\cdot q \, \mathrm{d}x = \int_\Omega W_j \cdot \varepsilon \, \mathrm{d}x \: \overset {!}{=} \: 0.	
+	\int_\Omega \frac{\partial \tilde u}{\partial t} W_j \, \mathrm{d}x + \int_\Omega 
+	 \left[ \nabla \cdot F(\tilde u) \right] W_j  \, \mathrm{d}x - \int_\Omega q W_j \, \mathrm{d}x = \int_\Omega \varepsilon W_j \, \mathrm{d}x \: \overset {!}{=} \: 0.	
 \label{eq:weightedResidual}	
 \end{equation}
 
