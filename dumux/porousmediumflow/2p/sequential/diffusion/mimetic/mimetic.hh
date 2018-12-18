@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Local stiffness matrix for the diffusion equation discretized by mimetic FD.
  */
-
 #ifndef DUMUX_MIMETIC2P_HH
 #define DUMUX_MIMETIC2P_HH
 
@@ -43,8 +42,8 @@
 
 #include <dune/common/dynvector.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief compute local stiffness matrix for conforming finite elements for the full 2-phase pressure equation

@@ -19,7 +19,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Velocity field from a finite volume solution of a pressure equation using a MPFA L-method.
  */
-
 #ifndef DUMUX_MPFAL2DPRESSUREVELOCITY2P_HH
 #define DUMUX_MPFAL2DPRESSUREVELOCITY2P_HH
 
@@ -29,6 +28,7 @@
 #include "2dvelocity.hh"
 
 namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief Class for the calculation of velocities from the  pressure solution of an IMPES scheme using a MPFA L-method.
@@ -564,6 +564,5 @@ void FvMpfaL2dPressureVelocity2p<TypeTag>::calculateVelocityOnBoundary(const Int
     }
 }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

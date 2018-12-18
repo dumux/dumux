@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Velocity field from a finite volume solution of a pressure equation.
  */
-
 #ifndef DUMUX_FVVELOCITY2P_HH
 #define DUMUX_FVVELOCITY2P_HH
 

@@ -21,10 +21,8 @@
  * \ingroup SequentialTwoPModel
  * \brief  Interactionvolume container for 3-d MPFA L-method on an h-adaptive grid.
  */
-
 #ifndef DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_ADAPTIVE_HH
 #define DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_ADAPTIVE_HH
-
 
 // dumux environment
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
@@ -32,8 +30,8 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/linteractionvolume3dadaptive.hh>
 #include "3dinteractionvolumecontainer.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief Interactionvolume container for 3-d MPFA L-method on an h-adaptive grid
@@ -1709,5 +1707,5 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
 
     }
 }
-} // end of Dune namespace
+} // end namespace Dumux
 #endif

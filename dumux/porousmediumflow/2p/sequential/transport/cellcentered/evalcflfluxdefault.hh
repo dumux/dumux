@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Fluxes to evaluate a CFL-Condition
  */
-
 #ifndef DUMUX_EVALCFLFLUX_DEFAULT_HH
 #define DUMUX_EVALCFLFLUX_DEFAULT_HH
 
@@ -279,6 +278,6 @@ typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCfl
     return cFLFluxFunction;
 }
 
-}
+} // end namespace Dumux
 
 #endif

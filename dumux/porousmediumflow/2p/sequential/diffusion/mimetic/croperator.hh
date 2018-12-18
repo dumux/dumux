@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Defines a class for Crozieux-Raviart piecewise linear finite element functions.
  */
-
 #ifndef DUMUX_CROPERATOR2P_HH
 #define DUMUX_CROPERATOR2P_HH
 
@@ -46,8 +45,8 @@
 #include <dumux/common/boundaryconditions.hh>
 #include "localstiffness.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief Extends CROperatorBase by a generic methods to assemble global stiffness matrix from local stiffness matrices.

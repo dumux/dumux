@@ -24,7 +24,6 @@
  * Remark1: only for 3-D hexahedrons of quadrilaterals.
  * Remark2: number of grid cells in each direction > 1
  */
-
 #ifndef DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_ADAPTIVE_HH
 
@@ -34,6 +33,7 @@
 #include "3dtransmissibilitycalculator.hh"
 
 namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation
@@ -2630,6 +2630,5 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assembleHangingNodeInteractionVolume(
     }
 }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

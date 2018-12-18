@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Defines the properties required for (immiscible) two-phase sequential models.
  */
-
 #ifndef DUMUX_2PPROPERTIES_SEQUENTIAL_HH
 #define DUMUX_2PPROPERTIES_SEQUENTIAL_HH
 

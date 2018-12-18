@@ -21,17 +21,13 @@
  * \ingroup SequentialTwoPModel
  * \brief Two-phase finite volume model
  */
-
 #ifndef DUMUX_FVPRESSUREVELOCITY2P_HH
 #define DUMUX_FVPRESSUREVELOCITY2P_HH
-
 
 // dumux environment
 #include "pressure.hh"
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
-
-
 
 namespace Dumux {
 /*!

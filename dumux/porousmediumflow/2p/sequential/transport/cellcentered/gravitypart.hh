@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Class for defining the gravity term of a two-phase flow saturation equation
  */
-
 #ifndef DUMUX_GRAVITYPART_HH
 #define DUMUX_GRAVITYPART_HH
 
@@ -226,6 +225,7 @@ private:
                           //if preCompute = false new mobilities will be taken (for implicit Scheme)
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
-};}
+};
+} // end namespace Dumux
 
 #endif

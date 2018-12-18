@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Class including the data of a grid cell needed if an adaptive grid is used.
  */
-
 #ifndef DUMUX_ELEMENTDATA2P_ADAPTIVE_HH
 #define DUMUX_ELEMENTDATA2P_ADAPTIVE_HH
 
@@ -58,8 +57,8 @@ private:
     };
 
 public:
-    //! Collection of variables that have to be mapped if the grid is adapted
-    /**
+    /*!
+     * \brief Collection of variables that have to be mapped if the grid is adapted
      * For an immiscible two-phase model, the following data has to be
      * transferred to a new grid.
      */
@@ -185,5 +184,5 @@ public:
 
 };
 
-}
+} // end namespace Dumux
 #endif

@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Base class for two-phase transport problems.
  */
-
 #ifndef DUMUX_TRANSPORTPROBLEM_2P_HH
 #define DUMUX_TRANSPORTPROBLEM_2P_HH
 
@@ -247,6 +246,6 @@ private:
     Scalar cFLFactor_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

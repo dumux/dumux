@@ -20,7 +20,6 @@
  * \ingroup SequentialTwoPModel
  * \brief 3d Velocity field from a finite volume solution of a pressure equation using a grid adaptive MPFA L-method.
  */
-
 #ifndef DUMUX_FVMPFALPRESSUREVELOCITY2P_ADAPTIVE_HH
 #define DUMUX_FVMPFALPRESSUREVELOCITY2P_ADAPTIVE_HH
 
@@ -28,8 +27,8 @@
 #include "3dpressureadaptive.hh"
 #include "3dvelocityadaptive.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief Class for the calculation of 3d velocities from the  pressure solution of an IMPES scheme using a grid adaptive MPFA L-method.
@@ -663,6 +662,5 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(c
     }
 }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

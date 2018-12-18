@@ -19,7 +19,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Velocity field from a finite volume solution of a pressure equation using a grid adaptive MPFA L-method.
  */
-
 #ifndef DUMUX_MPFAL2DPRESSUREVELOCITIES2P_ADAPTIVE_HH
 #define DUMUX_MPFAL2DPRESSUREVELOCITIES2P_ADAPTIVE_HH
 
@@ -28,8 +27,8 @@
 #include "2dpressureadaptive.hh"
 #include "2dvelocityadaptive.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief Class for the calculation of velocities from the  pressure solution of an IMPES scheme using a grid adaptive MPFA L-method.

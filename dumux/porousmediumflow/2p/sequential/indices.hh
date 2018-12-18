@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Defines the indices required for the two-phase sequential model.
  */
-
 #ifndef DUMUX_SEQUENTIAL_2P_INDICES_HH
 #define DUMUX_SEQUENTIAL_2P_INDICES_HH
 
@@ -267,6 +266,5 @@ struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pGlobalSn, PVOffset>
 
 // \}
 } // namespace Dumux
-
 
 #endif

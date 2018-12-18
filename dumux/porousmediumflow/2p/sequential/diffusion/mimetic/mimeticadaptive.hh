@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Local stiffness matrix for the diffusion equation discretized by mimetic FD.
  */
-
 #ifndef DUMUX_MIMETIC2PADAPTIVE_HH
 #define DUMUX_MIMETIC2PADAPTIVE_HH
 
@@ -45,8 +44,8 @@
 #include <dune/common/dynvector.hh>
 #include <dune/common/dynmatrix.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief compute local stiffness matrix for conforming finite elements for the full 2-phase pressure equation
@@ -218,7 +217,7 @@ public:
 
     /*!
      *\brief Assembles only boundary conditions for given element.
-     *\brief
+     *
      * On exit the following things have been done:
      * - The boundary conditions have been evaluated and are accessible with the bc() method
      * - The right hand side contains either the value of the essential boundary

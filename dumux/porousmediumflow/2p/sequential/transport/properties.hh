@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Specifies the properties for immiscible 2p transport
  */
-
 #ifndef DUMUX_TRANSPORT_PROPERTIES_2P_HH
 #define DUMUX_TRANSPORT_PROPERTIES_2P_HH
 

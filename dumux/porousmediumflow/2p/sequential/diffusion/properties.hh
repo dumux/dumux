@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Specifies the properties for immiscible 2p diffusion/pressure models
  */
-
 #ifndef DUMUX_DIFFUSION_PROPERTIES_2P_HH
 #define DUMUX_DIFFUSION_PROPERTIES_2P_HH
 

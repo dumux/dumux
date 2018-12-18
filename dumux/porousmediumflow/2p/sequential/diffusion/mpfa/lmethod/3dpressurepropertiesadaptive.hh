@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Properties for the MPFA-O method.
  */
-
 #ifndef DUMUX_FVMPFAL3DPROPERTIES2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL3DPROPERTIES2P_ADAPTIVE_HH
 

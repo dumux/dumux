@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Velocity calculation using a 2-d MPFA O-method.
  */
-
 #ifndef DUMUX_FVMPFAO2DVELOCITY2P_HH
 #define DUMUX_FVMPFAO2DVELOCITY2P_HH
 
@@ -741,6 +740,5 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
     }
 }
 
-}
-// end namespace Dumux
+} // end namespace Dumux
 #endif

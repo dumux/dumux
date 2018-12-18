@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief An assembler for the Jacobian matrix based on mimetic FD.
  */
-
 #ifndef DUMUX_MIMETICOPERATOR2PADAPTIVE_HH
 #define DUMUX_MIMETICOPERATOR2PADAPTIVE_HH
 
@@ -29,8 +28,8 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief Levelwise assembler

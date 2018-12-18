@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Base class for defining a convective part of the saturation transport equation.
  */
-
 #ifndef DUMUX_CONVECTIVEPART_HH
 #define DUMUX_CONVECTIVEPART_HH
 

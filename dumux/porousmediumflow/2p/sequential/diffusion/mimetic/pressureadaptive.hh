@@ -21,10 +21,8 @@
  * \ingroup SequentialTwoPModel
  * \brief Model for the pressure equation discretized by mimetic FD.
  */
-
 #ifndef DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
 #define DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
-
 
 // dumux environment
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>
@@ -549,7 +547,6 @@ void MimeticPressure2PAdaptive<TypeTag>::updateMaterialLaws()
     }
     return;
 }
-
 
 } // end namespace Dumux
 #endif

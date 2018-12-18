@@ -19,10 +19,8 @@
  * \ingroup SequentialTwoPModel
  * \brief  Finite volume MPFA O-method discretization of a two-phase pressure equation of the sequential IMPES model.
  */
-
 #ifndef DUMUX_FVMPFAO2DPRESSURE2P_HH
 #define DUMUX_FVMPFAO2DPRESSURE2P_HH
-
 
 // dumux environment
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
@@ -1965,6 +1963,5 @@ void FvMpfaO2dPressure2p<TypeTag>::updateMaterialLaws()
     return;
 }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Finite volume discretization of a two-phase flow pressure equation.
  */
-
 #ifndef DUMUX_FVPRESSURE2P_ADAPTIVE_HH
 #define DUMUX_FVPRESSURE2P_ADAPTIVE_HH
 
@@ -32,10 +31,8 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
 
+namespace Dumux {
 
-
-namespace Dumux
-{
 /*!
  * \ingroup SequentialTwoPModel
  * \brief Finite volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
@@ -129,10 +126,10 @@ public:
     /*!
      * \brief Pressure update
      *
-     *  \copydetails FVPressure::update()
+     * \copydetails FVPressure::update()
      *
-     *  The grid-adaptive implementation also reconstructs the velocity directly after the pressure update.
-     *  This is necessary to make sure the hanging nodes are treated correctly!
+     * The grid-adaptive implementation also reconstructs the velocity directly after the pressure update.
+     * This is necessary to make sure the hanging nodes are treated correctly!
      */
     void update()
     {
@@ -196,7 +193,6 @@ public:
      * \brief Adds pressure output to the output file
      *
      *  \copydetails FVPressure2P::addOutputVtkFields(MultiWriter&)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)

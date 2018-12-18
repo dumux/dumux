@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Cfl-flux-function to evaluate a Cfl-Condition after Coats 2003.
  */
-
 #ifndef DUMUX_EVALCFLFLUX_COATS_HH
 #define DUMUX_EVALCFLFLUX_COATS_HH
 
@@ -742,6 +741,6 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
     }
 }
 
-}
+} // end namespace Dumux
 
 #endif

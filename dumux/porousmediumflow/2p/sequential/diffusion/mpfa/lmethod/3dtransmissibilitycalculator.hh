@@ -20,7 +20,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Provides methods for transmissibility calculation in 3-d.
  */
-
 #ifndef DUMUX_FVMPFAL3D_TRANSMISSIBILITYCALCULATOR_HH
 #define DUMUX_FVMPFAL3D_TRANSMISSIBILITYCALCULATOR_HH
 
@@ -29,6 +28,7 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 
 namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief Provides methods for transmissibility calculation in 3-d.
@@ -2195,5 +2195,5 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseFour(
 
     return 4;
 }
-}// end of Dune namespace
+} // end namespace Dumux
 #endif

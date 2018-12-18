@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Class for defining the diffusive capillary pressure term of a 2p saturation equation.
  */
-
 #ifndef DUMUX_CAPILLARYDIFFUSION_HH
 #define DUMUX_CAPILLARYDIFFUSION_HH
 
@@ -240,6 +239,6 @@ private:
     const bool preComput_;//if preCompute = true the mobilities are taken from the variable object,
                           //if preCompute = false new mobilities will be taken (for implicit Scheme)
 };
-}
+} // end namespace Dumux
 
 #endif

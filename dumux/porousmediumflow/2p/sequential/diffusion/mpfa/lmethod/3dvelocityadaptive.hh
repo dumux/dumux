@@ -21,13 +21,13 @@
  * \ingroup SequentialTwoPModel
  * \brief 3-d velocity calculation on adaptive grids using a 3-d MPFA L-method.
  */
-
 #ifndef DUMUX_FVMPFAL3DVELOCITY2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL3DVELOCITY2P_ADAPTIVE_HH
 
 #include "3dvelocity.hh"
 
 namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief Class for calculating 3-d velocities from cell-wise constant pressure values.
@@ -2430,6 +2430,5 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
     cellData8.fluxData().setVelocityMarker(interactionVolume.getIndexOnElement(7, 2));
         }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

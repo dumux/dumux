@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Velocity calculation using a 2-d MPFA L-method.
  */
-
 #ifndef DUMUX_FVMPFAL2DVELOCITY2P_HH
 #define DUMUX_FVMPFAL2DVELOCITY2P_HH
 
@@ -31,8 +30,8 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/linteractionvolume.hh>
 #include "2dtransmissibilitycalculator.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief Class for calculating 2-d velocities from cell-wise constant pressure values.
@@ -909,6 +908,5 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
     }
 }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

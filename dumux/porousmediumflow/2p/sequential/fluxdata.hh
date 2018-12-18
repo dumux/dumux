@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Class storing data assigned to a cell-cell interfaces, so-called flux-data
  */
-
 #ifndef DUMUX_FLUXDATA2P_HH
 #define DUMUX_FLUXDATA2P_HH
 

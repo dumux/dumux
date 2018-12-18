@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Properties related to the sequential IMPES algorithms.
  */
-
 #ifndef DUMUX_IMPES2P_PROPERTIES_HH
 #define DUMUX_IMPES2P_PROPERTIES_HH
 

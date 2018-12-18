@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Finite Volume discretization of a two-phase flow pressure equation.
  */
-
 #ifndef DUMUX_FVPRESSURE2P_HH
 #define DUMUX_FVPRESSURE2P_HH
 

@@ -21,15 +21,14 @@
  * \ingroup SequentialTwoPModel
  * \brief Base class for stationary solution of a two-phase diffusion/pressure equation.
  */
-
 #ifndef DUMUX_DIFFUSIONPROBLEM_2P_HH
 #define DUMUX_DIFFUSIONPROBLEM_2P_HH
 
 #include <dumux/porousmediumflow/sequential/onemodelproblem.hh>
 #include "properties.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief  Base class for stationary solution of a two-phase diffusion/pressure equation.

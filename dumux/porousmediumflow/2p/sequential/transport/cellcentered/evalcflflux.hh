@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition.
  */
-
 #ifndef DUMUX_EVALCFLFLUX_HH
 #define DUMUX_EVALCFLFLUX_HH
 

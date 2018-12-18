@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Base class for all 2-phase problems which use an IMPES algorithm.
  */
-
 #ifndef DUMUX_IMPESPROBLEM_2P_HH
 #define DUMUX_IMPESPROBLEM_2P_HH
 
@@ -197,6 +196,6 @@ private:
     std::shared_ptr<SpatialParams> spatialParams_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

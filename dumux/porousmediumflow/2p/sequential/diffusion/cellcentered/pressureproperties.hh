@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Defines the properties required for finite volume pressure models in a two-phase sequential model.
  */
-
 #ifndef DUMUX_FVPRESSUREPORPERTIES2P_SEQUENTIAL_HH
 #define DUMUX_FVPRESSUREPORPERTIES2P_SEQUENTIAL_HH
 
@@ -34,7 +33,6 @@ namespace Dumux {
 ////////////////////////////////
 // Forward declarations
 ////////////////////////////////
-
 
 ////////////////////////////////
 // Properties

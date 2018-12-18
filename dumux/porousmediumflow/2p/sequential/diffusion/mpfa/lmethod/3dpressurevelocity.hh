@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  3d Velocity Field from a finite volume solution of a pressure equation using a MPFA L-method.
  */
-
 #ifndef DUMUX_FVMPFAL2PFABOUND3DVELOCITIES2P_HH
 #define DUMUX_FVMPFAL2PFABOUND3DVELOCITIES2P_HH
 
@@ -564,6 +563,5 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocityOnBoundary(const Int
     }
 }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

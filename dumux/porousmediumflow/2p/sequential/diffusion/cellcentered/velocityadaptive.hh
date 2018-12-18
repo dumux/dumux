@@ -21,18 +21,17 @@
  * \ingroup SequentialTwoPModel
  * \brief  Velocity field from a finite volume solution of a pressure equation.
  */
-
 #ifndef DUMUX_FVVELOCITY2P_ADAPTIVE_HH
 #define DUMUX_FVVELOCITY2P_ADAPTIVE_HH
 
 #include <dune/common/float_cmp.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/velocity.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
  * \ingroup SequentialTwoPModel
+ * \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
  *
  * Details see FVVelocity2P
  */
@@ -157,11 +156,11 @@ private:
 
 /*!
  * \brief Calculates the velocity at a cell-cell interface.
-*
-* \copydetails FVVelocity2P::calculateVelocity(const Intersection&,CellData&)
-*
-* Implementation of calculateVelocity() function for cell-cell interfaces with hanging nodes.
-*/
+ *
+ * \copydetails FVVelocity2P::calculateVelocity(const Intersection&,CellData&)
+ *
+ * Implementation of calculateVelocity() function for cell-cell interfaces with hanging nodes.
+ */
 template<class TypeTag>
 void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
 {

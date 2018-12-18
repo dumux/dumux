@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief  Class defining a standard, saturation dependent indicator for grid adaption.
  */
-
 #ifndef DUMUX_GRIDADAPTIONINDICATOR2PLOCAL_HH
 #define DUMUX_GRIDADAPTIONINDICATOR2PLOCAL_HH
 
@@ -29,6 +28,7 @@
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
 namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief  Class defining a standard, saturation dependent indicator for grid adaption.

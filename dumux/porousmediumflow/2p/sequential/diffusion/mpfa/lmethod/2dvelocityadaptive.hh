@@ -21,13 +21,13 @@
  * \ingroup SequentialTwoPModel
  * \brief  Velocity calculation on adaptive grids using a 2-d MPFA L-method.
  */
-
 #ifndef DUMUX_FVMPFAL2DVELOCITY2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL2DVELOCITY2P_ADAPTIVE_HH
 
 #include "2dvelocity.hh"
 
 namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief Class for calculating 2-d velocities from cell-wise constant pressure values.

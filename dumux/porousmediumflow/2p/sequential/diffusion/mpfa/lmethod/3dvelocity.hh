@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief 2-d velocity calculation using a 3-d MPFA L-method.
  */
-
 #ifndef DUMUX_FVMPFAL2PVELOCITY2P_HH
 #define DUMUX_FVMPFAL2PVELOCITY2P_HH
 
@@ -31,6 +30,7 @@
 #include "3dtransmissibilitycalculator.hh"
 
 namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief Class for calculating 3-d velocities from cell-wise constant pressure values.
@@ -2081,6 +2081,5 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
     }
 }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

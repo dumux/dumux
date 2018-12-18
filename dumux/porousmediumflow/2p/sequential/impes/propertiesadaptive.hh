@@ -21,7 +21,6 @@
  * \ingroup SequentialTwoPModel
  * \brief Properties for adaptive implementations of the sequential IMPES algorithms
  */
-
 #ifndef DUMUX_IMPES2PADAPTIVE_PROPERTIES_HH
 #define DUMUX_IMPES2PADAPTIVE_PROPERTIES_HH
 
@@ -29,7 +28,6 @@
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
 namespace Dumux {
-
 namespace Properties {
 /*!
  * \ingroup SequentialTwoPModel

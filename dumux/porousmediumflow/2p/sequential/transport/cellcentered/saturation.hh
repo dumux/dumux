@@ -21,15 +21,14 @@
  * \ingroup SequentialTwoPModel
  * \brief  Finite volume discretization of a saturation transport equation.
  */
-
 #ifndef DUMUX_FVSATURATION2P_HH
 #define DUMUX_FVSATURATION2P_HH
 
 #include <dumux/porousmediumflow/2p/sequential/transport/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/transport.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup SequentialTwoPModel
  * \brief The finite volume discretization of a saturation transport equation.
@@ -1216,5 +1215,5 @@ void FVSaturation2P<TypeTag>::updateMaterialLaws()
     return;
 }
 
-}
+} // end namespace Dumux
 #endif
