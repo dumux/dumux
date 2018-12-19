@@ -5,10 +5,10 @@ import os.path
 import subprocess
 import sys
 
-if len(sys.argv) > 5 or len(sys.argv) < 3:
+if len(sys.argv) < 3:
     sys.stderr.write("Invalid number of arguments given. Please provide the following arguments (in this order):\n\
                       - the name of the executable (either test_facetcoupling_tpfa_1p1p or test_facetcoupling_box_1p1p)\n\
-                      - between one and three fracture permeabilities you want to consider")
+                      - the fracture permeabilities you want to perform the convergence test for")
     sys.exit(1)
 
 # name of the executable
