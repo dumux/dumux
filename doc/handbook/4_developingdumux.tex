@@ -36,22 +36,17 @@ For the style guide and instructions how to contribute to \Dumux visit
 \Dumux users and developers at the LH2 are also referred to the internal Wiki for
 more information.
 
-\paragraph{Option Files optim.opts and debug.opts}
+\paragraph{Optimized computation vs debugging}
 \Dune and \Dumux are built with the help of \texttt{dunecontrol}, as explained on page \pageref{buildIt}.
-The options needed to be specified for that are provided using option files like
-\texttt{debug.opts} and \texttt{optim.opts}. These two compile \Dune and \Dumux
-either for debugging or for fast simulation. Programs compiled with optimization options
-can lead to a speedup of factor up to ten!\par
-In contrast programs that are compiled with optimization can hardly be debugged.
-You can modify the files and change the compiler, the name of the build director,
-add third-party dependencies, add additional compiler flags, ... .
+Per default, \Dumux is compiled using optimization options, which leads to faster runtimes but is unsuitable
+for debugging. For debug opts you can set \texttt{DCMAKE_BUILD_TYPE} to \texttt{Debug} or \texttt{RelWithDebInfo}
+in your options file. You can also do this in any of the \texttt{CMakeLists.txt} in Dumux by adding
+
 \begin{lstlisting}[style=Shell]
-BUILDDIR=build-clang
-CMAKE_FLAGS="\
-  -DCMAKE_C_COMPILER=/usr/bin/clang \
-  -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
-  -DUG_DIR=./externals/ug-3.12.1"
+set(CMAKE_BUILD_TYPE Debug)
 \end{lstlisting}
+
+Afterwarde rerun cmake again (run cmake <path-to-build-dir>).
 
 \paragraph{Dunecontrol for selected modules}
 A complete build using \texttt{dunecontrol} takes some time. In many cases not all modules need to be re-built.
