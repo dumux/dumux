@@ -3,14 +3,14 @@
 
 \Dumux has the following folder structure, which is similar to other \Dune modules.
 \begin{itemize}
-\item \texttt{bin}: binaries, e.g. used for the automatic testing, postprocessing, installation
+\item \texttt{bin}: binaries, e.g. used for the automatic testing, post-processing, installation
 \item \texttt{cmake}: the configuration options for building \Dumux
 \item \texttt{doc}: files necessary for the Doxygen documentation and this handbook, and various logos
 \item \texttt{dumux}: the main folder, containing the source files. see \ref{fig:dumux-structure}
       for a visualized structure. For more information on the models have a look at the
       Doxygen documentation.
 \item \texttt{test}: tests for each numerical model and some functionality.
-      The structure is equivalent to the dumux folder, the \texttt{references} folder
+      The structure is equivalent to the \texttt{dumux} folder, the \texttt{references} folder
       contains solutions for the automatic testing. Each test program consist of source
       \texttt{*.cc}, the problem definition \texttt{*problem.hh}, and an input file \texttt{*.input}.
       If necessary, spatially dependent parameters are defined in \texttt{*spatialparameters.hh}.
@@ -106,7 +106,7 @@
                          needed for the constitutive relationships (e.g. Henry coefficient)};
     ]
     [.\node[SecondLevel] {chemistry};
-      \node[ThirdLevel] {Files needed to account for, e.g. electrochemical processes as in a fuel cell.};
+      \node[ThirdLevel] {Files needed to account for, e.g. electro-chemical processes as in a fuel cell.};
     ]
     [.\node[SecondLevel] {components};
       \node[ThirdLevel] {Properties of a pure chemical substance (e.g. water)
