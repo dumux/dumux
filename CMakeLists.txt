@@ -12,18 +12,8 @@ if(NOT (dune-common_DIR
       ${PROJECT_BINARY_DIR})
 endif()
 
-if(NOT (opm-common_DIR
-        OR opm-common_ROOT
-        OR "${CMAKE_PREFIX_PATH}" MATCHES ".*opm-common.*"))
-    string(REPLACE  ${CMAKE_PROJECT_NAME}
-      opm-common opm-common_DIR
-      ${PROJECT_BINARY_DIR})
-endif()
-
 #find dune-common and set the module path
 find_package(dune-common)
-#find opm-common to support OPM
-find_package(opm-common)
 
 list(APPEND CMAKE_MODULE_PATH ${dune-common_MODULE_PATH}
   "${PROJECT_SOURCE_DIR}/cmake/modules")
