@@ -1,13 +1,13 @@
 \section{Models}
 Here the basic definitions, the general models concept, and a list of
 models available in \Dumux are given. The actual differential equations
-can be found in the localresiduals (see doxygen documentation of the
+can be found in the local residuals (see Doxygen documentation of the
 model's \texttt{LocalResidual} class).
 
 \subsection{Basic Definitions and Assumptions}
 The basic definitions and assumptions are made, using the example
 of a three-phase three-component system water-NAPL-gas
-\cite{A3:class:2002a}. The modification for other multicomponent
+\cite{A3:class:2002a}. The modification for other multi-component
 systems is straightforward and can be found, e.\ g., in
 \cite{A3:bielinski:2006,A3:acosta:2006}.
 
@@ -139,10 +139,10 @@ Here $p_i$ refers to the partial pressure of component i.
 As an example, if two equal volumes of gas A and gas B are mixed, the volume of the mixture stays the same but the pressures add up (see Figure \ref{fig:dalton1}).
 %
 \begin{figure}[ht]
-	\centering
-	\includegraphics[width=0.7\textwidth]{png/dalton1.png}
-	\caption{Dalton's law visualized}
-	\label{fig:dalton1}
+  \centering
+  \includegraphics[width=0.7\textwidth]{png/dalton1.png}
+  \caption{Dalton's law visualized}
+  \label{fig:dalton1}
 \end{figure}
 %
 The density of the mixture, $\varrho$, can be calculated as follows:
@@ -165,10 +165,10 @@ V = \sum_{i}^{}V_i.
 As an example, if two volumes of gas A and B at equal pressure are mixed, the pressure of the mixture stays the same, but the volumes add up (see Figure \ref{fig:dalton2}).
 %
 \begin{figure}[ht]
-	\centering
-	\includegraphics[width=0.7\textwidth]{png/dalton2.png}
-	\caption{Amagat's law visualized}
-	\label{fig:dalton2}
+  \centering
+  \includegraphics[width=0.7\textwidth]{png/dalton2.png}
+  \caption{Amagat's law visualized}
+  \label{fig:dalton2}
 \end{figure}
 %
 The density of the mixture, $\varrho$, can be calculated as follows:
@@ -257,7 +257,7 @@ fluid system. The new set of equations is considered as decoupled (or weakly cou
 and can thus be solved sequentially. The most popular sequential model is the
 fractional flow formulation for two-phase flow which is usually implemented applying
 an IMplicit Pressure Explicit Saturation algorithm (IMPES).
-In comparison to solving the equations monolothically, the sequential structure allows the use of
+In comparison to solving the equations monolithically, the sequential structure allows the use of
 different discretization methods for the different equations. The standard method
 used in the sequential algorithm is a cell-centered finite volume method. Further schemes,
 so far only available for the two-phase pressure equation, are cell-centered finite
