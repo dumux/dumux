@@ -25,17 +25,17 @@ Gmsh is an open-source flexible grid generator for unstructured finite-element m
 the provided GUI, we refer to the Gmsh documentation (\url{http://geuz.org/gmsh/doc/texinfo/gmsh.html}).
 
 The MSH format can contain element and boundary markers defined on the grid. Thus, boundaries can be easily marked as, e.g., inflow boundaries
-using Gmsh. Further, the format supports higher order elements. They can be used to create boundary parameterization supported by, e.g., the grid
+using Gmsh. Further, the format supports higher order elements. They can be used to create boundary parametrization supported by, e.g., the grid
 manager \texttt{UGGrid}.
 An example can be found in \texttt{dumux/test\allowbreak/io/gridmanager}.
 
 \subsubsection{Eclipse Grid Format}
-The Eclipse Grid Format (GRDECL) is commonly used for corner-point grids. 
+The Eclipse Grid Format (GRDECL) is commonly used for corner-point grids.
 Such grids consist of hexahedra, which are described by eight points on so-called pillars. A special feature of corner-point geometries is that points on pillars can degenerate, meaning that two neighboring points on a pillar can coincide. Furthermore, faces are, in general, bi-linear and cells can be non-convex. This allows for the accurate description of faults, layers, or wells, occurring in geological environments.
 
-Furthermore, petrophysical properties can be defined (for each cell), by using eclipse-specific keywords, e.g. \texttt{PORO}, \texttt{PERMX}, \texttt{PERMY}. 
+Furthermore, petrophysical properties can be defined (for each cell), by using eclipse-specific keywords, e.g. \texttt{PORO}, \texttt{PERMX}, \texttt{PERMY}.
 
-\Dumux supports the Eclipse Grid Format by using the \texttt{opm-grid} module (see (\url{https://opm-project.org}). 
+\Dumux supports the Eclipse Grid Format by using the \texttt{opm-grid} module (see (\url{https://opm-project.org}).
 An example can be found in \texttt{dumux/test\allowbreak/porousmediumflow/2p/implicit/cornerpoint}.
 
 \subsubsection{Other Grid Formats}
