@@ -1,7 +1,7 @@
 \section{Spatial Discretization Schemes}
 \label{spatialdiscretization}
 
-We discretize space with the cell-centered finite volume method (\ref{cc} ), the box method (\ref{box})
+We discretize space with cell-centered finite volume methods (\ref{cc} ), the box method (\ref{box})
 or a staggered grid scheme.
 Grid adaption is available for both box and cell-centered finite volume method.
 In general, the spatial  parameters, especially the porosity, have to be assigned on
@@ -271,7 +271,7 @@ Using these conditions, the intermediate face unknowns ${u}_\sigma$ can be elimi
 
 \begin{figure} [ht]
 \centering
-\includegraphics[width=0.8\linewidth,keepaspectratio]{png/mpfa_iv.png}
+\includegraphics[width=0.8\linewidth,keepaspectratio]{pdf/mpfa_iv.pdf}
 \caption{Interaction region for the Mpfa-O method. The graphic on the right illustrates how the sub-control volume $L^v$ and face $\sigma^v_2$ are embedded in cell $L$. Note that the face stencils for all sub-control volume faces in the depicted interaction region are $\mathcal{S}_{\sigma^v_i} = \{ K,L,M \}$, meaning that the fluxes over the sub-control volume faces depend on the three cell unknowns $u_K, u_L, u_M$.}
 \label{pc:interactionRegion_mpfa}
 \end{figure}
