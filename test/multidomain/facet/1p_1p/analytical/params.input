@@ -19,6 +19,10 @@ Problem.Name = lowdim
 LiquidDensity = 1.0
 LiquidKinematicViscosity = 1.0
 
+[LinearSolver]
+ResidualReduction = 1e-20
+MaxIterations = 2000
+
 [L2Error]
 QuadratureOrder = 1
 
