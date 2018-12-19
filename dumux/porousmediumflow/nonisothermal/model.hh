@@ -62,6 +62,7 @@ namespace Dumux {
  * \ingroup NIModel
  * \brief Specifies a number properties of non-isothermal porous medium
  *        flow models based on the specifics of a given isothermal model.
+ *
  * \tparam IsothermalTraits Model traits of the isothermal model
  */
 template<class IsothermalT>

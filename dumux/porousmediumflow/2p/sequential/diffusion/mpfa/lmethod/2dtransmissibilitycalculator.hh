@@ -18,7 +18,7 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief Provides methods for transmissibility calculation 2-d
+ * \brief Provides methods for transmissibility calculation 2-d.
  */
 #ifndef DUMUX_FVMPFAL2D_TRANSMISSIBILITYCALCULATOR_HH
 #define DUMUX_FVMPFAL2D_TRANSMISSIBILITYCALCULATOR_HH
@@ -28,11 +28,11 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/linteractionvolume.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \brief Provides methods for transmissibility calculation in 2-d.
  * \ingroup SequentialTwoPModel
+ * \brief Provides methods for transmissibility calculation in 2-d.
  *
  *  The transmissibilities are calculated using the MPFA L-method.
  *
@@ -93,6 +93,7 @@ public:
 
     /*!
      * \brief Constructs a FvMpfaL2dTransmissibilityCalculator object
+     *
      * \param problem A problem class object
      */
     FvMpfaL2dTransmissibilityCalculator(Problem& problem) :
@@ -117,6 +118,7 @@ private:
 };
 
 /*!
+ * \ingroup SequentialTwoPModel
  * \brief Calculates tranmissibility matrix
  *
  * Calculates tranmissibility matrix of an L-shape for a certain flux face.
@@ -374,6 +376,7 @@ int FvMpfaL2dTransmissibilityCalculator<TypeTag>::calculateTransmissibility(
 }
 
 /*!
+ * \ingroup SequentialTwoPModel
  * \brief Calculates tranmissibility matrix
  *
  * Calculates tranmissibility matrix of an L-shape for a certain flux face.
@@ -518,6 +521,7 @@ int FvMpfaL2dTransmissibilityCalculator<TypeTag>::calculateLeftHNTransmissibilit
 }
 
 /*!
+ * \ingroup SequentialTwoPModel
  * \brief Calculates tranmissibility matrix
  *
  * Calculates tranmissibility matrix of an L-shape for a certain flux face.
@@ -656,5 +660,5 @@ int FvMpfaL2dTransmissibilityCalculator<TypeTag>::calculateRightHNTransmissibili
     transmissibilityRight = D;
     return rightTriangle;
 }
-}// end of Dune namespace
+} // end namespace Dumux
 #endif

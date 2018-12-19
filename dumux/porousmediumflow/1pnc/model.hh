@@ -137,7 +137,7 @@ struct OnePNCNI { using InheritsFrom = std::tuple<OnePNC>; };
 } // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
-// properties for the isothermal single phase model
+// Properties for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
 //! Set as default that no component mass balance is replaced by the total mass balance
@@ -158,9 +158,10 @@ struct ModelTraits<TypeTag, TTag::OnePNC> { using type = GetPropType<TypeTag, Pr
 
 /*!
  * \brief The fluid state which is used by the volume variables to
- *        store the thermodynamic state. This should be chosen
- *        appropriately for the model ((non-)isothermal, equilibrium, ...).
- *        This can be done in the problem.
+ *        store the thermodynamic state.
+ *
+ * This should be chosen appropriately for the model ((non-)isothermal,
+ * equilibrium, ...). This can be done in the problem.
  */
 template<class TypeTag>
 struct FluidState<TypeTag, TTag::OnePNC>
@@ -213,10 +214,10 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::OnePNC> { using type = OnePNCIOFields; };
 
 ///////////////////////////////////////////////////////////////////////////
-// properties for the non-isothermal single phase model
+// Properties for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
-//! the non-isothermal vtk output fields
+//! The non-isothermal vtk output fields
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::OnePNCNI> { using type = EnergyIOFields<OnePNCIOFields>; };
 
@@ -225,7 +226,7 @@ template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::OnePNCNI>
 { using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
 
-//! model traits of the non-isothermal model.
+//! Model traits of the non-isothermal model.
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::OnePNCNI>
 {
@@ -284,7 +285,7 @@ public:
 template<class TypeTag>
 struct EnableChemicalNonEquilibrium<TypeTag, TTag::OnePNCNonEquil> { static constexpr bool value = false; };
 
-//! set equilibrium model traits
+//! Set equilibrium model traits
 template<class TypeTag>
 struct EquilibriumModelTraits<TypeTag, TTag::OnePNCNonEquil>
 {
@@ -295,7 +296,7 @@ public:
     using type = OnePNCUnconstrainedModelTraits<EquilibriumTraits>;
 };
 
-//! in case we do not assume full non-equilibrium one needs a thermal conductivity
+//! In case we do not assume full non-equilibrium one needs a thermal conductivity
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::OnePNCNonEquil>
 {
@@ -305,7 +306,7 @@ public:
     using type = ThermalConductivityAverage<Scalar>;
 };
 
-//! use the mineralization volume variables together with the 2pnc vol vars
+//! Use the mineralization volume variables together with the 2pnc vol vars
 template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::OnePNCNonEquil>
 {

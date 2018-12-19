@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Base class holding the variables for sequential models.
+ */
 #ifndef DUMUX_VARIABLECLASS2P2C_ADAPTIVE_HH
 #define DUMUX_VARIABLECLASS2P2C_ADAPTIVE_HH
 
@@ -24,26 +29,18 @@
 // for  parallelization
 #include <dumux/porousmediumflow/sequential/variableclassadaptive.hh>
 
-/**
- * @file
- * @brief  Base class holding the variables for sequential models.
- * @author Markus Wolff
- */
-
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \ingroup Adaptive2p2c mpfa
- */
-//! Class holding additionally mpfa data of adaptive compositional models.
-/*!
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Class holding additionally mpfa data of adaptive compositional models.
+ *
  * This class provides the possibility to store and load the transmissibilities (and associated infos)
  * of the mpfa method per irregular face. This class provides the storage container and access methods
  * for both 2D and 3D implementation.
  * Note that according to the number of half-edges (sub-faces) regarded, one ore more transmissibility
  * can be stored and loaded.
  *
- * @tparam TypeTag The Type Tag
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class VariableClass2P2CAdaptive: public VariableClassAdaptive<TypeTag>
@@ -84,8 +81,9 @@ protected:
     */
     const static int storageRequirement = Dune::StaticPower<dim-1, dim>::power;
 
-    //! Storage object for data related to the MPFA method
-    /**
+    /*!
+     * \brief Storage object for data related to the MPFA method
+     *
      * This Object stores the transmissibility coefficients
      * for all interaction regions/volumes of an irregular interface
      * in an h-adaptive simulation. It is valid for 2D/3D
@@ -103,8 +101,11 @@ protected:
         {
             interactionRegionsStored = 0;
         }
-        //! stores an intersection for the 2D implementation
-        /** This method also provides the information that both half-edges (2D) are
+
+        /*!
+         * \brief Stores an intersection for the 2D implementation
+         *
+         * This method also provides the information that both half-edges (2D) are
          * regarded and information was stored: Two interaction regions are applied
          * \param is23 Intersection pointing to 3rd cell of additional interaction region
          */
@@ -123,19 +124,22 @@ protected:
     const Grid& grid_; //!< The grid
 
 public:
-    //! Constructs a VariableClass object
-    /**
+    /*!
+     * \brief Constructs a VariableClass object
+     *
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
      */
     VariableClass2P2CAdaptive(const GridView& gridView) :
         ParentType(gridView), grid_(gridView.grid())
     {}
 
-    //! Resizes sequential variable vectors
-    /*! Method that change the size of the vectors for h-adaptive simulations, and clears recently
+    /*!
+     * \brief Resizes sequential variable vectors
+     *
+     * Method that change the size of the vectors for h-adaptive simulations, and clears recently
      * stored transmissibility matrices for the newly adapted grid.
      *
-     *\param size Size of the current (refined and coarsened) grid
+     * \param size Size of the current (refined and coarsened) grid
      */
     void adaptVariableSize(int size)
     {
@@ -144,12 +148,12 @@ public:
         irregularInterfaceMap_.clear();
     }
     /*!
-     * Reconstruct missing primary variables (where elements are created/deleted)
+     * \brief Reconstruct missing primary variables (where elements are created/deleted)
      *
      * To reconstruct the solution in father elements, problem properties might
      * need to be accessed.
      *
-     * @param problem The current problem
+     * \param problem The current problem
      */
     void reconstructPrimVars(Problem& problem)
     {
@@ -158,8 +162,10 @@ public:
         problem.pressureModel().adaptPressure();
     }
 
-    //! Stores Mpfa Data of one interaction region on an intersection
-    /** The method stores information of ONE interaction region (Transmissitivity
+    /*!
+     * \brief Stores Mpfa Data of one interaction region on an intersection
+     *
+     * The method stores information of ONE interaction region (Transmissitivity
      * as well as details of the 3rd cell in the region) into a storage container.
      * The key to each element is the index of the intersection, seen from the smaller
      * cell (only this is unique).
@@ -197,9 +203,10 @@ public:
         irregularInterfaceMap_[intersectionID].globalIdx3_[0] = globalIdx3;
     }
 
-
-    //! Stores Mpfa Data on an intersection for both half-edges
-    /** The method stores information of both interaction regions (Transmissitivity
+    /*!
+     * \brief Stores Mpfa Data on an intersection for both half-edges
+     *
+     * The method stores information of both interaction regions (Transmissitivity
      * as well as details of the 3rd cells of both regions) into a storage container.
      * The key to each element is the index of the intersection, seen from the smaller
      * cell (only this is unique).
@@ -254,8 +261,10 @@ public:
         irregularInterfaceMap_[intersectionID].setIntersection(secondHalfEdgeIntersectionIt);
     }
 
-    //! Stores 3D Mpfa Data on an intersection
-    /** The method stores information of the interaction region (Transmissitivity
+    /*!
+     * \brief Stores 3D Mpfa Data on an intersection
+     *
+     * The method stores information of the interaction region (Transmissitivity
      * as well as details of the 3rd & 4th cell in the region) into a storage container.
      * The key to each element is the index of the intersection, seen from the smaller
      * cell (only this index is unique).
@@ -317,8 +326,10 @@ public:
             = max(irregularInterfaceMap_[intersectionID].interactionRegionsStored, subFaceIdx+1);
     }
 
-    //! Weigths the transmissivity coefficient by the flux area (3D)
-    /** Each cell face could contain up to 4 interaction regions in 3D. If fewer interaction
+    /*!
+     * \brief Weigths the transmissivity coefficient by the flux area (3D)
+     *
+     * Each cell face could contain up to 4 interaction regions in 3D. If fewer interaction
      * regions are considered (e.g. at a boundary), the flux goes through a higher area than
      * was regarded in the calculation of the interaction region. Therefore, the transmissibility
      * coefficients have to be weighted (scaled).
@@ -354,8 +365,10 @@ public:
             irregularInterfaceMap_[intersectionID].T1_[subFaceIdx] *= weight;
     }
 
-    //! Provides access to stored Mpfa Data on an intersection for both half-edges
-    /** The method gets information of both interaction regions (Transmissitivity
+    /*!
+     * \brief Provides access to stored Mpfa Data on an intersection for both half-edges
+     *
+     * The method gets information of both interaction regions (Transmissitivity
      * as well as details of the 3rd cells of both regions) from a storage container.
      * The key to each element is the index of the intersection, seen from the smaller
      * cell (only this is unique).
@@ -428,9 +441,10 @@ public:
         return 1;
     }
 
-
-    //! Provides access to stored 3D Mpfa Data on an intersection for up to 4 subfaces
-    /** The method gets information of up to 4 interaction regions (Transmissitivity
+    /*!
+     * \brief Provides access to stored 3D Mpfa Data on an intersection for up to 4 subfaces
+     *
+     * The method gets information of up to 4 interaction regions (Transmissitivity
      * as well as details of the 3rd & 4th cells of the regions) from a storage container.
      * The key to each element is the index of the intersection, seen from the smaller
      * cell (only this is unique).
@@ -503,5 +517,5 @@ public:
     //@}
 
 };
-}
+} // end namespace Dumux
 #endif

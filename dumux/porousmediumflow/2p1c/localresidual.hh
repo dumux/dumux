@@ -22,16 +22,15 @@
  *
  * \copydoc Dumux::TwoPOneCLocalResidual
  */
+
 #ifndef DUMUX_2P1C_LOCAL_RESIDUAL_HH
 #define DUMUX_2P1C_LOCAL_RESIDUAL_HH
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup TwoPOneCModel
- *
  * \brief Element-wise calculation of the residual for the fully implicit two-phase one-component flow model.
  */
 template<class TypeTag>

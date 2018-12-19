@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup TracerModel
- * \brief Quantities required by the tracer model in a control volume
+ * \brief Quantities required by the tracer model in a control volume.
  */
+
 #ifndef DUMUX_TRACER_VOLUME_VARIABLES_HH
 #define DUMUX_TRACER_VOLUME_VARIABLES_HH
 
@@ -45,12 +46,12 @@ class TracerVolumeVariables
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
 
 public:
-    //! export fluid system type
+    //! Export fluid system type
     using FluidSystem = typename Traits::FluidSystem;
     using SolidState = typename Traits::SolidState;
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -82,7 +83,7 @@ public:
     }
 
     /*!
-     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     * \brief Returns the density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
      *
      * We always forward to the fluid state with the phaseIdx property (see class description).
      *
@@ -98,66 +99,66 @@ public:
     { return solidState_; }
 
     /*!
-     * \brief Return the saturation
+     * \brief Returns the saturation.
      *
      * This method is here for compatibility reasons with other models. The saturation
      * is always 1.0 in a one-phasic context.
      *
-     * \param pIdx TODO docme!
+     * \param pIdx The phase index
      */
     Scalar saturation(int pIdx = 0) const
     { return 1.0; }
 
     /*!
-     * \brief Return the mobility
+     * \brief Returns the mobility.
      *
      * This method is here for compatibility reasons with other models. The mobility is always 1
      * for one-phasic models where the velocity field is given
      *
-     * \param pIdx TODO docme!
+     * \param pIdx The phase index
      */
     Scalar mobility(int pIdx = 0) const
     { return 1.0; }
 
     /*!
-     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
+     * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
      *
-     * \param pIdx TODO docme!
+     * \param pIdx The phase index
      */
     Scalar molarDensity(int pIdx = 0) const
     { return fluidDensity_/fluidMolarMass_; }
 
     /*!
-     * \brief Return mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
+     * \brief Returns the mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
      *
-     * \param pIdx TODO docme!
+     * \param pIdx The phase index
      * \param compIdx The index of the component
      */
     Scalar moleFraction(int pIdx, int compIdx) const
     { return useMoles ? moleOrMassFraction_[compIdx] : moleOrMassFraction_[compIdx]/FluidSystem::molarMass(compIdx)*fluidMolarMass_; }
 
     /*!
-     * \brief Return mass fraction \f$\mathrm{[kg/kg]}\f$ of a component in the phase.
+     * \brief Returns the mass fraction \f$\mathrm{[kg/kg]}\f$ of a component in the phase.
      *
-     * \param pIdx TODO docme!
+     * \param pIdx The phase index
      * \param compIdx The index of the component
      */
     Scalar massFraction(int pIdx, int compIdx) const
     { return useMoles ? moleOrMassFraction_[compIdx]*FluidSystem::molarMass(compIdx)/fluidMolarMass_ : moleOrMassFraction_[compIdx]; }
 
     /*!
-     * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
+     * \brief Returns the concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
      *
-     * \param pIdx TODO docme!
+     * \param pIdx The phase index
      * \param compIdx The index of the component
      */
     Scalar molarity(int pIdx, int compIdx) const
     { return moleFraction(pIdx, compIdx)*molarDensity(); }
 
     /*!
-     * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
+     * \brief Returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
      *
-     * \param pIdx TODO docme!
+     * \param pIdx The phase index
      * \param compIdx The index of the component
      */
     Scalar diffusionCoefficient(int pIdx, int compIdx) const

@@ -18,8 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PorousmediumflowModels
  * \brief Base class for the flux variables in porous medium models
  */
+
 #ifndef DUMUX_POROUSMEDIUMFLOW_FLUXVARIABLES_HH
 #define DUMUX_POROUSMEDIUMFLOW_FLUXVARIABLES_HH
 
@@ -33,7 +35,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
+ * \ingroup PorousmediumflowModels
  * \brief The porous medium flux variables class that computes advective / convective,
  *        molecular diffusive and heat conduction fluxes.
  *
@@ -120,7 +122,8 @@ public:
 
     /*!
      * \brief Returns the diffusive fluxes computed by the respective law.
-     *        Specialization for enabled diffusion.
+     *
+     * Specialization for enabled diffusion.
      */
     template<bool enable = enableMolecularDiffusion, typename std::enable_if_t<enable, int> = 0>
     Dune::FieldVector<Scalar, numComponents> molecularDiffusionFlux(const int phaseIdx) const
@@ -136,7 +139,8 @@ public:
 
     /*!
      * \brief Returns the diffusive fluxes computed by the respective law.
-     *        Specialization for disabled diffusion. Fluxes are zero.
+     *
+     * Specialization for disabled diffusion. Fluxes are zero.
      */
     template<bool enable = enableMolecularDiffusion, typename std::enable_if_t<!enable, int> = 0>
     Dune::FieldVector<Scalar, numComponents> molecularDiffusionFlux(const int phaseIdx) const
@@ -146,7 +150,8 @@ public:
 
     /*!
      * \brief Returns the conductive flux computed by the respective law.
-     *        Specialization for enabled heat conduction and thermal equilibrium between all phases.
+     *
+     * Specialization for enabled heat conduction and thermal equilibrium between all phases.
      */
     template<bool enable = enableEnergyBalance && !enableThermalNonEquilibrium, typename std::enable_if_t<enable, int> = 0>
     Scalar heatConductionFlux() const
@@ -161,7 +166,8 @@ public:
 
     /*!
      * \brief Returns the conductive flux computed by the respective law.
-     *        Specialization for enabled heat conduction and thermal non-equilibrium.
+     *
+     * Specialization for enabled heat conduction and thermal non-equilibrium.
      */
     template<bool enable = enableEnergyBalance && enableThermalNonEquilibrium, typename std::enable_if_t<enable, int> = 0>
     Scalar heatConductionFlux(const int phaseIdx) const
@@ -177,7 +183,8 @@ public:
 
     /*!
      * \brief Returns the conductive flux computed by the respective law.
-     *        Specialization for disabeld heat conduction. Conductive fluxes are zero.
+     *
+     * Specialization for disabled heat conduction. Conductive fluxes are zero.
      */
     template<bool enable = enableEnergyBalance, typename std::enable_if_t<!enable, int> = 0>
     Scalar heatConductionFlux(const int phaseIdx) const

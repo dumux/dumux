@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Class defining a standard, saturation dependent indicator for grid adaption
+ * \brief  Class defining a standard, saturation dependent indicator for grid adaption.
  */
 #ifndef DUMUX_GRIDADAPTIONINDICATOR2P_HH
 #define DUMUX_GRIDADAPTIONINDICATOR2P_HH
@@ -28,11 +28,11 @@
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 #include <dumux/linear/vectorexchange.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \brief  Class defining a standard, saturation dependent indicator for grid adaption
  * \ingroup SequentialTwoPModel
+ * \brief  Class defining a standard, saturation dependent indicator for grid adaption
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -215,6 +215,6 @@ protected:
     ScalarSolutionType indicatorVector_;
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
-}
+} // end namespace Dumux
 
 #endif

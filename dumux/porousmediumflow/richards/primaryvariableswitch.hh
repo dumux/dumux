@@ -21,6 +21,7 @@
  * \ingroup RichardsModel
  * \brief The primary variable switch for the extended Richards model.
  */
+
 #ifndef DUMUX_RICHARDS_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_RICHARDS_PRIMARY_VARIABLE_SWITCH_HH
 

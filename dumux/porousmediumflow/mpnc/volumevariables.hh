@@ -22,6 +22,7 @@
  * \brief Contains the secondary variables (Quantities which are
  *        constant within a finite volume) of the MpNc model.
  */
+
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_HH
 
@@ -71,22 +72,22 @@ class MPNCVolumeVariablesImplementation<Traits, false>
     using CompositionFromFugacities = Dumux::CompositionFromFugacities<Scalar, typename Traits::FluidSystem>;
 
 public:
-    //! export the underlying fluid system
+    //! Export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
-    //! export the fluid state type
+    //! Export the fluid state type
     using FluidState = typename Traits::FluidState;
-    //! export type of solid state
+    //! Export type of solid state
     using SolidState = typename Traits::SolidState;
-    //! export type of solid system
+    //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
 
-    //! return number of phases considered by the model
+    //! Return number of phases considered by the model
     static constexpr int numFluidPhases() { return ModelTraits::numFluidPhases(); }
-    //! return number of components considered by the model
+    //! Return number of components considered by the model
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -135,14 +136,14 @@ public:
                 }
             }
         }
-        //porosity
+        // porosity
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 
     /*!
-     * \brief Set complete fluid state
+     * \brief Sets complete fluid state.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -253,8 +254,8 @@ public:
    }
 
     /*!
-     * \brief Return the fluid configuration at the given primary
-     *        variables
+     * \brief Returns the fluid configuration at the given primary
+     *        variables.
      */
     const FluidState &fluidState() const
     { return fluidState_; }
@@ -295,7 +296,7 @@ public:
     { return fluidState_.moleFraction(phaseIdx, compIdx); }
 
     /*!
-     * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
+     * \brief Returns the concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
      *
      * \param phaseIdx The phase index
      * \param compIdx The index of the component
@@ -304,7 +305,7 @@ public:
     { return fluidState_.molarity(phaseIdx, compIdx); }
 
     /*!
-     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
+     * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
      *
      * \param phaseIdx The phase index
      */
@@ -312,7 +313,7 @@ public:
     { return fluidState_.molarDensity(phaseIdx);}
 
     /*!
-     * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
+     * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      *
      * \param phaseIdx The phase index
@@ -321,7 +322,7 @@ public:
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
-     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     * \brief Returns the density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
      *
      * \param phaseIdx The phase index
      */
@@ -329,7 +330,7 @@ public:
     { return fluidState_.density(phaseIdx); }
 
     /*!
-     * \brief Returns temperature inside the sub-control volume.
+     * \brief Returns the temperature inside the sub-control volume.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
      * temperature of the rock matrix and of all fluid phases are
@@ -348,7 +349,7 @@ public:
     { return fluidState_.enthalpy(phaseIdx); }
 
     /*!
-     * \brief Return internal energy \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     * \brief Returns the internal energy \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
      */
     Scalar internalEnergy(const int phaseIdx) const
     { return fluidState_.internalEnergy(phaseIdx); }
@@ -361,13 +362,13 @@ public:
     { return FluidSystem::thermalConductivity(fluidState_, phaseIdx); }
 
     /*!
-     * \brief Return fugacity \f$\mathrm{[kg/m^3]}\f$ the of the component.
+     * \brief Returns the fugacity \f$\mathrm{[kg/m^3]}\f$ the of the component.
      */
     Scalar fugacity(const int compIdx) const
     { return fluidState_.fugacity(compIdx); }
 
     /*!
-     * \brief Return average molar mass \f$\mathrm{[kg/m^3]}\f$ the of the phase.
+     * \brief Returns the average molar mass \f$\mathrm{[kg/m^3]}\f$ the of the phase.
      */
     Scalar averageMolarMass(const int phaseIdx) const
     { return fluidState_.averageMolarMass(phaseIdx); }
@@ -426,7 +427,7 @@ public:
     }
 
     /*!
-     * \brief Returns the diffusion coefficient
+     * \brief Returns the diffusion coefficient.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
@@ -526,23 +527,23 @@ class MPNCVolumeVariablesImplementation<Traits, true>
 
     using ParameterCache = typename Traits::FluidSystem::ParameterCache;
 public:
-    //! export the underlying fluid system
+    //! Export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
-    //! export the fluid state type
+    //! Export the fluid state type
     using FluidState = typename Traits::FluidState;
-    //! export type of solid state
+    //! Export type of solid state
     using SolidState = typename Traits::SolidState;
-    //! export type of solid system
+    //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
 
-    //! return number of phases considered by the model
+    //! Return number of phases considered by the model
     static constexpr int numFluidPhases() { return ModelTraits::numFluidPhases(); }
-    //! return number of components considered by the model
+    //! Return number of components considered by the model
     static constexpr int numFluidComps = ParentType::numFluidComponents();
     using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -560,7 +561,7 @@ public:
 
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
-        //calculate the remaining quantities
+        // calculate the remaining quantities
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
 
@@ -598,7 +599,7 @@ public:
     }
 
     /*!
-     * \brief Set complete fluid state
+     * \brief Sets complete fluid state.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -695,7 +696,7 @@ public:
    }
 
     /*!
-     * \brief Update composition of all phases in the mutable
+     * \brief Updates composition of all phases in the mutable
      *        parameters from the primary variables.
      *
      *        \param actualFluidState Container for all the secondary variables concerning the fluids
@@ -758,8 +759,8 @@ public:
      * \brief The mole fraction we would have in the case of chemical equilibrium /
      *        on the interface.
      *
-     *     \param phaseIdx The index of the fluid phase
-     *     \param compIdx The local index of the component
+     * \param phaseIdx The index of the fluid phase
+     * \param compIdx The local index of the component
      */
     const Scalar xEquil(const unsigned int phaseIdx, const unsigned int compIdx) const
     {
@@ -767,7 +768,7 @@ public:
     }
 
     /*!
-     * \brief Return the fluid configuration at the given primary
+     * \brief Returns the fluid configuration at the given primary
      *        variables
      */
     const FluidState &fluidState() const
@@ -809,7 +810,7 @@ public:
     { return fluidState_.moleFraction(phaseIdx, compIdx); }
 
     /*!
-     * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
+     * \brief Returns the concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
      *
      * \param phaseIdx The phase index
      * \param compIdx The index of the component
@@ -818,7 +819,7 @@ public:
     { return fluidState_.molarity(phaseIdx, compIdx); }
 
     /*!
-     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
+     * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
      *
      * \param phaseIdx The phase index
      */
@@ -826,7 +827,7 @@ public:
     { return fluidState_.molarDensity(phaseIdx);}
 
     /*!
-     * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
+     * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      *
      * \param phaseIdx The phase index
@@ -835,7 +836,7 @@ public:
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
-     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     * \brief Returns the density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
      *
      * \param phaseIdx The phase index
      */
@@ -843,7 +844,7 @@ public:
     { return fluidState_.density(phaseIdx); }
 
     /*!
-     * \brief Returns temperature inside the sub-control volume.
+     * \brief Returns the temperature inside the sub-control volume.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
      * temperature of the rock matrix and of all fluid phases are
@@ -853,13 +854,13 @@ public:
     { return fluidState_.temperature(0/* phaseIdx*/); }
 
     /*!
-     * \brief Return enthalpy \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     * \brief Returns the enthalpy \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
      */
     Scalar enthalpy(const int phaseIdx) const
     { return fluidState_.enthalpy(phaseIdx); }
 
     /*!
-     * \brief Return internal energy \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     * \brief Returns the internal energy \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
      */
     Scalar internalEnergy(const int phaseIdx) const
     { return fluidState_.internalEnergy(phaseIdx); }
@@ -872,13 +873,13 @@ public:
     { return FluidSystem::thermalConductivity(fluidState_, phaseIdx); }
 
     /*!
-     * \brief Return fugacity \f$\mathrm{[kg/m^3]}\f$ the of the component.
+     * \brief Returns the fugacity \f$\mathrm{[kg/m^3]}\f$ the of the component.
      */
     Scalar fugacity(const int compIdx) const
     { return fluidState_.fugacity(compIdx); }
 
     /*!
-     * \brief Return average molar mass \f$\mathrm{[kg/m^3]}\f$ the of the phase.
+     * \brief Returns the average molar mass \f$\mathrm{[kg/m^3]}\f$ the of the phase.
      */
     Scalar averageMolarMass(const int phaseIdx) const
     { return fluidState_.averageMolarMass(phaseIdx); }

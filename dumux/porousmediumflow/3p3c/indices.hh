@@ -21,6 +21,7 @@
  * \ingroup ThreePThreeCModel
  * \brief Defines the indices required for the three-phase three-component fully implicit model.
  */
+
 #ifndef DUMUX_3P3C_INDICES_HH
 #define DUMUX_3P3C_INDICES_HH
 

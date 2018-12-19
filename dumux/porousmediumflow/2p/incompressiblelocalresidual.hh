@@ -22,6 +22,7 @@
  * \brief Element-wise calculation of the residual and its derivatives
  *        for a two-phase, incompressible test problem.
  */
+
 #ifndef DUMUX_2P_INCOMPRESSIBLE_TEST_LOCAL_RESIDUAL_HH
 #define DUMUX_2P_INCOMPRESSIBLE_TEST_LOCAL_RESIDUAL_HH
 
@@ -73,7 +74,7 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Add storage derivatives for wetting and non-wetting phase
+     * \brief Adds storage derivatives for wetting and non-wetting phase
      *
      * Compute storage derivatives for the wetting and the non-wetting phase with respect to \f$p_w\f$
      * and \f$S_n\f$.
@@ -116,7 +117,7 @@ public:
     }
 
     /*!
-     * \brief Add source derivatives for wetting and non-wetting phase
+     * \brief Adds source derivatives for wetting and non-wetting phase.
      *
      * \param partialDerivatives The partial derivatives
      * \param problem The problem
@@ -135,7 +136,7 @@ public:
     { /* TODO maybe forward to problem for the user to implement the source derivatives?*/ }
 
     /*!
-     * \brief Add flux derivatives for wetting and non-wetting phase for cell-centered FVM using TPFA
+     * \brief Adds flux derivatives for wetting and non-wetting phase for cell-centered FVM using TPFA
      *
      * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
@@ -254,7 +255,7 @@ public:
     }
 
     /*!
-     * \brief Add flux derivatives for wetting and non-wetting phase for box method
+     * \brief Adds flux derivatives for wetting and non-wetting phase for box method
      *
      * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
@@ -414,7 +415,7 @@ public:
     }
 
     /*!
-     * \brief Add cell-centered Dirichlet flux derivatives for wetting and non-wetting phase
+     * \brief Adds cell-centered Dirichlet flux derivatives for wetting and non-wetting phase
      *
      * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
@@ -496,7 +497,7 @@ public:
     }
 
     /*!
-     * \brief Add Robin flux derivatives for wetting and non-wetting phase
+     * \brief Adds Robin flux derivatives for wetting and non-wetting phase
      *
      * \param derivativeMatrices The matrices containing the derivatives
      * \param problem The problem

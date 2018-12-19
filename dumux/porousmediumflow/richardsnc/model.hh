@@ -45,12 +45,12 @@
  * consequence, the \f$\frac{k_{r\alpha}}{\mu_\alpha}\f$ term
  * typically is much larger for the gas phase than for the wetting
  * phase. For this reason, the Richards model assumes that
- * \f$\frac{k_{rn}}{\mu_n}\f$ is infinitly large. This implies that
+ * \f$\frac{k_{rn}}{\mu_n}\f$ is infinitely large. This implies that
  * the pressure of the gas phase is equivalent to the static pressure
  * distribution and that therefore, mass conservation only needs to be
  * considered for the wetting phase.
  *
- * The model thus choses the absolute pressure of the wetting phase
+ * The model thus chooses the absolute pressure of the wetting phase
  * \f$p_w\f$ as its only primary variable. The wetting phase
  * saturation is calculated using the inverse of the capillary
  * pressure, i.e.

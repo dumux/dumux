@@ -27,11 +27,10 @@
 #include <dune/grid/utility/persistentcontainer.hh>
 #include "celldata.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief Class including the data of a grid cell needed if an adaptive grid is used.
  * \ingroup SequentialTwoPModel
+ * \brief Class including the data of a grid cell needed if an adaptive grid is used.
  *
  * The class provides model-specific functions needed to adapt the stored cell data to a new (adapted) grid.
  * Additionally, it provides the storage-infrastructure for explicit front tracking.
@@ -58,8 +57,8 @@ private:
     };
 
 public:
-    //! Collection of variables that have to be mapped if the grid is adapted
-    /**
+    /*!
+     * \brief Collection of variables that have to be mapped if the grid is adapted
      * For an immiscible two-phase model, the following data has to be
      * transferred to a new grid.
      */
@@ -185,5 +184,5 @@ public:
 
 };
 
-}
+} // end namespace Dumux
 #endif

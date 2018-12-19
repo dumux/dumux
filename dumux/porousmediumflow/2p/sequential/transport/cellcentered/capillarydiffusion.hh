@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Class for defining the diffusive capillary pressure term of a 2p saturation equation
+ * \brief  Class for defining the diffusive capillary pressure term of a 2p saturation equation.
  */
 #ifndef DUMUX_CAPILLARYDIFFUSION_HH
 #define DUMUX_CAPILLARYDIFFUSION_HH
@@ -27,11 +27,10 @@
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/diffusivepart.hh>
 #include "properties.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief  Class for defining the diffusive capillary pressure term of a saturation equation
  * \ingroup SequentialTwoPModel
+ * \brief  Class for defining the diffusive capillary pressure term of a saturation equation.
  *
  * Defines the diffusive capillary pressure term of the form
  *
@@ -240,6 +239,6 @@ private:
     const bool preComput_;//if preCompute = true the mobilities are taken from the variable object,
                           //if preCompute = false new mobilities will be taken (for implicit Scheme)
 };
-}
+} // end namespace Dumux
 
 #endif

@@ -16,13 +16,9 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
- * \ingroup IMPEC
- * \ingroup IMPETProperties
- *
  * \file
- *
+ * \ingroup SequentialTwoPTwoCModel
  * \brief Defines the properties required for the sequential 2p2c models.
  */
 #ifndef DUMUX_2P2CPROPERTIES_HH
@@ -34,8 +30,7 @@
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 //****** forward declarations  ******//
 template<class TypeTag>
@@ -53,8 +48,7 @@ struct SequentialTwoPTwoCIndices;
 ////////////////////////////////
 // properties
 ////////////////////////////////
-namespace Properties
-{
+namespace Properties {
 
 //////////////////////////////////////////////////////////////////
 // Type tags
@@ -200,6 +194,6 @@ public:
 
 // \}
 
-}
+} // end namespace Dumux
 
 #endif

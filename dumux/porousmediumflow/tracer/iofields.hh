@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup TracerModel
- * \brief Adds I/O fields specific to the tracer model
+ * \brief Adds I/O fields specific to the tracer model.
  */
+
 #ifndef DUMUX_TRACER_IO_FIELDS_HH
 #define DUMUX_TRACER_IO_FIELDS_HH
 
@@ -33,7 +34,7 @@ namespace Dumux {
 
 /*!
  * \ingroup TracerModel
- * \brief Adds I/O fields specific to the tracer model
+ * \brief Adds I/O fields specific to the tracer model.
  */
 class TracerIOFields
 {

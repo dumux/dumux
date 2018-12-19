@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialOnePModel
+ * \brief Sequential OneP Model solving the equations for pressure and velocity separately.
+ */
+
 #ifndef DUMUX_FVPRESSURE1P_HH
 #define DUMUX_FVPRESSURE1P_HH
 
@@ -24,17 +30,12 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/1p/sequential/properties.hh>
 
-/**
- * \file
+namespace Dumux {
+
+/*!
  * \ingroup SequentialOnePModel
- * \brief Sequential OneP Model solving the equations for pressure and velocity seperately.
- */
-
-namespace Dumux
-{
-
-/*! \ingroup SequentialOnePModel
- * \brief Sequential OneP Model solving the equations for pressure and velocity seperately.
+ * \brief Sequential OneP Model solving the equations for pressure and velocity separately.
+ *
  * This model solves equations of the form
  * \f[
  *  \text{div}\, \boldsymbol v = q.
@@ -110,7 +111,8 @@ public:
     void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
     const Intersection&, const CellData&, const bool);
 
-    /*! \brief Initializes the pressure model
+    /*!
+     * \brief Initializes the pressure model
      *
      * \copydetails FVPressure::initialize()
      *
@@ -130,10 +132,10 @@ public:
         return;
     }
 
-    /*! \brief Pressure update
+    /*!
+     * \brief Pressure update
      *
      * \copydetails FVPressure::update()
-     *
      */
     void update()
     {
@@ -141,8 +143,8 @@ public:
         storePressureSolution();
     }
 
-    /*! \brief Globally stores the pressure solution
-     *
+    /*!
+     * \brief Globally stores the pressure solution
      */
     void storePressureSolution()
     {
@@ -155,7 +157,8 @@ public:
         }
     }
 
-    /*! \brief Stores the pressure solution of a cell
+    /*!
+     * \brief Stores the pressure solution of a cell
      *
      * \param eIdxGlobal Global cell index
      * \param cellData A CellData object
@@ -167,13 +170,13 @@ public:
             cellData.setPressure(press);
     }
 
-    /*! \brief Adds pressure output to the output file
+    /*!
+     * \brief Adds pressure output to the output file
      *
      * Adds pressures to the output.
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
@@ -188,8 +191,9 @@ public:
         return;
     }
 
-    //! Constructs a FVPressure1P object
-    /**
+    /*!
+     * \brief Constructs a FVPressure1P object
+     *
      * \param problem A problem class object
      */
     FVPressure1P(Problem& problem) :
@@ -212,7 +216,8 @@ private:
     Scalar viscosity_;
 };
 
-/*! \brief Function which calculates the source entry
+/*!
+ * \brief Function which calculates the source entry
  *
  * \copydetails FVPressure::getSource(EntryType&,const Element&,const CellData&,const bool)
  *
@@ -235,10 +240,10 @@ void FVPressure1P<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& entry, const
     return;
 }
 
-/*! \brief Function which calculates the flux entry
+/*!
+ * \brief Function which calculates the flux entry
  *
  * \copydetails FVPressure::getFlux(EntryType&,const Intersection&,const CellData&,const bool)
- *
  */
 template<class TypeTag>
 void FVPressure1P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entry, const Intersection& intersection
@@ -283,7 +288,8 @@ void FVPressure1P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entry, const I
     return;
 }
 
-/*! \brief Function which calculates the flux entry at a boundary
+/*!
+ * \brief Function which calculates the flux entry at a boundary
  *
  * \copydetails FVPressure::getFluxOnBoundary(EntryType&,const Intersection&,const CellData&,const bool)
  *
@@ -322,7 +328,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
     {
         problem_.dirichlet(boundValues, intersection);
 
-        //permeability vector at boundary
+        // permeability vector at boundary
         // compute vectorized permeabilities
         DimMatrix meanPermeability(0);
 
@@ -334,18 +340,18 @@ const Intersection& intersection, const CellData& cellData, const bool first)
 
         permeability/= viscosity_;
 
-        //get dirichlet pressure boundary condition
+        // get Dirichlet pressure boundary condition
         Scalar pressBound = boundValues;
 
-        //calculate current matrix entry
+        // calculate current matrix entry
         entry[matrix] = ((permeability * unitOuterNormal) / dist) * faceArea;
         entry[rhs] = entry[matrix] * pressBound;
 
-        //calculate right hand side
+        // calculate right hand side
         entry[rhs] -= density_ * (permeability * gravity_) * faceArea;
 
     }
-    //set neumann boundary condition
+    // set Neumann boundary condition
     else if (bcType.isNeumann(pressEqIdx))
     {
         problem_.neumann(boundValues, intersection);
@@ -361,5 +367,5 @@ const Intersection& intersection, const CellData& cellData, const bool first)
     return;
 }
 
-}
+} // end namespace Dumux
 #endif

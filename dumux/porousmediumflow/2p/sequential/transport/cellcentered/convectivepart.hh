@@ -19,19 +19,18 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Base class for defining a convective part of the saturation transport equation
+ * \brief  Base class for defining a convective part of the saturation transport equation.
  */
 #ifndef DUMUX_CONVECTIVEPART_HH
 #define DUMUX_CONVECTIVEPART_HH
 
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \brief  Base class for defining a convective part of the saturation transport equation
  * \ingroup SequentialTwoPModel
+ * \brief  Base class for defining a convective part of the saturation transport equation.
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -83,6 +82,6 @@ public:
     {}
 
 };
-}
+} // end namespace Dumux
 
 #endif

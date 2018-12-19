@@ -18,16 +18,17 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup NonEquilibriumModel
  * \brief The primary variable and equation indices for the MpNc model.
  */
+
 #ifndef DUMUX_NONEQUILIBRIUM_INDICES_HH
 #define DUMUX_NONEQUILIBRIUM_INDICES_HH
 
 namespace Dumux {
 
 /*!
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup NonEquilibriumModel
  * \brief The primary variable and equation indices for the MpNc model.
  */
 template <class EquilibriumIndices, int numEnergyEqFluid, int numEnergyEqSolid, int numEq>

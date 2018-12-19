@@ -22,7 +22,6 @@
 #ifndef DUMUX_FVMPFAL2DPRESSURE2P_HH
 #define DUMUX_FVMPFAL2DPRESSURE2P_HH
 
-
 // dumux environment
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/linteractionvolume.hh>
@@ -30,11 +29,11 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include "2dtransmissibilitycalculator.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \brief Finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model.
  * \ingroup SequentialTwoPModel
+ * \brief Finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model.
  *
  * Finite volume MPFA L-method discretization of the equations
  * \f[ - \text{div}\, \boldsymbol v_t = - \text{div}\, (\lambda_t \boldsymbol K \textbf{grad}\,
@@ -327,7 +326,6 @@ public:
         return;
     }
 
-
     /*!
      * \brief Adds pressure output to the output file
      *
@@ -493,7 +491,7 @@ private:
      *  \param cellData The IMPES <tt>CellData</tt> object of the current cell.
      *
      *  \return The scalar value of the error term.
-    */
+     */
     Scalar evaluateErrorTerm_(CellData& cellData)
     {
         //error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
@@ -1869,6 +1867,5 @@ void FvMpfaL2dPressure2p<TypeTag>::updateMaterialLaws()
     return;
 }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

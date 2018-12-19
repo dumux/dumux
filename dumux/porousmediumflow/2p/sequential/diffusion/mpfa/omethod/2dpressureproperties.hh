@@ -28,24 +28,20 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 NEW_TYPE_TAG(FvMpfaO2dPressureTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties));
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #include "2dpressurevelocity.hh"
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/velocityintransport.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 SET_TYPE_PROP(FvMpfaO2dPressureTwoP, PressureModel, FvMpfaO2dPressureVelocity2p<TypeTag>);
 //! Set velocity reconstruction implementation standard cell centered finite volume schemes as default
 SET_TYPE_PROP( FvMpfaO2dPressureTwoP, Velocity, FvMpfaVelocityInTransport<TypeTag> );
-}
-}// end of Dune namespace
+} // end namespace Properties
+} // end namespace Dumux
 #endif

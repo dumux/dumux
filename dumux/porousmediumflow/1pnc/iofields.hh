@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup OnePNCModel
- * \brief Adds I/O fields specific to the OnePNC model
+ * \brief Adds I/O fields specific to the OnePNC model.
  */
+
 #ifndef DUMUX_ONEPNC_IO_FIELDS_HH
 #define DUMUX_ONEPNC_IO_FIELDS_HH
 
@@ -32,7 +33,7 @@ namespace Dumux {
 
 /*!
  * \ingroup OnePNCModel
- * \brief Adds I/O fields specific to the OnePNC model
+ * \brief Adds I/O fields specific to the OnePNC model.
  */
 class OnePNCIOFields
 {

@@ -22,6 +22,7 @@
  * \brief Quantities required by the single-phase, n-component box
  *        model defined on a vertex.
  */
+
 #ifndef DUMUX_1PNC_VOLUME_VARIABLES_HH
 #define DUMUX_1PNC_VOLUME_VARIABLES_HH
 
@@ -61,22 +62,22 @@ class OnePNCVolumeVariables
     };
 
 public:
-    //! export fluid state type
+    //! Export fluid state type
     using FluidState = typename Traits::FluidState;
-    //! export fluid system type
+    //! Export fluid system type
     using FluidSystem = typename Traits::FluidSystem;
-    //! export indices
+    //! Export indices
     using Indices = typename Traits::ModelTraits::Indices;
-    //! export type of solid state
+    //! Export type of solid state
     using SolidState = typename Traits::SolidState;
-    //! export type of solid system
+    //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
 
-    //! return whether moles or masses are balanced
+    //! Returns whether moles or masses are balanced
     static constexpr bool useMoles() { return Traits::ModelTraits::useMoles(); }
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -121,7 +122,7 @@ public:
     }
 
     /*!
-     * \brief Set complete fluid state
+     * \brief Sets complete fluid state.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -181,8 +182,8 @@ public:
     }
 
     /*!
-     * \brief Return the fluid configuration at the given primary
-     *        variables
+     * \brief Returns the fluid configuration at the given primary
+     *        variables.
      */
     const FluidState &fluidState() const
     { return fluidState_; }
@@ -194,10 +195,10 @@ public:
     { return solidState_; }
 
     /*!
-     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     * \brief Returns density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
      *
      * \note the phase index passed to this function is for compatibility reasons
-     *       with multiphasic models.
+     *       with multi-phasic models.
      */
     Scalar density(int phaseIdx = 0) const
     {
@@ -205,10 +206,10 @@ public:
     }
 
     /*!
-     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
+     * \brief Returns molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
      *
      * \note the phase index passed to this function is for compatibility reasons
-     *       with multiphasic models.
+     *       with multi-phasic models.
      */
     Scalar molarDensity(int phaseIdx = 0) const
     {
@@ -216,7 +217,7 @@ public:
     }
 
     /*!
-     * \brief Return the saturation
+     * \brief Returns the saturation.
      *
      * This method is here for compatibility reasons with other models. The saturation
      * is always 1.0 in a one-phasic context.
@@ -225,13 +226,13 @@ public:
     { return 1.0; }
 
     /*!
-     * \brief Return mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
+     * \brief Returns the mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
      *
-     * \param phaseIdx the index of the fluid phase
-     * \param compIdx the index of the component
+     * \param phaseIdx The index of the fluid phase
+     * \param compIdx The index of the component
      *
-     * \note the phase index passed to this function is for compatibility reasons
-     *       with multiphasic models.
+     * \note The phase index passed to this function is for compatibility reasons
+     *       with multi-phasic models.
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     {
@@ -241,13 +242,13 @@ public:
     }
 
     /*!
-     * \brief Returns the mass fraction of a component in the phase
+     * \brief Returns the mass fraction of a component in the phase.
      *
-     * \param phaseIdx the index of the fluid phase
-     * \param compIdx the index of the component
+     * \param phaseIdx The index of the fluid phase
+     * \param compIdx The index of the component
      *
-     * \note the phase index passed to this function is for compatibility reasons
-     *       with multiphasic models.
+     * \note The phase index passed to this function is for compatibility reasons
+     *       with multi-phasic models.
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     {
@@ -257,13 +258,13 @@ public:
     }
 
     /*!
-     * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
+     * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      *
      * \param phaseIdx The phase index
      *
-     * \note the phase index passed to this function is for compatibility reasons
-     *       with multiphasic models.
+     * \note The phase index passed to this function is for compatibility reasons
+     *       with multi-phasic models.
      */
     Scalar pressure(int phaseIdx = 0) const
     {
@@ -271,7 +272,7 @@ public:
     }
 
     /*!
-     * \brief Return temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
      * temperature of the rock matrix and of all fluid phases are
@@ -286,8 +287,8 @@ public:
      * The term mobility is usually not employed in the one phase context.
      * The method is here for compatibility reasons with other models.
      *
-     * \note the phase index passed to this function is for compatibility reasons
-     *       with multiphasic models.
+     * \note The phase index passed to this function is for compatibility reasons
+     *       with multi-phasic models.
      */
     Scalar mobility(int phaseIdx = 0) const
     {
@@ -295,11 +296,11 @@ public:
     }
 
     /*!
-     * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
+     * \brief Returns the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      *
-     * \note the phase index passed to this function is for compatibility reasons
-     *       with multiphasic models.
+     * \note The phase index passed to this function is for compatibility reasons
+     *       with multi-phasic models.
      */
     Scalar viscosity(int phaseIdx = 0) const
     {
@@ -307,13 +308,13 @@ public:
     }
 
     /*!
-     * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
+     * \brief Returns the average porosity \f$\mathrm{[-]}\f$ within the control volume.
      */
     Scalar porosity() const
     { return solidState_.porosity(); }
 
     /*!
-     * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
+     * \brief Returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
@@ -322,9 +323,9 @@ public:
     }
 
     /*!
-     * \brief Returns the molarity of a component in the phase
+     * \brief Returns the molarity of a component in the phase.
      *
-     * \param compIdx the index of the component
+     * \param compIdx The index of the component
      */
     Scalar molarity(int compIdx) const // [moles/m^3]
     {
@@ -333,9 +334,9 @@ public:
     }
 
     /*!
-     * \brief Returns the mass fraction of a component in the phase
+     * \brief Returns the mass fraction of a component in the phase.
      *
-     * \param compIdx the index of the component
+     * \param compIdx The index of the component
      */
     Scalar massFraction(int compIdx) const
     {

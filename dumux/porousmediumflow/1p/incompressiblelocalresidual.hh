@@ -22,14 +22,14 @@
  * \brief Element-wise calculation of the residual and its derivatives
  *        for a single-phase, incompressible, test problem.
  */
+
 #ifndef DUMUX_1P_INCOMPRESSIBLE_LOCAL_RESIDUAL_HH
 #define DUMUX_1P_INCOMPRESSIBLE_LOCAL_RESIDUAL_HH
 
 #include <dumux/discretization/method.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup OnePModel
@@ -79,7 +79,7 @@ public:
         problem.addSourceDerivatives(partialDerivatives, element, fvGeometry, curVolVars, scv);
     }
 
-    //! flux derivatives for the cell-centered tpfa scheme
+    //! Flux derivatives for the cell-centered tpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
     std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
@@ -105,7 +105,7 @@ public:
         derivativeMatrices[scvf.outsideScvIdx()][conti0EqIdx][pressureIdx] -= deriv;
     }
 
-    //! flux derivatives for the cell-centered mpfa scheme
+    //! Flux derivatives for the cell-centered mpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
     std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::ccmpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
@@ -142,7 +142,7 @@ public:
                                                                                    :  tij[i]*up;
     }
 
-    //! flux derivatives for the box scheme
+    //! Flux derivatives for the box scheme
     template<class JacobianMatrix, class T = TypeTag>
     std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box, void>
     addFluxDerivatives(JacobianMatrix& A,

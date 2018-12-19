@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Finite volume 2p2c pressure model with multi-physics.
+ */
 #ifndef DUMUX_FVPRESSURE2P2C_MULTIPHYSICS_HH
 #define DUMUX_FVPRESSURE2P2C_MULTIPHYSICS_HH
 
@@ -26,36 +31,32 @@
 #include <dumux/linear/vectorexchange.hh>
 #include <dumux/material/constraintsolvers/compositionalflash.hh>
 
-/**
- * @file
- * @brief  Finite Volume 2p2c Pressure Model with MultiPhysics
- */
-
-namespace Dumux
-{
-//! The finite volume model for the solution of the compositional pressure equation
-/*! \ingroup multiphysics
- *  Provides a Finite Volume implementation for the pressure equation of a gas-liquid
- *  system with two components. An IMPES-like method is used for the sequential
- *  solution of the problem.  Diffusion is neglected, capillarity can be regarded.
- *  Isothermal conditions and local thermodynamic
- *  equilibrium are assumed.  Gravity is included.
- *  \f[
-         c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}}
-         \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{alpha} \bf{v}_{\alpha}\right)
-          = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
- *  \f]
- *  where \f$\bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
- *  \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields
- *  \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
- *  \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability,
- *  \f$ \lambda_{\alpha} \f$ the phase mobility,
- *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and
- *  \f$ C^{\kappa} \f$ the total Component concentration.
+namespace Dumux {
+/*!
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief The finite volume model for the solution of the compositional pressure equation
+ *
+ * Provides a Finite Volume implementation for the pressure equation of a gas-liquid
+ * system with two components. An IMPES-like method is used for the sequential
+ * solution of the problem.  Diffusion is neglected, capillarity can be regarded.
+ * Isothermal conditions and local thermodynamic
+ * equilibrium are assumed.  Gravity is included.
+ * \f[
+        c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}}
+        \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{alpha} \bf{v}_{\alpha}\right)
+         = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
+ * \f]
+ * where \f$\bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
+ * \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields
+ * \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
+ * \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability,
+ * \f$ \lambda_{\alpha} \f$ the phase mobility,
+ * \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and
+ * \f$ C^{\kappa} \f$ the total Component concentration.
  * See paper SPE 99619 or "Analysis of a Compositional Model for Fluid
  * Flow in Porous Media" by Chen, Qin and Ewing for derivation.
  *
- *  The partial derivatives of the actual fluid volume \f$ v_{total} \f$ are gained by using a secant method.
+ * The partial derivatives of the actual fluid volume \f$ v_{total} \f$ are gained by using a secant method.
  *
  * The model domain is automatically divided
  * in a single-phase and a two-phase domain. The full 2p2c model is only evaluated within the
@@ -145,7 +146,8 @@ public:
         ParentType::initialize();
     }
 
-    /*! \brief  Function for serialization of the pressure field.
+    /*!
+     * \brief  Function for serialization of the pressure field.
      *
      *  Function needed for restart option. Writes the pressure of a grid element to a restart file.
      *
@@ -160,7 +162,8 @@ public:
         outstream <<"  "<< cellData.subdomain();
     }
 
-    /*! \brief  Function for deserialization of the pressure field.
+    /*!
+     * \brief  Function for deserialization of the pressure field.
      *
      *  Function needed for restart option. Reads the pressure of a grid element from a restart file.
      *
@@ -184,8 +187,10 @@ public:
     //updates singlephase secondary variables for one cell and stores in the variables object
     void update1pMaterialLawsInElement(const Element& elementI, CellData& cellData, bool postTimeStep);
 
-    //! \brief Write data files
-     /*  \param name file name */
+    /*!
+     * \brief Write data files
+     * \param writer The writer
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -228,12 +233,13 @@ protected:
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
     Dune::Timer timer_; //!< A timer for the time spent on the multiphysics framework.
 
-   /*!
-    * \brief Indices of matrix and rhs entries
-    * During the assembling of the global system of equations get-functions are called (getSource(),
-    * getFlux(), etc.), which return global matrix or right hand side entries in a vector.
-    * These can be accessed using following indices:
-    */
+    /*!
+     * \brief Indices of matrix and rhs entries
+     *
+     * During the assembling of the global system of equations get-functions are called (getSource(),
+     * getFlux(), etc.), which return global matrix or right hand side entries in a vector.
+     * These can be accessed using following indices:
+     */
     enum
     {
         rhs = 1,//!<index for the right hand side entry
@@ -503,7 +509,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
     return;
 }
 
-/*! \brief The compositional single-phase flux in the multiphysics framework
+/*!
+ * \brief The compositional single-phase flux in the multiphysics framework
  *
  * If only single-phase conditions are encountered, the flux expression simplifies to (written for the
  * case where the wetting phase is only present):
@@ -602,7 +609,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
         return;
 }
 
-/*! \brief The compositional single-phase flux in the multiphysics framework
+/*!
+ * \brief The compositional single-phase flux in the multiphysics framework
  *
  * If only single-phase conditions are encountered, the flux expression simplifies to (written for the
  * case where the wetting phase is only present):

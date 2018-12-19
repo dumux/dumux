@@ -21,6 +21,7 @@
  * \ingroup TwoPOneCModel
  * \copydoc Dumux::TwoPOneCDarcysLaw
  */
+
 #ifndef DUMUX_2P1C_SPURIOUS_FLUX_BLOCKING_DARCYS_LAW_HH
 #define DUMUX_2P1C_SPURIOUS_FLUX_BLOCKING_DARCYS_LAW_HH
 
@@ -30,11 +31,9 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/darcyslaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
-namespace Properties
-{
+namespace Properties {
      template<class TypeTag, class MyTypeTag>
 struct UseBlockingOfSpuriousFlow { using type = UndefinedProperty; }; //!< Determines whether blocking of spurious flow is used or not.
 }
@@ -105,7 +104,7 @@ public:
 
 private:
     /*!
-     * \brief Calculate the blocking factor which prevents spurious cold water fluxes into the steam zone (Gudbjerg et al., 2005) \cite gudbjerg2004 <BR>
+     * \brief Calculates the blocking factor which prevents spurious cold water fluxes into the steam zone (Gudbjerg et al., 2005) \cite gudbjerg2004 <BR>
      *
      * \param up The upstream volume variables
      * \param dn The downstream volume variables

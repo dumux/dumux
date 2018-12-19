@@ -16,28 +16,27 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Class including the variables and data of discretized data of the constitutive relations.
+ */
 #ifndef DUMUX_FLUXDATA2P2C_HH
 #define DUMUX_FLUXDATA2P2C_HH
 
 #include <dumux/porousmediumflow/sequential/properties.hh>
 
-/**
- * @file
- * @brief  Class including the variables and data of discretized data of the constitutive relations
- */
-
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \ingroup IMPES
- */
-//! Class including the variables and data of discretized data of the constitutive relations.
-/*! The variables of two-phase flow, which are one pressure and one saturation are stored in this class.
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Class including the variables and data of discretized data of the constitutive relations.
+ *
+ * The variables of two-phase flow, which are one pressure and one saturation are stored in this class.
  * Additionally, a velocity needed in the transport part of the sequential two-phase flow is stored,
  * as well as discretized data of constitutive relationships like mobilities, fractional flow functions
- * and capillary pressure. Thus, they have to be callculated just once in every time step or every iteration step.
+ * and capillary pressure. Thus, they have to be calculated just once in every time step or every iteration step.
  *
- * @tparam TypeTag The Type Tag
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class FluxData2P2C
@@ -84,7 +83,8 @@ public:
                 velocity_[phaseIdx][fIdx] = 0.0;
     }
 
-    /*! \brief Returns the phase velocity vector at a cell-cell interface
+    /*!
+     * \brief Returns the phase velocity vector at a cell-cell interface
      *
      * \param phaseIdx Index of a fluid phase
      * \param indexInInside Index of the cell-cell interface in this cell
@@ -94,7 +94,8 @@ public:
         return velocity_[phaseIdx][indexInInside];
     }
 
-    /*! \brief Returns the phase velocity vector at a cell-cell interface
+    /*!
+     * \brief Returns the phase velocity vector at a cell-cell interface
      *
      * \param phaseIdx Index of a fluid phase
      * \param indexInInside Index of the cell-cell interface in this cell
@@ -104,7 +105,8 @@ public:
         return velocity_[phaseIdx][indexInInside];
     }
 
-    /*! \brief Sets the phase velocity vector at a cell-cell interface
+    /*!
+     * \brief Sets the phase velocity vector at a cell-cell interface
      *
      * \param phaseIdx Index of a fluid phase
      * \param indexInInside Index of the cell-cell interface in this cell
@@ -115,7 +117,8 @@ public:
         velocity_[phaseIdx][indexInInside] = velocity;
     }
 
-    /*! \brief Returns the total velocity vector at a cell-cell interface
+    /*!
+     * \brief Returns the total velocity vector at a cell-cell interface
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      */
@@ -125,7 +128,8 @@ public:
                 + velocity_[nPhaseIdx][indexInInside];
     }
 
-    /*! \brief Returns the total velocity vector at a cell-cell interface
+    /*!
+     * \brief Returns the total velocity vector at a cell-cell interface
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      */
@@ -145,18 +149,23 @@ public:
     {
         return isUpwindCell_.size();
     }
-    //! functions returning upwind information
-    /* @param indexInInside The local inside index of the intersection
-     * @param equationIdx The equation index
+
+    /*!
+     * \brief Functions returning upwind information
+     *
+     * \param indexInInside The local inside index of the intersection
+     * \param equationIdx The equation index
      */
     const bool& isUpwindCell(int indexInInside, int equationIdx) const
     {
         return isUpwindCell_[indexInInside][equationIdx];
     }
-    //! Sets the upwind information
-    /* @param indexInInside The local inside index of the intersection
-     * @param equationIdx The equation index
-     * @value value set true or false
+    /*!
+     * \brief Sets the upwind information
+     *
+     * \param indexInInside The local inside index of the intersection
+     * \param equationIdx The equation index
+     * \param value set true or false
      */
     void setUpwindCell(int indexInInside, int equationIdx, bool value)
     {
@@ -172,5 +181,5 @@ public:
 
 
 };
-}
+} // end namespace Dumux
 #endif

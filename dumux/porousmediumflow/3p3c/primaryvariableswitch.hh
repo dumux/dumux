@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup ThreePThreeCModel
- * \brief The primary variable switch for the 3p3c model
+ * \brief The primary variable switch for the 3p3c model.
  */
+
 #ifndef DUMUX_3P3C_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_3P3C_PRIMARY_VARIABLE_SWITCH_HH
 
@@ -32,7 +33,7 @@ namespace Dumux {
 
 /*!
  * \ingroup ThreePThreeCModel
- * \brief The primary variable switch controlling the phase presence state variable
+ * \brief The primary variable switch controlling the phase presence state variable.
  */
 class ThreePThreeCPrimaryVariableSwitch
 : public PrimaryVariableSwitch<ThreePThreeCPrimaryVariableSwitch>

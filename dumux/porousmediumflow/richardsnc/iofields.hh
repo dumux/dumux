@@ -21,6 +21,7 @@
  * \ingroup RichardsNCModel
  * \brief Adds I/O fields specific to the Richards model.
  */
+
 #ifndef DUMUX_RICHARDSNC_IO_FIELDS_HH
 #define DUMUX_RICHARDSNC_IO_FIELDS_HH
 

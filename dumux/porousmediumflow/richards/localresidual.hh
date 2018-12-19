@@ -22,6 +22,7 @@
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the Richards fully implicit models.
  */
+
 #ifndef DUMUX_RICHARDS_LOCAL_RESIDUAL_HH
 #define DUMUX_RICHARDS_LOCAL_RESIDUAL_HH
 
@@ -71,7 +72,7 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Evaluate the rate of change of all conservation
+     * \brief Evaluates the rate of change of all conservation
      *        quantites (e.g. phase mass) within a sub-control
      *        volume of a finite volume element for the immiscible models.
      * \param problem The problem
@@ -109,7 +110,7 @@ public:
 
 
     /*!
-     * \brief Evaluate the mass flux over a face of a sub control volume
+     * \brief Evaluates the mass flux over a face of a sub control volume.
      *
      * \param problem The problem
      * \param element The current element.

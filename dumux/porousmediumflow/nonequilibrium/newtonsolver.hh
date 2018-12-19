@@ -18,10 +18,12 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup NonEquilibriumModel
  * \brief A MpNc specific newton solver.
- *  This solver calls the velocity averaging in the model after each iteration.
+ *
+ * This solver calls the velocity averaging in the model after each iteration.
  */
+
 #ifndef DUMUX_NONEQUILIBRIUM_NEWTON_SOLVER_HH
 #define DUMUX_NONEQUILIBRIUM_NEWTON_SOLVER_HH
 
@@ -29,8 +31,9 @@
 
 namespace Dumux {
 /*!
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup NonEquilibriumModel
  * \brief A nonequilibrium specific newton solver.
+ *
  * This solver calls the velocity averaging in the problem after each iteration.
  */
 template <class Assembler, class LinearSolver>

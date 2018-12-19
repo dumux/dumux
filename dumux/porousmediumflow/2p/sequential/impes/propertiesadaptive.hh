@@ -27,13 +27,10 @@
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-namespace Dumux
-{
-
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 /*!
- *
+ * \ingroup SequentialTwoPModel
  * \brief General properties for adaptive implementations of the sequential IMPES algorithms
  */
 
@@ -47,8 +44,8 @@ NEW_TYPE_TAG(IMPESTwoPAdaptive, INHERITS_FROM(IMPET, SequentialTwoP));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #include <dumux/porousmediumflow/sequential/variableclassadaptive.hh>
 #include <dumux/porousmediumflow/2p/sequential/celldataadaptive.hh>
@@ -56,10 +53,8 @@ NEW_TYPE_TAG(IMPESTwoPAdaptive, INHERITS_FROM(IMPET, SequentialTwoP));
 #include <dumux/porousmediumflow/2p/sequential/impes/problem.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptinitializationindicator.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 //! Enable adaptive grid
 SET_BOOL_PROP(IMPESTwoPAdaptive, AdaptiveGrid, true);
 //! Set variable class for adaptive impet schemes
@@ -70,7 +65,7 @@ SET_TYPE_PROP(IMPESTwoPAdaptive, CellData, CellData2PAdaptive<TypeTag>);
 SET_TYPE_PROP(IMPESTwoPAdaptive, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
 //! Set default class for adaptation initialization indicator
 SET_TYPE_PROP(IMPESTwoPAdaptive,  AdaptionInitializationIndicator, GridAdaptInitializationIndicator<TypeTag>);
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

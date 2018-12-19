@@ -19,18 +19,18 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Velocity calculation on adaptive grids using a 2-d MPFA L-method
+ * \brief  Velocity calculation on adaptive grids using a 2-d MPFA L-method.
  */
 #ifndef DUMUX_FVMPFAL2DVELOCITY2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL2DVELOCITY2P_ADAPTIVE_HH
 
 #include "2dvelocity.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \brief Class for calculating 2-d velocities from cell-wise constant pressure values.
  * \ingroup SequentialTwoPModel
+ * \brief Class for calculating 2-d velocities from cell-wise constant pressure values.
  *
  * Calculates phase velocities or total velocity from a known pressure field applying a
  * finite volume discretization and a MPFA L-method.
@@ -116,13 +116,14 @@ template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelo
 public:
     /*!
      * \brief Constructs a FvMpfaL2dVelocity2pAdaptive object
+     *
      * \param problem A problem class object
      */
     FvMpfaL2dVelocity2pAdaptive(Problem& problem) :
         ParentType(problem), problem_(problem)
     {}
 
-    //! Calculate velocities for flux faces of a hanging node interaction volume
+    //! Calculatex velocities for flux faces of a hanging node interaction volume
     void calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData1,
                                                        CellData& cellData2, CellData& cellData4,
                                                        InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces);
@@ -410,6 +411,5 @@ void FvMpfaL2dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
     cellData4.fluxData().setVelocityMarker(interactionVolume.getIndexOnElement(3, 1));
 }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

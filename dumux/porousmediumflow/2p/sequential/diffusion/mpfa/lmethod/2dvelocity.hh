@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Velocity calculation using a 2-d MPFA L-method
+ * \brief  Velocity calculation using a 2-d MPFA L-method.
  */
 #ifndef DUMUX_FVMPFAL2DVELOCITY2P_HH
 #define DUMUX_FVMPFAL2DVELOCITY2P_HH
@@ -30,11 +30,11 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/linteractionvolume.hh>
 #include "2dtransmissibilitycalculator.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \brief Class for calculating 2-d velocities from cell-wise constant pressure values.
  * \ingroup SequentialTwoPModel
+ * \brief Class for calculating 2-d velocities from cell-wise constant pressure values.
  *
  * Calculates phase velocities or total velocity from a known pressure field applying a
  * finite volume discretization and a MPFA L-method.
@@ -124,6 +124,7 @@ template<class TypeTag> class FvMpfaL2dVelocity2p
 public:
     /*!
      * \brief Constructs a FvMpfaL2dVelocity2p object
+     *
      * \param problem A problem class object
      */
     FvMpfaL2dVelocity2p(Problem& problem) :
@@ -144,7 +145,7 @@ public:
     void calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume,
                             CellData& cellData, int elemIdx);
 
-    //!Initializes the velocity model
+    //! Initializes the velocity model
     void initialize()
     {
         const auto element = *problem_.gridView().template begin<0>();
@@ -244,7 +245,7 @@ private:
 protected:
     TransmissibilityCalculator transmissibilityCalculator_;
 
-    const GravityVector& gravity_; //!< vector including the gravity constant
+    const GravityVector& gravity_; // vector including the gravity constant
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
@@ -907,6 +908,5 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
     }
 }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

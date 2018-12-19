@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the flux variables
+ * \ingroup PorousmediumflowModels
+ * \brief Base class for the flux variables.
  */
 #ifndef DUMUX_POROUSMEDIUM_FLUXVARIABLESCACHE_HH
 #define DUMUX_POROUSMEDIUM_FLUXVARIABLESCACHE_HH
@@ -41,11 +42,12 @@ class PorousMediumFluxVariablesCacheImplementation;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
- * \ingroup ImplicitModel
+ * \ingroup PorousmediumflowModels
  * \brief The flux variables cache classes for porous media.
- *        Store data required for flux calculation. For each type of physical process (advection, diffusion, heat conduction)
- *        there is a base cache storing the data required to compute the respective fluxes. Specializations of the overall
- *        cache class are provided for different combinations of processes.
+ *
+ * Store data required for flux calculation. For each type of physical process (advection, diffusion, heat conduction)
+ * there is a base cache storing the data required to compute the respective fluxes. Specializations of the overall
+ * cache class are provided for different combinations of processes.
  */
 template<class TypeTag>
 using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
@@ -77,8 +79,8 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
 , public EnergyCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance()>
 {};
 
-//! specialization of the flux variables cache for the cell centered finite volume mpfa scheme
-//! stores data which is commonly used by all the different types of processes
+//! Specialization of the flux variables cache for the cell centered finite volume mpfa scheme.
+//! Stores data which is commonly used by all the different types of processes.
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 : public AdvectionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableAdvection()>
@@ -123,12 +125,12 @@ public:
 
 private:
 
-    bool isUpdated_ = false;       //!< returns true if cache has been fully updated
-    bool usesSecondaryIv_ = false; //!< returns true if scvf is embedded in secondary interaction volume
+    bool isUpdated_ = false;       // returns true if cache has been fully updated
+    bool usesSecondaryIv_ = false; // returns true if scvf is embedded in secondary interaction volume
 
-    GridIndexType ivIndexInContainer_;  //!< index of the iv (this scvf is embedded in) in its container
-    unsigned int ivLocalFaceIdx_;       //!< the interaction volume-local face index of this scvf
-    unsigned int idxInOutsideFaces_;    //!< index of scvf among outside scvfs of iv-local "positive" face (only surface grids)
+    GridIndexType ivIndexInContainer_;  // index of the iv (this scvf is embedded in) in its container
+    unsigned int ivLocalFaceIdx_;       // the interaction volume-local face index of this scvf
+    unsigned int idxInOutsideFaces_;    // index of scvf among outside scvfs of iv-local "positive" face (only surface grids)
 };
 
 } // end namespace Dumux

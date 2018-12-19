@@ -18,12 +18,14 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup BoxDiscretization
+ * \ingroup BoxDFMModel
  * \brief Base class for the finite volume geometry vector for box schemes that consider
- *        extra connectivity between grid vertices on marked codim one entities. On these,
- *        an additional scvf is created accounting for the additional exchange fluxes between
- *        these degrees of freedom.
+ *        extra connectivity between grid vertices on marked codim one entities.
+ *
+ * On these, an additional scvf is created accounting for the additional exchange fluxes
+ * between these degrees of freedom.
  */
+
 #ifndef DUMUX_POROUSMEDIUMFLOW_BOXDFM_GRID_FVGEOMETRY_HH
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_GRID_FVGEOMETRY_HH
 
@@ -47,9 +49,11 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup BoxDFMModel
  * \brief The default traits for the box finite volume grid geometry
- *        Defines the scv and scvf types and the mapper types
+ *
+ * Defines the scv and scvf types and the mapper types.
+ *
  * \tparam the grid view type
  */
 template<class GridView, class MapperTraits = DefaultMapperTraits<GridView>>
@@ -67,9 +71,11 @@ struct BoxDfmDefaultGridGeometryTraits
 };
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup BoxDFMModel
  * \brief Base class for the finite volume geometry vector for box schemes
- *        This builds up the sub control volumes and sub control volume faces
+ *
+ * This builds up the sub control volumes and sub control volume faces
+ *
  * \note This class is specialized for versions with and without caching the fv geometries on the grid view
  */
 template<class Scalar,
@@ -79,11 +85,13 @@ template<class Scalar,
 class BoxDfmFVGridGeometry;
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup BoxDFMModel
  * \brief Base class for the finite volume geometry vector for box schemes that consider
- *        extra connectivity between grid vertices on marked codim one entities. On these,
- *        an additional scvf is created accounting for the additional exchange fluxes between
- *        these degrees of freedom.
+ *        extra connectivity between grid vertices on marked codim one entities.
+ *
+ * On these, an additional scvf is created accounting for the additional exchange fluxes
+ * between these degrees of freedom.
+ *
  * \note For caching enabled we store the fv geometries for the whole grid view which is memory intensive but faster
  */
 template<class Scalar, class GV, class Traits>
@@ -108,28 +116,28 @@ class BoxDfmFVGridGeometry<Scalar, GV, true, Traits>
                                                 typename Traits::SubControlVolumeFace>;
 
 public:
-    //! export discretization method
+    //! Export discretization method
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::box;
 
-    //! export the type of the fv element geometry (the local view type)
+    //! Export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
-    //! export the type of sub control volume
+    //! Export the type of sub control volume
     using SubControlVolume = typename Traits::SubControlVolume;
-    //! export the type of sub control volume
+    //! Export the type of sub control volume
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
-    //! export dof mapper type
+    //! Export dof mapper type
     using DofMapper = typename Traits::VertexMapper;
-    //! export the finite element cache type
+    //! Export the finite element cache type
     using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
-    //! export the grid view type
+    //! Export the grid view type
     using GridView = GV;
 
     //! Constructor
     BoxDfmFVGridGeometry(const GridView gridView)
     : ParentType(gridView) {}
 
-    //! the vertex mapper is the dofMapper
-    //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
+    //! The vertex mapper is the dofMapper
+    //! This is convenience to have better chance to have the same main files for box/tpfa/mpfa...
     const DofMapper& dofMapper() const
     { return this->vertexMapper(); }
 
@@ -150,7 +158,7 @@ public:
     std::size_t numDofs() const
     { return this->gridView().size(dim); }
 
-    //! update all fvElementGeometries (do this again after grid adaption)
+    //! Update all fvElementGeometries (do this again after grid adaption)
     template< class FractureGridAdapter >
     void update(const FractureGridAdapter& fractureGridAdapter)
     {

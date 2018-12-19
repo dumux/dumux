@@ -22,6 +22,7 @@
  * \brief  Contains the quantities which are constant within a
  *        finite volume in the Richards, n-component model.
  */
+
 #ifndef DUMUX_RICHARDSNC_VOLUME_VARIABLES_HH
 #define DUMUX_RICHARDSNC_VOLUME_VARIABLES_HH
 
@@ -52,22 +53,22 @@ class RichardsNCVolumeVariables
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
 
 public:
-    //! export type of the fluid system
+    //! Export type of the fluid system
     using FluidSystem = typename Traits::FluidSystem;
-    //! export type of the fluid state
+    //! Export type of the fluid state
     using FluidState = typename Traits::FluidState;
-    //! export type of solid state
+    //! Export type of solid state
     using SolidState = typename Traits::SolidState;
-    //! export type of solid system
+    //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
-    //! export indices
+    //! Export indices
     using Indices = typename Traits::ModelTraits::Indices;
-    //! export phase acess indices
+    //! Export phase acess indices
     static constexpr int liquidPhaseIdx = 0;
     static constexpr int gasPhaseIdx = 1;
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -118,7 +119,7 @@ public:
     }
 
     /*!
-     * \brief Fill the fluid state according to the primary variables.
+     * \brief Fills the fluid state according to the primary variables.
      *
      * Taking the information from the primary variables,
      * the fluid state is filled with every information that is
@@ -186,8 +187,8 @@ public:
     }
 
     /*!
-     * \brief Return the fluid configuration at the given primary
-     *        variables
+     * \brief Returns the fluid configuration at the given primary
+     *        variables.
      */
     const FluidState &fluidState() const
     { return fluidState_; }
@@ -199,7 +200,7 @@ public:
     { return solidState_; }
 
     /*!
-     * \brief Return the temperature
+     * \brief Returns the temperature.
      */
     Scalar temperature() const
     { return fluidState_.temperature(); }
@@ -337,7 +338,7 @@ public:
     { return saturation(phaseIdx) * solidState_.porosity(); }
 
     /*!
-     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
+     * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
      *
      * We always forward to the fluid state with the phaseIdx property (see class description).
      */
@@ -345,7 +346,7 @@ public:
     { return phaseIdx == 0 ? this->fluidState_.molarDensity(phaseIdx) : 0.0; }
 
     /*!
-     * \brief Return mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
+     * \brief Returns the mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
      *
      * \param phaseIdx The index of the phase.
      * \param compIdx The index of the component.
@@ -356,7 +357,7 @@ public:
     { return phaseIdx == 0 ? this->fluidState_.moleFraction(phaseIdx, compIdx) : 0.0; }
 
     /*!
-     * \brief Return mass fraction \f$\mathrm{[kg/kg]}\f$ of a component in the phase.
+     * \brief Returns the mass fraction \f$\mathrm{[kg/kg]}\f$ of a component in the phase.
      *
      * \param phaseIdx The index of the phase.
      * \param compIdx The index of the component
@@ -367,7 +368,7 @@ public:
     { return phaseIdx == 0 ? this->fluidState_.massFraction(phaseIdx, compIdx) : 0.0; }
 
     /*!
-     * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
+     * \brief Returns the concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
      *
      * \param phaseIdx The index of the phase.
      * \param compIdx The index of the component
@@ -378,7 +379,7 @@ public:
     { return phaseIdx == 0 ? this->fluidState_.molarity(phaseIdx, compIdx) : 0.0; }
 
     /*!
-     * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
+     * \brief Returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
      *
      * \param phaseIdx The index of the phase.
      * \param compIdx The index of the component
@@ -390,22 +391,16 @@ protected:
     FluidState fluidState_; //!< the fluid state
 
 private:
-    /*!
-     * \brief TODO docme!
-     *
-     * \param d TODO docme!
-     * \param compIdx The index of the component
-     */
     void setDiffusionCoefficient_(int compIdx, Scalar d)
     { diffCoefficient_[compIdx-1] = d; }
 
     std::array<Scalar, ParentType::numFluidComponents()-1> diffCoefficient_;
 
-    Scalar relativePermeabilityWetting_; //!< the relative permeability of the wetting phase
+    Scalar relativePermeabilityWetting_; // the relative permeability of the wetting phase
     SolidState solidState_;
-    PermeabilityType permeability_; //!< the instrinsic permeability
-    Scalar pn_; //!< the reference non-wetting pressure
-    Scalar minPc_; //!< the minimum capillary pressure (entry pressure)
+    PermeabilityType permeability_; // the instrinsic permeability
+    Scalar pn_; // the reference non-wetting pressure
+    Scalar minPc_; // the minimum capillary pressure (entry pressure)
 };
 
 } // end namespace Dumux

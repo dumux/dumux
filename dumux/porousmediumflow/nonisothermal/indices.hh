@@ -16,12 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
  * \ingroup NIModel
- * \brief Defines the indices used by the non-isothermal two-phase two-component model
+ * \brief Defines the indices used by the non-isothermal two-phase two-component model.
  */
+
 #ifndef DUMUX_ENERGY_INDICES_HH
 #define DUMUX_ENERGY_INDICES_HH
 
@@ -29,7 +29,7 @@ namespace Dumux {
 
 /*!
  * \ingroup NIModel
- * \brief Indices for the non-isothermal two-phase two-component model
+ * \brief Indices for the non-isothermal two-phase two-component model.
  *
  * \tparam IsothermalIndices The indices of the isothermal model
  * \tparam numEq the number of equations of the non-isothermal model
