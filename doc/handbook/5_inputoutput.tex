@@ -6,7 +6,7 @@ the grid formats that can be used by \Dumux and introduces the \Dumux \texttt{Gr
 Finally, this section informs about handling output in \Dumux.
 
 \subsection{Supported grid file formats}
-\Dumux can read grids from file using the Dune Grid Format (DGF) or the Gmsh mesh format (MSH).
+\Dumux can read grids from file using the Dune Grid Format (DGF), the Gmsh mesh format (MSH), or the Eclipse grid format (GRDECL).
 Using the class \texttt{Dumux::VTKReader}, \Dumux has experimental support for reading grids and data from VTK files.
 
 \subsubsection{Dune Grid Format}
@@ -29,15 +29,23 @@ using Gmsh. Further, the format supports higher order elements. They can be used
 manager \texttt{UGGrid}.
 An example can be found in \texttt{dumux/test\allowbreak/io/gridmanager}.
 
+\subsubsection{Eclipse Grid Format}
+The Eclipse Grid Format (GRDECL) is commonly used for corner-point grids. 
+Such grids consist of hexahedra, which are described by eight points on so-called pillars. A special feature of corner-point geometries is that points on pillars can degenerate, meaning that two neighboring points on a pillar can coincide. Furthermore, faces are, in general, bi-linear and cells can be non-convex. This allows for the accurate description of faults, layers, or wells, occurring in geological environments.
+
+Furthermore, petrophysical properties can be defined (for each cell), by using eclipse-specific keywords, e.g. \texttt{PORO}, \texttt{PERMX}, \texttt{PERMY}. 
+
+\Dumux supports the Eclipse Grid Format by using the \texttt{opm-grid} module (see (\url{https://opm-project.org}). 
+An example can be found in \texttt{dumux/test\allowbreak/porousmediumflow/2p/implicit/cornerpoint}.
+
 \subsubsection{Other Grid Formats}
-Grid formats other than DGF, MSH, VTK will have to be converted to the DGF, MSH, VTK format before they can be used in \Dumux.
-If conversion is not an option, another possibility would be to write your own \texttt{GridManager}. Examples of other grid formats,
-which have previously been either converted or custom-created in \Dumux, are Petrel grids (cornerpoint grids),
-ArtMesh grids (fractured network grids), and ICEM grids (CAD developed grids).
+Grid formats other than DGF, MSH, GRDECL, VTK will have to be converted to the DGF, MSH, GRDECL, VTK format before they can be used in \Dumux.
+If conversion is not an option, another possibility would be to write your own \texttt{GridManager}s. Examples of other grid formats,
+which have previously been either converted or custom-created in \Dumux, are ArtMesh grids (fractured network grids), and ICEM grids (CAD developed grids).
 
 \subsection{The \Dumux \texttt{GridManager}}
-The \Dumux \texttt{GridManager} constructs the grid from information in the input file and handles the data.
-Currently, supported grid managers are \texttt{YaspGrid}, \texttt{OneDGrid}, \texttt{dune-uggrid}, \texttt{dune-alugrid}, \texttt{dune-foamgrid}, \texttt{dune-subgrid}, \texttt{opm-grid} (cornerpoint grids) and \texttt{dune-spgrid}.
+The \texttt{Dumux::GridManager} class constructs the grid from information in the input file and handles the data.
+Currently, supported Dune grid interface implementations  are \texttt{YaspGrid}, \texttt{OneDGrid}, \texttt{dune-uggrid}, \texttt{dune-alugrid}, \texttt{dune-foamgrid}, \texttt{dune-subgrid}, \texttt{opm-grid} (cornerpoint grids) and \texttt{dune-spgrid}.
 Grids can be constructed from a DGF or MSH file by simply providing the filename to the grid in the \texttt{Grid} group~\footnote{Note,
 that group name \texttt{Grid} is the default group name and can be customized in your problem changing the string property \texttt{GridParameterGroup}.
 This way, it is possible, e.g., for problems with more than one grid, to set different group names for each grid, thus configuring them separately.}
@@ -47,14 +55,14 @@ of the input file:
 File = mydgfgrid.dgf
 \end{lstlisting}
 
-If you are using an unstructured grid manager like \texttt{UGGrid} or \texttt{ALUGrid}, constructing a grid from a MSH is just changing a line:
+If you are using an unstructured grid interface like \texttt{UGGrid} or \texttt{ALUGrid}, constructing a grid from a MSH is just changing a line:
 \begin{lstlisting}[style=DumuxParameterFile]
 [Grid]
 File = mygmshgrid.msh
 \end{lstlisting}
 \Dumux will tell you in case your selected grid manager does not support reading MSH files.
 
-You want to intially refine your grid? It's just adding a line:
+You want to initially refine your grid? It's just adding a line:
 \begin{lstlisting}[style=DumuxParameterFile]
 [Grid]
 File = mydgfgrid.dgf
@@ -64,9 +72,9 @@ Refinement = 4
 When reading a MSH file, further parameters are recognized. \texttt{Verbose} enables verbose output on grid construction when set to $1$.
 \texttt{BoundarySegments} enables reading parameterized boundaries. \texttt{PhysicalEntities} enables reading boundary and element flags.
 
-\subsubsection{Parameters specific to the grid manager}
-The \Dumux \texttt{GridManager} supports also a selection of parameters that are specific to the chosen grid manager.
-To give an example, we take a look at the unstructured grid manager \texttt{UGGrid}.
+\subsubsection{Parameters specific to the grid implementation}
+The \texttt{{Dumux::GridManager}} supports also a selection of parameters that are specific to the chosen grid manager.
+To give an example, we take a look at the unstructured grid \texttt{UGGrid}.
 \texttt{UGGrid} supports red-green refinement per default. One can turn off the green closure by setting the grid's closure type
 \begin{lstlisting}[style=DumuxParameterFile]
 [Grid]
@@ -100,6 +108,13 @@ CellType = Cube # or Simplex
 \end{lstlisting}
 
 For all available parameters see the Doxygen documentation.
+
+\subsubsection{Other \Dumux \texttt{GridManager}s}
+\begin{itemize}
+\item \texttt{CakeGridManager}: Provides a method to create a piece of cake grid.
+\item \texttt{CpGridManager}: Reads the GRDECL file and generates a corner-point grid.
+\item \texttt{SubgridGridManager}: Creates a \texttt{dune-subgrid} for some given host grid.
+\end{itemize}
 
 \subsection{Input and Output formats}
 
