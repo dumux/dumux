@@ -22,6 +22,7 @@
  * \brief Element-wise calculation of the local residual for non-isothermal
  *        fully implicit models.
  */
+
 #ifndef DUMUX_ENERGY_LOCAL_RESIDUAL_HH
 #define DUMUX_ENERGY_LOCAL_RESIDUAL_HH
 
@@ -52,7 +53,7 @@ class EnergyLocalResidualImplementation<TypeTag, false>
 
 public:
     /*!
-     * \brief The energy storage in the fluid phase with index phaseIdx
+     * \brief The energy storage in the fluid phase with index phaseIdx.
      *
      * \param storage The mass of the component within the sub-control volume
      * \param scv The sub-control volume
@@ -66,7 +67,7 @@ public:
     {}
 
     /*!
-     * \brief The energy storage in the solid matrix
+     * \brief The energy storage in the solid matrix.
      *
      * \param storage The mass of the component within the sub-control volume
      * \param scv The sub-control volume
@@ -78,9 +79,9 @@ public:
     {}
 
     /*!
-     * \brief The advective phase energy fluxes
+     * \brief The advective phase energy fluxes.
      *
-     * \param flux TODO docme!
+     * \param flux The flux
      * \param fluxVars The flux variables.
      * \param phaseIdx The phase index
      */
@@ -92,7 +93,7 @@ public:
     /*!
      * \brief The diffusive energy fluxes
      *
-     * \param flux TODO docme!
+     * \param flux The flux
      * \param fluxVars The flux variables.
      */
     static void heatConductionFlux(NumEqVector& flux,
@@ -158,7 +159,7 @@ public:
     /*!
      * \brief The advective phase energy fluxes
      *
-     * \param flux TODO docme!
+     * \param flux The flux
      * \param fluxVars The flux variables.
      * \param phaseIdx The phase index
      */
@@ -175,7 +176,7 @@ public:
     /*!
      * \brief The diffusive energy fluxes
      *
-     * \param flux TODO docme!
+     * \param flux The flux
      * \param fluxVars The flux variables.
      */
     static void heatConductionFlux(NumEqVector& flux,

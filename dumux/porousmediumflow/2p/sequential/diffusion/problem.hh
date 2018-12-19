@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief Base class for stationary solution of a two-phase diffusion/pressure equation
+ * \brief Base class for stationary solution of a two-phase diffusion/pressure equation.
  */
 #ifndef DUMUX_DIFFUSIONPROBLEM_2P_HH
 #define DUMUX_DIFFUSIONPROBLEM_2P_HH
@@ -27,11 +27,11 @@
 #include <dumux/porousmediumflow/sequential/onemodelproblem.hh>
 #include "properties.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \brief  Base class for stationary solution of a two-phase diffusion/pressure equation
  * \ingroup SequentialTwoPModel
+ * \brief  Base class for stationary solution of a two-phase diffusion/pressure equation.
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -252,6 +252,6 @@ private:
     std::shared_ptr<PressureModel> pressModel_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

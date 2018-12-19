@@ -16,7 +16,6 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
  * \ingroup SequentialTwoPModel
@@ -25,9 +24,9 @@
 #ifndef DUMUX_SEQUENTIAL_2P_INDICES_HH
 #define DUMUX_SEQUENTIAL_2P_INDICES_HH
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
+ * \ingroup SequentialTwoPModel
  * \brief The common indices for the isothermal two-phase model.
  */
 struct SequentialTwoPCommonIndices
@@ -267,6 +266,5 @@ struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pGlobalSn, PVOffset>
 
 // \}
 } // namespace Dumux
-
 
 #endif

@@ -22,18 +22,16 @@
 #ifndef DUMUX_FVMPFAO2DPRESSURE2P_HH
 #define DUMUX_FVMPFAO2DPRESSURE2P_HH
 
-
 // dumux environment
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/ointeractionvolume.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief Finite volume MPFA O-method discretization of a two-phase flow pressure equation of the sequential IMPES model.
  * \ingroup SequentialTwoPModel
+ * \brief Finite volume MPFA O-method discretization of a two-phase flow pressure equation of the sequential IMPES model.
  *
  * Finite volume MPFA O-method discretization of the equations
  * \f[ - \text{div}\, \boldsymbol v_t = - \text{div}\, (\lambda_t \boldsymbol K \textbf{grad}\,
@@ -139,20 +137,20 @@ class FvMpfaO2dPressure2p: public FVPressure<TypeTag>
     using GlobalInteractionVolumeVector = std::vector<InteractionVolume>;
     using InnerBoundaryVolumeFaces = std::vector<Dune::FieldVector<bool, 2*dim> >;
 
-    //! helper function that finds the correct neighboring intersections
+    //! Helper function that finds the correct neighboring intersections
     Intersection getNextIntersection_(const Element&, const IntersectionIterator&);
 
-    //! initializes the matrix to store the system of equations
+    //! Initializes the matrix to store the system of equations
     friend class FVPressure<TypeTag>;
     void initializeMatrix();
 
     void storeInteractionVolumeInfo();
 
-    //! function which assembles the system of equations to be solved
+    //! Function which assembles the system of equations to be solved
     void assemble();
 public:
 
-    //! constitutive functions are initialized and stored in the variables object
+    //! Constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
 
     /*!
@@ -1965,6 +1963,5 @@ void FvMpfaO2dPressure2p<TypeTag>::updateMaterialLaws()
     return;
 }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

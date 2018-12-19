@@ -18,10 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumCompositional
+ * \ingroup PorousmediumflowModels
  * \brief Element-wise calculation of the local residual for problems
  *        using compositional fully implicit model.
  */
+
 #ifndef DUMUX_COMPOSITIONAL_LOCAL_RESIDUAL_HH
 #define DUMUX_COMPOSITIONAL_LOCAL_RESIDUAL_HH
 
@@ -31,7 +32,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup PorousmediumCompositional
+ * \ingroup PorousmediumflowModels
  * \brief Element-wise calculation of the local residual for problems
  *        using compositional fully implicit model.
  */
@@ -71,7 +72,7 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Evaluate the amount of all conservation quantities
+     * \brief Evaluates the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
      * The result should be averaged over the volume (e.g. phase mass

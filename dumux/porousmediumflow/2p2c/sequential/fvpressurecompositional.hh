@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Base class for compositional pressure equations
+ */
 #ifndef DUMUX_FVPRESSURECOMPOSITIONAL_HH
 #define DUMUX_FVPRESSURECOMPOSITIONAL_HH
 
@@ -29,36 +34,31 @@
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 
-
-/**
- * @file
- * @brief  Base Class for compositional pressure Equations
- */
-
-namespace Dumux
-{
-//! The finite volume model for the solution of the compositional pressure equation
-/*! \ingroup multiphase
- *  Provides the common ground to solve compositional pressure equations of the form
- *  \f[
-         c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}}
-         \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
-          = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
- *  \f]
- *  where \f$\bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
- *  \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields
- *  \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
- *  \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability,
- *  \f$ \lambda_{\alpha} \f$ the phase mobility,
- *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and
- *  \f$ C^{\kappa} \f$ the total Component concentration.
+namespace Dumux {
+/*!
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief The finite volume model for the solution of the compositional pressure equation
+ *
+ * Provides the common ground to solve compositional pressure equations of the form
+ * \f[
+        c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}}
+        \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
+         = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
+ * \f]
+ * where \f$\bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
+ * \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields
+ * \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
+ * \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability,
+ * \f$ \lambda_{\alpha} \f$ the phase mobility,
+ * \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and
+ * \f$ C^{\kappa} \f$ the total Component concentration.
  * See paper SPE 99619 or "Analysis of a Compositional Model for Fluid
  * Flow in Porous Media" by Chen, Qin and Ewing for derivation.
  *
- *  Common functions such as output and the initialization procedure are provided here. Also,
- *  private vector (the update estimate for the volume derivatives) are stored in this class,
- *  as only derived classes (other compositional pressure models) need acess to it.
- *  The partial derivatives of the actual fluid volume \f$ v_{total} \f$ are gained by using a secant method.
+ * Common functions such as output and the initialization procedure are provided here. Also,
+ * private vector (the update estimate for the volume derivatives) are stored in this class,
+ * as only derived classes (other compositional pressure models) need acess to it.
+ * The partial derivatives of the actual fluid volume \f$ v_{total} \f$ are gained by using a secant method.
  *
  * \tparam TypeTag The Type Tag
  */
@@ -119,7 +119,9 @@ public:
     //initialization routine to prepare first timestep
     void initialize(bool solveTwice = false);
 
-    /*! \brief Compositional pressure solution routine: update estimate for secants, assemble, solve.
+    /*!
+     * \brief Compositional pressure solution routine: update estimate for secants, assemble, solve.
+     *
      * An update estime (transport step acoording to old pressure field) determines changes in
      * mass, composition, which is used to calculate volume derivatives entering the pressure
      * equation, as well as an approximate guess for time step size for the storage terms in the
@@ -156,14 +158,16 @@ public:
 
     /*! \name general methods for output */
     //@{
-    //! \brief Write data files
-     /*! Adds pressure-related quantities, including numerical things such as the volume Error
-      * entering the pressure equation. Verobosity of the output can be triggered by
-      * the property / parameter VtkOutputLevel, with 0 putting out only primary
-      * variables and 4 being very verbose.
-      * \tparam MultiWriter Class defining the output writer
-      * \param writer  The output writer (usually a VTKMultiWriter object)
-      */
+    /*!
+     * \brief Write data files
+     *
+     * Adds pressure-related quantities, including numerical things such as the volume Error
+     * entering the pressure equation. Verobosity of the output can be triggered by
+     * the property / parameter VtkOutputLevel, with 0 putting out only primary
+     * variables and 4 being very verbose.
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer  The output writer (usually a VTKMultiWriter object)
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -294,8 +298,9 @@ public:
         return;
     }
 
-    //! \brief Write additional debug info in a special writer.
     /*!
+     * \brief Write additional debug info in a special writer.
+     *
      * To visualize the different steps through the initialization procedure,
      * we use very small pseudo time steps only for the writer!
      * This is only for debugging of the initialization procedure.
@@ -362,8 +367,8 @@ public:
     }
     //@}
 
-    //! Constructs a FVPressureCompositional object
-    /**
+    /*!
+     * \brief Constructs a FVPressureCompositional object
      * \param problem a problem class object
      */
     FVPressureCompositional(Problem& problem) : FVPressure<TypeTag>(problem),
@@ -418,8 +423,9 @@ private:
 };
 
 
-//! initializes the simulation run
 /*!
+ * \brief Initializes the simulation run
+ *
  * Initializes the simulation to gain the initial pressure field.
  * Output throughout initialization procedure is only done in debug mode.
  *
@@ -698,8 +704,9 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
     return;
 }
 
-//! updates secondary variables
 /*!
+ * \brief Updates secondary variables
+ *
  * A loop through all elements updates the secondary variables stored in the variableclass
  * by using the updated primary variables.
  * \param postTimeStep Flag indicating method is called from Problem::postTimeStep()
@@ -727,8 +734,9 @@ void FVPressureCompositional<TypeTag>::updateMaterialLaws(bool postTimeStep)
     return;
 }
 
-//! partial derivatives of the volumes w.r.t. changes in total concentration and pressure
 /*!
+ * \brief Partial derivatives of the volumes w.r.t. changes in total concentration and pressure
+ *
  * This method calculates the volume derivatives via a secant method, where the
  * secants are gained in a pre-computational step via the transport equation and
  * the last TS size.

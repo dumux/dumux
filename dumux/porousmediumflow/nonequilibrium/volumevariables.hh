@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup NonEquilibriumModel
  * \brief This class contains the volume variables required for the
  *        modules which require the specific interfacial area between
  *        fluid phases.
@@ -26,6 +26,7 @@
  * This files contains all specializations which use 'real'
  * interfacial areas.
  */
+
 #ifndef DUMUX_NONEQUILIBRIUM_VOLUME_VARIABLES_HH
 #define DUMUX_NONEQUILIBRIUM_VOLUME_VARIABLES_HH
 
@@ -37,8 +38,7 @@
 namespace Dumux {
 
 /*!
- * \file
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup NonEquilibriumModel
  * \brief This class contains the volume variables required for the
  *        modules which require the specific interfacial area between
  *        fluid phases.

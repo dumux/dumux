@@ -22,6 +22,7 @@
  * \brief Contains the quantities which are constant within a
  *        finite volume in the two-phase, n-component model.
  */
+
 #ifndef DUMUX_2PNC_VOLUME_VARIABLES_HH
 #define DUMUX_2PNC_VOLUME_VARIABLES_HH
 
@@ -92,20 +93,20 @@ class TwoPNCVolumeVariables
 
 
 public:
-    //! export fluid state type
+    //! Export fluid state type
     using FluidState = typename Traits::FluidState;
-    //! export fluid system type
+    //! Export fluid system type
     using FluidSystem = typename Traits::FluidSystem;
-    //! export type of solid state
+    //! Export type of solid state
     using SolidState = typename Traits::SolidState;
-    //! export type of solid system
+    //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
-    //! export the primary variable switch
+    //! Export the primary variable switch
     using PrimaryVariableSwitch = TwoPNCPrimaryVariableSwitch;
 
-    //! return whether moles or masses are balanced
+    //! Return whether moles or masses are balanced
     static constexpr bool useMoles() { return Traits::ModelTraits::useMoles(); }
-    //! return the two-phase formulation used here
+    //! Return the two-phase formulation used here
     static constexpr TwoPFormulation priVarFormulation() { return formulation; }
 
     // check for permissive specifications
@@ -114,7 +115,7 @@ public:
     static_assert((formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0), "Chosen TwoPFormulation not supported!");
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -177,7 +178,7 @@ public:
     }
 
     /*!
-     * \brief Set complete fluid state
+     * \brief Sets complete fluid state.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to be simulated
@@ -487,10 +488,10 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
     }
 
-    Scalar pc_;                     //!< The capillary pressure
-    Scalar porosity_;               //!< Effective porosity within the control volume
-    PermeabilityType permeability_; //!> Effective permeability within the control volume
-    Scalar mobility_[ModelTraits::numFluidPhases()]; //!< Effective mobility within the control volume
+    Scalar pc_;                     // The capillary pressure
+    Scalar porosity_;               // Effective porosity within the control volume
+    PermeabilityType permeability_; // Effective permeability within the control volume
+    Scalar mobility_[ModelTraits::numFluidPhases()]; // Effective mobility within the control volume
     std::array<std::array<Scalar,  ModelTraits::numFluidComponents()-1>, ModelTraits::numFluidPhases()> diffCoefficient_;
 
 };

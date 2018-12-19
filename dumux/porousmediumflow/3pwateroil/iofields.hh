@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup ThreePWaterOilModel
- * \brief Adds I/O fields specific to the twop model
+ * \brief Adds I/O fields specific to the three-phase three-component model.
  */
+
 #ifndef DUMUX_3P2CNI_IO_FIELDS_HH
 #define DUMUX_3P2CNI_IO_FIELDS_HH
 
@@ -31,7 +32,7 @@ namespace Dumux {
 
 /*!
  * \ingroup ThreePWaterOilModel
- * \brief Adds I/O fields specific to the three-phase three-component model
+ * \brief Adds I/O fields specific to the three-phase three-component model.
  */
 class ThreePWaterOilIOFields
 {

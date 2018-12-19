@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPModel
- * \brief Class defining a standard, saturation dependent indicator for grid adaptation
+ * \brief Class defining a standard, saturation dependent indicator for grid adaptation.
  */
 
 #ifndef DUMUX_TWOP_ADAPTION_INDICATOR_HH
@@ -36,8 +36,9 @@
 
 namespace Dumux {
 
-/*!\ingroup TwoPModel
- * \brief  Class defining a standard, saturation dependent indicator for grid adaptation
+/*!
+ * \ingroup TwoPModel
+ * \brief  Class defining a standard, saturation dependent indicator for grid adaptation.
  */
 template<class TypeTag>
 class TwoPGridAdaptIndicator
@@ -52,7 +53,8 @@ class TwoPGridAdaptIndicator
     enum { saturationIdx = Indices::saturationIdx };
 
 public:
-    /*! \brief The Constructor
+    /*!
+     * \brief The Constructor
      *
      * \param fvGridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
@@ -115,7 +117,7 @@ public:
                    Scalar refineTol = 0.05,
                    Scalar coarsenTol = 0.001)
     {
-        //! reset the indicator to a state that returns false for all elements
+        //! Reset the indicator to a state that returns false for all elements
         refineBound_ = std::numeric_limits<Scalar>::max();
         coarsenBound_ = std::numeric_limits<Scalar>::lowest();
         maxSaturationDelta_.assign(fvGridGeometry_->gridView().size(0), 0.0);
@@ -124,32 +126,32 @@ public:
         if (minLevel_ >= maxLevel_)
             return;
 
-        //! check for inadmissible tolerance combination
+        //! Check for inadmissible tolerance combination
         if (coarsenTol > refineTol)
             DUNE_THROW(Dune::InvalidStateException, "Refine tolerance must be higher than coarsen tolerance");
 
-        //! variables to hold the max/mon saturation values on the leaf
+        //! Variables to hold the max/mon saturation values on the leaf
         Scalar globalMax = std::numeric_limits<Scalar>::lowest();
         Scalar globalMin = std::numeric_limits<Scalar>::max();
 
         //! Calculate minimum and maximum saturation
         for (const auto& element : elements(fvGridGeometry_->gridView()))
         {
-            //! index of the current leaf-element
+            //! Index of the current leaf-element
             const auto globalIdxI = fvGridGeometry_->elementMapper().index(element);
 
-            //! obtain the saturation at the center of the element
+            //! Obtain the saturation at the center of the element
             const auto geometry = element.geometry();
             const auto elemSol = elementSolution(element, sol, *fvGridGeometry_);
             const Scalar satI = evalSolution(element, geometry, *fvGridGeometry_, elemSol, geometry.center())[saturationIdx];
 
-            //! maybe update the global minimum/maximum
+            //! Maybe update the global minimum/maximum
             using std::min;
             using std::max;
             globalMin = min(satI, globalMin);
             globalMax = max(satI, globalMax);
 
-            //! calculate maximum delta in saturation for this cell
+            //! Calculate maximum delta in saturation for this cell
             for (const auto& intersection : intersections(fvGridGeometry_->gridView(), element))
             {
                 //! Only consider internal intersections
@@ -162,7 +164,7 @@ public:
                     //! Visit intersection only once
                     if (element.level() > outside.level() || (element.level() == outside.level() && globalIdxI < globalIdxJ))
                     {
-                        //! obtain saturation in the neighbor
+                        //! Obtain saturation in the neighbor
                         const auto outsideGeometry = outside.geometry();
                         const auto elemSolJ = elementSolution(outside, sol, *fvGridGeometry_);
                         const Scalar satJ = evalSolution(outside, outsideGeometry, *fvGridGeometry_, elemSolJ, outsideGeometry.center())[saturationIdx];
@@ -176,10 +178,10 @@ public:
             }
         }
 
-        //! compute the maximum delta in saturation
+        //! Compute the maximum delta in saturation
         const auto globalDelta = globalMax - globalMin;
 
-        //! compute the refinement/coarsening bounds
+        //! Compute the refinement/coarsening bounds
         refineBound_ = refineTol*globalDelta;
         coarsenBound_ = coarsenTol*globalDelta;
 
@@ -204,13 +206,14 @@ public:
                 checkNeighborsRefine_(element);
     }
 
-    /*! \brief function call operator to return mark
+    /*!
+     * \brief function call operator to return mark
      *
-     *  \return  1 if an element should be refined
-     *          -1 if an element should be coarsened
-     *           0 otherwise
+     * \return  1 if an element should be refined
+     *         -1 if an element should be coarsened
+     *          0 otherwise
      *
-     *  \param element A grid element
+     * \param element A grid element
      */
     int operator() (const Element& element) const
     {
@@ -232,9 +235,9 @@ private:
     /*!
      * \brief Method ensuring the refinement ratio of 2:1
      *
-     *  For any given element, a loop over the neighbors checks if the
-     *  entities refinement would require that any of the neighbors has
-     *  to be refined, too. This is done recursively over all levels of the grid.
+     * For any given element, a loop over the neighbors checks if the
+     * entities refinement would require that any of the neighbors has
+     * to be refined, too. This is done recursively over all levels of the grid.
      *
      * \param element Element of interest that is to be refined
      * \param level level of the refined element: it is at least 1

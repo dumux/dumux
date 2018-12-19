@@ -30,14 +30,13 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
  * \ingroup SequentialTwoPModel
+ * \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
  *
  * This model implements two-phase flow of two immiscible fluids \f$\alpha \in \{ w, n \}\f$ using
- * a standard multiphase Darcy approach as the equation for the conservation of momentum, i.e.
+ * a standard multi-phase Darcy approach as the equation for the conservation of momentum, i.e.
  \f[
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
  \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right).
@@ -51,9 +50,9 @@ namespace Dumux
  \right\} = q_\alpha \;.
  \f]
 
- * In the incompressible case the phase densities \f$ \varrho_\alpha \f$ can be eliminated from the equations. The two equations
- * are then added up, and because \f$S_w + S_n = 1\f$, the first term cancels out. This leads to the so-called pressure
- * equation. For the wetting (\f$w\f$)
+ * In the incompressible case the phase densities \f$ \varrho_\alpha \f$ can be eliminated from the equations.
+ * The two equations are then added up, and because \f$S_w + S_n = 1\f$, the first term cancels out.
+ * This leads to the so-called pressure equation. For the wetting (\f$w\f$)
  * phase pressure as primary variable this yields
  \f[
  - \text{div}\,  \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_w + f_n \textbf{grad}\,
@@ -70,16 +69,16 @@ namespace Dumux
  - \text{div}\, \left[\lambda \boldsymbol K \left(\textbf{grad}\,
    p_{global} - \sum f_\alpha \varrho_\alpha {\textbf g}\right)\right] = q.
  \f]
- * Here, \f$ p_\alpha \f$ is a phase pressure, \f$ p_ {global} \f$ the global pressure of a classical fractional flow formulation
- * (see e.g. P. Binning and M. A. Celia, ''Practical implementation of the fractional flow approach to multi-phase flow simulation'',
- *  Advances in water resources, vol. 22, no. 5, pp. 461-478, 1999.),
+ * Here, \f$ p_\alpha \f$ is a phase pressure, \f$ p_ {global} \f$ the global pressure of a classical fractional
+ * flow formulation (see e.g. Binning and Celia (1999) \cite Binning1999),
  * \f$ p_c = p_n - p_w \f$ is the capillary pressure, \f$ \boldsymbol K \f$ the absolute permeability tensor,
  * \f$ \lambda = \lambda_w +  \lambda_n \f$ the total mobility depending on the
  * saturation (\f$ \lambda_\alpha = k_{r_\alpha} / \mu_\alpha \f$),
  * \f$ f_\alpha = \lambda_\alpha / \lambda \f$ the fractional flow function of a phase,
- * \f$ \varrho_\alpha \f$ a phase density, \f$ {\textbf g} \f$ the gravitational acceleration vector and \f$ q = q_w + q_n \f$ the total source term.
- * Depending on the primary variable chosen, one of the pressure equations above is solved sequentially together with the conservation
- * of the phase mass for one phase.
+ * \f$ \varrho_\alpha \f$ a phase density, \f$ {\textbf g} \f$ the gravitational acceleration vector and
+ * \f$ q = q_w + q_n \f$ the total source term.
+ * Depending on the primary variable chosen, one of the pressure equations above is solved sequentially
+ * together with the conservation of the phase mass for one phase.
  *
  * For all cases, \f$ p = p_D \f$ on \f$ \Gamma_{Dirichlet} \f$, and \f$ \boldsymbol v_{total} \cdot  \boldsymbol n  = q_N \f$
  * on \f$ \Gamma_{Neumann} \f$.
@@ -188,7 +187,7 @@ public:
     void getFluxOnBoundary(EntryType& entry,
     const Intersection& intersection, const CellData& cellData, const bool first);
 
-    //! updates and stores constitutive relations
+    //! Updates and stores constitutive relations
     void updateMaterialLaws();
 
     /*!
@@ -249,7 +248,7 @@ public:
 
                 numIter++;
             }
-            //std::cout<<"Pressure defect = "<<pressureNorm<<"; "<<
+            // std::cout<<"Pressure defect = "<<pressureNorm<<"; "<<
             //        numIter<<" Iterations needed for initial pressure field"<<std::endl;
         }
 
@@ -303,7 +302,7 @@ public:
     /*!
      * \brief Velocity update
      *
-     * Reset the velocities in the cellData
+     * Resets the velocities in the cellData.
      */
     void updateVelocity()
     {
@@ -541,6 +540,7 @@ public:
 
     /*!
      * \brief Constructs a FVPressure2P object
+     *
      * \param problem A problem class object
      */
     FVPressure2P(Problem& problem) :
@@ -595,13 +595,14 @@ private:
     int vtkOutputLevel_;
 
     static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
-    //! gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
+    //! Gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
-    //! gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    //! Gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 
-/*! \brief Function which calculates the source entry
+/*!
+ * \brief Function which calculates the source entry
  *
  * \copydetails FVPressure::getSource(EntryType&,const Element&,const CellData&,const bool)
  *
@@ -627,7 +628,8 @@ void FVPressure2P<TypeTag>::getSource(EntryType& entry, const Element& element
     entry[rhs] = volume * (sourcePhase[wPhaseIdx] + sourcePhase[nPhaseIdx]);
 }
 
-/*! \brief Function which calculates the storage entry
+/*!
+ * \brief Function which calculates the storage entry
  *
  * \copydetails FVPressure::getStorage(EntryType&,const Element&,const CellData&,const bool)
  *
@@ -637,7 +639,7 @@ void FVPressure2P<TypeTag>::getSource(EntryType& entry, const Element& element
  * \f]
  *
  * In the incompressible case an volume correction term is calculated which corrects
- * for unphysical saturation overshoots/undershoots.
+ * for non-physical saturation overshoots/undershoots.
  * These can occur if the estimated time step for the explicit transport was too large.
  * Correction by an artificial source term allows to correct this errors due to wrong time-stepping
  * without losing mass conservation. The error term looks as follows:
@@ -680,7 +682,7 @@ void FVPressure2P<TypeTag>::getStorage(EntryType& entry, const Element& element
     }
     else if (!compressibility_ && !first)
     {
-        //error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
+        // error term for incompressible models to correct non-physical saturation over/undershoots due to saturation transport
         // error reduction routine: volumetric error is damped and inserted to right hand side
         Scalar sat = 0;
         switch (saturationType_)
@@ -709,10 +711,10 @@ void FVPressure2P<TypeTag>::getStorage(EntryType& entry, const Element& element
     }
 }
 
-/*! \brief Function which calculates the flux entry
+/*!
+ * \brief Function which calculates the flux entry
  *
  * \copydetails FVPressure::getFlux(EntryType&,const Intersection&,const CellData&,const bool)
- *
  */
 template<class TypeTag>
 void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& intersection
@@ -737,7 +739,7 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
     Scalar pcI = cellData.capillaryPressure();
     Scalar pcJ = cellDataJ.capillaryPressure();
 
-    //get face normal
+    // get face normal
     const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
 
     // get face area
@@ -766,11 +768,11 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
         rhoMeanNw = 0.5 * (cellData.density(nPhaseIdx) + cellDataJ.density(nPhaseIdx));
     }
 
-    //calculate potential gradients
+    // calculate potential gradients
     Scalar potentialDiffW = 0;
     Scalar potentialDiffNw = 0;
 
-    //if we are at the very first iteration we can't calculate phase potentials
+    // if we are at the very first iteration we can't calculate phase potentials
     if (!first)
     {
         potentialDiffW = cellData.potential(wPhaseIdx) - cellDataJ.potential(wPhaseIdx);
@@ -792,7 +794,7 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
         }
     }
 
-    //do the upwinding of the mobility depending on the phase potentials
+    // do the upwinding of the mobility depending on the phase potentials
     Scalar lambdaW = (potentialDiffW > 0.) ? lambdaWI : lambdaWJ;
     lambdaW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
     Scalar lambdaNw = (potentialDiffNw > 0) ? lambdaNwI : lambdaNwJ;
@@ -808,29 +810,30 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
     }
 
     Scalar scalarPerm = permeability.two_norm();
-    //calculate current matrix entry
+    // calculate current matrix entry
     entry[matrix] = (lambdaW + lambdaNw) * scalarPerm / dist * faceArea;
 
-    //calculate right hand side
-    //calculate unit distVec
+    // calculate right hand side
+    // calculate unit distVec
     distVec /= dist;
     Scalar areaScaling = (unitOuterNormal * distVec);
-    //this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
+    // this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
     entry[rhs] = (lambdaW * density_[wPhaseIdx] + lambdaNw * density_[nPhaseIdx]) * scalarPerm * (gravity_ * distVec) * faceArea * areaScaling;
 
     if (pressureType_ == pw)
     {
-        //add capillary pressure term to right hand side
+        // add capillary pressure term to right hand side
         entry[rhs] += 0.5 * (lambdaNwI + lambdaNwJ) * scalarPerm * (pcI - pcJ) / dist * faceArea;
     }
     else if (pressureType_ == pn)
     {
-        //add capillary pressure term to right hand side
+        // add capillary pressure term to right hand side
         entry[rhs] -= 0.5 * (lambdaWI + lambdaWJ) * scalarPerm * (pcI - pcJ) / dist * faceArea;
     }
 }
 
-/*! \brief Function which calculates the flux entry at a boundary
+/*!
+ * \brief Function which calculates the flux entry at a boundary
  *
  * \copydetails FVPressure::getFluxOnBoundary(EntryType&,const Intersection&,const CellData&,const bool)
  *
@@ -858,10 +861,10 @@ const Intersection& intersection, const CellData& cellData, const bool first)
     // get capillary pressure
     Scalar pcI = cellData.capillaryPressure();
 
-    //get face index
+    // get face index
     int isIndexI = intersection.indexInInside();
 
-    //get face normal
+    // get face normal
     const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
 
     // get face area
@@ -891,7 +894,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
         Dune::FieldVector<Scalar, dim> permeability(0);
         meanPermeability.mv(unitOuterNormal, permeability);
 
-        //determine saturation at the boundary -> if no saturation is known directly at the boundary use the cell saturation
+        // determine saturation at the boundary -> if no saturation is known directly at the boundary use the cell saturation
         Scalar satW = 0;
         Scalar satNw = 0;
         if (bcType.isDirichlet(eqIdxSat))
@@ -919,13 +922,13 @@ const Intersection& intersection, const CellData& cellData, const bool first)
         }
         Scalar temperature = problem_.temperature(element);
 
-        //get dirichlet pressure boundary condition
+        // get Dirichlet pressure boundary condition
         Scalar pressBound = boundValues[pressureIdx];
 
-        //calculate consitutive relations depending on the kind of saturation used
+        //calculate constitutive relations depending on the kind of saturation used
         Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
 
-        //determine phase pressures from primary pressure variable
+        // determine phase pressures from primary pressure variable
         Scalar pressW = 0;
         Scalar pressNw = 0;
         if (pressureType_ == pw)
@@ -992,7 +995,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
                 density_[nPhaseIdx] = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? rhoMeanNw : density_[nPhaseIdx];
             }
 
-            //calculate potential gradient
+            // calculate potential gradient
             switch (pressureType_)
             {
             case pw:
@@ -1019,7 +1022,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
             potentialDiffNw += density_[nPhaseIdx] * (distVec * gravity_);
         }
 
-        //do the upwinding of the mobility depending on the phase potentials
+        // do the upwinding of the mobility depending on the phase potentials
         Scalar lambdaW = (potentialDiffW > 0.) ? lambdaWI : lambdaWBound;
         lambdaW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (lambdaWI + lambdaWBound) : lambdaW;
         Scalar lambdaNw = (potentialDiffNw > 0.) ? lambdaNwI : lambdaNwBound;
@@ -1034,15 +1037,15 @@ const Intersection& intersection, const CellData& cellData, const bool first)
         }
 
         Scalar scalarPerm = permeability.two_norm();
-        //calculate current matrix entry
+        // calculate current matrix entry
         entry[matrix] = (lambdaW + lambdaNw) * scalarPerm / dist * faceArea;
         entry[rhs] = entry[matrix] * pressBound;
 
-        //calculate right hand side
-        //calculate unit distVec
+        // calculate right hand side
+        // calculate unit distVec
         distVec /= dist;
         Scalar areaScaling = (unitOuterNormal * distVec);
-        //this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
+        // this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
         entry[rhs] -= (lambdaW * density_[wPhaseIdx] + lambdaNw * density_[nPhaseIdx]) * scalarPerm * (gravity_ * distVec)
                 * faceArea * areaScaling;
 
@@ -1057,7 +1060,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
             entry[rhs] += 0.5 * (lambdaWI + lambdaWBound) * scalarPerm * (pcI - pcBound) / dist * faceArea;
         }
     }
-    //set neumann boundary condition
+    // set Neumann boundary condition
     else if (bcType.isNeumann(eqIdxPress))
     {
         problem_.neumann(boundValues, intersection);
@@ -1075,7 +1078,8 @@ const Intersection& intersection, const CellData& cellData, const bool first)
     }
 }
 
-/*! \brief Updates constitutive relations and stores them in the variable class
+/*!
+ * \brief Updates constitutive relations and stores them in the variable class
  *
  * Stores mobility, fractional flow function and capillary pressure for all grid cells.
  * In the compressible case additionally the densities and viscosities are stored.
@@ -1093,13 +1097,13 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
 
         Scalar temperature = problem_.temperature(element);
 
-        //determine phase saturations from primary saturation variable
+        // determine phase saturations from primary saturation variable
 
         Scalar satW = cellData.saturation(wPhaseIdx);
 
         Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
 
-        //determine phase pressures from primary pressure variable
+        // determine phase pressures from primary pressure variable
         Scalar pressW = 0;
         Scalar pressNw = 0;
         if (pressureType_ == pw)
@@ -1160,7 +1164,7 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
         cellData.setMobility(wPhaseIdx, mobilityW);
         cellData.setMobility(nPhaseIdx, mobilityNw);
 
-        //initialize fractional flow functions
+        // initialize fractional flow functions
         cellData.setFracFlowFunc(wPhaseIdx, mobilityW / (mobilityW + mobilityNw));
         cellData.setFracFlowFunc(nPhaseIdx, mobilityNw / (mobilityW + mobilityNw));
 
@@ -1180,5 +1184,5 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
     }
 }
 
-}
+} // end namespace Dumux
 #endif

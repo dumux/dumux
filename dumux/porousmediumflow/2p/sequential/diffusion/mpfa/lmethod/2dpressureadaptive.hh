@@ -17,11 +17,11 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Grid adaptive finite volume MPFA L-method discretization of a two-phase pressure equation of the sequential IMPES model.
+ * \brief Grid adaptive finite volume MPFA L-method discretization of a two-phase
+ * pressure equation of the sequential IMPES model.
  */
 #ifndef DUMUX_FVMPFAL2DPRESSURE2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL2DPRESSURE2P_ADAPTIVE_HH
-
 
 // dumux environment
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
@@ -30,12 +30,11 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include "2dtransmissibilitycalculator.hh"
 
+namespace Dumux {
 
-namespace Dumux
-{
 /*!
- * \brief Grid adaptive finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model.
  * \ingroup SequentialTwoPModel
+ * \brief Grid adaptive finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model.
  *
  * Grid adaptive finite volume MPFA L-method discretization of the equations
  * \f[ - \text{div}\, \boldsymbol v_t = - \text{div}\, (\lambda_t \boldsymbol K \textbf{grad}\,
@@ -2582,6 +2581,5 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::updateMaterialLaws()
     return;
 }
 
-}
-// end of Dune namespace
+} // end namespace Dumux
 #endif

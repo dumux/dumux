@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Finite Volume discretization of a two-phase flow pressure equation.
+ * \brief  Finite volume discretization of a two-phase flow pressure equation.
  */
 #ifndef DUMUX_FVPRESSURE2P_ADAPTIVE_HH
 #define DUMUX_FVPRESSURE2P_ADAPTIVE_HH
@@ -31,13 +31,11 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
 
+namespace Dumux {
 
-
-namespace Dumux
-{
 /*!
- * \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
- * \ingroup FVPressure2p
+ * \ingroup SequentialTwoPModel
+ * \brief Finite volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
  *
  * Details see FVPressure2P
  *
@@ -128,10 +126,10 @@ public:
     /*!
      * \brief Pressure update
      *
-     *  \copydetails FVPressure::update()
+     * \copydetails FVPressure::update()
      *
-     *  The grid-adaptive implementation also reconstructs the velocity directly after the pressure update.
-     *  This is necessary to make sure the hanging nodes are treated correctly!
+     * The grid-adaptive implementation also reconstructs the velocity directly after the pressure update.
+     * This is necessary to make sure the hanging nodes are treated correctly!
      */
     void update()
     {
@@ -195,7 +193,6 @@ public:
      * \brief Adds pressure output to the output file
      *
      *  \copydetails FVPressure2P::addOutputVtkFields(MultiWriter&)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
@@ -206,7 +203,7 @@ public:
     }
 
     /*!
-     * \brief  Constructs a FVPressure2PAdaptive object
+     * \brief Constructs a FVPressure2PAdaptive object
      *
      * \param problem A problem class object
      */
@@ -266,7 +263,7 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
     {
         ParentType::getFlux(entry, intersection, cellData, first);
 
-        //add the entry only once in case the VisitFacesOnlyOnce option is enabled!!!
+        // add the entry only once in case the VisitFacesOnlyOnce option is enabled!!!
         if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) && elementI.level() < elementJ.level())
         {
             entry = 0.;
@@ -298,10 +295,10 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
         Scalar pcI = cellData.capillaryPressure();
         Scalar pcJ = cellDataJ.capillaryPressure();
 
-        //get face index
+        // get face index
         int isIndexI = intersection.indexInInside();
 
-        //get face normal
+        // get face normal
         const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
 
         // get face area
@@ -413,7 +410,7 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
         Scalar potentialWIK = 0;
         Scalar potentialNwIK = 0;
 
-        //if we are at the very first iteration we can't calculate phase potentials
+        // if we are at the very first iteration we can't calculate phase potentials
         if (!first)
         {
             // potentials from previous time step no available.
@@ -460,7 +457,7 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
             }
         }
 
-        //do the upwinding of the mobility depending on the phase potentials
+        // do the upwinding of the mobility depending on the phase potentials
         Scalar lambdaWIJ = (potentialWIJ > 0.) ? lambdaWI : lambdaWJ;
         lambdaWIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialWIJ, 0.0, 1.0e-30)) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaWIJ;
         Scalar lambdaNwIJ = (potentialNwIJ > 0) ? lambdaNwI : lambdaNwJ;
@@ -499,20 +496,20 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
         }
         }
 
-        //write hanging-node-specific stuff directly into matrix and rhs!
+        // write hanging-node-specific stuff directly into matrix and rhs!
         this->f_[globalIdxI] -= entry[rhs];
         this->f_[globalIdxJ] += entry[rhs];
 
         // set diagonal entry
         this->A_[globalIdxI][globalIdxI] += entry[matrix];
-        //set off-diagonal
+        // set off-diagonal
         this->A_[globalIdxI][globalIdxJ] -= entry[matrix];
 
         // set entry for cell J
         this->A_[globalIdxJ][globalIdxI] -= entry[matrix];
         this->A_[globalIdxJ][globalIdxJ] += entry[matrix];
 
-        //set entry to zero -> matrix already written!
+        // set entry to zero -> matrix already written!
         entry = 0.;
 
 //        std::cout<<"finished hanging node!\n";
@@ -525,5 +522,5 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
     return;
 }
 
-}
+} // end namespace Dumux
 #endif

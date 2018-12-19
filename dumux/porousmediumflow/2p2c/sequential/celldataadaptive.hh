@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Class including the variables and data of discretized data of the constitutive relations for one element
+ */
 #ifndef DUMUX_ELEMENTDATA2P2C_ADAPTIVE_HH
 #define DUMUX_ELEMENTDATA2P2C_ADAPTIVE_HH
 
@@ -24,21 +29,16 @@
 
 #include <dumux/porousmediumflow/2p2c/sequential/celldata.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/celldatamultiphysics.hh>
-/**
- * @file
- * @brief  Class including the variables and data of discretized data of the constitutive relations for one element
- * @author Benjamin Faigle, Markus Wolff
- */
-namespace Dumux
-{
+
+namespace Dumux {
 /*!
- * \ingroup Adaptive2p2c
- */
-//! Class including the data of a grid cell needed if an adaptive grid is used.
-/*! The class provides model-specific functions needed to adapt the stored cell data to a new (adapted) grid.
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Class including the data of a grid cell needed if an adaptive grid is used.
+ *
+ * The class provides model-specific functions needed to adapt the stored cell data to a new (adapted) grid.
  * Additionally, it provides the storage-infrastructure for explicit front tracking.
  *
- * @tparam TypeTag The Type Tag
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class CellData2P2CAdaptive: public CellData2P2CMultiPhysics<TypeTag>
@@ -73,8 +73,8 @@ private:
     int upwindError_[numPhases];
 
 public:
-    //! A container for all necessary variables to map an old solution to a new grid
-    /**
+    /*!
+     * \brief A container for all necessary variables to map an old solution to a new grid
      * If the primary variables (pressure, total concentrations) are mapped to a new grid,
      * the secondary variables can be calulated. For the mapping between sons and father, it
      * is in addition necessary to know about how many sons live in each father ("count").
@@ -115,13 +115,13 @@ public:
             upwindError_[i] = 0;
     }
 
-    //! stores leaf cell primary variables to transfer to new indexing
-    /**
+    /*!
+     * \brief Stores leaf cell primary variables to transfer to new indexing
      * Stores values to be adapted from the current CellData objects into
      * the adaptation container in order to be mapped on a new grid.
      *
-     * @param adaptedValues Container for model-specific values to be adapted
-     * @param element The element to be stored
+     * \param adaptedValues Container for model-specific values to be adapted
+     * \param element The element to be stored
      */
     void storeAdaptionValues(AdaptedValues& adaptedValues, const Element& element)
     {
@@ -137,15 +137,15 @@ public:
         adaptedValues.fluxData_=this->fluxData();
     }
 
-    //! adds cell information to father element for possible averaging / coarsening
-    /**
+    /*!
+     * \brief Adds cell information to father element for possible averaging / coarsening
      * Sum up the adaptedValues (sons values) into father element. We store from leaf
      * upwards, so sons are stored first, then cells on the next leaf (=fathers)
      * can be averaged.
      *
-     * @param adaptedValues Container for model-specific values to be adapted
-     * @param adaptedValuesFather Values to be adapted of father cell
-     * @param fatherElement The element of the father
+     * \param adaptedValues Container for model-specific values to be adapted
+     * \param adaptedValuesFather Values to be adapted of father cell
+     * \param fatherElement The element of the father
      */
     static void storeAdaptionValues(AdaptedValues& adaptedValues,
                                     AdaptedValues& adaptedValuesFather,
@@ -170,16 +170,17 @@ public:
         using std::max;
         adaptedValuesFather.subdomain = max(adaptedValuesFather.subdomain, adaptedValues.subdomain);
     }
-    //! Set adapted values in CellData
-    /**
+
+    /*!
+     * \brief Set adapted values in CellData
      * This methods stores reconstructed values into the cellData object, by
      * this setting a newly mapped solution to the storage container of the
      * sequential models.
      * In new cells, update estimate does not give meaningful results. We therefore
      * copy volume derivatives from old time step, and indicate that those are already availabe.
      *
-     * @param adaptedValues Container for model-specific values to be adapted
-     * @param element The element where things are stored.
+     * \param adaptedValues Container for model-specific values to be adapted
+     * \param element The element where things are stored.
      */
     void setAdaptionValues(AdaptedValues& adaptedValues, const Element& element)
     {
@@ -211,16 +212,17 @@ public:
         else
             this->volumeDerivativesAvailable(false);  // recalculate volume derivatives
     }
-    //! Reconstructs sons entries from data of father cell
-    /**
+
+    /*!
+     * \brief Reconstructs sons entries from data of father cell
      * Reconstructs an new solution from a father cell into for a newly
      * generated son cell. The new cell is stored into the global
      * adaptationMap.
      *
-     * @param adaptationMap Global map storing all values to be adapted
-     * @param father Entity Pointer to the father cell
-     * @param son Entity Pointer to the newly created son cell
-     * @param problem The problem
+     * \param adaptationMap Global map storing all values to be adapted
+     * \param father Entity Pointer to the father cell
+     * \param son Entity Pointer to the newly created son cell
+     * \param problem The problem
      */
     static void reconstructAdaptionValues(Dune::PersistentContainer<Grid, AdaptedValues>& adaptationMap,
             const Element& father, const Element& son, const Problem& problem)
@@ -276,5 +278,5 @@ public:
     }
 };
 
-}
+} // end namespace Dumux
 #endif

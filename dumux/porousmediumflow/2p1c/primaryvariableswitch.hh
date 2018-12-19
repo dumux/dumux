@@ -21,6 +21,7 @@
  * \ingroup TwoPOneCModel
  * \copydoc Dumux::TwoPOneCPrimaryVariableSwitch
  */
+
 #ifndef DUMUX_2P1C_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_2P1C_PRIMARY_VARIABLE_SWITCH_HH
 
@@ -47,7 +48,7 @@ public:
 protected:
 
     /*!
-     * \brief Perform variable switch at a degree of freedom location.
+     * \brief Performs variable switch at a degree of freedom location.
      *
      * \param priVars The primary variables at the given degree of freedom (dof) location.
      * \param volVars The volume variables.

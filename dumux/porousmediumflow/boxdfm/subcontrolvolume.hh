@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup BoxDiscretization
+ * \ingroup BoxDFMModel
  * \brief the sub control volume for the box discrete fracture scheme
  */
+
 #ifndef DUMUX_POROUSMEDIUMFLOW_BOXDFM_SUBCONTROLVOLUME_HH
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_SUBCONTROLVOLUME_HH
 
@@ -35,9 +36,10 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup BoxDFMModel
  * \brief Default traits class to be used for the sub-control volumes
  *        for the box discrete fracture scheme
+ *
  * \tparam GV the type of the grid view
  *
  * \note We define new traits for the box-dfm sub-control volume face
@@ -81,8 +83,9 @@ struct BoxDfmDefaultScvGeometryTraits
 };
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup BoxDFMModel
  * \brief the sub control volume for the box discrete fracture scheme
+ *
  * \tparam GV the type of the grid view
  * \tparam T the scvf geometry traits
  */
@@ -104,7 +107,7 @@ class BoxDfmSubControlVolume
     static_assert(dim == 2 || dim == 3, "Box-Dfm sub-control volume only implemented in 2d or 3d");
 
 public:
-    //! state the traits public and thus export all types
+    //! State the traits public and thus export all types
     using Traits = T;
 
     //! The default constructor
@@ -132,12 +135,15 @@ public:
         center_ /= corners_.size();
     }
 
-    //! Constructor for fracture scvs
-    //! The corner computation is the same as for boundary scvfs.
-    //! Also, the scvf area of a boundary scvf is equal to the scv
-    //! volume (unscaled by the aperture) Thus, we reuse functionality here.
-    //! In order to get the right dimensions later, one must provide appropriate
-    //! extrusion factors in the problem corresponding to the fracture aperture.
+    /*!
+     * \brief Constructor for fracture scvs
+     *
+     * The corner computation is the same as for boundary scvfs.
+     * Also, the scvf area of a boundary scvf is equal to the scv
+     * volume (unscaled by the aperture) Thus, we reuse functionality here.
+     * In order to get the right dimensions later, one must provide appropriate
+     * extrusion factors in the problem corresponding to the fracture aperture.     *
+     */
     template<class GeometryHelper, class Intersection>
     BoxDfmSubControlVolume(const GeometryHelper& geometryHelper,
                            const Intersection& intersection,

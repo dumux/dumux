@@ -17,9 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
  * \file
- *
+ * \ingroup PorousmediumflowModels
  * \brief Defines a type tag and some properties for models using the box scheme.
  */
 

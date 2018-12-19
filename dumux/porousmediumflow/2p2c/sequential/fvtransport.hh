@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Finite volume discretization of the component transport equation
+ */
 #ifndef DUMUX_FVTRANSPORT2P2C_HH
 #define DUMUX_FVTRANSPORT2P2C_HH
 
@@ -30,15 +35,10 @@
 #include <dumux/common/math.hh>
 #include <dumux/linear/vectorexchange.hh>
 
+namespace Dumux {
 /*!
- * \file
- * \brief  Finite Volume discretization of the component transport equation
- */
-namespace Dumux
-{
-/*!
- * \ingroup Sequential
- * \brief Compositional transport step in a Finite Volume discretization
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Compositional transport step in a Finite Volume discretization.
  *
  *  The finite volume model for the solution of the transport equation for compositional
  *  two-phase flow.
@@ -1419,5 +1419,5 @@ void FVTransport2P2C<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
     }
 }
 
-}
+} // end namespace Dumux
 #endif

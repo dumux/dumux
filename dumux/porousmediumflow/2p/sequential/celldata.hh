@@ -27,17 +27,16 @@
 #include "properties.hh"
 #include "fluxdata.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 template<class TypeTag>
 class FluxData2P;
 
 /*!
- * \brief Class including data of one grid cell.
  * \ingroup SequentialTwoPModel
+ * \brief Class including data of one grid cell.
  *
  * The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
- *Further, resulting cell values for constitutive relationships like
+ * Further, resulting cell values for constitutive relationships like
  * mobilities, fractional flow functions and capillary pressure are stored.
  * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
  *
@@ -48,10 +47,11 @@ template<class TypeTag, bool enableCompressibility>
 class CellData2P;
 
 /*!
- * \brief Class including the variables and data of discretized data of the constitutive relations for one grid cell.
  * \ingroup SequentialTwoPModel
+ * \brief Class including the variables and data of discretized data of the constitutive relations for one grid cell.
+ *
  * The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
- *Further, resulting cell values for constitutive relationships like
+ * Further, resulting cell values for constitutive relationships like
  * mobilities, fractional flow functions and capillary pressure are stored.
  * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
  *
@@ -259,7 +259,8 @@ public:
     // functions returning the vectors of secondary variables
     //////////////////////////////////////////////////////////////
 
-    /*! \brief Returns the cell phase mobility
+    /*!
+     * \brief Returns the cell phase mobility
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -268,7 +269,8 @@ public:
         return mobility_[phaseIdx];
     }
 
-    /*! \brief Returns the cell phase mobility
+    /*!
+     * \brief Returns the cell phase mobility
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -277,7 +279,8 @@ public:
         return mobility_[phaseIdx];
     }
 
-    /*! \brief Sets the cell phase mobility
+    /*!
+     * \brief Sets the cell phase mobility
      *
      * \param phaseIdx Index of a fluid phase
      * \param mobility Phase mobility with which is stored
@@ -287,7 +290,8 @@ public:
         mobility_[phaseIdx] = mobility;
     }
 
-    /*! \brief Returns the cell phase fractional flow function
+    /*!
+     * \brief Returns the cell phase fractional flow function
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -296,7 +300,8 @@ public:
         return fracFlowFunc_[phaseIdx];
     }
 
-    /*! \brief Returns the cell phase fractional flow function
+    /*!
+     * \brief Returns the cell phase fractional flow function
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -305,7 +310,8 @@ public:
         return fracFlowFunc_[phaseIdx];
     }
 
-    /*! \brief Sets the cell phase fractional flow function
+    /*!
+     * \brief Sets the cell phase fractional flow function
      *
      * \param phaseIdx Index of a fluid phase
      * \param fracFlowFunc Phase fractional flow function which is stored
@@ -327,7 +333,8 @@ public:
         return capillaryPressure_;
     }
 
-    /*! \brief Sets the cell capillary pressure
+    /*!
+     * \brief Sets the cell capillary pressure
      *
      * \param pc Capillary pressure which is stored
      */
@@ -336,7 +343,8 @@ public:
         capillaryPressure_ = pc;
     }
 
-    /*! \brief Store transport update
+    /*!
+     * \brief Store transport update
      *
      * \param update Transport update of the cell
      */
@@ -381,11 +389,11 @@ public:
 };
 
 /*!
- * \brief Class including the variables and data of discretized data of the constitutive relations for one grid cell.
  * \ingroup SequentialTwoPModel
+ * \brief Class including the variables and data of discretized data of the constitutive relations for one grid cell.
  *
  * The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
- *Further, resulting cell values for constitutive relationships like
+ * Further, resulting cell values for constitutive relationships like
  * mobilities, fractional flow functions and capillary pressure are stored.
  * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
  *
@@ -715,7 +723,8 @@ public:
         return fluidState_.viscosity(phaseIdx);
     }
 
-    /*!\brief Sets the cell phase viscosity
+    /*!
+     * \brief Sets the cell phase viscosity
      *
      * \param phaseIdx Index of a fluid phase
      * \param viscosity Phase viscosity which is stored
@@ -748,5 +757,5 @@ public:
     }
 
 };
-}
+} // end namespace Dumux
 #endif

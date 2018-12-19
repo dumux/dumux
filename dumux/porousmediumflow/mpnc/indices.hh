@@ -21,6 +21,7 @@
  * \ingroup MPNCModel
  * \brief The primary variable and equation indices for the MpNc model.
  */
+
 #ifndef DUMUX_MPNC_INDICES_HH
 #define DUMUX_MPNC_INDICES_HH
 

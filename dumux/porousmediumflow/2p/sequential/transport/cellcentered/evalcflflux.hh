@@ -19,18 +19,17 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition
+ * \brief Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition.
  */
 #ifndef DUMUX_EVALCFLFLUX_HH
 #define DUMUX_EVALCFLFLUX_HH
 
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition
  * \ingroup SequentialTwoPModel
+ * \brief Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition.
  *
  *  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition of the form
  *
@@ -123,6 +122,6 @@ public:
     EvalCflFlux ()
     {}
 };
-}
+} // end namespace Dumux
 
 #endif

@@ -18,9 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxDFMModel
  * \brief Cache class for the flux variables to be used
- *        in conjunction with the box discrete fracture scheme
+ *        in conjunction with the box discrete fracture scheme.
  */
+
 #ifndef DUMUX_POROUSMEDIUM_BOXDFM_FLUXVARIABLESCACHE_HH
 #define DUMUX_POROUSMEDIUM_BOXDFM_FLUXVARIABLESCACHE_HH
 
@@ -33,8 +35,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoxDiscretization
- * \ingroup BoxDFM
+ * \ingroup BoxDFMModel
  * \brief We only store discretization-related quantities for the box method.
  *        However, we cannot reuse the cache of the standard box method as we have
  *        to take into account the scvs that lie on fracture facets.
@@ -131,13 +132,13 @@ public:
         }
     }
 
-    //! return the Jacobian of the shape functions at the integration point
+    //! Returns the Jacobian of the shape functions at the integration point.
     const std::vector<ShapeJacobian>& shapeJacobian() const { return shapeJacobian_; }
-    //! return the shape values for all scvs at the integration point
+    //! Returns the shape values for all scvs at the integration point.
     const std::vector<ShapeValue>& shapeValues() const { return shapeValues_; }
-    //! return the shape value gradients for all scvs at the integration point
+    //! Returns the shape value gradients for all scvs at the integration point.
     const JacobianInverseTransposed& jacInvT() const { return jacInvT_; }
-    //! return the shape value gradients corresponding to an scv
+    //! Returns the shape value gradients corresponding to an scv.
     const GlobalPosition& gradN(unsigned int scvIdxInElement) const { return gradN_[scvIdxInElement]; }
 
 private:

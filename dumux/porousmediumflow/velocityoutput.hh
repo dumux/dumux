@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Velocity output for porous media models
+ * \ingroup PorousmediumflowModels
+ * \brief Velocity output for porous media models.
  */
+
 #ifndef DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 #define DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 
@@ -35,7 +36,8 @@
 namespace Dumux {
 
 /*!
- * \brief Velocity output policy for implicit (porous media) models
+ * \ingroup PorousmediumflowModels
+ * \brief Velocity output policy for implicit (porous media) models.
  */
 template<class GridVariables, class FluxVariables>
 class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
@@ -96,17 +98,17 @@ public:
         }
     }
 
-    //! returns whether or not velocity output is enabled
+    //! Returns whether or not velocity output is enabled.
     bool enableOutput() const override { return enableOutput_; }
 
-    //! returns the phase name of a given phase index
+    //! Returns the phase name of a given phase index.
     std::string phaseName(int phaseIdx) const override { return FluidSystem::phaseName(phaseIdx); }
 
-    //! returns the number of phases
+    //! Returns the number of phases.
     int numFluidPhases() const override { return VolumeVariables::numFluidPhases(); }
 
-    //! Calculate the velocities for the scvs in the element
-    //! We assume the local containers to be bound to the complete stencil
+    //! Calculates the velocities for the scvs in the element.
+    //! We assume the local containers to be bound to the complete stencil.
     void calculateVelocity(VelocityVector& velocity,
                            const ElementVolumeVariables& elemVolVars,
                            const FVElementGeometry& fvGeometry,

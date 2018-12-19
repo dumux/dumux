@@ -21,6 +21,7 @@
  * \ingroup RichardsModel
  * \brief Volume averaged quantities required by the Richards model.
  */
+
 #ifndef DUMUX_RICHARDS_VOLUME_VARIABLES_HH
 #define DUMUX_RICHARDS_VOLUME_VARIABLES_HH
 
@@ -39,7 +40,7 @@
 namespace Dumux {
 
 namespace Detail {
-//! helper structs to conditionally use a primary variable switch or not
+//! Helper structs to conditionally use a primary variable switch or not
 struct VolVarsWithPVSwitch
 {
     using PrimaryVariableSwitch = ExtendedRichardsPrimaryVariableSwitch;
@@ -70,21 +71,21 @@ class RichardsVolumeVariables
     using ModelTraits = typename Traits::ModelTraits;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 public:
-    //! export type of the fluid system
+    //! Export type of the fluid system
     using FluidSystem = typename Traits::FluidSystem;
-    //! export type of the fluid state
+    //! Export type of the fluid state
     using FluidState = typename Traits::FluidState;
-    //! export type of the fluid state
-    //! export type of solid state
+    //! Export type of the fluid state
+    //! Export type of solid state
     using SolidState = typename Traits::SolidState;
-    //! export type of solid system
+    //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
     using Indices = typename Traits::ModelTraits::Indices;
-    //! if water diffusion in air is enabled
+    //! If water diffusion in air is enabled
     static constexpr bool enableWaterDiffusionInAir() { return ModelTraits::enableMolecularDiffusion(); };
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -191,7 +192,7 @@ public:
     }
 
     /*!
-     * \brief Fill the fluid state according to the primary variables.
+     * \brief Fills the fluid state according to the primary variables.
      *
      * Taking the information from the primary variables,
      * the fluid state is filled with every information that is
@@ -251,8 +252,8 @@ public:
     }
 
     /*!
-     * \brief Return the fluid configuration at the given primary
-     *        variables
+     * \brief Returns the fluid configuration at the given primary
+     *        variables.
      */
     const FluidState &fluidState() const
     { return fluidState_; }
@@ -264,7 +265,7 @@ public:
     { return solidState_; }
 
     /*!
-     * \brief Return the temperature
+     * \brief Returns the temperature.
      */
     Scalar temperature() const
     { return fluidState_.temperature(); }
@@ -388,11 +389,10 @@ public:
     { return 100.0 *(pressure(phaseIdx) - pressure(FluidSystem::gasPhaseIdx))/density(phaseIdx)/9.81; }
 
     /*!
-     * \brief Returns the water content
-     *        fluid phase within the finite volume.
+     * \brief Returns the water content of a fluid phase within the finite volume.
      *
      * The water content is defined as the fraction of
-     * the saturation devided by the porosity
+     * the saturation devided by the porosity.
 
      * \param phaseIdx The index of the fluid phase
      * \note this function is here as a convenience to the user to not have to

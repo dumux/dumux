@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup TwoPNCModel
- * \brief Adds I/O fields specific to the twop-nc model
+ * \brief Adds I/O fields specific to the twop-nc model.
  */
+
 #ifndef DUMUX_TWOP_NC_IO_FIELDS_HH
 #define DUMUX_TWOP_NC_IO_FIELDS_HH
 
@@ -32,7 +33,7 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPNCModel
- * \brief Adds I/O fields specific to the TwoPNC model
+ * \brief Adds I/O fields specific to the TwoPNC model.
  */
 class TwoPNCIOFields
 {

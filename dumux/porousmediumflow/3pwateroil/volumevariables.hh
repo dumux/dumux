@@ -22,6 +22,7 @@
  * \brief Contains the quantities which are constant within a
  *        finite volume in the three-phase, two-component model.
  */
+
 #ifndef DUMUX_3P2CNI_VOLUME_VARIABLES_HH
 #define DUMUX_3P2CNI_VOLUME_VARIABLES_HH
 
@@ -90,20 +91,20 @@ public:
     using FluidState = typename Traits::FluidState;
     //! The type of the fluid system
     using FluidSystem = typename Traits::FluidSystem;
-    //! export the indices
+    //! Export the indices
     using Indices = typename ModelTraits::Indices;
-    //! export type of solid state
+    //! Export type of solid state
     using SolidState = typename Traits::SolidState;
-    //! export type of solid system
+    //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
-    //! export the primary variable switch
+    //! Export the primary variable switch
     using PrimaryVariableSwitch = ThreePWaterOilPrimaryVariableSwitch;
-    //! state if only the gas phase is allowed to disappear
+    //! State if only the gas phase is allowed to disappear
     static constexpr bool onlyGasPhaseCanDisappear()
     { return Traits::ModelTraits::onlyGasPhaseCanDisappear(); }
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to be simulated

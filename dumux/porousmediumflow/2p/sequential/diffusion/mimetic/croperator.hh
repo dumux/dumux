@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief Defines a class for Crozieux-Raviart piecewise linear finite element functions
+ * \brief Defines a class for Crozieux-Raviart piecewise linear finite element functions.
  */
 #ifndef DUMUX_CROPERATOR2P_HH
 #define DUMUX_CROPERATOR2P_HH
@@ -45,12 +45,11 @@
 #include <dumux/common/boundaryconditions.hh>
 #include "localstiffness.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \brief Extends CROperatorBase by a generic methods to assemble global stiffness matrix from local stiffness matrices
  * \ingroup SequentialTwoPModel
- * \tparam TypeTag The problem Type Tag
+ * \brief Extends CROperatorBase by a generic methods to assemble global stiffness matrix from local stiffness matrices.
  *
  * A class for mapping a CR function to a CR function
  * This class sets up a compressed row storage matrix with connectivity for CR elements.
@@ -59,6 +58,8 @@ namespace Dumux
  * The template parameter TypeTag describes what kind of Assembler we are. There two choices:
  * <dt>LevelTag</dt> We assemble on a grid level.
  * <dt>LeafTag</dt> We assemble on the leaf entities of the grid
+ *
+ * \tparam TypeTag The problem Type Tag
  */
 template<class TypeTag>
 class CROperatorAssemblerTwoP
@@ -90,7 +91,7 @@ class CROperatorAssemblerTwoP
         pressureEqIdx = Indices::pressureEqIdx,
     };
 
-    //! a function to approximately compute the number of nonzeros
+    //! A function to approximately compute the number of nonzeros
     int nnz()
     {
         return (4*dim - 1)*size_;
@@ -107,7 +108,7 @@ public:
     , RepresentationType::random)
     {}
 
-    //! initialize the CR operator assembler
+    //! Initialize the CR operator assembler
     void initialize()
     {
         faceMapper_.update();
@@ -179,13 +180,13 @@ public:
         A_.endindices();
     }
 
-    //! return const reference to operator matrix
+    //! Returns const reference to operator matrix
     const RepresentationType& operator* () const
     {
         return A_;
     }
 
-    //! return reference to operator matrix
+    //! Returns a reference to operator matrix
     RepresentationType& operator* ()
     {
         return A_;
@@ -202,7 +203,7 @@ public:
     }
 
     /*!
-     * \brief Assemble global stiffness matrix
+     * \brief Assembles global stiffness matrix
      *
      * This method takes an object that can compute local stiffness matrices and
      * assembles the global linear system Au=f.
@@ -329,6 +330,6 @@ protected:
     RepresentationType A_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

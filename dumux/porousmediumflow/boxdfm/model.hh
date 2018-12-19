@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
  * \file
+ * \ingroup BoxDFMModel
  * \brief Defines a type tag and some properties for porous medium
  *        flow models using the box scheme extended to discrete fractures.
  */

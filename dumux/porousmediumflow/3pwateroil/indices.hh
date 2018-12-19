@@ -21,6 +21,7 @@
  * \ingroup ThreePWaterOilModel
  * \brief Defines the indices required for the 3p2cni model.
  */
+
 #ifndef DUMUX_3P2CNI_INDICES_HH
 #define DUMUX_3P2CNI_INDICES_HH
 

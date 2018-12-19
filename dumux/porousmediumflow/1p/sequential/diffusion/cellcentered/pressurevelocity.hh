@@ -16,26 +16,27 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_FVPRESSUREVELOCITY1P_HH
-#define DUMUX_FVPRESSUREVELOCITY1P_HH
-
-
-// dumux environment
-#include "pressure.hh"
-#include <dumux/porousmediumflow/1p/sequential/properties.hh>
-#include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
-
 /*!
  * \file
  * \ingroup SequentialOnePModel
  * \brief  Single Phase Finite Volume Model
  */
 
-namespace Dumux
-{
+#ifndef DUMUX_FVPRESSUREVELOCITY1P_HH
+#define DUMUX_FVPRESSUREVELOCITY1P_HH
 
-/*! \ingroup SequentialOnePModel
+// dumux environment
+#include "pressure.hh"
+#include <dumux/porousmediumflow/1p/sequential/properties.hh>
+#include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
+
+
+namespace Dumux {
+
+/*!
+ * \ingroup SequentialOnePModel
  * \brief Single Phase Finite Volume Model
+ *
  * This model solves equations of the form
  * \f[
  *  \textbf{div}\, \boldsymbol v = q.
@@ -51,14 +52,14 @@ namespace Dumux
  * on \f$ \Gamma_{Neumann} \f$.
  *
  * \tparam TypeTag The Type Tag
- *
  */
 template<class TypeTag> class FVPressureVelocity1P: public FVPressure1P<TypeTag>
 {
     using ParentType = FVPressure1P<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 public:
-    /*! \brief Initializes the pressure model
+    /*!
+     * \brief Initializes the pressure model
      *
      * \copydetails FVPressure::initialize()
      */
@@ -68,10 +69,10 @@ public:
         velocity_.calculateVelocity();
     }
 
-    /*! \brief Pressure update
+    /*!
+     * \brief Pressure update
      *
      * \copydetails FVPressure::update()
-     *
      */
     void update()
     {
@@ -79,13 +80,13 @@ public:
         velocity_.calculateVelocity();
     }
 
-    /*! \brief Adds velocity output to the output file
+    /*!
+     * \brief Adds velocity output to the output file
      *
      * Adds the velocities to the output.
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
@@ -94,7 +95,8 @@ public:
         velocity_.addOutputVtkFields(writer);
     }
 
-    /*! Constructs a FVPressure1P object
+    /*!
+     * Constructs a FVPressure1P object
      *
      * \param problem A problem class object
      */
@@ -106,5 +108,5 @@ private:
     FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
 };
 
-}
+} // end namespace Dumux
 #endif

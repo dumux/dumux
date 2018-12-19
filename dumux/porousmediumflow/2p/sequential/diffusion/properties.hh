@@ -27,10 +27,8 @@
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 // \{
 
 //////////////////////////////////////////////////////////////////
@@ -43,18 +41,16 @@ NEW_TYPE_TAG(PressureTwoP, INHERITS_FROM(Pressure, SequentialTwoP));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
 SET_TYPE_PROP(PressureTwoP, Model, typename GET_PROP_TYPE(TypeTag, PressureModel));
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

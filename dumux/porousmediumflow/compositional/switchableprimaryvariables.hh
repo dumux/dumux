@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumCompositional
- * \brief A primary variable vector with a state to allow variable switches
+ * \ingroup PorousmediumflowModels
+ * \brief A primary variable vector with a state to allow variable switches.
  */
+
 #ifndef DUMUX_SWITCHABLE_PRIMARY_VARIABLES_HH
 #define DUMUX_SWITCHABLE_PRIMARY_VARIABLES_HH
 
@@ -29,17 +30,17 @@
 namespace Dumux {
 
 /*!
- * \ingroup PorousmediumCompositional
- * \brief A primary variable vector with a state to allow variable switches
+ * \ingroup PorousmediumflowModels
+ * \brief A primary variable vector with a state to allow variable switches.
  */
 template<class PrimaryVariables, class StateType>
 class SwitchablePrimaryVariables : public PrimaryVariables
 {
     using ParentType = PrimaryVariables;
 public:
-    //! inherit the constructors
+    //! Inherit the constructors
     using ParentType::ParentType;
-    //! use the assignment operators from the field vector
+    //! Use the assignment operators from the field vector
     using ParentType::operator=;
 
     //! Ask for the state of this primary variable object, e.g. the phase presence

@@ -21,8 +21,8 @@
  * \ingroup MPNCModel
  * \brief MpNc specific details needed to approximately calculate the local
  *        defect in the fully implicit scheme.
- *
  */
+
 #ifndef DUMUX_MPNC_LOCAL_RESIDUAL_HH
 #define DUMUX_MPNC_LOCAL_RESIDUAL_HH
 

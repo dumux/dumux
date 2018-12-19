@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief Properties related to the sequential IMPES algorithms
+ * \brief Properties related to the sequential IMPES algorithms.
  */
 #ifndef DUMUX_IMPES2P_PROPERTIES_HH
 #define DUMUX_IMPES2P_PROPERTIES_HH
@@ -27,16 +27,8 @@
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-namespace Dumux
-{
-
-namespace Properties
-{
-/*!
- *
- * \brief General properties for sequential IMPES algorithms
- *
- */
+namespace Dumux {
+namespace Properties {
 
 //////////////////////////////////////////////////////////////////
 // Type tags tags
@@ -48,16 +40,14 @@ NEW_TYPE_TAG(IMPESTwoP, INHERITS_FROM(IMPET, SequentialTwoP));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #include <dumux/porousmediumflow/2p/sequential/impes/problem.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
-}
-}
+namespace Dumux {
+namespace Properties {
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

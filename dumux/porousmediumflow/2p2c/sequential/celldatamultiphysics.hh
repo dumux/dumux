@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Storage container for discretized data for multi-physics models.
+ */
 #ifndef DUMUX_ELEMENTDATA2P2C_MULTYPHYSICS_HH
 #define DUMUX_ELEMENTDATA2P2C_MULTYPHYSICS_HH
 
@@ -23,23 +28,17 @@
 #include "properties.hh"
 #include "celldata.hh"
 
-/**
- * @file
- * @brief  Storage container for discretized data for multiphysics models
- */
-
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \ingroup multiphysics multiphase
- */
-//! Storage container for discretized data for multiphysics models
-/*! For multiphysics models, we divide the model in seperate sub-domains. Being a cell-based
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Storage container for discretized data for multiphysics models.
+ *
+ * For multi-physics models, we divide the model in separate sub-domains. Being a cell-based
  * information, this is also stored in the cellData. In addition, a simpler version of a
  * fluidState can be stored in cells being in the simpler subdomain.
  * Hence, acess functions either direct to the full fluidstate, or to the simple fluidstate.
  *
- * @tparam TypeTag The Type Tag
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class CellData2P2CMultiPhysics : public CellData2P2C<TypeTag>
@@ -111,22 +110,28 @@ public:
     // functions returning the vectors of secondary variables
     //////////////////////////////////////////////////////////////
 
-    //! Return subdomain information
-    /** Acess function to store subdomain information
+    /*!
+     * \brief Return subdomain information
+     *
+     * Acess function to store subdomain information
      */
     int& subdomain()
     {
         return subdomain_;
     }
-    //! Return subdomain information
-    /** Acess function to get subdomain information
+
+    /*!
+     * \brief Return subdomain information
+     *
+     * Acess function to get subdomain information
      */
     const int& subdomain() const
     {
         return subdomain_;
     }
-    //! Specify subdomain information and fluidStateType
-    /** This function is only called if
+
+    /*!
+     * \brief Specify subdomain information and fluidStateType
      */
     void setSubdomainAndFluidStateType(int index)
     {
@@ -261,12 +266,13 @@ public:
 
     //@}
 
-    //! Set a simple fluidstate for a cell in the simple domain
-    /** Uses a simplified fluidstate with less storage capacity
+    /*!
+     * \brief Set a simple fluidstate for a cell in the simple domain
+     * Uses a simplified fluidstate with less storage capacity
      * and functionality.
      * Makes shure the fluidStateType_ flag is set appropriately in this
      * cell.
-     * @param simpleFluidState A fluidstate storing a 1p2c mixture
+     * \param simpleFluidState A fluidstate storing a 1p2c mixture
      */
     void setSimpleFluidState(SimpleFluidState& simpleFluidState)
     {
@@ -287,8 +293,11 @@ public:
             simpleFluidState_ = std::make_shared<SimpleFluidState>();
         return *simpleFluidState_;
     }
-    //! Allows manipulation of the complex fluid state
-    /** Fluidstate is stored as a pointer, initialized as a null-pointer.
+
+    /*!
+     * \brief Allows manipulation of the complex fluid state
+     *
+     * Fluidstate is stored as a pointer, initialized as a null-pointer.
      * Enshure that if no FluidState is present, a new one is created.
      * Also enshure that we are in the complex subdomain.
      */
@@ -317,5 +326,5 @@ public:
 
 };
 
-}
+} // end namespace Dumux
 #endif

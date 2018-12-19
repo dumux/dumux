@@ -16,13 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
  * \ingroup OnePNCModel
  * \brief Defines the primary variable and equation indices used by
  *        the 1pnc model
  */
+
 #ifndef DUMUX_1PNC_INDICES_HH
 #define DUMUX_1PNC_INDICES_HH
 

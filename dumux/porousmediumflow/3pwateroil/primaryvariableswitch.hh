@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup ThreePWaterOilModel
- * \brief The primary variable switch for the 3p3c model
+ * \brief The primary variable switch for the 3p3c model.
  */
+
 #ifndef DUMUX_3P2CNI_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_3P2CNI_PRIMARY_VARIABLE_SWITCH_HH
 
@@ -31,7 +32,7 @@ namespace Dumux {
 
 /*!
  * \ingroup ThreePWaterOilModel
- * \brief The primary variable switch controlling the phase presence state variable
+ * \brief The primary variable switch controlling the phase presence state variable.
  */
 class ThreePWaterOilPrimaryVariableSwitch
 : public PrimaryVariableSwitch<ThreePWaterOilPrimaryVariableSwitch>

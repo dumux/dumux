@@ -22,6 +22,7 @@
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the three-phase three-component fully implicit model.
  */
+
 #ifndef DUMUX_3P2CNI_LOCAL_RESIDUAL_HH
 #define DUMUX_3P2CNI_LOCAL_RESIDUAL_HH
 
@@ -71,13 +72,13 @@ protected:
         nCompIdx = FluidSystem::nCompIdx,
     };
 
-    //! property that defines whether mole or mass fractions are used
+    //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Evaluate the amount of all conservation quantities
+     * \brief Evaluates the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
      * The result should be averaged over the volume (e.g. phase mass

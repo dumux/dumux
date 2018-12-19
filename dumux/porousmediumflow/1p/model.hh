@@ -115,7 +115,7 @@ struct OnePNI { using InheritsFrom = std::tuple<OneP>; };
 } // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
-// properties for the isothermal single phase model
+// Properties for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::OneP> { using type = OnePIOFields; };                          //!< default I/O fields specific to this model
@@ -146,9 +146,10 @@ public:
 
 /*!
  * \brief The fluid state which is used by the volume variables to
- *        store the thermodynamic state. This should be chosen
- *        appropriately for the model ((non-)isothermal, equilibrium, ...).
- *        This can be done in the problem.
+ *        store the thermodynamic state.
+ *
+ * This should be chosen appropriately for the model ((non-)isothermal,
+ * equilibrium, ...). This can be done in the problem.
  */
 template<class TypeTag>
 struct FluidState<TypeTag, TTag::OneP>
@@ -161,7 +162,7 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////
-// properties for the non-isothermal single phase model
+// Properties for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
 //! Add temperature to the output
