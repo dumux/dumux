@@ -5,7 +5,7 @@ Installing \Dumux means that you first unpack \Dune and \Dumux in a root directo
 (section \ref{sc:ObtainingSourceCode}).
 In a second step of the installation, all modules are configured with CMake
 (section \ref{buildIt}).
-After successfull installation of \Dumux we guide you to start a test application,
+After successful installation of \Dumux we guide you to start a test application,
 described in section \ref{quick-start-guide}.
 In section \ref{sec:build-doxy-doc} we explain how to build the \Dumux documentation.
 Lastly, section \ref{sec:external-modules-libraries} provides details on optional libraries and modules.
@@ -23,8 +23,8 @@ dune-istl and dune-localfunctions. For working with \Dumux, these modules are re
 All \Dune modules, including the \Dumux module, get extracted into a common root directory, as it
 is done in an ordinary \Dune installation.
 We usually name our root directory \texttt{DUMUX} but an arbitrary name can be chosen.
-Source code files for each \Dune module are contained in their own subdirectory within the root directory.
-The subdirectories for the modules are named after the module names (depending on how
+Source code files for each \Dune module are contained in their own sub-directory within the root directory.
+The sub-directories for the modules are named after the module names (depending on how
 the modules were obtained a version number is added to the module name).
 The name of each \Dune module is defined in the file \texttt{dune.module}, which is
 in the root directory of the respective module. This should not be changed by the user.
@@ -142,7 +142,7 @@ on the Dune grid interface, act similar.
 \label{buildIt}
 Configuring \Dune and \Dumux is done by the shell-command \texttt{dunecontrol} which is part of the \Dune build system.
 If you are interested in more details about the build system that is used,
-they can be found in the \Dune buildsystem documentation\footnote{\url{https://www.dune-project.org/buildsystem/}} and
+they can be found in the \Dune build system documentation\footnote{\url{https://www.dune-project.org/buildsystem/}} and
 CMake's documentation\footnote{\url{https://cmake.org/documentation/}}.
 If something fails during the execution of \texttt{dunecontrol} feel free to report it to the \Dune or \Dumux developer mailing list,
 but please include error details.
@@ -181,7 +181,7 @@ to avoid confusing it with the option files which came out of the distribution.
 The previous section showed how to install and compile \Dumux. This section
 shall give a very brief introduction how to run a first test application and how
 to visualize the first output files.\par
-All executables are compiled in the \texttt{build} subdirectories of \Dumux.
+All executables are compiled in the \texttt{build} sub-directories of \Dumux.
 If not specified differently in the options file, this is \texttt{build-cmake} as default.
 
 \begin{enumerate}
@@ -193,7 +193,7 @@ If not specified differently in the options file, this is \texttt{build-cmake} a
       type \texttt{./test{\_}2p{\_}incompressible{\_}tpfa params.input}
       into the console.
       The added \texttt{params.input} specifies that all
-      important run-time parameters (like first timestep size, end of simulation and location
+      important run-time parameters (like first time step size, end of simulation and location
       of the grid file) can be found in a text file in the same directory  with the
       name \texttt{params.input}.
 \item The simulation starts and produces some .vtu output files and also a .pvd
@@ -266,16 +266,16 @@ and some more libraries and tools which are prerequisites for their use.
   of choice for simulating structures such as foams, discrete fracture networks,
   or network flow problems.
   Download: \url{https://gitlab.dune-project.org/extensions/dune-foamgrid}
-  
+
 \item \textbf{opm-grid}: opm-grid is a DUNE module supporting grids in a corner-point format.
   Download: \url{https://github.com/OPM/opm-grid.git}
-  
-\item \textbf{dune-subgrid}: The dune-subgrid module is a meta-grid implementation that allows 
+
+\item \textbf{dune-subgrid}: The dune-subgrid module is a meta-grid implementation that allows
 to mark elements of another hierarchical dune grid and use this sub-grid just like a regular grid.
 The set of marked elements can then be accessed as a hierarchical dune grid in its own right.
 Dune-Subgrid provides the full grid interface including adaptive mesh refinement.
   Download: \url{https://git.imp.fu-berlin.de/agnumpde/dune-subgrid.git}
-  
+
 \item \textbf{dune-spgrid}: The DUNE module dune-spgrid provides a structured, parallel grid
 and supports periodic boundary conditions.
   Download: \url{https://gitlab.dune-project.org/extensions/dune-spgrid.git}
@@ -284,7 +284,7 @@ and supports periodic boundary conditions.
   library for the direct solution of large, sparse, non-symmetric systems of linear equations.
   Download: \url{http://crd.lbl.gov/~xiaoye/SuperLU}
 
-\item \textbf{UMFPack}: External library for solving linear equeations. It is part of SuiteSparse.
+\item \textbf{UMFPack}: External library for solving linear equations. It is part of SuiteSparse.
 
 \item \textbf{dune-UG}: External library for use as grid. UG is a toolbox for unstructured grids, released under GPL.
   To build UG the tools \texttt{lex}/\texttt{yacc} or the GNU variants of \texttt{flex}/\texttt{bison} must be provided.

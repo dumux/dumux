@@ -33,7 +33,7 @@ More details about the build-system can be found in section \ref{buildIt}.
 
 \subsection{A first test run of \Dumux}
 When the \texttt{installDumux.sh} script from the subsection above has run successfully, you can execute a second script that
-will compile and run a simple one-phase ground water flow example and will visualize the result using paraview.
+will compile and run a simple one-phase ground water flow example and will visualize the result using ParaView.
 The test script can be obtained by copying the following lines into a text-file named \texttt{test\_dumux.sh}
 that has to be located in the same directory as the installation script.
 \begin{lstlisting}[style=DumuxCode]
@@ -43,4 +43,4 @@ make -B test_1pcctpfa
 paraview *pvd
 \end{lstlisting}
 The script \texttt{test\_dumux.sh} can be executed by typing into the terminal: \texttt{./test\_dumux.sh}.
-If everything works fine, a paraview window with the result should open automatically.
+If everything works fine, a ParaView window with the result should open automatically.
