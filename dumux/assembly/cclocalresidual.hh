@@ -95,10 +95,10 @@ public:
             if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
                 flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
-//            else if (problem.couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
-//            {
-//                flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-//            }
+            else if (problem.couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+            {
+                flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+            }
 
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())

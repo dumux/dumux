@@ -1,12 +1,13 @@
 [Darcy.Grid]
 UpperRight = 1 1
 Cells = 10 10
+Refinement = 1
 
 [Stokes.Grid]
 LowerLeft = 0 1
 UpperRight = 1 2
 Cells = 10 10
-Refinement = 1
+Refinement = 2
 
 [Stokes.Problem]
 Name = stokes
@@ -28,7 +29,7 @@ EnableInertiaTerms = false
 AddVelocity = 1
 
 [Mpfa]
-Q = 0.5
+Q = 0.0
 
 [Newton]
 MaxRelativeShift = 1.0e-8

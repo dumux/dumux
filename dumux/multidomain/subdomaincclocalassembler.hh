@@ -522,6 +522,7 @@ public:
 
                 // restore the undeflected state of the coupling context
                 this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
+                updateCoupledVariables();
 
                 // TODO do we have to restore here again???
                 // if (enableGridFluxVarsCache)
