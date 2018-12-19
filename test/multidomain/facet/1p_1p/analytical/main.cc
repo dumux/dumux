@@ -334,7 +334,7 @@ int main(int argc, char** argv) try
                                                   couplingManager);
 
     // the linear solver
-    using LinearSolver = UMFPackBackend;
+    using LinearSolver = BlockDiagAMGBiCGSTABSolver;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
