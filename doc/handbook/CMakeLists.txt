@@ -30,7 +30,7 @@ set(TEX_IMAGES
   png/dalton1.png
   png/dalton2.png
   pdf/staggered_grid.pdf
-  png/mpfa_iv.png)
+  pdf/mpfa_iv.pdf)
 
 dune_add_latex_document(0_dumux-handbook.tex
   BIBFILES dumux-handbook.bib
