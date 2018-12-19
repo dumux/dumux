@@ -219,7 +219,7 @@ public:
     using FVGridGeometryTuple = std::tuple< CellCenterFVGridGeometry<ThisType>, FaceFVGridGeometry<ThisType> >;
 
     //! Constructor
-    StaggeredFVGridGeometry(const GridView& gridView)
+    StaggeredFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")
     : ParentType(gridView)
     , intersectionMapper_(gridView)
     {
@@ -227,7 +227,7 @@ public:
         if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
-        if (hasParamInGroup("Discretization", "TvdApproach"))
+        if (hasParamInGroup(paramGroup, "Discretization.TvdApproach"))
             GeometryHelper::setOrder(2);
     }
 
