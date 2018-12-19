@@ -28,25 +28,21 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 NEW_TYPE_TAG(FvMpfaL3dPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP, MPFAProperties));
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/3dpressurevelocityadaptive.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/velocityintransport.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 SET_TYPE_PROP(FvMpfaL3dPressureTwoPAdaptive, MPFAInteractionVolume, FvMpfaL3dInteractionVolumeAdaptive<TypeTag>);
 SET_TYPE_PROP(FvMpfaL3dPressureTwoPAdaptive, MPFAInteractionVolumeContainer, FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>);
 SET_TYPE_PROP(FvMpfaL3dPressureTwoPAdaptive, PressureModel, FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>);
 SET_TYPE_PROP( FvMpfaL3dPressureTwoPAdaptive, Velocity, FvMpfaVelocityInTransport<TypeTag> );
-}
-}// end of Dune namespace
+} // end namespace Properties
+} // end namespace Dumux
 #endif

@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup InputOutput
- * \brief A VTK output module to simplify writing dumux simulation data to VTK format
+ * \ingroup BoxDFMModel
+ * \brief A VTK output module to simplify writing dumux simulation data to VTK format.
  */
+
 #ifndef POROUSMEDIUMFLOW_BOXDFM_VTK_OUTPUT_MODULE_HH
 #define POROUSMEDIUMFLOW_BOXDFM_VTK_OUTPUT_MODULE_HH
 
@@ -35,18 +36,19 @@
 namespace Dumux {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup BoxDFMModel
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format.
- *        This output module is specialized for writing out data obtained by the box-dfm
- *        scheme. It writes out separate vtk files for the solution on the fracture. For
- *        this, a grid type to be used the fracture-conforming lower-dimensional grid has
- *        to be provided.
+ *
+ * This output module is specialized for writing out data obtained by the box-dfm
+ * scheme. It writes out separate vtk files for the solution on the fracture. For
+ * this, a grid type to be used the fracture-conforming lower-dimensional grid has
+ * to be provided.
  *
  * \tparam TypeTag The TypeTag of the problem implementation
  * \tparam FractureGrid The Type used for the lower-dimensional grid
  *
  * Handles the output of scalar and vector fields to VTK formatted file for multiple
- * variables and timesteps. Certain predefined fields can be registered on
+ * variables and time steps. Certain predefined fields can be registered on
  * initialization and/or be turned on/off using the designated properties. Additionally
  * non-standardized scalar and vector fields can be added to the writer manually.
  */

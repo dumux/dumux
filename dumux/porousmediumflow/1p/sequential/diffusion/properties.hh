@@ -16,21 +16,21 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialOnePModel
+ * \brief Specifies the properties for 1p pressure models.
+ */
+
 #ifndef DUMUX_DIFFUSION_PROPERTIES_1P_HH
 #define DUMUX_DIFFUSION_PROPERTIES_1P_HH
 
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/1p/sequential/properties.hh>
 
-/*!
- * \file
- * \ingroup SequentialOnePModel
- * \brief Specifies the properties for 1p pressure models
- */
-namespace Dumux
-{
-namespace Properties
-{
+
+namespace Dumux {
+namespace Properties {
 // \{
 
 //////////////////////////////////////////////////////////////////
@@ -43,17 +43,15 @@ NEW_TYPE_TAG(PressureOneP, INHERITS_FROM(Pressure, SequentialOneP));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

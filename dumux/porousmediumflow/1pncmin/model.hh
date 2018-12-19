@@ -23,7 +23,7 @@
 *
 * This model implements one-phase n-component flow of a compressible fluid composed of
 * the n components \f$\kappa \f$ in combination with mineral precipitation and dissolution
-* of the solid phases. The standard multiphase Darcy
+* of the solid phases. The standard multi-phase Darcy
 * approach is used as the equation for the conservation of momentum:
 * \f[
 v = - \frac{k_{r}}{\mu} \mbox{\bf K}
@@ -155,7 +155,7 @@ struct IOFields<TypeTag, TTag::OnePNCMin> { using type = MineralizationIOFields<
 // Properties for the non-isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
 
-//! non-isothermal vtk output
+//! Non-isothermal vtk output
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::OnePNCMinNI>
 {

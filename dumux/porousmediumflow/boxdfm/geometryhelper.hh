@@ -18,8 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup BoxDiscretization
- * \ingroup BoxDFM
+ * \ingroup BoxDFMModel
  * \brief Helper class constructing the dual grid finite volume geometries
  *        for the box discrete fracture model.
  */

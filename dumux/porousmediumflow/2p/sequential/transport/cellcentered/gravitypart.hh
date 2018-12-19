@@ -27,11 +27,10 @@
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/convectivepart.hh>
 #include "properties.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief  Class for defining the gravity term of  a two-phase flow saturation equation
  * \ingroup SequentialTwoPModel
+ * \brief Class for defining the gravity term of  a two-phase flow saturation equation
  *
  * Defines the gravity term of the form
  *
@@ -226,6 +225,7 @@ private:
                           //if preCompute = false new mobilities will be taken (for implicit Scheme)
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
-};}
+};
+} // end namespace Dumux
 
 #endif

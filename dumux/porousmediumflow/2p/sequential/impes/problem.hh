@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief Base class for all 2-phase problems which use an impes algorithm
+ * \brief Base class for all 2-phase problems which use an IMPES algorithm.
  */
 #ifndef DUMUX_IMPESPROBLEM_2P_HH
 #define DUMUX_IMPESPROBLEM_2P_HH
@@ -29,11 +29,10 @@
 #include "properties.hh"
 #include "propertiesadaptive.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief  Base class for all 2-phase problems which use an impes algorithm
  * \ingroup SequentialTwoPModel
+ * \brief  Base class for all 2-phase problems which use an IMPES algorithm.
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -197,6 +196,6 @@ private:
     std::shared_ptr<SpatialParams> spatialParams_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

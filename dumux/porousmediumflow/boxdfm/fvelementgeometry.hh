@@ -18,11 +18,14 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup BoxDiscretization
+ * \ingroup BoxDFMModel
  * \brief Base class for the local finite volume geometry for the box discrete
- *        fracture model. This builds up the sub control volumes and sub control
- *        volume faces for an element.
+ *        fracture model.
+ *
+ * This builds up the sub control volumes and sub control
+ * volume faces for an element.
  */
+
 #ifndef DUMUX_POROUSMEDIUMFLOW_BOXDFM_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_FV_ELEMENT_GEOMETRY_HH
 
@@ -36,9 +39,10 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoxDiscretization
- * \brief Base class for the finite volume geometry vector for box discrete fracture model
- *        This builds up the sub control volumes and sub control volume faces for each element.
+ * \ingroup BoxDFMModel
+ * \brief Base class for the finite volume geometry vector for box discrete fracture model.
+ *
+ * This builds up the sub control volumes and sub control volume faces for each element.
  *
  * \tparam GG the finite volume grid geometry type
  * \tparam enableFVGridGeometryCache if the grid geometry is cached or not
@@ -46,7 +50,7 @@ namespace Dumux {
 template<class GG, bool enableFVGridGeometryCache>
 class BoxDfmFVElementGeometry;
 
-//! specialization in case the FVElementGeometries are stored
+//! Specialization in case the FVElementGeometries are stored
 template<class GG>
 class BoxDfmFVElementGeometry<GG, true>
 {
@@ -59,13 +63,13 @@ class BoxDfmFVElementGeometry<GG, true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 public:
-    //! export type of subcontrol volume
+    //! Export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
-    //! export type of subcontrol volume face
+    //! Export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
-    //! export type of finite volume grid geometry
+    //! Export type of finite volume grid geometry
     using FVGridGeometry = GG;
-    //! the maximum number of scvs per element (2^dim for cubes)
+    //! The maximum number of scvs per element (2^dim for cubes)
     //! multiplied by 3 for the maximum number of fracture scvs per vertex
     static constexpr std::size_t maxNumElementScvs = (1<<dim)*3;
 
@@ -81,11 +85,14 @@ public:
     const SubControlVolumeFace& scvf(std::size_t scvfIdx) const
     { return fvGridGeometry().scvfs(eIdx_)[scvfIdx]; }
 
-    //! iterator range for sub control volumes. Iterates over
-    //! all scvs of the bound element.
-    //! This is a free function found by means of ADL
-    //! To iterate over all sub control volumes of this FVElementGeometry use
-    //! for (auto&& scv : scvs(fvGeometry))
+   /*!
+    * \brief Iterator range for sub control volumes.
+    *
+    * Iterates over all scvs of the bound element.
+    * This is a free function found by means of ADL.
+    * To iterate over all sub control volumes of this FVElementGeometry use
+    * for (auto&& scv : scvs(fvGeometry)).
+    */
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolume>::const_iterator>
     scvs(const BoxDfmFVElementGeometry& fvGeometry)
     {
@@ -94,11 +101,14 @@ public:
         return Dune::IteratorRange<Iter>(g.scvs(fvGeometry.eIdx_).begin(), g.scvs(fvGeometry.eIdx_).end());
     }
 
-    //! iterator range for sub control volumes faces. Iterates over
-    //! all scvfs of the bound element.
-    //! This is a free function found by means of ADL
-    //! To iterate over all sub control volume faces of this FVElementGeometry use
-    //! for (auto&& scvf : scvfs(fvGeometry))
+   /*!
+    * \brief Iterator range for sub control volumes faces.
+    *
+    * Iterates over all scvfs of the bound element.
+    * This is a free function found by means of ADL.
+    * To iterate over all sub control volume faces of this FVElementGeometry use
+    * for (auto&& scvf : scvfs(fvGeometry)).
+    */
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
     scvfs(const BoxDfmFVElementGeometry& fvGeometry)
     {
@@ -119,17 +129,19 @@ public:
     std::size_t numScvf() const
     { return fvGridGeometry().scvfs(eIdx_).size(); }
 
-    //! this function is for compatibility reasons with cc methods
-    //! The box stencil is always element-local so bind and bindElement
-    //! are identical.
+    //! This function is for compatibility reasons with cc methods
+    //! The box stencil is always element-local so bind and bindElement are identical.
     void bind(const Element& element)
     {
         this->bindElement(element);
     }
 
-    //! Binding of an element, has to be called before using the fvgeometries
-    //! Prepares all the volume variables within the element
-    //! For compatibility reasons with the FVGeometry cache being disabled
+   /*!
+    * \brief Binding of an element, has to be called before using the fvgeometries
+    *
+    * Prepares all the volume variables within the element.
+    * For compatibility reasons with the FVGeometry cache being disabled.
+    */
     void bindElement(const Element& element)
     {
         elementPtr_ = &element;
@@ -146,7 +158,7 @@ private:
     GridIndexType eIdx_;
 };
 
-//! specialization in case the FVElementGeometries are not stored
+//! Specialization in case the FVElementGeometries are not stored
 template<class GG>
 class BoxDfmFVElementGeometry<GG, false>
 {
@@ -166,13 +178,13 @@ class BoxDfmFVElementGeometry<GG, false>
                                                 typename GG::SubControlVolume,
                                                 typename GG::SubControlVolumeFace>;
 public:
-    //! export type of subcontrol volume
+    //! Export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
-    //! export type of subcontrol volume face
+    //! Export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
-    //! export type of finite volume grid geometry
+    //! Export type of finite volume grid geometry
     using FVGridGeometry = GG;
-    //! the maximum number of scvs per element (2^dim for cubes)
+    //! The maximum number of scvs per element (2^dim for cubes)
     //! multiplied by 3 for the maximum number of fracture scvs per vertex
     static constexpr std::size_t maxNumElementScvs = (1<<dim)*3;
 
@@ -188,11 +200,14 @@ public:
     const SubControlVolumeFace& scvf(std::size_t scvfIdx) const
     { return scvfs_[scvfIdx]; }
 
-    //! iterator range for sub control volumes. Iterates over
-    //! all scvs of the bound element.
-    //! This is a free function found by means of ADL
-    //! To iterate over all sub control volumes of this FVElementGeometry use
-    //! for (auto&& scv : scvs(fvGeometry))
+   /*!
+    * \brief Iterator range for sub control volumes.
+    *
+    * Iterates over all scvs of the bound element.
+    * This is a free function found by means of ADL.
+    * To iterate over all sub control volumes of this FVElementGeometry use
+    * for (auto&& scv : scvs(fvGeometry)).
+    */
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolume>::const_iterator>
     scvs(const BoxDfmFVElementGeometry& fvGeometry)
     {
@@ -200,11 +215,14 @@ public:
         return Dune::IteratorRange<Iter>(fvGeometry.scvs_.begin(), fvGeometry.scvs_.end());
     }
 
-    //! iterator range for sub control volumes faces. Iterates over
-    //! all scvfs of the bound element.
-    //! This is a free function found by means of ADL
-    //! To iterate over all sub control volume faces of this FVElementGeometry use
-    //! for (auto&& scvf : scvfs(fvGeometry))
+   /*!
+    * \brief Iterator range for sub control volumes faces.
+    *
+    * Iterates over all scvfs of the bound element.
+    * This is a free function found by means of ADL.
+    * To iterate over all sub control volume faces of this FVElementGeometry use
+    * for (auto&& scvf : scvfs(fvGeometry)).
+    */
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
     scvfs(const BoxDfmFVElementGeometry& fvGeometry)
     {
@@ -224,17 +242,19 @@ public:
     std::size_t numScvf() const
     { return scvfs_.size(); }
 
-    //! this function is for compatibility reasons with cc methods
-    //! The box stencil is always element-local so bind and bindElement
-    //! are identical.
+    //! This function is for compatibility reasons with cc methods
+    //! The box stencil is always element-local so bind and bindElement are identical.
     void bind(const Element& element)
     {
         this->bindElement(element);
     }
 
-    //! Binding of an element, has to be called before using the fvgeometries
-    //! Prepares all the volume variables within the element
-    //! For compatibility reasons with the FVGeometry cache being disabled
+   /*!
+    * \brief Binding of an element, has to be called before using the fvgeometries
+    *
+    * Prepares all the volume variables within the element.
+    * For compatibility reasons with the FVGeometry cache being disabled.
+    */
     void bindElement(const Element& element)
     {
         elementPtr_ = &element;
@@ -415,7 +435,13 @@ private:
     //! The global geometry this is a restriction of
     const FVGridGeometry* fvGridGeometryPtr_;
 
-    //! vectors to store the geometries locally after binding an element
+    /*!
+     * \brief Binding of an element, has to be called before using the fvgeometries
+     *
+     * Prepares all the volume variables within the element.
+     * For compatibility reasons with the FVGeometry cache being disabled.
+     * vectors to store the geometries locally after binding an element
+     */
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
 };

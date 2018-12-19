@@ -22,6 +22,7 @@
  * \brief Contains the quantities which are constant within a
  *        finite volume in the two-phase model.
  */
+
 #ifndef DUMUX_2P_VOLUME_VARIABLES_HH
 #define DUMUX_2P_VOLUME_VARIABLES_HH
 
@@ -62,17 +63,17 @@ class TwoPVolumeVariables
     static constexpr auto formulation = ModelTraits::priVarFormulation();
 
 public:
-    //! export type of fluid system
+    //! Export type of fluid system
     using FluidSystem = typename Traits::FluidSystem;
-    //! export type of fluid state
+    //! Export type of fluid state
     using FluidState = typename Traits::FluidState;
-    //! export type of solid state
+    //! Export type of solid state
     using SolidState = typename Traits::SolidState;
-    //! export type of solid system
+    //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -111,7 +112,7 @@ public:
     }
 
     /*!
-     * \brief Set complete fluid state
+     * \brief Sets complete fluid state.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to be simulated

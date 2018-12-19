@@ -22,6 +22,7 @@
  * \brief Contains the quantities which are constant within a sub-control volume
  *        of the finite volume grid in the two-phase, n-component mineralization model.
  */
+
 #ifndef DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
 #define DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
 
@@ -45,17 +46,17 @@ public:
 
     /*!
      * \brief Returns the volume fraction of the precipitate (solid phase)
-     *        for the given phaseIdx
+     *        for the given phaseIdx.
      *
-     * \param sCompIdx the index of the solid component
+     * \param sCompIdx The index of the solid component
      */
     Scalar solidVolumeFraction(int sCompIdx) const
     { return this->solidState_.volumeFraction(sCompIdx); }
 
     /*!
-     * \brief Returns the density of the phase for all fluid and solid phases
+     * \brief Returns the density of the phase for all fluid and solid phases.
      *
-     * \param sCompIdx the index of the solid component
+     * \param sCompIdx The index of the solid component
      */
     Scalar solidComponentDensity(int sCompIdx) const
     {
@@ -63,9 +64,9 @@ public:
     }
 
     /*!
-     * \brief Returns the density of the phase for all fluid and solid phases
+     * \brief Returns the density of the phase for all fluid and solid phases.
      *
-     * \param sCompIdx the index of the solid component
+     * \param sCompIdx The index of the solid component
      */
     Scalar solidComponentMolarDensity(int sCompIdx) const
     {

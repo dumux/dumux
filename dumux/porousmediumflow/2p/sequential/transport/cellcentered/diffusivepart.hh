@@ -26,11 +26,10 @@
 
 #include <dumux/porousmediumflow/2p/sequential/transport/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
- * \brief  Base class for defining the diffusive part of the saturation transport equation
  * \ingroup SequentialTwoPModel
+ * \brief Base class for defining the diffusive part of the saturation transport equation
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -102,6 +101,6 @@ public:
     {}
 
 };
-}
+} // end namespace Dumux
 
 #endif

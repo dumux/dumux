@@ -21,6 +21,7 @@
  * \ingroup MPNCModel
  * \brief Enumeration of the formulations accepted by the MpNc model.
  */
+
 #ifndef DUMUX_MPNC_PRESSUREFORMULATION_HH
 #define DUMUX_MPNC_PRESSUREFORMULATION_HH
 

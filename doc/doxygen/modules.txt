@@ -111,6 +111,12 @@
      */
     /*!
      * \ingroup PorousmediumflowModels
+     * \defgroup BoxDFMModel boxdfm
+     * \brief \todo
+     * \copydetails ./porousmediumflow/boxdfm/model.hh
+     */
+    /*!
+     * \ingroup PorousmediumflowModels
      * \defgroup CO2Model CO2
      * \brief Two-phase, two-component Darcy flow specialized for supercritical CO<sub>2</sub> storage
      * \copydetails ./porousmediumflow/co2/model.hh
@@ -131,13 +137,13 @@
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup PorousmediumNonEquilibriumModel NonEquilibrium
+     * \defgroup NonEquilibriumModel NonEquilibrium
      * \brief Model that adds nonequilibrium equations to another porous medium flow model (only used in MPNCModel currently)
      * \copydetails ./porousmediumflow/nonequilibrium/model.hh
      */
         /*!
-         * \ingroup PorousmediumNonEquilibriumModel
-         * \defgroup PorousmediumThermalNonEquilibriumModel ThermalNonEquilibrium
+         * \ingroup NonEquilibriumModel
+         * \defgroup ThermalNonEquilibriumModel ThermalNonEquilibrium
          * \brief Model that adapts the energy localresidual to thermal nonequilibrium
          * \copydetails ./porousmediumflow/nonequilibrium/thermal/localresidual.hh
          */

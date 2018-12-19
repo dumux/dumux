@@ -27,6 +27,7 @@
  * Their mass balance consist only of a storage and a source term:
  * \f$\frac{\partial \varrho_\lambda \phi_\lambda )} {\partial t} = q_\lambda\f$
  */
+
 #ifndef DUMUX_MINERALIZATION_MODEL_HH
 #define DUMUX_MINERALIZATION_MODEL_HH
 
@@ -35,7 +36,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePModel
+ * \ingroup MineralizationModel
  * \brief Specifies a number properties of
  *        models that consider mineralization proceses.
  *

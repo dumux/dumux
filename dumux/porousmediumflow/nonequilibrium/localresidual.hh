@@ -18,10 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup NonEquilibriumModel
  * \brief The local residual for the kinetic mass transfer module of
  *        the compositional multi-phase model.
  */
+
 #ifndef DUMUX_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 #define DUMUX_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 
@@ -38,7 +39,7 @@ template <class TypeTag>
 using NonEquilibriumLocalResidual = NonEquilibriumLocalResidualImplementation<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableThermalNonEquilibrium(), GetPropType<TypeTag, Properties::ModelTraits>::enableChemicalNonEquilibrium()>;
 
 /*!
- * \ingroup PorousmediumNonEquilibriumModel
+ * \ingroup NonEquilibriumModel
  * \brief The mass conservation part of the nonequilibrium model for a model without chemical non-equilibrium
  */
 template<class TypeTag>
@@ -67,7 +68,7 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Calculate the source term of the equation
+     * \brief Calculates the source term of the equation.
      *
      * \param problem The object specifying the problem which ought to be simulated
      * \param element An element which contains part of the control volume
@@ -156,7 +157,8 @@ public:
 
 
 /*!
- * \brief The mass conservation part of the nonequilibrium model for a model assuming chemical non-equilibrium and two phases */
+ * \brief The mass conservation part of the nonequilibrium model for a model assuming chemical non-equilibrium and two phases
+ */
 template<class TypeTag>
 class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public GetPropType<TypeTag, Properties::EquilibriumLocalResidual>
 {
@@ -195,7 +197,7 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public Get
 public:
      using ParentType::ParentType;
     /*!
-     * \brief Calculate the storage for all mass balance equations
+     * \brief Calculates the storage for all mass balance equations.
      *
      * \param problem The object specifying the problem which ought to be simulated
      * \param scv The sub-control volume
@@ -227,7 +229,7 @@ public:
     }
 
     /*!
-     * \brief Calculate the storage for all mass balance equations
+     * \brief Calculates the flux for all mass balance equations.
      *
      * \param problem The object specifying the problem which ought to be simulated
      * \param element An element which contains part of the control volume
@@ -278,7 +280,7 @@ public:
     }
 
     /*!
-     * \brief Calculate the source term of the equation
+     * \brief Calculates the source term of the equation.
      *
      * \param problem The source term
      * \param element An element which contains part of the control volume

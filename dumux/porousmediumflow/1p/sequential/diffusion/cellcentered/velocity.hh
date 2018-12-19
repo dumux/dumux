@@ -16,22 +16,23 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_FVVELOCITY1P_HH
-#define DUMUX_FVVELOCITY1P_HH
-
-#include <dumux/porousmediumflow/1p/sequential/properties.hh>
-
 /*!
  * \file
  * \ingroup SequentialOnePModel
  * \brief  Single phase finite volume velocity reconstruction
  */
 
+#ifndef DUMUX_FVVELOCITY1P_HH
+#define DUMUX_FVVELOCITY1P_HH
 
-namespace Dumux
-{
-/*! \ingroup SequentialOnePModel
+#include <dumux/porousmediumflow/1p/sequential/properties.hh>
+
+
+namespace Dumux {
+/*!
+ * \ingroup SequentialOnePModel
  * \brief Single phase finite volume velocity reconstruction
+ *
  * Calculates velocities from a known pressure field applying a finite volume discretization.
  * The pressure has to be given as piecewise constant cell values.
  * The velocity is calculated following  Darcy's law as
@@ -43,7 +44,6 @@ namespace Dumux
  *
  * \tparam TypeTag The Type Tag
  */
-
 template<class TypeTag>
 class FVVelocity1P
 {
@@ -79,8 +79,9 @@ class FVVelocity1P
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    //! Constructs a FVVelocity1P object
-    /**
+    /*!
+     * \brief Constructs a FVVelocity1P object
+     *
      * \param problem A problem class object
      */
     FVVelocity1P(Problem& problem)
@@ -97,16 +98,16 @@ public:
     // Calculates the velocity at a cell-cell interface.
     void calculateVelocity(const Intersection&, CellData&);
 
-    //Calculates the velocity at a boundary.
+    // Calculates the velocity at a boundary.
     void calculateVelocityOnBoundary(const Intersection&, CellData&);
 
-    /*! \brief Adds velocity output to the output file
+    /*!
+     * \brief Adds velocity output to the output file
      *
      * Adds the velocities to the output.
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
@@ -190,13 +191,15 @@ private:
     Scalar viscosity_;
 };
 
-/*! \brief Calculates the velocity at a cell-cell interface.
-*
-* Calculates the velocity at a cell-cell interface from a given pressure field.
-*
-* \param intersection Intersection of two grid cells
-* \param cellData Object containing all model relevant cell data
-*/
+/*!
+ * \ingroup SequentialOnePModel
+ * \brief Calculates the velocity at a cell-cell interface.
+ *
+ * Calculates the velocity at a cell-cell interface from a given pressure field.
+ *
+ * \param intersection Intersection of two grid cells
+ * \param cellData Object containing all model relevant cell data
+ */
 template<class TypeTag>
 void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
 {
@@ -235,16 +238,16 @@ void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, 
 
     permeability /= viscosity_;
 
-    //calculate potential gradients
+    // calculate potential gradients
     Scalar potential = (cellData.pressure() - cellDataJ.pressure()) / dist;
 
     potential += density_ * (unitOuterNormal * gravity_);
 
-    //store potentials for further calculations (velocity, saturation, ...)
+    // store potentials for further calculations (velocity, saturation, ...)
     cellData.fluxData().setPotential(isIndexI, potential);
     cellDataJ.fluxData().setPotential(isIndexJ, -potential);
 
-    //calculate the gravity term
+    // calculate the gravity term
     VelocityVector velocity(permeability);
     velocity *= (cellData.pressure() - cellDataJ.pressure()) / dist;
 
@@ -253,7 +256,7 @@ void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, 
 
     velocity += gravityTerm;
 
-    //store velocities
+    // store velocities
     cellData.fluxData().setVelocity(isIndexI, velocity);
     cellData.fluxData().setVelocityMarker(isIndexI);
 
@@ -262,26 +265,28 @@ void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     return;
 }
 
-/*! \brief Calculates the velocity at a boundary.
-*
-* Calculates the velocity at a boundary from a given pressure field.
-*
-* \param intersection Boundary intersection
-* \param cellData Object containing all model relevant cell data
-*/
+/*!
+ * \ingroup SequentialOnePModel
+ * \brief Calculates the velocity at a boundary.
+ *
+ * Calculates the velocity at a boundary from a given pressure field.
+ *
+ * \param intersection Boundary intersection
+ * \param cellData Object containing all model relevant cell data
+ */
 template<class TypeTag>
 void FVVelocity1P<TypeTag>::calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData)
 {
     auto element = intersection.inside();
 
-    //get face index
+    // get face index
     int isIndex = intersection.indexInInside();
 
-    //get face normal
+    // get face normal
     const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
 
     BoundaryTypes bcType;
-    //get boundary type
+    // get boundary type
     problem_.boundaryTypes(bcType, intersection);
     PrimaryVariables boundValues(0.0);
 
@@ -301,28 +306,28 @@ void FVVelocity1P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         // compute distance between cell centers
         Scalar dist = distVec.two_norm();
 
-        //permeability vector at boundary
+        // permeability vector at boundary
         // compute vectorized permeabilities
         DimMatrix meanPermeability(0);
 
         problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(element));
 
-        //multiply with normal vector at the boundary
+        // multiply with normal vector at the boundary
         Dune::FieldVector < Scalar, dim > permeability(0);
         meanPermeability.mv(unitOuterNormal, permeability);
         permeability /= viscosity_;
 
         Scalar pressBound = boundValues;
 
-        //calculate potential gradients
+        // calculate potential gradients
         Scalar potential = (cellData.pressure() - pressBound) / dist;
 
         potential += density_ * (unitOuterNormal * gravity_);
 
-        //store potentials for further calculations (velocity, saturation, ...)
+        // store potentials for further calculations (velocity, saturation, ...)
         cellData.fluxData().setPotential(isIndex, potential);
 
-        //calculate the gravity term
+        // calculate the gravity term
         VelocityVector velocity(permeability);
         velocity *= (cellData.pressure() - pressBound) / dist;
 
@@ -331,11 +336,11 @@ void FVVelocity1P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
 
         velocity += gravityTerm;
 
-        //store velocities
+        // store velocities
         cellData.fluxData().setVelocity(isIndex, velocity);
         cellData.fluxData().setVelocityMarker(isIndex);
 
-    } //end dirichlet boundary
+    } // end Dirichlet boundary
 
     else
     {
@@ -344,14 +349,14 @@ void FVVelocity1P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
 
         velocity *= boundValues[pressEqIdx] / density_;
 
-        //store potential gradients for further calculations
+        // store potential gradients for further calculations
         cellData.fluxData().setPotential(isIndex, boundValues[pressEqIdx]);
 
         //store velocity
         cellData.fluxData().setVelocity(isIndex, velocity);
         cellData.fluxData().setVelocityMarker(isIndex);
-    } //end neumann boundary
+    } // end Neumann boundary
     return;
 }
-}
+} // end namespace Dumux
 #endif

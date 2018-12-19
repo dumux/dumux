@@ -28,12 +28,11 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \brief Levelwise assembler
- *
  * \ingroup SequentialTwoPModel
+ * \brief Levelwise assembler
  *
  * This class serves as a base class for local assemblers. It provides
  * space and access to the local stiffness matrix. The actual assembling is done
@@ -176,8 +175,8 @@ public:
             }
             }
 
-            //velocity reconstruction: !!! The velocity which is not reconstructed from the primary
-            //pressure variable can be slightly wrong and not conservative!!!!
+            // velocity reconstruction: !!! The velocity which is not reconstructed from the primary
+            // pressure variable can be slightly wrong and not conservative!!!!
             // -> Should not be used for transport!!
             switch (pressureType)
             {
@@ -288,5 +287,5 @@ public:
         }
     }
 };
-}
+} // end namespace Dumux
 #endif

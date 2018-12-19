@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup TwoPModel
- * \brief Adds I/O fields specific to the two-phase model
+ * \brief Adds I/O fields specific to the two-phase model.
  */
+
 #ifndef DUMUX_TWOP_IO_FIELDS_HH
 #define DUMUX_TWOP_IO_FIELDS_HH
 
@@ -34,7 +35,7 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPModel
- * \brief Adds I/O fields specific to the two-phase model
+ * \brief Adds I/O fields specific to the two-phase model.
  */
 class TwoPIOFields
 {

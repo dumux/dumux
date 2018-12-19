@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Finite volume 2p2c pressure model
+ */
 #ifndef DUMUX_FVPRESSURE2P2C_HH
 #define DUMUX_FVPRESSURE2P2C_HH
 
@@ -33,15 +38,10 @@
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 
+namespace Dumux {
 /*!
- * \file
- * \brief  Finite Volume 2p2c Pressure Model
- */
-namespace Dumux
-{
-/*!
- * \ingroup multiphase
- * \brief The finite volume model for the solution of the compositional pressure equation
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief The finite volume model for the solution of the compositional pressure equation.
  *
  * Provides a Finite Volume implementation for the pressure equation of a compressible
  * system with two components. An IMPES-like method is used for the sequential

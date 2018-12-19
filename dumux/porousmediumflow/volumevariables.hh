@@ -18,18 +18,19 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousmediumFlow
+ * \ingroup PorousmediumflowModels
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.
  */
+
 #ifndef DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 #define DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 
 namespace Dumux {
 
 /*!
- * \ingroup PorousmediumFlow
- * \brief The isothermal base class
+ * \ingroup PorousmediumflowModels
+ * \brief The isothermal base class.
  *
  * \tparam Traits The volume variables traits
  * \tparam Impl The implementation of the volume variables
@@ -40,18 +41,18 @@ class PorousMediumFlowVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
 public:
-    //! export the type used for the primary variables
+    //! Export the type used for the primary variables
     using PrimaryVariables = typename Traits::PrimaryVariables;
-    //! export the type encapsulating primary variable indices
+    //! Export the type encapsulating primary variable indices
     using Indices = typename Traits::ModelTraits::Indices;
 
-    //! return number of phases considered by the model
+    //! Return number of phases considered by the model
     static constexpr int numFluidPhases() { return Traits::ModelTraits::numFluidPhases(); }
-    //! return number of components considered by the model
+    //! Return number of components considered by the model
     static constexpr int numFluidComponents() { return Traits::ModelTraits::numFluidComponents(); }
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -70,13 +71,13 @@ public:
     }
 
     /*!
-     * \brief Return the vector of primary variables
+     * \brief Returns the vector of primary variables.
      */
     const PrimaryVariables &priVars() const
     { return priVars_; }
 
     /*!
-     * \brief Return a component of primary variable vector
+     * \brief Returns a component of primary variable vector.
      *
      * \param pvIdx The index of the primary variable of interest
      */
@@ -84,7 +85,7 @@ public:
     { return priVars_[pvIdx]; }
 
     /*!
-     * \brief Return how much the sub-control volume is extruded.
+     * \brief Returns how much the sub-control volume is extruded.
      *
      * This means the factor by which a lower-dimensional (1D or 2D)
      * entity needs to be expanded to get a full dimensional cell. The

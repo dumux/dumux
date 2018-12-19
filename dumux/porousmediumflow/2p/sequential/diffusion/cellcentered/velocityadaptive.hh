@@ -19,20 +19,19 @@
 /*!
  * \file
  * \ingroup SequentialTwoPModel
- * \brief  Velocity Field from a finite volume solution of a pressure equation.
+ * \brief  Velocity field from a finite volume solution of a pressure equation.
  */
-
 #ifndef DUMUX_FVVELOCITY2P_ADAPTIVE_HH
 #define DUMUX_FVVELOCITY2P_ADAPTIVE_HH
 
 #include <dune/common/float_cmp.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/velocity.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
  * \ingroup SequentialTwoPModel
+ * \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
  *
  * Details see FVVelocity2P
  */
@@ -105,7 +104,7 @@ public:
         viscosity_[nPhaseIdx] = 0.;
     }
 
-    // For initialization
+    //! For initialization
     void initialize()
     {
         ParentType::initialize();
@@ -146,22 +145,22 @@ private:
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
 
-    //! gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    //! Gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
     static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
-    //! gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
+    //! Gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
-    //! gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    //! Gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 
 /*!
  * \brief Calculates the velocity at a cell-cell interface.
-*
-* \copydetails FVVelocity2P::calculateVelocity(const Intersection&,CellData&)
-*
-* Implementation of calculateVelocity() function for cell-cell interfaces with hanging nodes.
-*/
+ *
+ * \copydetails FVVelocity2P::calculateVelocity(const Intersection&,CellData&)
+ *
+ * Implementation of calculateVelocity() function for cell-cell interfaces with hanging nodes.
+ */
 template<class TypeTag>
 void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
 {
@@ -194,13 +193,13 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         Scalar pcI = cellData.capillaryPressure();
         Scalar pcJ = cellDataJ.capillaryPressure();
 
-        //get face index
+        // get face index
         int isIndexI = intersection.indexInInside();
 
         Scalar faceArea = intersection.geometry().volume();
         Scalar faceAreaSum = faceArea;
 
-        //get face normal
+        // get face normal
         const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
 
         // Count number of hanging nodes
@@ -212,7 +211,7 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         // We are looking for two things:
         // IsIndexJ, the index of the interface from the neighbor-cell point of view
         // GlobalIdxK, the index of the third cell
-        // for efficienty this is done in one intersection loop
+        // for efficiency this is done in one intersection loop
 
         // Intersectioniterator around cell I
         for (const auto& intersectionI : intersections(problem_.gridView(), elementI))
@@ -370,7 +369,7 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         }
         }
 
-        //store potentials for further calculations (velocity, saturation, ...)
+        // store potentials for further calculations (velocity, saturation, ...)
         // these quantities only have correct sign (needed for upwinding)
         // potentials are defined slightly different for adaptive scheme
         cellData.fluxData().addUpwindPotential(wPhaseIdx, isIndexI, potentialDiffWIJ);
@@ -396,7 +395,7 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
             densityNwIK = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNwIK, 0.0, 1.0e-30)) ? rhoMeanNwIK : densityNwIK;
         }
 
-        //calculate velocities and the gravity term
+        // calculate velocities and the gravity term
         Dune::FieldVector < Scalar, dimWorld > velocityW(unitOuterNormal);
         Dune::FieldVector < Scalar, dimWorld > velocityNw(unitOuterNormal);
         Dune::FieldVector < Scalar, dimWorld > gravityTermW(unitOuterNormal);
@@ -473,11 +472,11 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         Scalar pcI = cellData.capillaryPressure();
         Scalar pcJ = cellDataJ.capillaryPressure();
 
-        //get face index
+        // get face index
         int isIndexI = intersection.indexInInside();
         int isIndexJ = intersection.indexInOutside();
 
-        //get face normal
+        // get face normal
         const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
 
         // distance vector between barycenters
@@ -495,7 +494,7 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         Dune::FieldVector<Scalar, dim> permeability(0);
         meanPermeability.mv(unitOuterNormal, permeability);
 
-        //calculate potential gradients
+        // calculate potential gradients
         Scalar potentialDiffW = cellData.potential(wPhaseIdx) - cellDataJ.potential(wPhaseIdx);
         Scalar potentialDiffNw = cellData.potential(nPhaseIdx) - cellDataJ.potential(nPhaseIdx);
 
@@ -519,14 +518,14 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
             potentialDiffNw += density_[nPhaseIdx] * (distVec * gravity_);
         }
 
-        //store potentials for further calculations (velocity, saturation, ...)
+        // store potentials for further calculations (velocity, saturation, ...)
         cellData.fluxData().setUpwindPotential(wPhaseIdx, isIndexI, potentialDiffW);
         cellData.fluxData().setUpwindPotential(nPhaseIdx, isIndexI, potentialDiffNw);
 
         cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, isIndexJ, -potentialDiffW);
         cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, isIndexJ, -potentialDiffNw);
 
-        //do the upwinding of the mobility depending on the phase potentials
+        // do the upwinding of the mobility depending on the phase potentials
         Scalar lambdaW = (potentialDiffW > 0.) ? lambdaWI : lambdaWJ;
         lambdaW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30 )) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
         Scalar lambdaNw = (potentialDiffNw > 0.) ? lambdaNwI : lambdaNwJ;
@@ -547,19 +546,19 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
 
         Scalar scalarPerm = permeability.two_norm();
 
-        //calculate the gravity term
+        // calculate the gravity term
         Dune::FieldVector<Scalar, dimWorld> velocityW(unitOuterNormal);
         Dune::FieldVector<Scalar, dimWorld> velocityNw(unitOuterNormal);
 
-        //calculate unit distVec
+        // calculate unit distVec
         distVec /= dist;
         Scalar areaScaling = (unitOuterNormal * distVec);
-        //this treatment of g allows to account for gravity flux through faces
-        //where the face normal has no z component (e.g. parallelepiped grids)
+        // this treatment of g allows to account for gravity flux through faces
+        // where the face normal has no z component (e.g. parallelepiped grids)
         Scalar gravityTermW = (gravity_ * distVec) * density_[wPhaseIdx] * areaScaling;
         Scalar gravityTermNw = (gravity_ * distVec) * density_[nPhaseIdx] * areaScaling;
 
-        //calculate velocity depending on the pressure used -> use pc = pn - pw
+        // calculate velocity depending on the pressure used -> use pc = pn - pw
         switch (pressureType_)
         {
         case pw:
@@ -589,7 +588,7 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         }
         }
 
-        //store velocities
+        // store velocities
         cellData.fluxData().setVelocity(wPhaseIdx, isIndexI, velocityW);
         cellData.fluxData().setVelocity(nPhaseIdx, isIndexI, velocityNw);
         cellData.fluxData().setVelocityMarker(isIndexI);
@@ -607,5 +606,5 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
 
     return;
 }
-}
+} // end namespace Dumux
 #endif

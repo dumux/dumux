@@ -20,8 +20,8 @@
  * \file
  * \ingroup TwoPOneCModel
  * \copydoc Dumux::TwoPOneCIndices
- *
  */
+
 #ifndef DUMUX_2P1C_INDICES_HH
 #define DUMUX_2P1C_INDICES_HH
 

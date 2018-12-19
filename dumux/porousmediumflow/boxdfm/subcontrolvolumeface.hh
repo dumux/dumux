@@ -18,8 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxDFMModel
  * \brief The sub control volume face class for the box discrete fracture model.
  */
+
 #ifndef DUMUX_POROUSMEDIUMFLOW_BOXDFM_SUBCONTROLVOLUMEFACE_HH
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_SUBCONTROLVOLUMEFACE_HH
 
@@ -36,9 +38,10 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup BoxDFMModel
  * \brief Default traits class to be used for the sub-control volume faces
  *        for the box discrete fracture scheme
+ *
  * \tparam GV the type of the grid view
  *
  * \note We define new traits for the box-dfm sub-control volume face
@@ -107,7 +110,7 @@ class BoxDfmSubControlVolumeFace
     static_assert(T::dim == 2 || T::dim == 3, "Box-Dfm sub-control volume face only implemented in 2d or 3d");
 
 public:
-    //! state the traits public and thus export all types
+    //! State the traits public and thus export all types
     using Traits = T;
 
     //! The default constructor
@@ -227,15 +230,15 @@ public:
     LocalIndexType facetIndexInElement() const
     { assert(isFractureScvf_); return facetIdx_; }
 
-    //! Return the boundary flag
+    //! Returns the boundary flag
     typename BoundaryFlag::value_type boundaryFlag() const
     { return boundaryFlag_.get(); }
 
-    //! index of the inside sub control volume for spatial param evaluation
+    //! Index of the inside sub control volume for spatial param evaluation
     LocalIndexType insideScvIdx() const
     { return scvIndices_[0]; }
 
-    //! index of the outside sub control volume for spatial param evaluation
+    //! Index of the outside sub control volume for spatial param evaluation
     // This results in undefined behaviour if boundary is true
     LocalIndexType outsideScvIdx() const
     {

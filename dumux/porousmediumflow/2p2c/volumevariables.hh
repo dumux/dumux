@@ -22,6 +22,7 @@
  * \brief Contains the quantities which are constant within a
  *        finite volume in the two-phase two-component model.
  */
+
 #ifndef DUMUX_2P2C_VOLUME_VARIABLES_HH
 #define DUMUX_2P2C_VOLUME_VARIABLES_HH
 
@@ -90,16 +91,16 @@ public:
     using FluidState = typename Traits::FluidState;
     //! The fluid system used here
     using FluidSystem = typename Traits::FluidSystem;
-    //! export type of solid state
+    //! Export type of solid state
     using SolidState = typename Traits::SolidState;
-    //! export type of solid system
+    //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
-    //! export the primary variable switch
+    //! Export the primary variable switch
     using PrimaryVariableSwitch = TwoPNCPrimaryVariableSwitch;
 
-    //! return whether moles or masses are balanced
+    //! Return whether moles or masses are balanced
     static constexpr bool useMoles() { return ModelTraits::useMoles(); }
-    //! return the two-phase formulation used here
+    //! Return the two-phase formulation used here
     static constexpr TwoPFormulation priVarFormulation() { return formulation; }
 
     // check for permissive combinations
@@ -114,7 +115,7 @@ public:
                    "Explicit composition calculation has to be re-checked for NON-liquid-gas equilibria");
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Updates all quantities for a given control volume.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -154,7 +155,7 @@ public:
     }
 
     /*!
-     * \brief Set complete fluid state
+     * \brief Sets complete fluid state.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -532,13 +533,13 @@ private:
     FluidState fluidState_;
     SolidState solidState_;
 
-    Scalar pc_;                     //!< The capillary pressure
-    PermeabilityType permeability_; //!< Effective permeability within the control volume
+    Scalar pc_;                     // The capillary pressure
+    PermeabilityType permeability_; // Effective permeability within the control volume
 
-    //!< Relative permeability within the control volume
+    // Relative permeability within the control volume
     std::array<Scalar, ModelTraits::numFluidPhases()> relativePermeability_;
 
-    //!< Binary diffusion coefficients for the phases
+    // Binary diffusion coefficients for the phases
     std::array<Scalar, ModelTraits::numFluidPhases()> diffCoeff_;
 };
 

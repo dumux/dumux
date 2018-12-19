@@ -16,22 +16,22 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Finite volume discretization of the component transport equation.
+ */
 #ifndef DUMUX_FVTRANSPORT2P2C_MULTIPHYSICS_HH
 #define DUMUX_FVTRANSPORT2P2C_MULTIPHYSICS_HH
 
 #include <dumux/porousmediumflow/2p2c/sequential/fvtransport.hh>
 #include <dumux/linear/vectorexchange.hh>
 
-/**
- * @file
- * @brief  Finite Volume discretization of the component transport equation
- */
-
-namespace Dumux
-{
-//! Compositional Transport Step in a Finite Volume discretization
+namespace Dumux {
 /*!
- * \ingroup multiphysics
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Compositional transport step in a finite volume discretization.
+ *
  *  The finite volume model for the solution of the transport equation for compositional
  *  two-phase flow.
  *  \f[
@@ -97,8 +97,9 @@ public:
     {}
 };
 
-//! \brief Calculate the update vector and determine timestep size
 /*!
+ * \brief Calculate the update vector and determine timestep size
+ *
  *  This method calculates the update vector \f$ u \f$ of the discretized equation
  *  \f[
        C^{\kappa , new} = C^{\kappa , old} + u,
@@ -255,5 +256,5 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
     }
     return;
 }
-}
+} // end namespace Dumux
 #endif

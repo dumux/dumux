@@ -27,10 +27,8 @@
 #include <dumux/common/properties/propertysystemmacros.hh>
 #include <dumux/porousmediumflow/2p/sequential/transport/properties.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 // \{
 
 //////////////////////////////////////////////////////////////////
@@ -46,18 +44,16 @@ NEW_TYPE_TAG(FVTransportTwoP, INHERITS_FROM(TransportTwoP));
 //! Bool property which tells the transport model if it should use constitutive relations which
 //! are precomputed at the begin of the time step or if it should recompute the relations
 NEW_PROP_TAG( PrecomputedConstRels );
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #include "evalcflfluxdefault.hh"
 #include "dumux/porousmediumflow/2p/sequential/transport/cellcentered/diffusivepart.hh"
 #include "dumux/porousmediumflow/2p/sequential/transport/cellcentered/convectivepart.hh"
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/saturation.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 //! Set the default implementation of the cfl-condition
 SET_TYPE_PROP(FVTransportTwoP, EvalCflFluxFunction, EvalCflFluxDefault<TypeTag>);
 //! Set the default implementation of a diffusive flux -> diffusive flux dissabled
@@ -68,7 +64,7 @@ SET_TYPE_PROP(FVTransportTwoP, GravityFlux, ConvectivePart<TypeTag>);
 SET_BOOL_PROP( FVTransportTwoP, PrecomputedConstRels, true);
 //! Set finite volume implementation of the two-phase saturation equation as default saturation model
 SET_TYPE_PROP(FVTransportTwoP, TransportModel, FVSaturation2P<TypeTag>);
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup RichardsModel
- * \brief A Richards model newton solver.
+ * \brief A Richards model Newton solver.
  */
+
 #ifndef DUMUX_RICHARDS_NEWTON_SOLVER_HH
 #define DUMUX_RICHARDS_NEWTON_SOLVER_HH
 
@@ -31,7 +32,7 @@
 namespace Dumux {
 /*!
  * \ingroup RichardsModel
- * \brief A Richards model specific newton solver.
+ * \brief A Richards model specific Newton solver.
  *
  * This solver 'knows' what a 'physically meaningful' solution is
  * and can thus do update smarter than the plain Newton solver.
@@ -56,9 +57,7 @@ public:
 private:
 
     /*!
-     * \brief Update the current solution of the newton method
-     *
-     * \todo TODO: doc me!
+     * \brief Update the current solution of the Newton method
      *
      * \param uCurrentIter The solution after the current Newton iteration \f$ u^{k+1} \f$
      * \param uLastIter The solution after the last Newton iteration \f$ u^k \f$

@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup OnePModel
- * \brief Adds I/O fields specific to the one phase model
+ * \brief Adds I/O fields specific to the one phase model.
  */
+
 #ifndef DUMUX_ONEP_IO_FIELDS_HH
 #define DUMUX_ONEP_IO_FIELDS_HH
 
@@ -32,7 +33,7 @@ namespace Dumux {
 
 /*!
  * \ingroup OnePModel
- * \brief Adds I/O fields specific to the one phase model
+ * \brief Adds I/O fields specific to the one phase model.
  */
 class OnePIOFields
 {

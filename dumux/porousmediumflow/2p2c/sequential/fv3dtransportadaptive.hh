@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Finite volume discretization of the component transport equation.
+ */
 #ifndef DUMUX_FV3DTRANSPORT2P2C_ADAPTIVE_HH
 #define DUMUX_FV3DTRANSPORT2P2C_ADAPTIVE_HH
 
@@ -28,16 +33,11 @@
 #include "adaptiveproperties.hh"
 #include "fvtransport.hh"
 
-/**
- * @file
- * @brief  Finite Volume discretization of the component transport equation
- * @author Benjamin Faigle
- */
-
-namespace Dumux
-{
-//! Compositional Transport step in a Finite Volume discretization
-/*! \ingroup multiphase Adaptive2p2c
+namespace Dumux {
+/*!
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief Compositional transport step in a finite volume discretization
+ *
  *  The finite volume model for the solution of the transport equation for compositional
  *  two-phase flow.
  *  \f[
@@ -110,8 +110,9 @@ public:
     void getMpfaFlux(Dune::FieldVector<Scalar, 2>&, Dune::FieldVector<Scalar, 2>&,
             const IntersectionIterator&, CellData&);
 
-    //! Constructs a FV3dTransport2P2CAdaptive object
     /*!
+     * \brief Constructs a FV3dTransport2P2CAdaptive object
+     *
      * The compositional transport scheme can not be applied with a global pressure / total velocity
      * formulation. This is a 3D-specific implementation! In case of 2d, use the class
      * FV2dTransport2P2CAdaptive
@@ -137,8 +138,9 @@ protected:
     static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
 };
 
-//! \brief Calculate the update vector and determine timestep size
 /*!
+ * \brief Calculate the update vector and determine timestep size
+ *
  *  This method calculates the update vector \f$ u \f$ of the discretized equation
  *  \f[
        C^{\kappa , new} = C^{\kappa , old} + u,
@@ -322,8 +324,10 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
     return;
 }
 
-//! Compute flux over an irregular interface using a \a mpfa method
-/** A mpfa l-method is applied to calculate fluxes near hanging nodes, using:
+/*!
+ * \brief Compute flux over an irregular interface using a \a mpfa method
+ *
+ * A mpfa l-method is applied to calculate fluxes near hanging nodes, using:
  * \f[
       - \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha}
         \left( \sum_k \tau_{2k} p^t_{\alpha,k} + \varrho_{\alpha} \sum_k \tau_{2k} \mathbf{g}^T \mathbf{x}_{k} \right)
@@ -629,5 +633,5 @@ void FV3dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
     return;
 }
 
-}
+} // end namespace Dumux
 #endif

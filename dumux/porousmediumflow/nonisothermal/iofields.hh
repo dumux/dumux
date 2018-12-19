@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup NIModel
- * \brief Adds I/O fields specific to non-isothermal models
+ * \brief Adds I/O fields specific to non-isothermal models.
  */
+
 #ifndef DUMUX_ENERGY_OUTPUT_FIELDS_HH
 #define DUMUX_ENERGY_OUTPUT_FIELDS_HH
 
@@ -31,7 +32,7 @@ namespace Dumux {
 
 /*!
  * \ingroup NIModel
- * \brief Adds I/O fields specific to non-isothermal models
+ * \brief Adds I/O fields specific to non-isothermal models.
  */
 template<class IsothermalIOFields>
 class EnergyIOFields

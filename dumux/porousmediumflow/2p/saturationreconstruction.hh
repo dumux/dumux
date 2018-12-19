@@ -21,6 +21,7 @@
  * \ingroup TwoPModel
  * \brief copydoc Dumux::TwoPScvSaturationReconstruction
  */
+
 #ifndef DUMUX_2P_SCV_SATURATION_RECONSTRUCTION_HH
 #define DUMUX_2P_SCV_SATURATION_RECONSTRUCTION_HH
 
@@ -31,9 +32,11 @@ namespace Dumux {
 /*!
  * \ingroup TwoPModel
  * \brief Class that computes the non-wetting saturation in an scv from the saturation
- *        at the global degree of freedom. This is only necessary in conjunction with
- *        the box scheme where the degrees of freedom lie on material interfaces. There
- *        the non-wetting phase saturation is generally discontinuous.
+ *        at the global degree of freedom.
+ *
+ * This is only necessary in conjunction with the box scheme where the degrees of
+ * freedom lie on material interfaces. There the non-wetting phase saturation is
+ * generally discontinuous.
  */
 template<DiscretizationMethod M, bool enableReconstruction>
 class TwoPScvSaturationReconstruction
@@ -41,6 +44,7 @@ class TwoPScvSaturationReconstruction
 public:
     /*!
      * \brief Compute the non-wetting phase saturation in an scv
+     *
      * \note In the default case, we don't reconstruct anything. We do
      *       Reconstruction is only done when using the box method
      *       and enableReconstruction = true.
@@ -101,6 +105,6 @@ public:
     }
 };
 
-}
+} // end namespace Dumux
 
 #endif

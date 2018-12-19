@@ -16,14 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
  * \ingroup TwoPModel
  * \brief Adaption of the fully implicit scheme to the two-phase flow model.
  *
  * This model implements two-phase flow of two immiscible fluids
- * \f$\alpha \in \{ w, n \}\f$ using a standard multiphase Darcy
+ * \f$\alpha \in \{ w, n \}\f$ using a standard multi-phase Darcy
  * approach as the equation for the conservation of momentum, i.e.
  \f[
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
@@ -133,8 +132,7 @@ class TwoPIOFields;
 ////////////////////////////////
 // properties
 ////////////////////////////////
-namespace Properties
-{
+namespace Properties {
 
 //////////////////////////////////////////////////////////////////
 // Type tags

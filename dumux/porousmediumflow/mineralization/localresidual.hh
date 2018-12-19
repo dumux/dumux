@@ -22,6 +22,7 @@
  * \brief Element-wise calculation of the local residual for problems using a
  *        compositional model that also considers mineralization of solid phases.
  */
+
 #ifndef DUMUX_COMPOSITIONAL_MINERALIZATION_LOCAL_RESIDUAL_HH
 #define DUMUX_COMPOSITIONAL_MINERALIZATION_LOCAL_RESIDUAL_HH
 
@@ -56,7 +57,7 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Evaluate the amount of all conservation quantities
+     * \brief Evaluates the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
      * We consider the volume-average here (e.g. phase mass inside a

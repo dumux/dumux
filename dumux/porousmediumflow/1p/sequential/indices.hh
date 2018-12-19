@@ -16,17 +16,16 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
  * \ingroup SequentialOnePModel
  * \brief Defines the indices required for the sequential one-phase model.
  */
+
 #ifndef DUMUX_SEQUENTIAL_1P_INDICES_HH
 #define DUMUX_SEQUENTIAL_1P_INDICES_HH
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup SequentialOnePModel
  */

@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief  Finite Volume Diffusion Model
+ * \author Benjamin Faigle, Bernd Flemisch, Jochen Fritz, Markus Wolff
+ */
 #ifndef DUMUX_FV2DPRESSURE2P2C_ADAPTIVE_HH
 #define DUMUX_FV2DPRESSURE2P2C_ADAPTIVE_HH
 
@@ -34,16 +40,12 @@
 #include <dumux/common/math.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 
-/**
- * @file
- * @brief  Finite Volume Diffusion Model
- * @author Benjamin Faigle, Bernd Flemisch, Jochen Fritz, Markus Wolff
- */
+namespace Dumux {
 
-namespace Dumux
-{
-//! The finite volume model for the solution of the compositional pressure equation
-/*! \ingroup Adaptive2p2c
+/*!
+ * \ingroup SequentialTwoPTwoCModel
+ * \brief The finite volume model for the solution of the compositional pressure equation
+ *
  *  Provides a Finite Volume implementation for the pressure equation of a compressible
  *  system with two components. An IMPES-like method is used for the sequential
  *  solution of the problem.  Diffusion is neglected, capillarity can be regarded.
