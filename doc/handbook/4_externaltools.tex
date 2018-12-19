@@ -32,16 +32,16 @@ The basic Git commands are:
 \subsection{Gnuplot}
 \label{gnuplot}
 A gnuplot interface is available to plot or visualize results during a simulation run.
-This is achieved with the help of the class provided in \texttt{io/gnuplotinterface.hh}.
+This is achieved with the help of the \texttt{Dumux::GnuplotInterface} class provided in \texttt{io/gnuplotinterface.hh}.
 
 To use the gnuplot interface you have to make some modifications in your file, e.g., your main file.
 
-First, you have to include the corresponding header file for the gnuplot interface. 
+First, you have to include the corresponding header file for the gnuplot interface.
 \begin{lstlisting}[style=DumuxCode]
 #include <dumux/io/gnuplotinterface.hh
 \end{lstlisting}
 
-Second, you have to define an instance of the class GnuplotInterface (e.g. called \texttt{gnuplot}).
+Second, you have to define an instance of the class \texttt{Dumux::GnuplotInterface} (e.g. called \texttt{gnuplot}).
 \begin{lstlisting}[style=DumuxCode]
 Dumux::GnuplotInterface<double> gnuplot;
 \end{lstlisting}
@@ -52,20 +52,20 @@ The actual plotting is done using the method of the gnuplot interface:
 
 \begin{lstlisting}[style=DumuxCode]
 gnuplot.resetPlot();                             // reset the plot
-gnuplot.setXRange(0.0, 72000.0);                 // specify xmin and xmax  
+gnuplot.setXRange(0.0, 72000.0);                 // specify xmin and xmax
 gnuplot.setYRange(0.0, 1.0);                     // specify ymin and ymax
 gnuplot.setXlabel("time [s]");                   // set xlabel
 gnuplot.setYlabel("mole fraction mol/mol");  // set ylabel
 
 // set x-values, y-values, the name of the data file and the Gnuplot options
-gnuplot.addDataSetToPlot(x, y, "N2.dat", options); 
+gnuplot.addDataSetToPlot(x, y, "N2.dat", options);
 
 gnuplot.plot("mole_fraction_N2");                // set the name of the output file
 \end{lstlisting}
 
 It is also possible to add several data sets to one plot by calling \texttt{addDataSetToPlot()} more than once.
-For more information have a look into a test including the gnuplot interface header file or
-the header file itself (\texttt{dumux/io/gnuplotinterface.hh}).
+For more information have a look into a test including the gnuplot interface header file, the doxygen documentation
+of \texttt{Dumux::GnuplotInterface}, or the header file itself (\texttt{dumux/io/gnuplotinterface.hh}).
 
 
 \subsection{Gstat}
