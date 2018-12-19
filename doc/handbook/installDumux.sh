@@ -42,7 +42,7 @@ echo "(2/2) Configure dune modules and dumux. Build the
 dune libaries. This may take several minutes."
 echo "*************************************************"
 # run build
-./dune-common/bin/dunecontrol --opts=dumux/optim.opts all
+./dune-common/bin/dunecontrol --opts=dumux/cmake.opts all
 #
 if [ $? -ne 0 ]; then
     echo "*************************************************"
