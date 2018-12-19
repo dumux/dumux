@@ -21,6 +21,27 @@ dune_add_test(NAME test_md_facet_tracertracer_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_tpfa params.input \
                                                               -Vtk.OutputName test_md_facet_tracertracer_tpfa")
 
+dune_add_test(NAME test_md_facet_tracertracer_mpfa
+              LABELS multidomain
+              SOURCES main.cc
+              COMPILE_DEFINITIONS ONEPBULKTYPETAG=OnePBulkMpfa
+              COMPILE_DEFINITIONS ONEPLOWDIMTYPETAG=OnePLowDimMpfa
+              COMPILE_DEFINITIONS TRACERBULKTYPETAG=TracerBulkMpfa
+              COMPILE_DEFINITIONS TRACERLOWDIMTYPETAG=TracerLowDimMpfa
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_tracertracer_mpfa_onep_bulk-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_mpfa_onep_bulk-00000.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_tracertracer_mpfa_onep_lowdim-reference.vtp
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_mpfa_onep_lowdim-00000.vtp
+                                ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_tracertracer_mpfa_tracer_bulk-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_mpfa_tracer_bulk-00010.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_tracertracer_mpfa_tracer_lowdim-reference.vtp
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_mpfa_tracer_lowdim-00010.vtp
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_mpfa params.input \
+                                                              -Vtk.OutputName test_md_facet_tracertracer_mpfa")
+
 dune_add_test(NAME test_md_facet_tracertracer_box
               LABELS multidomain
               SOURCES main.cc

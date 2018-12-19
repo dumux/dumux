@@ -97,6 +97,18 @@ struct CouplingManager<TypeTag, TTag::TracerBulkTpfa> { using type = typename Tp
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::TracerLowDimTpfa> { using type = typename TpfaTracerTraits::CouplingManager; };
 
+// set cm property for the mpfa test
+using MpfaTraits = TestTraits<Properties::TTag::OnePBulkMpfa, Properties::TTag::OnePLowDimMpfa>;
+using MpfaTracerTraits = TestTraits<Properties::TTag::TracerBulkMpfa, Properties::TTag::TracerLowDimMpfa>;
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePBulkMpfa> { using type = typename MpfaTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::OnePLowDimMpfa> { using type = typename MpfaTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::TracerBulkMpfa> { using type = typename MpfaTracerTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::TracerLowDimMpfa> { using type = typename MpfaTracerTraits::CouplingManager; };
+
 } // end namespace Properties
 } // end namespace Dumux
 

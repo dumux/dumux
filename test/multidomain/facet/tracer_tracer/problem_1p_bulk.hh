@@ -33,6 +33,7 @@
 
 #include <dumux/multidomain/facet/box/properties.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
+#include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
@@ -49,6 +50,7 @@ namespace Properties {
 namespace TTag {
 struct OnePBulk { using InheritsFrom = std::tuple<OneP>; };
 struct OnePBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePBulk>; };
+struct OnePBulkMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, OnePBulk>; };
 struct OnePBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePBulk>; };
 } // end namespace TTag
 
