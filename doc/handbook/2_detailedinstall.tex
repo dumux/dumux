@@ -165,19 +165,13 @@ $ ./dune-common/bin/dunecontrol --configure-opts="CXXFLAGS=-fno-strict-aliasing"
 \end{lstlisting}
 
 Too many options can make life hard. That's why usually option files are being used together with \texttt{dunecontrol} and its sub-tools.
-Larger sets of options are kept in them. If you are going to compile with options suited for debugging the code, the following
+Larger sets of options are kept in them. If you are going to compile with modified options, the following
 can be a starting point:
 \begin{lstlisting}[style=Bash]
 $ # make sure you are in the common root directory
-$ cp dumux/debug.opts my-debug.opts      # create a personal version
-$ gedit my-debug.opts                    # optional editing the options file
-$ ./dune-common/bin/dunecontrol --opts=my-debug.opts --use-cmake all
-\end{lstlisting}
-
-More optimized code, which is typically not usable for standard debugging tasks, can be produced by
-\begin{lstlisting}[style=Bash]
-$ cp dumux/optim.opts my-optim.opts
-$ ./dune-common/bin/dunecontrol --opts=my-optim.opts --use-cmake all
+$ cp dumux/cmake.opts my-cmake.opts      # create a personal version
+$ gedit my-cmake.opts                    # optional editing the options file
+$ ./dune-common/bin/dunecontrol --opts=my-cmake.opts all
 \end{lstlisting}
 
 Sometimes, it is necessary to have additional options which
@@ -257,7 +251,7 @@ Make sure that it uses the same library as \Dune when configuring the external l
 
 Some of the libraries are then compiled within that directory and are not installed in
 a different place, but \Dune may need to know their location. Thus, one may have to refer to
-them as options for \texttt{dunecontrol}, for example via the options file \texttt{my-debug.opts}.
+them as options for \texttt{dunecontrol}, for example via the options file \texttt{my-cmake.opts}.
 Make sure you compile the required external libraries before you run \texttt{dunecontrol}.
 
 An easy way to install some of the libraries and modules given below is the
