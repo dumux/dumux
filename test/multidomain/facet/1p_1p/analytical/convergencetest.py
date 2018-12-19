@@ -5,10 +5,10 @@ import os.path
 import subprocess
 import sys
 
-if len(sys.argv) > 5 or len(sys.argv) < 3:
+if len(sys.argv) < 3:
     sys.stderr.write("Invalid number of arguments given. Please provide the following arguments (in this order):\n\
                       - the name of the executable (either test_facetcoupling_tpfa_1p1p or test_facetcoupling_box_1p1p)\n\
-                      - between one and three fracture permeabilities you want to consider")
+                      - the fracture permeabilities you want to perform the convergence test for")
     sys.exit(1)
 
 # name of the executable
@@ -41,7 +41,7 @@ for permIndex in range(0, len(k)):
             sys.exit(1)
 
         # write a temporary geo-file using num elements
-        tmpGeoFile = open("grids/tmp.geo", 'w')
+        tmpGeoFile = open("grids/" + execName + ".geo", 'w')
         lines[0] = "numElemsPerSide = " + str(int(cells)) + ";\n"
         for line in lines:
             tmpGeoFile.write(line)
@@ -49,17 +49,17 @@ for permIndex in range(0, len(k)):
         geoFile.close()
         tmpGeoFile.close()
 
-        subprocess.call(['gmsh', '-2', 'grids/tmp.geo'])
+        subprocess.call(['gmsh', '-2', "grids/" + execName + ".geo"])
         subprocess.call(['./' + execName, 'params.input',
                                           '-Vtk.OutputName', execName,
-                                          '-Grid.File', 'grids/tmp.msh',
+                                          '-Grid.File', "grids/" + execName + ".msh",
                                           '-Grid.NumElemsPerSide', str(int(cells)),
                                           '-LowDim.SpatialParams.Permeability', str(k[permIndex]),
                                           '-Problem.OutputFileName', execName + '.log'])
 
         # remove geo and msh file
-        subprocess.call(['rm', 'grids/tmp.geo'])
-        subprocess.call(['rm', 'grids/tmp.msh'])
+        subprocess.call(['rm', "grids/" + execName + ".geo"])
+        subprocess.call(['rm', "grids/" + execName + ".msh"])
 
     # check the rates and append them to the log file
     logfile = open(execName + '.log', "r+")
