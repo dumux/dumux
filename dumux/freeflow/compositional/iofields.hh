@@ -67,7 +67,7 @@ struct FreeflowNCIOFields
 
                 // the eddy diffusivity is recalculated for an arbitrary component which is not the phase component
                 if (turbulenceModel)
-                    out.addVolumeVariable([j](const auto& v){ return v.effectiveDiffusivity(0, j) - v.diffusionCoefficient(0, j); }, "D_t");
+                    out.addVolumeVariable([j](const auto& v){ return v.effectiveDiffusivity(0, j) - v.diffusionCoefficient(0, j); }, "D_t^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(0));
             }
         }
     }
