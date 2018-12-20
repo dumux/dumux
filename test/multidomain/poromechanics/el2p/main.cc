@@ -157,7 +157,7 @@ int main(int argc, char** argv) try
     using Scalar = GetPropType<TwoPTypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDT = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    auto dt = getParam<Scalar>("TimeLoop.Dt");
 
     // intialize the vtk output module
     using TwoPVtkOutputModule = Dumux::VtkOutputModule<TwoPGridVariables, GetPropType<TwoPTypeTag, Properties::SolutionVector>>;
@@ -227,9 +227,6 @@ int main(int argc, char** argv) try
         std::cout << "time, mass CO2 (kg), mass brine (kg):" << std::endl;
         std::cout << timeLoop->time() << " , " << storage[1] << " , " << storage[0] << std::endl;
         std::cout << "***************************************" << std::endl;
-
-        // set new dt as suggested by the Newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 
