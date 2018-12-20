@@ -422,15 +422,17 @@ public:
         {
             const auto darcyElemIdx = this->problem(darcyIdx).fvGridGeometry().elementMapper().index(data.element);
 
-            if(darcyElemIdx != dofIdxGlobalJ)
-                continue;
+            const auto darcyElementDeriv = this->problem(darcyIdx).fvGridGeometry().element(dofIdxGlobalJ);
+            const auto darcyElemSol = elementSolution(darcyElementDeriv, this->curSol()[darcyIdx], this->problem(darcyIdx).fvGridGeometry());
 
-            const auto darcyElemSol = elementSolution(data.element, this->curSol()[darcyIdx], this->problem(darcyIdx).fvGridGeometry());
-
-            for(const auto& scv : scvs(data.fvGeometry))
+            auto fvGeometryDeriv = localView(this->problem(darcyIdx).fvGridGeometry());
+            fvGeometryDeriv.bindElement(darcyElementDeriv);
+            for(const auto& scv : scvs(fvGeometryDeriv))
             {
-                (*data.elementVolVars)[dofIdxGlobalJ].update(darcyElemSol, this->problem(darcyIdx), data.element, scv);
-                data.volVars.update(darcyElemSol, this->problem(darcyIdx), data.element, scv);
+                (*data.elementVolVars)[dofIdxGlobalJ].update(darcyElemSol, this->problem(darcyIdx), darcyElementDeriv, scv);
+
+                if(darcyElemIdx == dofIdxGlobalJ)
+                    data.volVars.update(darcyElemSol, this->problem(darcyIdx), darcyElementDeriv, scv);
             }
             data.elementFluxVarsCache->update(data.element, data.fvGeometry, *data.elementVolVars);
         }
