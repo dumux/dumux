@@ -20,7 +20,7 @@ dune_add_test(NAME test_md_facet_1p1p_gravity_xi1_tpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_xi1_lowdim-00001.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_tpfa params.input")
 
-dune_add_test(NAME test_facet_1p1p_tpfa_gravity_xi066_tpfa
+dune_add_test(NAME test_facet_1p1p_gravity_xi066_tpfa
               LABELS multidomain
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_tpfa
