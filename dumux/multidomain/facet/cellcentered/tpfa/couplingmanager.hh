@@ -391,14 +391,13 @@ public:
             return sources;
 
         assert(lowDimContext_.isSet);
-        const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
         for (const auto& embedment : it->second.embedments)
             sources += evalBulkFluxes(this->problem(bulkId).fvGridGeometry().element(embedment.first),
                                       *lowDimContext_.bulkFvGeometry,
                                       *lowDimContext_.bulkElemVolVars,
                                       *lowDimContext_.bulkElemFluxVarsCache,
                                       *lowDimContext_.bulkLocalResidual,
-                                      bulkMap.find(embedment.first)->second.elementToScvfMap.at(lowDimContext_.elementIdx));
+                                      embedment.second);
 
         // if lowdim domain uses box, we distribute the sources equally among the scvs
         if (lowDimUsesBox)
