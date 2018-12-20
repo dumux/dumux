@@ -13,12 +13,13 @@ set(TEX_INPUTS
   4_parameterfiles.tex
   4_restartsimulations.tex
   4_structure.tex
+  5_basics.tex
   5_inputoutput.tex
-  5_models.tex
   5_parallel.tex
   5_propertysystem.tex
   5_spatialdiscretizations.tex
   5_stepsofasimulation.tex
+  5_temporaldiscretizations.tex
   installDumux.sh)
 
 set(TEX_IMAGES
