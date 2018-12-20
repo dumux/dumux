@@ -2,24 +2,24 @@ set(TEX_INPUTS
   0_dumux-handbook.tex
   0_listingstyle.tex
   1_introduction.tex
-  2_detailedinstall.tex
   2_quickinstall.tex
-  3_course.tex
-  3_furtherpractice.tex
-  4_assemblinglinearsystem.tex
-  4_developingdumux.tex
-  4_externaltools.tex
-  4_newfoldersetup.tex
-  4_parameterfiles.tex
-  4_restartsimulations.tex
-  4_structure.tex
-  5_basics.tex
-  5_inputoutput.tex
-  5_parallel.tex
-  5_propertysystem.tex
-  5_spatialdiscretizations.tex
-  5_stepsofasimulation.tex
-  5_temporaldiscretizations.tex
+  3_detailedinstall.tex
+  4_course.tex
+  4_furtherpractice.tex
+  5_assemblinglinearsystem.tex
+  5_developingdumux.tex
+  5_externaltools.tex
+  5_newfoldersetup.tex
+  5_parameterfiles.tex
+  5_restartsimulations.tex
+  5_structure.tex
+  6_basics.tex
+  6_inputoutput.tex
+  6_parallel.tex
+  6_propertysystem.tex
+  6_spatialdiscretizations.tex
+  6_stepsofasimulation.tex
+  6_temporaldiscretizations.tex
   installDumux.sh)
 
 set(TEX_IMAGES
