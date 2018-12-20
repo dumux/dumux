@@ -272,7 +272,15 @@ public:
     Scalar darcyPermeability(const SubControlVolumeFace<stokesIdx>& scvf) const
     {
         const auto& stokesContext = couplingManager().stokesCouplingContext(scvf);
-        return stokesContext.volVars.permeability();
+        const auto perm = stokesContext.volVars.permeability();
+
+        Scalar permTrace;
+        for(int i=0; i<perm.size();i++)
+            permTrace += perm[i][i];
+
+        permTrace /= perm.size();
+
+        return permTrace;
     }
 
      /*!

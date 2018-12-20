@@ -53,14 +53,24 @@ class OnePSpatialParams
 
 public:
     // export permeability type
-    using PermeabilityType = Scalar;
+    using PermeabilityType = DimWorldMatrix;
 
     OnePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry), permeability_(0.0)
     {
-        //auto perm = getParam<Scalar>("Darcy.SpatialParams.Permeability");
-        //permeability_[0][0] = permeability_[1][1] = perm;
-        permeability_ = getParam<Scalar>("Darcy.SpatialParams.Permeability");
+        auto perm = getParam<Scalar>("Darcy.SpatialParams.Permeability");
+
+        double pi = 4.0*atan(1.0);
+        double theta = pi*40.0/180;
+        double cost = cos(theta);
+        double sint = sin(theta);
+
+        Scalar k1_ = perm;
+        Scalar k2_ = perm;
+
+        permeability_[0][0] = cost*cost*k1_ + sint*sint*k2_;
+        permeability_[1][1] = sint*sint*k1_ + cost*cost*k2_;
+        permeability_[0][1] = permeability_[1][0] = cost*sint*(k1_ - k2_);
 
         alphaBJ_ = getParam<Scalar>("Darcy.SpatialParams.AlphaBeaversJoseph");
     }
