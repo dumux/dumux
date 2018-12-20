@@ -425,15 +425,12 @@ public:
             const auto darcyElementDeriv = this->problem(darcyIdx).fvGridGeometry().element(dofIdxGlobalJ);
             const auto darcyElemSol = elementSolution(darcyElementDeriv, this->curSol()[darcyIdx], this->problem(darcyIdx).fvGridGeometry());
 
-            auto fvGeometryDeriv = localView(this->problem(darcyIdx).fvGridGeometry());
-            fvGeometryDeriv.bindElement(darcyElementDeriv);
-            for(const auto& scv : scvs(fvGeometryDeriv))
-            {
-                (*data.elementVolVars)[dofIdxGlobalJ].update(darcyElemSol, this->problem(darcyIdx), darcyElementDeriv, scv);
+            const auto& scv = data.fvGeometry.scv(dofIdxGlobalJ);
+            auto& volVars = (*data.elementVolVars)[dofIdxGlobalJ];
+            volVars.update(darcyElemSol, this->problem(darcyIdx), darcyElementDeriv, scv);
+            if(darcyElemIdx == dofIdxGlobalJ)
+                data.volVars.update(darcyElemSol, this->problem(darcyIdx), darcyElementDeriv, scv);
 
-                if(darcyElemIdx == dofIdxGlobalJ)
-                    data.volVars.update(darcyElemSol, this->problem(darcyIdx), darcyElementDeriv, scv);
-            }
             data.elementFluxVarsCache->update(data.element, data.fvGeometry, *data.elementVolVars);
         }
     }
