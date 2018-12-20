@@ -423,7 +423,6 @@ public:
             return sources;
 
         assert(lowDimContext_.isSet);
-        const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
         for (unsigned int i = 0; i < it->second.embedments.size(); ++i)
         {
             const auto& embedment = it->second.embedments[i];
@@ -431,7 +430,7 @@ public:
             // list of scvfs in the bulk domain whose fluxes enter this scv
             // if low dim domain uses tpfa, this is all scvfs lying on this element
             // if it uses box, it is the one scvf coinciding with the given scv
-            const auto& coincidingScvfs = bulkMap.find(embedment.first)->second.elementToScvfMap.at(lowDimContext_.elementIdx);
+            const auto& coincidingScvfs = embedment.second;
             const auto& scvfList = lowDimUsesBox ? std::vector<GridIndexType<lowDimId>>{ coincidingScvfs[scv.localDofIndex()] }
                                                  : coincidingScvfs;
 
