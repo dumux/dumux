@@ -1,0 +1,21 @@
+diff --git a/dune/istl/paamg/amg.hh b/dune/istl/paamg/amg.hh
+index b4b90a97..5bd66cda 100644
+--- a/dune/istl/paamg/amg.hh
++++ b/dune/istl/paamg/amg.hh
+@@ -523,14 +523,14 @@ namespace Dune
+               // in order to ensure that we fulfill the alignement requirements
+               solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
+                                                   *scalarProduct_,
+-                                                  *coarseSmoother_, 1E-2, 1000, 0));
++                                                  *coarseSmoother_, 1E-12, 1000, 0));
+             else
+               solver_.reset();
+           }else
+           {
+               solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
+                   *scalarProduct_,
+-                  *coarseSmoother_, 1E-2, 1000, 0));
++                  *coarseSmoother_, 1E-12, 1000, 0));
+             // // we have to allocate these types using the rebound allocator
+             // // in order to ensure that we fulfill the alignement requirements
+             // using Alloc = typename A::template rebind<BiCGSTABSolver<X>>::other;
