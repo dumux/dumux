@@ -1,9 +1,3 @@
-This chapter provides one quick way of installing \Dumux.
-You should have a recent working Linux environment and no \Dune core modules should be installed.
-If you need more information or
-have \Dune already installed, please have a look at the detailed installation
-instructions in the more detailed intructions in the next chapter \ref{detailed-install}.
-
 \section{Prerequisites} \label{sec:prerequisites}
 For this quick start guide the following software packages are required:
 \begin{itemize}
@@ -11,16 +5,13 @@ For this quick start guide the following software packages are required:
 \item A standard compliant C++ compiler supporting C++11 and the C++14 feature set of GCC 4.9. We support GCC 4.9 or newer and Clang 3.8 or newer.
 \item CMake 2.8.12 or newer
 \item pkg-config
-\item paraview (to visualize the results)
+\item ParaView (to visualize the results)
 \end{itemize}
 
 \section{Obtaining code and configuring all modules with a script}
 We provide you with a shell-script \texttt{installDumux.sh} that facilitates setting up a {\Dune}/{\Dumux} directory tree
 and configures all modules with CMake.
-% TODO: uncomment/delete the following lines when next is the only release
-% It is available after obtaining a download link via \url{http://www.dumux.org/download/} or
-% by copying the following lines into a text-file named \texttt{installDumux.sh}:
-Copy the following lines into a text-file named \texttt{installDumux.sh}:
+Copy the following lines into a text file named \texttt{installDumux.sh}:
 \lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=1, firstnumber=1]{installDumux.sh}
 
 Place the \texttt{installDumux.sh} script in the directory where you want to install \Dumux and \Dune (a single
@@ -34,13 +25,15 @@ More details about the build-system can be found in section \ref{buildIt}.
 \subsection{A first test run of \Dumux}
 When the \texttt{installDumux.sh} script from the subsection above has run successfully, you can execute a second script that
 will compile and run a simple one-phase ground water flow example and will visualize the result using ParaView.
-The test script can be obtained by copying the following lines into a text-file named \texttt{test\_dumux.sh}
+The test script can be obtained by copying the following lines into a text file named \texttt{test\_dumux.sh}
 that has to be located in the same directory as the installation script.
 \begin{lstlisting}[style=DumuxCode]
-cd DUMUX/dumux/build-cmake/test/porousmediumflow/1p/implicit
-make -B test_1pcctpfa
-./test_1pcctpfa test_1pcctpfa.input
+cd DUMUX/dumux/build-cmake/test/porousmediumflow/1p/implicit/isothermal
+make -B test_1p_tpfa
+./test_1p_tpfa params.input
 paraview *pvd
 \end{lstlisting}
 The script \texttt{test\_dumux.sh} can be executed by typing into the terminal: \texttt{./test\_dumux.sh}.
-If everything works fine, a ParaView window with the result should open automatically.
+If everything works fine, a ParaView window with the result should open automatically, showing the initial
+conditions. Advance ParaView to the next frame (green arrow button) and rescale to data range to admire
+the colorful pressure distribution.

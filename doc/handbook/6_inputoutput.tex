@@ -120,9 +120,9 @@ For all available parameters see the Doxygen documentation.
 
 \subsubsection{VTK file format}
 Dumux allows to write out simulation results via the \texttt{VtkOutputModule}.
-For every print-out step, a single \texttt{*.vtu} file is created. For parallel simulations one file
+For every print-out step, a single VTU file is created. For parallel simulations one file
 per print-out step is generated for each processor.
-The \texttt{*.pvd} file groups the single \texttt{*.vtu} files and contains additionally the time step information.
+The PVD file groups the single VTU files and contains additionally the time step information.
 The VTK file format is supported by common visualisation programs like ParaView, VisIt, and Tecplot.
 
 \subsubsection{Customize the VTK output}
