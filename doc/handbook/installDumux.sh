@@ -10,25 +10,11 @@ Make sure to be connected to the internet."
 echo "*************************************************"
 # the core modules
 for MOD in common geometry grid localfunctions istl; do
-    if [ ! -d "dune-$MOD" ]; then
-        git clone -b releases/2.6 https://gitlab.dune-project.org/core/dune-$MOD.git
-    else
-        echo "Skip cloning dune-$MOD because the folder already exists."
-        cd dune-$MOD
-        git checkout releases/2.6
-        cd ..
-    fi
+    git clone -b releases/2.6 https://gitlab.dune-project.org/core/dune-$MOD.git
 done
 
 # dumux
-if [ ! -d "dumux" ]; then
-    git clone -b releases/3.0 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
-else
-    echo "Skip cloning dumux because the folder already exists."
-    cd dumux
-    git checkout releases/3.0
-    cd ..
-fi
+git clone -b releases/3.0 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 
 if [ $? -ne 0 ]; then
     echo "*************************************************"

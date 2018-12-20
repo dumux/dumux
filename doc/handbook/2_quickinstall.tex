@@ -28,9 +28,9 @@ will compile and run a simple one-phase ground water flow example and will visua
 The test script can be obtained by copying the following lines into a text file named \texttt{test\_dumux.sh}
 that has to be located in the same directory as the installation script.
 \begin{lstlisting}[style=DumuxCode]
-cd DUMUX/dumux/build-cmake/test/porousmediumflow/1p/implicit/stationary
-make -B test_1p_compressible_stationary_tpfa
-./test_1p_compressible_stationary_tpfa params.input
+cd DUMUX/dumux/build-cmake/test/porousmediumflow/1p/implicit/isothermal
+make -B test_1p_tpfa
+./test_1p_tpfa params.input
 paraview *pvd
 \end{lstlisting}
 The script \texttt{test\_dumux.sh} can be executed by typing into the terminal: \texttt{./test\_dumux.sh}.
