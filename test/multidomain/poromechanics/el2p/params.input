@@ -1,6 +1,6 @@
 [TimeLoop]
-DtInitial = 10 # [s]
-TEnd = 1000 # [s]
+Dt = 10 # [s]
+TEnd = 100 # [s]
 
 [Grid]
 LowerLeft = 0 0 0
@@ -31,10 +31,6 @@ SolidDensity = 2650
 
 [Brine]
 Salinity = 0.1
-
-[Newton]
-TargetSteps = 15
-MaxRelativeShift = 1e-6
 
 [Vtk]
 OutputName = test_md_poromechanics_el2p

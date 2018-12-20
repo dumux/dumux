@@ -380,10 +380,9 @@ public:
                 elemSol[0][pvIdx] = priVar;
                 this->couplingManager().updateCouplingContext(domainI, *this, domainI, globalI, elemSol[0], pvIdx);
                 curVolVars.update(elemSol, this->problem(), element, scv);
+                elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
                 if (enableGridFluxVarsCache)
                     gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
-                else
-                    elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 // calculate the residual with the deflected primary variables
                 if (!this->elementIsGhost()) partialDerivsTmp[0] = this->evalLocalResidual()[0];
@@ -465,6 +464,9 @@ public:
         const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
         const auto& curSolJ = this->curSol()[domainJ];
 
+        // make sure the flux variables cache does not contain any artifacts from prior differentiation
+        elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
+
         // convenience lambda for call to update self
         auto updateCoupledVariables = [&] ()
         {
@@ -473,9 +475,15 @@ public:
             if (enableGridFluxVarsCache)
             {
                 if (enableGridVolVarsCache)
+                {
                     this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
+                    this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), elemFluxVarsCache);
+                }
                 else
+                {
                     this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, gridVariables.gridFluxVarsCache());
+                    this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, elemFluxVarsCache);
+                }
             }
             else
             {
@@ -522,22 +530,13 @@ public:
 
                 // restore the undeflected state of the coupling context
                 this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
-
-                // TODO do we have to restore here again???
-                // if (enableGridFluxVarsCache)
-                //     this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, gridVariables.gridFluxVarsCache());
-                // else
-                //     this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, elemFluxVarsCache);
             }
-        }
 
-        // restore original state of the flux vars cache and/or vol vars in case of global caching.
-        // This has to be done in order to guarantee that everything is in an undeflected
-        // state before the assembly of another element is called. In the case of local caching
-        // this is obsolete because the local views used here go out of scope after this.
-        // We only have to do this for the last primary variable, for all others the flux var cache
-        // is updated with the correct element volume variables before residual evaluations
-        updateCoupledVariables();
+            // restore original state of the flux vars cache and/or vol vars in case of global caching.
+            // This has to be done in order to guarantee that the undeflected residual computation done
+            // above is correct when jumping to the next coupled element.
+            updateCoupledVariables();
+        }
     }
 };
 
