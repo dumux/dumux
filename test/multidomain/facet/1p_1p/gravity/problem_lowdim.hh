@@ -21,7 +21,6 @@
  * \ingroup FacetTests
  * \brief The problem for the lower-dimensional domain in the single-phase facet coupling test.
  */
-
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEP_LOWDIMPROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_ONEP_LOWDIMPROBLEM_HH
 
