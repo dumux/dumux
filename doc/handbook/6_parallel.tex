@@ -17,7 +17,7 @@ data from other ranks. The domain decomposition in Dune is handled by the grid m
 The grid is partitioned and distributed on several nodes. Most grid managers contain own domain decomposition methods to split the
 computational domain  into subdomains. Some grid managers also support external
 tools like METIS, ParMETIS, PTScotch or ZOLTAN for partitioning.
-On the other hand linear algebra types such as matrices and vectors
+On the other hand, linear algebra types such as matrices and vectors
 do not know that they are in a parallel environment. Communication is then handled by the components of the
 parallel solvers. Currently, the only parallel solver backend is \texttt{Dumux::AMGBackend}, a parallel AMG-preconditioned
 BiCGSTAB solver.
@@ -62,9 +62,9 @@ submit a job. Check with your cluster administrator how to run parallel applicat
 
 \subsection{Handling Parallel Results}
 For serial computations, \Dumux produces single vtu-files as default output format.
-During a simulation, one vtu-file is written for every output step.
-In the parallel case, one vtu-file for each step and processor is created.
+During a simulation, one VTU file is written for every output step.
+In the parallel case, one VTU file for each step and processor is created.
 For parallel computations, an additional variable \texttt{"process rank"} is written
 into the file. The process rank allows the user to inspect the subdomains
-after the computation. The parallel vtu-files are combined in a single pvd file
+after the computation. The parallel VTU files are combined in a single pvd file
 like in sequential simulations that can be opened with e.g. ParaView.
