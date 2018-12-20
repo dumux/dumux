@@ -11,6 +11,8 @@ get the following output at the end of the simulation run
 [ Grid ]
 Cells = "48 32"
 UpperRight = "6 4"
+[ Newton ]
+EnablePartialReassembly = "true"
 [ Problem ]
 EnableGravity = "true"
 Name = "2p"
@@ -21,7 +23,7 @@ LensUpperRight = "4.0 3.0"
 DtInitial = "250"
 TEnd = "3000"
 
-# Default parameters used:
+# Global default parameters used:
 [ Assembly ]
 NumericDifferenceMethod = "1"
 [ Flux ]
@@ -34,6 +36,7 @@ ResidualReduction = "1e-13"
 Verbosity = "0"
 [ Newton ]
 EnableAbsoluteResidualCriterion = "false"
+EnableChop = "false"
 EnableResidualCriterion = "false"
 EnableShiftCriterion = "true"
 MaxAbsoluteResidual = "1e-5"
@@ -44,7 +47,6 @@ SatisfyResidualAndShiftCriterion = "false"
 TargetSteps = "10"
 UseLineSearch = "false"
 [ TimeLoop ]
-MaxTimeStepDivisions = "10"
 MaxTimeStepSize = "1e300"
 [ Vtk ]
 AddProcessRank = "true"

@@ -1,13 +1,10 @@
-% \section{Detailed Installation Instructions}
-% \label{install}
-
 Installing \Dumux means that you first unpack \Dune and \Dumux in a root directory,
 (section \ref{sc:ObtainingSourceCode}).
 In a second step of the installation, all modules are configured with CMake
 (section \ref{buildIt}).
-After successful installation of \Dumux we guide you to start a test application,
+After successful installation of \Dumux, we guide you to start a test application,
 described in section \ref{quick-start-guide}.
-In section \ref{sec:build-doxy-doc} we explain how to build the \Dumux documentation.
+In section \ref{sec:build-doc} we explain how to build the \Dumux documentation.
 Lastly, section \ref{sec:external-modules-libraries} provides details on optional libraries and modules.
 
 In a technical sense \Dumux is a module of \Dune.
@@ -18,31 +15,28 @@ Details regarding the installation of \Dune are provided on the \Dune website \c
 \section{Obtaining Source Code for \Dune and \Dumux}
 \label{sc:ObtainingSourceCode}
 The \Dumux release and trunk (developer tree) are based on the most recent
-\Dune release 2.6, comprising the core modules dune-common, dune-geometry, dune-grid,
-dune-istl and dune-localfunctions. For working with \Dumux, these modules are required.
+\Dune release 2.6, comprising the core modules \texttt{dune-common}, \texttt{dune-geometry},
+\texttt{dune-grid}, \texttt{dune-istl} and \texttt{dune-localfunctions}.
+For working with \Dumux, these modules are required.
 All \Dune modules, including the \Dumux module, get extracted into a common root directory, as it
 is done in an ordinary \Dune installation.
 We usually name our root directory \texttt{DUMUX} but an arbitrary name can be chosen.
 Source code files for each \Dune module are contained in their own sub-directory within the root directory.
 The sub-directories for the modules are named after the module names (depending on how
-the modules were obtained a version number is added to the module name).
+the modules were obtained, a version number is added to the module name).
 The name of each \Dune module is defined in the file \texttt{dune.module}, which is
 in the root directory of the respective module. This should not be changed by the user.
 
 Two possibilities exist to get the source code of \Dune and \Dumux.
 Firstly, \Dune and \Dumux can be downloaded as tar files from the respective \Dune and \Dumux website.
 They have to be extracted as described in the next paragraph.
-% % TODO: alpha version was not released with a tarball. For the next releases the following lines need to be deleted again
-% There is no tar file for the current \DumuxVersion~release.
-% Secondly, a method to obtain the most recent source code (or, more generally, any of its previous revisions) by direct access
-% to the software repositories of the revision control system is described in the subsequent part.
-% Be aware that you cannot get \texttt{dumux-devel} or the external libraries from \texttt{dumux-external} unless
-% you have an GitLab account with the right privileges.
+Secondly, the most recent source code
+(or, more generally, any of its previous revisions) can be obtained by direct access
+to the software repositories of the revision control system. This is described in the second paragraph.
 
 In section \ref{sec:prerequisites} we list some prerequisites for running \Dune and \Dumux.
 Please check in said paragraph whether you can fulfill them before continuing.
 
-% TODO: alpha version was not released with a tarball. For the next releases the following lines need to be uncommented again
 \paragraph{Obtaining the software by installing tar files}
 The slightly old-fashionedly named tape-archive-file, shortly named tar file or
 tarball, is a common file format for distributing collections of files contained
@@ -75,7 +69,7 @@ on the Dune grid interface, act similar.
 \paragraph{Obtaining \Dune and \Dumux from software repositories}
 Direct access to a software revision control system for downloading code can be of advantage later on.
 It is easier to keep up with code changes and to receive important bug fixes.
-\Dune and \Dumux use Git for their software repositories. To access them a Git client is needed.
+\Dune and \Dumux use Git for their software repositories. To access them, a Git client is needed.
 
 In the technical language of Git, \emph{cloning a certain software version} means nothing more then fetching
 a local copy from the software repository and laying it out in the file system.
@@ -144,7 +138,7 @@ Configuring \Dune and \Dumux is done by the shell-command \texttt{dunecontrol} w
 If you are interested in more details about the build system that is used,
 they can be found in the \Dune build system documentation\footnote{\url{https://www.dune-project.org/buildsystem/}} and
 CMake's documentation\footnote{\url{https://cmake.org/documentation/}}.
-If something fails during the execution of \texttt{dunecontrol} feel free to report it to the \Dune or \Dumux developer mailing list,
+If something fails during the execution of \texttt{dunecontrol}, feel free to report it to the \Dune or \Dumux developer mailing list,
 but please include error details.
 
 It is possible to compile \Dumux with nearly no explicit options to the build system.
@@ -170,7 +164,7 @@ Sometimes, it is necessary to have additional options which
 are specific to a package set of an operating system or
 sometimes you have your own preferences.
 Feel free to work with your own set of options, which may evolve over time.
-The option files above are to be understood more as a starting point
+The option file that comes with the distribution is to be understood more as a starting point
 for setting up an own customization than as something which is fixed.
 The use of external libraries can make it necessary to add quite many options in an option file.
 It can be helpful to give your customized option file its own name, as done above,
@@ -185,9 +179,6 @@ All executables are compiled in the \texttt{build} sub-directories of \Dumux.
 If not specified differently in the options file, this is \texttt{build-cmake} as default.
 
 \begin{enumerate}
-\item Go to the directory \texttt{build-cmake/test}. There, various test application
-      folders can be found. Let us consider as example\\
-      \texttt{porousmediumflow/2p/implicit/incompressible/test{\_}2p{\_}incompressible{\_}tpfa}.
 \item Enter the folder \texttt{porousmediumflow/2p/implicit/incompressible}.\\ Type \texttt{make test{\_}2p{\_}incompressible{\_}tpfa}
       in order to compile the application\\\texttt{test{\_}2p{\_}incompressible{\_}tpfa}. To run the simulation,
       type \texttt{./test{\_}2p{\_}incompressible{\_}tpfa params.input}
@@ -196,16 +187,16 @@ If not specified differently in the options file, this is \texttt{build-cmake} a
       important run-time parameters (like first time step size, end of simulation and location
       of the grid file) can be found in a text file in the same directory  with the
       name \texttt{params.input}.
-\item The simulation starts and produces some .vtu output files and also a .pvd
-      file. The .pvd file can be used to examine time series and summarizes the .vtu
+\item The simulation starts and produces some VTU output files and also a PVD
+      file. The PVD file can be used to examine time series and summarizes the VTU
       files. It is possible to stop a running application by pressing $<$Ctrl$><$c$>$.
 \item You can display the results using the visualization tool ParaView (or
       alternatively VisIt). Just type \texttt{paraview} in the console and open the
-      .pvd file. On the left hand side, you can choose the desired parameter to be displayed.
+      PVD file. On the left hand side, you can choose the desired parameter to be displayed.
 \end{enumerate}
 
 \section{Building Documentation}
-
+\label{sec:build-doc}
 The building of included documentation like this handbook requires \LaTeX{} and auxiliary tools
 \texttt{bibtex}. One usually chooses a \LaTeX{} distribution like \texttt{texlive} for this purpose.
 It is possible to switch off the building of the documentation by setting the switch \texttt{--disable-documentation}
@@ -213,13 +204,13 @@ in the \texttt{CONFIGURE\_FLAGS} of the building options, see section \ref{build
 
 \subsection{Doxygen}
 \label{sec:build-doxy-doc}
-Doxygen documentation is done by especially formatted comments integrated in the source code,
+Doxygen documentation is done by specifically formatted comments integrated in the source code,
 which can get extracted by the program \texttt{doxygen}. Beside extracting these comments,
 \texttt{doxygen} builds up a web-browsable code structure documentation
 like class hierarchy of code displayed as graphs, see \url{http://www.stack.nl/~dimitri/doxygen/}.
 
-The Doxygen documentation of a module can be built, if \texttt{doxygen} is installed,
-by running \texttt{dunecontrol}, entering the \texttt{build-*}directory, and execute
+The Doxygen documentation of a module can be built if \texttt{doxygen} is installed,
+by running \texttt{dunecontrol}, entering the \texttt{build-*}directory, and executing
 \texttt{make doc}. Then point your web browser to the file
 \texttt{MODULE\_BUILD\_DIRECTORY/doc/doxygen/html/index.html} to read the generated documentation.
 This should also work for other \Dune modules.
@@ -231,9 +222,9 @@ in \texttt{MODULE\_BUILD\_DIRECTORY/doc/handbook/0\_dumux-handbook.pdf}.
 
 \section{External Libraries and Modules} \label{sec:external-modules-libraries}
 The libraries described below provide additional functionality but are not generally required to run \Dumux.
-If you are going to use an external library check the information provided on the \Dune website%
+If you are going to use an external library, check the information provided on the \Dune website%
 \footnote{DUNE: External libraries, \url{https://www.dune-project.org/doc/external-libraries/}}.
-If you are going to use an external \Dune module the website on external modules%
+If you are going to use an external \Dune module, the website on external modules%
 \footnote{DUNE: External modules, \url{https://www.dune-project.org/groups/external/}}
 can be helpful.
 
@@ -307,5 +298,5 @@ depending on which modules of \Dune and which external libraries you use.
 
 \item \textbf{Compilers}: Beside \texttt{g++}, \Dune can be built with Clang from the LLVM project and
   Intel \Cplusplus compiler. C and Fortran compilers are needed for some external libraries. As code of
-  different compilers is linked together they have to be be compatible with each other.
+  different compilers is linked together, they have to be be compatible with each other.
 \end{itemize}
