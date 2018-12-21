@@ -110,6 +110,7 @@ public:
                    const std::string& paramGroup = "TwoP")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
     {
+        FluidSystem::init();
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
