@@ -335,15 +335,15 @@ public:
     template< class PoroMechLocalAssembler >
     typename LocalResidual<PoroMechId>::ElementResidualVector
     evalCouplingResidual(Dune::index_constant<PoroMechId> poroMechDomainId,
-                         const PoroMechLocalAssembler& pmFlowLocalAssembler,
+                         const PoroMechLocalAssembler& poroMechLocalAssembler,
                          Dune::index_constant<PMFlowId> pmFlowDomainId,
                          GridIndexType<PMFlowId> dofIdxGlobalJ)
     {
-        return pmFlowLocalAssembler.localResidual().evalFluxAndSource(pmFlowLocalAssembler.element(),
-                                                                      pmFlowLocalAssembler.fvGeometry(),
-                                                                      pmFlowLocalAssembler.curElemVolVars(),
-                                                                      pmFlowLocalAssembler.elemFluxVarsCache(),
-                                                                      pmFlowLocalAssembler.elemBcTypes());
+        return poroMechLocalAssembler.localResidual().evalFluxAndSource(poroMechLocalAssembler.element(),
+                                                                        poroMechLocalAssembler.fvGeometry(),
+                                                                        poroMechLocalAssembler.curElemVolVars(),
+                                                                        poroMechLocalAssembler.elemFluxVarsCache(),
+                                                                        poroMechLocalAssembler.elemBcTypes());
     }
 
     //! Return a const reference to one of the problems
