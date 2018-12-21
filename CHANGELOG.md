@@ -1,125 +1,136 @@
 Differences Between DuMuX 2.12 and DuMuX 3.0
 =============================================
 
-* __IMPORTANT NOTES:__
-    - DuMuX 3.0 is a major version update. Hence, it is not backward compatible in all aspect to 2.12.
-      The following minor version updated will be, as before for the DuMuX 2-series, always backward compatible
+## Important Notes
+
+- DuMuX 3.0 is a major version update. It is not backward compatible in all aspects to 2.12.
+  The following minor version updates will be, as before for the DuMuX 2-series, always backward compatible
       to at least the last minor version update.
 
-    - DuMuX 3.0 is based on Dune 2.6 and is expected to run with the current Dune master.
-      We will try to keep the compatibility with the Dune master
-      as long as it is technically feasible and our resources allow it.
+- The tutorial has been replaced by the new module `dumux-course` which is
+  accessible at https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course.
+  We recommend new users and also users experienced with DuMuX 2.X to clone
+  the course and have a look at the exercises in there.
 
-    - DuMux 3.0 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
-      However, we suggest to use newer compiler versions, as we cannot test against all previous compiler versions.
+- DuMuX 3.0 is based on Dune 2.6 and is expected to run with the current Dune master.
+  We will try to keep the compatibility with the Dune master
+  as long as it is technically feasible and our resources allow it.
 
-    - For employing corner-point grids by means of opm-grid, the OPM release 2018.04 has to be used.
+- DuMuX 3.0 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
+  However, we suggest to use newer compiler versions, as we cannot test against all previous compiler versions.
 
-* __IMPROVEMENTS and ENHANCEMENTS:__
-    - Support for grid managers dune-subgrid (a meta grid selecting only certain elements from a host grid)
-      and dune-spgrid (a structured parallel grid manager, supporting periodic boundaries)
-    - __New style main files:__ 3.0 comes which a major overhaul of how the sequence of simulation steps is specified.
-      Until 2.12 there was the start.hh header including the free function `start` that contained a predefined sequence of
-      steps. Customization of the sequence was possible by many hooks implemented in classes used in this sequence. This
-      made it hard to follow the course of the program and hard to implement customization at points where this was not previously envisioned.
-      In contrast, in the new approach the sequence of simulation steps was linearized, meaning that each step is visible
-      in the program's main file. In the new main files, one can clearly see the io, initialization, assembly, solving, update, time loop, etc.,
-      of the program. Many parts of the simulation that were previously mandatory, i.e. simulations in 2.12 always contained a time loop,
-      are now optional (instationary simulations just don't need a time loop). The new style main files make it easier two follow the course
-      of the program, easier to customize, and offer more flexibility concerning the customization of steps and components of a simulation.
-      All tests and examples in the dumux repository have been adapted to the new style main files.
-    - __The grid geometry concept:__ In version 3.0, discretization methods use grid geometries which are wrapper or adapters around a `Dune::GridView`,
-      providing data structures and interfaces necessary to implement these discretization methods easily. In particular, the
-      abstraction of sub-control-volumes (scv) and sub-control-volume-faces (scvf) are now separate classes and the grid geometry provides means to iterate
-      over all scvs and scvfs of an element, using range-based-for loops.
-    - __The caching concept:__ Version 3.0 introduces a caching concept for the new grid geometry, the volume variables and the flux variables.
-      There are classes with a `Grid` prefix, that store data for the current grid view, and classes with the `Element` prefix that store data locally
-      for an element or element stencil. Depending on the caching concept used, data will be either stored completely in the `Grid` objects
-      (e.g. `GridGeometry`) and the `Element` object (e.g. `ElementGeometry`) are mere accessor objects, or, data will be partly only cached locally.
-      The local caching uses less memory but might result in a more runtime, the grid caching is memory intensive
-      but can provide a significant run-time speedup. Choose whatever concept fits your available resources.
-    - __MPFA schemes:__ The new design of the DuMux core facilitates the incorporation of new finite-volume schemes. In particular, the new core comes with
-      a framework for MPFA schemes, in which currently the only available scheme is the MPFA-O scheme. It can be used in conjunction with any DuMux model and
-      also works on surface grids. More schemes will be added in the future.
-    - __Interface solver:__ For the two-phase flow model in conjunction with the box scheme, an interface solver can now be used to reconstruct the saturations
-      in the sub-control volumes adjacent to vertices that lie on material discontinuities. This allows a sharper representation of the saturation front evolving
-      in heterogeneous porous media.
-    - __Box-dfm:__ The `2pdfm` model from version 2.12 has been generalized such that it can be used on any DuMux model and in both two and three dimensions.
-    - __MPNC:__ The general m-phase n-component model has been adapted in structure to the other porous medium flow models.
-    - __Tracer transport__: A new model for tracer transport with a given flow field has been added. The model can be also used to implement sequentially
-      coupled simulations, or iterative solvers where flow and transport are decoupled / weakly coupled.
-    - __Mineralization__: An adapter model for mineralization has been added and can be used with all porousmediumflow models. A balance for the solid
-      volume fraction of precipitating, adsorbed, or absorbed substances is added to the existing equations.
-    - __Multidomain:__ DuMux 3.0 introduces a new multidomain framework which does no longer depend on `dune-multidomain` and can be used for the coupling
-      of an arbitrary number of subdomains. The sub-domains can be regions in which a different set of equations are solved and/or which have different
-      dimensionalities. The implementation is such that any of the existing DuMux models can be used in the subdomains, while the data and functionality
-      required for the coupling of the sub-domains is implemented in a `CouplingManger` class. Three different coupling concepts are available, for which
-      there are a number of available `CouplingManager` class implementations:
-      - _Boundary:_ coupling across sub-domain boundaries
-      - _Embedded:_ Coupling between a bulk domain and an embedded lower-dimensional sub-domain which has an independent grid
-      - _Facet:_ Coupling betweeen a bulk domain and a codimension-one sub-domain, which is conforming with the element facets of the bulk domain
-    - __Free-flow models:__ The previous Navier-Stokes model using the box method has been replaced by one that employs a staggered grid discretization.
-      The latter does not  require any stabilization techniques while those were necessary for the box method in order to avoid spurious oscillations.
-      The free-flow models in DuMux 3.0 consider single phase flow with or without component/energy transport. So far, only regular cartesian grids are supported
-      but local grid refinement will be added in a future release.
-      Several RANS models for turbulent flow have been added: k-omega, k-epsilon, low-Re-k-epsilon, one-eq, zero-eq. The RANS models might be subject to further (interface)
-      changes.
-    - __Runtime parameters:__ Runtime parameters are no longer accessed with preprocessor macros. They have been replaced by C++ function templates
-      `Dumux::getParam`, `Dumux::hasParam`, `Dumux::getParamFromGroup`. The `..FromGroup` version has been redesigned to allow the specification
-      of parameters for different models in one input file. The concept of a parameter group string was extended to make it possible to
-      use a single input file for complex multidomain simulation setups.
-    - __Property system:__ The property system is now usable without preprocessor macros. To this end it was completely reimplemented using C++14 techniques and
-      variadic templates. The hierarchies can now be arbitrarily deep instead of being limited to 5 levels. The new implementation does not use
-      C++ inheritance. Properties and TypeTag now have to be properly qualified with the namespaces `Properties::`, `TTag::`. Types that share the
-      name with properties have to properly qualified with the `Dumux::` namespace. This update makes it hopefully more readable
-      and removes the "magic" part from the property system.
-    - __TypeTag templates:__ Implementers of code in DuMuX 3.0 are advised to avoid TypeTag as a template argument for class templates.
-      Many classes in the DuMuX core have been changed to have a small number of specific template arguments, including `GridGeometry`,
-      `TimeLoop`, `Newton`, `LinearSolver`, `SpatialParams`. This makes it possible to share objects of these types between models using
-      different TypeTags. This was not possible before as `Class<TypeTag1>` and `Class<TypeTag2>` are different types, even if they contain
-      exactly the implementation code otherwise.
-      Furthermore, having TypeTag as a template argument leads to bad programming, and unnecessary dependencies that should be avoided in
-      every object-oriented code.
-    - __Restarting simulations:__ The old restart module was replaced by an implementation based on a VTK backend (other formats might be added later such as HDF5).
-      Restarted simulations can read solutions from vtk files. In parallel, there is currently the restriction that the number of processors has be the same
-      as before the restart. Restarted simulations can read grids from vtk (currently only sequential, non-adaptive grids, support for parallel and adaptive
-      will be added in future version).
-    - __Components:__ Components can now derive from different base classes, `Base`, `Liquid`, `Solid`, `Gas`, depending on which
-      phase states are implemented. This can be used to determine at compile time if a component support a certain phase state.
-    - __Solid systems:__ DuMuX 3.0 introduces solid systems similar to fluid systems but for solid components. This allows a consistent
-      implementation of mineralization models including reactions, dissolution, precipitation and other processes altering the solid
-      phase of the porous medium.
-    - __Tabulation of fluid parameter laws:__ The tabulation of fluid parameter laws has been improved to only tabulate those functions actually used during the
-      simulation. To this end, the tabulation is done on the first call of certain fluid parameter.
-    - __Assembly__: The assembler can now assemble implicit and explicit Euler time discretizations. An interface for implementing analytical Jacobians was added.
-      The CCTpfa assembler has been significantly improved for complex models that spend a lot of time computing constitutive laws. Also the numerical
-      differentiation scheme was improved by altering the order in which derivatives are computed.
-    - __Solution-dependent spatial params:__ A redesign of the spatial params interface allows now to define spatial parameters such as permeability
-      and porosity that depend on the solution. This makes it easier to implement mineralization models altering the solid structure of the porous medium.
-    - __Different wettability:__ The 2p models can now model materials with different wettability (hydrophobic, hydrophilic) in different parts of the domain.
-    - __Thermal and chemical non-equilibrium:__ The possibility to consider thermal and/or chemical non-equilibrium of several types has been enabled for all
-      porous medium models.
-    - __Maxwell-Stefan-diffusion:__ Most models can now use Maxwell-Stefan diffusion for multi-component diffusion instead of Fickian diffusion.
-      There is also a few tests demonstrating how to use it.
+- For employing corner-point grids by means of opm-grid, the OPM release 2018.10 has to be used.
 
-* __IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:__
-    - Many classes have been completely redesigned. See the numerous example applications included in 3.0 showcasing all new classes.
-    - The `GridCreator` has been replaced by the `GridManager`, which no longer uses a singleton for the grid object.
-      This makes it possible to create two grids of the exact same type. The `GridManager` also handles user data provided in grid files.
+## Improvements and Enhancements
 
-* __Deprecated CLASSES/FILES, to be removed after 3.0:__
-    - All classes of the sequential models are deprecated. The sequential models will be ported to the new structure
-      of porous medium models (formerly called implicit models). This way sequential and implicit model implementations
-      no longer differ and use the same numerical infrastructure.
-    - The `TimeManager` class is to be replaced by the class `TimeLoop`.
-    - The `VtkMultiWriter` class is to be replaced by the class `VtkOutputModule`.
-    - The file `start.hh` is replaced by new style main files.
+### General
 
-* __Deprecated MEMBER FUNCTIONS, to be removed after 3.0:__
+- __New style main files:__ 3.0 comes which a major overhaul of how the sequence of simulation steps is specified.
+  Until 2.12 there was the start.hh header including the free function `start` that contained a predefined sequence of
+  steps. Customization of the sequence was possible by many hooks implemented in classes used in this sequence. This
+  made it hard to follow the course of the program and hard to implement customization at points where this was not previously envisioned.
+  In contrast, in the new approach the sequence of simulation steps was linearized, meaning that each step is visible
+  in the program's main file. In the new main files, one can clearly see the io, initialization, assembly, solving, update, time loop, etc.,
+  of the program. Many parts of the simulation that were previously mandatory, i.e. simulations in 2.12 always contained a time loop,
+  are now optional (stationary simulations just don't need a time loop). The new style main files make it easier two follow the course
+  of the program, are easier to customize, and offer more flexibility concerning the customization of steps and components of a simulation.
+  All tests and examples in the dumux repository have been adapted to the new style main files.
+- __Property system:__ The property system is now usable without preprocessor macros. To this end it was completely reimplemented using C++14 techniques and
+  variadic templates. The hierarchies can now be arbitrarily deep instead of being limited to 5 levels. The new implementation does not use
+  C++ inheritance. Properties and TypeTag now have to be properly qualified with the namespaces `Properties::`, `TTag::`. Types that share the
+  name with properties have to properly qualified with the `Dumux::` namespace. This update makes it hopefully more readable
+  and removes the "magic" part from the property system.
+- __Runtime parameters:__ Runtime parameters are no longer accessed with preprocessor macros. They have been replaced by C++ function templates
+  `Dumux::getParam`, `Dumux::hasParam`, `Dumux::getParamFromGroup`. The `..FromGroup` version has been redesigned to allow the specification
+  of parameters for different models in one input file. The concept of a parameter group string was extended to make it possible to
+  use a single input file for complex multidomain simulation setups.
+- __Restarting simulations:__ The old restart module was replaced by an implementation based on a VTK backend (other formats might be added later such as HDF5).
+  Restarted simulations can read solutions from vtk files. For parallel runs, there is currently the restriction that the number of processors has to be the same
+  as before the restart. Restarted simulations can read grids from vtk (currently only sequential, non-adaptive grids, support for parallel and adaptive
+  will be added in a future version).
+- __Assembly__: The assembler can now assemble implicit and explicit Euler time discretizations. An interface for implementing analytical Jacobians was added.
+  The CCTpfa assembler has been significantly improved for complex models that spend a lot of time computing constitutive laws. Also the numerical
+  differentiation scheme was improved by altering the order in which derivatives are computed.
+- __TypeTag templates:__ Implementers of code in DuMuX 3.0 are advised to avoid TypeTag as a template argument for class templates.
+  Many classes in the DuMuX core have been changed to have a small number of specific template arguments, including `GridGeometry`,
+  `TimeLoop`, `Newton`, `LinearSolver`, `SpatialParams`. This makes it possible to share objects of these types between models using
+  different TypeTags. This was not possible before as `Class<TypeTag1>` and `Class<TypeTag2>` are different types, even if they contain
+  exactly the same implementation code.
+  Furthermore, having TypeTag as a template argument leads to bad programming, and unnecessary dependencies that should be avoided in
+  every object-oriented code.
+- __The grid geometry concept:__ In version 3.0, discretization methods use grid geometries which are wrappers or adapters around a `Dune::GridView`,
+  providing data structures and interfaces necessary to implement these discretization methods easily. In particular, the
+  abstraction of sub-control-volumes (scv) and sub-control-volume-faces (scvf) are now separate classes and the grid geometry provides means to iterate
+  over all scvs and scvfs of an element, using range-based-for loops.
+- __The caching concept:__ Version 3.0 introduces a caching concept for the new grid geometry, the volume variables and the flux variables.
+  There are classes with a `Grid` prefix, that store data for the current grid view, and classes with the `Element` prefix that store data locally
+  for an element or element stencil. Depending on the caching concept used, data will be either stored completely in the `Grid` objects
+  (e.g. `GridGeometry`) and the `Element` objects (e.g. `ElementGeometry`) are mere accessor objects, or, data will be partly only cached locally.
+  Local caching uses less memory but might result in an increased runtime. Grid caching is memory intensive
+  but can provide a significant run-time speedup. Choose whatever concept fits your available resources,
+  the default being local caching.
+- __Support__ for grid managers `dune-subgrid` (a meta grid selecting only certain elements from a host grid)
+  and `dune-spgrid` (a structured parallel grid manager, supporting periodic boundaries).
 
-* __DELETED classes/files, property names, constants/enums,
-  member functions, which have been deprecated in DuMuX 2.12:__
-  - Everything listed as deprecated below has been removed.
+### Models, Physics and Methods
+
+- __MPFA schemes:__ The new design of the DuMuX core facilitates the incorporation of new finite-volume schemes. In particular, the new core comes with
+  a framework for MPFA schemes, in which currently the only available scheme is the MPFA-O scheme. It can be used in conjunction with any DuMuX model and
+  also works on surface grids. More schemes will be added in the future.
+- __Box-dfm:__ The `2pdfm` model from version 2.12 has been generalized such that it can be used on any DuMuX model and in both two and three dimensions.
+- __Tracer transport__: A new model for tracer transport with a given flow field has been added. The model can be also used to implement sequentially
+  coupled simulations, or iterative solvers where flow and transport are decoupled / weakly coupled.
+- __Mineralization__: An adapter model for mineralization has been added and can be used with all porousmediumflow models. A balance for the solid
+  volume fraction of precipitating, adsorbed, or absorbed substances is added to the existing equations.
+- __Solution-dependent spatial params:__ A redesign of the spatial params interface allows now to define spatial parameters such as permeability
+  and porosity that depend on the solution. This makes it easier to implement mineralization models altering the solid structure of the porous medium.
+- __Solid systems:__ DuMuX 3.0 introduces solid systems similar to fluid systems but for solid components. This allows a consistent
+  implementation of mineralization models including reactions, dissolution, precipitation and other processes altering the solid
+  phase of the porous medium.
+- __Multidomain:__ DuMuX 3.0 introduces a new multidomain framework which does no longer depend on `dune-multidomain` and can be used for the coupling
+  of an arbitrary number of subdomains. The sub-domains can be regions in which different sets of equations are solved and/or which have different
+  dimensionalities. The implementation is such that any of the existing DuMuX models can be used in the subdomains, while the data and functionality
+  required for the coupling of the sub-domains is implemented in a `CouplingManger` class. Three different coupling concepts are available, for which
+  there are a number of available `CouplingManager` class implementations:
+    - _Boundary:_ coupling across sub-domain boundaries
+    - _Embedded:_ Coupling between a bulk domain and an embedded lower-dimensional sub-domain which has an independent grid
+    - _Facet:_ Coupling betweeen a bulk domain and a codimension-one sub-domain, which is conforming with the element facets of the bulk domain
+- __Free-flow models:__ The previous Navier-Stokes model using the box method has been replaced by one that employs a staggered grid discretization.
+  The new method does not  require any stabilization techniques while those were necessary for the box method in order to avoid spurious oscillations.
+  The free-flow models in DuMuX 3.0 consider single phase flow with or without component/energy transport. So far, only regular Cartesian grids are supported
+  but local grid refinement will be added in a future release.
+  Several RANS models for turbulent flow have been added: k-omega, k-epsilon, low-Re-k-epsilon, one-eq, zero-eq. The RANS models might be subject to further (interface)
+  changes.
+- __Thermal and chemical non-equilibrium:__ The possibility to consider thermal and/or chemical non-equilibrium of several types has been enabled for all
+  porous medium models.
+- __Interface solver:__ For the two-phase flow model in conjunction with the box scheme, an interface solver can now be used to reconstruct the saturations
+  in the sub-control volumes adjacent to vertices that lie on material discontinuities. This allows a sharper representation of the saturation front evolving
+  in heterogeneous porous media.
+- __Components:__ Components can now derive from different base classes, `Base`, `Liquid`, `Solid`, `Gas`, depending on which
+  phase states are implemented. This can be used to determine at compile time if a component supports a certain phase state.
+- __Tabulation of fluid parameter laws:__ The tabulation of fluid parameter laws has been improved to only tabulate those functions actually used during the
+  simulation. To this end, the tabulation is done on the first call of a corresponding fluid parameter.
+- __MPNC:__ The general m-phase n-component model has been adapted in structure to the other porous medium flow models.
+- __Different wettability:__ The 2p models can now model materials with different wettability (hydrophobic, hydrophilic) in different parts of the domain.
+- __Maxwell-Stefan-diffusion:__ Most models can now use Maxwell-Stefan diffusion for multi-component diffusion instead of Fickian diffusion.
+  There are also a few tests demonstrating how to use it.
+
+## Immediate interface changes not allowing/requiring a deprecation period
+
+- Many classes have been completely redesigned. See the numerous example applications included in 3.0 showcasing all new classes.
+- The `GridCreator` has been replaced by the `GridManager`, which no longer uses a singleton for the grid object.
+  This makes it possible to create two grids of the exact same type. The `GridManager` also handles user data provided in grid files.
+
+## Deprecated classes/files, to be removed after 3.0
+- All classes of the sequential models are deprecated. The sequential models will be ported to the new structure
+  of porous medium models (formerly called implicit models). This way sequential and implicit model implementations
+  no longer differ and use the same numerical infrastructure.
+- The `TimeManager` class is to be replaced by the class `TimeLoop`.
+- The `VtkMultiWriter` class is to be replaced by the class `VtkOutputModule`.
+- The file `start.hh` is replaced by new style main files.
+
+## Deleted classes/files/functions... which have been deprecated in DuMuX 2.12
+- Everything listed as deprecated below has been removed.
 
 
 Differences Between DuMuX 2.11 and DuMuX 2.12
@@ -134,7 +145,7 @@ Differences Between DuMuX 2.11 and DuMuX 2.12
       [test/multidomain/README](test/multidomain/README) for details.
       Also the geomechanics models require Dune 2.4 and PDELab 2.0.
 
-    - DuMux 2.12 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
+    - DuMuX 2.12 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
 
     - For employing corner-point grids by means of opm-grid (former
       dune-cornerpoint), the OPM releases 2017.04 or 2017.10 have to be used.
@@ -183,7 +194,7 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
       Dune 2.4 core and specific versions of other modules, see
       `test/multidomain/README` for details.
 
-    - DuMux 2.11 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
+    - DuMuX 2.11 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
 
     - For employing corner-point grids by means of opm-grid (former
       dune-cornerpoint), the OPM release 2016.04 has to be used.
@@ -234,7 +245,7 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
       Dune 2.4 core and specific versions of other modules, see
       `test/multidomain/README` for details.
 
-    - DuMux 2.10 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
+    - DuMuX 2.10 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
 
     - For employing corner-point grids by means of opm-grid (former
       dune-cornerpoint), the OPM release 2016.04 has to be used.
