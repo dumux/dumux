@@ -1,3 +1,19 @@
+Differences Between DuMuX 3.1 and DuMuX 3.0
+=============================================
+
+### Important Notes
+
+### Improvements and Enhancements
+
+### Immediate interface changes not allowing/requiring a deprecation period
+
+### Deprecated classes/files, to be removed after 3.1:
+
+### Deprecated member functions, to be removed after 3.1:
+
+### Deleted classes/files, property names, constants/enums
+
+
 Differences Between DuMuX 2.12 and DuMuX 3.0
 =============================================
 
