@@ -38,7 +38,7 @@ See the file [LICENSE.md](LICENSE.md) for full copying permissions.
 
 Automated Testing
 ==================
-[![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-release26-gcc.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
+[![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-latest-gcc.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
 
 DuMuX features many tests (some unit tests and test problems) that can
 be run manually. We have experimental support for automated testing with buildbot.
