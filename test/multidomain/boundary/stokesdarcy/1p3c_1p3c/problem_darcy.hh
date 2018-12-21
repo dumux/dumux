@@ -69,8 +69,9 @@ template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::DarcyOnePThreeC> { static constexpr int value = 3; };
 
 //! Use a model with constant tortuosity for the effective diffusivity
-SET_TYPE_PROP(DarcyOnePThreeC, EffectiveDiffusivityModel,
-              DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>);
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::DarcyOnePThreeC>
+{ using type = DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Set the grid type
 template<class TypeTag>

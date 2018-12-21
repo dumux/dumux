@@ -27,9 +27,6 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 
-#include "problem_bulk.hh"
-#include "problem_lowdim.hh"
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
@@ -48,19 +45,23 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 
+#include "problem_bulk.hh"
+#include "problem_lowdim.hh"
+
+namespace Dumux {
+
 // obtain/define some types to be used below in the property definitions and in main
 template< class BulkTypeTag, class LowDimTypeTag >
 class TestTraits
 {
-    using BulkFVGridGeometry = typename GET_PROP_TYPE(BulkTypeTag, FVGridGeometry);
-    using LowDimFVGridGeometry = typename GET_PROP_TYPE(LowDimTypeTag, FVGridGeometry);
+    using BulkFVGridGeometry = GetPropType<BulkTypeTag, Properties::FVGridGeometry>;
+    using LowDimFVGridGeometry = GetPropType<LowDimTypeTag, Properties::FVGridGeometry>;
 public:
     using MDTraits = Dumux::MultiDomainTraits<BulkTypeTag, LowDimTypeTag>;
     using CouplingMapper = Dumux::FacetCouplingMapper<BulkFVGridGeometry, LowDimFVGridGeometry>;
     using CouplingManager = Dumux::FacetCouplingManager<MDTraits, CouplingMapper>;
 };
 
-namespace Dumux {
 namespace Properties {
 
 // set cm property in the sub-problems
