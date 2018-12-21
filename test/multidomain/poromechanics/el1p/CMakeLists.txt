@@ -10,4 +10,5 @@ dune_add_test(NAME test_md_poromechanics_el1p
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_poromechanics_el1p_poroelastic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el1p_poroelastic-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el1p params.input
-                       -Vtk.OutputName test_md_poromechanics_el1p")
+                                                              -Vtk.OutputName test_md_poromechanics_el1p"
+                       --zeroThreshold {"u":1e-14})
