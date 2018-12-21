@@ -26,6 +26,11 @@ InitialPorosity = 0.2 # [-]
 ResidualReduction = 1e-20
 MaxIterations = 2000
 
+[Newton]
+MaxSteps = 25
+TargetSteps = 15
+MaxRelativeShift = 1e-10
+
 [Component]
 SolidDensity = 2650
 
