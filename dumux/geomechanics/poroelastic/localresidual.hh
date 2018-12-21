@@ -53,9 +53,6 @@ class PoroElasticLocalResidual: public ElasticLocalResidual<TypeTag>
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
 
-    // class assembling the stress tensor
-    using StressType = GetPropType<TypeTag, Properties::StressType>;
-
 public:
     using ParentType::ParentType;
 
