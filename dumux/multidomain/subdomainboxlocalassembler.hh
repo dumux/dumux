@@ -187,6 +187,16 @@ public:
         const auto residual = this->evalLocalResidual();
         for (const auto& scv : scvs(this->fvGeometry()))
             res[scv.dofIndex()] += residual[scv.localDofIndex()];
+
+        auto applyDirichlet = [&] (const auto& scvI,
+                                   const auto& dirichletValues,
+                                   const auto eqIdx,
+                                   const auto pvIdx)
+        {
+            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+        };
+
+        this->asImp_().evalDirichletBoundaries(applyDirichlet);
     }
 
     /*!
