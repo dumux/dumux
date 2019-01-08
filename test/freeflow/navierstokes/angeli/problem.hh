@@ -89,7 +89,6 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -103,39 +102,12 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
     AngeliTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), eps_(1e-6)
+    : ParentType(fvGridGeometry)
     {
-        printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
-    }
-
-   /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    bool shouldWriteRestartFile() const
-    {
-        return false;
-    }
-
-    void postTimeStep(const SolutionVector& curSol) const
-    {
-        if(printL2Error_)
-        {
-            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-            const auto l2error = L2Error::calculateL2Error(*this, curSol);
-            const int numCellCenterDofs = this->fvGridGeometry().numCellCenterDofs();
-            const int numFaceDofs = this->fvGridGeometry().numFaceDofs();
-            std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
-                    << std::scientific
-                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
-                    << ", L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                    << ", L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
-                    << std::endl;
-        }
     }
 
    /*!
@@ -145,17 +117,6 @@ public:
      */
     Scalar temperature() const
     { return 298.0; }
-
-
-   /*!
-     * \brief Returns the sources within the domain.
-     *
-     * \param globalPos The global position
-     */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return NumEqVector(0.0);
-    }
 
     // \}
    /*!
@@ -209,7 +170,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition & globalPos) const
     {
         // use the values of the analytical solution
-        return analyticalSolution(globalPos, time());
+        return analyticalSolution(globalPos, time_+timeStepSize_);
     }
 
     /*!
@@ -223,7 +184,7 @@ public:
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
 
-        const Scalar t = time + timeLoop_->timeStepSize();
+        const Scalar t = time;
 
         PrimaryVariables values;
 
@@ -248,93 +209,31 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        return analyticalSolution(globalPos, -timeLoop_->timeStepSize());
+        return analyticalSolution(globalPos, 0);
     }
 
-   /*!
-     * \brief Returns the analytical solution for the pressure.
+    /*!
+     * \brief Updates the time
      */
-    auto& getAnalyticalPressureSolution() const
+    void updateTime(const Scalar time)
     {
-        return analyticalPressure_;
+        time_ = time;
     }
 
-   /*!
-     * \brief Returns the analytical solution for the velocity.
+    /*!
+     * \brief Updates the time step size
      */
-    auto& getAnalyticalVelocitySolution() const
+    void updateTimeStepSize(const Scalar timeStepSize)
     {
-        return analyticalVelocity_;
-    }
-
-   /*!
-     * \brief Returns the analytical solution for the velocity at the faces.
-     */
-    auto& getAnalyticalVelocitySolutionOnFace() const
-    {
-        return analyticalVelocityOnFace_;
-    }
-
-    void setTimeLoop(TimeLoopPtr timeLoop)
-    {
-        timeLoop_ = timeLoop;
-        createAnalyticalSolution();
-    }
-
-    Scalar time() const
-    {
-        return timeLoop_->time();
-    }
-
-   /*!
-     * \brief Adds additional VTK output data to the VTKWriter.
-     *
-     * Function is called by the output module on every write.
-     */
-    void createAnalyticalSolution()
-    {
-        analyticalPressure_.resize(this->fvGridGeometry().numCellCenterDofs());
-        analyticalVelocity_.resize(this->fvGridGeometry().numCellCenterDofs());
-        analyticalVelocityOnFace_.resize(this->fvGridGeometry().numFaceDofs());
-
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(this->fvGridGeometry());
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                auto ccDofIdx = scv.dofIndex();
-                auto ccDofPosition = scv.dofPosition();
-                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition, time());
-
-                // velocities on faces
-                for (auto&& scvf : scvfs(fvGeometry))
-                {
-                    const auto faceDofIdx = scvf.dofIndex();
-                    const auto faceDofPosition = scvf.center();
-                    const auto dirIdx = scvf.directionIndex();
-                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition, time());
-                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
-                }
-
-                analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
-
-                for(int dirIdx = 0; dirIdx < ModelTraits::dim(); ++dirIdx)
-                    analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
-            }
-        }
+        timeStepSize_ = timeStepSize;
     }
 
 private:
-
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
 
     Scalar kinematicViscosity_;
-    TimeLoopPtr timeLoop_;
-    bool printL2Error_;
-    std::vector<Scalar> analyticalPressure_;
-    std::vector<VelocityVector> analyticalVelocity_;
-    std::vector<VelocityVector> analyticalVelocityOnFace_;
+    Scalar time_ = 0;
+    Scalar timeStepSize_ = 0;
 };
 } // end namespace Dumux
 
