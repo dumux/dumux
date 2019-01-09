@@ -189,6 +189,15 @@ public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_PROP(TwoPNCMinNI, ThermalConductivityModel)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+public:
+    using type = ThermalConductivitySomerton<Scalar>;
+};
+
 //! non-isothermal vtkoutput
 SET_TYPE_PROP(TwoPNCMinNI, VtkOutputFields, EnergyVtkOutputFields<MineralizationVtkOutputFields<TwoPNCVtkOutputFields>>);
 

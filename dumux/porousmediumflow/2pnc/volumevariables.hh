@@ -388,6 +388,11 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
+    Scalar averageMolarMass(int phaseIdx) const
+    {
+     return fluidState_.averageMolarMass(phaseIdx);
+    }
+
     /*!
      * \brief Returns the effective pressure of a given phase within
      *        the control volume.

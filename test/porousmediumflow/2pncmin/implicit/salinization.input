@@ -1,0 +1,66 @@
+# Parameter file for test case 2pncmin.
+# Everything behind a '#' is a comment.
+# Type "./test_2pncmin --help" for more information.
+
+[TimeLoop]
+TEnd = 1e9                        # duration of the simulation [s]
+DtInitial = 1                    # initial time step size [s]
+#MaxTimeStepSize = 500                 # maximum time step size
+EpisodeLength = 30000
+
+[Grid]
+Positions0 = 0 0.035
+Positions1 = 0 0.035 0.04
+Cells0 = 3
+Cells1 = 14 8
+Grading0 = 1.0
+Grading1 = 1.0 -1.2
+
+
+[FluidSystem]
+NTemperature =  100                # [-] number of tabularization entries
+NPressure = 100                    # [-] number of tabularization entries
+PressureLow = 1e4                  # [Pa]low end for tabularization of fluid properties
+PressureHigh = 3e6                 # [Pa]high end for tabularization of fluid properties
+TemperatureLow = 273.15            # [K]low end for tabularization of fluid properties
+TemperatureHigh = 400.00           # [K]high end for tabularization of fluid properties
+
+[Problem]
+Name = salinization                # [-]  name for output files
+InitialPressure   = 1e5            # [Pa] Initial reservoir pressure
+InitialLiquidSaturation    = 0.06  # [-]  initial liquid saturation
+InitialSalinity = 2e-4           #[-]=[kgNaCl/kgSolution]  Initial mass fraction
+WaterDepth = 0.04
+
+BottomPressure       = 1e5         # [Pa]
+BottomLiqSaturation  = 0.03         # [-]  liquid saturation at top boundary
+BottomSalinity       = 2e-4     # [-]  NaCl mass frac of bottom liquid
+BottomTemperature    = 299         # [-] = [kgNaCl/kgSolution]  Mass fraction at bottom liquid
+EvaporationStartTime = 30000 #[s]
+
+Temperature          = 299         # [K] temperature
+
+
+[SpatialParams]
+SolubilityLimit     = 0.26 	       # [-]  solubility limit of salt in brine
+referencePorosity   = 0.41656      # [-]  initial porosity
+referencePermeability   = 3e-11
+VGAlpha = 0.000135789077453 #0.0002 #
+VGn = 13.79180
+IrreducibleLiqSat = 0 #0.259009615906936
+IrreducibleGasSat = 0.025948705918491
+
+[FreeFlow]
+RefMoleFracH2O = 0.0052
+BoundaryLayerThickness = 0.01 #0.005 #
+MassTransferCoefficient = 1
+RefTemperature = 299
+
+[Vtk]
+AddVelocity         = 1            # Add extra information
+
+[LinearSolver]
+ResidualReduction = 1e-6
+
+[Output]
+PlotFluidMatrixInteractions = true
