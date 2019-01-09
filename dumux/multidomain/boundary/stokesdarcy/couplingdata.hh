@@ -191,6 +191,15 @@ struct IndexHelper<stokesIdx, darcyIdx, FFFS, true>
     { return FFFS::compIdx(coupledCompdIdx); }
 };
 
+//! forward declare
+template <class TypeTag, DiscretizationMethod discMethod>
+class DarcysLawImplementation;
+
+//! forward declare
+template <class TypeTag, DiscretizationMethod discMethod>
+class ForchheimersLawImplementation;
+
+
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance, bool isCompositional>
 class StokesDarcyCouplingDataImplementation;
 
@@ -221,13 +230,17 @@ class StokesDarcyCouplingDataImplementationBase
     template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::LocalView::SubControlVolume;
     template<std::size_t id> using Indices = typename GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>::Indices;
     template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
-    template<std::size_t id> using VolumeVariables  = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
-    template<std::size_t id> using Problem  = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using FluidSystem  = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
-    template<std::size_t id> using ModelTraits  = GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>;
+    template<std::size_t id> using VolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
+    template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+    template<std::size_t id> using FluidSystem = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
+    template<std::size_t id> using ModelTraits = GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>;
 
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
+
+    using AdvectionType = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::AdvectionType>;
+    using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<darcyIdx>, FVGridGeometry<darcyIdx>::discMethod>;
+    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<darcyIdx>, FVGridGeometry<darcyIdx>::discMethod>;
 
     static constexpr bool adapterUsed = ModelTraits<darcyIdx>::numFluidPhases() > 1;
     using IndexHelper = Dumux::IndexHelper<stokesIdx, darcyIdx, FluidSystem<stokesIdx>, adapterUsed>;
@@ -298,20 +311,10 @@ public:
         const Scalar darcyPressure = stokesContext.volVars.pressure(darcyPhaseIdx);
 
         if(numPhasesDarcy > 1)
-        {
             momentumFlux = darcyPressure;
-        }
-        else // use pressure reconstruction for single phase models
-        {
-            // v = -K/mu * (gradP + rho*g)
-            const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf();
-            const Scalar mu = stokesContext.volVars.viscosity(darcyPhaseIdx);
-            const Scalar rho = stokesContext.volVars.density(darcyPhaseIdx);
-            const Scalar distance = (stokesContext.element.geometry().center() - scvf.center()).two_norm();
-            const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).gravity()[scvf.directionIndex()];
-            const Scalar interfacePressure = ((scvf.directionSign() * velocity * (mu/darcyPermeability(element, scvf))) + rho * g) * distance + darcyPressure;
-            momentumFlux = interfacePressure;
-        }
+        else // use pressure reconstruction for single phase models; use tag dispatch to choose correct function for Darcy or Forchheimer
+            momentumFlux = pressureAtInterface_(element, scvf, stokesElemFaceVars, stokesContext, AdvectionType());
+        // TODO: generalize for permeability tensors
 
         // normalize pressure
         if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
@@ -433,6 +436,67 @@ protected:
     {
         return  volVars.effectiveThermalConductivity();
     }
+
+    /*!
+     * \brief Returns the pressure at the interface using Darcy's law for reconstruction
+     */
+    template<class ElementFaceVariables, class CouplingContext>
+    Scalar pressureAtInterface_(const Element<stokesIdx>& element,
+                                const SubControlVolumeFace<stokesIdx>& scvf,
+                                const ElementFaceVariables& elemFaceVars,
+                                const CouplingContext& context,
+                                const DarcysLaw&) const
+    {
+        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+        const Scalar cellCenterPressure = context.volVars.pressure(darcyPhaseIdx);
+
+        // v = -K/mu * (gradP + rho*g)
+        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
+        const Scalar mu = context.volVars.viscosity(darcyPhaseIdx);
+        const Scalar rho = context.volVars.density(darcyPhaseIdx);
+        const Scalar distance = (context.element.geometry().center() - scvf.center()).two_norm();
+        const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).gravity()[scvf.directionIndex()];
+        const Scalar interfacePressure = ((scvf.directionSign() * velocity * (mu/darcyPermeability(element, scvf))) + rho * g) * distance + cellCenterPressure;
+        return interfacePressure;
+    }
+
+    /*!
+     * \brief Returns the pressure at the interface using Forchheimers's law for reconstruction
+     */
+    template<class ElementFaceVariables, class CouplingContext>
+    Scalar pressureAtInterface_(const Element<stokesIdx>& element,
+                                const SubControlVolumeFace<stokesIdx>& scvf,
+                                const ElementFaceVariables& elemFaceVars,
+                                const CouplingContext& context,
+                                const ForchheimersLaw&) const
+    {
+        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+        const Scalar cellCenterPressure = context.volVars.pressure(darcyPhaseIdx);
+        using std::abs;
+        using std::sqrt;
+
+        // v + cF * sqrt(K) * rho/mu * v * abs(v) + K/mu grad(p + rho z) = 0
+        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
+        const Scalar mu = context.volVars.viscosity(darcyPhaseIdx);
+        const Scalar rho = context.volVars.density(darcyPhaseIdx);
+        const Scalar distance = (context.element.geometry().center() - scvf.center()).two_norm();
+        const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).gravity()[scvf.directionIndex()];
+
+        // get the Forchheimer coefficient
+        Scalar cF = 0.0;
+        for (const auto& darcyScvf : scvfs(context.fvGeometry))
+        {
+            if (darcyScvf.index() == context.darcyScvfIdx)
+                cF = couplingManager_.problem(darcyIdx).spatialParams().forchCoeff(darcyScvf);
+        }
+
+        const Scalar interfacePressure = ((scvf.directionSign() * velocity * (mu/darcyPermeability(element, scvf)))
+                                        + (scvf.directionSign() * velocity * abs(velocity) * rho * 1.0/sqrt(darcyPermeability(element, scvf)) * cF)
+                                        +  rho * g) * distance + cellCenterPressure;
+        return interfacePressure;
+    }
+
+
 
 private:
     const CouplingManager& couplingManager_;
