@@ -283,6 +283,8 @@ public:
         boundaryScvfs_.resize(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
         localToGlobalScvfIndices_.resize(numScvs);
+/*
+        boundaryScvfDofIndices_.assign(numScvf, false);*/
 
         // Build the scvs and scv faces
         IndexType scvfIdx = 0;
@@ -329,6 +331,8 @@ public:
                                         std::vector<IndexType>({eIdx, this->gridView().size(0) + numBoundaryScvf_}),
                                         geometryHelper
                                         );
+
+//                     boundaryScvfDofIndices_[this->gridView().indexSet().subIndex(element, localFaceIndex, 1)] = true;
                     boundaryScvfs_[this->gridView().indexSet().subIndex(element, localFaceIndex, 1)] = tmpScvf;
                     scvfs_.emplace_back(intersection,
                                         intersection.geometry(),
@@ -401,11 +405,31 @@ public:
         return boundaryScvfsIndexSet_;
     }
 
+    template<class Problem>
+    std::vector<IndexType> dirichletBoundaryScvfsIndexSet(const Problem& problem) const
+    {
+        std::vector<IndexType> vec;
+        for (auto& scvfIdx : boundaryScvfsIndexSet_)
+        {
+            const auto scvf = boundaryScvf(scvfIdx);
+            const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+            if (bcTypes.isDirichlet(Problem::Indices::velocity(scvf.directionIndex())))
+            {
+                vec.push_back(scvfIdx);
+            }
+        }
+        return vec;
+    }
+
     //! Get a vector of all dofIndices of the boundary scvs
     const std::vector<IndexType>& boundaryScvsIndexSet() const
     {
         return boundaryScvsIndexSet_;
     }
+
+//     //! If a d.o.f. is on the boundary
+//     bool dofOnBoundary(unsigned int dofIdx) const
+//     { return boundaryScvfDofIndices_[dofIdx]; }
 
     //! Returns a pointer the cell center specific auxiliary class. Required for the multi-domain FVAssembler's ctor.
     std::unique_ptr<CellCenterFVGridGeometry<ThisType>> cellCenterFVGridGeometryPtr() const
@@ -442,6 +466,7 @@ private:
     std::vector<SubControlVolumeFace> boundaryScvfs_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<IndexType>> localToGlobalScvfIndices_;
+//     std::vector<bool> boundaryScvfDofIndices_;
     std::vector<IndexType> boundaryScvfsIndexSet_;
     std::vector<IndexType> boundaryScvsIndexSet_;
     IndexType numBoundaryScvf_;

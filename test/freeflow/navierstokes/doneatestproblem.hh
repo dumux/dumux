@@ -79,7 +79,6 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -92,6 +91,8 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+
     DoneaTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {

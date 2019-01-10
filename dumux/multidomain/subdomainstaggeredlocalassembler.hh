@@ -655,7 +655,7 @@ public:
                    NumericDifferentiation::partialDerivative(evalResidual, faceSolution[globalJ][pvIdx], partialDeriv, origResiduals[scvf.localFaceIdx()],
                                                              eps(faceSolution[globalJ][pvIdx], pvIdx), numDiffMethod);
 
-                    const auto boundaryScvfsIndexSet = (this->problem()).dirichletBoundaryScvfsIndexSet();
+                    const auto boundaryScvfsIndexSet = fvGridGeometry.dirichletBoundaryScvfsIndexSet(this->problem());
 
                     const auto it = find (boundaryScvfsIndexSet.begin(), boundaryScvfsIndexSet.end(), globalJ);
                     if ((it == boundaryScvfsIndexSet.end() /*globalJ not a boundary DirichletBoundary*/) || (faceGlobalI == globalJ)){
@@ -725,7 +725,7 @@ public:
                 NumericDifferentiation::partialDerivative(evalResidual, facePriVars[pvIdx], partialDeriv, origResidual,
                                                           epsCoupl(facePriVars[pvIdx], pvIdx), numDiffMethod);
 
-                const auto boundaryScvfsIndexSet = (this->problem()).dirichletBoundaryScvfsIndexSet();
+                const auto boundaryScvfsIndexSet = fvGridGeometry.dirichletBoundaryScvfsIndexSet(this->problem());
 
                 const auto it = find (boundaryScvfsIndexSet.begin(), boundaryScvfsIndexSet.end(), globalJ);
                 if ((it == boundaryScvfsIndexSet.end() /*globalJ not a boundary DirichletBoundary*/) || (cellCenterGlobalI == globalJ)){

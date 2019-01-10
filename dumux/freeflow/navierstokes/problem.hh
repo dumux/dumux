@@ -219,22 +219,6 @@ public:
         return velocitySelf / (alpha / sqrt(K) * scvf.pairData(localSubFaceIdx).parallelDistance + 1.0);
     }
 
-    std::vector<IndexType> dirichletBoundaryScvfsIndexSet() const
-    {
-        std::vector<IndexType> vec;
-        const auto boundaryScvfsIndexSet = (this->fvGridGeometry()).boundaryScvfsIndexSet();
-        for (auto& scvfIdx : boundaryScvfsIndexSet)
-        {
-            const auto scvf = (this->fvGridGeometry()).boundaryScvf(scvfIdx);
-            const auto bcTypes = asImp_().boundaryTypesAtPos(scvf.center());
-            if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
-            {
-                vec.push_back(scvfIdx);
-            }
-        }
-        return vec;
-    }
-
     std::vector<IndexType> fixedPressureScvsIndexSet() const
     {
         std::vector<IndexType> vec;
