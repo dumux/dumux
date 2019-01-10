@@ -175,6 +175,38 @@ public:
             auto& subRes = (*residual_)[domainId];
             this->assembleJacobianAndResidual_(domainId, jacRow, subRes, curSol);
         });
+
+        static constexpr auto cellCenterIdx = Dune::index_constant<0>();
+        static constexpr auto faceIdx = Dune::index_constant<1>();
+
+        Scalar diagSum = 0;
+        auto& zeroBlock = (*jacobian_)[cellCenterIdx][cellCenterIdx];
+//         for (unsigned int i = 0; i < zeroBlock.M(); ++i)
+//         {
+//             diagSum += zeroBlock[i][i];
+//         }
+
+        auto& oneBlock = (*jacobian_)[faceIdx][faceIdx];
+        for (unsigned int i = 0; i < oneBlock.M(); ++i)
+        {
+            diagSum += oneBlock[i][i];
+        }
+
+        Scalar averageDiagElement = diagSum / (zeroBlock.M() + oneBlock.M());
+
+        std::cout << std::endl << "averageDiagElement = " << averageDiagElement << std::endl;
+
+        for (unsigned int i = 0; i < oneBlock.M(); ++i)
+        {
+            const auto prob = problem(faceIdx);
+
+            const auto boundaryScvfsIndexSet = prob.fvGridGeometry().dirichletBoundaryScvfsIndexSet(prob);
+
+            if (std::find(boundaryScvfsIndexSet.begin(), boundaryScvfsIndexSet.end(), i) != boundaryScvfsIndexSet.end()){
+                oneBlock[i][i] = averageDiagElement;
+                (*residual_)[faceIdx][i] *= averageDiagElement;
+            }
+        }
     }
 
     //! compute the residuals using the internal residual
