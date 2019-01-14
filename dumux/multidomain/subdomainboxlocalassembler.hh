@@ -265,7 +265,6 @@ public:
     void bindLocalViews()
     {
         // get some references for convenience
-        auto& couplingManager = this->couplingManager();
         const auto& element = this->element();
         const auto& curSol = this->curSol()[domainId];
         auto&& fvGeometry = this->fvGeometry();
@@ -274,10 +273,6 @@ public:
 
         // bind the caches
         couplingManager_.bindCouplingContext(domainId, element, this->assembler());
-        fvGeometry.bind(element);
-
-        // bind the caches
-        couplingManager.bindCouplingContext(domainId, element, this->assembler());
         fvGeometry.bind(element);
 
         if (implicit)
