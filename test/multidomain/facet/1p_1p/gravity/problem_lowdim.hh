@@ -52,10 +52,10 @@ namespace Properties {
 namespace TTag {
 struct OnePLowDim { using InheritsFrom = std::tuple<OneP>; };
 struct OnePLowDimTpfa { using InheritsFrom = std::tuple<OnePLowDim, CCTpfaModel>; };
-} // end namespace TTag
 
 // we need an additional type tag for the test using mpfa in the bulk domain
-NEW_TYPE_TAG(OnePLowDimMpfa, INHERITS_FROM(CCTpfaModel, OnePLowDim));
+struct OnePLowDimMpfa { using InheritsFrom = std::tuple<OnePLowDim, CCTpfaModel>; };
+} // end namespace TTag
 
 // Set the grid type
 template<class TypeTag>
