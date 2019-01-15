@@ -1,0 +1,239 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 3 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ * \ingroup FacetTests
+ * \brief The problem for the bulk domain in the elastic
+ *        single-phase facet coupling test.
+ */
+#ifndef DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_POROELASTIC_PROBLEM_HH
+#define DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_POROELASTIC_PROBLEM_HH
+
+#include <dune/alugrid/grid.hh>
+
+#include <dumux/geomechanics/poroelastic/model.hh>
+#include <dumux/geomechanics/fvproblem.hh>
+
+#include <dumux/multidomain/facet/box/properties.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/components/constant.hh>
+
+#include "spatialparams_bulk_poroelastic.hh"
+
+namespace Dumux {
+
+// forward declaration of the problem class
+template <class TypeTag>
+class PoroElasticSubProblem;
+
+namespace Properties {
+
+// Create new type tags
+namespace TTag {
+struct PoroElasticBulk { using InheritsFrom = std::tuple<BoxFacetCouplingModel, PoroElastic>; };
+} // end namespace TTag
+// Set the grid type
+template<class TypeTag>
+struct Grid<TypeTag, TTag::PoroElasticBulk> { using type = Dune::ALUGrid<2, 2, Dune::simplex, Dune::nonconforming>; };
+// Set the problem property
+template<class TypeTag>
+struct Problem<TypeTag, TTag::PoroElasticBulk> { using type = Dumux::PoroElasticSubProblem<TypeTag>; };
+// The fluid phase consists of one constant component
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::PoroElasticBulk>
+{
+    using type = Dumux::FluidSystems::OnePLiquid< GetPropType<TypeTag, Properties::Scalar>,
+                                                  Dumux::Components::Constant<0, GetPropType<TypeTag, Properties::Scalar>> >;
+};
+// The spatial parameters property
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::PoroElasticBulk>
+{
+    using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
+                                           GetPropType<TypeTag, Properties::FVGridGeometry> >;
+};
+} // end namespace Properties
+
+/*!
+ * \ingroup FacetTests
+ * \brief The problem for the bulk domain in the elastic
+ *        single-phase facet coupling test.
+ */
+template<class TypeTag>
+class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
+{
+    using ParentType = GeomechanicsFVProblem<TypeTag>;
+
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using StressType = GetPropType<TypeTag, Properties::StressType>;
+    using Force = typename StressType::ForceVector;
+
+public:
+    PoroElasticSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                          std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                          std::shared_ptr<CouplingManager> couplingManagerPtr,
+                          const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    , couplingManagerPtr_(couplingManagerPtr)
+    {
+        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+    }
+
+    /*!
+     * \brief The problem name.
+     */
+    const std::string& name() const
+    { return problemName_; }
+
+    //! Returns the temperature in the domain.
+    static constexpr Scalar temperature()
+    { return 273.15; }
+
+    //! Evaluates the initial conditions for a given position.
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(0.0); }
+
+    //! Evaluates the boundary conditions for a given position.
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(0.0); }
+
+    //! Evaluates the boundary conditions for a Neumann boundary segment.
+    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(0.0); }
+
+    /*!
+     * \brief Returns the effective fluid density in an scv.
+     */
+    Scalar effectiveFluidDensity(const Element& element,
+                                 const SubControlVolume& scv) const
+    {
+        // get context from coupling manager
+        // here, we know that the flow problem uses cell-centered finite volumes,
+        // thus, we simply take the volume variables of the element and return the density
+        const auto& context = couplingManager().poroMechanicsCouplingContext();
+        return (*context.pmFlowElemVolVars)[scv.elementIndex()].density();
+    }
+
+    /*!
+     * \brief Returns the effective pore pressure at a flux integration point.
+     */
+    template< class FluxVarsCache >
+    Scalar effectivePorePressure(const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 const FluxVarsCache& fluxVarsCache) const
+    {
+        // get context from coupling manager
+        // here, we know that the flow problem uses cell-centered finite volumes,
+        // thus, we simply take the volume variables of the element and return the pressure
+        const auto& context = couplingManager().poroMechanicsCouplingContext();
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        return (*context.pmFlowElemVolVars)[eIdx].pressure();
+    }
+
+    /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param globalPos The global position
+     */
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
+    {
+        BoundaryTypes values;
+        values.setAllNeumann();
+
+        const auto xMax = this->fvGridGeometry().bBoxMax()[0];
+        const auto yMin = this->fvGridGeometry().bBoxMin()[1];
+        const auto yMax = this->fvGridGeometry().bBoxMax()[1];
+
+        if (globalPos[0] > xMax - 1e-6)
+            values.setDirichlet(Indices::uxIdx);
+        else if (globalPos[1] < yMin + 1e-6 || globalPos[1] > yMax - 1e-6)
+            values.setDirichlet(Indices::uyIdx);
+
+        return values;
+    }
+
+    /*!
+     * \brief Specifies which kind of interior boundary condition should be
+     *        used for which equation on a given sub-control volume face
+     *        that couples to a facet element.
+     *
+     * \param element The finite element the scvf is embedded in
+     * \param scvf The sub-control volume face
+     */
+    BoundaryTypes interiorBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        BoundaryTypes values;
+        values.setAllNeumann();
+        return values;
+    }
+
+    /*!
+     * \brief Specifies which kind of interior boundary condition should be
+     *        used for which equation on a given sub-control volume face
+     *        that couples to a facet element.
+     *
+     * \param element The finite element the scvf is embedded in
+     * \param scvf The sub-control volume face
+     */
+    template<class ElementVolumeVariables>
+    Force interiorBoundaryForce(const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const ElementVolumeVariables& elemVolVars,
+                                const SubControlVolumeFace& scvf) const
+    {
+        const auto& facetVolVars = couplingManager().getLowDimVolVars(element, scvf);
+
+        // the force is essentially -(p*I)*n
+        Force force = scvf.unitOuterNormal();
+        force *= -1.0;
+        force *= facetVolVars.pressure();
+        force *= scvf.area();
+        return force;
+    }
+
+    //! Returns reference to the coupling manager.
+    const CouplingManager& couplingManager() const
+    { return *couplingManagerPtr_; }
+
+private:
+    std::shared_ptr<const CouplingManager> couplingManagerPtr_;
+    static constexpr Scalar eps_ = 3e-6;
+    std::string problemName_;
+};
+
+} // end namespace Dumux
+
+#endif // DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_POROELASTIC_PROBLEM_HH
