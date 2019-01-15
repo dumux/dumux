@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Properties (and default properties) for all models using cell-centered
  *        finite volume scheme with MPFA together with coupling across the grid element facets

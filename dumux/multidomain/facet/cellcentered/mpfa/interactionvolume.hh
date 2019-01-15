@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup CCMpfaDiscretization
  * \copydoc Dumux::CCMpfaOFacetCouplingInteractionVolume
  */
 #ifndef DUMUX_MULTIDOMAIN_FACET_CC_MPFA_O_INTERACTIONVOLUME_HH
@@ -41,9 +39,7 @@ namespace Dumux {
 template< class Traits > class CCMpfaOFacetCouplingInteractionVolume;
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup CCMpfaDiscretization
  * \brief The default interaction volume traits class for the mpfa-o method
  *        in the context of facet coupling. This uses dynamic types types for
  *        matrices/vectors in order to work on general grids.
@@ -74,9 +70,7 @@ public:
 };
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup CCMpfaDiscretization
  * \brief Class for the interaction volume of the mpfa-o scheme in the
  *        context of models involving coupling to a lower-dimensional
  *        domain across the element facets.

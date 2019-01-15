@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup CCMpfaDiscretization
  * \copydoc Dumux::MpfaOFacetCouplingInteractionVolumeAssembler
  */
 #ifndef DUMUX_MULTIDOMAIN_FACET_CC_MPFA_O_LOCAL_ASSEMBLER_HH
@@ -37,9 +35,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup CCMpfaDiscretization
  * \brief Specialization of the interaction volume-local
  *        assembler class for the schemes using an mpfa-o type
  *        assembly in the context of facet coupling.

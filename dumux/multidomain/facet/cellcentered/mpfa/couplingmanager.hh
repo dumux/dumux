@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \copydoc Dumux::FacetCouplingManager
  */
@@ -41,7 +40,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
  * \brief Manages the coupling between bulk elements and lower dimensional elements
  *        where the coupling occurs across the facets of the bulk grid. This implementation

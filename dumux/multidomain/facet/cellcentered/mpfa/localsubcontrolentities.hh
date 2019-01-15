@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup CCMpfaDiscretization
  * \brief Classes for sub control entities of the
  *        mpfa-o method in the context of facet coupling
  */
@@ -33,9 +31,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \ingroup CCMpfaDiscretization
  * \brief Class for the interaction volume-local sub-control volume used
  *        in the mpfa-o scheme in the context of facet coupling.
  *
@@ -96,7 +92,7 @@ private:
 };
 
 /*!
- * \ingroup CCMpfaDiscretization
+ * \ingroup FacetCoupling
  * \brief Class for the interaction volume-local sub-control volume face
  *        used in the mpfa-o scheme in the context of facet coupling.
  *
