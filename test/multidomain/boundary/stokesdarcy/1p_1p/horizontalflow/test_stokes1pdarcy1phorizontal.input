@@ -28,6 +28,9 @@ EnableInertiaTerms = false
 [Stokes.Vtk]
 AddVelocity = 1
 
+[Darcy.Vtk]
+AddVelocity = 1
+
 [Mpfa]
 Q = 0.0
 

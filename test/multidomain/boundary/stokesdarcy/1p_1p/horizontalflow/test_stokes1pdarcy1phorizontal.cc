@@ -163,12 +163,6 @@ int main(int argc, char** argv) try
     GET_PROP_TYPE(StokesTypeTag, VtkOutputFields)::init(stokesVtkWriter);
     stokesVtkWriter.write(0.0);
 
-    VtkOutputModule<DarcyGridVariables, typename GET_PROP_TYPE(DarcyTypeTag, SolutionVector)> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx], darcyName);
-    using DarcyVelocityOutput = typename GET_PROP_TYPE(DarcyTypeTag, VelocityOutput);
-    darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
-    GET_PROP_TYPE(DarcyTypeTag, VtkOutputFields)::init(darcyVtkWriter);
-    darcyVtkWriter.write(0.0);
-
     // the assembler for a stationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(stokesProblem, stokesProblem, darcyProblem),
@@ -179,6 +173,12 @@ int main(int argc, char** argv) try
                                                                  stokesGridVariables->faceGridVariablesPtr(),
                                                                  darcyGridVariables),
                                                  couplingManager);
+
+    VtkOutputModule<DarcyGridVariables, typename GET_PROP_TYPE(DarcyTypeTag, SolutionVector)> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx], darcyName);
+    using DarcyVelocityOutput = PorousMediumFlowVelocityOutput<DarcyGridVariables,typename GET_PROP_TYPE(DarcyTypeTag, FluxVariables), CouplingManager, Assembler>;
+    darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables, couplingManager, assembler));
+    GET_PROP_TYPE(DarcyTypeTag, VtkOutputFields)::init(darcyVtkWriter);
+    darcyVtkWriter.write(0.0);
 
     // the linear solver
     using LinearSolver = UMFPackBackend;

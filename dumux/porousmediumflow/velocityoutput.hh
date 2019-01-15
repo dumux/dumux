@@ -36,7 +36,7 @@ namespace Dumux {
 /*!
  * \brief Velocity output policy for implicit (porous media) models
  */
-template<class GridVariables, class FluxVariables>
+template<class GridVariables, class FluxVariables, class CouplingManager = double, class Assembler = double>
 class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
 {
     using ParentType = VelocityOutput<GridVariables>;
@@ -73,10 +73,12 @@ public:
      *
      * \param gridVariables The grid variables
      */
-    PorousMediumFlowVelocityOutput(const GridVariables& gridVariables)
+    PorousMediumFlowVelocityOutput(const GridVariables& gridVariables, std::shared_ptr<CouplingManager> couplingManager, std::shared_ptr<Assembler> assembler)
     : problem_(gridVariables.curGridVolVars().problem())
     , fvGridGeometry_(gridVariables.fvGridGeometry())
     , gridVariables_(gridVariables)
+    , assemblerPtr_(assembler)
+    , couplingManagerPtr_(couplingManager)
     {
         // check, if velocity output can be used (works only for cubes so far)
         enableOutput_ = getParamFromGroup<bool>(problem_.paramGroup(), "Vtk.AddVelocity");
@@ -122,6 +124,9 @@ public:
         // bind the element flux variables cache
         auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+
+        // bind the coupling context
+        couplingManagerPtr_->bindCouplingContext(Dune::index_constant</*darcyIdx*/2>(), element, *assemblerPtr_);
 
         // the upwind term to be used for the volume flux evaluation
         auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.mobility(phaseIdx); };
@@ -435,6 +440,8 @@ private:
 
     bool enableOutput_;
     std::vector<int> cellNum_;
+    std::shared_ptr<Assembler> assemblerPtr_;
+    std::shared_ptr<CouplingManager> couplingManagerPtr_;
 };
 
 } // end namespace Dumux
