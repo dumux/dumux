@@ -75,7 +75,7 @@ public:
     {
         static constexpr auto poroMechId = CouplingManager::poroMechId;
 
-        const auto& poroMechGridGeom = couplingManagerPtr_->template problem<poroMechId>().fvGridGeometry();
+        const auto& poroMechGridGeom = couplingManagerPtr_->problem(poroMechId).fvGridGeometry();
         const auto poroMechElemSol = elementSolution(element, couplingManagerPtr_->curSol()[poroMechId], poroMechGridGeom);
 
         // evaluate the deformation-dependent porosity at the scv center
