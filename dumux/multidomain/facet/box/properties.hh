@@ -32,7 +32,10 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box.hh>
 
+#include <dumux/flux/hookeslaw.hh>
+
 #include <dumux/multidomain/facet/box/darcyslaw.hh>
+#include <dumux/multidomain/facet/box/effectivestresslaw.hh>
 #include <dumux/multidomain/facet/box/elementboundarytypes.hh>
 #include <dumux/multidomain/facet/box/fvgridgeometry.hh>
 #include <dumux/multidomain/facet/box/localresidual.hh>
@@ -86,6 +89,18 @@ private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = BoxFacetCouplingFVGridGeometry<Scalar, GridView, enableCache>;
+};
+
+//! Per default, we use the standard box facet coupling effective stresses law
+template<class TypeTag>
+struct StressType<TypeTag, TTag::BoxFacetCouplingModel>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using ElasticStressType = HookesLaw< Scalar, FVGridGeometry >;
+public:
+    using type = BoxFacetCouplingEffectiveStressLaw< ElasticStressType, FVGridGeometry >;
 };
 
 } // namespace Properties
