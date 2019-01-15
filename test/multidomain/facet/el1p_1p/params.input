@@ -1,0 +1,26 @@
+[Problem]
+EnableGravity = false
+
+[Component]
+SolidDensity = 2750.0 # granite
+
+[Grid]
+File = ./grids/singlefracture.msh
+
+[SpatialParams]
+InitialPorosity = 0.25 # used from both ElasticBulk & OnePBulk
+
+[OnePBulk]
+Problem.Name = onep_bulk
+SpatialParams.InitialPermeability = 1e-12
+
+[OnePFacet]
+Problem.Name = onep_facet
+Problem.InjectionPressure = 2e5
+SpatialParams.InitialAperture = 1e-2
+
+[ElasticBulk]
+Problem.Name = elastic_bulk
+
+[Vtk]
+OutputName = test_md_facet_el1p1p_tpfa
