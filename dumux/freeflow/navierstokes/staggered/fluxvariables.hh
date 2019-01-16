@@ -654,7 +654,7 @@ private:
     //! helper function to conveniently create a ghost face used to retrieve boundary values from the problem
     SubControlVolumeFace makeGhostFace_(const SubControlVolumeFace& ownScvf, const GlobalPosition& pos) const
     {
-        return SubControlVolumeFace(pos, std::vector<unsigned int>{ownScvf.insideScvIdx(), ownScvf.outsideScvIdx()}, ownScvf.directionIndex(), ownScvf.dofIndex(), ownScvf.index());
+        return SubControlVolumeFace(pos, std::vector<unsigned int>{ownScvf.insideScvIdx(), ownScvf.outsideScvIdx()}, ownScvf.directionIndex(), ownScvf.axisData().selfDof, ownScvf.index());
     };
 
     //! helper function to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest

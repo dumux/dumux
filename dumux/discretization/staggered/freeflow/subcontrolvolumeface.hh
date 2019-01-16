@@ -108,7 +108,7 @@ public:
       selfToOppositeDistance_(0.0),
       dirIdx_(dirIdx),
       isGhostFace_(true)
-    {}
+      {    axisData_.selfDof = dofIdx; }
 
     //! The center of the sub control volume face
     const GlobalPosition& center() const
