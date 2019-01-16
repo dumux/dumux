@@ -50,6 +50,7 @@ public:
         vtk.addVolumeVariable([](const auto& v){ return v.mobility(FluidSystem::phase1Idx); },"mob_"+ FluidSystem::phaseName(FluidSystem::phase1Idx));
 
         vtk.addVolumeVariable([](const auto& v){ return v.porosity(); }, "porosity");
+        vtk.addVolumeVariable([](const auto& v){ return v.permeability(); }, "permeability");
     }
 };
 

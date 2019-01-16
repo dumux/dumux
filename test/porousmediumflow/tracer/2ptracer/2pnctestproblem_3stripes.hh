@@ -37,8 +37,8 @@
 #include <dumux/porousmediumflow/problem.hh>
 
 #include "2pncimmiscible.hh"
-//#include "2ptestspatialparams.hh"
-#include "2ptestspatialparams_randomfield.hh"
+#include "2ptestspatialparams.hh"
+//#include "2ptestspatialparams_randomfield.hh"
 //#include "2pnctestlocalresidual.hh"
 
 #ifndef ENABLEINTERFACESOLVER
@@ -127,8 +127,8 @@ class TwoPNCTestProblem : public PorousMediumFlowProblem<TypeTag>
 //         tracer6Idx = Indices::conti0EqIdx + FluidSystem::comp7Idx,
 //         tracer7Idx = Indices::conti0EqIdx + FluidSystem::comp8Idx,
 //         tracer8Idx = Indices::conti0EqIdx + FluidSystem::comp9Idx,
-    //    tracer9Idx = Indices::conti0EqIdx + FluidSystem::comp10Idx,
-    //    tracer10Idx = Indices::conti0EqIdx + FluidSystem::comp11Idx,
+//         tracer9Idx = Indices::conti0EqIdx + FluidSystem::comp10Idx,
+//         tracer10Idx = Indices::conti0EqIdx + FluidSystem::comp11Idx,
     };
 
     // static constexpr int dimWorld = GridView::dimensionworld;
@@ -189,7 +189,9 @@ public:
         values[saturationDNAPLIdx] = 0.0;
 
         //the tracer component's Dirichlet BC
-        if (onUpperBoundary_(globalPos))
+        // VERSION "3stripes"
+        if (onUpperBoundary_(globalPos) ||  onStripe1_(globalPos) || onStripe2_(globalPos) || onStripe3_(globalPos))
+
         {
             if (useMoles){
                 values[tracer1Idx] = 1e-9;
@@ -276,7 +278,9 @@ public:
         values[saturationDNAPLIdx] = 0;
 
         //the tracer component's initial values
-        if (onUpperBoundary_(globalPos))
+        // VERSION "3stripes"
+        if (onUpperBoundary_(globalPos) ||  onStripe1_(globalPos) || onStripe2_(globalPos) || onStripe3_(globalPos))
+
         {
             if (useMoles){
                 values[tracer1Idx] = 1e-9;

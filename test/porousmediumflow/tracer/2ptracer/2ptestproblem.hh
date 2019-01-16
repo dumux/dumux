@@ -39,8 +39,8 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/2p/incompressiblelocalresidual.hh>
 
-#include "2ptestspatialparams.hh"
-// #include "2ptestspatialparams_randomfield.hh"
+//#include "2ptestspatialparams.hh"
+#include "2ptestspatialparams_randomfield.hh"
 
 
 #ifndef ENABLEINTERFACESOLVER
@@ -119,8 +119,6 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
         dnaplPhaseIdx = FluidSystem::phase1Idx
     };
 
-    // static constexpr int dimWorld = GridView::dimensionworld;
-
 public:
     TwoPTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry) {}
@@ -135,7 +133,8 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
+//      if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
+        if (onLowerBoundary_(globalPos))
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -189,8 +188,8 @@ public:
         NumEqVector values(0.0);
         if (onInlet_(globalPos))
         {
-            values[contiDNAPLEqIdx] = -0.04; // kg / (m * s)
-            values[Indices::conti0EqIdx] = -0.04;
+            values[contiDNAPLEqIdx] = -0.05; // kg / (m * s)
+            values[Indices::conti0EqIdx] = -0.05;
         }
 
         // in the test with the oil wet lens, use higher injection rate

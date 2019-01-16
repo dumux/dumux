@@ -59,8 +59,12 @@ SET_TYPE_PROP(TwoPTracerTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(TwoPTracerTestTypeTag, Problem, TwoPTracerTestProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TwoPTracerTestTypeTag, SpatialParams, TwoPTracerTestSpatialParams<TypeTag>);
-
+SET_PROP(TwoPTracerTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = TwoPTracerTestSpatialParams<FVGridGeometry, Scalar>;
+};
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(TwoPTracerTestTypeTag, UseMoles, false);
 SET_BOOL_PROP(TwoPTracerTestCCTypeTag, SolutionDependentMolecularDiffusion, false);
@@ -87,20 +91,20 @@ public:
     { return -1; }
 
     //! The number of components
-    static constexpr int numComponents = 2;
+    static constexpr int numComponents = 1;
 
     //! Human readable component name (index compIdx) (for vtk output)
     static std::string componentName(int compIdx)
     { return "tracer_" + std::to_string(compIdx); }
 
     //! Human readable phase name (index phaseIdx) (for velocity vtk output)
+    //TODO adapt for multiphase and accordingly for the vtkOutput
     static std::string phaseName(int phaseIdx = 0)
     { if (phaseIdx == 0)
         return "Water";
       else
         return "NotWater";
     }
-    // Noch für mehrphasig anpassen und entsprechend korrekte Namengebung auch für vtkOutput!
 
     //! Molar mass in kg/mol of the component with index compIdx
     static Scalar molarMass(unsigned int compIdx)
@@ -200,20 +204,13 @@ public:
     {
         PrimaryVariables initialValues(0.0);
 
-//  VERSION 1
-        // if (onUpperBoundary_(globalPos))
-
-//  VERSION 2
+        // VERSION "3stripes"
         if (onUpperBoundary_(globalPos) ||  onStripe1_(globalPos) || onStripe2_(globalPos) || onStripe3_(globalPos))
-
-//  VERSION 3
-//         if (onUpperTrajectoryPoint_(globalPos) || onLeftTrajectroyPoint_(globalPos) || onRightTrajectoryPoint_(globalPos))
-
         {
             if (useMoles)
                 initialValues = 1e-9;
             else
-                initialValues = 1e-9*FluidSystem::molarMass(0)/this->spatialParams().fluidMolarMass(0, globalPos);
+                initialValues = 1e-9*FluidSystem::molarMass(0)/this->spatialParams().fluidMolarMass(globalPos);
         }
         return initialValues;
     }
@@ -234,28 +231,19 @@ private:
     Scalar cellWidth_ = xMax_/xNumCells_;
     Scalar width_ = xMax_ - this->fvGridGeometry().bBoxMin()[0];
 
-//  VERSION 1
-     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-     {
-         return globalPos[1] > yMax_ - 0.1 - eps_;
-     }
-
-
-//  VERSION 2
-     bool onStripe1_(const GlobalPosition &globalPos) const
-     {
-//          std::cout << "Stripe1 is: " << (( (yMax_ /4.0 - cellHeight_*0.5) <= globalPos[1] ) &&
-//                   ( (yMax_/4.0 + cellHeight_*0.5) > globalPos[1] ));
-//          std::cout << " at globalPos:" << globalPos[1] << "\n";
-//          std::cout << "yMax is: " << yMax_ << "\n" ;
-
-        return  (
-            ( (yMax_ /4.0 - cellHeight_*0.5) <= globalPos[1] ) &&
-            ( (yMax_/4.0 + cellHeight_*0.5) > globalPos[1] )
-        );
+    bool onUpperBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[1] > yMax_ - 0.1 - eps_;
     }
 
-
+    // VERSION "3stripes"
+    bool onStripe1_(const GlobalPosition &globalPos) const
+    {
+       return  (
+           ( (yMax_ /4.0 - cellHeight_*0.5) <= globalPos[1] ) &&
+           ( (yMax_/4.0 + cellHeight_*0.5) > globalPos[1] )
+       );
+    }
 
     bool onStripe2_(const GlobalPosition &globalPos) const
     {
@@ -272,44 +260,6 @@ private:
             ( (3.0 * yMax_/4.0 + cellHeight_*0.5) > globalPos[1] )
         );
     }
-
-//  VERSION 3
-
-     bool onUpperTrajectoryPoint_(const GlobalPosition &globalPos) const
-     {
-//          std::cout << "onUpperTrajectoryPoint is: "
-//          << (    globalPos[1] > (yMax_ - 2.0*cellHeight_) &&
-//                  globalPos[0] > (width_/2.0 - cellWidth_) &&
-//                  globalPos[0] < (width_/2.0 + cellWidth_) );
-//          std::cout << " at x- globalPos:" << globalPos[0] << "\n";
-//          std::cout << " at y- globalPos:" << globalPos[1] << "\n";
-
-         return (
-             globalPos[1] > (yMax_ - 2.0*cellHeight_) &&
-             globalPos[0] > (width_/2.0 - cellWidth_) &&
-             globalPos[0] < (width_/2.0 + cellWidth_)
-         );
-     }
-
-     bool onLeftTrajectroyPoint_(const GlobalPosition &globalPos) const
-     {
-         return (
-             ( globalPos[1] >= (3.0 * yMax_ /4.0 - cellHeight_) ) &&
-             ( globalPos[1] < (3.0 * yMax_/4.0 + cellHeight_) ) &&
-             ( globalPos[0] > (xMax_ /6.0 - cellHeight_) ) &&
-             ( globalPos[0] < (xMax_ /6.0 + cellHeight_) )
-         );
-     }
-
-     bool onRightTrajectoryPoint_(const GlobalPosition &globalPos) const
-     {
-         return (
-             ( globalPos[1] >= (3.0 * yMax_ /4.0 - cellHeight_) ) &&
-             ( globalPos[1] < (3.0 * yMax_/4.0 + cellHeight_) ) &&
-             ( globalPos[0] > (5.0 * xMax_/6.0 - cellHeight_) ) &&
-             ( globalPos[0] < (5.0 * xMax_/6.0 + cellHeight_) )
-         );
-     }
 
 };
 

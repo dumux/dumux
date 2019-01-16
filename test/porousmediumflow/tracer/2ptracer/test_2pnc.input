@@ -1,6 +1,6 @@
 [TimeLoop]
-DtInitial = 50 # [s]
-TEnd = 15000 # [s]
+DtInitial = 10 # [s]
+TEnd = 5000 # [s]
 MaxTimeStepSize = 100
 
 [Grid]
@@ -16,7 +16,7 @@ PermeabilityLens = 1e-12 # [m^2]
 
 [Problem]
 Name = test_2pnc
-EnableGravity = true
+EnableGravity = false
 
 [Newton]
 EnablePartialReassembly = true

@@ -32,7 +32,8 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include "2pnctestproblem.hh"
+//#include "2pnctestproblem.hh"
+#include "2pnctestproblem_3stripes.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>

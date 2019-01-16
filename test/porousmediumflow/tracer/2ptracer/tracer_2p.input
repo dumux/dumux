@@ -1,7 +1,7 @@
 [TimeLoop]
-DtInitial = 50 # [s]
-TEnd = 15000 # [s]
-MaxTimeStepSize = 100
+DtInitial = 10 # [s]
+TEnd = 500 # [s]
+MaxTimeStepSize = 10
 
 [Grid]
 LowerLeft = 0 0
@@ -16,7 +16,7 @@ PermeabilityLens = 1e-12 # [m^2]
 
 [Problem]
 Name = tracer_2p
-EnableGravity = true
+EnableGravity = false
 
 [Newton]
 EnablePartialReassembly = true

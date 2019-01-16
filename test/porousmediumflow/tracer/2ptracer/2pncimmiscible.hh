@@ -81,6 +81,15 @@ public:
 
     //TODO: for each tracercomponent, define a unique component index for all added tracers
     static constexpr int comp2Idx = 2; //!< index of the first tracer
+//     static constexpr int comp3Idx = 3; //!< index of the second tracer
+//     static constexpr int comp4Idx = 4; //!< index of the ... tracer
+//     static constexpr int comp5Idx = 5;
+//     static constexpr int comp6Idx = 6;
+//     static constexpr int comp7Idx = 7;
+//     static constexpr int comp8Idx = 8;
+//     static constexpr int comp9Idx = 9;
+//     static constexpr int comp10Idx = 10;
+//     static constexpr int comp11Idx = 11; // index of the 10th tracer
 
     /****************************************
      * Fluid phase related static parameters
@@ -125,7 +134,7 @@ public:
 
         if (phaseIdx == phase0Idx)
             return Fluid0::isGas();
-        return Fluid1::isGas();
+            return Fluid1::isGas();
     }
 
     /*!
@@ -181,7 +190,7 @@ public:
         // let the fluids decide
         if (phaseIdx == phase0Idx)
             return Fluid0::isCompressible();
-        return Fluid1::isCompressible();
+            return Fluid1::isCompressible();
     }
 
     /*!
@@ -196,7 +205,7 @@ public:
         // let the fluids decide
         if (phaseIdx == phase0Idx)
             return Fluid0::viscosityIsConstant();
-        return Fluid1::viscosityIsConstant();
+            return Fluid1::viscosityIsConstant();
     }
 
     /*!
@@ -212,7 +221,7 @@ public:
         // let the fluids decide
         if (phaseIdx == phase0Idx)
             return Fluid0::isIdealFluid1();
-        return Fluid1::isIdealFluid1();
+            return Fluid1::isIdealFluid1();
     }
 
     /****************************************
@@ -234,7 +243,26 @@ public:
         //TODO: for each tracercomponent, define a unique name! Otherwise Paraview will crash.
         else if (compIdx == comp2Idx)
             return "NaCl1";
+//         else if (compIdx == comp3Idx)
+//             return "NaCl2";
+//         else if (compIdx == comp4Idx)
+//             return "NaCl3";
+//         else if (compIdx == comp5Idx)
+//             return "NaCl4";
+//         else if (compIdx == comp5Idx)
+//             return "NaCl5";
+//         else if (compIdx == comp5Idx)
+//             return "NaCl6";
+//         else if (compIdx == comp5Idx)
+//             return "NaCl7";
+//         else if (compIdx == comp5Idx)
+//             return "NaCl8";
+//         else if (compIdx == comp5Idx)
+//             return "NaCl9";
+//         else if (compIdx == comp5Idx)
+//             return "NaCl10";
     }
+
 
     /*!
      * \brief Return the molar mass of a component in \f$\mathrm{[kg/mol]}\f$.
@@ -409,15 +437,17 @@ public:
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         assert(0 <= compIdx  && compIdx < numComponents);
 
-        if (phaseIdx == phase1Idx)
+        if (phaseIdx == phase1Idx && compIdx == comp1Idx)
+            return 1e-2;
             // We could calculate the real fugacity coefficient of
             // the component in the fluid. Probably that's not worth
             // the effort, since the fugacity coefficient of the other
             // component is infinite anyway...
+        else if (phaseIdx == phase1Idx && compIdx != comp1Idx)
             return 1.0;
         else if (phaseIdx == phase0Idx && compIdx == comp0Idx)
             //water likes to stay in the water phase
-            return 1e-10;
+            return 1e-2;
         else if (phaseIdx == phase0Idx && compIdx == comp1Idx)
             //NAPL doesn't want to be in the water phase
             return fluidState.pressure(phase0Idx);
