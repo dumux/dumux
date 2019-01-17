@@ -2,8 +2,8 @@ dune_symlink_to_source_files(FILES test_2pncmin.input salinization.input)
 
 add_executable(salinization salinization.cc)
 
-#target_compile_definitions(salinization PRIVATE TYPETAG=DissolutionBox)
-target_compile_definitions(salinization PRIVATE TYPETAG=DissolutionCCTpfa)
+target_compile_definitions(salinization PRIVATE TYPETAG=DissolutionBox)
+#target_compile_definitions(salinization PRIVATE TYPETAG=DissolutionCCTpfa)
 
 # isothermal tests
 dune_add_test(NAME test_2pncmin_box

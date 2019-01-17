@@ -328,7 +328,7 @@ public:
 
         gnuplot2_.resetPlot();
         gnuplot2_.setXRange(0, time_);
-        gnuplot2_.setYRange(0, 0.01);
+        gnuplot2_.setYRange(0, 0.0001);
         gnuplot2_.setXlabel("time [s]");
         gnuplot2_.setYlabel("mass NaCl[kg]");
 
@@ -359,12 +359,11 @@ public:
         // default to Neumann
         bcTypes.setAllNeumann();
 
-//         if(globalPos[1] < this->fvGridGeometry().bBoxMax()[1]-waterDepth_ + eps_)
     if(globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_)
     {
         bcTypes.setAllDirichlet();
     }
-//
+
          return bcTypes;
     }
 
@@ -381,27 +380,13 @@ public:
         const Scalar xmin = this->fvGridGeometry().bBoxMin()[0];
         const Scalar xmax = this->fvGridGeometry().bBoxMax()[0];
         Scalar density = 1000.00;
-//         auto depth = this->fvGridGeometry().bBoxMax()[dimWorld-1] - waterDepth_ - globalPos[dimWorld-1];
         const auto g = this->gravityAtPos(globalPos)[dimWorld-1];
 
-//         if(globalPos[1] < hmin + eps_)
-//         {
-            priVars[pressureIdx]   = bottomPressure_ - density*9.81*globalPos[dimWorld-1]; // Bottom boundary pressure bar
-//             priVars[pressureIdx]   = 1000*g*(this->fvGridGeometry().bBoxMax()[dimWorld-1]-waterDepth_) + initPressure_ ; // Bottom boundary pressure bar
-//             priVars[switchIdx]     = 1.5e-5; //x_Air_liq
-            priVars[switchIdx]     = bottomLiqSaturation_; // Saturation bottom boundary
-            priVars[xwNaClIdx]     = massToMoleFrac_(bottomSalinity_);// mole fraction salt
-            priVars[precipNaClIdx] = 0.0;// precipitated salt
-            priVars[energyEqIdx] = bottomTemperature_;// precipitated salt
-//         }
-//         else if(globalPos[0] < xmin + eps_ || globalPos[0] > xmax - eps_ )
-//         {
-//             priVars[pressureIdx]   = 1000*g*(this->fvGridGeometry().bBoxMax()[dimWorld-1] - waterDepth_ - globalPos[dimWorld-1]) + initPressure_;
-//             priVars[switchIdx]     = bottomLiqSaturation_; // Saturation bottom boundary
-//             priVars[xwNaClIdx]     = massToMoleFrac_(bottomSalinity_);// mole fraction salt
-//             priVars[precipNaClIdx] = 0.0;// precipitated salt
-//             priVars[energyEqIdx] = bottomTemperature_;// precipitated salt
-//         }
+        priVars[pressureIdx]   = bottomPressure_ - density*9.81*globalPos[dimWorld-1]; // Bottom boundary pressure bar
+        priVars[switchIdx]     = bottomLiqSaturation_; // Saturation bottom boundary
+        priVars[xwNaClIdx]     = massToMoleFrac_(bottomSalinity_);// mole fraction salt
+        priVars[precipNaClIdx] = 0.0;// precipitated salt
+        priVars[energyEqIdx] = bottomTemperature_;// precipitated salt
 
         return priVars;
     }
@@ -422,8 +407,6 @@ public:
         if(time_ > episodeLength){
         if(globalPos[1] > hmax - eps_)
         {
-//             std::cout<<time_<<std::endl;
-//             file << time_ << " " << globalPos << " ";
 
             // get free- flow properties:
             static const Scalar moleFracRefH2O = getParam<Scalar>("FreeFlow.RefMoleFracH2O");
@@ -436,58 +419,56 @@ public:
 
             // calculate fluxes
             // liquid phase
-            Scalar evaporationRateMole = massTransferCoefficient
+            Scalar evaporationRateMole = 0;
+            if(moleFracH2OInside - moleFracRefH2O > 0)
+            {
+                evaporationRateMole = massTransferCoefficient
                                         * volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx)
                                         * (moleFracH2OInside - moleFracRefH2O)
                                         / boundaryLayerThickness
                                         * volVars.molarDensity(gasPhaseIdx);
+            }
+            else
+            {
+                evaporationRateMole = massTransferCoefficient
+                                        * volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx)
+                                        * (moleFracH2OInside - moleFracRefH2O)
+                                        / boundaryLayerThickness
+                                        * 1.2;
 
-            values[conti0EqIdx] = 0.0022*2; //evaporationRateMole;
-            values[conti1EqIdx] = - 0.0022*2; //evaporationRateMole;
-            std::cout<< "evaporation rate: "<<evaporationRateMole<<std::endl;
-            values[conti0EqIdx + NaClIdx] = 0.0;
-//             std::cout<< "moleFractionInside: " << moleFracH2OInside<<std::endl;
-//             std::cout<< "molarDensity: "<< volVars.molarDensity(gasPhaseIdx)<<std::endl;
+            }
 
-//             evaporationRateMole_ = evaporationRateMole;
-//             moleFracH2OInside_ = moleFracH2OInside;
-//             moleFracRefH2O_ = moleFracRefH2O;
-//             diffusionCoefficient_ = volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx);
-//             molarDensity_ = volVars.molarDensity(gasPhaseIdx);
+            values[conti0EqIdx] = evaporationRateMole;
 
-//         std::cout << evaporationRateMole << " " << moleFracH2OInside<< " " << moleFracRefH2O << " " << volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx) << " " << volVars.molarDensity(gasPhaseIdx) << std::endl;
+//             gas phase
+            // gas flows in
+            if (volVars.pressure(gasPhaseIdx) - 1e5 > 0) {
+                values[conti1EqIdx] =
+//                                         (volVars.pressure(gasPhaseIdx) + volVars.molarDensity(gasPhaseIdx) * volVars.moleFraction(gasPhaseIdx, AirIdx) * 9.81 *globalPos[1]
+//                                         - 1e5 - volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O) * 9.81 * (globalPos[1] + boundaryLayerThickness))
+                                        (volVars.pressure(gasPhaseIdx) - 1e5)
+                                      /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
+                                       *volVars.mobility(gasPhaseIdx)
+                                       *referencePermeability_
+                                       *volVars.molarDensity(gasPhaseIdx)
+                                       *volVars.moleFraction(gasPhaseIdx, AirIdx);
+            }
+            //gas flows out
+            else {
+                values[conti1EqIdx] =
+//                                         (volVars.pressure(gasPhaseIdx) + volVars.molarDensity(gasPhaseIdx) * volVars.moleFraction(gasPhaseIdx, AirIdx) * 9.81 *globalPos[1]
+//                                         - 1e5 - volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O) * 9.81 * (globalPos[1] + boundaryLayerThickness))
+                                        (volVars.pressure(gasPhaseIdx) - 1e5)
+                                        /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
+                                        *volVars.mobility(gasPhaseIdx)
+                                        *referencePermeability_
+                                        *volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O);
+             }
 
-
-//             std::cout << "diffusion coefficient:" << volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx) <<std::endl;
-//             std::cout << "mole frac inside:" << moleFracH2OInside <<std::endl;
-//             std::cout << "ref mole frac:" << moleFracRefH2O <<std::endl;
-//             std::cout << "molar density:" << volVars.molarDensity(gasPhaseIdx)<<std::endl;
-//             std::cout << "evaporation rate:" << evaporationRateMole <<std::endl;
-
-            //gas phase
-//             if (volVars.pressure(gasPhaseIdx) - 1e5 > 0) {
-//                 values[conti1EqIdx] = -(volVars.pressure(gasPhaseIdx) - 1e5)
-//                                       /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
-//                                        *volVars.mobility(gasPhaseIdx)
-//                                        *referencePermeability_
-//                                        *volVars.molarDensity(gasPhaseIdx)
-//                                        *volVars.moleFraction(gasPhaseIdx, AirIdx);
-//             }
-//             else {
-//                 values[conti1EqIdx] = -(volVars.pressure(gasPhaseIdx) - 1e5)
-//                                         /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
-//                                         *volVars.mobility(gasPhaseIdx)
-//                                         *referencePermeability_
-//                                         *volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O);
-//              }
-//                                        *this->spatialParams.permeability(element, fvGeometry.scv(scvf.insideScvIdx()).center()), elemSol)
 
             // energy fluxes
-//             Scalar temperatureRef = getParam<Scalar>("FreeFlow.RefTemperature");
-//             values[energyEqIdx] = 0;
             values[energyEqIdx] = FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, H2OIdx) * values[conti0EqIdx] * FluidSystem::molarMass(H2OIdx);
 
-//             values[energyEqIdx] += 0;
             values[energyEqIdx] += FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, AirIdx)* values[conti1EqIdx] * FluidSystem::molarMass(AirIdx);
 
             values[energyEqIdx] += FluidSystem::thermalConductivity(elemVolVars[scvf.insideScvIdx()].fluidState(), gasPhaseIdx) * (volVars.temperature() - temperatureRef)/boundaryLayerThickness;
@@ -517,9 +498,7 @@ public:
         priVars.setState(bothPhases);
         Scalar density = 1000.00; //FluidSystem::density(, liquidPhaseIdx);
 
-//         priVars[pressureIdx] = initPressure_;
         priVars[pressureIdx] = bottomPressure_ - density*9.81*globalPos[dimWorld-1];
-//         priVars[switchIdx]   = 1.5e-5; //x_air_liq
         priVars[switchIdx]   = initLiqSaturation_;                 // Sw primary variable
         priVars[xwNaClIdx]   = massToMoleFrac_(initSalinity_);     // mole fraction
         priVars[precipNaClIdx] = 0.0; // [kg/m^3]
@@ -631,23 +610,6 @@ public:
     }
 
 
-//             Scalar evaporationRateMole(){
-//                 return evaporationRateMole_;
-//             }
-//             Scalar moleFracH2OInside(){
-//                 return moleFracH2OInside_;
-//             }
-//             Scalar moleFracRefH2O(){
-//                 return moleFracRefH2O_;
-//             }
-//             Scalar diffusionCoefficient(){
-//                 return diffusionCoefficient_;
-//             }
-//             Scalar molarDensity(){
-//                 return molarDensity_;
-//             }
-
-
 
 private:
 
@@ -698,44 +660,7 @@ private:
     std::vector<double> y_;
     std::vector<double> y2_;
 
-    //     Scalar reservoirSaturation_;
-    //     Scalar topLiqSaturation_;
-    //     Scalar topPressure_;
-    //     Scalar topSalinity_;
-        Scalar temperature_;
-
-//             Scalar evaporationRateMole_;
-//             Scalar moleFracH2OInside_;
-//             Scalar moleFracRefH2O_;
-//             Scalar diffusionCoefficient_;
-//             Scalar molarDensity_;
-
-//     std::vector<double>  temperature_={298.49,
-// 298.64,
-// 298.54,
-// 298.35,
-// 298.5,
-// 298.53,
-// 298.51,
-// 298.4,
-// 298.45,
-// 298.44,
-// 298.49,
-// 298.46,
-// 298.42,
-// 298.4,
-// 298.4,
-// 298.38,
-// 298.44,
-// 298.45,
-// 298.39,
-// 298.43,
-// 298.41,
-// 298.39,
-// 298.38,
-// 298.33,
-// 298.34,
-// 298.32};
+    Scalar temperature_;
 
 
 };

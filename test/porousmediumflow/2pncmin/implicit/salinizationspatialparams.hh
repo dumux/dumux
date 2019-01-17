@@ -29,7 +29,6 @@
 #include <dumux/io/plotmateriallaw.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-// #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
@@ -105,7 +104,9 @@ public:
         gnuplot.plot("pc-Sw");
 
         gnuplot.resetAll();
-        plotMaterialLaw.addkrcurves(gnuplot, materialParams_, irreducibleLiqSat_, irreducibleGasSat_, "fine");
+        gnuplot.setOption("set xrange [0:1]");
+        gnuplot.setOption("set yrange [0:1]");
+        plotMaterialLaw.addkrcurves(gnuplot, materialParams_, irreducibleLiqSat_, 1/*-irreducibleGasSat_*/, "fine");
         gnuplot.plot("kr");
     }
 
