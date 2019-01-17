@@ -183,12 +183,14 @@ public:
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
      *       by clamping the input.
      */
-    static Scalar krw(const Params &params, Scalar swe)
+    static Scalar krw(const Params &params, Scalar sweOld)
     {
         using std::pow;
         using std::sqrt;
         using std::min;
         using std::max;
+
+        Scalar swe =sweNew_(sweOld);
 
         swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
@@ -209,12 +211,14 @@ public:
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
      *       by clamping the input.
      */
-    static Scalar dkrw_dswe(const Params &params, Scalar swe)
+    static Scalar dkrw_dswe(const Params &params, Scalar sweOld)
     {
         using std::pow;
         using std::sqrt;
         using std::min;
         using std::max;
+
+        Scalar swe =sweNew_(sweOld);
 
         swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
@@ -236,12 +240,13 @@ public:
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
      *       by clamping the input.
      */
-    static Scalar krn(const Params &params, Scalar swe)
+    static Scalar krn(const Params &params, Scalar sweOld)
     {
         using std::pow;
         using std::min;
         using std::max;
 
+        Scalar swe =sweNew_(sweOld);
         swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         return pow(1 - swe, 1.0/3) * pow(1 - pow(swe, 1.0/params.vgm()), 2*params.vgm());
@@ -261,16 +266,29 @@ public:
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
      *       by clamping the input.
      */
-    static Scalar dkrn_dswe(const Params &params, Scalar swe)
+    static Scalar dkrn_dswe(const Params &params, Scalar sweOld)
     {
         using std::pow;
         using std::min;
         using std::max;
 
+        Scalar swe =sweNew_(sweOld);
         swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         const Scalar x = pow(swe, 1.0/params.vgm());
         return -pow(1.0 - x, 2*params.vgm()) * pow(1.0 - swe, -2.0/3) * (1.0/3 + 2*x/swe);
+    }
+
+private:
+    static Scalar sweNew_(Scalar sweOld){
+
+        Scalar resWaterSat = 0.259009615906936;
+        Scalar resGasSat = 0.0;
+        Scalar resGasSatOld = 0.025948705918491;
+
+        Scalar saturation = sweOld *(1-resGasSatOld-resWaterSat)+resWaterSat;
+        Scalar sweNew = (saturation - resWaterSat)/(1-resWaterSat-resGasSat);
+        return sweNew;
     }
 
 };
