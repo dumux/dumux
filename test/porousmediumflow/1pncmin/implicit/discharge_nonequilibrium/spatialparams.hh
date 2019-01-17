@@ -68,6 +68,7 @@ class OnePNCMinNINonequilibriumTestSpatialParams
 public:
     // type used for the permeability (i.e. tensor or scalar)
     using PermeabilityType = Scalar;
+    using FluidSolidInterfacialAreaFormulation = FluidSolidInterfacialAreaShiWang<Scalar>;
     /*!
      * \brief The constructor
      *
