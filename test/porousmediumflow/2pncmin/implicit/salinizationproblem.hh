@@ -420,7 +420,7 @@ public:
 
                 // get porous medium values:
                 Scalar moleFracH2OInside = volVars.moleFraction(gasPhaseIdx, H2OIdx);
-                Scalar referencePermeability_ = getParam<Scalar>("SpatialParams.Permeability", 2.23e-14);
+                Scalar referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
 
                 // calculate fluxes
                 // liquid phase
