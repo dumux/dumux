@@ -1,0 +1,21 @@
+[Grid]
+UpperRight = 1 1
+Cells = 50 50
+
+[Problem]
+Name = test_sincos_steady # name passed to the output routines
+EnableGravity = false
+PrintL2Error = true
+EnableInertiaTerms = true
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 0.001
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
+AddProcessRank = false
