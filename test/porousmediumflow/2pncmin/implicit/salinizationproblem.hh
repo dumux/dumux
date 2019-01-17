@@ -182,25 +182,29 @@ public:
     DissolutionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-
-        temperature_            = getParam<Scalar>("Problem.Temperature");
-        initPressure_      = getParam<Scalar>("Problem.InitialPressure");
-        initLiqSaturation_      = getParam<Scalar>("Problem.InitialLiquidSaturation");
-        initSalinity_          = getParam<Scalar>("Problem.InitialSalinity");
-        bottomLiqSaturation_     = getParam<Scalar>("Problem.BottomLiqSaturation");
-        bottomSalinity_          = getParam<Scalar>("Problem.BottomSalinity");
-        bottomPressure_          = getParam<Scalar>("Problem.BottomPressure");
-        bottomTemperature_       = getParam<Scalar>("Problem.BottomTemperature");
-        evaporationStartTime_       = getParam<Scalar>("Problem.EvaporationStartTime");
-        waterDepth_       = getParam<Scalar>("Problem.WaterDepth");
-
+        //Fluidsystem
         nTemperature_           = getParam<int>("FluidSystem.NTemperature");
         nPressure_              = getParam<int>("FluidSystem.NPressure");
         pressureLow_            = getParam<Scalar>("FluidSystem.PressureLow");
         pressureHigh_           = getParam<Scalar>("FluidSystem.PressureHigh");
         temperatureLow_         = getParam<Scalar>("FluidSystem.TemperatureLow");
         temperatureHigh_        = getParam<Scalar>("FluidSystem.TemperatureHigh");
-        name_                   = getParam<std::string>("Problem.Name");
+
+        //problem
+        name_ = getParam<std::string>("Problem.Name");
+        temperature_            = getParam<Scalar>("Problem.Temperature");
+
+        //inital conditions
+        initPressure_      = getParam<Scalar>("Problem.InitialPressure");
+        initGasSaturation_      = getParam<Scalar>("Problem.InitialGasSaturation");
+        initSalinity_          = getParam<Scalar>("Problem.InitialSalinity");
+
+        //bottom Dirichlet boundary
+        bottomPressure_          = getParam<Scalar>("Problem.BottomPressure");
+        bottomGasSaturation_     = getParam<Scalar>("Problem.BottomGasSaturation");
+        bottomSalinity_          = getParam<Scalar>("Problem.BottomSalinity");
+        bottomTemperature_       = getParam<Scalar>("Problem.BottomTemperature");
+
 
         unsigned int codim = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box ? dim : 0;
         permeability_.resize(fvGridGeometry->gridView().size(codim));
@@ -383,7 +387,7 @@ public:
         const auto g = this->gravityAtPos(globalPos)[dimWorld-1];
 
         priVars[pressureIdx]   = bottomPressure_ - density*9.81*globalPos[dimWorld-1]; // Bottom boundary pressure bar
-        priVars[switchIdx]     = bottomLiqSaturation_; // Saturation bottom boundary
+        priVars[switchIdx]     = bottomGasSaturation_; // Saturation bottom boundary
         priVars[xwNaClIdx]     = massToMoleFrac_(bottomSalinity_);// mole fraction salt
         priVars[precipNaClIdx] = 0.0;// precipitated salt
         priVars[energyEqIdx] = bottomTemperature_;// precipitated salt
@@ -398,82 +402,83 @@ public:
                              const SubControlVolumeFace& scvf) const
     {
         PrimaryVariables values(0.0);
+
         const auto& globalPos = scvf.ipGlobal();
         const auto& volVars = elemVolVars[scvf.insideScvIdx()];
         const Scalar hmax = this->fvGridGeometry().bBoxMax()[1];
-        Scalar temperatureRef = getParam<Scalar>("FreeFlow.RefTemperature");
 
-        const auto episodeLength = getParam<Scalar>("TimeLoop.EpisodeLength");
+        static const Scalar temperatureRef = getParam<Scalar>("FreeFlow.RefTemperature");
+        static const Scalar episodeLength = getParam<Scalar>("TimeLoop.EpisodeLength");
+
         if(time_ > episodeLength){
-        if(globalPos[1] > hmax - eps_)
-        {
-
-            // get free- flow properties:
-            static const Scalar moleFracRefH2O = getParam<Scalar>("FreeFlow.RefMoleFracH2O");
-            static const Scalar boundaryLayerThickness = getParam<Scalar>("FreeFlow.BoundaryLayerThickness");
-            static const Scalar massTransferCoefficient = getParam<Scalar>("FreeFlow.MassTransferCoefficient");
-
-            // get porous medium values:
-            Scalar moleFracH2OInside = volVars.moleFraction(gasPhaseIdx, H2OIdx);
-            Scalar referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
-
-            // calculate fluxes
-            // liquid phase
-            Scalar evaporationRateMole = 0;
-            if(moleFracH2OInside - moleFracRefH2O > 0)
+            if(globalPos[1] > hmax - eps_)
             {
-                evaporationRateMole = massTransferCoefficient
-                                        * volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx)
-                                        * (moleFracH2OInside - moleFracRefH2O)
-                                        / boundaryLayerThickness
-                                        * volVars.molarDensity(gasPhaseIdx);
-            }
-            else
-            {
-                evaporationRateMole = massTransferCoefficient
-                                        * volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx)
-                                        * (moleFracH2OInside - moleFracRefH2O)
-                                        / boundaryLayerThickness
-                                        * 1.2;
+                // get free- flow properties:
+                static const Scalar moleFracRefH2O = getParam<Scalar>("FreeFlow.RefMoleFracH2O");
+                static const Scalar boundaryLayerThickness = getParam<Scalar>("FreeFlow.BoundaryLayerThickness");
+                static const Scalar massTransferCoefficient = getParam<Scalar>("FreeFlow.MassTransferCoefficient");
 
-            }
+                // get porous medium values:
+                Scalar moleFracH2OInside = volVars.moleFraction(gasPhaseIdx, H2OIdx);
+                Scalar referencePermeability_ = getParam<Scalar>("SpatialParams.Permeability", 2.23e-14);
 
-            values[conti0EqIdx] = evaporationRateMole;
+                // calculate fluxes
+                // liquid phase
+                Scalar evaporationRateMole = 0;
+                if(moleFracH2OInside - moleFracRefH2O > 0)
+                {
+                    evaporationRateMole = massTransferCoefficient
+                                            * volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx)
+                                            * (moleFracH2OInside - moleFracRefH2O)
+                                            / boundaryLayerThickness
+                                            * volVars.molarDensity(gasPhaseIdx);
+                }
+                else
+                {
+                    evaporationRateMole = massTransferCoefficient
+                                            * volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx)
+                                            * (moleFracH2OInside - moleFracRefH2O)
+                                            / boundaryLayerThickness
+                                            * 1.2;
 
-//             gas phase
-            // gas flows in
-            if (volVars.pressure(gasPhaseIdx) - 1e5 > 0) {
-                values[conti1EqIdx] =
-//                                         (volVars.pressure(gasPhaseIdx) + volVars.molarDensity(gasPhaseIdx) * volVars.moleFraction(gasPhaseIdx, AirIdx) * 9.81 *globalPos[1]
-//                                         - 1e5 - volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O) * 9.81 * (globalPos[1] + boundaryLayerThickness))
-                                        (volVars.pressure(gasPhaseIdx) - 1e5)
-                                      /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
-                                       *volVars.mobility(gasPhaseIdx)
-                                       *referencePermeability_
-                                       *volVars.molarDensity(gasPhaseIdx)
-                                       *volVars.moleFraction(gasPhaseIdx, AirIdx);
-            }
-            //gas flows out
-            else {
-                values[conti1EqIdx] =
-//                                         (volVars.pressure(gasPhaseIdx) + volVars.molarDensity(gasPhaseIdx) * volVars.moleFraction(gasPhaseIdx, AirIdx) * 9.81 *globalPos[1]
-//                                         - 1e5 - volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O) * 9.81 * (globalPos[1] + boundaryLayerThickness))
-                                        (volVars.pressure(gasPhaseIdx) - 1e5)
+                }
+
+                values[conti0EqIdx] = evaporationRateMole;
+
+    //             gas phase
+                // gas flows in
+                if (volVars.pressure(gasPhaseIdx) - 1e5 > 0) {
+                    values[conti1EqIdx] =
+    //                                         (volVars.pressure(gasPhaseIdx) + volVars.molarDensity(gasPhaseIdx) * volVars.moleFraction(gasPhaseIdx, AirIdx) * 9.81 *globalPos[1]
+    //                                         - 1e5 - volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O) * 9.81 * (globalPos[1] + boundaryLayerThickness))
+                                            (volVars.pressure(gasPhaseIdx) - 1e5)
                                         /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
                                         *volVars.mobility(gasPhaseIdx)
                                         *referencePermeability_
-                                        *volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O);
-             }
+                                        *volVars.molarDensity(gasPhaseIdx)
+                                        *volVars.moleFraction(gasPhaseIdx, AirIdx);
+                }
+                //gas flows out
+                else {
+                    values[conti1EqIdx] =
+    //                                         (volVars.pressure(gasPhaseIdx) + volVars.molarDensity(gasPhaseIdx) * volVars.moleFraction(gasPhaseIdx, AirIdx) * 9.81 *globalPos[1]
+    //                                         - 1e5 - volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O) * 9.81 * (globalPos[1] + boundaryLayerThickness))
+                                            (volVars.pressure(gasPhaseIdx) - 1e5)
+                                            /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
+                                            *volVars.mobility(gasPhaseIdx)
+                                            *referencePermeability_
+                                            *volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O);
+                }
 
 
-            // energy fluxes
-            values[energyEqIdx] = FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, H2OIdx) * values[conti0EqIdx] * FluidSystem::molarMass(H2OIdx);
+                // energy fluxes
+                values[energyEqIdx] = FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, H2OIdx) * values[conti0EqIdx] * FluidSystem::molarMass(H2OIdx);
 
-            values[energyEqIdx] += FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, AirIdx)* values[conti1EqIdx] * FluidSystem::molarMass(AirIdx);
+                values[energyEqIdx] += FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, AirIdx)* values[conti1EqIdx] * FluidSystem::molarMass(AirIdx);
 
-            values[energyEqIdx] += FluidSystem::thermalConductivity(elemVolVars[scvf.insideScvIdx()].fluidState(), gasPhaseIdx) * (volVars.temperature() - temperatureRef)/boundaryLayerThickness;
+                values[energyEqIdx] += FluidSystem::thermalConductivity(elemVolVars[scvf.insideScvIdx()].fluidState(), gasPhaseIdx) * (volVars.temperature() - temperatureRef)/boundaryLayerThickness;
 
-        }
+            }
         }
         return values;
     }
@@ -499,7 +504,7 @@ public:
         Scalar density = 1000.00; //FluidSystem::density(, liquidPhaseIdx);
 
         priVars[pressureIdx] = bottomPressure_ - density*9.81*globalPos[dimWorld-1];
-        priVars[switchIdx]   = initLiqSaturation_;                 // Sw primary variable
+        priVars[switchIdx]   = initGasSaturation_;                 // Sw primary variable
         priVars[xwNaClIdx]   = massToMoleFrac_(initSalinity_);     // mole fraction
         priVars[precipNaClIdx] = 0.0; // [kg/m^3]
         priVars[energyEqIdx] = temperature_; // [K]
@@ -632,16 +637,16 @@ private:
 
     std::string name_;
 
-    Scalar initSalinity_;
     Scalar initPressure_;
-    Scalar initLiqSaturation_;
+    Scalar initGasSaturation_;
+    Scalar initSalinity_;
 
     Scalar bottomPressure_;
-    Scalar bottomLiqSaturation_;
+    Scalar bottomGasSaturation_;
     Scalar bottomSalinity_;
     Scalar bottomTemperature_;
-    Scalar waterDepth_;
-    Scalar evaporationStartTime_;
+
+    Scalar temperature_;
 
     Scalar pressureLow_, pressureHigh_;
     Scalar temperatureLow_, temperatureHigh_;
@@ -659,8 +664,6 @@ private:
     std::vector<double> x_;
     std::vector<double> y_;
     std::vector<double> y2_;
-
-    Scalar temperature_;
 
 
 };
