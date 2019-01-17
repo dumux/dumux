@@ -1,0 +1,30 @@
+[TimeLoop]
+DtInitial = 0.01 # [s]
+TEnd = 1.0 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 50 50
+
+[Problem]
+Name = test_sincos_unsteady # name passed to the output routines
+EnableGravity = false
+PrintL2Error = true
+EnableInertiaTerms = true
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 0.1
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
+AddProcessRank = false
