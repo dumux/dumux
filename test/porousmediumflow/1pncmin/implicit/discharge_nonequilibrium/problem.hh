@@ -21,8 +21,8 @@
  * \ingroup OnePNCMinTests
  * \brief Definition of a problem for Dischargeical heat storage using \f$ \textnormal{CaO},   \textnormal{Ca} \left( \textnormal{OH} \right)_2\f$.
  */
-#ifndef DUMUX_DISCHARGE_PROBLEM_HH
-#define DUMUX_DISCHARGE_PROBLEM_HH
+#ifndef DUMUX_DISCHARGE_NONEQUILIBRIUM_PROBLEM_HH
+#define DUMUX_DISCHARGE_NONEQUILIBRIUM_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
 
@@ -45,25 +45,25 @@
 namespace Dumux {
 
 template <class TypeTag>
-class DischargeProblem;
+class Discharge_nonequilibrium_Problem;
 
 namespace Properties {
 // Create new type tags
 namespace TTag {
-struct Discharge { using InheritsFrom = std::tuple<OnePNCMinNonEquil>; };
-struct DischargeBox { using InheritsFrom = std::tuple<Discharge, BoxModel>; };
+struct Discharge_nonequilibrium { using InheritsFrom = std::tuple<OnePNCMinNonEquil>; };
+struct Discharge_nonequilibrium_Box { using InheritsFrom = std::tuple<Discharge_nonequilibrium, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::Discharge> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::Discharge_nonequilibrium> { using type = Dune::YaspGrid<2>; };
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::Discharge> { using type = DischargeProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::Discharge_nonequilibrium> { using type = Discharge_nonequilibrium_Problem<TypeTag>; };
 
 // The fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::Discharge>
+struct FluidSystem<TypeTag, TTag::Discharge_nonequilibrium>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using H2ON2 = FluidSystems::H2ON2<Scalar>;
@@ -72,7 +72,7 @@ struct FluidSystem<TypeTag, TTag::Discharge>
 };
 
 template<class TypeTag>
-struct SolidSystem<TypeTag, TTag::Discharge>
+struct SolidSystem<TypeTag, TTag::Discharge_nonequilibrium>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ComponentOne = Components::ModifiedCaO<Scalar>;
@@ -82,20 +82,20 @@ struct SolidSystem<TypeTag, TTag::Discharge>
 
 // // Enable velocity output
 // template<class TypeTag>
-// struct VtkAddVelocity<TypeTag, TTag::Discharge> { static constexpr bool value = false; };
+// struct VtkAddVelocity<TypeTag, TTag::Discharge_nonequilibrium> { static constexpr bool value = false; };
 
 // Set the spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::Discharge>
+struct SpatialParams<TypeTag, TTag::Discharge_nonequilibrium>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ThermoChemSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePNCMinNINonequilibriumTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
 template<class TypeTag>
-struct UseMoles<TypeTag, TTag::Discharge> { static constexpr bool value = true; };
+struct UseMoles<TypeTag, TTag::Discharge_nonequilibrium> { static constexpr bool value = true; };
 }
 
 /*!
@@ -111,7 +111,7 @@ struct UseMoles<TypeTag, TTag::Discharge> { static constexpr bool value = true; 
  * The test only runs for the box discretization.
  */
 template <class TypeTag>
-class DischargeProblem : public PorousMediumFlowProblem<TypeTag>
+class Discharge_nonequilibrium_Problem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -131,7 +131,7 @@ class DischargeProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ReactionRate = ThermoChemReaction;
-
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
 
@@ -151,9 +151,13 @@ class DischargeProblem : public PorousMediumFlowProblem<TypeTag>
         cPhaseIdx = SolidSystem::comp0Idx,
 
         temperatureIdx = Indices::temperatureIdx,
-        energyEqIdx = Indices::energyEqIdx
-    };
+        temperatureSolidIdx = Indices::temperatureSolidIdx,
+        energyEqIdx = Indices::energyEqIdx,
+        energyEqSolidIdx = Indices::energyEqSolidIdx
 
+
+    };
+    //static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
@@ -162,7 +166,7 @@ public:
      *
      * \param fvGridGeometry The finite volume grid geometry
      */
-    DischargeProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    Discharge_nonequilibrium_Problem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
         name_      = getParam<std::string>("Problem.Name");
@@ -177,7 +181,7 @@ public:
         boundaryPressure_ = getParam<Scalar>("Problem.BoundaryPressure");
         boundaryVaporMoleFrac_ = getParam<Scalar>("Problem.BoundaryMoleFraction");
         boundaryTemperature_ = getParam<Scalar>("Problem.BoundaryTemperature");
-
+        boundaryTemperatureSolid_ = getParam<Scalar>("Problem.boundaryTemperatureSolid");
         unsigned int codim = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
         permeability_.resize(fvGridGeometry->gridView().size(codim));
         porosity_.resize(fvGridGeometry->gridView().size(codim));
@@ -201,6 +205,12 @@ public:
      {
         timeStepSize_ = timeStepSize;
      }
+    void setGridVariables(std::shared_ptr<GridVariables> gridVariables)
+    { gridVariables_ = gridVariables; }
+
+     const GridVariables& gridVariables() const
+    { return *gridVariables_; }
+
 
     /*!
      * \name Boundary conditions
@@ -218,7 +228,7 @@ public:
         values.setDirichlet(pressureIdx);
         values.setDirichlet(H2OIdx);
         values.setDirichlet(temperatureIdx);
-
+        values.setDirichlet(temperatureSolidIdx);
         return values;
     }
 
@@ -235,6 +245,7 @@ public:
         priVars[pressureIdx] = boundaryPressure_;
         priVars[H2OIdx] = boundaryVaporMoleFrac_;
         priVars[temperatureIdx] = boundaryTemperature_;
+        priVars[temperatureSolidIdx] = boundaryTemperatureSolid_;
         priVars[CaO2H2Idx] = 0.0;
         priVars[CaOIdx] = 0.2;
 
@@ -278,9 +289,11 @@ public:
         Scalar h2oInit;
         Scalar CaOInit;
         Scalar CaO2H2Init;
+        Scalar tInitSolid;
 
         pInit = getParam<Scalar>("Problem.PressureInitial");
         tInit = getParam<Scalar>("Problem.TemperatureInitial");
+        tInitSolid = getParam<Scalar>("Problem.TemperatureInitialSolid");
         h2oInit = getParam<Scalar>("Problem.VaporInitial");
         CaOInit = getParam<Scalar>("Problem.CaOInitial");
         CaO2H2Init = getParam<Scalar>("Problem.CaO2H2Initial");
@@ -288,6 +301,7 @@ public:
         priVars[pressureIdx] = pInit;
         priVars[H2OIdx]   = h2oInit;
         priVars[temperatureIdx] = tInit;
+        priVars[temperatureSolidIdx] = tInitSolid;
 
         // these values are not used, as we didn't set BCs
         // for the solid phases. For cell-centered models it is
@@ -330,7 +344,7 @@ public:
         Scalar qMole = qMass/FluidSystem::molarMass(H2OIdx)*(1-volVars.porosity());
 
         // make sure not more solid reacts than present
-        // In this test, we only consider discharge. Therefore, we use the cPhaseIdx for CaO.
+        // In this test, we only consider Discharge_nonequilibrium. Therefore, we use the cPhaseIdx for CaO.
         if (-qMole*timeStepSize_ + volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidComponentMolarDensity(cPhaseIdx) < 0 + eps_)
         {
             qMole = -volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidComponentMolarDensity(cPhaseIdx)/timeStepSize_;
@@ -340,7 +354,7 @@ public:
         source[conti0EqIdx+H2OIdx] = - qMole;
 
         Scalar deltaH = 108e3; // J/mol
-        source[energyEqIdx] = qMole * deltaH;
+        source[energyEqSolidIdx] = qMole * deltaH;
 
         return source;
     }
@@ -403,6 +417,7 @@ private:
     Scalar boundaryPressure_;
     Scalar boundaryVaporMoleFrac_;
     Scalar boundaryTemperature_;
+    Scalar boundaryTemperatureSolid_;
 
     std::vector<double> permeability_;
     std::vector<double> porosity_;
@@ -410,6 +425,7 @@ private:
 
     ReactionRate rrate_;
     Scalar timeStepSize_;
+    std::shared_ptr<GridVariables> gridVariables_;
 };
 
 } //end namespace

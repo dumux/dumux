@@ -81,8 +81,9 @@ v = - \frac{k_{r}}{\mu} \mbox{\bf K}
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
-
+//mee--need to include nonisothermal
 namespace Dumux {
+
 namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
@@ -151,6 +152,8 @@ public:
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::OnePNCMin> { using type = MineralizationIOFields<OnePNCIOFields>; };
 
+
+
 //////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
@@ -179,6 +182,88 @@ public:
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::OnePNCMinNI>
 { using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
+
+
+//////////////////////////////////////////////////////////////////
+// Type tags
+//////////////////////////////////////////////////////////////////
+namespace TTag {
+struct OnePNCMinNonEquil { using InheritsFrom = std::tuple<NonEquilibrium, OnePNCMin>; };
+} // end namespace TTag
+/////////////////////////////////////////////////
+// Properties for the non-equilibrium OnePNC model
+/////////////////////////////////////////////////
+
+template<class TypeTag>
+struct EquilibriumLocalResidual<TypeTag, TTag::OnePNCMinNonEquil> { using type = MineralizationLocalResidual<TypeTag>; };
+
+//! Set the vtk output fields specific to this model
+template<class TypeTag>
+struct EquilibriumIOFields<TypeTag, TTag::OnePNCMinNonEquil> { using type = MineralizationIOFields<OnePNCIOFields>; };
+
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::OnePNCMinNonEquil>
+{
+private:
+    using EquiTraits = GetPropType<TypeTag, Properties::EquilibriumModelTraits>;
+    static constexpr bool enableTNE = getPropValue<TypeTag, Properties::EnableThermalNonEquilibrium>();
+    static constexpr bool enableCNE = getPropValue<TypeTag, Properties::EnableChemicalNonEquilibrium>();
+    static constexpr int numEF = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr int numES = getPropValue<TypeTag, Properties::NumEnergyEqSolid>();
+    static constexpr auto nf = getPropValue<TypeTag, Properties::NusseltFormulation>();
+    static constexpr auto ns = getPropValue<TypeTag, Properties::SherwoodFormulation>();
+
+    using NonEquilTraits = NonEquilibriumModelTraits<EquiTraits, enableCNE, enableTNE, numEF, numES, nf, ns>;
+public:
+    using type = NonEquilTraits;
+};
+
+// by default chemical non equilibrium is enabled in the nonequil model, switch that off here
+template<class TypeTag>
+struct EnableChemicalNonEquilibrium<TypeTag, TTag::OnePNCMinNonEquil> { static constexpr bool value = false; };
+
+//! set equilibrium model traits
+template<class TypeTag>
+struct EquilibriumModelTraits<TypeTag, TTag::OnePNCMinNonEquil>
+{
+private:
+     using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+     using OnePNCTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
+     using EquilibriumTraits = MineralizationModelTraits<OnePNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
+public:
+    using type = OnePNCUnconstrainedModelTraits<EquilibriumTraits>;
+};
+
+//! in case we do not assume full non-equilibrium one needs a thermal conductivity
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::OnePNCMinNonEquil>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = ThermalConductivityAverage<Scalar>;
+};
+
+//! use the NON equilibrium volume variables together with the 1pnc vol vars
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OnePNCMinNonEquil>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+
+    using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using NonMinVolVars = OnePNCVolumeVariables<Traits>;
+    using EquilibriumVolVars = MineralizationVolumeVariables<Traits, NonMinVolVars>;
+public:
+    using type = NonEquilibriumVolumeVariables<Traits, EquilibriumVolVars>;
+};
+
 
 } // end namespace Properties
 } // end namespace Dumux
