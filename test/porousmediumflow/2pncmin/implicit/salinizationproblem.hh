@@ -561,11 +561,6 @@ public:
         if (moleFracNaCl_wPhase < moleFracNaCl_Max_wPhase)
             precipSalt *= -1;
 
-        // gas phase
-        precipSalt += volVars.porosity() * volVars.molarDensity(gasPhaseIdx)
-                                         * volVars.saturation(gasPhaseIdx)
-                                         * abs(moleFracNaCl_nPhase - moleFracNaCl_Max_nPhase);
-
         // make sure we don't dissolve more salt than previously precipitated
         if (precipSalt*timeStepSize_ + volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidComponentMolarDensity(sPhaseIdx)< 0)
             precipSalt = -volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidComponentMolarDensity(sPhaseIdx)/timeStepSize_;

@@ -55,6 +55,10 @@ public:
             vtk.addVolumeVariable([i](const auto& v){ return v.molarDensity(i); },
                                     "rhoMolar_" + FluidSystem::phaseName(i));
 
+        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+            vtk.addVolumeVariable([i](const auto& v){ return v.viscosity(i); },
+                                    "mu_" + FluidSystem::phaseName(i));
+
         if (VolumeVariables::numComponents() < 3){
             for (int i = 0; i < VolumeVariables::numPhases(); ++i)
                 for (int j = 0; j < VolumeVariables::numComponents(); ++j)
