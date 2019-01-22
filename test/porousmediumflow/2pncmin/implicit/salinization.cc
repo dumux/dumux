@@ -179,7 +179,7 @@ int main(int argc, char** argv) try
 //         file << "#time, globalPos, evaporation rate, mole frac inside, ref mole frac, diffusion coefficient, molar density" << std::endl;
 
     // time loop
-    timeLoop->setPeriodicCheckPoint(episodeLength);
+//     timeLoop->setPeriodicCheckPoint(episodeLength);
     timeLoop->start(); do
     {
         // set time for problem for implicit Euler scheme

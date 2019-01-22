@@ -6,56 +6,58 @@
 TEnd                    = 1e9                   # duration of the simulation [s]
 DtInitial               = 1                     # initial time step size [s]
 MaxTimeStepSize         = 50000                 # maximum time step size
-EpisodeLength           = 100000
+EpisodeLength           = 0
 
 [Newton]
-MaxRelativeShift        = 1e-12
+MaxRelativeShift        = 1e-8
 
 [LinearSolver]
 ResidualReduction       = 1e-20
 
 [Grid]
-Positions0              = 0 0.07
-Positions1              = 0 0.03 0.04
+Positions0              = 0 0.035
+Positions1              = 0 0.03 0.04 0.041
 Cells0                  = 5
-Cells1                  = 5 8
+Cells1                  = 5 8 2
 Grading0                = 1.0
-Grading1                = 1.0 -1.2
+Grading1                = 1.0 -1.2 1.0
 
 [FluidSystem]
 NTemperature            = 100                   # [-] number of tabularization entries
 NPressure               = 100                   # [-] number of tabularization entries
-PressureLow             = 1e4                   # [Pa]low end for tabularization of fluid properties
-PressureHigh            = 3e6                   # [Pa]high end for tabularization of fluid properties
-TemperatureLow          = 273.15                # [K]low end for tabularization of fluid properties
-TemperatureHigh         = 400.00                # [K]high end for tabularization of fluid properties
+PressureLow             = 1e4                   # [Pa] low end for tabularization of fluid properties
+PressureHigh            = 3e6                   # [Pa] high end for tabularization of fluid properties
+TemperatureLow          = 273.15                # [K] low end for tabularization of fluid properties
+TemperatureHigh         = 400.00                # [K] high end for tabularization of fluid properties
 
 [Problem]
-Name                    = salinization_new          # [-]  name for output files
+Name                    = salinization_1          # [-] name for output files
 Temperature             = 299                   # [K] temperature
 InitialPressure         = 1e5                   # [Pa] Initial reservoir pressure
 InitialGasSaturation    = 0.06                  # [-]  initial liquid saturation
-InitialSalinity         = 2e-4                  # [-]=[kgNaCl/kgSolution]  Initial mass fraction
+InitialSalinity         = 2e-4                  # [-]=[kgNaCl/kgSolution] Initial mass fraction
 BottomPressure          = 1e5                   # [Pa]
-BottomGasSaturation     = 0.025948705918491     # [-]  liquid saturation at top boundary
-BottomSalinity          = 2e-4                  # [-]  NaCl mass frac of bottom liquid
-BottomTemperature       = 299                   # [-] = [kgNaCl/kgSolution]  Mass fraction at bottom liquid
+BottomGasSaturation     = 0.025948705918491     # [-] liquid saturation at top boundary
+BottomSalinity          = 2e-4                  # [-] NaCl mass frac of bottom liquid
+BottomTemperature       = 299                   # [-] = [kgNaCl/kgSolution] Mass fraction at bottom liquid
 
 [FreeFlow]
 RefMoleFracH2O          = 0.0052
-BoundaryLayerThickness  = 0.018 #0.005 #
+BoundaryLayerThickness  = 0.01 #0.005 #
 MassTransferCoefficient = 1
 RefTemperature          = 299
 
 [SpatialParams]
-SolubilityLimit         = 0.26 	                # [-]  solubility limit of salt in brine
-referencePorosity                = 0.41656               # [-]  initial porosity
-#Permeability            = 3e-11
-referencePermeability            = 3e-11
+SolubilityLimit         = 0.26 	                # [-] solubility limit of salt in brine
+referencePorosity       = 0.41656               # [-] initial porosity
+pseudoPorosity          = 0.6
+referencePermeability   = 3e-11
+pseudoPermeability      = 1e-5
 VGAlpha                 = 0.000152568361302
 VGn                     = 13.79180
 IrreducibleLiqSat       = 0.259009615906936
 IrreducibleGasSat       = 0.025948705918491
+SurfacePosition         = 0.04
 
 [Vtk]
 AddVelocity             = 1                     # Add extra information
