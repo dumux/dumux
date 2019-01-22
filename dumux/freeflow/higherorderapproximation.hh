@@ -139,9 +139,10 @@ public:
       */
     Scalar upwind(const Scalar downstreamVelocity,
                   const Scalar upstreamVelocity,
-                  const Scalar density) const
+                  const Scalar density,
+                  const Scalar upwindWeight) const
     {
-        return upstreamVelocity * density;
+        return (upwindWeight * upstreamVelocity + (1.0 - upwindWeight) * downstreamVelocity) * density;
     }
 
     /**

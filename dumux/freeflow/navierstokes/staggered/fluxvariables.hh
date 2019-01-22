@@ -107,7 +107,7 @@ public:
     {
         const Scalar velocity = elemFaceVars[scvf].velocitySelf();
         const bool insideIsUpstream = scvf.directionSign() == sign(velocity);
-        static const Scalar upWindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
@@ -115,8 +115,8 @@ public:
         const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
         const auto& downstreamVolVars = insideIsUpstream ? outsideVolVars : insideVolVars;
 
-        const Scalar flux = (upWindWeight * upwindTerm(upstreamVolVars) +
-                            (1.0 - upWindWeight) * upwindTerm(downstreamVolVars))
+        const Scalar flux = (upwindWeight * upwindTerm(upstreamVolVars) +
+                            (1.0 - upwindWeight) * upwindTerm(downstreamVolVars))
                             * velocity * scvf.area() * scvf.directionSign();
 
         return flux * extrusionFactor_(elemVolVars, scvf);
@@ -198,6 +198,7 @@ public:
         // The velocities of the dof at interest and the one of the opposite scvf.
         const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
         const Scalar velocityOpposite = elemFaceVars[scvf].velocityOpposite();
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
 
         // The volume variables within the current element. We only require those (and none of neighboring elements)
         // because the fluxes are calculated over the staggered face at the center of the element.
@@ -262,11 +263,11 @@ public:
                     }
                 }
                 else
-                    momentum = highOrder.upwind(velocities[0], velocities[1], insideVolVars.density());
+                    momentum = highOrder.upwind(velocities[0], velocities[1], insideVolVars.density(), upwindWeight);
             }
             else
-                momentum = selfIsUpstream ? highOrder.upwind(velocityOpposite, velocitySelf, insideVolVars.density())
-                                          : highOrder.upwind(velocitySelf, velocityOpposite, insideVolVars.density());
+                momentum = selfIsUpstream ? highOrder.upwind(velocityOpposite, velocitySelf, insideVolVars.density(), upwindWeight)
+                                          : highOrder.upwind(velocitySelf, velocityOpposite, insideVolVars.density(), upwindWeight);
 
             // Account for the orientation of the staggered face's normal outer normal vector
             // (pointing in opposite direction of the scvf's one).
@@ -433,6 +434,8 @@ private:
         // of interest is located.
         const Scalar transportingVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
 
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight", 1.0);
+
         // Check whether the own or the neighboring element is upstream.
         const bool selfIsUpstream = ( normalFace.directionSign() == sign(transportingVelocity) );
 
@@ -489,7 +492,7 @@ private:
                 }
             }
             else
-                momentum = highOrder.upwind(velocities[0], velocities[1], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+                momentum = highOrder.upwind(velocities[0], velocities[1], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), upwindWeight);
         }
         else
         {
@@ -497,8 +500,8 @@ private:
                                                ? faceVars.velocityParallel(localSubFaceIdx, 0)
                                                : getParallelVelocityFromBoundary_(problem, scvf, normalFace, faceVars.velocitySelf(), localSubFaceIdx, element, lateralFaceHasDirichletPressure, lateralFaceHasBJS);
 
-            momentum = selfIsUpstream ? highOrder.upwind(velocityFirstParallel, faceVars.velocitySelf(), insideVolVars.density())
-                                      : highOrder.upwind(faceVars.velocitySelf(), velocityFirstParallel, outsideVolVars.density());
+            momentum = selfIsUpstream ? highOrder.upwind(velocityFirstParallel, faceVars.velocitySelf(), insideVolVars.density(), upwindWeight)
+                                      : highOrder.upwind(faceVars.velocitySelf(), velocityFirstParallel, outsideVolVars.density(), upwindWeight);
         }
 
         // Account for the orientation of the staggered normal face's outer normal vector
