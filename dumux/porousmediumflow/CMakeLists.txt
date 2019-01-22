@@ -20,6 +20,7 @@ add_subdirectory(nonisothermal)
 add_subdirectory(richards)
 add_subdirectory(richardsnc)
 add_subdirectory(sequential)
+add_subdirectory(solidenergy)
 add_subdirectory(tracer)
 
 install(FILES

@@ -1,0 +1,20 @@
+[TimeLoop]
+DtInitial = 10 # [s]
+TEnd = 100 # [s]
+MaxTimeStepSize = 10
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 0.01 0.01
+Cells = 100 100
+
+[Problem]
+Name = test_solidenergy
+TemperatureInit = 293.15
+TemperatureHigh = 300.0
+NusseltNumber = 100
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790

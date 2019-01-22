@@ -21,37 +21,28 @@
  * \ingroup NIModel
  * \brief Adds I/O fields specific to non-isothermal models.
  */
+#ifndef DUMUX_ENERGY_IO_FIELDS_HH
+#define DUMUX_ENERGY_IO_FIELDS_HH
 
-#ifndef DUMUX_ENERGY_OUTPUT_FIELDS_HH
-#define DUMUX_ENERGY_OUTPUT_FIELDS_HH
-
-#include <dune/common/deprecated.hh>
+#include <string>
 #include <dumux/io/name.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup NIModel
- * \brief Adds I/O fields specific to non-isothermal models.
+ * \brief Adds I/O fields specific to non-isothermal models
+ * \tparam IsothermalIOFields the isothermal io fields to adapt to non-isothermal io fields
  */
-template<class IsothermalIOFields>
+template<class IsothermalIOFields = void>
 class EnergyIOFields
 {
-
 public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
         IsothermalIOFields::initOutputModule(out);
-        out.addVolumeVariable( [](const auto& v){ return v.temperature(); },
-                               IOName::temperature());
-    }
-
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
+        out.addVolumeVariable( [](const auto& v){ return v.temperature(); }, IOName::temperature());
     }
 
     template <class ModelTraits, class FluidSystem = void, class SolidSystem = void>
@@ -63,6 +54,28 @@ public:
             return IsothermalIOFields::template primaryVariableName<IsothermalTraits, FluidSystem, SolidSystem>(pvIdx, state);
         else
             return IOName::temperature();
+    }
+};
+
+/*!
+ * \ingroup NIModel
+ * \brief Adds I/O fields specific to non-isothermal models.
+ * \note Specialization if this is class used on its own (not as an adapter)
+ */
+template<>
+class EnergyIOFields<void>
+{
+public:
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
+    {
+        out.addVolumeVariable( [](const auto& v){ return v.temperature(); }, IOName::temperature());
+    }
+
+    template <class ModelTraits, class FluidSystem = void, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        return IOName::temperature();
     }
 };
 

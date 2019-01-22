@@ -5,6 +5,8 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 
 ### Improvements and Enhancements
 
+- Added new porous medium model for the energy balance of a porous solid (general heat equation)
+
 ### Immediate interface changes not allowing/requiring a deprecation period
 
 ### Deprecated classes/files, to be removed after 3.1:
