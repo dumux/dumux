@@ -167,16 +167,16 @@ public:
         // this evaluation should be moved to another location
         DimVector tmpVec;
         DimMatrix Keff, Keff_i, Keff_j;
-//         Keff_i = EffectivePermeabilityModel::effectivePermeability(this->curVolVars_()[fluxVars.face().i],
-//                               this->problem_().spatialParams(),
-//                               this->element_(),
-//                               this->fvGeometry_(),
-//                               fluxVars.face().i);
-//         Keff_j = EffectivePermeabilityModel::effectivePermeability(this->curVolVars_()[fluxVars.face().j],
-//                               this->problem_().spatialParams(),
-//                               this->element_(),
-//                               this->fvGeometry_(),
-//                               fluxVars.face().j);
+        Keff_i = EffectivePermeabilityModel::effectivePermeability(this->curVolVars_()[fluxVars.face().i],
+                              this->problem_().spatialParams(),
+                              this->element_(),
+                              this->fvGeometry_(),
+                              fluxVars.face().i);
+        Keff_j = EffectivePermeabilityModel::effectivePermeability(this->curVolVars_()[fluxVars.face().j],
+                              this->problem_().spatialParams(),
+                              this->element_(),
+                              this->fvGeometry_(),
+                              fluxVars.face().j);
 
         this->problem_().spatialParams().meanK(Keff, Keff_i, Keff_j);
         // loop over all phases
@@ -246,7 +246,7 @@ public:
 
                     stabilizationTerm /= dt;
 
-//                     flux[eqIdx] -= stabilizationTerm;
+                    flux[eqIdx] -= stabilizationTerm;
                 }
             }
 

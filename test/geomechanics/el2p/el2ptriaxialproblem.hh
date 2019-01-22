@@ -640,7 +640,7 @@ public:
         {
             if(globalPos[1] > this->bBoxMax()[1]-eps_)
             {
-                Scalar time = this->timeManager().time();
+                Scalar time = this->timeManager().time() - tInitEnd_;
                 Scalar factor= GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.DisplacementFactor);
 
                 values[uyIdx] = factor*time;

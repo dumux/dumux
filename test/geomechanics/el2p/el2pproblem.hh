@@ -821,33 +821,34 @@ public:
 //             if( this->timeManager().episodeIndex() == 7)
 //                 episodeLength_ = 1.0;
 
-            if( this->timeManager().episodeIndex() == 1)
-                episodeLength_ = 1800.0;
-            if( this->timeManager().episodeIndex() == 2)
-                episodeLength_ = 100.0;
+//             if( this->timeManager().episodeIndex() == 1)
+//                 episodeLength_ = 1800.0;
+//             if( this->timeManager().episodeIndex() == 2)
+//                 episodeLength_ = 100.0;
 
-            if( this->timeManager().episodeIndex() == 15)
-                episodeLength_ = 0.98;
-            if( (this->timeManager().episodeIndex() == 24) ||
-                (this->timeManager().episodeIndex() == 34))
-                episodeLength_ = 0.99;
-            if( (this->timeManager().episodeIndex() == 16) ||
-                (this->timeManager().episodeIndex() == 25) ||
-                (this->timeManager().episodeIndex() == 35))
-                episodeLength_ = 4.00;
-            if( (this->timeManager().episodeIndex() == 17) ||
-                (this->timeManager().episodeIndex() == 26) ||
-                (this->timeManager().episodeIndex() == 36))
-                episodeLength_ = 15.00;
-            if( (this->timeManager().episodeIndex() == 18) ||
-                (this->timeManager().episodeIndex() == 27) ||
-                (this->timeManager().episodeIndex() == 37))
-                episodeLength_ = 20.00;
-            if( (this->timeManager().episodeIndex() == 22) ||
-                (this->timeManager().episodeIndex() == 31) ||
-                (this->timeManager().episodeIndex() == 41))
-                episodeLength_ = 100.00;
+//             if( this->timeManager().episodeIndex() == 15)
+//                 episodeLength_ = 0.98;
+//             if( (this->timeManager().episodeIndex() == 24) ||
+//                 (this->timeManager().episodeIndex() == 34))
+//                 episodeLength_ = 0.99;
+//             if( (this->timeManager().episodeIndex() == 16) ||
+//                 (this->timeManager().episodeIndex() == 25) ||
+//                 (this->timeManager().episodeIndex() == 35))
+//                 episodeLength_ = 4.00;
+//             if( (this->timeManager().episodeIndex() == 17) ||
+//                 (this->timeManager().episodeIndex() == 26) ||
+//                 (this->timeManager().episodeIndex() == 36))
+//                 episodeLength_ = 15.00;
+//             if( (this->timeManager().episodeIndex() == 18) ||
+//                 (this->timeManager().episodeIndex() == 27) ||
+//                 (this->timeManager().episodeIndex() == 37))
+//                 episodeLength_ = 20.00;
+//             if( (this->timeManager().episodeIndex() == 22) ||
+//                 (this->timeManager().episodeIndex() == 31) ||
+//                 (this->timeManager().episodeIndex() == 41))
+//                 episodeLength_ = 100.00;
 
+            // High K
 //             if( this->timeManager().episodeIndex() == 29)
 //                 episodeLength_ = 0.96;
 //             if( (this->timeManager().episodeIndex() == 30) ||
@@ -866,15 +867,33 @@ public:
 //                 (this->timeManager().episodeIndex() == 36) ||
 //                 (this->timeManager().episodeIndex() == 36))
 //                 episodeLength_ = 100.00;
-//
-//             if( this->timeManager().episodeIndex() == 1)
-//                 episodeLength_ = 1800.0;
-//             if( this->timeManager().episodeIndex() == 2)
-//                 episodeLength_ = 100.0;
 
-//             if( (this->timeManager().episodeIndex() == 9) ||
-//                 (this->timeManager().episodeIndex() == 23))
-//                 episodeLength_ = 0.98;
+            // Low K
+            if( this->timeManager().episodeIndex() == 1)
+                episodeLength_ = 900.0;
+            if( this->timeManager().episodeIndex() == 2)
+                episodeLength_ = 100.0;
+            if(  this->timeManager().episodeIndex() == 10)
+                episodeLength_ = 0.99;
+            if( (this->timeManager().episodeIndex() == 11) ||
+                (this->timeManager().episodeIndex() == 11) ||
+                (this->timeManager().episodeIndex() == 11))
+                episodeLength_ = 4.00;
+            if( (this->timeManager().episodeIndex() == 12) ||
+                (this->timeManager().episodeIndex() == 12) ||
+                (this->timeManager().episodeIndex() == 12))
+                episodeLength_ = 15.00;
+            if( (this->timeManager().episodeIndex() == 13) ||
+                (this->timeManager().episodeIndex() == 13) ||
+                (this->timeManager().episodeIndex() == 13))
+                episodeLength_ = 20.00;
+            if( (this->timeManager().episodeIndex() == 17) ||
+                (this->timeManager().episodeIndex() == 17) ||
+                (this->timeManager().episodeIndex() == 17))
+                episodeLength_ = 100.00;
+
+
+
 //             if(  this->timeManager().episodeIndex() == 12)
 //                 episodeLength_ = 0.99;
 //             if( (this->timeManager().episodeIndex() == 13) ||

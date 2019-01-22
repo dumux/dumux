@@ -490,7 +490,7 @@ public:
             const Scalar lambda = lameParams[0];
             const Scalar mu = lameParams[1];
 
-            K[eIdx] = lambda + 2/3*mu;
+            K[eIdx] = lambda + 2.0/3.0*mu;
             stressSink[eIdx] = stressSink_[eIdx];
 
             // calculate strain tensor
@@ -512,8 +512,10 @@ public:
             }
 
             if(hasElementFailed_[eIdx])
-                sigma = this->calculateReducedStress(eIdx, sigma, true);
-
+                if (eIdx == 1)
+                    sigma = this->calculateReducedStress(eIdx, sigma, true);
+                else
+                    sigma = this->calculateReducedStress(eIdx, sigma, false);
             // in case of rock mechanics sign convention compressive stresses
             // are defined to be positive
             if(rockMechanicsSignConvention_){
@@ -610,10 +612,10 @@ public:
             Dune::FieldMatrix<RF, dim, dim> deltaEffStressRotated(0.0);
             deltaEffStressRotated = this->calculateRotatedStress(deltaEffStress, faultAngle_[eIdx]);
 
-//             if( (eIdx == 1019) /*|| (eIdx == 1025)*/)
+//             if( (eIdx == 1) /*|| (eIdx == 1025)*/)
 // //             if(this->problem().getHasElementFailed(eIdx))
 //             {
-//                 std::cout << "element " << eIdx << " is inclined by " << angle << std::endl;
+//                 std::cout << "element " << eIdx << " is inclined by " << faultAngle_[eIdx] << std::endl;
 //
 //                 std::cout << "deltaEffStress:" << std::endl;
 //                 std::cout << deltaEffStress[0][0] << " " << deltaEffStress[0][1] << std::endl;

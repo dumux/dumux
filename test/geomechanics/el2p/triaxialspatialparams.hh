@@ -374,8 +374,8 @@ private:
         Scalar xCoord = globalPos[0];
         Scalar yCoord = globalPos[1];
 
-        Scalar xCenterFault = 50.0;
-        Scalar yCenterFault = 50.0;
+        Scalar xCenterFault = 0.5;
+        Scalar yCenterFault = 0.5;
 
 //         Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
         Scalar xFaultDistanceCenterToBothTips = 100; // x-distance in m to both tips of the fault
@@ -385,18 +385,19 @@ private:
 
         Scalar deltaX = xCenterFault - xCoord;
 
-        if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
+        if(
+            (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
             yCoord < yCenterFault - tan(55 * M_PI / 180) * deltaX + spatialTolarance_ &&
             yCoord > yCenterFault - tan(55 * M_PI / 180) * deltaX - spatialTolarance_ &&
 //                 yCoord < 50 &&
 //                 yCoord > 40 &&
             yCoord > yFaultBottom &&
             yCoord < yFaultTop)
-            return true;
-        else if (xCoord < 480 &&
-            xCoord > 470 &&
-            yCoord > 1020 &&
-            yCoord < 1030)
+            // for Heterogeneous
+            &&
+            (!(xCoord < 0.21 && xCoord > 0.09 && yCoord > 0.00 && yCoord < 0.11))
+            &&
+            (!(xCoord < 0.91 && xCoord > 0.79 && yCoord > 0.89 && yCoord < 1.01)) )
             return true;
 //         else if (xCoord < 50 &&
 //             xCoord > 45 &&
