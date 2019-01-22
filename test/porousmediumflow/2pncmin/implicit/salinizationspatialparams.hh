@@ -75,17 +75,31 @@ public:
         irreducibleGasSat_     = getParam<Scalar>("SpatialParams.IrreducibleGasSat", 1e-3);
         vgAlpha_               = getParam<Scalar>("SpatialParams.VGAlpha", 1.5);
         vgn_                   = getParam<Scalar>("SpatialParams.VGn", 4.0);
+        surfacePosition_       = getParam<Scalar>("SpatialParams.SurfacePosition");
+        pseudoPorosity_        = getParam<Scalar>("SpatialParams.pseudoPorosity");
+        pseudoPermeability_    = getParam<Scalar>("SpatialParams.pseudoPermeability");
 
         plotFluidMatrixInteractions_ = getParam<bool>("Output.PlotFluidMatrixInteractions");
 
         //Van Genuchen parameters
         // residual saturations
+
+
         materialParams_.setSwr(irreducibleLiqSat_);
         materialParams_.setSnr(irreducibleGasSat_);
 
         //Van Genuchen parameters
         materialParams_.setVgAlpha(vgAlpha_ );
         materialParams_.setVgn(vgn_);
+
+        materialParamsPseudo_.setSwr(0.0);
+        materialParamsPseudo_.setSnr(0.0);
+
+        //Van Genuchen parameters
+        materialParamsPseudo_.setVgAlpha(0.01);
+        materialParamsPseudo_.setVgn(3.0);
+
+
     }
 
     /*!
@@ -127,7 +141,13 @@ public:
      */
     template<class SolidSystem>
     Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos, int compIdx) const
-    { return 1.0-referencePorosity_; }
+    {
+        Scalar pos1 = globalPos[1];
+        if(pos1 <= surfacePosition_)
+        return 1.0-referencePorosity_;
+      else
+        return 1.0-pseudoPorosity_;
+    }
 
     /*!
      *  \brief Define the reference porosity \f$[-]\f$ distribution.
@@ -138,7 +158,17 @@ public:
      *  \param scv The sub-control volume
      */
     Scalar referencePorosity(const Element& element, const SubControlVolume &scv) const
-    { return referencePorosity_; }
+    {
+      Scalar pos1 = scv.center()[1];
+      if(pos1 <= surfacePosition_){
+//         std::cout<< "refPor: "<< referencePorosity_ << std::endl;
+        return referencePorosity_;
+      }
+      else{
+//         std::cout<< "pseudoPor: "<< pseudoPorosity_ << std::endl;
+        return pseudoPorosity_;
+      }
+    }
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
      *  on the position in the domain
@@ -157,10 +187,19 @@ public:
 
         Scalar sumPrecipitates = 0.0;
         sumPrecipitates += priVars[3 /*numComp*/];
+        Scalar pos1 = scv.center()[1];
 
          using std::max;
-         const auto poro =  max(/*minPoro*/1e-5, referencePorosity_ - sumPrecipitates);
-         return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
+         if(pos1 <= surfacePosition_)
+         {
+            const auto poro =  max(/*minPoro*/1e-5, referencePorosity_ - sumPrecipitates);
+            return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
+         }
+         else
+         {
+            const auto poro =  max(/*minPoro*/1e-5, pseudoPorosity_ - sumPrecipitates);
+            return permLaw_.evaluatePermeability(pseudoPermeability_, pseudoPorosity_, poro);
+         }
     }
 
 //     Scalar solidity(const SubControlVolume &scv) const
@@ -174,7 +213,11 @@ public:
 
     // return the brooks-corey context depending on the position
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    { return materialParams_; }
+    { if(globalPos[1]<=surfacePosition_)
+            return materialParams_;
+        else
+          return materialParamsPseudo_;
+    }
 
     // define which phase is to be considered as the wetting phase
     template<class FluidSystem>
@@ -184,6 +227,7 @@ public:
 private:
 
     MaterialLawParams materialParams_;
+    MaterialLawParams materialParamsPseudo_;
 
     PermeabilityKozenyCarman<PermeabilityType> permLaw_;
 
@@ -194,6 +238,10 @@ private:
     Scalar irreducibleGasSat_;
     Scalar vgAlpha_;
     Scalar vgn_ ;
+    Scalar surfacePosition_;
+    Scalar pseudoPorosity_;
+    Scalar pseudoPermeability_;
+
 
     bool plotFluidMatrixInteractions_;
 };
