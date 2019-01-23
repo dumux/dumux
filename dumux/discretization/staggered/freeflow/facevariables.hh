@@ -38,6 +38,7 @@ template<class FacePrimaryVariables, int dim>
 class StaggeredFaceVariables
 {
     static constexpr int numPairs = (dim == 2) ? 2 : 4;
+    static constexpr int order = 2;
     using Scalar = typename FacePrimaryVariables::block_type;
 
 public:
@@ -75,28 +76,30 @@ public:
 
         // treat the velocity forward of the self face i.e. the face that is
         // forward wrt the self face by degree i
-        velocityForward_.clear();
+        velocityForward_.fill(0.0);
         for (int i = 0; i < scvf.axisData().inAxisForwardDofs.size(); i++)
         {
              if(!(scvf.axisData().inAxisForwardDofs[i] < 0))
              {
-                 velocityForward_.push_back(faceSol[scvf.axisData().inAxisForwardDofs[i]]);
+                 velocityForward_[i]= faceSol[scvf.axisData().inAxisForwardDofs[i]];
              }
         }
 
         // treat the velocity at the first backward face i.e. the face that is
         // behind the opposite face by degree i
-        velocityBackward_.clear();
+        velocityBackward_.fill(0.0);
         for (int i = 0; i < scvf.axisData().inAxisBackwardDofs.size(); i++)
         {
              if(!(scvf.axisData().inAxisBackwardDofs[i] < 0))
              {
-                 velocityBackward_.push_back(faceSol[scvf.axisData().inAxisBackwardDofs[i]]);
+                 velocityBackward_[i] = faceSol[scvf.axisData().inAxisBackwardDofs[i]];
              }
         }
 
         // handle all sub faces
-        std::vector<Scalar> a;
+        for(int i = 0; i < velocityParallel_.size(); ++i)
+            velocityParallel_[i].fill(0.0);
+
         for(int i = 0; i < scvf.pairData().size(); ++i)
         {
             const auto& subFaceData = scvf.pairData(i);
@@ -107,16 +110,14 @@ public:
             if(scvf.hasOuterNormal(i))
                 velocityNormalOutside_[i] = faceSol[subFaceData.normalPair.second];
 
-            a.clear();
             // treat the velocities parallel to the self face
             for(int j = 0; j < subFaceData.parallelDofs.size(); j++)
             {
                 if(scvf.hasParallelNeighbor(i,j))
                 {
-                    a.push_back(faceSol[subFaceData.parallelDofs[j]]);
+                    velocityParallel_[i][j] = faceSol[subFaceData.parallelDofs[j]];
                 }
             }
-            velocityParallel_[i] = a;
         }
     }
 
@@ -190,9 +191,9 @@ public:
 private:
     Scalar velocitySelf_;
     Scalar velocityOpposite_;
-    std::vector<Scalar> velocityForward_;
-    std::vector<Scalar> velocityBackward_;
-    std::array<std::vector<Scalar>, numPairs> velocityParallel_;
+    std::array<Scalar, order-1> velocityForward_;
+    std::array<Scalar, order-1> velocityBackward_;
+    std::array<std::array<Scalar, order>, numPairs> velocityParallel_;
     std::array<Scalar, numPairs>  velocityNormalInside_;
     std::array<Scalar, numPairs>  velocityNormalOutside_;
 
