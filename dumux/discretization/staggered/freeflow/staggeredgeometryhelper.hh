@@ -30,6 +30,7 @@
 #include <dumux/common/math.hh>
 #include <type_traits>
 #include <algorithm>
+#include <array>
 
 namespace Dumux
 {
@@ -38,11 +39,11 @@ namespace Dumux
  * \ingroup StaggeredDiscretization
  * \brief Parallel Data stored per sub face
  */
-template<class Scalar, class GlobalPosition>
+template<class Scalar, class GlobalPosition, int geometryOrder>
 struct PairData
 {
-    std::vector<int> parallelDofs;
-    std::vector<Scalar> parallelDistances;
+    std::array<int, geometryOrder> parallelDofs;
+    std::array<Scalar, geometryOrder+1> parallelDistances;
     std::pair<signed int,signed int> normalPair;
     int localNormalFaceIdx;
     Scalar normalDistance;
@@ -53,16 +54,16 @@ struct PairData
  * \ingroup StaggeredDiscretization
  * \brief In Axis Data stored per sub face
  */
-template<class Scalar>
+template<class Scalar, int geometryOrder>
 struct AxisData
 {
     int selfDof;
     int oppositeDof;
-    std::vector<int> inAxisForwardDofs;
-    std::vector<int> inAxisBackwardDofs;
+    std::array<int, geometryOrder-1> inAxisForwardDofs;
+    std::array<int, geometryOrder-1> inAxisBackwardDofs;
     Scalar selfToOppositeDistance;
-    std::vector<Scalar> inAxisForwardDistances;
-    std::vector<Scalar> inAxisBackwardDistances;
+    std::array<Scalar, geometryOrder-1> inAxisForwardDistances;
+    std::array<Scalar, geometryOrder-1> inAxisBackwardDistances;
 };
 
 /*!
@@ -105,7 +106,6 @@ class FreeFlowStaggeredGeometryHelper
     static constexpr int numFacetSubEntities = (dim == 2) ? 2 : 4;
     static constexpr int numfacets = dimWorld * 2;
     static constexpr int numPairs = 2 * (dimWorld - 1);
-    static int order_;
 
 public:
 
@@ -162,17 +162,7 @@ public:
         return Dumux::directionIndex(std::move(intersection.centerUnitOuterNormal()));
     }
 
-    //! \brief Returns the order needed by the scheme
-    static int order()
-    {
-        return order_;
-    }
-
-    //! \brief Set the order needed by the scheme
-    static void setOrder(const int order)
-    {
-        order_ = order;
-    }
+    static constexpr int geometryOrder = 2;
 
 private:
     /*!
@@ -180,24 +170,14 @@ private:
      */
     void fillAxisData_()
     {
-        unsigned int numForwardBackwardAxisDofs = order_ - 1;
+        unsigned int numForwardBackwardAxisDofs = axisData_.inAxisForwardDofs.size();
         const auto inIdx = intersection_.indexInInside();
         const auto oppIdx = localOppositeIdx_(inIdx);
 
-        // Clear the containers before filling them
-        this->axisData_.inAxisForwardDofs.clear();
-        this->axisData_.inAxisBackwardDofs.clear();
-        this->axisData_.inAxisForwardDistances.clear();
-        this->axisData_.inAxisBackwardDistances.clear();
-
-        // initialize values that could remain unitialized if the intersection lies on a boundary
-        for(int i = 0; i < numForwardBackwardAxisDofs; i++)
-        {
-            this->axisData_.inAxisForwardDofs.push_back(-1);
-            this->axisData_.inAxisBackwardDofs.push_back(-1);
-            this->axisData_.inAxisForwardDistances.push_back(0);
-            this->axisData_.inAxisBackwardDistances.push_back(0);
-        }
+        this->axisData_.inAxisForwardDofs.fill(-1);
+        this->axisData_.inAxisBackwardDofs.fill(-1);
+        this->axisData_.inAxisForwardDistances.fill(0);
+        this->axisData_.inAxisBackwardDistances.fill(0);
 
         // Set the self Dof
         this->axisData_.selfDof = gridView_.indexSet().subIndex(this->intersection_.inside(), inIdx, codimIntersection);
@@ -215,9 +195,8 @@ private:
         auto selfFace = getFacet_(inIdx, element_);
         if(intersection_.neighbor())
         {
-            if (order_ > 1)
-                inAxisForwardElementStack.push(intersection_.outside());
-            bool keepStackingForward = (inAxisForwardElementStack.size() < order_-1);
+            inAxisForwardElementStack.push(intersection_.outside());
+            bool keepStackingForward = (inAxisForwardElementStack.size() < numForwardBackwardAxisDofs);
             while(keepStackingForward)
             {
                 auto e = inAxisForwardElementStack.top();
@@ -228,7 +207,7 @@ private:
                         if( intersection.neighbor())
                         {
                             inAxisForwardElementStack.push(intersection.outside());
-                            keepStackingForward = (inAxisForwardElementStack.size() < order_-1);
+                            keepStackingForward = (inAxisForwardElementStack.size() < numForwardBackwardAxisDofs);
                         }
                         else
                         {
@@ -238,6 +217,7 @@ private:
                 }
             }
         }
+
         std::vector<GlobalPosition> forwardFaceCoordinates(inAxisForwardElementStack.size(), selfFace.geometry().center());
         while(!inAxisForwardElementStack.empty())
         {
@@ -247,6 +227,7 @@ private:
             forwardFaceCoordinates[forwardIdx] = selfFace.geometry().center();
             inAxisForwardElementStack.pop();
         }
+
         for(int i = 0; i< forwardFaceCoordinates.size(); i++)
         {
             if(i == 0)
@@ -268,9 +249,8 @@ private:
             {
                 if(intersection.neighbor())
                 {
-                    if (order_ > 1)
-                        inAxisBackwardElementStack.push(intersection.outside());
-                    bool keepStackingBackward = (inAxisBackwardElementStack.size() < order_-1);
+                    inAxisBackwardElementStack.push(intersection.outside());
+                    bool keepStackingBackward = (inAxisBackwardElementStack.size() < numForwardBackwardAxisDofs);
                     while(keepStackingBackward)
                     {
                         auto e = inAxisBackwardElementStack.top();
@@ -282,7 +262,7 @@ private:
                                 if( intersectionOut.neighbor())
                                 {
                                     inAxisBackwardElementStack.push(intersectionOut.outside());
-                                    keepStackingBackward = (inAxisBackwardElementStack.size() < order_-1);
+                                    keepStackingBackward = (inAxisBackwardElementStack.size() < numForwardBackwardAxisDofs);
                                 }
                                 else
                                 {
@@ -294,6 +274,7 @@ private:
                 }
             }
         }
+
         std::vector<GlobalPosition> backwardFaceCoordinates(inAxisBackwardElementStack.size(), oppFace.geometry().center());
         while(!inAxisBackwardElementStack.empty())
         {
@@ -303,6 +284,7 @@ private:
             backwardFaceCoordinates[backwardIdx] = oppFace.geometry().center();
             inAxisBackwardElementStack.pop();
         }
+
         for(int i = 0; i< backwardFaceCoordinates.size(); i++)
         {
             if(i == 0)
@@ -324,19 +306,17 @@ private:
         // initialize values that could remain unitialized if the intersection lies on a boundary
         for(auto& data : pairData_)
         {
-            int numParallelDofs = order_;
-
             // parallel Dofs
-            data.parallelDofs.clear();
-            data.parallelDofs.resize(numParallelDofs, -1);
+            data.parallelDofs.fill(-1);
 
             // parallel Distances
-            data.parallelDistances.clear();
-            data.parallelDistances.resize(numParallelDofs + 1, 0.0);
+            data.parallelDistances.fill(0.0);
 
             // outer normals
             data.normalPair.second = -1;
         }
+
+        unsigned int numParallelFaces = pairData_[0].parallelDistances.size();
 
         // set basic global positions
         const auto& elementCenter = this->element_.geometry().center();
@@ -388,7 +368,6 @@ private:
             }
         }
 
-
         // get the parallel Dofs
         const int parallelLocalIdx = intersection_.indexInInside();
         int numPairParallelIdx = 0;
@@ -402,7 +381,8 @@ private:
                     auto parallelAxisIdx = directionIndex(intersection);
                     auto localNormalIntersectionIndex = intersection.indexInInside();
                     parallelElementStack.push(element_);
-                    bool keepStacking =  (parallelElementStack.size() < order_+1);
+
+                    bool keepStacking =  (parallelElementStack.size() < numParallelFaces);
                     while(keepStacking)
                     {
                         auto e = parallelElementStack.top();
@@ -413,7 +393,7 @@ private:
                                 if( normalIntersection.neighbor() )
                                 {
                                     parallelElementStack.push(normalIntersection.outside());
-                                    keepStacking = (parallelElementStack.size() < order_+1);
+                                    keepStacking = (parallelElementStack.size() < numParallelFaces);
                                 }
                                 else
                                 {
@@ -422,6 +402,7 @@ private:
                             }
                         }
                     }
+
                     while(!parallelElementStack.empty())
                     {
                         if(parallelElementStack.size() > 1)
@@ -431,6 +412,7 @@ private:
                         this->pairData_[numPairParallelIdx].parallelDistances[parallelElementStack.size()-1] = setParallelPairDistances_(parallelElementStack.top(), parallelAxisIdx);
                         parallelElementStack.pop();
                     }
+
                 }
                 else
                 {
@@ -544,13 +526,10 @@ private:
     const Element element_; //!< The respective element
     const typename Element::Geometry elementGeometry_; //!< Reference to the element geometry
     const GridView gridView_; //!< The grid view
-    AxisData<Scalar> axisData_; //!< Data related to forward and backward faces
-    std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_; //!< Collection of pair information related to normal and parallel faces
+    AxisData<Scalar, geometryOrder> axisData_; //!< Data related to forward and backward faces
+    std::array<PairData<Scalar, GlobalPosition, geometryOrder>, numPairs> pairData_; //!< Collection of pair information related to normal and parallel faces
     std::vector<GlobalPosition> innerNormalFacePos_;
 };
-
-template<class GridView>
-int FreeFlowStaggeredGeometryHelper<GridView>::order_ = 1;
 
 } // end namespace Dumux
 

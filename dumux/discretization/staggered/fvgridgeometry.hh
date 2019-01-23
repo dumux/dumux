@@ -228,7 +228,9 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
         if (hasParamInGroup(paramGroup, "Discretization.TvdApproach"))
-            GeometryHelper::setOrder(2);
+            stencilOrder_ = 2;
+        else
+            stencilOrder_ = 1;
     }
 
     //! The total number of sub control volumes
@@ -343,6 +345,7 @@ public:
         }
 
         // build the connectivity map for an effecient assembly
+        connectivityMap_.setStencilOrder(stencilOrder_);
         connectivityMap_.update(*this);
     }
 
@@ -414,6 +417,7 @@ private:
     // mappers
     ConnectivityMap connectivityMap_;
     IntersectionMapper intersectionMapper_;
+    int stencilOrder_;
 
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
@@ -473,7 +477,7 @@ public:
     using FVGridGeometryTuple = std::tuple< CellCenterFVGridGeometry<ThisType>, FaceFVGridGeometry<ThisType> >;
 
     //! Constructor
-    StaggeredFVGridGeometry(const GridView& gridView)
+    StaggeredFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")
     : ParentType(gridView)
     , intersectionMapper_(gridView)
     {
@@ -481,6 +485,10 @@ public:
         if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
+        if (hasParamInGroup(paramGroup, "Discretization.TvdApproach"))
+            stencilOrder_ = 2;
+        else
+            stencilOrder_ = 1;
     }
 
     //! update all fvElementGeometries (do this again after grid adaption)
@@ -533,6 +541,7 @@ public:
         }
 
         // build the connectivity map for an effecient assembly
+        connectivityMap_.setStencilOrder(stencilOrder_);
         connectivityMap_.update(*this);
     }
 
@@ -631,6 +640,7 @@ private:
     // mappers
     ConnectivityMap connectivityMap_;
     IntersectionMapper intersectionMapper_;
+    int stencilOrder_;
 
     //! vectors that store the global data
     std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;

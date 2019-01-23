@@ -51,12 +51,14 @@ class FreeFlowStaggeredSubControlVolumeFace
     using Geometry = typename T::Geometry;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
+    using GeometryHelper = FreeFlowStaggeredGeometryHelper<GV>;
 
     using Scalar = typename T::Scalar;
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
 
     static constexpr int numPairs = 2 * (dimworld - 1);
+    static constexpr int geometryOrder = GeometryHelper::geometryOrder;
 
 public:
     using GlobalPosition = typename T::GlobalPosition;
@@ -204,7 +206,7 @@ public:
     }
 
     //! Returns the data for one sub face
-    const PairData<Scalar, GlobalPosition>& pairData(const int idx) const
+    const PairData<Scalar, GlobalPosition, geometryOrder>& pairData(const int idx) const
     {
         return pairData_[idx];
     }
@@ -323,8 +325,8 @@ private:
 
     int dofIdx_;
     Scalar selfToOppositeDistance_;
-    AxisData<Scalar> axisData_;
-    std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
+    AxisData<Scalar, geometryOrder> axisData_;
+    std::array<PairData<Scalar, GlobalPosition, geometryOrder>, numPairs> pairData_;
 
     int localFaceIdx_;
     unsigned int dirIdx_;

@@ -92,6 +92,13 @@ public:
         }
     }
 
+    //! \brief Set the order needed by the scheme
+    void setStencilOrder(const int stencilOrder)
+    {
+        stencilOrder_ = stencilOrder;
+    }
+
+
     //! Returns the stencil of a cell center dof w.r.t. other cell center dofs
     const std::vector<GridIndexType>& operator() (CellCenterIdxType, CellCenterIdxType, const GridIndexType globalI) const
     {
@@ -179,7 +186,7 @@ private:
     {
         if(stencil.empty())
         {
-            for(int i = 0; i < scvf.axisData().inAxisBackwardDofs.size(); i++)
+            for(int i = 0; i < stencilOrder_ - 1; i++)
             {
                 if(scvf.hasBackwardNeighbor(i))
                 {
@@ -190,7 +197,7 @@ private:
             stencil.push_back(scvf.axisData().selfDof);
             stencil.push_back(scvf.axisData().oppositeDof);
 
-            for(int i = 0; i < scvf.axisData().inAxisForwardDofs.size(); i++)
+            for(int i = 0; i < stencilOrder_ - 1; i++)
             {
                 if(scvf.hasForwardNeighbor(i))
                 {
@@ -207,7 +214,7 @@ private:
                 stencil.push_back(data.normalPair.second);
 
             // add parallel dofs
-            for (int i = 0; i < data.parallelDofs.size(); i++)
+            for (int i = 0; i < stencilOrder_ /*data.parallelDofs.size()*/; i++)
             {
                 if(!(data.parallelDofs[i] < 0))
                 {
@@ -221,6 +228,7 @@ private:
     CellCenterToFaceMap cellCenterToFaceMap_;
     FaceToCellCenterMap faceToCellCenterMap_;
     FaceToFaceMap faceToFaceMap_;
+    int stencilOrder_;
 };
 
 } // end namespace Dumux
