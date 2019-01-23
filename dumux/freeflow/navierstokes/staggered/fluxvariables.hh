@@ -388,9 +388,9 @@ public:
 
             // If there is no symmetry or Neumann boundary condition for the given sub face, proceed to calculate the tangential momentum flux.
             if (problem.enableInertiaTerms())
-                normalFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, lateralFaceHasDirichletPressure, lateralFaceHasBJS);
+                normalFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, fvGeometry, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, lateralFaceHasDirichletPressure, lateralFaceHasBJS);
 
-            normalFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, lateralFaceHasDirichletPressure, lateralFaceHasBJS);
+            normalFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, fvGeometry, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, lateralFaceHasDirichletPressure, lateralFaceHasBJS);
         }
         return normalFlux;
     }
@@ -419,6 +419,7 @@ private:
      * \endverbatim
      */
     FacePrimaryVariables computeAdvectivePartOfLateralMomentumFlux_(const Problem& problem,
+                                                                    const FVElementGeometry& fvGeometry,
                                                                     const Element& element,
                                                                     const SubControlVolumeFace& scvf,
                                                                     const SubControlVolumeFace& normalFace,
@@ -458,7 +459,7 @@ private:
         // If a Tvd approach has been specified and I am not too near to the boundary I can use a second order approximation.
         if (highOrder.tvdApproach() != TvdApproach::none)
         {
-            if (canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx, velocities, distances, problem, element, faceVars, lateralFaceHasDirichletPressure, lateralFaceHasBJS))
+            if (canLateralSecondOrder_(scvf, fvGeometry, selfIsUpstream, localSubFaceIdx, velocities, distances, problem, element, faceVars, lateralFaceHasDirichletPressure, lateralFaceHasBJS))
             {
                 switch (highOrder.tvdApproach())
                 {
@@ -528,6 +529,7 @@ private:
      * \endverbatim
      */
     FacePrimaryVariables computeDiffusivePartOfLateralMomentumFlux_(const Problem& problem,
+                                                                    const FVElementGeometry& fvGeometry,
                                                                     const Element& element,
                                                                     const SubControlVolumeFace& scvf,
                                                                     const SubControlVolumeFace& normalFace,
@@ -765,6 +767,7 @@ private:
      * \param distances Variable that will store the distances of interest
      */
     bool canLateralSecondOrder_(const SubControlVolumeFace& ownScvf,
+                                const FVElementGeometry& fvGeometry,
                                 const bool selfIsUpstream,
                                 const int localSubFaceIdx,
                                 std::array<Scalar, 3>& velocities,
@@ -775,7 +778,7 @@ private:
                                 const bool lateralFaceHasDirichletPressure,
                                 const bool lateralFaceHasBJS) const
     {
-        const SubControlVolumeFace& normalFace = problem.fvGridGeometry().scvf(ownScvf.insideScvIdx(), ownScvf.pairData(localSubFaceIdx).localNormalFaceIdx);
+         const SubControlVolumeFace& normalFace = fvGeometry.scvf(ownScvf.insideScvIdx(), ownScvf.pairData(localSubFaceIdx).localNormalFaceIdx);
 
         // The local index of the faces that is opposite to localSubFaceIdx
         const int oppositeSubFaceIdx = localSubFaceIdx % 2 ? localSubFaceIdx - 1 : localSubFaceIdx + 1;
@@ -802,7 +805,7 @@ private:
             if (ownScvf.hasParallelNeighbor(oppositeSubFaceIdx, 0))
                 velocities[2] = faceVars.velocityParallel(oppositeSubFaceIdx, 0);
             else
-                velocities[2] = getParallelVelocityFromOtherBoundary_(problem, ownScvf, oppositeSubFaceIdx, element, velocities[1]);
+                velocities[2] = getParallelVelocityFromOtherBoundary_(problem, fvGeometry, ownScvf, oppositeSubFaceIdx, element, velocities[1]);
 
             distances[0] = ownScvf.cellCenteredParallelDistance(localSubFaceIdx, 0);
             distances[1] = ownScvf.cellCenteredParallelDistance(oppositeSubFaceIdx, 0);
@@ -829,9 +832,9 @@ private:
                 velocities[2] = faceVars.velocityParallel(localSubFaceIdx, 1);
             else
             {
-                const Element& elementParallel = problem.fvGridGeometry().element(problem.fvGridGeometry().scv(normalFace.outsideScvIdx()));
-                const SubControlVolumeFace& firstParallelScvf = problem.fvGridGeometry().scvf(normalFace.outsideScvIdx(), ownScvf.localFaceIdx());
-                velocities[2] = getParallelVelocityFromOtherBoundary_(problem, firstParallelScvf, localSubFaceIdx, elementParallel, velocities[1]);
+                const Element& elementParallel = fvGeometry.fvGridGeometry().element(fvGeometry.scv(normalFace.outsideScvIdx()));
+                const SubControlVolumeFace& firstParallelScvf = fvGeometry.scvf(normalFace.outsideScvIdx(), ownScvf.localFaceIdx());
+                velocities[2] = getParallelVelocityFromOtherBoundary_(problem, fvGeometry, firstParallelScvf, localSubFaceIdx, elementParallel, velocities[1]);
             }
 
             distances[0] = ownScvf.cellCenteredParallelDistance(localSubFaceIdx, 0);
@@ -886,13 +889,14 @@ private:
      * \param parallelVelocity The velocity over scvf
      */
     Scalar getParallelVelocityFromOtherBoundary_(const Problem& problem,
+                                                 const FVElementGeometry& fvGeometry,
                                                  const SubControlVolumeFace& scvf,
                                                  const int localIdx,
                                                  const Element& boundaryElement,
                                                  const Scalar parallelVelocity) const
     {
         // A ghost subface at the boundary is created, featuring the location of the sub face's center
-        const SubControlVolumeFace& boundaryNormalFace = problem.fvGridGeometry().scvf(scvf.insideScvIdx(), scvf.pairData(localIdx).localNormalFaceIdx);
+        const SubControlVolumeFace& boundaryNormalFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData(localIdx).localNormalFaceIdx);
         GlobalPosition boundarySubFaceCenter = scvf.pairData(localIdx).virtualFirstParallelFaceDofPos + boundaryNormalFace.center();
         boundarySubFaceCenter *= 0.5;
         const SubControlVolumeFace boundarySubFace = makeGhostFace_(boundaryNormalFace, boundarySubFaceCenter);
