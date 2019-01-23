@@ -25,14 +25,15 @@ Name = test_stokes1pdarcy1phorizontal
 EnableGravity = false
 EnableInertiaTerms = false
 
-[Stokes.Vtk]
+[Vtk]
 AddVelocity = 1
+WriteFaceData = true
 
 [Darcy.Vtk]
 AddVelocity = 1
 
 [Mpfa]
-Q = 0.0
+Q = 0.5
 
 [Newton]
 MaxRelativeShift = 1.0e-8

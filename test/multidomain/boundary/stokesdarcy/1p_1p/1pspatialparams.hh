@@ -61,12 +61,12 @@ public:
         auto perm = getParam<Scalar>("Darcy.SpatialParams.Permeability");
 
         double pi = 4.0*atan(1.0);
-        double theta = pi*40.0/180;
+        double theta = pi*45.0/180;
         double cost = cos(theta);
         double sint = sin(theta);
 
         Scalar k1_ = perm;
-        Scalar k2_ = perm;
+        Scalar k2_ = 100*perm;
 
         permeability_[0][0] = cost*cost*k1_ + sint*sint*k2_;
         permeability_[1][1] = sint*sint*k1_ + cost*cost*k2_;

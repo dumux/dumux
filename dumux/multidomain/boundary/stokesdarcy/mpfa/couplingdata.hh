@@ -273,14 +273,17 @@ public:
     {
         const auto& stokesContext = couplingManager().stokesCouplingContext(scvf);
         const auto perm = stokesContext.volVars.permeability();
+        const auto dirIdx = 1 - scvf.directionIndex();
 
-        Scalar permTrace;
-        for(int i=0; i<perm.size();i++)
-            permTrace += perm[i][i];
+//        Scalar permTrace;
+//        for(int i=0; i<perm.size();i++)
+//            permTrace += perm[i][i];
+//
+//        permTrace /= perm.size();
+//
+//        return permTrace;
 
-        permTrace /= perm.size();
-
-        return permTrace;
+        return perm[dirIdx][dirIdx];
     }
 
      /*!
