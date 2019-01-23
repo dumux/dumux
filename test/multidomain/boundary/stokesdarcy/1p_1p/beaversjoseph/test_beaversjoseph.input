@@ -1,0 +1,60 @@
+# [Darcy.Grid]
+# UpperRight = 1 1
+# Cells = 10 10
+# Refinement = 1
+#
+# [Stokes.Grid]
+# LowerLeft = -1 1
+# UpperRight = 2 2
+# Cells = 30 10
+# Refinement = 2
+[Grid]
+Positions0 = 0 1.6
+Positions1 = 0 0.25
+Cells0 = 160
+Cells1 = 25
+
+[Darcy.Grid]
+LowerLeftPM = 0.25 0
+UpperRightPM = 1.5 0.13
+
+[Stokes.Grid]
+Refinement = 1
+
+
+[Stokes.Problem]
+Name = stokes
+PressureDifference = 1e-6
+
+[Darcy.Problem]
+Name = darcy
+
+[Darcy.SpatialParams]
+# Permeability = 0.000174 # m^2
+# Permeability = 1e-6 # m^2
+K1 = 0.000174
+K2 = 0.000174
+PermeabilityAngle = 90
+AlphaBeaversJoseph = 1.0
+
+[Problem]
+Name = test_stokes1pdarcy1phorizontal
+EnableGravity = false
+EnableInertiaTerms = true
+
+[Vtk]
+AddVelocity = 1
+WriteFaceData = true
+
+[Darcy.Vtk]
+AddVelocity = 1
+
+[Mpfa]
+Q = 0.5
+
+[Newton]
+MaxRelativeShift = 1e-8
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
