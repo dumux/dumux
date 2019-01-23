@@ -9,7 +9,7 @@ dune_add_test(NAME test_1pncminni_discharge_nonequilibrium_box
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pncminni_box-00065.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncminni_box params.input -Problem.Name test_1pncminni_box"
                         --zeroThreshold {"precipVolFrac_CaOH2":5e-6})
-
+set(CMAKE_BUILD_TYPE Debug)
 #install sources
 install(FILES
 modifiedcao.hh

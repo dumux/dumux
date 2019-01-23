@@ -182,8 +182,16 @@ public:
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::OnePNCMinNI>
 { using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
+}// end namespace properties
+
+template<class OnePNCMinModelTraits, int numSC, int numInertSC>
+struct OnePNCMinconstrainedModelTraits : public OnePNCMinModelTraits
+{
+    static constexpr int numConstraintEq() { return numSC - numInertSC; }
+};
 
 
+namespace Properties{
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
@@ -231,7 +239,7 @@ private:
      using OnePNCTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
      using EquilibriumTraits = MineralizationModelTraits<OnePNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
-    using type = OnePNCUnconstrainedModelTraits<EquilibriumTraits>;
+    using type = OnePNCMinconstrainedModelTraits<EquilibriumTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 };
 
 //! in case we do not assume full non-equilibrium one needs a thermal conductivity
