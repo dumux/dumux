@@ -25,6 +25,7 @@
 #define DUMUX_DARCY_SUBPROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
+#include <dune/alugrid/grid.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 
@@ -37,6 +38,10 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/mpfa/upwindscheme.hh>
+
+#ifndef DARCYGRIDTYPE
+#define DARCYGRIDTYPE Dune::YaspGrid<2>
+#endif
 
 namespace Dumux
 {
@@ -58,7 +63,7 @@ SET_PROP(DarcyOneP, FluidSystem)
 };
 
 // Set the grid type
-SET_TYPE_PROP(DarcyOneP, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(DarcyOneP, Grid, DARCYGRIDTYPE);
 
 SET_PROP(DarcyOneP, SpatialParams)
 {
