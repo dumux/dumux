@@ -37,3 +37,7 @@ Q = 0.5
 
 [Newton]
 MaxRelativeShift = 1.0e-8
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
