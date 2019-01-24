@@ -55,7 +55,7 @@ struct CCMpfaFVGridGeometryTraits : public DefaultMapperTraits<GV>
     //! Per default, we use high values that are hopefully enough for all cases
     //! We assume simplex grids where stencils can get quite large but the size is unknown
     static constexpr int maxElementStencilSize = int(GV::dimension) == 3 ? 150 :
-                                                 (int(GV::dimension)<int(GV::dimensionworld) ? 45 : 15);
+                                                 (int(GV::dimension)<int(GV::dimensionworld) ? 45 : 40);
     //! type definitions depending on the FVGridGeometry itself
     template< class FVGridGeom >
     using MpfaHelper = CCMpfaHelper< FVGridGeom >;
