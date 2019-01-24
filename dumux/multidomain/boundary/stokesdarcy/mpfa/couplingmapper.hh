@@ -241,7 +241,12 @@ public:
             const auto& scvfIndices = indexSet.globalScvfIndices();
 
             for(auto&& index : scvIndices)
+            {
                 stokesFaceToDarcyStencils[stokesScvf.dofIndex()].push_back(index);
+                darcyToStokesFaceStencils[index].first.push_back(stokesScvf.dofIndex());
+                darcyToStokesFaceStencils[index].second.push_back(stokesScvf.index());
+                darcyElementToStokesElementMap_[index].push_back({stokesElementIdx, stokesScvfIdx, darcyScvfIdx});
+            }
 
             for(auto&& index : scvfIndices)
             {
