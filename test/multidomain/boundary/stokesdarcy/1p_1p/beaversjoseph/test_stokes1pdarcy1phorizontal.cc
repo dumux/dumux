@@ -48,6 +48,7 @@
 #include <dumux/multidomain/newtonsolver.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/mpfa/couplingmanager.hh>
+#include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
 
 #include "darcyproblem.hh"
 #include "stokesproblem.hh"
@@ -107,7 +108,7 @@ int main(int argc, char** argv) try
     hostGridManager.init();
     auto& hostGrid = hostGridManager.grid();
 
-    using GlobalPosition = std::array<double, dim>;
+    using GlobalPosition = Dune::FieldVector<double, dim>;
 
     const auto lowerLeftPM = getParamFromGroup<GlobalPosition>("Darcy", "Grid.LowerLeftPM");
     const auto upperRightPM = getParamFromGroup<GlobalPosition>("Darcy", "Grid.UpperRightPM");
@@ -195,6 +196,9 @@ int main(int argc, char** argv) try
 
     StaggeredVtkOutputModule<StokesGridVariables, typename GET_PROP_TYPE(StokesTypeTag, SolutionVector)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesName);
     GET_PROP_TYPE(StokesTypeTag, VtkOutputFields)::init(stokesVtkWriter);
+
+    stokesVtkWriter.addField(stokesProblem->getAnalyticalVelocityX(), "analyticalV_x");
+
     stokesVtkWriter.write(0.0);
 
     // the assembler for a stationary problem
@@ -222,8 +226,59 @@ int main(int argc, char** argv) try
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
+    // set up two surfaces over which fluxes are calculated
+    FluxOverSurface<StokesTypeTag, std::decay_t<decltype(sol)>> flux(*stokesProblem, *stokesGridVariables, sol);
+
+    const auto p0frontPM = lowerLeftPM;
+    const auto p1frontPM = GlobalPosition{lowerLeftPM[0], upperRightPM[1]};
+    flux.addSurface("frontPM", p0frontPM, p1frontPM);
+
+    const auto p0frontChannel = GlobalPosition{lowerLeftPM[0], upperRightPM[1]};;
+    const auto p1frontChannel = GlobalPosition{lowerLeftPM[0], stokesFvGridGeometry->bBoxMax()[1]};
+    flux.addSurface("frontChannel", p0frontChannel, p1frontChannel);
+
+    const auto p0topPM = GlobalPosition{lowerLeftPM[0],  upperRightPM[1]};
+    const auto p1topPM = GlobalPosition{upperRightPM[0], upperRightPM[1]};
+    flux.addSurface("topPM", p0topPM, p1topPM);
+
+    const auto p0MiddleChannel = GlobalPosition{lowerLeftPM[0] + 0.5*(upperRightPM[0]-lowerLeftPM[0]),  upperRightPM[1]};
+    const auto p1MiddleChannel = GlobalPosition{lowerLeftPM[0] + 0.5*(upperRightPM[0]-lowerLeftPM[0]), stokesFvGridGeometry->bBoxMax()[1]};
+    flux.addSurface("middleChannel", p0MiddleChannel, p1MiddleChannel);
+
+    const auto p0backPM = GlobalPosition{upperRightPM[0],  lowerLeftPM[1]};
+    const auto p1backPM = GlobalPosition{upperRightPM[0], upperRightPM[1]};
+    flux.addSurface("backPM", p0backPM, p1backPM);
+
+    const auto p0backChannel = GlobalPosition{upperRightPM[0],  upperRightPM[1]};
+    const auto p1backChannel = GlobalPosition{upperRightPM[0], stokesFvGridGeometry->bBoxMax()[1]};
+    flux.addSurface("backChannel", p0backChannel, p1backChannel);
+
+    const auto p0Inlet = stokesFvGridGeometry->bBoxMin();
+    const auto p1Inlet = GlobalPosition{stokesFvGridGeometry->bBoxMin()[0], stokesFvGridGeometry->bBoxMax()[1]};
+    flux.addSurface("inlet", p0Inlet, p1Inlet);
+
+    const auto p0outlet = GlobalPosition{stokesFvGridGeometry->bBoxMax()[0], stokesFvGridGeometry->bBoxMin()[1]};
+    const auto p1outlet = stokesFvGridGeometry->bBoxMax();
+    flux.addSurface("outlet", p0outlet, p1outlet);
+
+
     // solve the non-linear system
     nonLinearSolver.solve(sol);
+
+    flux.calculateVolumeFluxes();
+    std::cout << "volume fluxes:" << std::endl;
+    std::cout << "inlet         = " << flux.netFlux("inlet")[0] << std::endl;
+    std::cout << "outlet        = " << flux.netFlux("outlet")[0] << std::endl;
+
+    std::cout << "frontPM       = " << flux.netFlux("frontPM")[0] << std::endl;
+    std::cout << "frontChannel  = " << flux.netFlux("frontChannel")[0] << std::endl;
+
+    std::cout << "topPM is      = " << flux.netFlux("topPM")[0] << std::endl;
+
+    std::cout << "middleChannel = " << flux.netFlux("middleChannel")[0] << std::endl;
+
+    std::cout << "backPM        = " << flux.netFlux("backPM")[0] << std::endl;
+    std::cout << "backChannel   = " << flux.netFlux("backChannel")[0] << std::endl;
 
     // write vtk output
     stokesVtkWriter.write(1.0);

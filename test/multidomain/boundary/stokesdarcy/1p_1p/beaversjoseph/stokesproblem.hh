@@ -211,6 +211,49 @@ public:
         return values;
     }
 
+    /*!
+     * \brief calculate the analytical velocity in x direction based on Beavers & Joseph (1967)
+     */
+    void calculateAnalyticalVelocityX() const
+    {
+        analyticalVelocityX_.resize(this->fvGridGeometry().gridView().size(0));
+
+        using std::sqrt;
+        // const Scalar dPdX = -deltaP_ / (this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0]);
+        // const Scalar dPdX = -8.278e-10;
+        const Scalar dPdX = -getParamFromGroup<Scalar>("Stokes", "Problem.PressureGradientForBJOutput");
+        static const Scalar mu = 1e-3;
+        // static const Scalar mu = FluidSystem::viscosity(temperature(), 1e5);
+        static const Scalar alpha = getParam<Scalar>("Darcy.SpatialParams.AlphaBeaversJoseph");
+        static const Scalar K = getParam<Scalar>("Darcy.SpatialParams.K1");
+        static const Scalar sqrtK = sqrt(K);
+
+        static const Scalar bottomY = (this->fvGridGeometry().bBoxMin()[1] + getParamFromGroup<GlobalPosition>("Darcy", "Grid.UpperRightPM")[1]);
+        const Scalar sigma = (this->fvGridGeometry().bBoxMax()[1] - bottomY)/sqrtK;
+
+        const Scalar uB =  -K/(2.0*mu) * ((sigma*sigma + 2.0*alpha*sigma) / (1.0 + alpha*sigma)) * dPdX;
+
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            const auto eIdx = this->fvGridGeometry().gridView().indexSet().index(element);
+            const Scalar y = element.geometry().center()[1] - bottomY;
+
+            const Scalar u = uB*(1.0 + alpha/sqrtK*y) + 1.0/(2.0*mu) * (y*y + 2*alpha*y*sqrtK) * dPdX;
+            analyticalVelocityX_[eIdx] = u;
+        }
+    }
+
+    /*!
+     * \brief Get the analytical velocity in x direction
+     */
+    const std::vector<Scalar>& getAnalyticalVelocityX() const
+    {
+        if(analyticalVelocityX_.empty())
+            calculateAnalyticalVelocityX();
+        return analyticalVelocityX_;
+    }
+
+
     // \}
 
     //! Set the coupling manager
@@ -274,6 +317,8 @@ private:
 
     Scalar eps_;
     Scalar deltaP_;
+
+    mutable std::vector<Scalar> analyticalVelocityX_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };
