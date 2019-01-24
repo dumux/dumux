@@ -120,6 +120,17 @@ public:
     { return fluidState_.density(0); }
 
     /*!
+     * \brief Returns the mobility \f$\mathrm{[1/(Pa s)]}\f$.
+     *
+     * This function is implemented for compatibility reasons, ALTHOUGH the term mobility is
+     * usually not employed in the free-flow context.
+     */
+    Scalar mobility(int phaseIdx = 0) const
+    {
+        return 1.0/viscosity(phaseIdx);
+    }
+
+    /*!
      * \brief Return temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
