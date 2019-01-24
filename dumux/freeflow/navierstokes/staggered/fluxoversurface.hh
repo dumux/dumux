@@ -46,7 +46,7 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief  Class used to calculate fluxes over surfaces. This only works for the staggered grid discretization.
  */
-template <class TypeTag>
+template <class TypeTag, class SolutionVector>
 class FluxOverSurface
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -54,7 +54,7 @@ class FluxOverSurface
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    // using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
