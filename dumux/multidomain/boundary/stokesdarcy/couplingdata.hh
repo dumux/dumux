@@ -281,7 +281,7 @@ public:
     /*!
      * \brief Returns the intrinsic permeability of the coupled Darcy element.
      */
-    Scalar darcyPermeability(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
+    auto darcyPermeability(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
         const auto& stokesContext = couplingManager().stokesCouplingContext(element, scvf);
         return stokesContext.volVars.permeability();
@@ -456,7 +456,8 @@ protected:
         const Scalar rho = context.volVars.density(darcyPhaseIdx);
         const Scalar distance = (context.element.geometry().center() - scvf.center()).two_norm();
         const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).gravity()[scvf.directionIndex()];
-        const Scalar interfacePressure = ((scvf.directionSign() * velocity * (mu/darcyPermeability(element, scvf))) + rho * g) * distance + cellCenterPressure;
+        //HACK todo implement properly
+        const Scalar interfacePressure = ((scvf.directionSign() * velocity * (mu/darcyPermeability(element, scvf)[1][1])) + rho * g) * distance + cellCenterPressure;
         return interfacePressure;
     }
 
