@@ -48,31 +48,28 @@ public:
         const auto& elemVolVars = fluxVars.elemVolVars();
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
-        // redefine upwind term to work with navier stokes vol vars (have no mobility() function)
-        auto usedUpwindTerm = [phaseIdx] (const auto& volVars) { return volVars.density(phaseIdx)/volVars.viscosity(phaseIdx); };
-
         using CouplingManager = std::decay_t<decltype(fluxVars.problem().couplingManager())>;
         if (fluxVars.problem().couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
         {
             const auto& outsideVolVars = fluxVars.problem().couplingManager().darcyCouplingContext(scvf).volVars;
 
             if (std::signbit(flux)) // if sign of flux is negative
-                return flux*(upwindWeight*usedUpwindTerm(outsideVolVars)
-                             + (1.0 - upwindWeight)*usedUpwindTerm(insideVolVars));
+                return flux*(upwindWeight*upwindTerm(outsideVolVars)
+                             + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
             else
-                return flux*(upwindWeight*usedUpwindTerm(insideVolVars)
-                             + (1.0 - upwindWeight)*usedUpwindTerm(outsideVolVars));
+                return flux*(upwindWeight*upwindTerm(insideVolVars)
+                             + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
         }
         else
         {
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
             if (std::signbit(flux)) // if sign of flux is negative
-                return flux*(upwindWeight*usedUpwindTerm(outsideVolVars)
-                             + (1.0 - upwindWeight)*usedUpwindTerm(insideVolVars));
+                return flux*(upwindWeight*upwindTerm(outsideVolVars)
+                             + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
             else
-                return flux*(upwindWeight*usedUpwindTerm(insideVolVars)
-                             + (1.0 - upwindWeight)*usedUpwindTerm(outsideVolVars));
+                return flux*(upwindWeight*upwindTerm(insideVolVars)
+                             + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
         }
     }
 };
