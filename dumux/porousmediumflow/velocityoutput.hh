@@ -121,12 +121,12 @@ public:
         const auto geometry = element.geometry();
         const Dune::GeometryType geomType = geometry.type();
 
+        // bind the coupling context
+        couplingManagerPtr_->bindCouplingContext(Dune::index_constant</*darcyIdx*/2>(), element, *assemblerPtr_);
+
         // bind the element flux variables cache
         auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
-
-        // bind the coupling context
-        couplingManagerPtr_->bindCouplingContext(Dune::index_constant</*darcyIdx*/2>(), element, *assemblerPtr_);
 
         // the upwind term to be used for the volume flux evaluation
         auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.mobility(phaseIdx); };
