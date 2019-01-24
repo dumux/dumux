@@ -1,5 +1,5 @@
 add_input_file_links()
-dune_symlink_to_source_files(FILES laufer_re50000.csv laufer_re50000_u+y+.csv)
+dune_symlink_to_source_files(FILES references)
 
 add_executable(test_ff_rans_lauferpipe_kepsilon EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_rans_lauferpipe_kepsilon PUBLIC "KEPSILON=1")
