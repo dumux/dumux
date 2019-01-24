@@ -148,6 +148,7 @@ class Discharge_nonequilibrium_Problem : public PorousMediumFlowProblem<TypeTag>
         conti0EqIdx = Indices::conti0EqIdx,
 
         // Phase Indices
+        phaseIdx = FluidSystem::phase0Idx,
         cPhaseIdx = SolidSystem::comp0Idx,
 
         temperatureIdx = Indices::temperatureIdx,
@@ -355,6 +356,7 @@ public:
 
         Scalar deltaH = 108e3; // J/mol
         source[energyEqSolidIdx] = qMole * deltaH;
+        source[energyEqIdx] = - qMole * (volVars.porosity()/(1-volVars.porosity()))*(volVars.pressure(phaseIdx)/volVars.molarDensity(phaseIdx));
 
         return source;
     }

@@ -54,7 +54,7 @@ public:
         using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
 
         // calculate the equilibrium temperature Teq
-        Scalar T= volVars.temperature();
+        Scalar T= volVars.temperatureSolid();
         Scalar Teq = 0;
 
         Scalar moleFractionVapor = 1e-3;
@@ -223,7 +223,7 @@ public:
         using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
 
         // calculate the equilibrium temperature Teq
-        Scalar T= volVars.temperature();
+        Scalar T= volVars.temperatureSolid();
         Scalar Teq = 0;
 
         Scalar moleFractionVapor = 1e-3;

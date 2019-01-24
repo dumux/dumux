@@ -32,7 +32,7 @@ CaO2H2Initial = 0.0
 BoundaryPressure= 2e5                  # [Pa] outlet pressure
 BoundaryTemperature = 573.15             # [K] inlet temperature: charge: 873 K ; discharge: 473K
 BoundaryMoleFraction = 0.464                     # [] molefraction
-boundaryTemperatureSolid = 285
+boundaryTemperatureSolid = 573.15
 
 [Vtk]
 #AddVelocity         = 0            # Add extra information
