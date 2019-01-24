@@ -17,7 +17,9 @@ PressureDifference = 1e-9
 Name = darcy
 
 [Darcy.SpatialParams]
-Permeability = 1e-6 # m^2
+K1 = 0.00017 # m^2
+K2 = 0.00017 # m^2
+PermeabilityAngle = 90
 AlphaBeaversJoseph = 1.0
 
 [Problem]
