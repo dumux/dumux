@@ -283,8 +283,19 @@ public:
      */
     auto darcyPermeability(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
-        const auto& stokesContext = couplingManager().stokesCouplingContext(element, scvf);
-        return stokesContext.volVars.permeability();
+        const auto& stokesContext = couplingManager_.stokesCouplingContext(element, scvf);
+        const auto perm = stokesContext.volVars.permeability();
+        const auto dirIdx = 1 - scvf.directionIndex();
+
+//        Scalar permTrace;
+//        for(int i=0; i<perm.size();i++)
+//            permTrace += perm[i][i];
+//
+//        permTrace /= perm.size();
+//
+//        return permTrace;
+
+        return perm[dirIdx][dirIdx];
     }
 
     /*!
@@ -312,10 +323,23 @@ public:
 
         if(numPhasesDarcy > 1)
             momentumFlux = darcyPressure;
-        else // use pressure reconstruction for single phase models; use tag dispatch to choose correct function for Darcy or Forchheimer
-            momentumFlux = pressureAtInterface_(element, scvf, stokesElemFaceVars, stokesContext, AdvectionType());
-        // TODO: generalize for permeability tensors
+        else // use pressure reconstruction for single phase models
+        {
+            // v = -K/mu * (gradP + rho*g)
+            const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf();
+            const Scalar mu = stokesContext.volVars.viscosity(darcyPhaseIdx);
+            const Scalar rho = stokesContext.volVars.density(darcyPhaseIdx);
+            auto distanceVector = scvf.center() - stokesContext.element.geometry().center();
+            const auto g = couplingManager_.problem(darcyIdx).gravityAtPos(scvf.center());
+            const auto alpha_inside = -vtmv(scvf.unitOuterNormal(), stokesContext.volVars.permeability(), g)*stokesContext.volVars.extrusionFactor();
 
+            distanceVector /= distanceVector.two_norm2();
+            Scalar ti = -vtmv(distanceVector, stokesContext.volVars.permeability(), scvf.unitOuterNormal());
+            ti *= stokesContext.volVars.extrusionFactor();
+
+            const Scalar interfacePressure = (mu*scvf.directionSign() * velocity + rho * alpha_inside)/ti + darcyPressure;
+            momentumFlux = interfacePressure;
+        }
         // normalize pressure
         if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
             momentumFlux -= couplingManager_.problem(stokesIdx).initial(scvf)[Indices<stokesIdx>::pressureIdx];
