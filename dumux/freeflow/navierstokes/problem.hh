@@ -212,8 +212,9 @@ public:
         // du/dy = alpha/sqrt(K) * u_boundary
         // du/dy = (u_center - u_boundary) / deltaY
         // u_boundary = u_center / (alpha/sqrt(K)*deltaY + 1)
+        // TODO generalize for tensors
         using std::sqrt;
-        const Scalar K = asImp_().permeability(element, normalFace);
+        const Scalar K = getScalarK_(asImp_().permeability(element, normalFace), scvf);
         const Scalar alpha = asImp_().alphaBJ(normalFace);
         return velocitySelf / (alpha / sqrt(K) * scvf.pairData(localSubFaceIdx).parallelDistance + 1.0);
     }
@@ -227,6 +228,19 @@ private:
     //! \copydoc asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
+
+    //! Helper function to retrieve the relevant (tangetial) entry of the permeability tensor
+    Scalar getScalarK_(const Dune::FieldMatrix<Scalar, 2, 2>& K, const SubControlVolumeFace& scvf) const
+    {
+        const auto dirIdx = 1 - scvf.directionIndex();
+        return K[dirIdx][dirIdx];
+    }
+
+    //! Just return the value itself for Scalar permeabilities
+    Scalar getScalarK_(const Scalar K, const SubControlVolumeFace& scvf) const
+    {
+        return K;
+    }
 
     GravityVector gravity_;
     bool enableInertiaTerms_;
