@@ -224,19 +224,19 @@ int main(int argc, char** argv) try
             gnuplotLawOfTheWall.setYRange(0.0, 30.0);
             gnuplotLawOfTheWall.setOption("set log x");
             gnuplotLawOfTheWall.setOption("set xrange [1:3000]");
-            gnuplotLawOfTheWall.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
+            gnuplotLawOfTheWall.addFileToPlot("references/laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
 #if LOWREKEPSILON
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l lc 7");
 #elif KEPSILON
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7 t 'with u_{tau}'");
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 16:17 w l lc 8 t 'with u_{tau,nom}'");
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l lc 7 t 'with u_{tau}'");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 15:16 w l lc 8 t 'with u_{tau,nom}'");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l lc 7");
 #elif KOMEGA
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l lc 7");
 #elif ONEEQ
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l lc 7");
 #else
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
+            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l lc 7");
 #endif
             gnuplotLawOfTheWall.plot(std::string(gnuplotFileName));
 
@@ -247,17 +247,17 @@ int main(int argc, char** argv) try
             gnuplotVelocityProfile.setXlabel("v_x/v_{x,max} [-]");
             gnuplotVelocityProfile.setYRange(0.0, 1.0);
             gnuplotVelocityProfile.setYlabel("y [-]");
-            gnuplotVelocityProfile.addFileToPlot("laufer_re50000.csv", "u 2:1 w p t 'Laufer 1954, Re=50000'");
+            gnuplotVelocityProfile.addFileToPlot("references/laufer_re50000.csv", "u 2:1 w p t 'Laufer 1954, Re=50000'");
 #if LOWREKEPSILON
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($26/0.2456) w l lc 7");
+            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 6:($25/0.2456) w l lc 7");
 #elif KEPSILON
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($28/0.2456) w l lc 7");
+            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 6:($29/0.2456) w l lc 7");
 #elif KOMEGA
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($26/0.2456) w l lc 7");
+            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 6:($25/0.2456) w l lc 7");
 #elif ONEEQ
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($25/0.2456) w l lc 7");
+            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 6:($24/0.2456) w l lc 7");
 #else
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($24/0.2456) w l lc 7");
+            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 6:($23/0.2456) w l lc 7");
 #endif
             gnuplotVelocityProfile.plot(std::string(gnuplotFileName));
         }
