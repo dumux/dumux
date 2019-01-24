@@ -5,7 +5,7 @@
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 3 of the License, or       *
+ *   the Free Software Foundation, either version 2 of the License, or       *
  *   (at your option) any later version.                                     *
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
@@ -30,6 +30,7 @@
 #include <dune/common/test/iteratortest.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/common/intersectionmapper.hh>
 #include <dumux/common/defaultmappertraits.hh>
@@ -82,8 +83,10 @@ int main (int argc, char *argv[]) try
 
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
-
     std::cout << "Checking the FVGeometries, SCVs and SCV faces" << std::endl;
+
+    // parse command line arguments and input file
+    Parameters::init(argc, argv);
 
     using Grid = Dune::YaspGrid<2>;
 
@@ -98,11 +101,11 @@ int main (int argc, char *argv[]) try
 
     // make a grid
     GlobalPosition lower(0.0);
-    GlobalPosition upper(1.0);
-    std::array<unsigned int, dim> els{{2, 4}};
+    GlobalPosition upper(10.0);
+    std::array<unsigned int, dim> els{{5, 5}};
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
-    auto leafGridView = grid->leafGridView();
 
+    auto leafGridView = grid->leafGridView();
     FVGridGeometry fvGridGeometry(leafGridView);
     fvGridGeometry.update();
 
@@ -120,43 +123,82 @@ int main (int argc, char *argv[]) try
     for (const auto& element : elements(leafGridView))
     {
         auto eIdx = fvGridGeometry.elementMapper().index(element);
-        std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
-        auto fvGeometry = localView(fvGridGeometry);
-        fvGeometry.bind(element);
-
-        auto range = scvs(fvGeometry);
-        Detail::NoopFunctor<SubControlVolume> op;
-        if(0 != testForwardIterator(range.begin(), range.end(), op))
-            DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
-
-        for (auto&& scv : scvs(fvGeometry))
+        if(eIdx == 12 || eIdx == 0)
         {
-            std::cout << "-- scv " << scv.dofIndex() << " center at: " << scv.center() << std::endl;
-        }
+            std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
+            auto fvGeometry = localView(fvGridGeometry);
+            fvGeometry.bind(element);
 
-        auto range2 = scvfs(fvGeometry);
-        Detail::NoopFunctor<SubControlVolumeFace> op2;
-        if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
-            DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
+            auto range = scvs(fvGeometry);
+            Detail::NoopFunctor<SubControlVolume> op;
+            if(0 != testForwardIterator(range.begin(), range.end(), op))
+                DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                std::cout << "-- scv " << scv.dofIndex() << " center at: " << scv.center() << std::endl;
+            }
+
+            auto range2 = scvfs(fvGeometry);
+            Detail::NoopFunctor<SubControlVolumeFace> op2;
+            if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
+                DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
 
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            std::cout <<  std::fixed << std::left << std::setprecision(2)
-            << "pos "<< scvf.ipGlobal()
-            << "; fIdx "  << std::setw(3)  << scvf.index()
-            << "; dofIdx (self/oppo.) " << std::setw(3) << scvf.dofIndex() << "/" << std::setw(3) <<scvf.dofIndexOpposingFace()
-            << "; dist (self/oppo.) " << std::setw(3) << scvf.selfToOppositeDistance()
-            << ", norm1 in/out " << std::setw(3) << scvf.pairData(0).normalPair.first << "/" << std::setw(3) << scvf.pairData(0).normalPair.second
-            << ", norm2 in/out " << std::setw(3) << scvf.pairData(1).normalPair.first << "/" << std::setw(3) << scvf.pairData(1).normalPair.second
-            << ", par1 " << std::setw(3)  << std::setw(3) << scvf.pairData(0).outerParallelFaceDofIdx
-            << ", par2 " << std::setw(3)  << std::setw(3) << scvf.pairData(1).outerParallelFaceDofIdx
-            << ", normDist1 " << std::setw(3) << scvf.pairData(0).normalDistance
-            << ", normDist2 " << std::setw(3) << scvf.pairData(1).normalDistance
-            << ", parDist1 " << std::setw(3) << scvf.pairData(0).parallelDistance
-            << ", parDist2 " << std::setw(3) << scvf.pairData(1).parallelDistance;
-            if (scvf.boundary()) std::cout << " (on boundary)";
-            std::cout << std::endl;
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                std::cout << "\n";
+                std::cout << " Scvf Index " << scvf.index()  << " , local Index " << scvf.localFaceIdx() << "\n";
+                std::cout << " Center pos "<< scvf.ipGlobal() << "\n";
+
+                if (scvf.boundary())
+                {std::cout << " (on boundary)" << "\n";}
+                else
+                {std::cout << "\n";}
+
+                std::cout <<  std::fixed << std::left << std::setprecision(2);
+
+                std::cout << " On Axis Dof Index: \n";
+                if(fvGridGeometry.order() > 1)
+                {std::cout << " | Forward dofIdx : " << std::setw(3) << scvf.axisData().inAxisForwardDofs[0] << "\n";}
+                std::cout << " | Self dofIdx : " << std::setw(3) << scvf.dofIndex() << "\n";
+                std::cout << " | Opposite dofIdx : " << std::setw(3) << scvf.dofIndexOpposingFace() << "\n";
+                if(fvGridGeometry.order() > 1)
+                {std::cout << " | Backward dofIdx : " << std::setw(3) << scvf.axisData().inAxisBackwardDofs[0] << "\n";}
+
+                std::cout << " Normal Dof Index: \n";
+                for(int i = 0; i < scvf.pairData().size(); i++)
+                {
+                    std::cout << " | normal inner dofIdx "<< i <<": " << std::setw(3) << scvf.pairData(i).normalPair.first << "\n";
+                    std::cout << " | normal outer dofIdx "<< i <<": " << std::setw(3) << scvf.pairData(i).normalPair.second << "\n";
+                }
+
+                std::cout << " Parallel Dof Index: \n";
+                for(int i = 0; i < scvf.pairData().size(); i++)
+                {
+                    for(int j = 0; j < fvGridGeometry.order(); j++)
+                    {
+                        std::cout << " | Parallel Dof "<< j << " on axis " << i << ": "<<  std::setw(3) << scvf.pairData(i).parallelDofs[j] << "\n";
+                    }
+                }
+
+                std::cout << " Distances: \n";
+                if(fvGridGeometry.order() > 1)
+                {std::cout << " | Opposite To Backwards Face Dist : " << std::setw(3) << scvf.axisData().inAxisBackwardDistances[0] << "\n";}
+                std::cout << " | self To Opposite Dist : " << std::setw(3) << scvf.selfToOppositeDistance() << "\n";
+                if(fvGridGeometry.order() > 1)
+                {std::cout << " | Opposite To Backwards Face Dist : " << std::setw(3) << scvf.axisData().inAxisBackwardDistances[0] << "\n";}
+
+                for(int i = 0; i < scvf.pairData().size(); i++)
+                {
+                    for(int j = 0; j < fvGridGeometry.order(); j++)
+                    {
+                        std::cout << " | Parallel Distance "<< j << " on axis " << i << ": "<< std::setw(3) << scvf.pairData(i).parallelDistances[j] << "\n";
+                    }
+                }
+                std::cout << std::endl;
+                std::cout << std::endl;
+            }
         }
     }
 }

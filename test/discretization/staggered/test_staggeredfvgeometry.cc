@@ -30,6 +30,7 @@
 #include <dune/common/test/iteratortest.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/common/intersectionmapper.hh>
 #include <dumux/common/defaultmappertraits.hh>
@@ -67,7 +68,10 @@ struct TestFVGGTraits : public DefaultMapperTraits<GridView>
     //! Dummy connectivity map, required by FVGridGeometry
     template<class FVGridGeometry>
     struct MockConnectivityMap
-    { void update(const FVGridGeometry& fvGridGeometry) {} };
+    {
+        void update(const FVGridGeometry& fvGridGeometry) {}
+        void setStencilOrder(const int order) {}
+    };
 
     template<class FVGridGeometry>
     using ConnectivityMap = MockConnectivityMap<FVGridGeometry>;
@@ -85,6 +89,9 @@ int main (int argc, char *argv[]) try
 
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
+
+    // parse command line arguments and input file
+    Parameters::init(argc, argv);
 
     std::cout << "Checking the FVGeometries, SCVs and SCV faces" << std::endl;
 

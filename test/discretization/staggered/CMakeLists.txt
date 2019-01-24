@@ -1,3 +1,5 @@
+dune_symlink_to_source_files(FILES "params.input")
+
 dune_add_test(NAME test_staggeredfvgeometry
               SOURCES test_staggeredfvgeometry.cc
               LABELS unit discretization)

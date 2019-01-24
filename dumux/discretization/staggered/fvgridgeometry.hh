@@ -251,6 +251,12 @@ public:
         return numBoundaryScvf_;
     }
 
+    //! The order of the stencil built
+    std::size_t order() const
+    {
+        return stencilOrder_;
+    }
+
     //! The total number of intersections
     std::size_t numIntersections() const
     {
@@ -555,6 +561,12 @@ public:
     std::size_t numScvf() const
     {
         return numScvf_;
+    }
+
+    //! The order of the stencil built
+    std::size_t order() const
+    {
+        return stencilOrder_;
     }
 
     //! The total number of boundary sub control volume faces
