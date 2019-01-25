@@ -27,8 +27,8 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dumux/io/grid/subgridgridcreator.hh>
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
+#include <dumux/material/components/air.hh>
 
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
@@ -47,7 +47,7 @@ NEW_TYPE_TAG(StokesOneP, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
 SET_PROP(StokesOneP, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
+    using type = FluidSystems::OnePGas<Scalar, Dumux::Components::Air<Scalar> > ;
 };
 
 // Set the grid type
@@ -179,10 +179,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values(0.0);
-        values = initialAtPos(globalPos);
-
-        return values;
+        return initialAtPos(globalPos);;
     }
 
     /*!
@@ -277,9 +274,10 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
+        values[Indices::pressureIdx] = 1e5;
 
         if(onLeftBoundary_(globalPos))
-            values[Indices::pressureIdx] = deltaP_;
+            values[Indices::pressureIdx] = 1e5+deltaP_;
 
         return values;
     }

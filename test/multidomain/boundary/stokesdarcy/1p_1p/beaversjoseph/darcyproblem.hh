@@ -34,8 +34,8 @@
 
 #include "./../1pspatialparams.hh"
 
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
+#include <dumux/material/components/air.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/mpfa/upwindscheme.hh>
 
@@ -55,7 +55,7 @@ SET_TYPE_PROP(DarcyOneP, Problem, Dumux::DarcySubProblem<TypeTag>);
 SET_PROP(DarcyOneP, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
+    using type = FluidSystems::OnePGas<Scalar, Dumux::Components::Air<Scalar> > ;
 };
 
 // Set the grid type
@@ -174,10 +174,7 @@ public:
      */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
-        PrimaryVariables values(0.0);
-        values = initial(element);
-
-        return values;
+        return initial(element);;
     }
 
     /*!
@@ -261,7 +258,7 @@ public:
      */
     PrimaryVariables initial(const Element &element) const
     {
-        return PrimaryVariables(0.0);
+        return PrimaryVariables(1e5);
     }
 
     // \}
