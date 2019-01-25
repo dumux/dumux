@@ -230,16 +230,16 @@ public:
     Scalar zMax(const GlobalPosition &globalPos) const
     {
       if (globalPos[0]<6.3+eps_)
-          return 0;
-      else if (globalPos[0]>6.3+eps_ && globalPos[0]<23.6+eps_)
-          return (-10.-0.)/(23.6-6.3)*(globalPos[0])+ 3.64 +eps_;
-      else if (globalPos[0]>23.6+eps_)
-          return -10;
+          return 15.;
+      else if (globalPos[0]>6.3-eps_ && globalPos[0]<23.6+eps_)
+          return (5.-15.)/(23.6-6.3)*(globalPos[0])+ (322./17.3);
+      else if (globalPos[0]>23.6-eps_)
+          return 5.;
     }
 
         Scalar zMin(const GlobalPosition &globalPos) const
     {
-          return -40.0;
+          return -25.0;
     }
 
     Scalar depth(const GlobalPosition &globalPos) const
@@ -251,7 +251,7 @@ public:
 
     Scalar wTdepth(const GlobalPosition &globalPos) const
     {
-       return (-15. - globalPos[1]);
+       return (0. - globalPos[1]);
     }
 
 
@@ -272,7 +272,7 @@ public:
 
             // initial approximate pressure distribution at start of initialization run
 //             pInit_[vIdxGlobal] = -(1.0e5 + (depthBOR_ - globalPos[dimWorld-1]) * waterDensity_ * 9.81);
-            pInit_[vIdxGlobal] = -(1.0e5 + wTdepth(globalPos) * waterDensity_ * 9.81);
+            pInit_[vIdxGlobal] = -(1.0e5 + wTdepth(globalPos) * waterDensity_ * 9.81);//khodam - to +(negative is correct)
         }
     }
 
@@ -324,7 +324,7 @@ public:
           const Scalar snr = materialLawParams.snr();
 
 
-          const Scalar meterUeberGW = globalPos[1] +15;
+          const Scalar meterUeberGW = globalPos[1] +0;
           const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
 
           Scalar n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.n);//khodam
@@ -333,7 +333,7 @@ public:
 
           //const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));// khodam: numerical solution
 
-          const Scalar sw = pow(pow(alpha_*pc, n_) + 1, -m_);//Khodam: numerical solution from vanGenuchten.hh
+          const Scalar sw = std::min(1.0-snr, pow(pow(alpha_*pc, n_) + 1, -m_));//Khodam: numerical solution from vanGenuchten.hh
 //           const Scalar sw = std::min(1.0-snr, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam: use the numerical solution for sw
 
 
@@ -346,13 +346,13 @@ public:
 
 //        stress[0] = k0_ * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
 
-       stress[0] = 0.5 * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
+       stress[0] = 0.5 *( sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
 
        if(dimWorld >=2)
-       stress[1] =  sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) );
+       stress[1] =  sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
 
        if(dimWorld == 3)
-       stress[2] = sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) );
+       stress[2] = sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
       return stress;
     }
 
@@ -398,7 +398,7 @@ public:
      */
     const char *name() const
     {
-        return "el2pRutqvist.FineMesh";
+        return "el2pRutqvist";
     }
 
     /*!
@@ -497,11 +497,11 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
         // The solid displacement normal to the lateral boundaries is fixed.
         if(onInlet_(globalPos))
         {
-            if (initializationRun_ == true)
-            {
-                values.setDirichlet(momentumXEqIdx);
-                values.setDirichlet(momentumYEqIdx);
-            }
+//             if (initializationRun_ == true)
+//             {
+//                 values.setDirichlet(momentumXEqIdx);
+//                 values.setDirichlet(momentumYEqIdx);
+//             }
 
           }
 
@@ -510,7 +510,7 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
 
             if (initializationRun_ == true)
             {
-                values.setDirichlet(momentumYEqIdx);
+//                 values.setDirichlet(momentumYEqIdx);
             }
           }
 
@@ -520,7 +520,7 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
 
             if (initializationRun_ == true)
             {
-                values.setDirichlet(momentumYEqIdx);
+//                 values.setDirichlet(momentumYEqIdx);
             }
           }
 
@@ -529,23 +529,14 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
 
             if (initializationRun_ == true)
             {
-                values.setDirichlet(momentumYEqIdx);
+//                 values.setDirichlet(momentumYEqIdx);
             }
          }
 
-//         if (onLowerBoundary_(globalPos)){
-//
-//              values.setDirichlet(momentumYEqIdx);
-//
-//             if(initializationRun_ == true)
-//             {
-//                 values.setDirichlet(momentumXEqIdx);
-//            }
-//         }
         if (onLowerBoundary_(globalPos)){ //fixed boundary
 
-             values.setDirichlet(uyIdx);
-             values.setDirichlet(uxIdx);
+             values.setDirichlet(momentumXEqIdx);
+             values.setDirichlet(momentumYEqIdx);
 
         }
      }
@@ -869,7 +860,7 @@ private:
     std::vector<std::vector<Scalar>> effPorosityVectorOldIteration_;
     std::vector<std::vector<Scalar>> effPorosityVectorOldTimestep_;
     Scalar tInitEnd_;
-    bool onInlet_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+    bool onInlet_(const GlobalPosition &globalPos) const
     {
         return (globalPos[1]>zMax(globalPos)-eps_);
     }
@@ -879,24 +870,24 @@ private:
         return  (globalPos[1] < zMin(globalPos) + eps_);
     }
 
-    bool leftBoundaryO_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+    bool leftBoundaryO_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] < -32. + eps_ && globalPos[1] > -15. - eps_);
+        return (globalPos[0] < -32. + eps_ && globalPos[1] > 0. - eps_);
     }
 
-    bool leftBoundaryU_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+    bool leftBoundaryU_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] < -32. + eps_ && globalPos[1] < -15. + eps_);
+        return (globalPos[0] < -32. + eps_ && globalPos[1] < 0. + eps_);
     }
 
-    bool rightBoundaryO_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+    bool rightBoundaryO_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] > 35. - eps_ && globalPos[1] > -15. - eps_);
+        return (globalPos[0] > 35. - eps_ && globalPos[1] > 0. - eps_);
     }
 
-    bool rightBoundaryU_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+    bool rightBoundaryU_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] > 35. - eps_ && globalPos[1] < -15. + eps_);
+        return (globalPos[0] > 35. - eps_ && globalPos[1] < 0. + eps_);
     }
 public:
     bool initializationRun_, coupled_, output_;

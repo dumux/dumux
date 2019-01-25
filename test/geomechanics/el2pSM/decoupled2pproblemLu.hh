@@ -327,16 +327,16 @@ public:
     Scalar zMax(const GlobalPosition &globalPos) const
     {
       if (globalPos[0]<6.3+eps_)
-          return 0;
-      else if (globalPos[0]>6.3+eps_ && globalPos[0]<23.6+eps_)
-          return (-10.-0.)/(23.6-6.3)*(globalPos[0])+ 3.64 +eps_;
-      else if (globalPos[0]>23.6+eps_)
-          return -10;
+          return 15.;
+      else if (globalPos[0]>6.3-eps_ && globalPos[0]<23.6+eps_)
+          return (5.-15.)/(23.6-6.3)*(globalPos[0])+ (322./17.3);
+      else if (globalPos[0]>23.6-eps_)
+          return 5.;
     }
 
         Scalar zMin(const GlobalPosition &globalPos) const
     {
-          return -40.0;
+          return -25.0;
     }
 
     Scalar depth(const GlobalPosition &globalPos) const
@@ -348,7 +348,7 @@ public:
 
     Scalar wTdepth(const GlobalPosition &globalPos) const
     {
-       return (-15. - globalPos[1]);
+       return (0. - globalPos[1]);
     }
 
 
@@ -397,7 +397,7 @@ public:
      */
     const char *name() const
     {
-        return "2pproblem.FineMesh";
+        return "2pproblem";
     }
 
     /*!
@@ -451,15 +451,15 @@ public:
     {
         values.setAllNeumann();
 
-        if(onInlet_(globalPos))
-          {
-            if (initializationRun_ == true)
-            {
-                values.setDirichlet(pressureIdx, contiWEqIdx);
-                values.setDirichlet(saturationIdx, contiNEqIdx);
-            }
-
-           }
+//         if(onInlet_(globalPos))
+//           {
+//             if (initializationRun_ == true)
+//             {
+//                 values.setDirichlet(pressureIdx, contiWEqIdx);
+//                 values.setDirichlet(saturationIdx, contiNEqIdx);
+//             }
+//
+//            }
 
         if ( rightBoundaryU_(globalPos)){
             values.setDirichlet(pressureIdx, contiWEqIdx);
@@ -480,24 +480,24 @@ public:
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
         values = 0.0;
-
-        if ( (onInlet_(globalPos)) ){
-          const auto& materialLawParams = this->spatialParams().materialLawParams(globalPos);
-          const Scalar swr = materialLawParams.swr();
-          const Scalar snr = materialLawParams.snr();
-
-
-          const Scalar meterUeberGW = globalPos[1] +15;
-          const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
-          const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
-//           std::cout<< "invertPcGW_=" <<invertPcGW_(pc, materialLawParams) << std::endl;
-          values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
-          values[saturationIdx] = 1.-sw;
-        } else
-        {
+//
+//         if ( (onInlet_(globalPos)) ){
+//           const auto& materialLawParams = this->spatialParams().materialLawParams(globalPos);
+//           const Scalar swr = materialLawParams.swr();
+//           const Scalar snr = materialLawParams.snr();
+//
+//
+//           const Scalar meterUeberGW = globalPos[1] +0;
+//           const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
+//           const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
+// //           std::cout<< "invertPcGW_=" <<invertPcGW_(pc, materialLawParams) << std::endl;
+//           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
+//           values[saturationIdx] = 1.-sw;
+//         } else
+//         {
           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
           values[saturationIdx] = 0.0;
-        }
+//         }
     }
 
      void solDependentNeumann(PrimaryVariables &values,
@@ -527,17 +527,17 @@ public:
                     values[contiWEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
                     if (pN>1.e5) values[contiNEqIdx] = satN * (pN - 1.e5) * rb_;
                }
-                else {
+                else {//deactivate to match comsol
                    //std::cout << "saturation below 1, infiltration \n" ;
                     values[contiWEqIdx] = -avgRain_*1000.;
                     if (pN>1.e5) {
                     values[contiNEqIdx] = satN * (pN - 1.e5) * rb_;
                     }
-                }
+//                 }
         }
 
      }
-    // \}
+    }
 
     /*!
      * \name Volume terms
@@ -560,18 +560,18 @@ public:
         const Scalar swr = materialLawParams.swr();
         const Scalar snr = materialLawParams.snr();
 
-        if (globalPos[1] > -15)
+        if (globalPos[1] > 0.)
         {
             Scalar n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.n);
             Scalar m_ = 1.0 - (1.0 / n_);
             Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.alpha);
-          const Scalar meterUeberGW_ = globalPos[1] +15;
+          const Scalar meterUeberGW_ = globalPos[1] + 0;
           const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW_);
 //        const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));// use the numerical solution for Pc
-           const Scalar sw = std::min(1.0-snr, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam use the analytical solution for sw
+           const Scalar sw = std::min(1.0 - snr, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam use the analytical solution for sw
 
           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
-          values[saturationIdx] = 1-sw;
+          values[saturationIdx] = 1 - sw;
         } else
         {
           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
@@ -579,33 +579,33 @@ public:
         }
     }
 //numerical solution for Pc
-    static Scalar invertPcGW_(const Scalar pcIn,
-                              const MaterialLawParams &pcParams)
-    {
-        Scalar lower(0.0);
-        Scalar upper(1.0);
-        const unsigned int maxIterations = 25;
-        const Scalar bisLimit = 1.0;
-
-        Scalar sw, pcGW;
-        for (unsigned int k = 1; k <= maxIterations; k++)
-        {
-            sw = 0.5*(upper + lower);
-            pcGW = MaterialLaw::pc(pcParams, sw);
-            const Scalar delta = std::abs(pcGW - pcIn);
-            if (delta < bisLimit)
-                return sw;
-
-            if (k == maxIterations)
-                return sw;
-
-            if (pcGW > pcIn)
-                lower = sw;
-            else
-                upper = sw;
-        }
-        return sw;
-    }
+//     static Scalar invertPcGW_(const Scalar pcIn,
+//                               const MaterialLawParams &pcParams)
+//     {
+//         Scalar lower(0.0);
+//         Scalar upper(1.0);
+//         const unsigned int maxIterations = 25;
+//         const Scalar bisLimit = 1.0;
+//
+//         Scalar sw, pcGW;
+//         for (unsigned int k = 1; k <= maxIterations; k++)
+//         {
+//             sw = 0.5*(upper + lower);
+//             pcGW = MaterialLaw::pc(pcParams, sw);
+//             const Scalar delta = std::abs(pcGW - pcIn);
+//             if (delta < bisLimit)
+//                 return sw;
+//
+//             if (k == maxIterations)
+//                 return sw;
+//
+//             if (pcGW > pcIn)
+//                 lower = sw;
+//             else
+//                 upper = sw;
+//         }
+//         return sw;
+//     }
 
 
     void source(PrimaryVariables &values,
@@ -969,7 +969,7 @@ private:
     int iteration_;
     bool evalOriginalRhs_, evalGlobalResidual_;
 
-    bool onInlet_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+    bool onInlet_(const GlobalPosition &globalPos) const
     {
         return (globalPos[1]>zMax(globalPos)-eps_);
     }
@@ -979,24 +979,24 @@ private:
         return  (globalPos[1] < zMin(globalPos) + eps_);
     }
 
-    bool leftBoundaryO_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+    bool leftBoundaryO_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] < -32. + eps_ && globalPos[1] > -15. - eps_);
+        return (globalPos[0] < -32. + eps_ && globalPos[1] > 0. - eps_);
     }
 
-    bool leftBoundaryU_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+    bool leftBoundaryU_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] < -32. + eps_ && globalPos[1] < -15. + eps_);
+        return (globalPos[0] < -32. + eps_ && globalPos[1] < 0. + eps_);
     }
 
-    bool rightBoundaryO_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+    bool rightBoundaryO_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] > 35. - eps_ && globalPos[1] > -15. - eps_);
+        return (globalPos[0] > 35. - eps_ && globalPos[1] > 0. - eps_);
     }
 
-    bool rightBoundaryU_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+    bool rightBoundaryU_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] > 35. - eps_ && globalPos[1] < -15. + eps_);
+        return (globalPos[0] > 35. - eps_ && globalPos[1] < 0. + eps_);
     }
 public:
     bool initializationRun_, coupled_, output_;

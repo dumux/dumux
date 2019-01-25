@@ -1,6 +1,7 @@
 [TimeManager]
 TInitEnd =0.01  # [s]
 TEnd =  12960000   #  [s]
+#TEnd =  54000   #  [s]
 DtInitial = 0.01 #   [s]
 EpisodeLengthInit =  0.005 #  [s]
 EpisodeLengthMainSimulation =  86400 # [s]
@@ -17,8 +18,13 @@ FirstEvalOriginalRhsIteration = 100
 
 [Grid]
 Refine = 0
-#File = ./grids/Lu2D.msh  #very coarse mesh cube
-File = ./Lu2Dfine.msh    #fine cube msh
+#File = ./Lu2D.msh  #very coarse mesh cube previous coordinates
+#File = ./Lu2Dfine.msh  #fine cube msh 
+#File = ./Lu2DCompare.msh   #made with comsol
+#File = ./Lu2DveryFine.msh #very fine cube msh to compare with comsol-new final
+#File = ./COMSOLvsDUMUX.msh #very fine cube msh to compare with comsol Final
+File = ./Lu2DveryFineFullyC.msh # fine cube msh to compare with fully coupled-Final coarse
+#File = ./fullyfineTest.msh #refined the one which runs for fully coupled Final
 
 
 [Damping]
@@ -62,16 +68,17 @@ BrineDensity = 1000
 E = 1.0e7
 #E = 3.0e8
 nu = 0.33
-PoreComp = 3.0e-9
+PoreComp = 0.0 #3.0e-9 #!!!
 
 
 [TransportParameters]
 Kinit = 1.E-12  # initial permeability [m²]
 ks = 1.39e-6 #Hydraulic conductivity[m/s]
 avgRain = 3.7E-8 #[m/s] 400 mm in 150d
+#avgRain = 3.7E-7 #[m/s] 400 mm in 15d
 
 Phi   = 0.46     # porosity
-swr =0  # Residual water content
+swr = 0 #0.034  # Residual water content
 snr = 0
 n = 1.37 
 alpha = 0.000163196 # [1/m] to [1/pa] = 1.6/9804.139432
