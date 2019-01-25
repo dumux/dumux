@@ -147,6 +147,12 @@ int main(int argc, char** argv) try
     constexpr auto stokesFaceIdx = CouplingManager::stokesFaceIdx;
     constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
+    // get some time loop parameters
+    using Scalar = GetPropType<StokesTypeTag, Properties::Scalar>;
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
     // the problem (initial and boundary conditions)
     using StokesProblem = GetPropType<StokesTypeTag, Properties::Problem>;
     auto stokesProblem = std::make_shared<StokesProblem>(stokesFvGridGeometry, couplingManager);
@@ -161,6 +167,13 @@ int main(int argc, char** argv) try
 
     // get a solution vector storing references to the two Stokes solution vectors
     auto stokesSol = partial(sol, stokesCellCenterIdx, stokesFaceIdx);
+
+    // apply initial solution for instationary problems
+    stokesProblem->applyInitialSolution(stokesSol);
+    darcyProblem->applyInitialSolution(sol[darcyIdx]);
+
+    auto solOld = sol;
+
     couplingManager->init(stokesProblem, darcyProblem, sol);
 
     // the grid variables
@@ -182,8 +195,23 @@ int main(int argc, char** argv) try
 
     stokesVtkWriter.write(0.0);
 
-    // the assembler for a stationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+
+#if INSTATIONARY
+    // instantiate time loop
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
+
+    // the assembler for a stationary problem
+    auto assembler = std::make_shared<Assembler>(std::make_tuple(stokesProblem, stokesProblem, darcyProblem),
+                                                 std::make_tuple(stokesFvGridGeometry->cellCenterFVGridGeometryPtr(),
+                                                                 stokesFvGridGeometry->faceFVGridGeometryPtr(),
+                                                                 darcyFvGridGeometry),
+                                                 std::make_tuple(stokesGridVariables->cellCenterGridVariablesPtr(),
+                                                                 stokesGridVariables->faceGridVariablesPtr(),
+                                                                 darcyGridVariables),
+                                                 couplingManager, timeLoop);
+#else
     auto assembler = std::make_shared<Assembler>(std::make_tuple(stokesProblem, stokesProblem, darcyProblem),
                                                  std::make_tuple(stokesFvGridGeometry->cellCenterFVGridGeometryPtr(),
                                                                  stokesFvGridGeometry->faceFVGridGeometryPtr(),
@@ -192,6 +220,7 @@ int main(int argc, char** argv) try
                                                                  stokesGridVariables->faceGridVariablesPtr(),
                                                                  darcyGridVariables),
                                                  couplingManager);
+#endif
 
     VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx], darcyName);
     using DarcyVelocityOutput = GetPropType<DarcyTypeTag, Properties::VelocityOutput>;
@@ -213,28 +242,17 @@ int main(int argc, char** argv) try
                     GetPropType<StokesTypeTag, Properties::ModelTraits>,
                     GetPropType<StokesTypeTag, Properties::LocalResidual>> flux(*stokesGridVariables, stokesSol);
 
-    const auto p0frontPM = lowerLeftPM;
-    const auto p1frontPM = GlobalPosition{lowerLeftPM[0], upperRightPM[1]};
-    flux.addSurface("frontPM", p0frontPM, p1frontPM);
-
-    const auto p0frontChannel = GlobalPosition{lowerLeftPM[0], upperRightPM[1]};;
-    const auto p1frontChannel = GlobalPosition{lowerLeftPM[0], stokesFvGridGeometry->bBoxMax()[1]};
+    const auto p0frontChannel = GlobalPosition{darcyFvGridGeometry->bBoxMin()[0], darcyFvGridGeometry->bBoxMax()[1]};;
+    const auto p1frontChannel = GlobalPosition{darcyFvGridGeometry->bBoxMin()[0], stokesFvGridGeometry->bBoxMax()[1]};
     flux.addSurface("frontChannel", p0frontChannel, p1frontChannel);
 
-    const auto p0topPM = GlobalPosition{lowerLeftPM[0],  upperRightPM[1]};
-    const auto p1topPM = GlobalPosition{upperRightPM[0], upperRightPM[1]};
-    flux.addSurface("topPM", p0topPM, p1topPM);
-
-    const auto p0MiddleChannel = GlobalPosition{lowerLeftPM[0] + 0.5*(upperRightPM[0]-lowerLeftPM[0]),  upperRightPM[1]};
-    const auto p1MiddleChannel = GlobalPosition{lowerLeftPM[0] + 0.5*(upperRightPM[0]-lowerLeftPM[0]), stokesFvGridGeometry->bBoxMax()[1]};
+    const Scalar xMiddleChannel = getParam<Scalar>("FluxOverSurface.PosX");
+    const auto p0MiddleChannel = GlobalPosition{xMiddleChannel,  darcyFvGridGeometry->bBoxMax()[1]};
+    const auto p1MiddleChannel = GlobalPosition{xMiddleChannel, stokesFvGridGeometry->bBoxMax()[1]};
     flux.addSurface("middleChannel", p0MiddleChannel, p1MiddleChannel);
 
-    const auto p0backPM = GlobalPosition{upperRightPM[0],  lowerLeftPM[1]};
-    const auto p1backPM = GlobalPosition{upperRightPM[0], upperRightPM[1]};
-    flux.addSurface("backPM", p0backPM, p1backPM);
-
-    const auto p0backChannel = GlobalPosition{upperRightPM[0],  upperRightPM[1]};
-    const auto p1backChannel = GlobalPosition{upperRightPM[0], stokesFvGridGeometry->bBoxMax()[1]};
+    const auto p0backChannel = GlobalPosition{darcyFvGridGeometry->bBoxMax()[0],  darcyFvGridGeometry->bBoxMax()[1]};
+    const auto p1backChannel = GlobalPosition{darcyFvGridGeometry->bBoxMax()[0], stokesFvGridGeometry->bBoxMax()[1]};
     flux.addSurface("backChannel", p0backChannel, p1backChannel);
 
     const auto p0Inlet = stokesFvGridGeometry->bBoxMin();
@@ -245,28 +263,125 @@ int main(int argc, char** argv) try
     const auto p1outlet = stokesFvGridGeometry->bBoxMax();
     flux.addSurface("outlet", p0outlet, p1outlet);
 
+    auto printAllFluxes = [&]()
+    {
+        using Indices = typename GetPropType<StokesTypeTag, Properties::ModelTraits>::Indices;
+
+        Scalar fluxFront = 0.0;
+        Scalar fluxTop = 0.0;
+        Scalar fluxBack = 0.0;
+
+        auto fvGeometry = localView(*stokesFvGridGeometry);
+        auto elemVolVars = localView(stokesGridVariables->curGridVolVars());
+        auto elemFaceVars = localView(stokesGridVariables->curGridFaceVars());
+        for (auto&& element : elements(stokesFvGridGeometry->gridView()))
+        {
+            couplingManager->bindCouplingContext(stokesCellCenterIdx, element, *assembler);
+
+            fvGeometry.bind(element);
+            elemVolVars.bind(element, fvGeometry, stokesSol);
+            elemFaceVars.bind(element, fvGeometry, stokesSol);
+
+            for (const auto scvf : scvfs(fvGeometry))
+            {
+                if (!couplingManager->isCoupledEntity(CouplingManager::stokesIdx, scvf))
+                    continue;
+
+                if (scvf.directionIndex() == 0 && scvf.directionSign() > 0)
+                {
+                    fluxFront += stokesProblem->neumann(element, fvGeometry,
+                                                        elemVolVars, elemFaceVars,
+                                                        scvf)[Indices::conti0EqIdx] * scvf.area();
+                }
+
+                if (scvf.directionIndex() == 1 && scvf.directionSign() < 0)
+                {
+                    fluxTop += stokesProblem->neumann(element, fvGeometry,
+                                                      elemVolVars, elemFaceVars,
+                                                      scvf)[Indices::conti0EqIdx] * scvf.area();
+                }
+
+                if (scvf.directionIndex() == 0 && scvf.directionSign() < 0)
+                {
+                    fluxBack += stokesProblem->neumann(element, fvGeometry,
+                                                       elemVolVars, elemFaceVars,
+                                                       scvf)[Indices::conti0EqIdx] * scvf.area();
+                }
+            }
+        }
+
+        flux.calculateMassOrMoleFluxes();
+        std::cout << "***********************" << std::endl;
+        std::cout << "mass fluxes channel:" << std::endl;
+        std::cout << "inlet         = " << flux.netFlux("inlet")[0] << std::endl;
+        std::cout << "outlet        = " << flux.netFlux("outlet")[0] << std::endl;
+        std::cout << "frontChannel  = " << flux.netFlux("frontChannel")[0] << std::endl;
+        std::cout << "middleChannel = " << flux.netFlux("middleChannel")[0] << std::endl;
+        std::cout << "backChannel   = " << flux.netFlux("backChannel")[0] << std::endl;
+
+        std::cout << "inlet + frontChannel + front pm   = " << flux.netFlux("inlet")[0]+flux.netFlux("frontChannel")[0]+fluxFront << std::endl;
+        std::cout << "ratio q_channel/q_in =" <<  flux.netFlux("middleChannel")[0] / flux.netFlux("inlet")[0] << std::endl;
+        std::cout << "***********************" << std::endl;
+
+        std::cout << "***********************" << std::endl;
+        std::cout << "mass fluxes pm " << std::endl;
+        std::cout << "front = " << fluxFront << std::endl;
+        std::cout << "top   = " << fluxTop << std::endl;
+        std::cout << "back  = " << fluxBack << std::endl;
+        std::cout << "sum   = " << fluxFront+fluxTop+fluxBack << std::endl;
+        std::cout << "***********************" << std::endl;
+
+        std::cout << "Re middle channel = " << flux.netFlux("middleChannel")[0] / (1.2 * 1.5e-5) << std::endl;
+
+    };
+
+#if INSTATIONARY
+
+        // time loop
+        timeLoop->start(); do
+        {
+            // set previous solution for storage evaluations
+            assembler->setPreviousSolution(solOld);
+
+            // solve the non-linear system with time step control
+            nonLinearSolver.solve(sol, *timeLoop);
+
+            // make the new solution the old solution
+            solOld = sol;
+            stokesGridVariables->advanceTimeStep();
+            darcyGridVariables->advanceTimeStep();
+
+            // advance to the time loop to the next step
+            timeLoop->advanceTimeStep();
+
+            // write vtk output
+            stokesVtkWriter.write(timeLoop->time());
+            darcyVtkWriter.write(timeLoop->time());
+
+            printAllFluxes();
+
+            // report statistics of this time step
+            timeLoop->reportTimeStep();
+
+            // set new dt as suggested by newton solver
+            timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+        } while (!timeLoop->finished());
+
+        timeLoop->finalize(stokesGridView.comm());
+        timeLoop->finalize(darcyGridView.comm());
+
+#else
 
     // solve the non-linear system
     nonLinearSolver.solve(sol);
 
-    flux.calculateVolumeFluxes();
-    std::cout << "volume fluxes:" << std::endl;
-    std::cout << "inlet         = " << flux.netFlux("inlet")[0] << std::endl;
-    std::cout << "outlet        = " << flux.netFlux("outlet")[0] << std::endl;
-
-    std::cout << "frontPM       = " << flux.netFlux("frontPM")[0] << std::endl;
-    std::cout << "frontChannel  = " << flux.netFlux("frontChannel")[0] << std::endl;
-
-    std::cout << "topPM is      = " << flux.netFlux("topPM")[0] << std::endl;
-
-    std::cout << "middleChannel = " << flux.netFlux("middleChannel")[0] << std::endl;
-
-    std::cout << "backPM        = " << flux.netFlux("backPM")[0] << std::endl;
-    std::cout << "backChannel   = " << flux.netFlux("backChannel")[0] << std::endl;
+    printAllFluxes();
 
     // write vtk output
     stokesVtkWriter.write(1.0);
     darcyVtkWriter.write(1.0);
+#endif
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

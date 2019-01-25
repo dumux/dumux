@@ -34,8 +34,8 @@
 
 #include "spatialparams.hh"
 
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/components/air.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
 
 namespace Dumux
 {
@@ -58,7 +58,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DarcyOneP>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
+    using type = FluidSystems::OnePGas<Scalar, Dumux::Components::Air<Scalar> > ;
 };
 
 // Set the grid type
@@ -259,7 +259,7 @@ public:
      */
     PrimaryVariables initial(const Element &element) const
     {
-        return PrimaryVariables(0.0);
+        return PrimaryVariables(1e5);
     }
 
     // \}
