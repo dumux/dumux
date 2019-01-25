@@ -139,6 +139,12 @@ public:
     using BulkFacetFlowManager::getLowDimVolVars;
     using BulkFacetMechManager::getLowDimVolVars;
 
+    using BulkFacetFlowManager::getLowDimElement;
+    using BulkFacetMechManager::getLowDimElement;
+
+    using BulkFacetFlowManager::getLowDimElementIndex;
+    using BulkFacetMechManager::getLowDimElementIndex;
+
     using BulkFacetFlowManager::evalSourcesFromBulk;
 
     using BulkFacetFlowManager::evalCouplingResidual;
