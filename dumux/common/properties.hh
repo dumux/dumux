@@ -97,6 +97,7 @@ NEW_PROP_TAG(DualGridNodalIndexSet);               //!< The type used for the no
 /////////////////////////////////////////////////////////////
 NEW_PROP_TAG(EnergyLocalResidual);                 //!< The local residual of the energy equation
 NEW_PROP_TAG(AdvectionType);                       //!< The type for the calculation the advective fluxes
+NEW_PROP_TAG(DiffusionType);                       //!< The type for the calculation the diffusive fluxes
 NEW_PROP_TAG(SolutionDependentAdvection);          //!< specifies if the parameters for the advective fluxes depend on the solution
 NEW_PROP_TAG(MolecularDiffusionType);              //!< The type for the calculation of the molecular diffusion fluxes
 NEW_PROP_TAG(SolutionDependentMolecularDiffusion); //!< specifies if the parameters for the diffusive fluxes depend on the solution

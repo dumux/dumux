@@ -155,6 +155,8 @@ public:
     {
         name_ = getParam<std::string>("Problem.Name");
         minBoundaryH_ = getParam<Scalar>("Problem.MinBoundaryH",1.0E-6);
+        //turbulenceModel_ = getParam<Scalar>("Problem.TurbulenceModel",0);
+        //elderCoefficient_ = getParam<Scalar>("Problem.ElderCoefficient",0.067);
     }
 
     /*!
@@ -808,6 +810,8 @@ private:
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
     Scalar minBoundaryH_ = 0.2;
+    Scalar turbulenceModel_ = 0;
+    Scalar ElderCoefficient_ = 0.067;
 
     /*Initial data */
     std::vector<double> hInit_;

@@ -141,7 +141,7 @@ public:
 
         //! \todo Check whether the default accumulation mode atOnceAccu is needed.
         //! \todo make parameters changeable at runtime from input file / parameter tree
-        Dune::Amg::Parameters params(15,2000,1.2,1.6,Dune::Amg::atOnceAccu);
+        /*Dune::Amg::Parameters params(15,2000,1.2,1.6,Dune::Amg::atOnceAccu);
         params.setDefaultValuesIsotropic(Grid::dimension);
         params.setDebugLevel(this->verbosity());
         Criterion criterion(params);
@@ -151,6 +151,33 @@ public:
 
         AMGType amg(*fop, criterion, smootherArgs, *comm);
         Dune::BiCGSTABSolver<VType> solver(*fop, *sp, amg, this->residReduction(), this->maxIter(),
+                                           rank == 0 ? this->verbosity() : 0);
+        */
+
+        /*
+         Dune::MatrixAdapter<Matrix,Vector,Vector> op(A);        // make linear operator from A
+         Dune::SeqJac<Matrix,Vector,Vector> jac(A,1,1);          // Jacobi preconditioner
+         Dune::SeqGS<Matrix,Vector,Vector> gs(A,1,1);            // GS preconditioner
+         Dune::SeqSOR<Matrix,Vector,Vector> sor(A,1,1.9520932);  // SSOR preconditioner
+         Dune::SeqSSOR<Matrix,Vector,Vector> ssor(A,1,1.0); // SSOR preconditioner
+         Dune::SeqILU0<Matrix,Vector,Vector> ilu0(A,1.0);        // preconditioner object
+         Dune::SeqILUn<Matrix,Vector,Vector> ilu1(A,1,0.92);     // preconditioner object
+        */
+
+        //LEO add new preconditioner
+        typedef Dune::SeqSSOR<Matrix,Vector,Vector> Prec;
+        //typedef Dune::SeqSOR<Matrix,Vector,Vector> Prec;
+        //typedef Dune::SeqILU0<Matrix,Vector,Vector> Prec;
+        //typedef Dune::SeqJac<Matrix,Vector,Vector> Prec;
+        //typedef Dune::SeqGS<Matrix,Vector,Vector> Prec;
+
+        typedef Dune::BlockPreconditioner<Vector,Vector,Comm,Prec> ParPrec;
+
+        Prec prec(A, 1, 1.0); //SSOR A=Matrix, n=Number of iterations to perform, w=relaxation factor
+        //Prec prec(A,1,1);
+
+        ParPrec pprec(prec, *comm);
+        Dune::BiCGSTABSolver<VType> solver(*fop, *sp, pprec, this->residReduction(), this->maxIter(),
                                            rank == 0 ? this->verbosity() : 0);
 
         solver.apply(x, b, result_);
