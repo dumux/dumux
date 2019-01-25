@@ -4,7 +4,7 @@ TInitEnd = 0.01      # [s]
 TEnd = 12960000 #        # [s]
 #TEnd = 54000        # [s]
 DtInitial = 0.01       # [s]
-EpisodeLength = 86400  # [s] # these values are hit in the output
+EpisodeLength = 3600  # [s] # these values are hit in the output
 #EpisodeLength = 3600  # [s]
 
 
@@ -13,8 +13,13 @@ EpisodeLength = 86400  # [s] # these values are hit in the output
 #Cells = 4 4 4
 Refine = 0
 <<<<<<< Updated upstream
-#File = ./Lu2D.msh  #very coarse mesh cube
-File = ./Lu2Dfine.msh  #fine cube msh
+#File = ./Lu2D.msh  #very coarse mesh cube previous coordinates
+#File = ./Lu2Dfine.msh  #fine cube msh 
+#File = ./Lu2DCompare.msh   #made with comsol
+#File = ./Lu2DveryFine.msh #very fine cube msh to compare with comsol(didnt run)-now runs
+File = ./Lu2DveryFineFullyC.msh # fine cube msh to compare with decoupled veryfine-Final
+#File = ./COMSOLvsDUMUX.msh # very fine cube msh same as comsol model(didnt run)
+#File = ./fullyfineTest.msh #refined the one which runs final
 
 
 
@@ -47,10 +52,17 @@ swr = 0  # Residual water content
 snr = 0
 
 avgRain = 3.7E-8 #[m/s] 400 mm in 150d low intensity
+#avgRain = 3.7E-7 #[m/s] 400 mm in 15d high intensity
+
 #avgRain = 5.5E-6 #20[mm/h]
 #avgRain =1.39e-6 #Ks
 
 
 [Fluid]
-
 waterDensity = 1000 # [kg/m3]
+
+#from here I added after it was not converging for fine mesh
+[Implicit]
+MassUpwindWeight = 1.0
+MobilityUpwindWeight = 1.0
+

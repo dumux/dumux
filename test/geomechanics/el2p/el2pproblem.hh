@@ -63,6 +63,7 @@ NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
 // Set the grid type
 // SET_TYPE_PROP(El2P_TestProblem, Grid, Dune::YaspGrid<3>);
 SET_TYPE_PROP(El2P_TestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+// SET_TYPE_PROP(El2P_TestProblem, Grid, Dune :: UGGrid<3>);
 
 SET_PROP(El2P_TestProblem, PressureFEM)
 {
@@ -120,8 +121,9 @@ public:
 SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxRelativeShift, 1e-1);//!!!Holger: this is added to adjust the first relative shift to make the initial step convergable, then we activete the Restart in input file and reduce this relative shift
 
 // use the algebraic multigrid
-SET_TYPE_PROP(El2P_TestProblem, LinearSolver, El2PAMGBackend<TypeTag>);
-// SET_TYPE_PROP(El2P_TestProblem, LinearSolver, SuperLUBackend<TypeTag>);
+// SET_TYPE_PROP(El2P_TestProblem, LinearSolver, El2PAMGBackend<TypeTag>);//didnt converge for fine mesh
+SET_TYPE_PROP(El2P_TestProblem, LinearSolver, SuperLUBackend<TypeTag>);
+// SET_TYPE_PROP(El2P_TestProblem, LinearSolver, UMFPackBackend<TypeTag> );//didnt converge for fine mesh
 
 // central differences to calculate the jacobian by default
 SET_INT_PROP(El2P_TestProblem, ImplicitNumericDifferenceMethod, 0);
@@ -284,16 +286,16 @@ public:
     Scalar zMax(const GlobalPosition &globalPos) const
     {
       if (globalPos[0]<6.3+eps_)
-          return 0;
-      else if (globalPos[0]>6.3+eps_ && globalPos[0]<23.6+eps_)
-          return (-10.-0.)/(23.6-6.3)*(globalPos[0])+ 3.64 +eps_;
-      else if (globalPos[0]>23.6+eps_)
-          return -10;
+          return 15.;
+      else if (globalPos[0]>6.3-eps_ && globalPos[0]<23.6+eps_)
+          return (5.-15.)/(23.6-6.3)*(globalPos[0])+ (322./17.3);
+      else if (globalPos[0]>23.6-eps_)
+          return 5.;
     }
 
         Scalar zMin(const GlobalPosition &globalPos) const
     {
-          return -40.0;
+          return -25.0;
     }
 
     Scalar depth(const GlobalPosition &globalPos) const
@@ -305,7 +307,7 @@ public:
 
     Scalar wTdepth(const GlobalPosition &globalPos) const
     {
-       return (-15. - globalPos[1]);
+       return (0. - globalPos[1]);
     }
     // note: pInit is < 0 (just due to geomechanics sign convention applied here)
     // initialize the pressure field for initialization run
@@ -393,7 +395,7 @@ public:
           const Scalar snr = materialLawParams.snr();
 
 
-          const Scalar meterUeberGW = globalPos[1] +15;
+          const Scalar meterUeberGW = globalPos[1] +0;
           const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
 
           Scalar n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.n);//khodam
@@ -411,21 +413,13 @@ public:
 
 //        stress[0] = k0_ * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
 
-       stress[0] = 0.5 * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
-
+       stress[0] = 0.5 *( sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
 
        if(dimWorld >=2)
-       stress[1] =  sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) );
-
-
-//         Scalar theta = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.FrictionAngle)*M_PI / 180.0;
-//         using std::sin;
-//         stress[0] = (1 - sin(theta)) * stress [1];//khodam
-
-
+       stress[1] =  sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
 
        if(dimWorld == 3)
-       stress[2] = sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) );
+       stress[2] = sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
 
 
       return stress;
@@ -442,11 +436,11 @@ public:
      */
     std::string name() const
     {
-        return "el2p-FineMesh";
+        return "el2p.Comsol.test";
     }
 
     /*!
-     * \brief Returns the temperature within the domain.
+     * \brief Returns the temperature wcithin the domain.
      *
      * This problem assumes a temperature of 10 degrees Celsius at the ground surface
      * and a geothermal gradient of 0.03 K/m.
@@ -459,12 +453,6 @@ public:
         return T;
     };
 
-
-    // returns the bottom of reservoir value (depth in m)
-//     const Scalar depthBOR() const
-//     {
-//         return depthBOR_;
-//     }
 
     // note: pInit is < 0 (just due to geomechanics sign convention applied here)
     // function which returns the initialized pressure at an arbitrary location within the element
@@ -538,54 +526,35 @@ public:
         // The solid displacement normal to the lateral boundaries is fixed.
         if(onInlet_(globalPos))
         {
+//             if (initializationRun_ == true)
+//             {
+// //                 values.setDirichlet(pressureIdx, contiWEqIdx);
+// //                 values.setDirichlet(saturationIdx, contiNEqIdx);
+//                 values.setDirichlet(uxIdx);
+//                 values.setDirichlet(uyIdx);
+//             }
+
+          }
+
+
+        if (leftBoundaryO_(globalPos)|| rightBoundaryO_(globalPos)){
+
+            values.setDirichlet(uxIdx);//this part is aplied all the time
+
+//             if (initializationRun_ == true)
+//             {
+//                 values.setDirichlet(uyIdx);
+//             }
+          }
+
+        if (leftBoundaryU_(globalPos)){
+            values.setDirichlet(uxIdx);//this part is aplied all the time
+            //values.setDirichlet(momentumYEqIdx);
             if (initializationRun_ == true)
             {
                 values.setDirichlet(pressureIdx, contiWEqIdx);
                 values.setDirichlet(saturationIdx, contiNEqIdx);
-                values.setDirichlet(uxIdx);
-                values.setDirichlet(uyIdx);
-            }
-
-          }
-
-//         if(onInlet_(globalPos)|| rightBoundaryO_(globalPos))
-//         {
-//             if (initializationRun_ == true)
-//             {
-//                 values.setDirichlet(pressureIdx, contiWEqIdx);
-//                 values.setDirichlet(saturationIdx, contiNEqIdx);
-//                 values.setDirichlet(uxIdx);
 //                 values.setDirichlet(uyIdx);
-//             }
-//
-//           }
-
-          if (leftBoundaryO_(globalPos)){
-
-            values.setDirichlet(uxIdx);//this part is aplied all the time
-            if (initializationRun_ == true)
-            {
-                values.setDirichlet(uyIdx);
-            }
-          }
-
-
-          if (rightBoundaryO_(globalPos)){
-
-            values.setDirichlet(uxIdx);//this part is aplied all the time
-            if (initializationRun_ == true)
-            {
-                values.setDirichlet(uyIdx);
-            }
-          }
-
-
-
-        if (leftBoundaryU_(globalPos)){
-            values.setDirichlet(uxIdx);//this part is aplied all the time
-            if (initializationRun_ == true)
-            {
-                values.setDirichlet(uyIdx);
             }
           }
 
@@ -596,27 +565,15 @@ public:
             values.setDirichlet(uxIdx);//this part is aplied all the time
             if (initializationRun_ == true)
             {
-                values.setDirichlet(uyIdx);
+//                 values.setDirichlet(uyIdx);
             }
          }
 
 
-
-//         if (onLowerBoundary_(globalPos)){//roler boundary didnt converge for higher E
-//
-//              values.setDirichlet(momentumYEqIdx);
-//
-//             if(initializationRun_ == true)
-//             {
-//                 values.setDirichlet(momentumXEqIdx);
-//            }
-//         }
-
-
         if (onLowerBoundary_(globalPos)){ //fixed boundary
 
-             values.setDirichlet(uyIdx);
              values.setDirichlet(uxIdx);
+             values.setDirichlet(uyIdx);
 
         }
      }
@@ -656,53 +613,53 @@ public:
 
 
 //         if (onInlet_(globalPos)|| rightBoundaryO_(globalPos)){
-        if (onInlet_(globalPos)){
-
-          const auto& materialLawParams = this->spatialParams().materialLawParams(globalPos);
-          const Scalar swr = materialLawParams.swr();
-          const Scalar snr = materialLawParams.snr();
-
-
-          const Scalar meterUeberGW = globalPos[1] +15;
-          const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
-          const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
-          values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
-          values[saturationIdx] = 1.-sw;
-        } else
-        {
+//         if (onInlet_(globalPos)){
+//
+//           const auto& materialLawParams = this->spatialParams().materialLawParams(globalPos);
+//           const Scalar swr = materialLawParams.swr();
+//           const Scalar snr = materialLawParams.snr();
+//
+//
+//           const Scalar meterUeberGW = globalPos[1] +0;
+//           const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
+//           const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
+//           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
+//           values[saturationIdx] = 1.-sw;
+//         } else
+//         {
           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
           //std::cout<< "pressure=" <<values[pressureIdx] << std::endl;
           values[saturationIdx] = 0.0;
-        }
+//         }
     }
 
-    static Scalar invertPcGW_(const Scalar pcIn,
-                              const MaterialLawParams &pcParams)
-    {
-        Scalar lower(0.0);
-        Scalar upper(1.0);
-        const unsigned int maxIterations = 25;
-        const Scalar bisLimit = 1.0;
-
-        Scalar sw, pcGW;
-        for (unsigned int k = 1; k <= maxIterations; k++)
-        {
-            sw = 0.5*(upper + lower);
-            pcGW = MaterialLaw::pc(pcParams, sw);
-            const Scalar delta = std::abs(pcGW - pcIn);
-            if (delta < bisLimit)
-                return sw;
-
-            if (k == maxIterations)
-                return sw;
-
-            if (pcGW > pcIn)
-                lower = sw;
-            else
-                upper = sw;
-        }
-        return sw;
-    }
+//     static Scalar invertPcGW_(const Scalar pcIn,
+//                               const MaterialLawParams &pcParams)
+//     {
+//         Scalar lower(0.0);
+//         Scalar upper(1.0);
+//         const unsigned int maxIterations = 25;
+//         const Scalar bisLimit = 1.0;
+//
+//         Scalar sw, pcGW;
+//         for (unsigned int k = 1; k <= maxIterations; k++)
+//         {
+//             sw = 0.5*(upper + lower);
+//             pcGW = MaterialLaw::pc(pcParams, sw);
+//             const Scalar delta = std::abs(pcGW - pcIn);
+//             if (delta < bisLimit)
+//                 return sw;
+//
+//             if (k == maxIterations)
+//                 return sw;
+//
+//             if (pcGW > pcIn)
+//                 lower = sw;
+//             else
+//                 upper = sw;
+//         }
+//         return sw;
+//     }
     /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
@@ -763,32 +720,6 @@ public:
                     }
                 }
         }
-
-
-
-//                 if (rightBoundaryO_(globalPos))
-//         {
-//              if (initializationRun_ == true)
-//             {
-//                 values[contiWEqIdx] = 0.0;
-//                 values[contiNEqIdx] = 0,0;
-//             }
-//               else{
-//                   if (satW > 1. - eps_){
-//                    //std::cout << "saturation above 1 \n" ;
-//                     values[contiWEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
-//                     if (pN>1.e5) values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
-//                }
-//                 else {
-//                    //std::cout << "saturation below 1, infiltration \n" ;
-//                     values[contiWEqIdx] = 0.0;
-//                     if (pN>1.e5) {
-//                     values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
-//                     }
-//                 }
-//         }
-//         }
-
 
      }
 
@@ -858,7 +789,7 @@ public:
         double time = this->timeManager().time()+this->timeManager().timeStepSize();
 
         if(time>1.0)
-        this->newtonController().setMaxRelativeShift(1.e-5);
+        this->newtonController().setMaxRelativeShift(1.e-5);//khodam from 1e-5
 
         // Write mass balance information for rank 0
         if (this->gridView().comm().rank() == 0) {
@@ -916,22 +847,22 @@ private:
 
     bool leftBoundaryO_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] < -32. + eps_ && globalPos[1] > -15. - eps_);
+        return (globalPos[0] < -32. + eps_ && globalPos[1] > 0. - eps_);
     }
 
     bool leftBoundaryU_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] < -32. + eps_ && globalPos[1] < -15. + eps_);
+        return (globalPos[0] < -32. + eps_ && globalPos[1] < 0. + eps_);
     }
 
     bool rightBoundaryO_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] > 35. - eps_ && globalPos[1] > -15. - eps_);
+        return (globalPos[0] > 35. - eps_ && globalPos[1] > 0. - eps_);
     }
 
     bool rightBoundaryU_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] > 35. - eps_ && globalPos[1] < -15. + eps_);
+        return (globalPos[0] > 35. - eps_ && globalPos[1] < 0. + eps_);
     }
 public:
     bool initializationRun_, coupled_, output_;
@@ -1100,18 +1031,20 @@ public:
                     Scalar m_ = 1.0 - (1.0 / n_);
                     Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.alpha);
 
-                    const Scalar meterUeberGW = globalPos[1] +15;
-                    const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
+                    const Scalar meterUeberGW_ = globalPos[1] + 0;
+                    const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW_);//Pc>0 is unsaturated and Pc<=0 is saturated
 //                     const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
                     const Scalar sw = pow(pow(alpha_*pc, n_) + 1, -m_);
 
                     // initialize saturation values
-                     values[saturationIdx] = 1- sw;
+//                     values[pressureIdx] = (1.0e5 + 1000. * 9.81 * (0. - globalPos[1]));
+                    values[saturationIdx] = 1 - sw;
+
                 }
 
             }
 
-           // check if the pressure value for this vertex has been initialized
+           // checkfin if the pressure value for this vertex has been initialized
             if (valueSet == false)
             {
                 std::cout << " pressure value not initialized correctly "

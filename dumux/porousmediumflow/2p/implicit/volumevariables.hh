@@ -136,6 +136,15 @@ public:
             fluidState.setPressure(wPhaseIdx, pw);
             fluidState.setPressure(nPhaseIdx,
                                    pw + MaterialLaw::pc(materialParams, 1 - sn));
+
+//             if (pw>1.e5){
+//             fluidState.setPressure(nPhaseIdx,
+//                                    pw + MaterialLaw::pc(materialParams, 1 - sn));
+//             }else{
+//                 fluidState.setPressure(nPhaseIdx,
+//                                    0);
+//             }//khodam
+//             std::cout<< "Pc="<< MaterialLaw::pc(materialParams, 1 - sn)<< std::endl;
         }
         else if (int(formulation) == pnsw) {
             Scalar sw = priVars[saturationIdx];

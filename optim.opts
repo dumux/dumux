@@ -23,6 +23,8 @@ GXX_OPTS=" \
 CMAKE_FLAGS=" \
   -DCMAKE_CXX_FLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
   -DUG_DIR=ug_installation_path \
+  -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE \
+  -DSUPERLU_ROOT=/home/shirin/DUMUX2.12C/SuperLU_4.3 \
   "
 
 # optional configure flags
