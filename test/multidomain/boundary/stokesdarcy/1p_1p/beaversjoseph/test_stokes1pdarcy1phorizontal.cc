@@ -192,11 +192,17 @@ int main(int argc, char** argv) try
 
     // the grid variables
     using StokesGridVariables = typename GET_PROP_TYPE(StokesTypeTag, GridVariables);
-    auto stokesGridVariables = std::make_shared<StokesGridVariables>(stokesProblem, stokesFvGridGeometry);
-    stokesGridVariables->init(stokesSol);
     using DarcyGridVariables = typename GET_PROP_TYPE(DarcyTypeTag, GridVariables);
+    auto stokesGridVariables = std::make_shared<StokesGridVariables>(stokesProblem, stokesFvGridGeometry);
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyFvGridGeometry);
+
+#if INSTATIONARY
+    stokesGridVariables->init(stokesSol, stokesSol);
+    darcyGridVariables->init(sol[darcyIdx], sol[darcyIdx]);
+#else
+    stokesGridVariables->init(stokesSol);
     darcyGridVariables->init(sol[darcyIdx]);
+#endif
 
     // intialize the vtk output module
     const auto stokesName = getParam<std::string>("Problem.Name") + "_" + stokesProblem->name();
