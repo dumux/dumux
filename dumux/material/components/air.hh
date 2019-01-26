@@ -84,7 +84,7 @@ public:
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
         // Assume an ideal gas
-        return IdealGas::density(molarMass(), temperature, pressure);
+        return IdealGas::density(molarMass(), temperature, pressure+1e5);
     }
 
     /*!
@@ -145,29 +145,29 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar oldGasViscosity(Scalar temperature, Scalar pressure)
-    {
-        const Scalar Tc = criticalTemperature();
-        const Scalar Vc = 84.525138; // critical specific volume [cm^3/mol]
-        const Scalar omega = 0.078; // accentric factor
-        const Scalar M = molarMass() * 1e3; // molar mas [g/mol]
-
-        const Scalar Fc = 1.0 - 0.2756*omega;
-        const Scalar Tstar = 1.2593*temperature/Tc;
-
-        using std::exp;
-        using std::pow;
-        const Scalar Omega_v = 1.16145*pow(Tstar, -0.14874)
-                               + 0.52487*exp(-0.77320*Tstar)
-                               + 2.16178*exp(-2.43787*Tstar);
-
-        using std::cbrt;
-        using std::sqrt;
-        const Scalar mu = 40.785 * Fc * sqrt(M * temperature)/(cbrt(Vc * Vc) * Omega_v);
-
-        // convertion from micro poise to Pa s
-        return mu/1.0e6/10.0;
-    }
+    // static Scalar oldGasViscosity(Scalar temperature, Scalar pressure)
+    // {
+    //     const Scalar Tc = criticalTemperature();
+    //     const Scalar Vc = 84.525138; // critical specific volume [cm^3/mol]
+    //     const Scalar omega = 0.078; // accentric factor
+    //     const Scalar M = molarMass() * 1e3; // molar mas [g/mol]
+    //
+    //     const Scalar Fc = 1.0 - 0.2756*omega;
+    //     const Scalar Tstar = 1.2593*temperature/Tc;
+    //
+    //     using std::exp;
+    //     using std::pow;
+    //     const Scalar Omega_v = 1.16145*pow(Tstar, -0.14874)
+    //                            + 0.52487*exp(-0.77320*Tstar)
+    //                            + 2.16178*exp(-2.43787*Tstar);
+    //
+    //     using std::cbrt;
+    //     using std::sqrt;
+    //     const Scalar mu = 40.785 * Fc * sqrt(M * temperature)/(cbrt(Vc * Vc) * Omega_v);
+    //
+    //     // convertion from micro poise to Pa s
+    //     return mu/1.0e6/10.0;
+    // }
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
@@ -185,6 +185,7 @@ public:
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
+        pressure += 1e5;
         // above 1200 K, the function becomes inaccurate
         // since this should realistically never happen, we can live with it
         const Scalar tempCelsius = temperature - 273.15;
@@ -207,13 +208,13 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar simpleGasViscosity(Scalar temperature, Scalar pressure)
-    {
-        // above 1200 K, the function becomes inaccurate
-        // since this should realistically never happen, we can live with it
-        using std::sqrt;
-        return 1.496e-6 * sqrt(temperature * temperature * temperature) / (temperature + 120.0);
-    }
+    // static Scalar simpleGasViscosity(Scalar temperature, Scalar pressure)
+    // {
+    //     // above 1200 K, the function becomes inaccurate
+    //     // since this should realistically never happen, we can live with it
+    //     using std::sqrt;
+    //     return 1.496e-6 * sqrt(temperature * temperature * temperature) / (temperature + 120.0);
+    // }
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
@@ -226,35 +227,35 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar exactGasViscosity(Scalar temperature, Scalar pressure)
-    {
-        const Scalar epsk = 103.3; // [K]
-
-        using std::log;
-        using std::exp;
-        using std::sqrt;
-        const Scalar logTstar = log(temperature/epsk);
-        const Scalar Omega = exp(0.431
-                                 - 0.4623*logTstar
-                                 + 0.08406*logTstar*logTstar
-                                 + 0.005341*logTstar*logTstar*logTstar
-                                 - 0.00331*logTstar*logTstar*logTstar*logTstar);
-
-        const Scalar sigma = 0.36; // [nm]
-        const Scalar eta0 = 0.0266958*sqrt(1000.0*molarMass()*temperature)/(sigma*sigma*Omega);
-
-        using std::pow;
-        const Scalar tau = criticalTemperature()/temperature;
-        const Scalar rhoc = 10.4477; // [mol/m^3]
-        const Scalar delta = 0.001*pressure/(temperature*8.3144598)/rhoc;
-        const Scalar etaR = 10.72 * pow(tau, 0.2) * delta
-                            + 1.122 * pow(tau, 0.05) * pow(delta, 4)
-                            + 0.002019 * pow(tau, 2.4) * pow(delta, 9)
-                            - 8.876 * pow(tau, 0.6) * delta * exp(-delta)
-                            - 0.02916 * pow(tau, 3.6) * pow(delta, 8) * exp(-delta);
-
-        return (eta0 + etaR)*1e-6;
-    }
+    // static Scalar exactGasViscosity(Scalar temperature, Scalar pressure)
+    // {
+    //     const Scalar epsk = 103.3; // [K]
+    //
+    //     using std::log;
+    //     using std::exp;
+    //     using std::sqrt;
+    //     const Scalar logTstar = log(temperature/epsk);
+    //     const Scalar Omega = exp(0.431
+    //                              - 0.4623*logTstar
+    //                              + 0.08406*logTstar*logTstar
+    //                              + 0.005341*logTstar*logTstar*logTstar
+    //                              - 0.00331*logTstar*logTstar*logTstar*logTstar);
+    //
+    //     const Scalar sigma = 0.36; // [nm]
+    //     const Scalar eta0 = 0.0266958*sqrt(1000.0*molarMass()*temperature)/(sigma*sigma*Omega);
+    //
+    //     using std::pow;
+    //     const Scalar tau = criticalTemperature()/temperature;
+    //     const Scalar rhoc = 10.4477; // [mol/m^3]
+    //     const Scalar delta = 0.001*pressure/(temperature*8.3144598)/rhoc;
+    //     const Scalar etaR = 10.72 * pow(tau, 0.2) * delta
+    //                         + 1.122 * pow(tau, 0.05) * pow(delta, 4)
+    //                         + 0.002019 * pow(tau, 2.4) * pow(delta, 9)
+    //                         - 8.876 * pow(tau, 0.6) * delta * exp(-delta)
+    //                         - 0.02916 * pow(tau, 3.6) * pow(delta, 8) * exp(-delta);
+    //
+    //     return (eta0 + etaR)*1e-6;
+    // }
 
     /*!
      * \brief Specific enthalpy of Air \f$\mathrm{[J/kg]}\f$

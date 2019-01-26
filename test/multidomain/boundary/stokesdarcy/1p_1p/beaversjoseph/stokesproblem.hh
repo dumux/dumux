@@ -274,10 +274,10 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[Indices::pressureIdx] = 1e5;
+        // values[Indices::pressureIdx] = 1e5;
 
         if(onLeftBoundary_(globalPos))
-            values[Indices::pressureIdx] = 1e5+deltaP_;
+            values[Indices::pressureIdx] = deltaP_;
 
         return values;
     }

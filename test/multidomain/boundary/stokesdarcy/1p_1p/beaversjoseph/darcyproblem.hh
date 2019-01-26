@@ -258,7 +258,7 @@ public:
      */
     PrimaryVariables initial(const Element &element) const
     {
-        return PrimaryVariables(1e5);
+        return PrimaryVariables(0.0);
     }
 
     // \}

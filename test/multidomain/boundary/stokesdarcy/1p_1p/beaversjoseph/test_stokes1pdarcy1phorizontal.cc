@@ -206,6 +206,7 @@ int main(int argc, char** argv) try
     GET_PROP_TYPE(StokesTypeTag, VtkOutputFields)::init(stokesVtkWriter);
 
     stokesVtkWriter.addField(stokesProblem->getAnalyticalVelocityX(), "analyticalV_x");
+    stokesVtkWriter.addVolumeVariable([](const auto& v){ return v.density() - 1.23012;}, "dRho");
 
     stokesVtkWriter.write(0.0);
 
@@ -240,6 +241,7 @@ int main(int argc, char** argv) try
     using DarcyVelocityOutput = PorousMediumFlowVelocityOutput<DarcyGridVariables,typename GET_PROP_TYPE(DarcyTypeTag, FluxVariables), CouplingManager, Assembler>;
     darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables, couplingManager, assembler));
     GET_PROP_TYPE(DarcyTypeTag, VtkOutputFields)::init(darcyVtkWriter);
+    darcyVtkWriter.addVolumeVariable([](const auto& v){ return v.density() - 1.23012;}, "dRho");
     darcyVtkWriter.write(0.0);
 
     // the linear solver
