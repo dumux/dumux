@@ -1,5 +1,6 @@
 add_input_file_links()
 
+dune_symlink_to_source_files(FILES "unstructured.msh")
 
 dune_add_test(NAME test_beaversjoseph_instationary
               SOURCES test_stokes1pdarcy1phorizontal.cc
@@ -26,3 +27,19 @@ dune_add_test(NAME test_beaversjoseph_stationary
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_stokes1pdarcy1phorizontal_darcy-00001.vtu
 
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes1pdarcy1phorizontal test_stokes1pdarcy1phorizontal.input")
+
+dune_add_test(NAME test_unstructured_stationary
+              SOURCES test_stokes1pdarcy1p_unstructured.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMPILE_DEFINITIONS STATIONARY=0
+              COMPILE_DEFINITIONS USESUBGRID=0
+              COMMAND ./test_unstructured_stationary
+              CMD_ARGS "params_low_re.input")
+
+dune_add_test(NAME test_unstructured_instationary
+              SOURCES test_stokes1pdarcy1p_unstructured.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMPILE_DEFINITIONS INSTATIONARY=1
+              COMPILE_DEFINITIONS USESUBGRID=0
+              COMMAND ./test_unstructured_instationary
+              CMD_ARGS "params_low_re.input")

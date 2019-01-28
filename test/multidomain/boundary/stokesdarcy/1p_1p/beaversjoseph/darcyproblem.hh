@@ -39,6 +39,10 @@
 
 #include <dumux/multidomain/boundary/stokesdarcy/mpfa/upwindscheme.hh>
 
+#ifndef USESUBGRID
+#define USESUBGRID 1
+#endif
+
 namespace Dumux
 {
 template <class TypeTag>
@@ -58,8 +62,7 @@ SET_PROP(DarcyOneP, FluidSystem)
     using type = FluidSystems::OnePGas<Scalar, Dumux::Components::Air<Scalar> > ;
 };
 
-// Set the grid type
-// SET_TYPE_PROP(DarcyOneP, Grid, Dune::YaspGrid<2>);
+#if USESUBGRID
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DarcyOneP>
@@ -70,7 +73,10 @@ struct Grid<TypeTag, TTag::DarcyOneP>
     using HostGrid = TensorGrid;
     using type = Dune::SubGrid<dim, HostGrid>;
 };
-
+#else
+// Set the grid type
+SET_TYPE_PROP(DarcyOneP, Grid, Dune::ALUGrid<2, 2, Dune::simplex, Dune::nonconforming>);
+#endif
 
 SET_PROP(DarcyOneP, SpatialParams)
 {

@@ -9,6 +9,7 @@ Cells0 = 210
 Cells1 = 50
 
 [Darcy.Grid]
+File = ./unstructured.msh # to be used for unstructured test case
 LowerLeftPM = 0.25 0
 UpperRightPM = 0.5 0.20
 
@@ -16,6 +17,11 @@ UpperRightPM = 0.5 0.20
 Name = stokes
 PressureDifference = 1.5e-3
 PressureGradientForBJOutput = 8.278e-10
+
+[Stokes.Grid]
+LowerLeft = -0.5 0
+UpperRight = 1.5 0.5
+Cells = 400 50
 
 [Darcy.Problem]
 Name = darcy
