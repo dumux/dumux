@@ -192,7 +192,7 @@ struct IOFields<TypeTag, TTag::OneEq> { using type = OneEqIOFields; };
 // Create new type tags
 namespace TTag {
 //! The type tag for the single-phase, non-isothermal Spalart-Allmaras model
-struct OneEqNI { using InheritsFrom = std::tuple<RANSNI>; };
+struct OneEqNI { using InheritsFrom = std::tuple<OneEq, RANSNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model

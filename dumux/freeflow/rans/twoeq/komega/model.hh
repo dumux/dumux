@@ -185,7 +185,7 @@ struct IOFields<TypeTag, TTag::KOmega> { using type = KOmegaIOFields; };
 // Create new type tags
 namespace TTag {
 //! The type tag for the single-phase, non-isothermal k-omega 2-Eq. model
-struct KOmegaNI { using InheritsFrom = std::tuple<RANSNI>; };
+struct KOmegaNI { using InheritsFrom = std::tuple<KOmega, RANSNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model

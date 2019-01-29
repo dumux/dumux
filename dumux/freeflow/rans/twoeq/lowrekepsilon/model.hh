@@ -192,7 +192,7 @@ struct IOFields<TypeTag, TTag::LowReKEpsilon> { using type = LowReKEpsilonIOFiel
 // Create new type tags
 namespace TTag {
 //! The type tag for the single-phase, non-isothermal low-Reynolds k-epsilon model
-struct LowReKEpsilonNI { using InheritsFrom = std::tuple<RANSNI>; };
+struct LowReKEpsilonNI { using InheritsFrom = std::tuple<LowReKEpsilon, RANSNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model

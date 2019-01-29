@@ -179,7 +179,7 @@ struct IOFields<TypeTag, TTag::KEpsilon> { using type = KEpsilonIOFields; };
 // Create new type tags
 namespace TTag {
 //! The type tag for the single-phase, non-isothermal k-epsilon model
-struct KEpsilonNI { using InheritsFrom = std::tuple<RANSNI>; };
+struct KEpsilonNI { using InheritsFrom = std::tuple<KEpsilon, RANSNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model
