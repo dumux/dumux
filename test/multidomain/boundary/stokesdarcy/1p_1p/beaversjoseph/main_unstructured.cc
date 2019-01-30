@@ -201,6 +201,39 @@ int main(int argc, char** argv) try
                                                  couplingManager);
 #endif
 
+    auto printAllFluxes = [&]()
+    {
+        using Indices = typename GetPropType<StokesTypeTag, Properties::ModelTraits>::Indices;
+
+        Scalar flux = 0.0;
+
+        auto fvGeometry = localView(*stokesFvGridGeometry);
+        auto elemVolVars = localView(stokesGridVariables->curGridVolVars());
+        auto elemFaceVars = localView(stokesGridVariables->curGridFaceVars());
+        for (auto&& element : elements(stokesFvGridGeometry->gridView()))
+        {
+            couplingManager->bindCouplingContext(stokesCellCenterIdx, element, *assembler);
+
+            fvGeometry.bind(element);
+            elemVolVars.bind(element, fvGeometry, stokesSol);
+            elemFaceVars.bind(element, fvGeometry, stokesSol);
+
+            for (const auto scvf : scvfs(fvGeometry))
+            {
+                if (!couplingManager->isCoupledEntity(CouplingManager::stokesIdx, scvf))
+                    continue;
+
+                Scalar faceFlux = stokesProblem->neumann(element, fvGeometry,
+                                                         elemVolVars, elemFaceVars,
+                                                         scvf)[Indices::conti0EqIdx] * scvf.area();
+                if (faceFlux < 0.0)
+                    flux += faceFlux;
+            }
+        }
+
+        std::cout << "Transfer flux = " << flux << std::endl;
+    };
+
     VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx], darcyName);
     using DarcyVelocityOutput = GetPropType<DarcyTypeTag, Properties::VelocityOutput>;
     darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
@@ -256,8 +289,10 @@ int main(int argc, char** argv) try
     // solve the non-linear system
     nonLinearSolver.solve(sol);
 
+    printAllFluxes();
+
     // write vtk output
-    stokesVtkWriter.write(1.0);
+    // stokesVtkWriter.write(1.0);
     darcyVtkWriter.write(1.0);
 #endif
 
