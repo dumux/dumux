@@ -188,10 +188,12 @@ int main(int argc, char** argv) try
     const auto stokesName = getParam<std::string>("Problem.Name") + "_" + stokesProblem->name();
     const auto darcyName = getParam<std::string>("Problem.Name") + "_" + darcyProblem->name();
 
-    StaggeredVtkOutputModule<StokesGridVariables, GetPropType<StokesTypeTag, Properties::SolutionVector>> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesName);
+    StaggeredVtkOutputModule<StokesGridVariables, std::decay_t<decltype(stokesSol)>> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesName);
     GetPropType<StokesTypeTag, Properties::VtkOutputFields>::initOutputModule(stokesVtkWriter);
 
     stokesVtkWriter.addField(stokesProblem->getAnalyticalVelocityX(), "analyticalV_x");
+    stokesVtkWriter.addVolumeVariable([](const auto& v){ return v.density() - 1.23012;}, "dRho");
+    stokesVtkWriter.addVolumeVariable([](const auto& v){ return v.pressure() - 1e5;}, "dP");
 
     stokesVtkWriter.write(0.0);
 
@@ -199,8 +201,9 @@ int main(int argc, char** argv) try
 
 #if INSTATIONARY
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
+    timeLoop->setPeriodicCheckPoint(10.0);
 
     // the assembler for a stationary problem
     auto assembler = std::make_shared<Assembler>(std::make_tuple(stokesProblem, stokesProblem, darcyProblem),
@@ -226,6 +229,8 @@ int main(int argc, char** argv) try
     using DarcyVelocityOutput = GetPropType<DarcyTypeTag, Properties::VelocityOutput>;
     darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
     GetPropType<DarcyTypeTag, Properties::VtkOutputFields>::initOutputModule(darcyVtkWriter);
+    darcyVtkWriter.addVolumeVariable([](const auto& v){ return v.density() - 1.23012;}, "dRho");
+    darcyVtkWriter.addVolumeVariable([](const auto& v){ return v.pressure() - 1e5;}, "dP");
     darcyVtkWriter.write(0.0);
 
     // the linear solver
@@ -333,6 +338,21 @@ int main(int argc, char** argv) try
 
         std::cout << "Re middle channel = " << flux.netFlux("middleChannel")[0] / (1.2 * 1.5e-5) << std::endl;
 
+        std::ofstream file;
+        std::string outname = getParam<std::string>("Problem.Outputname");
+        outname.append("_summary.out");
+        file.open(outname, std::ios::out | std::ios::app);
+        if (file.fail())
+            throw std::ios_base::failure(std::strerror(errno));
+
+        double theta = getParam<Scalar>("Darcy.SpatialParams.PermeabilityAngle");
+#if INSTATIONARY
+        file << timeLoop->time() << "\t";
+#endif
+        file << theta  << "\t " << fluxFront  << "\t " << fluxTop  << "\t " << fluxBack << "\t " << flux.netFlux("middleChannel")[0] << std::endl;;
+        file.close();
+
+
     };
 
 #if INSTATIONARY
@@ -355,8 +375,11 @@ int main(int argc, char** argv) try
             timeLoop->advanceTimeStep();
 
             // write vtk output
-            stokesVtkWriter.write(timeLoop->time());
-            darcyVtkWriter.write(timeLoop->time());
+            if (timeLoop->isCheckPoint() || timeLoop->finished())
+            {
+                stokesVtkWriter.write(timeLoop->time());
+                darcyVtkWriter.write(timeLoop->time());
+            }
 
             printAllFluxes();
 
