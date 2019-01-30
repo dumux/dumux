@@ -54,6 +54,36 @@ intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
 
 /*!
  * \ingroup Geometry
+ * \brief Compute all intersections between entities and a point
+ */
+template<class ctype, int dimworld>
+inline std::pair<bool, std::size_t>
+intersectingEntityCartesian(const Dune::FieldVector<ctype, dimworld>& point,
+                            const Dune::FieldVector<ctype, dimworld>& min,
+                            const Dune::FieldVector<ctype, dimworld>& max,
+                            const Dune::FieldVector<ctype, dimworld>& cells)
+{
+    static constexpr ctype eps_ = 1.0e-7;
+    const auto dist = max-min;
+    const ctype eps0 = eps_*dist[0];
+    const ctype eps1 = eps_*dist[1];
+    const ctype eps2 = eps_*dist[2];
+    if (min[0] - eps0 <= point[0] && point[0] <= max[0] + eps0 &&
+        min[1] - eps1 <= point[1] && point[1] <= max[1] + eps1 &&
+        min[2] - eps2 <= point[2] && point[2] <= max[2] + eps2)
+    {
+        auto ijk = point-min;
+        for (int i = 0; i < dimworld; ++i)
+            ijk[i] = std::floor(ijk[i]*cells[i]/dist[i]);
+
+        return std::make_pair(true, std::size_t(cells[1]*cells[0]*int(ijk[2]) + cells[0]*int(ijk[1]) + int(ijk[0])));
+    }
+    else
+        return std::make_pair(false, std::size_t(0));
+}
+
+/*!
+ * \ingroup Geometry
  * \brief Compute intersections with point for all nodes of the bounding box tree recursively
  */
 template<class EntitySet, class ctype, int dimworld>
