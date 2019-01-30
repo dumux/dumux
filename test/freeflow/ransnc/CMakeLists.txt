@@ -16,7 +16,7 @@ dune_add_test(NAME test_ff_rans2cni_kepsilon_twolayer
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_kepsilon_twolayer-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon_twolayer-00033.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon_twolayer-00031.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon params_nonisothermal.input
                              -Problem.Name test_ff_rans2cni_kepsilon_twolayer")
 
@@ -44,7 +44,7 @@ dune_add_test(NAME test_ff_rans2cni_komega
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_komega-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_komega-00032.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_komega-00031.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_komega params_nonisothermal.input
                                        -Problem.Name test_ff_rans2cni_komega
                                        -Newton.TargetSteps 12")
@@ -63,7 +63,7 @@ dune_add_test(NAME test_ff_rans2cni_lowrekepsilon
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_lowrekepsilon-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_lowrekepsilon-00032.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_lowrekepsilon-00030.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_lowrekepsilon params_nonisothermal.input
                              -Problem.Name test_ff_rans2cni_lowrekepsilon")
 target_compile_definitions(test_ff_rans2cni_lowrekepsilon PUBLIC "LOWREKEPSILON=1" "NONISOTHERMAL=1")
@@ -93,7 +93,7 @@ dune_add_test(NAME test_ff_rans2c_zeroeq
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_zeroeq.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq-00031.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq-00029.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq params.input
                              -Problem.Name test_ff_rans2c_zeroeq")
 
@@ -103,8 +103,8 @@ dune_add_test(NAME test_ff_rans2cni_zeroeq
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_zeroeq.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_zeroeq-00032.vtu
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_zeroeq-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_zeroeq-00030.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_zeroeq params_nonisothermal.input
                              -Problem.Name test_ff_rans2cni_zeroeq")
 target_compile_definitions(test_ff_rans2cni_zeroeq PUBLIC "NONISOTHERMAL=1")
