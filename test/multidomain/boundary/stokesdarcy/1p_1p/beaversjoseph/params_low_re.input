@@ -34,6 +34,7 @@ AlphaBeaversJoseph = 1.0
 
 [Problem]
 Name = test_stokes1pdarcy1phorizontal
+Outputname = mpfa_lowre
 EnableGravity = false
 EnableInertiaTerms = true
 
@@ -48,7 +49,7 @@ AddVelocity = 1
 Q = 0.5
 
 [Newton]
-MaxRelativeShift = 1e-8
+MaxRelativeShift = 1e-7
 
 [Assembly]
 NumericDifferenceMethod = 0

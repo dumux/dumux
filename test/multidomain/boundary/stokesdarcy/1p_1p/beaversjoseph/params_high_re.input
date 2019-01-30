@@ -1,39 +1,34 @@
 [TimeLoop]
-TEnd = 1e5
-DtInitial = 80
+TEnd = 1e6
+DtInitial = 0.1
 
 [Grid]
-Positions0 = 0 2.1
+Positions0 = 0 2.5
 Positions1 = 0 0.25
-Cells0 = 210
+Cells0 = 500
 Cells1 = 50
 
 [Darcy.Grid]
-File = ./unstructured.msh # to be used for unstructured test case
-LowerLeftPM = 0.25 0
-UpperRightPM = 0.5 0.20
+LowerLeftPM = 0.4 0
+UpperRightPM = 0.6 0.20
 
 [Stokes.Problem]
 Name = stokes
-PressureDifference = 1.5e-3
+PressureDifference = 2e-3
 PressureGradientForBJOutput = 8.278e-10
-
-[Stokes.Grid]
-LowerLeft = -0.5 0
-UpperRight = 1.5 0.5
-Cells = 400 50
 
 [Darcy.Problem]
 Name = darcy
 
 [Darcy.SpatialParams]
-K1 = 1e-6
+K1 = 1e-8
 K2 = 1e-6
-PermeabilityAngle = 45
+PermeabilityAngle = 0
 AlphaBeaversJoseph = 1.0
 
 [Problem]
-Name = test_stokes1pdarcy1phorizontal
+Name = mpfa_highre_1-100_0
+Outputname = mpfa_highre_1-100_0
 EnableGravity = false
 EnableInertiaTerms = true
 
@@ -48,7 +43,8 @@ AddVelocity = 1
 Q = 0.5
 
 [Newton]
-MaxRelativeShift = 1e-8
+MaxRelativeShift = 1e-6
+MaxSteps = 40
 
 [Assembly]
 NumericDifferenceMethod = 0
