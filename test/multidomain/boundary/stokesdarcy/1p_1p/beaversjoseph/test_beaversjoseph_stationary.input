@@ -9,8 +9,14 @@ Cells0 = 160
 Cells1 = 50
 
 [Darcy.Grid]
+File = ./unstructured.msh # to be used for unstructured test case
 LowerLeftPM = 0.25 0
 UpperRightPM = 0.5 0.20
+
+[Stokes.Grid]
+LowerLeft = -0.5 0
+UpperRight = 1.5 0.25
+Cells = 200 50
 
 [Stokes.Problem]
 Name = stokes

@@ -34,6 +34,11 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
 
+
+#ifndef USESUBGRID
+#define USESUBGRID 1
+#endif
+
 namespace Dumux
 {
 template <class TypeTag>
@@ -54,6 +59,7 @@ struct FluidSystem<TypeTag, TTag::StokesOneP>
     using type = FluidSystems::OnePGas<Scalar, Dumux::Components::Air<Scalar> > ;
 };
 
+#if USESUBGRID
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::StokesOneP>
@@ -64,7 +70,10 @@ struct Grid<TypeTag, TTag::StokesOneP>
     using HostGrid = TensorGrid;
     using type = Dune::SubGrid<dim, HostGrid>;
 };
-
+#else
+// Set the grid type
+SET_TYPE_PROP(StokesOneP, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+#endif
 
 // Set the problem property
 template<class TypeTag>

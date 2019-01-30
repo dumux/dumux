@@ -37,6 +37,10 @@
 #include <dumux/material/components/air.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>
 
+#ifndef USESUBGRID
+#define USESUBGRID 1
+#endif
+
 namespace Dumux
 {
 template <class TypeTag>
@@ -61,6 +65,7 @@ struct FluidSystem<TypeTag, TTag::DarcyOneP>
     using type = FluidSystems::OnePGas<Scalar, Dumux::Components::Air<Scalar> > ;
 };
 
+#if USESUBGRID
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DarcyOneP>
@@ -71,6 +76,10 @@ struct Grid<TypeTag, TTag::DarcyOneP>
     using HostGrid = TensorGrid;
     using type = Dune::SubGrid<dim, HostGrid>;
 };
+#else
+// Set the grid type
+SET_TYPE_PROP(DarcyOneP, Grid, Dune::ALUGrid<2, 2, Dune::simplex, Dune::nonconforming>);
+#endif
 
 
 template<class TypeTag>
