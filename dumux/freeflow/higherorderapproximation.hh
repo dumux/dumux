@@ -35,23 +35,13 @@ namespace Dumux {
 //! \brief Available Tvd approaches
 enum class TvdApproach
 {
-    none    = 0,
-    uniform = 1,
-    li      = 2,
-    hou     = 3
+    none, uniform, li, hou
 };
 
 //! \biraf Available differencing schemes
 enum class DifferencingScheme
 {
-    none      = 0,
-    vanleer   = 1,
-    vanalbada = 2,
-    minmod    = 3,
-    superbee  = 4,
-    umist     = 5,
-    mclimiter = 6,
-    wahyd     = 7
+    none, vanleer, vanalbada, minmod, superbee, umist, mclimiter, wahyd
 };
 
 /**
@@ -66,15 +56,8 @@ public:
         if (hasParamInGroup(paramGroup, "Discretization.TvdApproach"))
         {
             // Read the runtime parameters
-            tvdApproach_ = static_cast<TvdApproach>(getParamFromGroup<int>(paramGroup, "Discretization.TvdApproach"));
-            if(tvdApproach_ == TvdApproach::none)
-            {
-                DUNE_THROW(ParameterException, "\nTvd approach 0 is not implemented.\n" <<
-                        static_cast<int>(TvdApproach::uniform) << ": Uniform Tvd\n" <<
-                        static_cast<int>(TvdApproach::li) << ": Li's approach\n" <<
-                        static_cast<int>(TvdApproach::hou) << ": Hou's approach");
-            }
-            differencingScheme_ = static_cast<DifferencingScheme>(getParamFromGroup<int>(paramGroup, "Discretization.DifferencingScheme"));
+            tvdApproach_ = tvdApproachFromString(getParamFromGroup<std::string>(paramGroup, "Discretization.TvdApproach"));
+            differencingScheme_ = differencingSchemeFromString(getParamFromGroup<std::string>(paramGroup, "Discretization.DifferencingScheme"));
 
             // Assign the limiter_ depending on the differencing scheme
             switch (differencingScheme_)
@@ -87,8 +70,7 @@ public:
                 case DifferencingScheme::vanalbada :
                 {
                     if (tvdApproach_ == TvdApproach::hou)
-                        DUNE_THROW(ParameterException, "\nDifferencing scheme " << static_cast<int>(DifferencingScheme::vanalbada) <<
-                            " (Van Albada) is not implemented for the Tvd approach " << static_cast<int>(TvdApproach::hou) <<" (Hou).");
+                        DUNE_THROW(ParameterException, "\nDifferencing scheme (Van Albada) is not implemented for the Tvd approach (Hou).");
                     else
                         limiter_ = this->vanalbada;
                     break;
@@ -120,8 +102,8 @@ public:
                 }
                 default:
                 {
-                    DUNE_THROW(ParameterException, "\nDifferencing scheme " << static_cast<int>(differencingScheme_) <<
-                        " is not implemented.\n");
+                    DUNE_THROW(ParameterException, "\nDifferencing scheme " << static_cast<std::string>(differencingSchemeToString(differencingScheme_)) <<
+                        " is not implemented.\n");  // should never be reached
                     break;
                 }
             }
@@ -131,6 +113,78 @@ public:
             // If the runtime parameters are not specified we will use upwind
             tvdApproach_ = TvdApproach::none;
             differencingScheme_ = DifferencingScheme::none;
+        }
+    }
+
+    /**
+     * \brief Convenience function to convert user input given as std::string
+     *        to the corresponding enum class used for choosing the TVD Approach
+     */
+    TvdApproach tvdApproachFromString(const std::string& tvd)
+    {
+        if (tvd == "Uniform") return TvdApproach::uniform;
+        if (tvd == "Li") return TvdApproach::li;
+        if (tvd == "Hou") return TvdApproach::hou;
+        DUNE_THROW(ParameterException, "\nThis tvd approach : \"" << tvd << "\" is not implemented.\n"
+                                       << "The available TVD approaches for uniform (and nonuniform) grids are as follows: \n"
+                                       << tvdApproachToString(TvdApproach::uniform) << ": Assumes a uniform cell size distribution\n"
+                                       << tvdApproachToString(TvdApproach::li) << ": Li's approach for nonuniform cell sizes\n"
+                                       << tvdApproachToString(TvdApproach::hou) << ": Hou's approach for nonuniform cell sizes");
+    }
+
+    /**
+     * \brief return the name of the TVD approach
+     */
+    std::string tvdApproachToString(TvdApproach tvd)
+    {
+        switch (tvd)
+        {
+            case TvdApproach::uniform: return "Uniform";
+            case TvdApproach::li: return "Li";
+            case TvdApproach::hou: return "Hou";
+            default: return "Invalid"; // should never be reached
+        }
+    }
+
+    /**
+     * \brief Convenience function to convert user input given as std::string
+     *        to the corresponding enum class used for choosing the Discretization Method
+     */
+    DifferencingScheme differencingSchemeFromString(const std::string& differencingScheme)
+    {
+        if (differencingScheme == "vanleer") return DifferencingScheme::vanleer;
+        if (differencingScheme == "vanalbada") return DifferencingScheme::vanalbada;
+        if (differencingScheme == "minmod") return DifferencingScheme::minmod;
+        if (differencingScheme == "superbee") return DifferencingScheme::superbee;
+        if (differencingScheme == "umist") return DifferencingScheme::umist;
+        if (differencingScheme == "mclimiter") return DifferencingScheme::mclimiter;
+        if (differencingScheme == "wahyd") return DifferencingScheme::wahyd;
+        DUNE_THROW(ParameterException, "\nThis differencing scheme: \"" << differencingScheme << "\" is not implemented.\n"
+                                       << "The available differencing schemes are as follows: \n"
+                                       << differencingSchemeToString(DifferencingScheme::vanleer) << ": The Vanleer flux limiter\n"
+                                       << differencingSchemeToString(DifferencingScheme::vanalbada) << ": The VanAlbada flux limiter\n"
+                                       << differencingSchemeToString(DifferencingScheme::minmod) << ": The Min-Mod flux limiter\n"
+                                       << differencingSchemeToString(DifferencingScheme::superbee) << ": The SuperBEE flux limiter\n"
+                                       << differencingSchemeToString(DifferencingScheme::umist) << ": The UMist flux limiter\n"
+                                       << differencingSchemeToString(DifferencingScheme::mclimiter) << ": The McLimiter flux limiter\n"
+                                       << differencingSchemeToString(DifferencingScheme::wahyd) << ": The Wahyd flux limiter");
+    }
+
+    /**
+     * \brief return the name of the Discretization Method
+     */
+    std::string differencingSchemeToString(DifferencingScheme differencingScheme)
+    {
+        switch (differencingScheme)
+        {
+            case DifferencingScheme::vanleer: return "vanleer";
+            case DifferencingScheme::vanalbada: return "vanalbada";
+            case DifferencingScheme::minmod: return "minmod";
+            case DifferencingScheme::superbee: return "superbee";
+            case DifferencingScheme::umist: return "umist";
+            case DifferencingScheme::mclimiter: return "mclimiter";
+            case DifferencingScheme::wahyd: return "wahyd";
+            default: return "Invalid"; // should never be reached
         }
     }
 
@@ -195,10 +249,11 @@ public:
                const Scalar upUpstreamVelocity,
                const Scalar density) const
     {
+        using std::isfinite;
         const Scalar ratio = (upstreamVelocity - upUpstreamVelocity) / (downstreamVelocity - upstreamVelocity);
 
         // If the velocity field is uniform (like at the first newton step) we get a NaN
-        if(ratio > 0.0 && std::isfinite(ratio))
+        if(ratio > 0.0 && isfinite(ratio))
         {
             const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (downstreamVelocity - upstreamVelocity);
             return density * (upstreamVelocity + secondOrderTerm);
@@ -208,7 +263,7 @@ public:
     }
 
     /**
-      * \brief Tvd Scheme: Total Variation Diminuishing
+      * \brief Tvd Scheme: Total Variation Diminishing
       *
       * This functions manages the non uniformities of the grid according to [Li, Liao 2007].
       * It tries to reconstruct the value for the velocity at the upstream-upstream point
@@ -222,6 +277,7 @@ public:
                const bool selfIsUpstream,
                const Scalar density) const
     {
+        using std::isfinite;
         // I need the information of selfIsUpstream to get the correct sign because upUpstreamToUpstreamDistance is always positive
         const Scalar upUpstreamGradient = (upstreamVelocity - upUpstreamVelocity) / upUpstreamToUpstreamDistance * selfIsUpstream;
 
@@ -231,7 +287,7 @@ public:
         const Scalar ratio = (upstreamVelocity - reconstrutedUpUpstreamVelocity) / (downstreamVelocity - upstreamVelocity);
 
         // If the velocity field is uniform (like at the first newton step) we get a NaN
-        if(ratio > 0.0 && std::isfinite(ratio))
+        if(ratio > 0.0 && isfinite(ratio))
         {
             const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (downstreamVelocity - upstreamVelocity);
             return density * (upstreamVelocity + secondOrderTerm);
@@ -241,7 +297,7 @@ public:
     }
 
     /**
-     * \brief Tvd Scheme: Total Variation Diminuishing
+     * \brief Tvd Scheme: Total Variation Diminishing
      *
      * This functions manages the non uniformities of the grid according to [Hou, Simons, Hinkelmann 2007].
      * It should behave better then the Li's version in very stretched grids.
@@ -254,11 +310,12 @@ public:
                const Scalar downstreamStaggeredCellSize,
                const Scalar density) const
     {
+        using std::isfinite;
         const Scalar ratio = (upstreamVelocity - upUpstreamVelocity) / (downstreamVelocity - upstreamVelocity)
                            * upstreamToDownstreamDistance / upUpstreamToUpstreamDistance;
 
         // If the velocity field is uniform (like at the first newton step) we get a NaN
-        if(ratio > 0.0 && std::isfinite(ratio))
+        if(ratio > 0.0 && isfinite(ratio))
         {
             const Scalar upstreamStaggeredCellSize = 0.5 * (upstreamToDownstreamDistance + upUpstreamToUpstreamDistance);
             const Scalar R = (upstreamStaggeredCellSize + downstreamStaggeredCellSize) / upstreamStaggeredCellSize;
@@ -292,7 +349,8 @@ public:
       */
     static Scalar minmod(const Scalar r, const Scalar R)
     {
-        return std::min(r, 1.0);
+        using std::min;
+        return min(r, 1.0);
     }
 
     /**
@@ -302,7 +360,9 @@ public:
       */
     static Scalar superbee(const Scalar r, const Scalar R)
     {
-        return std::max(std::min(R * r, 1.0), std::min(r, R));
+        using std::min;
+        using std::max;
+        return max(min(R * r, 1.0), min(r, R));
     }
 
     /**
@@ -310,7 +370,8 @@ public:
       */
     static Scalar umist(const Scalar r, const Scalar R)
     {
-        return std::min({R * r, (r * (5.0 - R) + R - 1.0) / 4.0, (r * (R - 1.0) + 5.0 - R) / 4.0, R});
+        using std::min;
+        return min({R * r, (r * (5.0 - R) + R - 1.0) / 4.0, (r * (R - 1.0) + 5.0 - R) / 4.0, R});
     }
 
     /*
@@ -318,7 +379,8 @@ public:
      */
     static Scalar mclimiter(const Scalar r, const Scalar R)
     {
-        return std::min({R * r, (r + 1.0) / 2.0, R});
+        using std::min;
+        return min({R * r, (r + 1.0) / 2.0, R});
     }
 
     /**
@@ -326,7 +388,8 @@ public:
       */
     static Scalar wahyd(const Scalar r, const Scalar R)
     {
-        return r > 1 ? std::min((r + R * r * r) / (R + r * r), R)
+        using std::min;
+        return r > 1 ? min((r + R * r * r) / (R + r * r), R)
                      : vanleer(r, R);
     }
 
