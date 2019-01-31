@@ -38,6 +38,11 @@
 namespace Dumux
 {
 
+/*!
+ * \file
+ * \ingroup SweModel
+ * \brief Advective flux for the shallow water Model.
+ */
 template<class TypeTag>
 class SweAdvectiveFlux
 {

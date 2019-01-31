@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SweModel
+ * \brief Defines the diffusive flux for the shallow water Model.
+ */
 #ifndef DUMUX_SHALLOW_WATER_DIFFUSIVE_FLUX_HH
 #define DUMUX_SHALLOW_WATER_DIFFUSIVE_FLUX_HH
 
@@ -31,6 +36,11 @@
 namespace Dumux
 {
 
+/*!
+ * \file
+ * \ingroup SweModel
+ * \brief Diffusive flux for the shallow water Model.
+ */
 template<class TypeTag>
 class SweDiffusiveFlux
 {
