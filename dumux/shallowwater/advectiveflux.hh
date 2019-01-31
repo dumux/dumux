@@ -16,6 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
+/*!
+ * \file
+ * \ingroup SweModel
+ * \brief Defines the advective flux for the shallow water Model.
+ */
+
 #ifndef DUMUX_SHALLOW_WATER_ADVECTIVE_FLUX_HH
 #define DUMUX_SHALLOW_WATER_ADVECTIVE_FLUX_HH
 

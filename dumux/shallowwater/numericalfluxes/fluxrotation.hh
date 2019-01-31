@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CCTpfaDiscretization
+ * \ingroup SweModel
  * \brief Rotate the flux using the rotation invarianz of the SWEs
  *        two-point flux approximation.
  */

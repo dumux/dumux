@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
+ * \ingroup SweModel
  * \brief Simple model to compute a mobility of water
  *        for small water depths the mobility gets zero.
  *        No limitation for the momentum terms!
