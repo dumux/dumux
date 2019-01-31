@@ -47,7 +47,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup SweModel
+ *
+ */
 template <class TypeTag>
 struct SweModelTraits
 {
