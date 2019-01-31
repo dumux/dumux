@@ -9,7 +9,7 @@ pvpython $SCRIPT -f $input -o $DATA -of $2 -p1 $P1 -p2 $P2 -v 2 -r 10000 | tee -
 }
 
 ### lauferpipe
-INPUT=params_verbose.input
+INPUT=scripts/params_verbose.input
 P1="8.0 0.0 0.0"
 P2="8.0 0.12345 0.0"
 
