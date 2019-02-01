@@ -235,32 +235,7 @@ public:
             {
                 if (canFrontalSecondOrder_(scvf, selfIsUpstream, velocities, distances, elemFaceVars[scvf]))
                 {
-                    switch (highOrder.tvdApproach())
-                    {
-                        case TvdApproach::uniform :
-                        {
-                            momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], insideVolVars.density());
-                            break;
-                        }
-                        case TvdApproach::li :
-                        {
-                            momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream, insideVolVars.density());
-                            break;
-                        }
-                        case TvdApproach::hou :
-                        {
-                            momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], insideVolVars.density());
-                            break;
-                        }
-                        default:
-                        {
-                            DUNE_THROW(ParameterException, "\nTvd approach " << static_cast<int>(highOrder.tvdApproach()) << " is not implemented.\n" <<
-                                        static_cast<int>(TvdApproach::uniform) << ": Uniform Tvd\n" <<
-                                        static_cast<int>(TvdApproach::li) << ": Li's approach\n" <<
-                                        static_cast<int>(TvdApproach::hou) << ": Hou's approach");
-                            break;
-                        }
-                    }
+                    momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], selfIsUpstream, insideVolVars.density(), highOrder.tvdApproach());
                 }
                 else
                     momentum = highOrder.upwind(velocities[0], velocities[1], insideVolVars.density(), upwindWeight);
@@ -464,32 +439,7 @@ private:
         {
             if (canLateralSecondOrder_(scvf, fvGeometry, selfIsUpstream, localSubFaceIdx, velocities, distances, problem, element, faceVars, lateralFaceHasDirichletPressure, lateralFaceHasBJS))
             {
-                switch (highOrder.tvdApproach())
-                {
-                    case TvdApproach::uniform :
-                    {
-                        momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
-                        break;
-                    }
-                    case TvdApproach::li :
-                    {
-                        momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], selfIsUpstream, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
-                        break;
-                    }
-                    case TvdApproach::hou :
-                    {
-                        momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
-                        break;
-                    }
-                    default:
-                    {
-                        DUNE_THROW(ParameterException, "\nTvd approach " << static_cast<int>(highOrder.tvdApproach()) << " is not implemented.\n" <<
-                                    static_cast<int>(TvdApproach::uniform) << ": Uniform Tvd\n" <<
-                                    static_cast<int>(TvdApproach::li) << ": Li's approach\n" <<
-                                    static_cast<int>(TvdApproach::hou) << ": Hou's approach");
-                        break;
-                    }
-                }
+                momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], selfIsUpstream, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), highOrder.tvdApproach());
             }
             else
                 momentum = highOrder.upwind(velocities[0], velocities[1], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), upwindWeight);

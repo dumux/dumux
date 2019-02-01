@@ -242,12 +242,55 @@ public:
     }
 
     /**
-      * \brief Tvd Scheme: Total Variation Diminuishing
-      */
+     * \brief Tvd Scheme: Total Variation Diminishing
+     *
+     */
     Scalar tvd(const Scalar downstreamVelocity,
                const Scalar upstreamVelocity,
                const Scalar upUpstreamVelocity,
-               const Scalar density) const
+               const Scalar upstreamToDownstreamDistance,
+               const Scalar upUpstreamToUpstreamDistance,
+               const Scalar downstreamStaggeredCellSize,
+               const bool selfIsUpstream,
+               const Scalar density,
+               const TvdApproach tvdApproach) const
+    {
+        Scalar momentum = 0.0;
+        switch(tvdApproach)
+        {
+            case TvdApproach::uniform :
+            {
+                momentum += tvdUniform(downstreamVelocity, upstreamVelocity, upUpstreamVelocity, density);
+                break;
+            }
+            case TvdApproach::li :
+            {
+                momentum += tvdLi(downstreamVelocity, upstreamVelocity, upUpstreamVelocity, upstreamToDownstreamDistance, upUpstreamToUpstreamDistance, selfIsUpstream, density);
+                break;
+            }
+            case TvdApproach::hou :
+            {
+                momentum += tvdHou(downstreamVelocity, upstreamVelocity, upUpstreamVelocity, upstreamToDownstreamDistance, upUpstreamToUpstreamDistance, downstreamStaggeredCellSize, density);
+                break;
+            }
+            default:
+            {
+                DUNE_THROW(ParameterException, "\nThis Tvd Approach is not implemented.\n");
+                break;
+            }
+        }
+        return momentum;
+    }
+
+    /**
+     * \brief Tvd Scheme: Total Variation Diminishing
+     *
+     * This function assumes the cell size distribution to be uniform.
+     */
+    Scalar tvdUniform(const Scalar downstreamVelocity,
+                      const Scalar upstreamVelocity,
+                      const Scalar upUpstreamVelocity,
+                      const Scalar density) const
     {
         using std::isfinite;
         const Scalar ratio = (upstreamVelocity - upUpstreamVelocity) / (downstreamVelocity - upstreamVelocity);
@@ -265,17 +308,17 @@ public:
     /**
       * \brief Tvd Scheme: Total Variation Diminishing
       *
-      * This functions manages the non uniformities of the grid according to [Li, Liao 2007].
+      * This function manages the non uniformities of the grid according to [Li, Liao 2007].
       * It tries to reconstruct the value for the velocity at the upstream-upstream point
       * if the grid was uniform.
       */
-    Scalar tvd(const Scalar downstreamVelocity,
-               const Scalar upstreamVelocity,
-               const Scalar upUpstreamVelocity,
-               const Scalar upstreamToDownstreamDistance,
-               const Scalar upUpstreamToUpstreamDistance,
-               const bool selfIsUpstream,
-               const Scalar density) const
+    Scalar tvdLi(const Scalar downstreamVelocity,
+                 const Scalar upstreamVelocity,
+                 const Scalar upUpstreamVelocity,
+                 const Scalar upstreamToDownstreamDistance,
+                 const Scalar upUpstreamToUpstreamDistance,
+                 const bool selfIsUpstream,
+                 const Scalar density) const
     {
         using std::isfinite;
         // I need the information of selfIsUpstream to get the correct sign because upUpstreamToUpstreamDistance is always positive
@@ -299,16 +342,16 @@ public:
     /**
      * \brief Tvd Scheme: Total Variation Diminishing
      *
-     * This functions manages the non uniformities of the grid according to [Hou, Simons, Hinkelmann 2007].
+     * This function manages the non uniformities of the grid according to [Hou, Simons, Hinkelmann 2007].
      * It should behave better then the Li's version in very stretched grids.
      */
-    Scalar tvd(const Scalar downstreamVelocity,
-               const Scalar upstreamVelocity,
-               const Scalar upUpstreamVelocity,
-               const Scalar upstreamToDownstreamDistance,
-               const Scalar upUpstreamToUpstreamDistance,
-               const Scalar downstreamStaggeredCellSize,
-               const Scalar density) const
+    Scalar tvdHou(const Scalar downstreamVelocity,
+                  const Scalar upstreamVelocity,
+                  const Scalar upUpstreamVelocity,
+                  const Scalar upstreamToDownstreamDistance,
+                  const Scalar upUpstreamToUpstreamDistance,
+                  const Scalar downstreamStaggeredCellSize,
+                  const Scalar density) const
     {
         using std::isfinite;
         const Scalar ratio = (upstreamVelocity - upUpstreamVelocity) / (downstreamVelocity - upstreamVelocity)
