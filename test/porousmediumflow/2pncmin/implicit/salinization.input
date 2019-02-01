@@ -49,9 +49,8 @@ RefTemperature          = 299
 
 [SpatialParams]
 SolubilityLimit         = 0.26 	                # [-]  solubility limit of salt in brine
-referencePorosity                = 0.41656               # [-]  initial porosity
-#Permeability            = 3e-11
-referencePermeability            = 3e-11
+referencePorosity       = 0.41656               # [-]  initial porosity
+referencePermeability   = 3e-11
 VGAlpha                 = 0.000152568361302
 VGn                     = 13.79180
 IrreducibleLiqSat       = 0.259009615906936
