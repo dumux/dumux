@@ -70,7 +70,7 @@ public:
     {
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);
-        referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
+
         irreducibleLiqSat_     = getParam<Scalar>("SpatialParams.IrreducibleLiqSat", 0.2);
         irreducibleGasSat_     = getParam<Scalar>("SpatialParams.IrreducibleGasSat", 1e-3);
         vgAlpha_               = getParam<Scalar>("SpatialParams.VGAlpha", 1.5);
@@ -86,6 +86,19 @@ public:
         //Van Genuchen parameters
         materialParams_.setVgAlpha(vgAlpha_ );
         materialParams_.setVgn(vgn_);
+
+        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        std::default_random_engine generator (seed);
+//         referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
+        std::normal_distribution<double> distribution (1e-11,0.5e-11);
+
+        referencePermeability_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        for (const auto& element : elements(fvGridGeometry->gridView()))
+        {
+        unsigned int elementIdx = fvGridGeometry->elementMapper().index(element);
+        referencePermeability_[elementIdx] = distribution(generator);
+        std::cout << referencePermeability_[elementIdx] << std::endl;
+        }
     }
 
     /*!
@@ -160,7 +173,9 @@ public:
 
          using std::max;
          const auto poro =  max(/*minPoro*/1e-5, referencePorosity_ - sumPrecipitates);
-         return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
+
+         unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+         return permLaw_.evaluatePermeability(referencePermeability_[elementIdx], referencePorosity_, poro);
     }
 
 //     Scalar solidity(const SubControlVolume &scv) const
@@ -189,7 +204,7 @@ private:
 
     Scalar solubilityLimit_;
     Scalar referencePorosity_;
-    PermeabilityType referencePermeability_ = 0.0;
+    std::vector<PermeabilityType> referencePermeability_;
     Scalar irreducibleLiqSat_;
     Scalar irreducibleGasSat_;
     Scalar vgAlpha_;
