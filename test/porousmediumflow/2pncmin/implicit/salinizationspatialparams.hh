@@ -86,6 +86,17 @@ public:
         //Van Genuchen parameters
         materialParams_.setVgAlpha(vgAlpha_ );
         materialParams_.setVgn(vgn_);
+
+        // residual saturations
+        materialParamsCoarse_.setSwr(irreducibleLiqSat_);
+        materialParamsCoarse_.setSnr(irreducibleGasSat_);
+
+        //Van Genuchen parameters
+        materialParamsCoarse_.setVgAlpha(0.0005);
+        materialParamsCoarse_.setVgn(15.0);
+                //Van Genuchen parameters
+//         materialParamsCoarse_.setVgAlpha(vgAlpha_ );
+//         materialParamsCoarse_.setVgn(vgn_);
     }
 
     /*!
@@ -138,7 +149,14 @@ public:
      *  \param scv The sub-control volume
      */
     Scalar referencePorosity(const Element& element, const SubControlVolume &scv) const
-    { return referencePorosity_; }
+    {
+         Scalar pos0 = scv.center()[0];
+         if (pos0<0.035+eps_){
+            return referencePorosity_;
+         }
+         else
+             return referencePorosity_;
+        }
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
      *  on the position in the domain
@@ -160,7 +178,15 @@ public:
 
          using std::max;
          const auto poro =  max(/*minPoro*/1e-5, referencePorosity_ - sumPrecipitates);
+
+         Scalar pos0 = scv.center()[0];
+         if (pos0<0.035+eps_){
          return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
+         }
+         else
+         {
+             return permLaw_.evaluatePermeability(2e-13, referencePorosity_, poro);
+         }
     }
 
 //     Scalar solidity(const SubControlVolume &scv) const
@@ -174,7 +200,16 @@ public:
 
     // return the brooks-corey context depending on the position
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    { return materialParams_; }
+    {
+        if (globalPos[0]<0.035+eps_){
+            return materialParams_;
+        }
+        else
+        {
+            return materialParamsCoarse_;
+        }
+
+    }
 
     // define which phase is to be considered as the wetting phase
     template<class FluidSystem>
@@ -184,6 +219,7 @@ public:
 private:
 
     MaterialLawParams materialParams_;
+    MaterialLawParams materialParamsCoarse_;
 
     PermeabilityKozenyCarman<PermeabilityType> permLaw_;
 
@@ -194,6 +230,7 @@ private:
     Scalar irreducibleGasSat_;
     Scalar vgAlpha_;
     Scalar vgn_ ;
+    static constexpr Scalar eps_ = 1e-6;
 
     bool plotFluidMatrixInteractions_;
 };
