@@ -62,3 +62,6 @@ AddVelocity             = 1                     # Add extra information
 
 [Output]
 PlotFluidMatrixInteractions = true
+PlotPcS = false
+PlotMass = false
+PlotEvaporation = true

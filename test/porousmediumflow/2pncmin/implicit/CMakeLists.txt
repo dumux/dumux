@@ -1,4 +1,4 @@
-dune_symlink_to_source_files(FILES test_2pncmin.input salinization.input)
+dune_symlink_to_source_files(FILES salinization.input salinization_4cm.input salinization_16cm.input)
 
 add_executable(salinization salinization.cc)
 

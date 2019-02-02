@@ -205,6 +205,9 @@ public:
         bottomSalinity_          = getParam<Scalar>("Problem.BottomSalinity");
         bottomTemperature_       = getParam<Scalar>("Problem.BottomTemperature");
 
+        plotPcS_ = getParam<bool>("Output.PlotPcS", false);
+        plotEvaporation_ = getParam<bool>("Output.PlotEvaporation", false);
+        plotMass_ = getParam<bool>("Output.PlotMass", false);
 
         unsigned int codim = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box ? dim : 0;
         permeability_.resize(fvGridGeometry->gridView().size(codim));
@@ -216,7 +219,8 @@ public:
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
 
-        this->spatialParams().plotMaterialLaw();
+        if(plotPcS_)
+        { this->spatialParams().plotMaterialLaw(); }
 
     }
 
@@ -257,6 +261,7 @@ public:
     void postTimeStep(const SolutionVector& curSol,
                       const GridVolumeVariables &curGridVolVars)
     {
+
         PrimaryVariables source(0.0);
         Scalar evaporation = 0.0;
         Scalar saturation = 0.0;
@@ -289,20 +294,21 @@ public:
         saturation /= i;
         std::cout << "Soil evaporation rate: " << evaporation << " kg/s." << '\n';
 
-        //do a gnuplot
-        x_.push_back(time_); // in seconds
-        y_.push_back(evaporation);
+        if(plotEvaporation_){
+            //do a gnuplot
+            x_.push_back(time_); // in seconds
+            y_.push_back(evaporation);
 
-        gnuplot_.resetPlot();
-        gnuplot_.setXRange(0, time_);
-        gnuplot_.setYRange(0, 2e-7);
-        gnuplot_.setXlabel("time [s]");
-        gnuplot_.setYlabel("kg/s");
-        gnuplot_.addDataSetToPlot(x_, y_, "evaporation");
+            gnuplot_.resetPlot();
+            gnuplot_.setXRange(0, time_);
+            gnuplot_.setYRange(0, 2e-7);
+            gnuplot_.setXlabel("time [s]");
+            gnuplot_.setYlabel("kg/s");
+            gnuplot_.addDataSetToPlot(x_, y_, name_);
 
 
-        gnuplot_.plot("");
-
+            gnuplot_.plot(name_);
+        }
 
         // compute the mass in the entire domain
         Scalar massNaCl = 0.0;
@@ -327,18 +333,21 @@ public:
             }
         }
 
-        //do a gnuplot
-        y2_.push_back(massNaCl);
+        if(plotMass_){
+            //do a gnuplot
+            y2_.push_back(massNaCl);
 
-        gnuplot2_.resetPlot();
-        gnuplot2_.setXRange(0, time_);
-        gnuplot2_.setYRange(0, 0.0001);
-        gnuplot2_.setXlabel("time [s]");
-        gnuplot2_.setYlabel("mass NaCl[kg]");
+            gnuplot2_.resetPlot();
+            gnuplot2_.setXRange(0, time_);
+            gnuplot2_.setYRange(0, 0.0001);
+            gnuplot2_.setXlabel("time [s]");
+            gnuplot2_.setYlabel("mass NaCl[kg]");
 
-        gnuplot2_.addDataSetToPlot(x_, y2_, "mass NaCl");
+            gnuplot2_.addDataSetToPlot(x_, y2_, "mass NaCl");
 
-        gnuplot2_.plot("");
+            gnuplot2_.plot("");
+        }
+
 
         std::cout << std::setprecision(15) << "mass of NaCl is: " << massNaCl << std::endl;
 
@@ -357,8 +366,6 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
-
-        const Scalar hmin = this->fvGridGeometry().bBoxMin()[1];
 
         // default to Neumann
         bcTypes.setAllNeumann();
@@ -380,13 +387,10 @@ public:
         PrimaryVariables priVars(0.0);
         priVars.setState(bothPhases);
 
-        const Scalar hmin = this->fvGridGeometry().bBoxMin()[1];
-        const Scalar xmin = this->fvGridGeometry().bBoxMin()[0];
-        const Scalar xmax = this->fvGridGeometry().bBoxMax()[0];
         Scalar density = 1000.00;
         const auto g = this->gravityAtPos(globalPos)[dimWorld-1];
 
-        priVars[pressureIdx]   = bottomPressure_ - density*9.81*globalPos[dimWorld-1]; // Bottom boundary pressure bar
+        priVars[pressureIdx]   = bottomPressure_ - density*g*globalPos[dimWorld-1]; // Bottom boundary pressure bar
         priVars[switchIdx]     = bottomGasSaturation_; // Saturation bottom boundary
         priVars[xwNaClIdx]     = massToMoleFrac_(bottomSalinity_);// mole fraction salt
         priVars[precipNaClIdx] = 0.0;// precipitated salt
@@ -547,10 +551,8 @@ public:
         const auto& volVars = elemVolVars[scv];
 
         Scalar moleFracNaCl_wPhase = volVars.moleFraction(liquidPhaseIdx, NaClIdx);
-        Scalar moleFracNaCl_nPhase = volVars.moleFraction(gasPhaseIdx, NaClIdx);
         Scalar massFracNaCl_Max_wPhase = this->spatialParams().solubilityLimit();
         Scalar moleFracNaCl_Max_wPhase = massToMoleFrac_(massFracNaCl_Max_wPhase);
-        Scalar moleFracNaCl_Max_nPhase = moleFracNaCl_Max_wPhase / volVars.pressure(gasPhaseIdx);
         Scalar saltPorosity = this->spatialParams().minimalPorosity(element, scv);
 
         // liquid phase
@@ -631,6 +633,9 @@ private:
 
 
     std::string name_;
+    bool plotPcS_;
+    bool plotEvaporation_;
+    bool plotMass_;
 
     Scalar initPressure_;
     Scalar initGasSaturation_;
