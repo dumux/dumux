@@ -51,7 +51,6 @@ RefTemperature          = 299
 SolubilityLimit         = 0.26 	                # [-]  solubility limit of salt in brine
 referencePorosity       = 0.41656               # [-]  initial porosity
 referencePermeability   = 1e-13
-StandardDeviationPermeability = 9e-13
 VGAlpha                 = 0.0002 #0.000152568361302
 VGn                     = 14.5 #13.79180
 IrreducibleLiqSat       = 0.259009615906936
