@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SweModel
+ * \ingroup CCTpfaDiscretization
  * \brief Compute the boundary fluxes based on the Riemann invariants
  *
  *        bdType can be:

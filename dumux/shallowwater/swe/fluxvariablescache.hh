@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SweModel
  * \brief Base class for the flux variables
  */
 #ifndef DUMUX_GODUNOV_FLUXVARIABLESCACHE_HH
@@ -41,7 +40,7 @@ class SweFluxVariablesCacheImplementation;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
- * \ingroup SweModel
+ * \ingroup ImplicitModel
  * \brief The flux variables cache classes for porous media.
  *        Store data required for flux calculation. For each type of physical process (advection, diffusion, heat conduction)
  *        there is a base cache storing the data required to compute the respective fluxes. Specializations of the overall

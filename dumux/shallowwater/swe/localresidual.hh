@@ -55,7 +55,6 @@ class SweResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using Element = typename GridView::template Codim<0>::Entity;
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-    using DiffusionType = typename GET_PROP_TYPE(TypeTag, DiffusionType);
 
 
     enum {
@@ -102,7 +101,7 @@ public:
     }
 
        /*!
-     * \brief Evaluate the mass/momentum flux over a face of a sub control volume
+     * \brief Evaluate the mass flux over a face of a sub control volume
      *
      * \param problem The problem
      * \param element The current element.
@@ -118,13 +117,9 @@ public:
                                const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
 
-        //std::cout << " Inside computeFlux" << std::endl;
-
         NumEqVector flux(0.0);
-        auto advFlux  = AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
-        auto diffFlux = DiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
-
-        flux = advFlux + diffFlux;
+        auto numFlux = AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
+        flux = numFlux;// + turbFlux;
 
         return flux;
     }

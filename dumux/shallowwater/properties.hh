@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup ShallowWaterModels
  * \file
- * \ingroup SweModel
  *
  * \brief Defines a type tag and some properties for shallow water models.
  */

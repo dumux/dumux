@@ -16,13 +16,6 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
-/*!
- * \file
- * \ingroup SweModel
- * \brief Defines the advective flux for the shallow water Model.
- */
-
 #ifndef DUMUX_SHALLOW_WATER_ADVECTIVE_FLUX_HH
 #define DUMUX_SHALLOW_WATER_ADVECTIVE_FLUX_HH
 
@@ -38,11 +31,6 @@
 namespace Dumux
 {
 
-/*!
- * \file
- * \ingroup SweModel
- * \brief Advective flux for the shallow water Model.
- */
 template<class TypeTag>
 class SweAdvectiveFlux
 {
@@ -141,7 +129,7 @@ class SweAdvectiveFlux
         rotateFluxBack(nxy,riemannFlux);
 
         //Audusse
-        Scalar hgzl = 0.5 * (cellStatesLeft[0] + hllc_hl) *(cellStatesLeft[0] - hllc_hl);
+        Scalar hgzl = 0.5 * (cellStatesLeft[0] + hllc_hl) *(cellStatesLeft[0] - hllc_hl)  ;
         Scalar hgzr = 0.5 * (cellStatesRight[0] + hllc_hr) * (cellStatesRight[0] - hllc_hr);
         Scalar hdxzl = 0.0;
         Scalar hdxzr = 0.0;

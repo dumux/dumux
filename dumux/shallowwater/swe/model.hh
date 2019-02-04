@@ -20,11 +20,11 @@
  * \file
  * \ingroup SweModel
  *
- * \brief A two-dimensional shallow water equations model
+ * \brief A two-dimesnional shallow water equations model
  *
  *
  *
- * So far, only the cell centered spatial discretization is available.
+ * So far, only the cell centerd spatial discretization is available.
  */
 
 #ifndef DUMUX_SWE_MODEL_HH
@@ -34,7 +34,6 @@
 #include <dumux/common/properties/model.hh>
 #include <dumux/shallowwater/properties.hh>
 #include <dumux/shallowwater/advectiveflux.hh>
-#include <dumux/shallowwater/diffusiveflux.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
@@ -47,10 +46,7 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup SweModel
- *
- */
+
 template <class TypeTag>
 struct SweModelTraits
 {
@@ -103,9 +99,6 @@ SET_TYPE_PROP(Swe, VtkOutputFields, SweVtkOutputFields);
 
 //Set the advective Flux
 SET_TYPE_PROP(Swe, AdvectionType, SweAdvectiveFlux<TypeTag>);
-
-//Set the diffusive Flux
-SET_TYPE_PROP(Swe, DiffusionType, SweDiffusiveFlux<TypeTag>);
 }
 
 } // end namespace

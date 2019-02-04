@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SweModel
+ * \ingroup CCTpfaDiscretization
  * \brief Exact Riemann solver for shallow water equations using
  *        two-point flux approximation.
  */
