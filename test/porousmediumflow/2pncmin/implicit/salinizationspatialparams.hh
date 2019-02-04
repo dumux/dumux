@@ -70,11 +70,14 @@ public:
     {
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);
-        referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
+        referencePermeabilityLeft_ = getParam<Scalar>("SpatialParams.referencePermeabilityLeft", 2.23e-14);
+        referencePermeabilityRight_ = getParam<Scalar>("SpatialParams.referencePermeabilityRight", 2.23e-14);
         irreducibleLiqSat_     = getParam<Scalar>("SpatialParams.IrreducibleLiqSat", 0.2);
         irreducibleGasSat_     = getParam<Scalar>("SpatialParams.IrreducibleGasSat", 1e-3);
-        vgAlpha_               = getParam<Scalar>("SpatialParams.VGAlpha", 1.5);
-        vgn_                   = getParam<Scalar>("SpatialParams.VGn", 4.0);
+        vgAlphaLeft_               = getParam<Scalar>("SpatialParams.VGAlphaLeft", 1.5);
+        vgnLeft_                   = getParam<Scalar>("SpatialParams.VGnLeft", 4.0);
+        vgAlphaRight_               = getParam<Scalar>("SpatialParams.VGAlphaRight", 1.5);
+        vgnRight_                   = getParam<Scalar>("SpatialParams.VGnRight", 4.0);
 
         plotFluidMatrixInteractions_ = getParam<bool>("Output.PlotFluidMatrixInteractions");
 
@@ -84,16 +87,16 @@ public:
         materialParams_.setSnr(irreducibleGasSat_);
 
         //Van Genuchen parameters
-        materialParams_.setVgAlpha(vgAlpha_ );
-        materialParams_.setVgn(vgn_);
+        materialParams_.setVgAlpha(vgAlphaLeft_ );
+        materialParams_.setVgn(vgnLeft_);
 
         // residual saturations
         materialParamsCoarse_.setSwr(irreducibleLiqSat_);
         materialParamsCoarse_.setSnr(irreducibleGasSat_);
 
         //Van Genuchen parameters
-        materialParamsCoarse_.setVgAlpha(0.0005);
-        materialParamsCoarse_.setVgn(15.0);
+        materialParamsCoarse_.setVgAlpha(vgAlphaRight_);
+        materialParamsCoarse_.setVgn(vgnLeft_);
                 //Van Genuchen parameters
 //         materialParamsCoarse_.setVgAlpha(vgAlpha_ );
 //         materialParamsCoarse_.setVgn(vgn_);
@@ -181,11 +184,11 @@ public:
 
          Scalar pos0 = scv.center()[0];
          if (pos0<0.035+eps_){
-         return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
+         return permLaw_.evaluatePermeability(referencePermeabilityLeft_, referencePorosity_, poro);
          }
          else
          {
-             return permLaw_.evaluatePermeability(2e-13, referencePorosity_, poro);
+             return permLaw_.evaluatePermeability(referencePermeabilityRight_, referencePorosity_, poro);
          }
     }
 
@@ -225,11 +228,14 @@ private:
 
     Scalar solubilityLimit_;
     Scalar referencePorosity_;
-    PermeabilityType referencePermeability_ = 0.0;
+    PermeabilityType referencePermeabilityLeft_ = 0.0;
+    PermeabilityType referencePermeabilityRight_ = 0.0;
     Scalar irreducibleLiqSat_;
     Scalar irreducibleGasSat_;
-    Scalar vgAlpha_;
-    Scalar vgn_ ;
+    Scalar vgAlphaLeft_;
+    Scalar vgnLeft_ ;
+    Scalar vgAlphaRight_;
+    Scalar vgnRight_ ;
     static constexpr Scalar eps_ = 1e-6;
 
     bool plotFluidMatrixInteractions_;

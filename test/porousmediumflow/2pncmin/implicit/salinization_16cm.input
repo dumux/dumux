@@ -31,7 +31,7 @@ TemperatureLow          = 273.15                # [K]low end for tabularization 
 TemperatureHigh         = 400.00                # [K]high end for tabularization of fluid properties
 
 [Problem]
-Name                    = salinization_16cm_medium_1 # [-]  name for output files
+Name                    = salinization_16cm_heterogen # [-]  name for output files
 Temperature             = 299                   # [K] temperature
 InitialPressure         = 1.00e5                   # [Pa] Initial reservoir pressure
 InitialGasSaturation    = 0.06                  # [-]  initial liquid saturation
@@ -50,9 +50,12 @@ RefTemperature          = 299
 [SpatialParams]
 SolubilityLimit         = 0.26 	                # [-]  solubility limit of salt in brine
 referencePorosity       = 0.41656               # [-]  initial porosity
-referencePermeability   = 1e-13
-VGAlpha                 = 0.000264 #0.000152568361302 #0.00098 #
-VGn                     = 14.5 #13.79180 #15.0 #14.5 #
+referencePermeabilityLeft   = 1.2e-13
+referencePermeabilityRight  = 0.8e-13
+VGAlphaLeft                 = 0.0002 #0.00098 #0.000152568361302
+VGnLeft                     = 14.5 #15.0 #13.79180
+VGAlphaRight                = 0.0003 #0.00098 #0.000152568361302
+VGnRight                    = 14.5 #15.0 #13.79180
 IrreducibleLiqSat       = 0.259009615906936
 IrreducibleGasSat       = 0.025948705918491
 
