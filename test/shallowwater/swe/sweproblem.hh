@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SWE Tests
+ * \ingroup SweTests
  * \brief A  simple dam break test for the SWEs.
  */
 #ifndef DUMUX_SWE_TEST_PROBLEM_HH
@@ -76,8 +76,7 @@ SET_PROP(SweTestTypeTag, SpatialParams)
 
 
 /*!
- * \ingroup Shallow water equations model
- * \ingroup ImplicitTestProblems
+ * \ingroup SweTests
  *
  * \brief A simple dambreak test
  *

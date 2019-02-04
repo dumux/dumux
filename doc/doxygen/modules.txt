@@ -232,6 +232,13 @@
      * \copydetails ./freeflow/nonisothermal/model.hh
      */
 
+/* ***************** Shallowwater ******************/
+/*!
+ * \defgroup SweModel Shallow Water Models
+ * \brief Models basing on the 2D shallow water equation
+ * \copydetails ./shallowwater/swe/model.hh
+ */
+
 /* ***************** Benchmarks and Tests ******************/
 /*!
  * \defgroup BenchmarksAndTests Benchmarks and Tests
@@ -339,6 +346,11 @@
           */
     /*!
       * \ingroup BenchmarksAndTests
+      * \defgroup SweTests Shallow Water Tests
+      * \brief Tests for shallow water flow.
+      */
+    /*!
+      * \ingroup BenchmarksAndTests
       * \defgroup MaterialTests Material system tests
       * \brief Benchmarks and Test(s) for the material system.
       */
@@ -367,6 +379,12 @@
          * \ingroup CCDiscretization
          * \defgroup CCMpfaDiscretization Multi-point flux approximation (Mpfa)
          * \brief A cell-centered finite volume scheme with multi-point flux approximation.
+         */
+        /*!
+         * \ingroup CCDiscretization
+         * \defgroup GodunovDiscretization Godunov discretisation
+         * \brief A cell-centered finite volume scheme with godunov
+         * discretisation.
          */
     /*!
      * \ingroup Discretization
