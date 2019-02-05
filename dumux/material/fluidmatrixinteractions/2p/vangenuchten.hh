@@ -74,7 +74,7 @@ public:
 
         swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
-        const Scalar pc = pow(pow(swe, -1.0/params.vgm()) - 1, 1.0/params.vgn())/params.vgAlpha();
+        const Scalar pc = params.leverettFactor() * pow(pow(swe, -1.0/params.vgm()) - 1, 1.0/params.vgn())/params.vgAlpha();
         return pc;
     }
 

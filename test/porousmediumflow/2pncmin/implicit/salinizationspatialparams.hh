@@ -33,6 +33,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
+#include <random>
 
 namespace Dumux {
 
@@ -70,6 +71,8 @@ public:
     {
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);
+        referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
+        sdevPermeability_ = getParam<Scalar>("SpatialParams.PermeabilityStandardDeviation", 1e-14);
 
         irreducibleLiqSat_     = getParam<Scalar>("SpatialParams.IrreducibleLiqSat", 0.2);
         irreducibleGasSat_     = getParam<Scalar>("SpatialParams.IrreducibleGasSat", 1e-3);
@@ -78,50 +81,63 @@ public:
 
         plotFluidMatrixInteractions_ = getParam<bool>("Output.PlotFluidMatrixInteractions");
 
-        //Van Genuchen parameters
-        // residual saturations
-        materialParams_.setSwr(irreducibleLiqSat_);
-        materialParams_.setSnr(irreducibleGasSat_);
 
-        //Van Genuchen parameters
-        materialParams_.setVgAlpha(vgAlpha_ );
-        materialParams_.setVgn(vgn_);
 
-        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+
+        unsigned seed = 0.5; //std::chrono::system_clock::now().time_since_epoch().count();
         std::default_random_engine generator (seed);
-//         referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
-        std::normal_distribution<double> distribution (1e-11,0.5e-11);
+        std::normal_distribution<double> distribution (referencePermeability_,sdevPermeability_);
 
-        referencePermeability_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        permeability_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        materialParams_.resize(this->fvGridGeometry().gridView().size(0.0));
+
         for (const auto& element : elements(fvGridGeometry->gridView()))
         {
-        unsigned int elementIdx = fvGridGeometry->elementMapper().index(element);
-        referencePermeability_[elementIdx] = distribution(generator);
-        std::cout << referencePermeability_[elementIdx] << std::endl;
+            unsigned int eIdx = fvGridGeometry->elementMapper().index(element);
+
+            //Van Genuchen parameters
+            // residual saturations
+            materialParams_[eIdx].setSwr(irreducibleLiqSat_);
+            materialParams_[eIdx].setSnr(irreducibleGasSat_);
+
+            //Van Genuchen parameters
+            materialParams_[eIdx].setVgAlpha(vgAlpha_ );
+            materialParams_[eIdx].setVgn(vgn_);
+
+
+            permeability_[eIdx] = distribution(generator);
+
+            //avoid negative permeability values
+            if(permeability_[eIdx] < 0)
+            { permeability_[eIdx] = 1e-15;}
+
+            std::cout << permeability_[eIdx] << std::endl;
+            materialParams_[eIdx].setLeverettFactor(pow(referencePermeability_/permeability_[eIdx], 0.5));
         }
     }
 
-    /*!
-     * \brief This is called from the problem and creates a gnuplot output
-     *        of e.g the pc-Sw curve
-     */
-    void plotMaterialLaw()
-    {
-        PlotMaterialLaw<Scalar, MaterialLaw> plotMaterialLaw;
-        GnuplotInterface<Scalar> gnuplot(plotFluidMatrixInteractions_);
-        gnuplot.setOpenPlotWindow(plotFluidMatrixInteractions_);
-        plotMaterialLaw.addpcswcurve(gnuplot, materialParams_, irreducibleLiqSat_, 1-irreducibleGasSat_);
-        gnuplot.setOption("set xrange [0:1]");
-        gnuplot.setOption("set yrange [0:15000]");
-        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
-        gnuplot.plot("pc-Sw");
-
-        gnuplot.resetAll();
-        gnuplot.setOption("set xrange [0:1]");
-        gnuplot.setOption("set yrange [0:1]");
-        plotMaterialLaw.addkrcurves(gnuplot, materialParams_, irreducibleLiqSat_, 1/*-irreducibleGasSat_*/, "fine");
-        gnuplot.plot("kr");
-    }
+//     /*!
+//      * \brief This is called from the problem and creates a gnuplot output
+//      *        of e.g the pc-Sw curve
+//      */
+//     void plotMaterialLaw()
+//     {
+//         PlotMaterialLaw<Scalar, MaterialLaw> plotMaterialLaw;
+//         GnuplotInterface<Scalar> gnuplot(plotFluidMatrixInteractions_);
+//         gnuplot.setOpenPlotWindow(plotFluidMatrixInteractions_);
+//         plotMaterialLaw.addpcswcurve(gnuplot, materialParams_, irreducibleLiqSat_, 1-irreducibleGasSat_);
+//         gnuplot.setOption("set xrange [0:1]");
+//         gnuplot.setOption("set yrange [0:15000]");
+//         gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+//         gnuplot.plot("pc-Sw");
+//
+//         gnuplot.resetAll();
+//         gnuplot.setOption("set xrange [0:1]");
+//         gnuplot.setOption("set yrange [0:1]");
+//         plotMaterialLaw.addkrcurves(gnuplot, materialParams_, irreducibleLiqSat_, 1/*-irreducibleGasSat_*/, "fine");
+//         gnuplot.plot("kr");
+//     }
 
     /*!
      *  \brief Define the minimum porosity \f$[-]\f$ distribution
@@ -175,7 +191,7 @@ public:
          const auto poro =  max(/*minPoro*/1e-5, referencePorosity_ - sumPrecipitates);
 
          unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
-         return permLaw_.evaluatePermeability(referencePermeability_[elementIdx], referencePorosity_, poro);
+         return permLaw_.evaluatePermeability(permeability_[elementIdx], referencePorosity_, poro);
     }
 
 //     Scalar solidity(const SubControlVolume &scv) const
@@ -187,9 +203,20 @@ public:
     Scalar theta(const SubControlVolume &scv) const
     { return 10.0; }
 
-    // return the brooks-corey context depending on the position
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    { return materialParams_; }
+//     // return the brooks-corey context depending on the position
+//     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+//     { return materialParams_; }
+
+    template<class ElementSolution>
+    const MaterialLawParams& materialLawParams(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolution& elemSol) const
+    {
+        unsigned int eIdx = this->fvGridGeometry().elementMapper().index(element);
+        return materialParams_[eIdx];
+    }
+
+
 
     // define which phase is to be considered as the wetting phase
     template<class FluidSystem>
@@ -198,13 +225,15 @@ public:
 
 private:
 
-    MaterialLawParams materialParams_;
+    std::vector<MaterialLawParams> materialParams_;
 
     PermeabilityKozenyCarman<PermeabilityType> permLaw_;
 
     Scalar solubilityLimit_;
     Scalar referencePorosity_;
-    std::vector<PermeabilityType> referencePermeability_;
+    Scalar referencePermeability_;
+    Scalar sdevPermeability_;
+    std::vector<PermeabilityType> permeability_;
     Scalar irreducibleLiqSat_;
     Scalar irreducibleGasSat_;
     Scalar vgAlpha_;

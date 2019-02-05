@@ -46,10 +46,11 @@ public:
     VanGenuchtenParams()
     {}
 
-    VanGenuchtenParams(Scalar vgAlpha, Scalar vgn)
+    VanGenuchtenParams(Scalar vgAlpha, Scalar vgn, Scalar l)
     {
         setVgAlpha(vgAlpha);
         setVgn(vgn);
+        setLeverettFactor(l);
     }
 
     /*!
@@ -108,10 +109,19 @@ public:
     void setVgn(Scalar n)
     { vgn_ = n; vgm_ = 1 - 1/vgn_; }
 
+
+    void setLeverettFactor(Scalar l)
+    {leverettFactor_ = l;}
+
+
+    Scalar leverettFactor() const
+    {return leverettFactor_; }
+
 private:
     Scalar vgAlpha_;
     Scalar vgm_;
     Scalar vgn_;
+    Scalar leverettFactor_;
 };
 } // namespace Dumux
 

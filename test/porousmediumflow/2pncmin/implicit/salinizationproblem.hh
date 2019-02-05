@@ -219,8 +219,8 @@ public:
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
 
-        if(plotPcS_)
-        { this->spatialParams().plotMaterialLaw(); }
+//         if(plotPcS_)
+//         { this->spatialParams().plotMaterialLaw(); }
 
     }
 
