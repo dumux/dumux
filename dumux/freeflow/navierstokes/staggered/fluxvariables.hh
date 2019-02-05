@@ -163,10 +163,11 @@ public:
                                              const SubControlVolumeFace& scvf,
                                              const FVElementGeometry& fvGeometry,
                                              const ElementVolumeVariables& elemVolVars,
-                                             const ElementFaceVariables& elemFaceVars)
+                                             const ElementFaceVariables& elemFaceVars,
+                                             const GridFluxVariablesCache& gridFluxVarsCache)
     {
-        return computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars) +
-               computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
+        return computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache) +
+               computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache);
     }
 
     /*!
@@ -191,7 +192,8 @@ public:
                                                     const SubControlVolumeFace& scvf,
                                                     const FVElementGeometry& fvGeometry,
                                                     const ElementVolumeVariables& elemVolVars,
-                                                    const ElementFaceVariables& elemFaceVars)
+                                                    const ElementFaceVariables& elemFaceVars,
+                                                    const GridFluxVariablesCache& gridFluxVarsCache)
     {
         FacePrimaryVariables frontalFlux(0.0);
 
@@ -227,7 +229,7 @@ public:
             // distances[2]: downstream staggered cell size
             std::array<Scalar, 3> distances{0.0, 0.0, 0.0};
 
-            const auto& highOrder = problem.higherOrderApproximation();
+            const auto& highOrder = gridFluxVarsCache.higherOrderApproximation();
 
             // If a Tvd approach has been specified and I am not too near to the boundary I can use a second order
             // approximation for the velocity. In this frontal flux I use for the density always the value that I have on the scvf.
@@ -304,7 +306,8 @@ public:
                                                     const SubControlVolumeFace& scvf,
                                                     const FVElementGeometry& fvGeometry,
                                                     const ElementVolumeVariables& elemVolVars,
-                                                    const ElementFaceVariables& elemFaceVars)
+                                                    const ElementFaceVariables& elemFaceVars,
+                                                    const GridFluxVariablesCache& gridFluxVarsCache)
     {
         FacePrimaryVariables normalFlux(0.0);
         auto& faceVars = elemFaceVars[scvf];
@@ -364,7 +367,7 @@ public:
 
             // If there is no symmetry or Neumann boundary condition for the given sub face, proceed to calculate the tangential momentum flux.
             if (problem.enableInertiaTerms())
-                normalFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, fvGeometry, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, lateralFaceHasDirichletPressure, lateralFaceHasBJS);
+                normalFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, fvGeometry, element, scvf, normalFace, elemVolVars, faceVars, gridFluxVarsCache, localSubFaceIdx, lateralFaceHasDirichletPressure, lateralFaceHasBJS);
 
             normalFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, fvGeometry, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, lateralFaceHasDirichletPressure, lateralFaceHasBJS);
         }
@@ -401,6 +404,7 @@ private:
                                                                     const SubControlVolumeFace& normalFace,
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const FaceVariables& faceVars,
+                                                                    const GridFluxVariablesCache& gridFluxVarsCache,
                                                                     const int localSubFaceIdx,
                                                                     const bool lateralFaceHasDirichletPressure,
                                                                     const bool lateralFaceHasBJS)
@@ -432,7 +436,7 @@ private:
         // distances[2]: downstream staggered cell size
         std::array<Scalar, 3> distances{0.0, 0.0, 0.0};
 
-        const auto& highOrder = problem.higherOrderApproximation();
+        const auto& highOrder = gridFluxVarsCache.higherOrderApproximation();
 
         // If a Tvd approach has been specified and I am not too near to the boundary I can use a second order approximation.
         if (highOrder.tvdApproach() != TvdApproach::none)

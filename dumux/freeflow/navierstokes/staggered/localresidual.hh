@@ -179,7 +179,7 @@ public:
                                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        return fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
+        return fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache.gridFluxVarsCache());
     }
 
     /*!

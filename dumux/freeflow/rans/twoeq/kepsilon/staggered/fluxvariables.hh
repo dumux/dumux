@@ -184,12 +184,13 @@ public:
                                              const SubControlVolumeFace& scvf,
                                              const FVElementGeometry& fvGeometry,
                                              const ElementVolumeVariables& elemVolVars,
-                                             const ElementFaceVariables& elemFaceVars)
+                                             const ElementFaceVariables& elemFaceVars,
+                                             const GridFluxVariablesCache& gridFluxVarsCache)
     {
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
-        return ParentType::computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars)
-               + ParentType::computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars)
+        return ParentType::computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache)
+               + ParentType::computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache)
                + 2.0 / ModelTraits::dim() * insideVolVars.density() * insideVolVars.turbulentKineticEnergy()
                  * scvf.area() * scvf.directionSign() * insideVolVars.extrusionFactor();
     }

@@ -59,6 +59,8 @@ class FreeFlowFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::st
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
     //! Do nothing for the staggered grid specialization.
     void update(const Problem& problem,
                 const Element& element,

@@ -28,6 +28,8 @@
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/staggered/elementfluxvariablescache.hh>
 
+#include <dumux/freeflow/higherorderapproximation.hh>
+
 namespace Dumux {
 
 /*!
@@ -42,7 +44,6 @@ struct StaggeredDefaultGridFluxVariablesCacheTraits
     using Problem = P;
     using FluxVariablesCache = FVC;
     using FluxVariablesCacheFiller = FVCF;
-
     template<class GridFluxVariablesCache, bool cachingEnabled>
     using LocalView = StaggeredElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
 };
@@ -72,6 +73,7 @@ class StaggeredGridFluxVariablesCache<P, FVC, FVCF, true, Traits>
 public:
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
+    using Scalar = typename FluxVariablesCache::Scalar;
 
     //! export the flux variable cache filler type
     using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
@@ -82,7 +84,10 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
-    StaggeredGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    StaggeredGridFluxVariablesCache(const Problem& problem, const std::string& paramGroup = "")
+    : problemPtr_(&problem)
+    , higherOrderApproximation_(paramGroup)
+      {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
     template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
@@ -118,6 +123,12 @@ public:
         }
     }
 
+    //! Return the HigherOrderApproximation
+    const HigherOrderApproximation<Scalar>& higherOrderApproximation() const
+    {
+        return higherOrderApproximation_;
+    }
+
     const Problem& problem() const
     { return *problemPtr_; }
 
@@ -130,6 +141,7 @@ public:
 
 private:
     const Problem* problemPtr_;
+    HigherOrderApproximation<Scalar> higherOrderApproximation_;
 
     std::vector<FluxVariablesCache> fluxVarsCache_;
     std::vector<std::size_t> globalScvfIndices_;
@@ -149,6 +161,7 @@ class StaggeredGridFluxVariablesCache<P, FVC, FVCF, false, Traits>
 public:
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
+    using Scalar = typename FluxVariablesCache::Scalar;
 
     //! export the flux variable cache filler type
     using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
@@ -159,7 +172,10 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
-    StaggeredGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    StaggeredGridFluxVariablesCache(const Problem& problem, const std::string& paramGroup = "")
+    : problemPtr_(&problem)
+    , higherOrderApproximation_(paramGroup)
+      {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
     template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
@@ -171,10 +187,16 @@ public:
     const Problem& problem() const
     { return *problemPtr_; }
 
+    //! Return the HigherOrderApproximation
+    const HigherOrderApproximation<Scalar>& higherOrderApproximation() const
+    {
+        return higherOrderApproximation_;
+    }
+
 private:
-
-
     const Problem* problemPtr_;
+    HigherOrderApproximation<Scalar> higherOrderApproximation_;
+
 };
 
 } // end namespace Dumux
