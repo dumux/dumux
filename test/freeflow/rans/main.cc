@@ -167,6 +167,7 @@ int main(int argc, char** argv) try
 
         // update wall properties
         problem->updateDynamicWallProperties(x);
+        assembler->updateGridVariables(x);
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();

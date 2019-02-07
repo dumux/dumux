@@ -166,6 +166,7 @@ int main(int argc, char** argv) try
 
         // update wall properties
         problem->updateDynamicWallProperties(x);
+        assembler->updateGridVariables(x);
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
