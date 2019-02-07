@@ -1,0 +1,62 @@
+[TimeLoop]
+DtInitial = 1e-3 # [s]
+MaxTimeStepSize = 2 # [s]
+TEnd = 20 # [s]
+
+[RANS.Grid]
+Verbosity = true
+Positions0 = -1.0 0.0 1.0 2.0
+Positions1 = 0.25 0.5 0.75
+Grading0 = -1.0 1.0 1.0
+Grading1 = 1.3 -1.3
+Cells0 = 5 10 5
+Cells1 = 15 15
+
+[Darcy.Grid]
+Verbosity = true
+Positions0 = 0.0 1.0
+Positions1 = 0.0 0.25
+Cells0 = 10
+Cells1 = 15
+Grading0 =  1.0
+Grading1 = -1.3
+
+[RANS.Problem]
+Name = rans
+InletVelocity = 2.5 # [m/s]
+
+[Darcy.Problem]
+Name = darcy
+Pressure = 1e5
+
+[Darcy.SpatialParams]
+Porosity = 0.3
+Permeability = 1e-10
+AlphaBeaversJoseph = 2.0
+
+[SpatialParams]
+ForchCoeff = 0.55 #
+
+[Problem]
+EnableGravity = false
+
+[RANS.RANS]
+UseStoredEddyViscosity = false
+EddyViscosityModel = "baldwinLomax"
+
+[RANS.KEpsilon]
+YPlusThreshold = 30. # should be small (10-30) for coarse grids large (30-60) for fine grids
+
+[Vtk]
+AddVelocity = true
+WriteFaceData = false
+OutputName = rectangle_interface
+
+[Newton]
+TargetSteps = 8
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
