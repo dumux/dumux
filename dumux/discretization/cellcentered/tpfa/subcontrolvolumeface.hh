@@ -125,6 +125,7 @@ public:
     , geomType_(isGeometry.type())
     , area_(isGeometry.volume())
     , center_(isGeometry.center())
+    , circumcenter_(is.geometry().impl().circumcenter())
     , unitOuterNormal_(is.centerUnitOuterNormal())
     , scvfIndex_(scvfIndex)
     , scvIndices_(scvIndices)
@@ -143,10 +144,15 @@ public:
     }
 
     //! The integration point for flux evaluations in global coordinates
-    const GlobalPosition& ipGlobal() const
+    const GlobalPosition ipGlobal() const
     {
-        // Return center for now
-        return center_;
+        // Return circumcenter
+        GlobalPosition cm = center();
+        cm -= circumcenter_;
+        static Scalar percentage = Dumux::getParam<Scalar>("CMPercentage", 1e-8);
+        cm *= percentage;
+        cm += circumcenter_;
+        return cm;
     }
 
     //! The area of the sub control volume face
@@ -216,6 +222,7 @@ private:
     CornerStorage corners_;
     Scalar area_;
     GlobalPosition center_;
+    GlobalPosition circumcenter_;
     GlobalPosition unitOuterNormal_;
     GridIndexType scvfIndex_;
     GridIndexStorage scvIndices_;

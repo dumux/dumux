@@ -93,6 +93,7 @@ public:
     : ParentType()
     , geometry_(std::move(geometry))
     , center_(geometry_.value().center())
+    , circumcenter_(geometry_.value().impl().circumcenter())
     , elementIndex_(elementIndex)
     {}
 
@@ -111,6 +112,7 @@ public:
         geometry_.release();
         geometry_.emplace(other.geometry_.value());
         center_ = other.center_;
+        circumcenter_ = other.circumcenter_;
         elementIndex_ = other.elementIndex_;
         return *this;
     }
@@ -124,6 +126,7 @@ public:
         geometry_.release();
         geometry_.emplace(std::move(other.geometry_.value()));
         center_ = std::move(other.center_);
+        circumcenter_ = std::move(other.circumcenter_);
         elementIndex_ = std::move(other.elementIndex_);
         return *this;
     }
@@ -132,6 +135,17 @@ public:
     const GlobalPosition& center() const
     {
         return center_;
+    }
+
+    //! The circumcenter of the sub control volume
+    const GlobalPosition circumcenter() const
+    {
+        GlobalPosition cm = center();
+        cm -= circumcenter_;
+        static Scalar percentage = Dumux::getParam<Scalar>("CMPercentage", 1e-8);
+        cm *= percentage;
+        cm += circumcenter_;
+        return cm;
     }
 
     //! The volume of the sub control volume
@@ -190,6 +204,7 @@ private:
     // Work around the fact that geometry is not default constructible
     Optional<Geometry> geometry_;
     GlobalPosition center_;
+    GlobalPosition circumcenter_;
     GridIndexType elementIndex_;
 };
 
