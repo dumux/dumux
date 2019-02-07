@@ -167,7 +167,7 @@ private:
         const auto& problem = this->assembler().problem(id);
         const auto& fvGridGeometry = this->assembler().fvGridGeometry(id);
         auto& gridVariables = this->assembler().gridVariables(id);
-        priVarSwitch.updateBoundary(problem, fvGridGeometry, gridVariables, sol);
+        priVarSwitch.updateBoundary(problem, fvGridGeometry, gridVariables, sol[id]);
     }
 
     /*!
