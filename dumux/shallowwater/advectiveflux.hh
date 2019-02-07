@@ -136,7 +136,7 @@ class SweAdvectiveFlux
         rotateFluxBack(nxy,riemannFlux);
 
         //Audusse
-        Scalar hgzl = 0.5 * (cellStatesLeft[0] + hllc_hl) *(cellStatesLeft[0] - hllc_hl)  ;
+        Scalar hgzl = 0.5 * (cellStatesLeft[0] + hllc_hl) *(cellStatesLeft[0] - hllc_hl);
         Scalar hgzr = 0.5 * (cellStatesRight[0] + hllc_hr) * (cellStatesRight[0] - hllc_hr);
         Scalar hdxzl = 0.0;
         Scalar hdxzr = 0.0;

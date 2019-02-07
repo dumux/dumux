@@ -94,7 +94,7 @@ public:
         return grav_;
     }
 
-    /*! \brief Define the friciton law.
+    /*! \brief Define the friction law.
     *
     *   0 = no friction
     *   1 = Manning
@@ -144,7 +144,7 @@ public:
         if ( elementdata.find("z") != elementdata.end() ){
             eleZ_ = elementdata["z"];
         }else{
-            //TODO thorw an error
+            //TODO throw an error
             std::cout << "Error elementdata missing z" << std::endl;
         }
 
