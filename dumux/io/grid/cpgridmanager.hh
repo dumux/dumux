@@ -25,6 +25,8 @@
 #define DUMUX_IO_GRID_CPGRIDMANAGER_HH
 
 #if HAVE_OPM_GRID
+#include <dune/common/parallel/mpihelper.hh>
+
 #include <opm/grid/CpGrid.hpp>
 #include <opm/parser/eclipse/Parser/Parser.hpp>
 #include <opm/parser/eclipse/Parser/ParseContext.hpp>
@@ -54,6 +56,7 @@ public:
         Opm::EclipseGrid eclGrid(*deck_);
         grid_ = std::make_shared<Grid>();
         grid_->processEclipseFormat(eclGrid, false, false);
+        loadBalance();
     }
 
     /*!
@@ -79,7 +82,7 @@ public:
      */
     void loadBalance()
     {
-        if (grid_->comm().size() > 1)
+        if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
             grid_->loadBalance();
     }
 
