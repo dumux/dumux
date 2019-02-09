@@ -91,35 +91,15 @@ public:
         // on interior Neumann boundaries, evaluate the flux using the facet permeability
         if (bcTypes.hasOnlyNeumann())
         {
-            // compute point on element whose connection vector to
-            // the scvf integration point is parallel to the normal
-            const auto& elemGeometry = element.geometry();
-            const auto d1 = scvf.ipGlobal() - insideScv.dofPosition();
-            const auto d2 = elemGeometry.center() - insideScv.dofPosition();
-
-            const auto d1Norm = d1.two_norm();
-            const auto d2Norm = d2.two_norm();
-
-            using std::tan;
-            using std::acos;
-            const auto angle = acos( (d1*d2)/d1Norm/d2Norm );
-            const auto dm = tan(angle)*d1Norm;
-
-            auto pos = scvf.unitOuterNormal();
-            pos *= -1.0*dm;
-            pos += scvf.ipGlobal();
-
-            const auto posLocal = elemGeometry.local(pos);
-            std::vector< Dune::FieldVector<Scalar, 1> > insideShapeValues;
-            fvGeometry.fvGridGeometry().feCache().get(elemGeometry.type()).localBasis().evaluateFunction(posLocal, insideShapeValues);
+            const auto& supportPointShapeValues = fluxVarCache.shapeValuesAtTpfaSupportPoint();
 
             Scalar rho = 0.0;
-            Scalar pInside = 0.0;
+            Scalar supportPressure = 0.0;
             for (const auto& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
                 rho += volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
-                pInside += volVars.pressure(phaseIdx)*insideShapeValues[scv.indexInElement()][0];
+                supportPressure += volVars.pressure(phaseIdx)*supportPointShapeValues[scv.indexInElement()][0];
             }
 
             // compute tpfa flux such that flux and pressure continuity holds
@@ -129,11 +109,12 @@ public:
             using std::sqrt;
             const auto df = dim == dimWorld ? 0.5*facetVolVars.extrusionFactor()
                                             : 0.5*sqrt(facetVolVars.extrusionFactor());
+            const auto dm = (scvf.ipGlobal() - fluxVarCache.tpfaSupportPoint()).two_norm();
 
             const auto tm = 1.0/dm*vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), scvf.unitOuterNormal());
             const auto tf = 1.0/df*vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
 
-            auto flux = tm*tf/(tm+tf)*(pInside - facetVolVars.pressure(phaseIdx))
+            auto flux = tm*tf/(tm+tf)*(supportPressure - facetVolVars.pressure(phaseIdx))
                         *scvf.area()*insideVolVars.extrusionFactor();
 
             if (enableGravity)
