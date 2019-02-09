@@ -69,9 +69,9 @@ public:
 
         // on interior boundaries with Neumann BCs, prepare the shape values at a point
         // inside the element whose orthogonal projection is the integration point on scvf
-        if (scvf.interiorBoundary() && problem.interiorBoundaryTypes(element, scvf).hasOnlyNeumann())
+        if (scvf.interiorBoundary())
         {
-            isInteriorNeumannCache_ = true;
+            isInteriorBoundaryCache_ = true;
             const auto& geometry = element.geometry();
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
 
@@ -96,14 +96,14 @@ public:
 
     //! returns the integration point inside the element for interior boundaries
     const GlobalPosition& tpfaSupportPoint() const
-    { assert(isInteriorNeumannCache_); return ipGlobalInside_; }
+    { assert(isInteriorBoundaryCache_); return ipGlobalInside_; }
 
     //! returns the shape values at ip inside the element for interior boundaries
     const std::vector<ShapeValue>& shapeValuesAtTpfaSupportPoint() const
-    { assert(isInteriorNeumannCache_); return shapeValuesInside_; }
+    { assert(isInteriorBoundaryCache_); return shapeValuesInside_; }
 
 private:
-    bool isInteriorNeumannCache_{false};
+    bool isInteriorBoundaryCache_{false};
     GlobalPosition ipGlobalInside_;
     std::vector<ShapeValue> shapeValuesInside_;
 };
