@@ -102,7 +102,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
         bool isSet;
         GridIndexType< bulkId > elementIdx;
         std::vector< FVElementGeometry<lowDimId> > lowDimFvGeometries;
-        std::vector< ElementVolumeVariables<lowDimId> > lowDimElemVolVars;
+        std::vector< std::vector<VolumeVariables<lowDimId>> > lowDimElemVolVars;
 
         void reset()
         {
@@ -296,7 +296,7 @@ public:
         if (lowDimUsesBox)
             return bulkContext_.lowDimElemVolVars[idxInContext][coupledScvIdx];
         else
-            return bulkContext_.lowDimElemVolVars[idxInContext][lowDimElemIdx];
+            return bulkContext_.lowDimElemVolVars[idxInContext][0];
     }
 
     /*!
@@ -478,11 +478,29 @@ public:
                 const auto& ldSol = Assembler::isImplicit() ? this->curSol()[lowDimId] : assembler.prevSol()[lowDimId];
                 const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
                 auto fvGeom = localView(ldGridGeometry);
-                auto elemVolVars = localView(assembler.gridVariables(lowDimId).curGridVolVars());
                 fvGeom.bindElement(elemJ);
-                elemVolVars.bindElement(elemJ, fvGeom, ldSol);
 
-                // TODO interpolated volvars
+                auto elemSol = elementSolution(elemJ, ldSol, fvGeom.fvGridGeometry());
+                std::vector<VolumeVariables<lowDimId>> elemVolVars;
+
+                // for tpfa, make only one volume variables object for the element
+                // for the update, use the first (and only - for tpfa) scv of the element
+                if (!lowDimUsesBox)
+                {
+                    VolumeVariables<lowDimId> volVars;
+                    volVars.update(elemSol, this->problem(lowDimId), elemJ, *scvs(fvGeom).begin());
+                    elemVolVars.emplace_back( std::move(volVars) );
+                }
+                // for box, make interpolated vol vars in each scv center,
+                // which geometricallly coincides with the scvf integration point
+                else
+                {
+                    elemVolVars.resize(fvGeom.numScv());
+                    for (const auto& scv : scvs(fvGeom))
+                        FacetCoupling::makeInterpolatedVolVars(elemVolVars[scv.localDofIndex()], this->problem(lowDimId),
+                                                               ldSol, fvGeom, elemJ, elemJ.geometry(), scv.center());
+                }
+
                 bulkContext_.isSet = true;
                 bulkContext_.lowDimFvGeometries.emplace_back( std::move(fvGeom) );
                 bulkContext_.lowDimElemVolVars.emplace_back( std::move(elemVolVars) );
@@ -613,9 +631,14 @@ public:
 
                 auto& elemVolVars = bulkContext_.lowDimElemVolVars[idxInContext];
                 const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
+                auto elemSol = elementSolution(element, this->curSol()[lowDimId], fvGeom.fvGridGeometry());
 
-                // TODO interpolated vol vars
-                elemVolVars.bindElement(element, fvGeom, this->curSol()[lowDimId]);
+                if (!lowDimUsesBox)
+                    elemVolVars[0].update(elemSol, this->problem(lowDimId), element, *scvs(fvGeom).begin());
+                else
+                    for (const auto& scv : scvs(fvGeom))
+                        FacetCoupling::makeInterpolatedVolVars(elemVolVars[scv.localDofIndex()], this->problem(lowDimId),
+                                                               this->curSol()[lowDimId], fvGeom, element, element.geometry(), scv.center());
             }
         }
     }
@@ -733,9 +756,14 @@ public:
             auto& elemVolVars = bulkContext_.lowDimElemVolVars[idxInContext];
             const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
             const auto& element = lowDimLocalAssembler.element();
+            auto elemSol = elementSolution(element, this->curSol()[lowDimId], fvGeom.fvGridGeometry());
 
-            // TODO interpolated update
-            elemVolVars.bindElement(element, fvGeom, this->curSol()[lowDimId]);
+            if (!lowDimUsesBox)
+                elemVolVars[0].update(elemSol, this->problem(lowDimId), element, *scvs(fvGeom).begin());
+            else
+                for (const auto& scv : scvs(fvGeom))
+                    FacetCoupling::makeInterpolatedVolVars(elemVolVars[scv.localDofIndex()], this->problem(lowDimId),
+                                                           this->curSol()[lowDimId], fvGeom, element, element.geometry(), scv.center());
         }
     }
 
