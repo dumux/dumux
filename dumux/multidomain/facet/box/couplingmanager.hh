@@ -251,7 +251,7 @@ public:
      */
     bool isCoupled(const Element<bulkId>& element,
                    const SubControlVolumeFace<bulkId>& scvf) const
-    { return scvf.isOnInteriorBoundary(); }
+    { return scvf.interiorBoundary(); }
 
     /*!
      * \brief returns true if a bulk scvf coincides with a facet element.
