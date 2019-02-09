@@ -91,35 +91,56 @@ public:
         // on interior Neumann boundaries, evaluate the flux using the facet permeability
         if (bcTypes.hasOnlyNeumann())
         {
-            // interpolate pressure/density to scvf integration point
-            Scalar p = 0.0;
+            // compute point on element whose connection vector to
+            // the scvf integration point is parallel to the normal
+            const auto& elemGeometry = element.geometry();
+            const auto d1 = scvf.ipGlobal() - insideScv.dofPosition();
+            const auto d2 = elemGeometry.center() - insideScv.dofPosition();
+
+            const auto d1Norm = d1.two_norm();
+            const auto d2Norm = d2.two_norm();
+
+            using std::tan;
+            using std::acos;
+            const auto angle = acos( (d1*d2)/d1Norm/d2Norm );
+            const auto dm = tan(angle)*d1Norm;
+
+            auto pos = scvf.unitOuterNormal();
+            pos *= -1.0*dm;
+            pos += scvf.ipGlobal();
+
+            const auto posLocal = elemGeometry.local(pos);
+            std::vector< Dune::FieldVector<Scalar, 1> > insideShapeValues;
+            fvGeometry.fvGridGeometry().feCache().get(elemGeometry.type()).localBasis().evaluateFunction(posLocal, insideShapeValues);
+
             Scalar rho = 0.0;
+            Scalar pInside = 0.0;
             for (const auto& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
-                p += volVars.pressure(phaseIdx)*shapeValues[scv.indexInElement()][0];
                 rho += volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
+                pInside += volVars.pressure(phaseIdx)*insideShapeValues[scv.indexInElement()][0];
             }
 
-            // compute tpfa flux from integration point to facet centerline
+            // compute tpfa flux such that flux and pressure continuity holds
             const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
 
+            // On surface grids, use sqrt of aperture as distance measur
             using std::sqrt;
-            // If this is a surface grid, use the square root of the facet extrusion factor
-            // as an approximate average distance from scvf ip to facet center
-            using std::sqrt;
-            const auto a = facetVolVars.extrusionFactor();
-            auto gradP = scvf.unitOuterNormal();
-            gradP *= dim == dimWorld ? 0.5*a : 0.5*sqrt(a);
-            gradP /= gradP.two_norm2();
-            gradP *= (facetVolVars.pressure(phaseIdx) - p);
-            if (enableGravity)
-                gradP.axpy(-rho, problem.gravityAtPos(scvf.center()));
+            const auto df = dim == dimWorld ? 0.5*facetVolVars.extrusionFactor()
+                                            : 0.5*sqrt(facetVolVars.extrusionFactor());
 
-            // apply facet permeability and return the flux
-            return -1.0*scvf.area()
-                       *insideVolVars.extrusionFactor()
-                       *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), gradP);
+            const auto tm = 1.0/dm*vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), scvf.unitOuterNormal());
+            const auto tf = 1.0/df*vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
+
+            auto flux = tm*tf/(tm+tf)*(pInside - facetVolVars.pressure(phaseIdx))
+                        *scvf.area()*insideVolVars.extrusionFactor();
+
+            if (enableGravity)
+                flux -= rho*scvf.area()*insideVolVars.extrusionFactor()
+                        *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), problem.gravityAtPos(scvf.center()));
+
+            return flux;
         }
 
         // on interior Dirichlet boundaries use the facet pressure and evaluate flux
