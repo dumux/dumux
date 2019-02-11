@@ -158,7 +158,7 @@ public:
                 // add coupling info to all elements/scvfs in interaction volumes
                 for (auto dofIdx : lowDimElementDofs)
                     for (auto scvfIdx : embeddedScvfIndices)
-                        addCouplingsFromIV_(bulkFvGridGeometry, fvGeometry.scvf(scvfIdx), fvGeometry, lowDimElemIdx, dofIdx);
+                        this->addCouplingsFromIV_(bulkFvGridGeometry, fvGeometry.scvf(scvfIdx), fvGeometry, lowDimElemIdx, dofIdx);
 
                 // sort the scvfs according to the corners of the low dim element if box is used
                 // that allows identifying which scvf flux enters which low dim scv later

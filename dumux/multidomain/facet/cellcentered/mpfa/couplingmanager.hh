@@ -166,7 +166,7 @@ public:
      * \note  The coupling residual is independent of w.r.t. which bulk dof it is computed
      */
     template< class LowDimLocalAssembler >
-    typename LowDimLocalAssembler::LocalResidual::ElementResidualVector
+    typename LocalResidual<lowDimId>::ElementResidualVector
     evalCouplingResidual(LowDimIdType,
                          const LowDimLocalAssembler& lowDimLocalAssembler,
                          BulkIdType,
@@ -179,7 +179,7 @@ public:
      *        the fluxes across the facets of the neighboring bulk elements.
      */
     template< class LowDimLocalAssembler >
-    typename LowDimLocalAssembler::LocalResidual::ElementResidualVector
+    typename LocalResidual<lowDimId>::ElementResidualVector
     evalCouplingResidual(LowDimIdType, const LowDimLocalAssembler& lowDimLocalAssembler, BulkIdType)
     {
         // make sure this is called for the element for which the context was set
@@ -420,7 +420,7 @@ private:
 
                         // Update context to deflected solution and reevaluate residual
                         updateContext(couplingElemIdx, dofIndex, priVars, pvIdx);
-                        return evalCouplingResidual(lowDimId, lowDimLocalAssembler, bulkId);
+                        return this->evalCouplingResidual(lowDimId, lowDimLocalAssembler, bulkId);
                     };
 
                     static const int numDiffMethod = getParamFromGroup<int>(this->problem(lowDimId).paramGroup(), "Assembly.NumericDifferenceMethod");
