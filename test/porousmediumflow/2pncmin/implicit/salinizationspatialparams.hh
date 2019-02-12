@@ -72,7 +72,7 @@ public:
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);
         referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
-        sdevPermeability_ = getParam<Scalar>("SpatialParams.PermeabilityStandardDeviation", 1e-14);
+        sdevPorosity_ = getParam<Scalar>("SpatialParams.PorosityStandardDeviation", 1e-14);
 
         irreducibleLiqSat_     = getParam<Scalar>("SpatialParams.IrreducibleLiqSat", 0.2);
         irreducibleGasSat_     = getParam<Scalar>("SpatialParams.IrreducibleGasSat", 1e-3);
@@ -85,17 +85,24 @@ public:
 
 
 
-        unsigned seed = 0.5; //std::chrono::system_clock::now().time_since_epoch().count();
+        unsigned seed = 1; //std::chrono::system_clock::now().time_since_epoch().count();
         std::default_random_engine generator (seed);
-        std::normal_distribution<double> distribution (referencePermeability_,sdevPermeability_);
+        std::normal_distribution<double> distribution (referencePorosity_,sdevPorosity_);
 
-        permeability_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        materialParams_.resize(this->fvGridGeometry().gridView().size(0.0));
+        const auto numElems = this->fvGridGeometry().elementMapper().size();
 
-        for (const auto& element : elements(fvGridGeometry->gridView()))
+        porosity_.resize(numElems, 0.0);
+        permeability_.resize(numElems, 0.0);
+        materialParams_.resize(numElems);
+
+//         for (const auto& element : elements(fvGridGeometry->gridView()))
+
+        std::cout << "numElems: " << numElems << std::endl;
+
+        for (int eIdx = numElems-1; eIdx >= 0; --eIdx)
         {
-            unsigned int eIdx = fvGridGeometry->elementMapper().index(element);
-
+            std::cout << "at eIdx : " << eIdx << std::endl;
+//             const int eIdx = this->fvGridGeometry().elementMapper().index(element);
             //Van Genuchen parameters
             // residual saturations
             materialParams_[eIdx].setSwr(irreducibleLiqSat_);
@@ -106,14 +113,18 @@ public:
             materialParams_[eIdx].setVgn(vgn_);
 
 
-            permeability_[eIdx] = distribution(generator);
+//             Scalar numberOfElements = this->fvGridGeometry().elementMapper().size();
+            porosity_[eIdx] = distribution(generator);
 
             //avoid negative permeability values
-            if(permeability_[eIdx] < 0)
-            { permeability_[eIdx] = 1e-15;}
+            if(porosity_[eIdx] < 0)
+            { porosity_[eIdx] = 1e-5; }
 
-            std::cout << permeability_[eIdx] << std::endl;
-            materialParams_[eIdx].setLeverettFactor(pow(referencePermeability_/permeability_[eIdx], 0.5));
+            // just valid if no precipitant in the beginning
+            permeability_[eIdx] = permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, porosity_[eIdx]);
+
+            std::cout << porosity_[eIdx] << " " << permeability_[eIdx] << std::endl;
+            materialParams_[eIdx].setLeverettFactor(pow(referencePermeability_/permeability_[eIdx]*porosity_[eIdx]/referencePorosity_, 0.5));
         }
     }
 
@@ -148,15 +159,26 @@ public:
     Scalar minimalPorosity(const Element& element, const SubControlVolume &scv) const
     { return 1e-5; }
 
-    /*!
-     *  \brief Define the volume fraction of the inert component
+
+        /*!
+     * \brief Returns the volume fraction of the inert component with index compIdx \f$[-]\f$
      *
-     *  \param globalPos The global position in the domain
-     *  \param compIdx The index of the inert solid component
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The element solution
+     * \param compIdx The solid component index
+     * \return solid volume fraction
      */
-    template<class SolidSystem>
-    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos, int compIdx) const
-    { return 1.0-referencePorosity_; }
+    template<class SolidSystem, class ElementSolution>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
+    {
+        unsigned int eIdx = this->fvGridGeometry().elementMapper().index(element);
+        return 1.0-porosity_[eIdx];
+
+    }
 
     /*!
      *  \brief Define the reference porosity \f$[-]\f$ distribution.
@@ -167,7 +189,12 @@ public:
      *  \param scv The sub-control volume
      */
     Scalar referencePorosity(const Element& element, const SubControlVolume &scv) const
-    { return referencePorosity_; }
+    {
+        unsigned int eIdx = this->fvGridGeometry().elementMapper().index(element);
+        return porosity_[eIdx];
+
+    }
+//     { return referencePorosity_; }
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
      *  on the position in the domain
@@ -188,10 +215,11 @@ public:
         sumPrecipitates += priVars[3 /*numComp*/];
 
          using std::max;
-         const auto poro =  max(/*minPoro*/1e-5, referencePorosity_ - sumPrecipitates);
+         unsigned int eIdx = this->fvGridGeometry().elementMapper().index(element);
 
-         unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
-         return permLaw_.evaluatePermeability(permeability_[elementIdx], referencePorosity_, poro);
+         const auto poro =  max(/*minPoro*/1e-5, porosity_[eIdx] - sumPrecipitates);
+
+         return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
     }
 
 //     Scalar solidity(const SubControlVolume &scv) const
@@ -229,10 +257,11 @@ private:
 
     PermeabilityKozenyCarman<PermeabilityType> permLaw_;
 
+    std::vector<Scalar> porosity_;
     Scalar solubilityLimit_;
     Scalar referencePorosity_;
     Scalar referencePermeability_;
-    Scalar sdevPermeability_;
+    Scalar sdevPorosity_;
     std::vector<PermeabilityType> permeability_;
     Scalar irreducibleLiqSat_;
     Scalar irreducibleGasSat_;
