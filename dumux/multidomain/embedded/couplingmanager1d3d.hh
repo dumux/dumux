@@ -328,11 +328,13 @@ public:
                 static const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
                 const auto radius = lowDimProblem.spatialParams().radius(lowDimElementIdx);
                 const auto normal = lowDimGeometry.corner(1)-lowDimGeometry.corner(0);
-                const auto weight = 2*M_PI*radius/numIp;
+                const auto circleAvgWeight = 2*M_PI*radius/numIp;
+                const auto integrationElement = lowDimGeometry.integrationElement(qp.position());
+                const auto qpweight = qp.weight();
 
                 const auto circlePoints = EmbeddedCoupling::circlePoints(globalPos, normal, radius, numIp);
-                std::vector<Scalar> circleIpWeight(circlePoints.size());
-                std::vector<std::size_t> circleStencil(circlePoints.size());
+                std::vector<Scalar> circleIpWeight; circleIpWeight.reserve(circlePoints.size());
+                std::vector<std::size_t> circleStencil; circleStencil.reserve(circlePoints.size());
                 // for box
                 std::unordered_map<std::size_t, std::vector<std::size_t> > circleCornerIndices;
                 using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
@@ -344,20 +346,24 @@ public:
                     if (circleBulkElementIndices.empty())
                         continue;
 
-                    const auto bulkElementIdx = circleBulkElementIndices[0];
-                    circleStencil[k] = bulkElementIdx;
-                    circleIpWeight[k] = weight;
-
-                    if (isBox<bulkIdx>())
+                    const auto localCircleAvgWeight = circleAvgWeight / circleBulkElementIndices.size();
+                    for (const auto bulkElementIdx : circleBulkElementIndices)
                     {
-                        if (!static_cast<bool>(circleCornerIndices.count(bulkElementIdx)))
-                        {
-                            const auto bulkElement = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx);
-                            circleCornerIndices[bulkElementIdx] = this->vertexIndices(bulkIdx, bulkElementIdx);
+                        circleStencil.push_back(bulkElementIdx);
+                        circleIpWeight.push_back(localCircleAvgWeight);
 
-                            // evaluate shape functions at the integration point
-                            const auto bulkGeometry = bulkElement.geometry();
-                            this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, circlePoints[k], circleShapeValues[bulkElementIdx]);
+                        // precompute interpolation data for box scheme for each cut bulk element
+                        if (isBox<bulkIdx>())
+                        {
+                            if (!static_cast<bool>(circleCornerIndices.count(bulkElementIdx)))
+                            {
+                                const auto bulkElement = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx);
+                                circleCornerIndices[bulkElementIdx] = this->vertexIndices(bulkIdx, bulkElementIdx);
+
+                                // evaluate shape functions at the integration point
+                                const auto bulkGeometry = bulkElement.geometry();
+                                this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, circlePoints[k], circleShapeValues[bulkElementIdx]);
+                            }
                         }
                     }
                 }
@@ -383,12 +389,10 @@ public:
                 for (auto bulkElementIdx : bulkElementIndices)
                 {
                     const auto id = this->idCounter_++;
-                    const auto ie = lowDimGeometry.integrationElement(qp.position());
-                    const auto qpweight = qp.weight();
 
-                    this->pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({bulkElementIdx}));
+                    this->pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, integrationElement, std::vector<std::size_t>({bulkElementIdx}));
                     this->pointSources(bulkIdx).back().setEmbeddings(bulkElementIndices.size());
-                    this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({lowDimElementIdx}));
+                    this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement, std::vector<std::size_t>({lowDimElementIdx}));
                     this->pointSources(lowDimIdx).back().setEmbeddings(bulkElementIndices.size());
 
                     // pre compute additional data used for the evaluation of
