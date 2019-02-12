@@ -133,44 +133,6 @@ public:
 
         return source;
     }
-
-protected:
-    /*!
-     * \brief Evaluate boundary conditions for a cell center dof
-     */
-    template<class ElementBoundaryTypes>
-    void evalBoundaryForCellCenter_(CellCenterResidual& residual,
-                                    const Problem& problem,
-                                    const Element& element,
-                                    const FVElementGeometry& fvGeometry,
-                                    const ElementVolumeVariables& elemVolVars,
-                                    const ElementFaceVariables& elemFaceVars,
-                                    const ElementBoundaryTypes& elemBcTypes,
-                                    const ElementFluxVariablesCache& elemFluxVarsCache) const
-    {
-        BaseLocalResidual::evalBoundaryForCellCenter_(residual, problem, element, fvGeometry,
-                                                      elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            unsigned int elementIdx = problem.fvGridGeometry().elementMapper().index(element);
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& insideVolVars = elemVolVars[insideScv];
-
-            // fixed value for the turbulent kinetic energy
-            if (insideVolVars.inNearWallRegion())
-            {
-                residual[Indices::turbulentKineticEnergyEqIdx - cellCenterOffset]
-                    = insideVolVars.turbulentKineticEnergy() - problem.turbulentKineticEnergyWallFunction(elementIdx);
-            }
-
-            // fixed value for the dissipation
-            if (insideVolVars.inNearWallRegion() || insideVolVars.isMatchingPoint())
-            {
-                residual[Indices::dissipationEqIdx - cellCenterOffset]
-                    = insideVolVars.dissipation() - problem.dissipationWallFunction(elementIdx);
-            }
-        }
-    }
 };
 } // end namespace Dumux
 

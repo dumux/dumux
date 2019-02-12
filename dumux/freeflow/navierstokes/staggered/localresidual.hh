@@ -185,70 +185,63 @@ public:
      * \brief Evaluate boundary conditions for a cell center dof
      */
     template<class ElementBoundaryTypes>
-    void evalBoundaryForCellCenter_(CellCenterResidual& residual,
-                                    const Problem& problem,
-                                    const Element& element,
-                                    const FVElementGeometry& fvGeometry,
-                                    const ElementVolumeVariables& elemVolVars,
-                                    const ElementFaceVariables& elemFaceVars,
-                                    const ElementBoundaryTypes& elemBcTypes,
-                                    const ElementFluxVariablesCache& elemFluxVarsCache) const
+    CellCenterResidual computeBoundaryFluxForCellCenter(const Problem& problem,
+                                                        const Element& element,
+                                                        const FVElementGeometry& fvGeometry,
+                                                        const SubControlVolumeFace& scvf,
+                                                        const ElementVolumeVariables& elemVolVars,
+                                                        const ElementFaceVariables& elemFaceVars,
+                                                        const ElementBoundaryTypes& elemBcTypes,
+                                                        const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        for (auto&& scvf : scvfs(fvGeometry))
+        CellCenterResidual result(0.0);
+
+        if (scvf.boundary())
         {
-            if (scvf.boundary())
+            const auto bcTypes = problem.boundaryTypes(element, scvf);
+
+            // no fluxes occur over symmetry boundaries
+            if (!bcTypes.isSymmetry())
             {
-                const auto bcTypes = problem.boundaryTypes(element, scvf);
+                const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
 
-                // no fluxes occur over symmetry boundaries
-                if (!bcTypes.isSymmetry())
+                // treat Dirichlet and outflow BCs
+                result = computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+
+                // treat Neumann BCs, i.e. overwrite certain fluxes by user-specified values
+                static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
+                if(bcTypes.hasNeumann())
                 {
-                    const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
-
-                    // treat Dirichlet and outflow BCs
-                    FluxVariables fluxVars;
-                    auto boundaryFlux = fluxVars.computeMassFlux(problem, element, fvGeometry, elemVolVars,
-                                                                 elemFaceVars, scvf, elemFluxVarsCache[scvf]);
-
-                    EnergyLocalResidual::heatFlux(boundaryFlux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
-
-                    // treat Neumann BCs, i.e. overwrite certain fluxes by user-specified values
-                    static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
-                    if(bcTypes.hasNeumann())
+                    for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                     {
-                        for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
+                        if(bcTypes.isNeumann(eqIdx + cellCenterOffset))
                         {
-                            if(bcTypes.isNeumann(eqIdx + cellCenterOffset))
-                            {
-                                boundaryFlux[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx + cellCenterOffset]
-                                                                      * extrusionFactor * scvf.area();
-                            }
+                            result[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx + cellCenterOffset]
+                                                                  * extrusionFactor * scvf.area();
                         }
                     }
-
-                    // account for wall functions, if used
-                    incorporateWallFunction_(boundaryFlux, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars);
-
-                    // add the flux over the boundary scvf to the residual
-                    residual += boundaryFlux;
                 }
+
+                // account for wall functions, if used
+                incorporateWallFunction_(result, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars);
             }
         }
+        return result;
     }
 
     /*!
-     * \brief Evaluate boundary conditions for a face dof
+     * \brief Evaluate Dirichlet (fixed value) boundary conditions for a face dof
      */
     template<class ElementBoundaryTypes>
-    void evalBoundaryForFace(FaceResidual& residual,
-                             const Problem& problem,
-                             const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const SubControlVolumeFace& scvf,
-                             const ElementVolumeVariables& elemVolVars,
-                             const ElementFaceVariables& elemFaceVars,
-                             const ElementBoundaryTypes& elemBcTypes,
-                             const ElementFluxVariablesCache& elemFluxVarsCache) const
+    void evalDirichletBoundariesForFace(FaceResidual& residual,
+                                        const Problem& problem,
+                                        const Element& element,
+                                        const FVElementGeometry& fvGeometry,
+                                        const SubControlVolumeFace& scvf,
+                                        const ElementVolumeVariables& elemVolVars,
+                                        const ElementFaceVariables& elemFaceVars,
+                                        const ElementBoundaryTypes& elemBcTypes,
+                                        const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         if (scvf.boundary())
         {
@@ -261,17 +254,6 @@ public:
                 const Scalar velocity = elemFaceVars[scvf].velocitySelf();
                 const Scalar dirichletValue = problem.dirichlet(element, scvf)[Indices::velocity(scvf.directionIndex())];
                 residual = velocity - dirichletValue;
-            }
-            else if(bcTypes.isNeumann(Indices::velocity(scvf.directionIndex())))
-            {
-                // the source term has already been accounted for, here we
-                // add a given Neumann flux for the face on the boundary itself ...
-                const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
-                residual += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
-                                           * extrusionFactor * scvf.area();
-
-                // ... and treat the fluxes of the remaining (frontal and lateral) faces of the staggered control volume
-                residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
             }
             else if(bcTypes.isSymmetry())
             {

@@ -104,6 +104,8 @@ public:
     {
         if (!scvf.boundary())
             residual += asImp_().computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+        else
+            residual += asImp_().computeBoundaryFluxForCellCenter(problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
     }
 
     //! Evaluate the source terms for a cell center residual
@@ -169,19 +171,6 @@ public:
         storage /= timeLoop_->timeStepSize();
 
         residual += storage;
-    }
-
-    //! Evaluate the boundary conditions for a cell center residual
-    void evalBoundaryForCellCenter(CellCenterResidualValue& residual,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const ElementVolumeVariables& elemVolVars,
-                                   const ElementFaceVariables& elemFaceVars,
-                                   const ElementBoundaryTypes& bcTypes,
-                                   const ElementFluxVariablesCache& elemFluxVarsCache) const
-    {
-        asImp_().evalBoundaryForCellCenter_(residual, problem, element, fvGeometry, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache);
     }
 
     //! for compatibility with FVLocalAssemblerBase
