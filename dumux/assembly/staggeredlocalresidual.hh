@@ -234,6 +234,8 @@ public:
     {
         if (!scvf.boundary())
             residual += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+        else
+            residual += asImp_().computeBoundaryFluxForFace(problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
     }
 
     //! Evaluate the source terms for a face residual
@@ -296,20 +298,6 @@ public:
         storage /= timeLoop_->timeStepSize();
 
         residual += storage;
-    }
-
-    //! Evaluate the boundary conditions for a face residual
-    void evalBoundaryForFace(FaceResidualValue& residual,
-                             const Problem& problem,
-                             const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const ElementFaceVariables& elemFaceVars,
-                             const ElementBoundaryTypes& bcTypes,
-                             const ElementFluxVariablesCache& elemFluxVarsCache,
-                             const SubControlVolumeFace& scvf) const
-    {
-        asImp_().evalBoundaryForFace_(residual, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache);
     }
 
     //! If no solution has been set, we treat the problem as stationary.

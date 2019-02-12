@@ -249,7 +249,9 @@ public:
         if (!this->assembler().isStationaryProblem())
             residual += evalLocalStorageResidualForFace(scvf);
 
-        this->localResidual().evalBoundaryForFace(residual, problem(), this->element(), this->fvGeometry(), elemVolVars, elemFaceVars, this->elemBcTypes(), this->elemFluxVarsCache(), scvf);
+        this->localResidual().evalDirichletBoundariesForFace(residual, this->problem(), this->element(),
+                                                             this->fvGeometry(), scvf, elemVolVars, elemFaceVars,
+                                                             this->elemBcTypes(), this->elemFluxVarsCache());
 
         return residual;
     }

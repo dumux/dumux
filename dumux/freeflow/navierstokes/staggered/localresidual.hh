@@ -181,8 +181,6 @@ public:
         return fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
     }
 
-protected:
-
     /*!
      * \brief Evaluate boundary conditions for a cell center dof
      */
@@ -242,15 +240,15 @@ protected:
      * \brief Evaluate boundary conditions for a face dof
      */
     template<class ElementBoundaryTypes>
-    void evalBoundaryForFace_(FaceResidual& residual,
-                              const Problem& problem,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const SubControlVolumeFace& scvf,
-                              const ElementVolumeVariables& elemVolVars,
-                              const ElementFaceVariables& elemFaceVars,
-                              const ElementBoundaryTypes& elemBcTypes,
-                              const ElementFluxVariablesCache& elemFluxVarsCache) const
+    void evalBoundaryForFace(FaceResidual& residual,
+                             const Problem& problem,
+                             const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const SubControlVolumeFace& scvf,
+                             const ElementVolumeVariables& elemVolVars,
+                             const ElementFaceVariables& elemFaceVars,
+                             const ElementBoundaryTypes& elemBcTypes,
+                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         if (scvf.boundary())
         {
@@ -283,16 +281,47 @@ protected:
                 const Scalar fixedValue = 0.0;
                 residual = velocity - fixedValue;
             }
+        }
+    }
+
+    /*!
+     * \brief Evaluate boundary boundary fluxes for a face dof
+     */
+    template<class ElementBoundaryTypes>
+    FaceResidual computeBoundaryFluxForFace(const Problem& problem,
+                                            const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const SubControlVolumeFace& scvf,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const ElementFaceVariables& elemFaceVars,
+                                            const ElementBoundaryTypes& elemBcTypes,
+                                            const ElementFluxVariablesCache& elemFluxVarsCache) const
+    {
+        FaceResidual result(0.0);
+
+        if (scvf.boundary())
+        {
+            // handle the actual boundary conditions:
+            const auto bcTypes = problem.boundaryTypes(element, scvf);
+            if (bcTypes.isNeumann(Indices::velocity(scvf.directionIndex())))
+            {
+                // the source term has already been accounted for, here we
+                // add a given Neumann flux for the face on the boundary itself ...
+                const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+                result = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
+                                         * extrusionFactor * scvf.area();
+
+                // ... and treat the fluxes of the remaining (frontal and lateral) faces of the staggered control volume
+                result += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+            }
             else if(bcTypes.isDirichlet(Indices::pressureIdx))
             {
                 // if none of the above conditions apply, we are at an "fixed pressure" boundary for which the resdiual of the momentum balance needs to be assembled
                 // as if it where inside the domain and not on the boundary (source term has already been acounted for)
-                residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+                result = computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
             }
-            else
-                DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions "
-                           "for the momentum equations at global position " << scvf.center());
         }
+        return result;
     }
 
 private:
