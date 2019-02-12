@@ -41,7 +41,7 @@ namespace Dumux {
  * \ingroup MultiDomain
  * \brief The interface of the coupling manager for multi domain problems
  */
-template<class Traits>
+template<class Traits, bool implicitAssembly = true>
 class CouplingManager
 {
     template<std::size_t id> using SubDomainTypeTag = typename Traits::template SubDomain<id>::TypeTag;
@@ -59,6 +59,12 @@ public:
 
     //! the type of the solution vector
     using SolutionVector = typename Traits::SolutionVector;
+
+    /*!
+     * \brief Returns true if the coupling manager considers implicit assembly.
+     */
+    static constexpr bool useImplicitAssembly()
+    { return implicitAssembly; }
 
     /*!
      * \name member functions concerning the coupling stencils
@@ -186,6 +192,12 @@ public:
     void updateSolution(const SolutionVector& curSol)
     { curSol_ = curSol; }
 
+    /*!
+     * \brief Sets a pointer to the previous solution vector
+     */
+    void setPrevSol(const SolutionVector& prevSol)
+    { prevSol_ = &prevSol; }
+
     // \}
 
     /*!
@@ -285,12 +297,28 @@ protected:
     const SolutionVector& curSol() const
     { return curSol_; }
 
+    /*!
+     * \brief the previous solution vector of the coupled problem
+     */
+    const SolutionVector& prevSol() const
+    {
+        if (prevSol_)
+            return *prevSol_;
+        else
+            DUNE_THROW(Dune::InvalidStateException, "The prevSol pointer was not set. Use setPrevSol() before calling this function");
+    }
+
 private:
     /*!
      * \brief the solution vector of the coupled problem
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
      */
     SolutionVector curSol_;
+
+    /*!
+     * \brief a pointer to the solution vector of the previous time step of the coupled problem
+     */
+     const SolutionVector* prevSol_;
 
     /*!
      * \brief A tuple of std::weak_ptrs to the sub problems

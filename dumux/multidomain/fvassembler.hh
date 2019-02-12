@@ -129,6 +129,8 @@ private:
     template<std::size_t id>
     using SubDomainAssembler = typename SubDomainAssemblerType<FVGridGeometry<id>::discMethod, id>::type;
 
+    static_assert(isImplicit() == CouplingManager::useImplicitAssembly(), "The FVAssembler and the CouplingManager need to be set for the same type of assembly (implicit/explicit)");
+
 public:
 
 
