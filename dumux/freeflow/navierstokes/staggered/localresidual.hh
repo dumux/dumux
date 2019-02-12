@@ -78,9 +78,6 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
-    static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
-    static constexpr bool isCompositional = ModelTraits::numFluidComponents() > 1;
-
 public:
     using EnergyLocalResidual = FreeFlowEnergyLocalResidual<FVGridGeometry, FluxVariables, ModelTraits::enableEnergyBalance(), (ModelTraits::numFluidComponents() > 1)>;
 

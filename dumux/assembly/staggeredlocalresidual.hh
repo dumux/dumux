@@ -51,7 +51,6 @@ class StaggeredLocalResidual
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     using CellCenterResidual = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FaceResidual = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
@@ -99,11 +98,11 @@ public:
                                const FVElementGeometry& fvGeometry,
                                const ElementVolumeVariables& elemVolVars,
                                const ElementFaceVariables& elemFaceVars,
-                               const ElementBoundaryTypes& bcTypes,
+                               const ElementBoundaryTypes& elemBcTypes,
                                const ElementFluxVariablesCache& elemFluxVarsCache,
                                const SubControlVolumeFace& scvf) const
     {
-        if(!scvf.boundary())
+        if (!scvf.boundary())
             residual += asImp_().computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
     }
 
@@ -229,11 +228,11 @@ public:
                          const FVElementGeometry& fvGeometry,
                          const ElementVolumeVariables& elemVolVars,
                          const ElementFaceVariables& elemFaceVars,
-                         const ElementBoundaryTypes& bcTypes,
+                         const ElementBoundaryTypes& elemBcTypes,
                          const ElementFluxVariablesCache& elemFluxVarsCache,
                          const SubControlVolumeFace& scvf) const
     {
-        if(!scvf.boundary())
+        if (!scvf.boundary())
             residual += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
     }
 
