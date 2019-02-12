@@ -166,9 +166,6 @@ public:
                 }
             }
         }
-
-        const auto exactIntegral = M_PI*radius*radius*height;
-        std::cout << "Integration error in %: " << std::abs(exactIntegral-integral)/exactIntegral*100.0 << std::endl;
     }
 
     Scalar integrationElement(std::size_t i) const
