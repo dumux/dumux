@@ -487,7 +487,7 @@ protected:
     }
 
     template<class Geometry, class GlobalPosition>
-    Scalar computeDistance(const Geometry& geometry, const GlobalPosition& p)
+    Scalar computeDistance(const Geometry& geometry, const GlobalPosition& p) const
     {
         Scalar avgDist = 0.0;
         const auto& quad = Dune::QuadratureRules<Scalar, bulkDim>::rule(geometry.type(), 5);
@@ -497,6 +497,20 @@ protected:
             avgDist += (globalPos-p).two_norm()*qp.weight();
         }
         return avgDist;
+    }
+
+    template<class Geometry, class GlobalPosition>
+    Scalar computeDistanceToCenter(const Geometry& geometry, const GlobalPosition& p) const
+    {
+        const auto a = geometry.corner(0);
+        const auto b = geometry.corner(1);
+        const auto ab = b - a;
+        const auto t = (p - a)*ab/ab.two_norm2();
+
+        // compute distance
+        auto proj = a; proj.axpy(t, ab);
+        const auto r = (proj - p).two_norm();
+        return r;
     }
 
     //! Return reference to point source data vector member
