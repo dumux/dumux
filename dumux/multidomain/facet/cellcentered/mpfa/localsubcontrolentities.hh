@@ -25,6 +25,8 @@
 #ifndef DUMUX_MULTDOMAIN_FACET_CC_MPFA_O_LOCAL_SUBCONTROLENTITIES_HH
 #define DUMUX_MULTDOMAIN_FACET_CC_MPFA_O_LOCAL_SUBCONTROLENTITIES_HH
 
+#include <array>
+
 #include <dune/common/fvector.hh>
 #include <dumux/discretization/cellcentered/mpfa/omethod/localsubcontrolentities.hh>
 

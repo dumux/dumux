@@ -26,6 +26,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_HELPER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_ASSEMBLER_HELPER_HH
 
+#include <algorithm>
 #include <vector>
 #include <cassert>
 #include <utility>

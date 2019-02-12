@@ -23,6 +23,7 @@
 #define DUMUX_CCTPFA_FACETCOUPLING_MAPPER_HH
 
 #include <dune/common/indices.hh>
+#include <dune/common/float_cmp.hh>
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>

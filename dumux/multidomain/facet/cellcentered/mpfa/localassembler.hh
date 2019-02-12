@@ -27,6 +27,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassemblerbase.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassemblerhelper.hh>
