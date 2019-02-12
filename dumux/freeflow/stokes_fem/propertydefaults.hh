@@ -91,12 +91,8 @@ SET_TYPE_PROP(BoxStokes, LinearSolver, UMFPackBackend<TypeTag>);
 //! the Model property
 SET_TYPE_PROP(BoxStokes, Model, StokesFemModel<TypeTag>);
 
-//! the VolumeVariables property
-//SET_TYPE_PROP(BoxStokes, VolumeVariables, StokesVolumeVariables<TypeTag>);
-
 //! define the VolumeVariables
 SET_TYPE_PROP(BoxStokes, SecondaryVariables, StokesSecondaryVariables<TypeTag>);
-
 
 //! the FluxVariables property
 SET_TYPE_PROP(BoxStokes, FluxVariables, StokesFluxVariables<TypeTag>);

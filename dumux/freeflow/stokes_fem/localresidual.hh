@@ -16,16 +16,6 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- *
- *
- *
- * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the Stokes box model.
- */
-
-
 #ifndef DUMUX_STOKES_LOCAL_RESIDUAL_BASE_HH
 #define DUMUX_STOKES_LOCAL_RESIDUAL_BASE_HH
 
@@ -34,12 +24,6 @@
 
 #include <dumux/implicit/model.hh>
 #include "properties.hh"
-
-//non-existent volumevariables
-//#include "volumevariables.hh"
-
-//non-existent fluxvariables
-//#include "fluxvariables.hh"
 
 #include <dune/common/fmatrix.hh>
 
@@ -131,35 +115,10 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     const SecondaryVariables& secVars,
     const ElementSolution& elemSol) const
     {
-//        PrimaryVariables storage(secVars.density());
-//        for (int dir = 0; dir < dim; ++dir)
-//            storage[Indices::momentum(dir)] *= secVars.velocity()[dir];
-//        storage[dim] = 0;
-
-
     PrimaryVariables storage(0.0);
 
     for (int dir = 0; dir < dim; ++dir)
         storage[Indices::momentum(dir)] += secVars.velocity()[dir];
-
-
-
-
-//std::cout <<  "myLocResCurSecVarsPressure: " << secVars.pressure() << std::endl;
-
-        //        PrimaryVariables storage(0.0);
-        //
-        //        for (int dir = 0; dir < dim; ++dir)
-        //        storage[Indices::momentum(dir)] = secVars.velocity()[dir];
-        //
-        //        storage *= secVars.density();
-
-
-        //std::cout << "MyLocResdensityStorage: " << secVars.density() << std::endl;
-        //std::cout << "pressureStorage: " << secVars.pressure() << std::endl;
-        //printvector(std::cout, secVars.velocity(), "MyLocResStorageVelocity: ","");
-        //printvector(std::cout, secVars.velocity(), "MyLocResStorageVelocity: ","");
-//printvector(std::cout, storage, "MyLocStorage: ","");
 
         return storage; //changed from void to PrimaryVariables as its required in geomechanics
     }
@@ -179,32 +138,14 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     const SecondaryVariables& secVars,
     const ElementSolution& elemSol) const
     {
-    /*
-      *folgende Gradientenberechnung statt update-funktion
-     */
-//    StressTensor dyad(0.0);
-// dyad = secVars.velocity().dot(secVars.velocity());
-// printmatrix(std::cout, dyad, "dyad: ", "");
-
-// StressTensor dyad2(0.0);
-// dyad2[0][0] = secVars.velocity()[0]*secVars.velocity()[0];
-// dyad2[0][1] = secVars.velocity()[0]*secVars.velocity()[1];
-// dyad2[1][0] = secVars.velocity()[1]*secVars.velocity()[0];
-// dyad2[1][1] = secVars.velocity()[1]*secVars.velocity()[1];
-// printmatrix(std::cout, dyad2, "dyad2: ", "");
-
     FluxTermType flux(0.0);
 
     StressTensor gradV(0.0);
     for (int dir = 0; dir < dim; ++dir){
         for (unsigned int i = 0; i < elemSol.size(); ++i){
-    //std::cout << "myLocRes i: " << i << std::endl;
-    //printvector(std::cout, ipData.shapeGradients(i), "myLocResShapeGradients(i)", "");
-
             gradV[dir].axpy(elemSol[i][Indices::momentum(dir)], ipData.shapeGradients(i));
         }
     }
-
 
     StressTensor gradSym(0.0);
     for(int i=0; i<dim; i++){
@@ -217,93 +158,54 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     sigma = gradSym;
     sigma *= secVars.kinematicViscosity();
 
-
 //    sigma *= -1;
-
-
-
-//        std::cout << secVars.pressure() << std::endl;
-
-//printmatrix(std::cout, sigma, "MyLocResSigmaPrePressure", "");
-
-
-
 
     Scalar divV(0.0);
     for (unsigned int i = 0; i < elemSol.size(); ++i){
         for (int dir = 0; dir < dim; ++dir){
-    //std::cout << "myLocRes i: " << i << std::endl;
-    //printvector(std::cout, ipData.shapeGradients(i), "myLocResShapeGradients(i)", "");
-
             divV += ipData.shapeGradients(i)[dir]*elemSol[i][Indices::momentum(dir)];
         }
     }
 
-
-    Scalar eps = secVars.penaltyEps();
-//    Scalar eps = secVars.epsGeneral(secVars.velocity(), secVars.pressure());
+//    Scalar eps = secVars.penaltyEps();
+    Scalar eps = secVars.epsGeneral(secVars.velocity(), secVars.pressure());
 //    eps /= secVars.density();
 
     divV /= eps;
     divV /= secVars.density();
 
+//    divV = -secVars.pressure();
+//    divV /= secVars.density();
     /*******************
      ***************
      */
 //mit dichte multiplizieren?
    // divV *= secVars.density();
 
+
+
     for(int i=0; i<dim; i++){
         sigma[i][i] += divV;
     }
 
-//printmatrix(std::cout, sigma, "MyLocResSigmaPostPressure", "");
-
-
-        //      //add advective term
-        //      StressTensor advTerm(0.0);
-        //      for (int dir = 0; dir < dim; ++dir){
-        //          for (unsigned int i = 0; i < elemSol.size(); ++i){
-        //              advTerm[dir].axpy(elemSol[i][Indices::momentum(dir)]*elemSol[i][Indices::momentum(dir)], ipData.shapeValues(i));
-        //          }
-        //       }
-        //
-        //       advTerm *= secVars.density();
-
 
     StressTensor advTerm(0.0);
-//    	for(unsigned int i = 0; i < elemSol.size(); ++i){
-//    		advTerm[0][0] =  elemSol[i][0]*elemSol[i][0]*ipData.shapeValues(i)[0]*ipData.shapeValues(i)[0];
-//    		advTerm[1][0] =  elemSol[i][0]*elemSol[i][1]*ipData.shapeValues(i)[0]*ipData.shapeValues(i)[1];
-//    		advTerm[0][1] =  elemSol[i][1]*elemSol[i][0]*ipData.shapeValues(i)[1]*ipData.shapeValues(i)[0];
-//    		advTerm[0][0] =  elemSol[i][1]*elemSol[i][1]*ipData.shapeValues(i)[1]*ipData.shapeValues(i)[1];
-//    	}
+
     advTerm[0][0] = secVars.velocity()[0]*secVars.velocity()[0];
     advTerm[0][1] = secVars.velocity()[0]*secVars.velocity()[1];
     advTerm[1][0] = secVars.velocity()[1]*secVars.velocity()[0];
     advTerm[1][1] = secVars.velocity()[1]*secVars.velocity()[1];
 
-        //printmatrix(std::cout, flux, "fluxVor", "");
-
     for(int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; ++momentumIdx)
     {
         for(int col=0; col<dim; col++)
         {
-            flux[momentumIdx][col] -= sigma[momentumIdx][col];//+advTerm[momentumIdx][col];
+            flux[momentumIdx][col] -= sigma[momentumIdx][col];
             flux[momentumIdx][col] += advTerm[momentumIdx][col];
         }
     }
 
-//printmatrix(std::cout, flux, "MyLocResfluxNachAdvDiff", "");
-
-
-
    auto velocityU = secVars.velocity();
-
-
-//std::cout << "myLocResDensity: " << secVars.density() << std::endl;
-
-//printvector(std::cout, velocityU, "MyLocResFluxVelocityU: ","");
 
    // velocityU *= secVars.density();
 
@@ -312,12 +214,6 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     {
          flux[dim][col]+= velocityU[col];
     }
-
-//        printmatrix(std::cout, flux, "MyLocResflux", "");
-
-        //flux *= -1;    //weil in implicit/fem/localresidual: ... -flux
-        //printmatrix(std::cout, flux, "fluxNachMass", "");
-
 
     return flux;
     }
@@ -339,113 +235,31 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     const SecondaryVariables& secVars,
     const ElementSolution& elemSol)
     {
-    PrimaryVariables source(0.0);
-        //    source = problem.sourceAtPos(ipData.ipGlobal());
+      PrimaryVariables source(0.0);
 
- //   source += ParentType::computeSource(element, ipData, secVars, elemSol);
+      Scalar epsTimesP = secVars.epsGeneral(secVars.velocity(), secVars.pressure());
+      epsTimesP*= secVars.pressure();
+   //   epsTimesP*= secVars.kinematicViscosity();
+      source[dim] -= epsTimesP;
 
-
-//
-//        Scalar divV(0.0);
-//        for (unsigned int i = 0; i < elemSol.size(); ++i){
-//            for (int dir = 0; dir < dim; ++dir){
-//        //std::cout << "myLocRes i: " << i << std::endl;
-//        //printvector(std::cout, ipData.shapeGradients(i), "myLocResShapeGradients(i)", "");
-//
-//                divV += ipData.shapeGradients(i)[dir]*elemSol[i][Indices::momentum(dir)];
-//            }
-//        }
-//
-//
-//        Scalar eps = secVars.penaltyEps();
-//    //    Scalar eps = secVars.epsGeneral(secVars.velocity(), secVars.pressure());
-//
-//
-//        divV /= eps;
-//
-//
-//
-//        StressTensor gradP(0.0);
-//
-//            for (unsigned int i = 0; i < elemSol.size(); ++i){
-//        //std::cout << "myLocRes i: " << i << std::endl;
-//        //printvector(std::cout, ipData.shapeGradients(i), "myLocResShapeGradients(i)", "");
-//
-//                gradP[0].axpy(divV, ipData.shapeGradients(i));
-//            }
-//
-//
-//    source[0] += gradP[0][0];
-//    source[1] += gradP[0][1];
-
-
-    //add penalty function as source term
-    Scalar epsTimesP = secVars.penaltyEps();
-    epsTimesP*= secVars.pressure();
- //   epsTimesP*= secVars.kinematicViscosity();
-    source[dim] -= epsTimesP;
-
-
-//    source[dim] += secVars.epsGeneral(secVars.velocity(), secVars.pressure())*secVars.pressure();
-
-//    source[dim] = (secVars.penaltyEpsTimesP(secVars.velocity()));
-
-        //printvector(std::cout, source, "MyLocRessourceEnd: ","");
-    return source;
+      return source;
     }
 
 
+    Scalar massStab(const Element& element,
+            const IpData& ipData,
+            const SecondaryVariables& secVars,
+            const ElementSolution& elemSol)
+    {
+        //for mass balance
+        Scalar massStab(0.0);
+        for (unsigned int i = 0; i < elemSol.size(); ++i){
+            massStab += elemSol[i][0]*ipData.shapeGradients(i)[0] + elemSol[i][1]*ipData.shapeGradients(i)[1];
+        }
 
-//    DimVector computeStabilizationTerms(const Element& element,
-//        	    const IpData& ipData,
-//        	    const SecondaryVariables& secVars,
-//        	    const ElementSolution& elemSol)
-//        {
-//        DimVector stabTerms(0.0);
-//
-//        StressTensor advTerm(0.0);
-//        advTerm[0][0] = secVars.velocity()[0]*secVars.velocity()[0];
-//        advTerm[0][1] = secVars.velocity()[0]*secVars.velocity()[1];
-//        advTerm[1][0] = secVars.velocity()[1]*secVars.velocity()[0];
-//        advTerm[1][1] = secVars.velocity()[1]*secVars.velocity()[1];
-//
-//    printmatrix(std::cout, advTerm, "myLocResadvTerm", "");
-//    printvector(std::cout, advTerm[0], "myLocResadvTerm[0]", "");
-//
-//        DimVector divAdvTerm(0.0);
-//
-//        for (unsigned int i = 0; i < elemSol.size(); ++i){
-//        	printvector(std::cout, ipData.shapeGradients(i), "myLocResipData.shapeGradients(i)", "");
-//        	divAdvTerm[0] += advTerm[0] * ipData.shapeGradients(i);
-//        	divAdvTerm[1] += advTerm[1] * ipData.shapeGradients(i);
-//        }
-//
-//
-//
-//    printvector(std::cout, divAdvTerm, "myLocResdivAdvTerm", "");
-//
-//    //    DimVector divAdvTerm(0.0);
-//    //    for (unsigned int i = 0; i < elemSol.size(); ++i){
-//    //        divAdvTerm[0] += elemSol[i][0]*elemSol[i][0]*ipData.shapeGradients(i)[0] + elemSol[i][0]*elemSol[i][1]*ipData.shapeGradients(i)[1];
-//    //        divAdvTerm[1] += elemSol[i][1]*elemSol[i][0]*ipData.shapeGradients(i)[0] + elemSol[i][1]*elemSol[i][1]*ipData.shapeGradients(i)[1];
-//    //    }
-//
-//    //std::cout << "myLocResDynamicVisc" << secVars.dynamicViscosity() << std::endl;
-//    //std::cout << "myLocResKinematicVisc" << secVars.kinematicViscosity() << std::endl;
-//
-//
-//        divAdvTerm *= secVars.stabAlpha(secVars.velocity()[0], secVars.kinematicViscosity(), secVars.meshWidthX());
-//    printvector(std::cout, divAdvTerm, "myLocResdivAdvTermTimesStabAlpha", "");
-//    	divAdvTerm *= secVars.meshWidthX();
-//    printvector(std::cout, divAdvTerm, "myLocResdivAdvTermTimesMeshWidth", "");
-//
-//    	stabTerms[0] = divAdvTerm[0];
-//    	stabTerms[1] = divAdvTerm[1];
-//
-//    printvector(std::cout, stabTerms, "myLocResstabTerms", "");
-//
-//        return stabTerms;
-//        }
+        return massStab;
+    }
+
 
 
 
@@ -454,72 +268,49 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
             const SecondaryVariables& secVars,
             const ElementSolution& elemSol)
     {
-    DimVector stabTerms(0.0);
+        DimVector stabTerms(0.0);
 
-    StressTensor advTerm(0.0);
-//    advTerm[0][0] = secVars.velocity()[0]*secVars.velocity()[0];
-//    advTerm[0][1] = secVars.velocity()[0]*secVars.velocity()[1];
-//    advTerm[1][0] = secVars.velocity()[1]*secVars.velocity()[0];
-//    advTerm[1][1] = secVars.velocity()[1]*secVars.velocity()[1];
-//
-//    printmatrix(std::cout, advTerm, "myLocResadvTerm", "");
-//    //printvector(std::cout, advTerm[0], "myLocResadvTerm[0]", "");
-//
-//        DimVector divAdvTerm(0.0);
-//
-//        for (unsigned int i = 0; i < elemSol.size(); ++i){
-//    //printvector(std::cout, ipData.shapeGradients(i), "myLocResipData.shapeGradients(i)", "");
-//        	divAdvTerm[0] += advTerm[0] * ipData.shapeGradients(i);
-//        	divAdvTerm[1] += advTerm[1] * ipData.shapeGradients(i);
-//        }
-//printvector(std::cout, divAdvTerm, "myLocResdivAdvTerm", "");
+        StressTensor advTerm(0.0);
+        DimVector divAdvTerm(0.0);
 
+        for (unsigned int i = 0; i < elemSol.size(); ++i){
+            divAdvTerm[0] += 2*elemSol[i][0]*elemSol[i][0]*ipData.shapeValues(i)*ipData.shapeGradients(i)[0] + 2*elemSol[i][1]*elemSol[i][0]*ipData.shapeValues(i)*ipData.shapeGradients(i)[1];
+            divAdvTerm[1] += 2*elemSol[i][0]*elemSol[i][1]*ipData.shapeValues(i)*ipData.shapeGradients(i)[0] + 2*elemSol[i][1]*elemSol[i][1]*ipData.shapeValues(i)*ipData.shapeGradients(i)[1];
+        }
 
+        //for diffusive part, doesnt fall off entirely
+        Scalar meshQuot = secVars.meshWidthX()*secVars.meshWidthY();
+        meshQuot = 1/meshQuot;
 
-    DimVector divAdvTerm(0.0);
-    for (unsigned int i = 0; i < elemSol.size(); ++i){
-        divAdvTerm[0] += elemSol[i][0]*elemSol[i][0]*ipData.shapeGradients(i)[0] + elemSol[i][0]*elemSol[i][1]*ipData.shapeGradients(i)[1];
-        divAdvTerm[1] += elemSol[i][1]*elemSol[i][0]*ipData.shapeGradients(i)[0] + elemSol[i][1]*elemSol[i][1]*ipData.shapeGradients(i)[1];
-    }
+        DimVector divGradVel(0.0);
+        for (unsigned int i = 0; i < elemSol.size(); ++i){
 
-//std::cout << "myLocResDynamicVisc" << secVars.dynamicViscosity() << std::endl;
-//std::cout << "myLocResKinematicVisc" << secVars.kinematicViscosity() << std::endl;
-
-    Scalar stabTerm(0.0), tau(0.0), S(0.0);
-
-//    tau = secVars.meshWidthX()*secVars.stabAlpha(secVars.velocity()[0], secVars.kinematicViscosity(), secVars.meshWidthX())*secVars.velocity()[0] +
-//          secVars.meshWidthY()*secVars.stabAlpha(secVars.velocity()[1], secVars.kinematicViscosity(), secVars.meshWidthY())*secVars.velocity()[1];
-    tau = 1*secVars.stabAlpha(secVars.velocity()[0], secVars.kinematicViscosity(), 1)*secVars.velocity()[0] +
-          1*secVars.stabAlpha(secVars.velocity()[1], secVars.kinematicViscosity(), 1)*secVars.velocity()[1];
-    tau /= 2;
-//std::cout << "myLocResTauPreS: " << tau << std::endl;
+            divGradVel[0] += elemSol[i][1]*meshQuot;
+            divGradVel[1] += elemSol[i][0]*meshQuot;
+        }
 
 
-    S = secVars.velocity()[0]*secVars.velocity()[0] + secVars.velocity()[1]*secVars.velocity()[1];
-//std::cout << "myLocResS: " << S << std::endl;
+        DimVector divDivIVel = divGradVel;
+        DimVector diffus = divGradVel + divDivIVel;
 
-    if(S != 0){
-    tau /= S;
-//std::cout << "myLocResPostS: " << tau << std::endl;
+        Scalar stabTerm(0.0), tau(0.0), S(0.0);
 
+        tau = 1*secVars.stabAlpha(secVars.velocity()[0], secVars.kinematicViscosity(), 1)*secVars.velocity()[0] +
+              1*secVars.stabAlpha(secVars.velocity()[1], secVars.kinematicViscosity(), 1)*secVars.velocity()[1];
+        tau /= 2;
 
+        S = secVars.velocity()[0]*secVars.velocity()[0] + secVars.velocity()[1]*secVars.velocity()[1];
 
+        if(S != 0){
+        tau /= S;
 
-//    divAdvTerm *= secVars.stabAlpha(secVars.velocity()[0], secVars.kinematicViscosity(), secVars.meshWidthX());
-//printvector(std::cout, divAdvTerm, "myLocResdivAdvTermTimesStabAlpha", "");
-//	divAdvTerm *= secVars.meshWidthX();
-//printvector(std::cout, divAdvTerm, "myLocResdivAdvTermTimesMeshWidth", "");
+        divAdvTerm *= tau;
 
+        stabTerms[0] = divAdvTerm[0];
+        stabTerms[1] = divAdvTerm[1];
 
-    divAdvTerm *= tau;
-
-    stabTerms[0] = divAdvTerm[0];
-    stabTerms[1] = divAdvTerm[1];
-
-//printvector(std::cout, stabTerms, "myLocResstabTerms", "");
-    }
-
-    return stabTerms;
+        }
+        return stabTerms;
     }
 
 

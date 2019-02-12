@@ -165,21 +165,6 @@ protected:
         Valgrind::CheckDefined(velocityGrad_);
     }
 
-    /*
-    void determineUpwindDirection_(const ElementVolumeVariables &elemVolVars)
-    {
-
-        // set the upstream and downstream vertices
-        upstreamIdx_ = face().i;
-        downstreamIdx_ = face().j;
-
-        if (normalVelocity() < 0)
-        {
-            using std::swap;
-            swap(upstreamIdx_, downstreamIdx_);
-        }
-    }
-    */
 
 public:
     /*!
@@ -194,17 +179,6 @@ public:
             return fvGeometry_().subContVolFace[faceIdx_];
     }
 
-    /*!
-     * \brief Return the average volume of the upstream and the downstream sub-control volume;
-     *        this is required for the stabilization.
-     */
-    /*
-    const Scalar averageSCVVolume() const
-    {
-        return 0.5*(fvGeometry_().subContVol[upstreamIdx_].volume +
-                fvGeometry_().subContVol[downstreamIdx_].volume);
-    }
-     */
 
     /*!
      * \brief Return the pressure \f$\mathrm{[Pa]}\f$ at the integration
@@ -274,17 +248,6 @@ public:
     const Scalar kinematicEddyViscosity() const
     { return 0; }
 
-    /*!
-     * \brief Return the local index of the upstream sub-control volume.
-     */
-   // int upstreamIdx() const
-    //{ return upstreamIdx_; }
-
-    /*!
-     * \brief Return the local index of the downstream sub-control volume.
-     */
-    //int downstreamIdx() const
-    //{ return downstreamIdx_; }
 
     /*!
      * \brief Indicates if a face is on a boundary. Used for in the
@@ -311,10 +274,6 @@ protected:
     DimVector pressureGrad_;
     DimMatrix velocityGrad_;
 
-    // local index of the upwind vertex
-   // int upstreamIdx_;
-    // local index of the downwind vertex
-    //int downstreamIdx_;
     // the index of the considered face
     int faceIdx_;
 

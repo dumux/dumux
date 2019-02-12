@@ -1,0 +1,25 @@
+[TimeManager]
+DtInitial = 0.0001 #[s]
+TEnd = 2 #[s]
+
+[Grid]
+UpperRight = 5 1
+Cells = 19 5#8 8   # 32 cells in x and 32 in y direction
+
+[Stokes]
+StabilizationAlpha = 0.0 # a stabilization factor. Set negative for stabilization and to zero for no stabilization
+
+[Problem]
+EnableGravity = 0 # disable gravity
+PenEps = 0.001
+LidVelocity = 10.0
+IsStabilized = 0
+InletVelocity = 1000
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Component]
+LiquidKinematicViscosity = 1
+LiquidDensity = 1

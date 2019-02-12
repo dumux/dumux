@@ -63,21 +63,21 @@ SET_TYPE_PROP(StokesFemTestProblemDrivenCavity, Problem, StokesFemTestProblemDri
 //              FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
 //                                            N2<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
-////// Use nitrogen as gas phase
-SET_TYPE_PROP(StokesFemTestProblemDrivenCavity, Fluid,
-              FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                        SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
-
 // Use nitrogen as gas phase
 //SET_TYPE_PROP(StokesFemTestProblem2, Fluid,
 //              FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
 //                                            N2<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Use nitrogen as gas phase
-//SET_TYPE_PROP(StokesFemTestProblem2, Fluid,
-//              FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-//                                            Constant<TypeTag ,typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+SET_TYPE_PROP(StokesFemTestProblemDrivenCavity, Fluid,
+              FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                            Constant<TypeTag ,typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
+
+////// Use simple h2o
+//SET_TYPE_PROP(StokesFemTestProblemDrivenCavity, Fluid,
+//              FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+//                                        SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 //added from elastic
 // Quadrature order
@@ -136,8 +136,6 @@ class StokesFemTestProblemDrivenCavity : public ImplicitFemProblem<TypeTag>
     using Fluid = typename GET_PROP_TYPE(TypeTag, Fluid);
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 
-//added for running purposes
-    //from stokes
  //   typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
@@ -146,16 +144,11 @@ public:
         : ParentType(timeManager, gridView)
     {
         eps_ = 1e-6;
-        lidVelocity_ = 1.0;
+        lidVelocity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.LidVelocity);
         cellSizeX_ = GET_RUNTIME_PARAM(TypeTag, DimVector, Grid.UpperRight)[0]/GET_RUNTIME_PARAM(TypeTag, DimVector, Grid.Cells)[0];
         inletVelocity_ = 10.0;
+        kinematicViscosity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Component.LiquidKinematicViscosity);
     }
-
-
-    /*!
-     * \name Problem parameters
-     */
-    // \{
 
     /*!
      * \brief The problem name.
@@ -189,11 +182,7 @@ public:
        {
            return PrimaryVariables(0.0);
        }
-       // \}
-      /*!
-        * \name Boundary conditions
-        */
-       // \{
+
 
       /*!
         * \brief Specifies which kind of boundary condition should be
@@ -230,8 +219,11 @@ public:
            values[Indices::velocityXIdx] = 0.0;
            values[Indices::velocityYIdx] = 0.0;
 
-           if(globalPos[1] > this->bBoxMax()[1] - eps_)
+//           if(globalPos[1] > this->bBoxMax()[1] - eps_)
+           if(onUpperBoundary_(globalPos))
                values[Indices::velocityXIdx] = lidVelocity_;
+
+  //         values = analyticalSolution(globalPos);
 
            return values;
        }
@@ -251,90 +243,6 @@ public:
            return values;
        }
 
-       // \}
-
-//____________________________________________________________________________________________________________________________________
-//       //ChannelTest
-//       PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-//           {
-//               return PrimaryVariables(0.0);
-//           }
-//           // \}
-//          /*!
-//            * \name Boundary conditions
-//            */
-//           // \{
-//
-//          /*!
-//            * \brief Specifies which kind of boundary condition should be
-//            *        used for which equation on a given boundary control volume.
-//            *
-//            * \param globalPos The position of the center of the finite volume
-//            */
-//           BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
-//           {
-//               BoundaryTypes values;
-//
-//               if(isInlet(globalPos))
-//               {
-//                   values.setDirichlet(Indices::velocityXIdx);
-//                   values.setDirichlet(Indices::velocityYIdx);
-//               }
-//               else if(isOutlet(globalPos))
-//               {
-//                   values.setDirichlet(Indices::pressureIdx);
-//               }
-//               else
-//               {
-//                   values.setDirichlet(Indices::velocityXIdx);
-//                   values.setDirichlet(Indices::velocityYIdx);
-//               }
-//
-//               return values;
-//           }
-//
-//          /*!
-//            * \brief Evaluate the boundary conditions for a dirichlet
-//            *        control volume.
-//            *
-//            * \param globalPos The center of the finite volume which ought to be set.
-//            */
-//           PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
-//           {
-//               PrimaryVariables values = initialAtPos(globalPos);
-//
-//               if(isInlet(globalPos))
-//               {
-//                   values[Indices::velocityXIdx] = inletVelocity_;
-//               }
-//
-//               return values;
-//           }
-//
-//           // \}
-//
-//          /*!
-//            * \name Volume terms
-//            */
-//           // \{
-//
-//          /*!
-//            * \brief Evaluate the initial value for a control volume.
-//            *
-//            * \param globalPos The global position
-//            */
-//           PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-//           {
-//               PrimaryVariables values;
-//               values[Indices::pressureIdx] = 1.1e+5;
-//               values[Indices::velocityXIdx] = 0.0;
-//               values[Indices::velocityYIdx] = 0.0;
-//
-//               return values;
-//           }
-//______________________________________________________________________________________________________________________________________
-
-
 
 
         /*!
@@ -344,7 +252,7 @@ public:
          */
         PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
         {
-            Scalar kinematicViscosity_ = 0.000001;
+            //Scalar kinematicViscosity_ = 0.000001;
             Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
 
             Scalar v0 = 1.0;
@@ -359,12 +267,13 @@ public:
 
             PrimaryVariables values;
 
-            //in x-richtung
+            //analytical solution for Stokes problem
+            //in x-direction
 //            values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
 //            values[Indices::velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
 //            values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
 
-            //in y-Richtung
+            //in y-direction
 //            values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * y));
 //            values[Indices::velocityXIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * y) * std::sin(2.0 * M_PI * x);
 //            values[Indices::velocityYIdx] = 1.0 - std::exp(lambda_ * y) * std::cos(2.0 * M_PI * x);
@@ -376,8 +285,9 @@ public:
 
 
             values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
-            values[Indices::velocityXIdx] = v0*(1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y));
-            values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
+            values[Indices::velocityXIdx] = 8*(x*x*x*x -2*x*x*x+x*x)*(4*y*y*y-2*y);
+            values[Indices::velocityYIdx] = -8*(4*x*x*x-6*x*x+2*x)*(y*y*y*y-y*y);
+            values *= lidVelocity_;
 
             return values;
         }
@@ -422,6 +332,7 @@ private:
     Scalar lidVelocity_;
     Scalar cellSizeX_;
     Scalar inletVelocity_;
+    Scalar kinematicViscosity_;
 };
 } //end namespace
 

@@ -69,18 +69,11 @@ using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-///    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     using DimVector = Dune::FieldVector<Scalar, dim>;
-
-
-  //  typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
-    //added to resemble geomechanics, not needed as it is included in volumevariables
-//    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
 public:
     /*!
@@ -91,30 +84,11 @@ public:
                 const Element& element,
                 const IpData& ipData)
     {
-//std::cout << "Wir sind in secVarsUpdate" << std::endl;
-        //copied secondaryvariablesbase from fem
-        // interpolate primary variables
-        //printvector(std::cout, elemSol, "secVarsElemSol","");
-
     ParentType::update(elemSol, problem, element, ipData);
-
-
-        //printvector(std::cout, ParentType::priVars(), "ParentType::priVars(): ", "");
 
     completeFluidState(ParentType::priVars(), problem, element, fluidState_);
     for (int dimIdx=0; dimIdx<dim; ++dimIdx)
         velocity_[dimIdx] = ParentType::priVars()[Indices::momentum(dimIdx)];
-
-       // printvector(std::cout, ParentType::priVars(), "ParentType::priVars(): ", "");
-
-        //        printvector(std::cout, velocity_, "SecondaryVarsVelocity_: ", "");
-        //        std::cout << "secVarspressure: " << ParentType::priVars()[pressureIdx] << std::endl;
-        //        std::cout << "pressure: " << pressure() << std::endl;
-        //        std::cout << "temperature: " << temperature() << std::endl;
-        //        std::cout << "secVarsdensity: " << density() << std::endl;
-        //        std::cout << "dynamicViscosity: " << dynamicViscosity() << std::endl;
-        ////        std::cout << "extrusionFactor(): " << ParentType::extrusionFactor() << std::endl;
-        //        printvector(std::cout, elemSol, "elemSol: ", "");
     }
 
     /*!
@@ -144,12 +118,7 @@ public:
         fluidState.setViscosity(phaseIdx,
                                 FluidSystem::viscosity(fluidState,
                                                        paramCache,
-                                                       phaseIdx));
-
-        // compute and set the enthalpy
-        //TODO: commented enthalpy for running purposes
-//        Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
-//        fluidState.setEnthalpy(phaseIdx, h);
+                                                       phaseIdx));;
     }
 
     /*!
@@ -160,14 +129,6 @@ public:
     FluidState &fluidState()
     { return fluidState_; }
 
-
-    /*!
-     * \brief Returns the global position for the control-volume.
-     */
-    /*deleted GlobalPos from update
-     * const GlobalPosition globalPos() const
-    { return globalPos_; }
-    */
 
     /*!
      * \brief Returns the mass density \f$\mathrm{[kg/m^3]}\f$ of the fluid within the
@@ -211,13 +172,6 @@ public:
     { return fluidState_.viscosity(phaseIdx) / fluidState_.density(phaseIdx); }
 
     /*!
-     * \brief Return the dynamic eddy viscosity
-     *        \f$\mathrm{[Pa \cdot s]} = \mathrm{[N \cdot s/m^2]}\f$ (if implemented).
-     */
-//    const Scalar dynamicEddyViscosity() const
-//    { return kinematicEddyViscosity() * density(); }
-
-    /*!
      * \brief Returns the velocity vector in the sub-control volume.
      */
     const DimVector &velocity() const
@@ -234,7 +188,6 @@ public:
 
     Scalar epsGeneral(DimVector velocity, Scalar pressure) const {
     Scalar eps(0.0),k(0.0), normU(0.0);
-
     //set specific k, usually 1e-9 < k < 1e-3
     k = 1e-3;
 
@@ -244,31 +197,17 @@ public:
     }
     normU = sqrt(normU);
 
-//    	normU = velocity.two_norm2();
 
-//    std::cout << "mySecVars normU: " << normU <<  std::endl;
-//    std::cout << "mySecVars pressure: " << pressure << std::endl;
-
-
-    if(pressure < 1e-13 || normU < 1e-26){
-        std::cout << "mySecVars pressure or vel. too small" << std::endl;
-        std::cout << "1e-3  " << std::endl;
-        return 1e-2;
+    if(k*normU/pressure < GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.PenEps)){
+        return GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.PenEps);
     }
     else{
-//        std::cout << "mySecVars pressure or vel. large enough" << std::endl;
-
-//    		std::cout << "mySecVars abs(pressure): " << abs(pressure) << std::endl;
-//    		std::cout << "mySecVars eps: " << k*normU/abs(pressure) << std::endl;
         //absolute value of pressure
         if(pressure < 0){
         pressure *= -1;
         }
-//    		std::cout << "mySecVars normU: " << normU <<  std::endl;
-//    		std::cout << "mySecVars pressure: " << pressure << std::endl;
-//    		std::cout << "mySecVars eps: " << k*normU/pressure << std::endl;
 
-     return k*normU/pressure;
+        return k*normU/pressure;
      }
 
     }
@@ -311,27 +250,10 @@ public:
         Scalar reynoldsHalf(0.0);
         Scalar funcCosH(0.0);
 
-//        reynolds = (velocity*meshWidth) / viscosity;
-//std::cout << "secVarsReynolds " << reynolds << std::endl;
-//        reynoldsHalf = reynolds/2;
-//std::cout << "secVarsReynoldsHalf " << reynoldsHalf << std::endl;
-//        funcCosH = cosh(reynoldsHalf)/sinh(reynoldsHalf);
-//std::cout << "secVarsFuncCosH " << funcCosH << std::endl;
-//
-//
-//        alpha = 0.5*( (funcCosH)-(2/reynolds) );
-//std::cout << "secVarsAlpha " << alpha << std::endl;
-
         Scalar H(0.0), alphaDash(0.0);
         reynolds = (velocity*meshWidth) / viscosity;
-//std::cout << "secVarsVelocity " << velocity << std::endl;
-//std::cout << "secVarsMeshWidth " << meshWidth << std::endl;
-//std::cout << "secVarsViscosity " << viscosity << std::endl;
-//std::cout << "secVarsReynolds " << reynolds << std::endl;
 
         H = reynolds/2;
-//std::cout << "secVarsH " << H << std::endl;
-
 
         if(H>=-3 && H<=3){
             alphaDash = H/3;
@@ -342,9 +264,6 @@ public:
                 alphaDash = -1;
             }
         }
-
-//std::cout << "secVarsAlphaDash " << alphaDash << std::endl;
-
 
         alpha = 0.5*alphaDash;
 
@@ -386,7 +305,7 @@ public:
 
     Scalar penaltyEps() const
     {
-        return 0.001;
+      return GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.PenEps);
     }
 
 
@@ -396,43 +315,17 @@ public:
 
       for(int i=0; i<dim; i++){
           normU += velocity[i]*velocity[i];
-//std::cout << "secVarsNormU: " << normU << std::endl;
       }
       normU = sqrt(normU);
-//std::cout << "secVarsSqrtNormU: " << normU << std::endl;
 
       Scalar epsP = (k*normU);
-
-//std::cout << "secVarsEps: " << epsP << std::endl;
-
       return epsP;
     }
 
 
 protected:
-//    template<class ParameterCache>
-//    static Scalar enthalpy_(const FluidState& fluidState,
-//                            const ParameterCache& paramCache,
-//                            int phaseIdx)
-//    {
-//        return 0;
-//    }
-
-    //solved differently in the update function
-    /*static Scalar temperature_(const PrimaryVariables &priVars,
-                            const Problem& problem,
-                            const Element &element,
-                            const FVElementGeometry &fvGeometry,
-                            const int scvIdx)
-    {
-        return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
-    }
-    */
 
     DimVector velocity_;
-
- //   GlobalPosition globalPos_;
-
     FluidState fluidState_;
 
 private:

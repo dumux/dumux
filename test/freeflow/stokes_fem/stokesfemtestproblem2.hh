@@ -64,9 +64,9 @@ SET_TYPE_PROP(StokesFemTestProblem2, Problem, StokesFemTestProblem2<TypeTag>);
 //                                            N2<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 ////// Use nitrogen as gas phase
-SET_TYPE_PROP(StokesFemTestProblem2, Fluid,
-              FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                        SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+//SET_TYPE_PROP(StokesFemTestProblem2, Fluid,
+//              FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+//                                        SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Use nitrogen as gas phase
 //SET_TYPE_PROP(StokesFemTestProblem2, Fluid,
@@ -74,9 +74,9 @@ SET_TYPE_PROP(StokesFemTestProblem2, Fluid,
 //                                            N2<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Use nitrogen as gas phase
-//SET_TYPE_PROP(StokesFemTestProblem2, Fluid,
-//              FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-//                                            Constant<TypeTag ,typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+SET_TYPE_PROP(StokesFemTestProblem2, Fluid,
+              FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                            Constant<TypeTag ,typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 
 //added from elastic
@@ -136,21 +136,15 @@ class StokesFemTestProblem2 : public ImplicitFemProblem<TypeTag>
     using Fluid = typename GET_PROP_TYPE(TypeTag, Fluid);
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 
-//added for running purposes
-    //from stokes
- //   typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
     StokesFemTestProblem2(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
         eps_ = 1e-6;
+        inletVelocity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InletVelocity);
+        kinematicViscosity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Component.LiquidKinematicViscosity);
     }
-
-    /*!
-     * \name Problem parameters
-     */
-    // \{
 
     /*!
      * \brief The problem name.
@@ -173,123 +167,80 @@ public:
     Scalar temperature() const
         {  return 273.15 + 10; }
 
-/////////////////////////////////////////////////////////////////////////////
-    // \}
 
-    /*!
-     * \name Boundary conditions
-     */
-    // \{
-
-    // old STOKES TEST PROBLEM
+//______________________________________________________________________________________________________________________________________________________
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
         values.setAllDirichlet();
 
-//                // set Dirichlet values for the velocity everywhere
-//                values.setDirichlet(0);
-//                values.setDirichlet(1);
-//
-//                // set a fixed pressure in one cell
-//                if (globalPos[0]<=0.2 && globalPos[1]<=0.2)
-//                    values.setDirichlet(2);
+        // set pressure at one point
+        const Scalar middle = (this->bBoxMax()[1] - this->bBoxMin()[1])/2;
+        // if (onRightBoundary_(globalPos) && globalPos[1] > middle - eps_ && globalPos[1] < middle + eps_)
+        //     values.setDirichlet(pressureIdx);
 
-                return values;
+        // if (onRightBoundary_(globalPos))
+        //     values.setNeumann(Indices::velocityXIdx);
 
+        return values;
     }
 
-//    //DONEA_TEST_PROBLEM
-//    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
-//        {
-//            BoundaryTypes values;
-//
-//            // set Dirichlet values for the velocity and pressure everywhere
-//            //values.setAllDirichlet();
-//
-//            values.setAllDirichlet();
-//
-//            return values;
-//        }
+
+   PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
+   {
+       PrimaryVariables values(0.0);
+       const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+       const Scalar velocityVariation = 0.2;
+
+       if (onRightBoundary_(globalPos))
+       values[Indices::velocityXIdx] = 0;
+
+       return values;
+   }
+
+    // old STOKES TEST PROBLEM
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    {
+        PrimaryVariables values(0.0);
+        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+        const Scalar velocityVariation = 0.2;
+
+        values = initialAtPos(globalPos);
+
+        // sinusoidal variation of the maximum velocity in time
+        const Scalar v0 = inletVelocity_;
+
+        // parabolic velocity profile
+        values[velocityXIdx] =  v0*(globalPos[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - globalPos[1])
+                               / (0.25*(this->bBoxMax()[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - this->bBoxMin()[1]));
+        return values;
+    }
 
 
+    /*!
+     * \brief Return the analytical solution of the problem at a given position
+     *
+     * \param globalPos The global position
+     */
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    {
+        Scalar x = globalPos[0];
+        Scalar y = globalPos[1];
 
-        //from ELASTIC
-        PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-        {
-            return analyticalSolution(globalPos);
-        }
-
-
-
-        /*!
-         * \brief Return the analytical solution of the problem at a given position
-         *
-         * \param globalPos The global position
-         */
-        PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
-        {
-            Scalar kinematicViscosity_ = 0.000001;
-            Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
-
-            Scalar v0 = 100;
-            reynoldsNumber = v0 / kinematicViscosity_;
-
-            Scalar lambda_ = 0.5 * reynoldsNumber
-                             - std::sqrt(reynoldsNumber * reynoldsNumber * 0.25 + 4.0 * M_PI * M_PI);
+        const Scalar v0 = inletVelocity_;
 
 
-            Scalar x = globalPos[0];
-            Scalar y = globalPos[1];
-
-            PrimaryVariables values;
-
-            //in x-richtung
-//            values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
-//            values[Indices::velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
-//            values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
-
-            //in y-Richtung
-//            values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * y));
-//            values[Indices::velocityXIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * y) * std::sin(2.0 * M_PI * x);
-//            values[Indices::velocityYIdx] = 1.0 - std::exp(lambda_ * y) * std::cos(2.0 * M_PI * x);
-
-//            values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * y));
-//            values[Indices::velocityXIdx] = 1.0-y;
-//            values[Indices::velocityYIdx] = 1.0-x;
+        PrimaryVariables values(0.0);
 
 
+        values[pressureIdx] = x * (1.0-x); // p(x,y) = x(1-x) [Donea2003]
+        values[velocityXIdx] = v0*(globalPos[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - globalPos[1])
+                                  / (0.25*(this->bBoxMax()[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - this->bBoxMin()[1]));
+        values[velocityYIdx] = 0;
 
-            values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
-            values[Indices::velocityXIdx] = v0*(1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y));
-            values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
+        return values;
+    }
 
-            return values;
-        }
-
-
-
-
-    //from ELASTIC
-//        PrimaryVariables source(const Element& element,
-//                                const IpData& ipData,
-//                                const SecondaryVariables& secVars) const
-//        {
-//            const auto ipGlobal = ipData.ipGlobal();
-//            const auto x = ipGlobal[0];
-//            const auto y = ipGlobal[1];
-
-//            PrimaryVariables source(0.0);
-//      /*      source[Indices::momentumXIdx] = (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x
-//                                          + (-48.0*y + 72.0*y*y - 48.0*y*y*y + 12.0)* x*x
-//                                          + (-2.0 + 24.0*y - 72.0*y*y + 48.0*y*y*y)*x
-//                                          + 1.0 - 4.0*y + 12.0*y*y - 8.0*y*y*y;
-//            source[Indices::momentumYIdx] = (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
-//                                          + (4.0 - 24.0*y + 48.0*y*y - 48.0*y*y*y + 24.0*y*y*y*y)*x - 12.0*y*y
-//                                          + 24.0*y*y*y - 12.0*y*y*y*y;
-//    */
-//            return source;
-//        }
 
     // old STOKES TEST PROBLEM
     PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
@@ -297,363 +248,20 @@ public:
         return PrimaryVariables(0.0);
     }
 
-//    //from donea
-//    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-//        {
-//            PrimaryVariables source(0.0);
-////            Scalar x = globalPos[0];
-////            Scalar y = globalPos[1];
-////
-////            source[momentumXIdx] = (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x
-////                                          + (-48.0*y + 72.0*y*y - 48.0*y*y*y + 12.0)* x*x
-////                                          + (-2.0 + 24.0*y - 72.0*y*y + 48.0*y*y*y)*x
-////                                          + 1.0 - 4.0*y + 12.0*y*y - 8.0*y*y*y;
-////            source[momentumYIdx] = (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
-////                                          + (4.0 - 24.0*y + 48.0*y*y - 48.0*y*y*y + 24.0*y*y*y*y)*x - 12.0*y*y
-////                                          + 24.0*y*y*y - 12.0*y*y*y*y;
-//            return source;
-//        }
 
-
-
+    // old STOKES TEST PROBLEM
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
-        values[pressureIdx] = 1e5;;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
-
-        return values;
-    }
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//    // old STOKES TEST PROBLEM
-//    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
-//    {
-//    	BoundaryTypes values;
-//        values.setAllDirichlet();
-//
-//        // the mass balance has to be of type outflow
-////        values.setOutflow(massBalanceIdx);
-//
-////        if(onRightBoundary_(globalPos) &&
-////                globalPos[1] < this->bBoxMax()[1]-eps_ && globalPos[1] > this->bBoxMin()[1]+eps_)
-////            values.setAllOutflow();
-//
-//        // set pressure at one point
-//        const Scalar middle = (this->bBoxMax()[1] - this->bBoxMin()[1])/2;
-//        if (onRightBoundary_(globalPos) &&
-//                globalPos[1] > middle - eps_ && globalPos[1] < middle + eps_)
-//            values.setDirichlet(pressureIdx);
-//
-//        return values;
-//    }
-//
-////    //DONEA_TEST_PROBLEM
-////    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
-////        {
-////            BoundaryTypes values;
-////
-////            // set Dirichlet values for the velocity and pressure everywhere
-////            //values.setAllDirichlet();
-////
-////            values.setAllDirichlet();
-////
-////            return values;
-////        }
-//
-//    // old STOKES TEST PROBLEM
-//    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
-//    {
-//    	PrimaryVariables values(0.0);
-//        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
-//        const Scalar velocityVariation = 0.2;
-//
-//        values = initialAtPos(globalPos);
-//
-//        // sinusoidal variation of the maximum velocity in time
-//        const Scalar v0 = 100.0; // + std::sin(2*M_PI*time/3000) * velocityVariation;
-//
-//        // parabolic velocity profile
-////        values[velocityXIdx] =  1.0;
-//        values[velocityXIdx] =  v0*(globalPos[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - globalPos[1])
-//                               / (0.25*(this->bBoxMax()[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - this->bBoxMin()[1]));
-////        values[velocityXIdx] = 4*globalPos[1] - 4*globalPos[1]*globalPos[1];
-//        return values;
-//    }
-//
-//
-////        //from ELASTIC
-////        PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-////        {
-////            return analyticalSolution(globalPos);
-////        }
-//
-//
-//
-//        /*!
-//         * \brief Return the analytical solution of the problem at a given position
-//         *
-//         * \param globalPos The global position
-//         */
-//        PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
-//        {
-//            Scalar x = globalPos[0];
-//            Scalar y = globalPos[1];
-//
-////            // sinusoidal variation of the maximum velocity in time
-////            const Scalar v0 = 100.0;
-//
-//            PrimaryVariables values(0.0);
-//            values[pressureIdx] = x * (1.0-x); // p(x,y) = x(1-x) [Donea2003]
-//            values[velocityXIdx] = x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);
-//            values[velocityYIdx] = -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);
-//
-////            values[pressureIdx] = x * (1.0-x); // p(x,y) = x(1-x) [Donea2003]
-////            values[velocityXIdx] = v0*(globalPos[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - globalPos[1])
-////                                       / (0.25*(this->bBoxMax()[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - this->bBoxMin()[1]));
-////            values[velocityYIdx] = 0;
-//
-//            return values;
-//        }
-//
-//
-//
-//
-//    //from ELASTIC
-////        PrimaryVariables source(const Element& element,
-////                                const IpData& ipData,
-////                                const SecondaryVariables& secVars) const
-////        {
-////            const auto ipGlobal = ipData.ipGlobal();
-////            const auto x = ipGlobal[0];
-////            const auto y = ipGlobal[1];
-//
-////            PrimaryVariables source(0.0);
-////      /*      source[Indices::momentumXIdx] = (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x
-////                                          + (-48.0*y + 72.0*y*y - 48.0*y*y*y + 12.0)* x*x
-////                                          + (-2.0 + 24.0*y - 72.0*y*y + 48.0*y*y*y)*x
-////                                          + 1.0 - 4.0*y + 12.0*y*y - 8.0*y*y*y;
-////            source[Indices::momentumYIdx] = (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
-////                                          + (4.0 - 24.0*y + 48.0*y*y - 48.0*y*y*y + 24.0*y*y*y*y)*x - 12.0*y*y
-////                                          + 24.0*y*y*y - 12.0*y*y*y*y;
-////    */
-////            return source;
-////        }
-//
-//    // old STOKES TEST PROBLEM
-//    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-//    {
-//        return PrimaryVariables(0.0);
-//    }
-//
-////    //from donea
-////    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-////        {
-////            PrimaryVariables source(0.0);
-//////            Scalar x = globalPos[0];
-//////            Scalar y = globalPos[1];
-//////
-//////            source[momentumXIdx] = (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x
-//////                                          + (-48.0*y + 72.0*y*y - 48.0*y*y*y + 12.0)* x*x
-//////                                          + (-2.0 + 24.0*y - 72.0*y*y + 48.0*y*y*y)*x
-//////                                          + 1.0 - 4.0*y + 12.0*y*y - 8.0*y*y*y;
-//////            source[momentumYIdx] = (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
-//////                                          + (4.0 - 24.0*y + 48.0*y*y - 48.0*y*y*y + 24.0*y*y*y*y)*x - 12.0*y*y
-//////                                          + 24.0*y*y*y - 12.0*y*y*y*y;
-////            return source;
-////        }
-//
-//    // old STOKES TEST PROBLEM
-//    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-//    {
-//    	PrimaryVariables values(0.0);
-//    //    values = 0.0;
-//        values[pressureIdx] = 1e5;
-//        values[velocityXIdx] =  0; // TODO remove, taken from Dirichlet --> solution inner nodes ok
-//        return values;
-//    }
-//
-////        //from ELASTIC
-////        PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-////        {
-////            PrimaryVariables values;
-////            values[velocityXIdx] = 0.0;
-////            values[velocityYIdx] = 0.0;
-////            values[pressureIdx] = 0.0;
-////            return values;
-////        }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /* CHANNEL_TEST_PROBLEM
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
-    {
-        BoundaryTypes values;
-
-        // set Dirichlet values for the velocity and pressure everywhere
-        //values.setAllDirichlet();
-
-        values.setAllNeumann();
-
-        if(onLeftBoundary_(globalPos)){
-            values.setDirichlet(velocityXIdx,momentumXIdx);
-            values.setDirichlet(velocityYIdx,momentumYIdx);
-        }
-
-
-        if(onRightBoundary_(globalPos)){
-            values.setNeumann(momentumXIdx);
-            values.setNeumann(momentumYIdx);
-        }
-
-
-        if(onUpperBoundary_(globalPos)){
-            values.setDirichlet(velocityXIdx,momentumXIdx);
-            values.setDirichlet(velocityYIdx,momentumYIdx);
-            //p pet setAllNeumann zu 0 gesetzt
-        }
-
-
-        if(onLowerBoundary_(globalPos)){
-            values.setDirichlet(velocityXIdx,momentumXIdx);
-            values.setDirichlet(velocityYIdx,momentumYIdx);
-            //p pet setAllNeumann zu 0 gesetzt
-        }
-
-
-        return values;
-    }
-
-
-    //from ELASTIC
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-    {
-        PrimaryVariables dirichletPrim(0.0);
-        Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
-
-        if(onLeftBoundary_(globalPos)){
-            //  dirichletPrim[velocityXIdx] = 4/boxY * y - 4/boxY² * y²
-            dirichletPrim[velocityXIdx] = 4/3 * y - 4/9 * y*y;
-            dirichletPrim[velocityYIdx] = 0;
-            dirichletPrim[pressureIdx]  = 1e5;
-        }
-
-
-        if(onRightBoundary_(globalPos)){
-        }
-
-
-        if(onUpperBoundary_(globalPos)){
-            dirichletPrim[velocityXIdx] = 0;
-            dirichletPrim[velocityYIdx] = 0;
-            //p pet setAllNeumann zu 0 gesetzt
-        }
-
-
-        if(onLowerBoundary_(globalPos)){
-            dirichletPrim[velocityXIdx] = 0;
-            dirichletPrim[velocityYIdx] = 0;
-            //p pet setAllNeumann zu 0 gesetzt
-        }
-
-
-            //return analyticalSolution(globalPos);
-    }
-
-
-
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    {
-        PrimaryVariables neumannPrim(0.0);
-        Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
-
-        if(onLeftBoundary_(globalPos)){
-
-    }
-
-
-        if(onRightBoundary_(globalPos)){
-            neumannPrim[velocityXIdx] = 0.05;
-            neumannPrim[velocityYIdx] = 0;
-            neumannPrim[pressureIdx] = -0.5;
-        }
-
-
-        if(onUpperBoundary_(globalPos)){
-            neumannPrim[pressureIdx] = 0;
-        }
-
-
-        if(onLowerBoundary_(globalPos)){
-            neumannPrim[pressureIdx] = 0;
-        }
-
-        //return analyticalSolution(globalPos);
-    }
-
-
-
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
-    {
-        Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
-
-        PrimaryVariables values;
-        values[pressureIdx] = x * (1.0-x); // p(x,y) = x(1-x) [Donea2003]
-        values[velocityXIdx] = x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);
-        values[velocityYIdx] = -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);
-
-        return values;
-    }
-
-
- //   PrimaryVariables neumann(const Element& element,
- //                            const Intersection& intersection,
- //                            const ElementSolutionVector& elemSol,
- //                            const IpData& ipData) const
- //   { return PrimaryVariables(0.0); }
-
-
-
-
-//from ELASTIC
-    PrimaryVariables source(const Element& element,
-                            const IpData& ipData,
-                            const SecondaryVariables& secVars) const
-    {
-        const auto ipGlobal = ipData.ipGlobal();
-        const auto x = ipGlobal[0];
-        const auto y = ipGlobal[1];
-
-        PrimaryVariables source(0.0);
-//       source[Indices::momentumXIdx] = (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x
-//                                      + (-48.0*y + 72.0*y*y - 48.0*y*y*y + 12.0)* x*x
-//                                      + (-2.0 + 24.0*y - 72.0*y*y + 48.0*y*y*y)*x
-//                                      + 1.0 - 4.0*y + 12.0*y*y - 8.0*y*y*y;
-//        source[Indices::momentumYIdx] = (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
-//                                      + (4.0 - 24.0*y + 48.0*y*y - 48.0*y*y*y + 24.0*y*y*y*y)*x - 12.0*y*y
-//                                      + 24.0*y*y*y - 12.0*y*y*y*y;
-
-        return source;
-    }
-
-
-    //from ELASTIC
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    {
-        PrimaryVariables values;
+        PrimaryVariables values(0.0);
         values[pressureIdx] = 1e5;
-        values[velocityXIdx] = 1.0;
-        values[velocityYIdx] = 0.0;
-      //  std::cout << "globalPos=" << globalPos << std::endl;
+        values[velocityXIdx] =  0;
+        values[velocityYIdx] =  0;
         return values;
     }
-*/
+
+
+//______________________________________________________________________________________________________________________________________________________
+
 
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
@@ -668,7 +276,7 @@ private:
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > this->bBoxMax()[1] - eps_; }
 
-    Scalar eps_;
+    Scalar eps_, inletVelocity_, kinematicViscosity_;
 
 };
 
