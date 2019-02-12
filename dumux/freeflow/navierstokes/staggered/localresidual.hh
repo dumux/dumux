@@ -68,6 +68,7 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
@@ -184,7 +185,6 @@ public:
     /*!
      * \brief Evaluate boundary conditions for a cell center dof
      */
-    template<class ElementBoundaryTypes>
     CellCenterResidual computeBoundaryFluxForCellCenter(const Problem& problem,
                                                         const Element& element,
                                                         const FVElementGeometry& fvGeometry,
@@ -232,7 +232,6 @@ public:
     /*!
      * \brief Evaluate Dirichlet (fixed value) boundary conditions for a face dof
      */
-    template<class ElementBoundaryTypes>
     void evalDirichletBoundariesForFace(FaceResidual& residual,
                                         const Problem& problem,
                                         const Element& element,
@@ -269,7 +268,6 @@ public:
     /*!
      * \brief Evaluate boundary boundary fluxes for a face dof
      */
-    template<class ElementBoundaryTypes>
     FaceResidual computeBoundaryFluxForFace(const Problem& problem,
                                             const Element& element,
                                             const FVElementGeometry& fvGeometry,
