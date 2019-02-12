@@ -122,32 +122,57 @@ public:
             // loop over all intersected elements
             for (unsigned int eIdx : entities)
             {
-                if (FVGridGeometry::discMethod == DiscretizationMethod::box)
+                if constexpr(FVGridGeometry::discMethod == DiscretizationMethod::box)
                 {
                     // check in which subcontrolvolume(s) we are
                     const auto element = fvGridGeometry.boundingBoxTree().entitySet().entity(eIdx);
                     auto fvGeometry = localView(fvGridGeometry);
                     fvGeometry.bindElement(element);
                     const auto globalPos = source.position();
-                    // loop over all sub control volumes and check if the point source is inside
-                    constexpr int dim = FVGridGeometry::GridView::dimension;
-                    Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
-                    for (auto&& scv : scvs(fvGeometry))
-                        if (intersectsPointGeometry(globalPos, scv.geometry()))
-                            scvIndices.push_back(scv.indexInElement());
 
-                    // for all scvs that where tested positiv add the point sources
-                    // to the element/scv to point source map
-                    for (auto scvIdx : scvIndices)
+                    static const bool boxPointSourceLumping = getParam<bool>("MixedDimension.EnableBoxPointSourceLumping", true);
+                    if (boxPointSourceLumping)
                     {
-                        const auto key = std::make_pair(eIdx, scvIdx);
-                        if (pointSourceMap.count(key))
-                            pointSourceMap.at(key).push_back(source);
-                        else
-                            pointSourceMap.insert({key, {source}});
-                        // split equally on the number of matched scvs
-                        auto& s = pointSourceMap.at(key).back();
-                        s.setEmbeddings(scvIndices.size()*s.embeddings());
+                        // loop over all sub control volumes and check if the point source is inside
+                        constexpr int dim = FVGridGeometry::GridView::dimension;
+                        Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
+                        for (auto&& scv : scvs(fvGeometry))
+                            if (intersectsPointGeometry(globalPos, scv.geometry()))
+                                scvIndices.push_back(scv.indexInElement());
+
+                        // for all scvs that where tested positiv add the point sources
+                        // to the element/scv to point source map
+                        for (auto scvIdx : scvIndices)
+                        {
+                            const auto key = std::make_pair(eIdx, scvIdx);
+                            if (pointSourceMap.count(key))
+                                pointSourceMap.at(key).push_back(source);
+                            else
+                                pointSourceMap.insert({key, {source}});
+                            // split equally on the number of matched scvs
+                            auto& s = pointSourceMap.at(key).back();
+                            s.setEmbeddings(scvIndices.size()*s.embeddings());
+                        }
+                    }
+                    // distribute the sources according to the basis function weights
+                    else
+                    {
+                        using Scalar = std::decay_t<decltype(source.values()[0])>;
+                        using ShapeValues = std::vector<typename Dune::FieldVector<Scalar, 1>>;
+                        ShapeValues shapeValues;
+                        const auto& localBasis = fvGeometry.feLocalBasis();
+                        const auto ipLocal = element.geometry().local(globalPos);
+                        localBasis.evaluateFunction(ipLocal, shapeValues);
+                        for (auto&& scv : scvs(fvGeometry))
+                        {
+                            const auto key = std::make_pair(eIdx, scv.indexInElement());
+                            if (pointSourceMap.count(key))
+                                pointSourceMap.at(key).push_back(source);
+                            else
+                                pointSourceMap.insert({key, {source}});
+                            auto& s = pointSourceMap.at(key).back();
+                            s *= shapeValues[scv.indexInElement()];
+                        }
                     }
                 }
                 else
