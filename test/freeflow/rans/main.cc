@@ -42,7 +42,6 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/valgrind.hh>
-#include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
@@ -188,86 +187,6 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////
-
-#if HAVE_PVPYTHON
-    static const bool plotLawOfTheWall = getParam<bool>("Output.PlotLawOfTheWall", false);
-    static const bool plotVelocityProfile = getParam<bool>("Output.PlotVelocityProfile", false);
-    if (plotLawOfTheWall || plotVelocityProfile)
-    {
-        char fileName[255];
-        std::string fileNameFormat = "%s-%05d";
-        sprintf(fileName, fileNameFormat.c_str(), problem->name().c_str(), timeLoop->timeStepIndex());
-        std::cout << fileName << std::endl;
-        std::string vtuFileName = std::string(fileName) + ".vtu";
-        std::string script = std::string(DUMUX_SOURCE_DIR) + "/bin/postprocessing/extractlinedata.py";
-        std::string syscom;
-
-        // execute the pvpython script
-        std::string command = std::string(PVPYTHON_EXECUTABLE) + " " + script
-                              + " -f " + vtuFileName
-                              + " -v 0"
-                              + " -r 10000";
-        syscom =  command + " -p1 8.0 0.0 0.0"
-                          + " -p2 8.0 0.2469 0.0"
-                          + " -of " + std::string(fileName) + "\n";
-
-        if (!system(syscom.c_str()))
-        {
-            Dumux::GnuplotInterface<Scalar> gnuplotLawOfTheWall;
-            Dumux::GnuplotInterface<Scalar> gnuplotVelocityProfile;
-            char gnuplotFileName[255];
-            sprintf(gnuplotFileName, fileNameFormat.c_str(), "lawOfTheWall", timeLoop->timeStepIndex());
-            gnuplotLawOfTheWall.setOpenPlotWindow(plotLawOfTheWall);
-            gnuplotLawOfTheWall.setDatafileSeparator(',');
-            gnuplotLawOfTheWall.resetPlot();
-            gnuplotLawOfTheWall.setXlabel("y^+ [-]");
-            gnuplotLawOfTheWall.setYlabel("u_+ [-]");
-            gnuplotLawOfTheWall.setYRange(0.0, 30.0);
-            gnuplotLawOfTheWall.setOption("set log x");
-            gnuplotLawOfTheWall.setOption("set xrange [1:3000]");
-            gnuplotLawOfTheWall.addFileToPlot("references/laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
-#if LOWREKEPSILON
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l lc 7");
-#elif KEPSILON
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l lc 7 t 'with u_{tau}'");
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 15:16 w l lc 8 t 'with u_{tau,nom}'");
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l lc 7");
-#elif KOMEGA
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l lc 7");
-#elif ONEEQ
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l lc 7");
-#else
-            gnuplotLawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l lc 7");
-#endif
-            gnuplotLawOfTheWall.plot(std::string(gnuplotFileName));
-
-            sprintf(gnuplotFileName, fileNameFormat.c_str(), "velProfile", timeLoop->timeStepIndex());
-            gnuplotVelocityProfile.setOpenPlotWindow(plotVelocityProfile);
-            gnuplotVelocityProfile.setDatafileSeparator(',');
-            gnuplotVelocityProfile.resetPlot();
-            gnuplotVelocityProfile.setXlabel("v_x/v_{x,max} [-]");
-            gnuplotVelocityProfile.setYRange(0.0, 1.0);
-            gnuplotVelocityProfile.setYlabel("y [-]");
-            gnuplotVelocityProfile.addFileToPlot("references/laufer_re50000.csv", "u 2:1 w p t 'Laufer 1954, Re=50000'");
-#if LOWREKEPSILON
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 6:($25/0.2456) w l lc 7");
-#elif KEPSILON
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 6:($29/0.2456) w l lc 7");
-#elif KOMEGA
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 6:($25/0.2456) w l lc 7");
-#elif ONEEQ
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 6:($24/0.2456) w l lc 7");
-#else
-            gnuplotVelocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 6:($23/0.2456) w l lc 7");
-#endif
-            gnuplotVelocityProfile.plot(std::string(gnuplotFileName));
-        }
-        else
-        {
-            std::cerr << "An error occurred when calling pvpython.";
-        }
-    }
-#endif
 
     // print dumux end message
     if (mpiHelper.rank() == 0)
