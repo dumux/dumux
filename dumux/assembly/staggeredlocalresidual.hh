@@ -51,7 +51,6 @@ class StaggeredLocalResidual
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     using CellCenterResidual = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FaceResidual = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
@@ -99,12 +98,14 @@ public:
                                const FVElementGeometry& fvGeometry,
                                const ElementVolumeVariables& elemVolVars,
                                const ElementFaceVariables& elemFaceVars,
-                               const ElementBoundaryTypes& bcTypes,
+                               const ElementBoundaryTypes& elemBcTypes,
                                const ElementFluxVariablesCache& elemFluxVarsCache,
                                const SubControlVolumeFace& scvf) const
     {
-        if(!scvf.boundary())
+        if (!scvf.boundary())
             residual += asImp_().computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+        else
+            residual += asImp_().computeBoundaryFluxForCellCenter(problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
     }
 
     //! Evaluate the source terms for a cell center residual
@@ -172,19 +173,6 @@ public:
         residual += storage;
     }
 
-    //! Evaluate the boundary conditions for a cell center residual
-    void evalBoundaryForCellCenter(CellCenterResidualValue& residual,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const ElementVolumeVariables& elemVolVars,
-                                   const ElementFaceVariables& elemFaceVars,
-                                   const ElementBoundaryTypes& bcTypes,
-                                   const ElementFluxVariablesCache& elemFluxVarsCache) const
-    {
-        asImp_().evalBoundaryForCellCenter_(residual, problem, element, fvGeometry, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache);
-    }
-
     //! for compatibility with FVLocalAssemblerBase
     template<class... Args>
     CellCenterResidualValue evalFluxAndSource(Args&&... args) const
@@ -229,12 +217,14 @@ public:
                          const FVElementGeometry& fvGeometry,
                          const ElementVolumeVariables& elemVolVars,
                          const ElementFaceVariables& elemFaceVars,
-                         const ElementBoundaryTypes& bcTypes,
+                         const ElementBoundaryTypes& elemBcTypes,
                          const ElementFluxVariablesCache& elemFluxVarsCache,
                          const SubControlVolumeFace& scvf) const
     {
-        if(!scvf.boundary())
+        if (!scvf.boundary())
             residual += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+        else
+            residual += asImp_().computeBoundaryFluxForFace(problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
     }
 
     //! Evaluate the source terms for a face residual
@@ -297,20 +287,6 @@ public:
         storage /= timeLoop_->timeStepSize();
 
         residual += storage;
-    }
-
-    //! Evaluate the boundary conditions for a face residual
-    void evalBoundaryForFace(FaceResidualValue& residual,
-                             const Problem& problem,
-                             const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const ElementFaceVariables& elemFaceVars,
-                             const ElementBoundaryTypes& bcTypes,
-                             const ElementFluxVariablesCache& elemFluxVarsCache,
-                             const SubControlVolumeFace& scvf) const
-    {
-        asImp_().evalBoundaryForFace_(residual, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache);
     }
 
     //! If no solution has been set, we treat the problem as stationary.

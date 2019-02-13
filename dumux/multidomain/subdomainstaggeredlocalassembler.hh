@@ -166,8 +166,6 @@ public:
         if (!this->assembler().isStationaryProblem())
             residual += evalLocalStorageResidualForCellCenter();
 
-        this->localResidual().evalBoundaryForCellCenter(residual, problem(), this->element(), this->fvGeometry(), elemVolVars, elemFaceVars, this->elemBcTypes(), this->elemFluxVarsCache());
-
         // handle cells with a fixed Dirichlet value
         const auto cellCenterGlobalI = problem().fvGridGeometry().elementMapper().index(this->element());
         const auto& scvI = this->fvGeometry().scv(cellCenterGlobalI);
@@ -249,7 +247,9 @@ public:
         if (!this->assembler().isStationaryProblem())
             residual += evalLocalStorageResidualForFace(scvf);
 
-        this->localResidual().evalBoundaryForFace(residual, problem(), this->element(), this->fvGeometry(), elemVolVars, elemFaceVars, this->elemBcTypes(), this->elemFluxVarsCache(), scvf);
+        this->localResidual().evalDirichletBoundariesForFace(residual, this->problem(), this->element(),
+                                                             this->fvGeometry(), scvf, elemVolVars, elemFaceVars,
+                                                             this->elemBcTypes(), this->elemFluxVarsCache());
 
         return residual;
     }

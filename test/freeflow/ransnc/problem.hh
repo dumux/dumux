@@ -325,6 +325,32 @@ public:
 
         return false;
     }
+#elif KEPSILON
+    /*!
+     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scv The sub control volume
+     */
+    template<class Element, class FVElementGeometry, class SubControlVolume>
+    bool isDirichletCell(const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const SubControlVolume& scv,
+                         int pvIdx) const
+    {
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+
+        // set a fixed turbulent kinetic energy and dissipation near the wall
+        if (this->inNearWallRegion(eIdx))
+            return pvIdx == Indices::turbulentKineticEnergyEqIdx || pvIdx == Indices::dissipationEqIdx;
+
+        // set a fixed dissipation at  the matching point
+        if (this->isMatchingPoint(eIdx))
+            return pvIdx == Indices::dissipationEqIdx;
+
+        return false;
+    }
 #endif
 
     /*!
@@ -371,10 +397,18 @@ public:
         PrimaryVariables values(initialAtPos(globalPos));
 #if KOMEGA
         using std::pow;
-        unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
-        const auto wallDistance = ParentType::wallDistance_[elementIdx];
-        values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementIdx]
+        unsigned int eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto wallDistance = ParentType::wallDistance_[eIdx];
+        values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[eIdx]
                                             / (ParentType::betaOmega() * pow(wallDistance, 2));
+#elif KEPSILON
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+
+        // fixed value for the turbulent kinetic energy
+        values[Indices::turbulentKineticEnergyEqIdx] = this->turbulentKineticEnergyWallFunction(eIdx);
+
+        // fixed value for the dissipation
+        values[Indices::dissipationEqIdx] = this->dissipationWallFunction(eIdx);
 #endif
         return values;
     }
