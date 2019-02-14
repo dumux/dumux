@@ -50,6 +50,7 @@
 #include <dumux/multidomain/newtonsolver.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
+#include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
 
 #include "problem_darcy.hh"
 #include "problem_stokes.hh"
@@ -194,6 +195,29 @@ int main(int argc, char** argv) try
                                                  couplingManager,
                                                  timeLoop);
 
+     FluxOverSurface<StokesGridVariables,
+                     decltype(stokesSol),
+                     GetPropType<StokesTypeTag, Properties::ModelTraits>,
+                     GetPropType<StokesTypeTag, Properties::LocalResidual>> flux(*stokesGridVariables, stokesSol);
+
+     using StokesGridView = GetPropType<StokesTypeTag, Properties::GridView>;
+     using StokesElement = typename StokesGridView::template Codim<0>::Entity;
+
+     using GlobalPosition = typename StokesElement::Geometry::GlobalCoordinate;
+
+     const Scalar xMin = stokesFvGridGeometry->bBoxMin()[0];
+     const Scalar xMax = stokesFvGridGeometry->bBoxMax()[0];
+     const Scalar yMin = stokesFvGridGeometry->bBoxMin()[1];
+     const Scalar yMax = stokesFvGridGeometry->bBoxMax()[1];
+
+     const auto p0inlet = GlobalPosition{xMin, yMin};
+     const auto p1inlet = GlobalPosition{xMin, yMax};
+     flux.addSurface("inlet", p0inlet, p1inlet);
+
+     const auto p0outlet = GlobalPosition{xMax, yMin};
+     const auto p1outlet = GlobalPosition{xMax, yMax};
+     flux.addSurface("outlet", p0outlet, p1outlet);
+
     // the linear solver
     using LinearSolver = UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
@@ -223,6 +247,16 @@ int main(int argc, char** argv) try
         // write vtk output
         stokesVtkWriter.write(timeLoop->time());
         darcyVtkWriter.write(timeLoop->time());
+
+        flux.calculateMassOrMoleFluxes();
+
+        std::cout << "mole flux at inlet is: " << flux.netFlux("inlet") << std::endl;
+        std::cout << "mole flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+
+        // calculate and print volume fluxes over the planes
+        flux.calculateVolumeFluxes();
+        std::cout << "volume flux at inlet is: " << flux.netFlux("inlet")[0] << std::endl;
+        std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
 
         // report statistics of this time step
         timeLoop->reportTimeStep();

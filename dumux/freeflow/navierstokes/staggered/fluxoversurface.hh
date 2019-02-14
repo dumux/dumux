@@ -227,7 +227,11 @@ public:
                                const auto& elemFluxVarsCache)
         {
             LocalResidual localResidual(&problem_());
-            return localResidual.computeFluxForCellCenter(problem_(), element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+
+            if (scvf.boundary())
+                return localResidual.computeBoundaryFluxForCellCenter(problem_(), element, fvGeometry, scvf, elemVolVars, elemFaceVars, /*elemBcTypes*/{}, elemFluxVarsCache);
+            else
+                return localResidual.computeFluxForCellCenter(problem_(), element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
         };
 
         calculateFluxes(fluxType);
@@ -238,8 +242,19 @@ public:
      */
     void calculateVolumeFluxes()
     {
-        const auto isCompositional = std::integral_constant<bool, (ModelTraits::numFluidComponents() > 1) >();
-        calculateVolumeFluxesImpl_(isCompositional);
+        auto fluxType = [this](const auto& element,
+                               const auto& fvGeometry,
+                               const auto& elemVolVars,
+                               const auto& elemFaceVars,
+                               const auto& scvf,
+                               const auto& elemFluxVarsCache)
+        {
+            CellCenterPrimaryVariables result(0.0);
+            result[0] = elemFaceVars[scvf].velocitySelf() * scvf.area() * scvf.directionSign();
+            return result;
+        };
+
+        calculateFluxes(fluxType);
     }
 
     /*!
@@ -338,88 +353,6 @@ public:
 private:
 
     const auto& problem_() const { return gridVariables_.curGridVolVars().problem(); }
-
-    /*!
-     * \brief Calculate the volume fluxes over all surfaces for compositional models.
-     *        This method simply averages the densities between two adjacent cells.
-     */
-    void calculateVolumeFluxesImpl_(std::true_type)
-    {
-        auto fluxType = [this](const auto& element,
-                               const auto& fvGeometry,
-                               const auto& elemVolVars,
-                               const auto& elemFaceVars,
-                               const auto& scvf,
-                               const auto& elemFluxVarsCache)
-        {
-            LocalResidual localResidual(&problem_());
-            const auto massOrMoleFlux = localResidual.computeFluxForCellCenter(problem_(), element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
-
-            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-
-            constexpr bool useMoles = false;//getPropValue<TypeTag, Properties::UseMoles>();
-            const auto density = [useMoles](const auto& volVars)
-            {
-                return useMoles ? volVars.molarDensity() : volVars.density() ;
-            };
-
-            const auto avgDensity = 0.5*density(insideVolVars) + 0.5*density(outsideVolVars);
-
-            constexpr auto replaceCompEqIdx = ModelTraits::ReplaceCompEqIdx();
-            constexpr auto numComponents = ModelTraits::numFluidComponents();
-
-            const Scalar cumulativeFlux = [replaceCompEqIdx, numComponents, &massOrMoleFlux]()
-            {
-                Scalar result = 0.0;
-                if(replaceCompEqIdx < numComponents)
-                    result = massOrMoleFlux[replaceCompEqIdx];
-                else
-                {
-                    for(int i = 0; i < numComponents; ++i)
-                        result += massOrMoleFlux[i];
-                }
-
-                return result;
-            }();
-
-            CellCenterPrimaryVariables tmp(0.0);
-            tmp[0] = cumulativeFlux / avgDensity;
-            return tmp;
-        };
-
-        calculateFluxes(fluxType);
-    }
-
-    /*!
-     * \brief Calculate the volume fluxes over all surfaces for non-compositional models.
-     *        This method simply averages the densities between two adjacent cells.
-     */
-    void calculateVolumeFluxesImpl_(std::false_type)
-    {
-        auto fluxType = [this](const auto& element,
-                               const auto& fvGeometry,
-                               const auto& elemVolVars,
-                               const auto& elemFaceVars,
-                               const auto& scvf,
-                               const auto& elemFluxVarsCache)
-        {
-            LocalResidual localResidual(&problem_());
-            const Scalar totalMassFlux = localResidual.computeFluxForCellCenter(problem_(), element, fvGeometry, elemVolVars,
-                                                                                elemFaceVars, scvf, elemFluxVarsCache)[0];
-
-            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-
-            const auto avgDensity = 0.5*insideVolVars.density() + 0.5*outsideVolVars.density();
-
-            CellCenterPrimaryVariables tmp(0.0);
-            tmp[0] = totalMassFlux / avgDensity;
-            return tmp;
-        };
-
-        calculateFluxes(fluxType);
-    }
 
     std::map<std::string, SurfaceData<surfaceDim ,dim> > surfaces_;
     const GridVariables& gridVariables_;
