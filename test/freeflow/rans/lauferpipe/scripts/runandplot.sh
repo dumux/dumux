@@ -1,5 +1,5 @@
 DATA="."
-SCRIPT="../../../../bin/postprocessing/extractlinedata.py"
+SCRIPT="../../../../../bin/postprocessing/extractlinedata.py"
 
 runSim () {
 ./$1 $INPUT -Problem.Name $2 | tee -a logfile.out
