@@ -1066,6 +1066,30 @@ private:
         using BlockVector = typename Dune::BlockVector<VectorBlock>;
         BlockVector y(numRows);
 
+        Dune::writeMatrixToMatlab(M, "matrix.mat");
+        Dune::writeVectorToMatlab(bTmp, "rhs.mat");
+
+        // Dune::Hybrid::forEach(b, [&size](const auto& subVector)
+        // {
+        //     // the size of the individual vector blocks equals the respective number of equations.
+        //     const auto numEq = std::decay_t<decltype(subVector)>::block_type::size();
+        //     size += numEq * subVector.size();
+        // });
+
+        std::ofstream blocksizes;
+        blocksizes.open ("blocksizes.txt");
+        blocksizes << "Size of pressure block (free flow): " << b[Dune::Indices::_0].size() << std::endl;
+        blocksizes << "Size of velocity block (free flow): " << b[Dune::Indices::_1].size() << std::endl;
+        // blocksizes << "Size of pressure block (Darcy): " << b[Dune::Indices::_2].size() << std::endl;
+        blocksizes.close();
+
+        std::ofstream indices;
+        indices.open ("indices.txt");
+        indices << "0" << std::endl;
+        indices << b[Dune::Indices::_0].size() << std::endl;
+        // indices << "Size of pressure block (Darcy): " << b[Dune::Indices::_2].size() << std::endl;
+        indices.close();
+
         // solve
         const bool converged = ls.solve(M, y, bTmp);
 
