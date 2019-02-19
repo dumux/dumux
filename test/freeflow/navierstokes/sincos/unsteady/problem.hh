@@ -189,7 +189,7 @@ public:
                          int pvIdx) const
     {
         // set fixed pressure in one cell
-        return isLowerLeftCell_(scv.center()) && pvIdx == Indices::pressureIdx;
+        return (scv.dofIndex() == 0) && pvIdx == Indices::pressureIdx;
     }
 
    /*!
@@ -262,13 +262,6 @@ public:
     }
 
 private:
-
-    bool isLowerLeftCell_(const GlobalPosition& globalPos) const
-    {
-        return (globalPos[0] < (this->fvGridGeometry().bBoxMin()[0] + 0.5*cellSizeX_ + eps_) &&
-                globalPos[1] < (this->fvGridGeometry().bBoxMin()[1] + 0.5*cellSizeY_ + eps_));
-    }
-
     static constexpr Scalar eps_ = 1e-6;
 
     Scalar cellSizeX_;
