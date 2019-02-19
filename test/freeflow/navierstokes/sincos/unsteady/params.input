@@ -24,6 +24,9 @@ NumericDifference.BaseEpsilon = 1e-8
 MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
+SatisfyResidualAndShiftCriterion = true
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-10
 
 [Vtk]
 WriteFaceData = false
