@@ -15,6 +15,9 @@ LiquidKinematicViscosity = 0.001
 [Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
+SatisfyResidualAndShiftCriterion = true
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-10
 
 [Vtk]
 WriteFaceData = false
