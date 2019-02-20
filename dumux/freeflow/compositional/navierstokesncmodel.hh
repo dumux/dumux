@@ -100,6 +100,13 @@ struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension>
     //! Index of of a component balance eq. to be replaced by a total mass/mole balance
     static constexpr int replaceCompEqIdx() { return repCompEqIdx; }
 
+    //! The model does not include a turbulence model
+    static constexpr bool usesTurbulenceModel() { return false; }
+
+    //! return the type of turbulence model used
+    static constexpr auto turbulenceModel()
+    { return TurbulenceModel::none; }
+
     //! the indices
     using Indices = NavierStokesIndices<dimension>;
 };

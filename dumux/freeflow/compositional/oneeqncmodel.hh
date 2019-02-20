@@ -75,6 +75,10 @@ struct OneEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useMoles
     //! The model does include a turbulence model
     static constexpr bool usesTurbulenceModel() { return true; }
 
+    //! return the type of turbulence model used
+    static constexpr auto turbulenceModel()
+    { return TurbulenceModel::oneeq; }
+
     //! the indices
     using Indices = OneEqIndices<dimension, nComp>;
 };
@@ -146,7 +150,7 @@ struct IOFields<TypeTag, TTag::OneEqNC> { using type = FreeflowNCIOFields<OneEqI
 // Create new type tags
 namespace TTag {
 //! The type tags for the single-phase, multi-component non-isothermal one-equation models
-struct OneEqNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
+struct OneEqNCNI { using InheritsFrom = std::tuple<OneEqNC, NavierStokesNCNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model

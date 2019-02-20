@@ -32,6 +32,7 @@
 #include <dumux/discretization/staggered/elementsolution.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/rans/problem.hh>
+#include <dumux/freeflow/turbulencemodel.hh>
 
 #include "model.hh"
 
@@ -45,11 +46,10 @@ namespace Dumux {
  * and a routine for the determining the eddy viscosity of the Baldwin-Lomax model.
  */
 template<class TypeTag>
-class ZeroEqProblem : public RANSProblem<TypeTag>
+class RANSProblemImpl<TypeTag, TurbulenceModel::zeroeq> : public RANSProblemBase<TypeTag>
 {
-    using ParentType = RANSProblem<TypeTag>;
+    using ParentType = RANSProblemBase<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
-
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -75,7 +75,7 @@ public:
      * \param fvGridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    ZeroEqProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    RANSProblemImpl(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     {
         eddyViscosityModel_ = getParamFromGroup<std::string>(paramGroup, "RANS.EddyViscosityModel", "vanDriest");

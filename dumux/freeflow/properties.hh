@@ -28,6 +28,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
 #include <dumux/flux/fourierslaw.hh>
+#include "turbulencemodel.hh"
 
 namespace Dumux {
 namespace Properties {

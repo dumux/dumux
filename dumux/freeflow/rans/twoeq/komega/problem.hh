@@ -30,6 +30,7 @@
 #include <dumux/discretization/staggered/elementsolution.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/rans/problem.hh>
+#include <dumux/freeflow/turbulencemodel.hh>
 
 #include "model.hh"
 
@@ -42,11 +43,10 @@ namespace Dumux {
  * This implements the 2-equation k-omega turbulence model developed in Wilcox08 and Wilcox88
  */
 template<class TypeTag>
-class KOmegaProblem : public RANSProblem<TypeTag>
+class RANSProblemImpl<TypeTag, TurbulenceModel::komega> : public RANSProblemBase<TypeTag>
 {
-    using ParentType = RANSProblem<TypeTag>;
+    using ParentType = RANSProblemBase<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
-
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
@@ -62,7 +62,7 @@ class KOmegaProblem : public RANSProblem<TypeTag>
     using DimVector = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    KOmegaProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    RANSProblemImpl(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     {
         useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);

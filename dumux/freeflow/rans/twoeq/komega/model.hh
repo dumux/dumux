@@ -73,9 +73,11 @@
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/rans/model.hh>
+#include <dumux/freeflow/rans/twoeq/indices.hh>
+#include <dumux/freeflow/turbulencemodel.hh>
 
+#include "problem.hh"
 #include "fluxvariables.hh"
-#include "indices.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "iofields.hh"
@@ -103,7 +105,11 @@ struct KOmegaModelTraits : RANSModelTraits<dimension>
     static constexpr int numFluidComponents() { return 1; }
 
     //! The indices
-    using Indices = KOmegaIndices<dim(), numFluidComponents()>;
+    using Indices = RANSTwoEqIndices<dim(), numFluidComponents()>;
+
+    //! return the type of turbulence model used
+    static constexpr auto turbulenceModel()
+    { return TurbulenceModel::komega; }
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -179,7 +185,7 @@ struct IOFields<TypeTag, TTag::KOmega> { using type = KOmegaIOFields; };
 // Create new type tags
 namespace TTag {
 //! The type tag for the single-phase, non-isothermal k-omega 2-Eq. model
-struct KOmegaNI { using InheritsFrom = std::tuple<RANSNI>; };
+struct KOmegaNI { using InheritsFrom = std::tuple<KOmega, RANSNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model

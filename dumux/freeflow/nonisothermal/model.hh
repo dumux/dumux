@@ -59,8 +59,10 @@ struct FreeflowNIModelTraits : public IsothermalTraits
 {
     //! We solve for one more equation, i.e. the energy balance
     static constexpr int numEq() { return IsothermalTraits::numEq()+1; }
+
     //! We additionally solve for the equation balance
     static constexpr bool enableEnergyBalance() { return true; }
+
     //! the indices
     using Indices = FreeflowNonIsothermalIndices<typename IsothermalTraits::Indices, numEq()>;
 };

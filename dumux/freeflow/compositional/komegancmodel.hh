@@ -58,7 +58,7 @@ struct KOmegaNC { using InheritsFrom = std::tuple<NavierStokesNC>; };
 
 /*!
  * \ingroup FreeflowNCModel
- * \brief Traits for the low-Reynolds k-epsilon multi-component model
+ * \brief Traits for the k-omega multi-component model
  *
  * \tparam dimension The dimension of the problem
  * \tparam nComp The number of components to be considered
@@ -75,11 +75,15 @@ struct KOmegaNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useMole
     //! The model does include a turbulence model
     static constexpr bool usesTurbulenceModel() { return true; }
 
+    //! return the type of turbulence model used
+    static constexpr auto turbulenceModel()
+    { return TurbulenceModel::komega; }
+
     //! the indices
-    using Indices = KOmegaIndices<dimension, nComp>;
+    using Indices = RANSTwoEqIndices<dimension, nComp>;
 };
 
-//!< states some specifics of the isothermal multi-component low-Reynolds k-epsilon model
+//!< states some specifics of the isothermal multi-component k-omega model
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::KOmegaNC>
 {
@@ -146,7 +150,7 @@ struct IOFields<TypeTag, TTag::KOmegaNC> { using type = FreeflowNCIOFields<KOmeg
 // Create new type tags
 namespace TTag {
 //! The type tags for the single-phase, multi-component non-isothermal k-omega models
-struct KOmegaNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
+struct KOmegaNCNI { using InheritsFrom = std::tuple<KOmegaNC, NavierStokesNCNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model
@@ -161,6 +165,7 @@ private:
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     static constexpr int replaceCompEqIdx = getPropValue<TypeTag, Properties::ReplaceCompEqIdx>();
     using IsothermalModelTraits = KOmegaNCModelTraits<dim, numComponents, useMoles, replaceCompEqIdx>;
+
 public:
     using type = FreeflowNIModelTraits<IsothermalModelTraits>;
 };

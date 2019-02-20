@@ -71,7 +71,11 @@ struct KEpsilonNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useMo
     static constexpr bool usesTurbulenceModel() { return true; }
 
     //! the indices
-    using Indices = KEpsilonIndices<dimension, nComp>;
+    using Indices = RANSTwoEqIndices<dimension, nComp>;
+
+    //! return the type of turbulence model used
+    static constexpr auto turbulenceModel()
+    { return TurbulenceModel::kepsilon; }
 };
 
 //!< states some specifics of the isothermal multi-component low-Reynolds k-epsilon model
@@ -141,7 +145,7 @@ struct IOFields<TypeTag, TTag::KEpsilonNC> { using type = FreeflowNCIOFields<KEp
 // Create new type tags
 namespace TTag {
 //! The type tags for the single-phase, multi-component non-isothermal k-epsilon models
-struct KEpsilonNCNI { using InheritsFrom = std::tuple<NavierStokesNCNI>; };
+struct KEpsilonNCNI { using InheritsFrom = std::tuple<KEpsilonNC, NavierStokesNCNI>; };
 } // end namespace TTag
 
 //! The model traits of the non-isothermal model

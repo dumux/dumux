@@ -7,8 +7,7 @@ Verbosity = true
 Positions0 = 0.0 6.0
 Positions1 = 0.0 0.5
 Cells0 = 10
-Cells1 = 20
-Grading1 = 1.4
+Cells1 = 5
 
 [Problem]
 Name = test_ff_rans2c # name passed to the output routines
@@ -19,13 +18,17 @@ EnableGravity = false
 InletMoleFraction = 1e-3
 
 [RANS]
-EddyViscosityModel = "prandtl"
 TurbulentSchmidtNumber = 0.7
+TurbulentPrandtlNumber = 0.85
+
+[KEpsilon]
+YPlusThreshold = 10. # should be small (10-30) for coarse grids
 
 [Assembly]
 NumericDifferenceMethod = 0
 NumericEpsilon.BaseEpsilon = 1e-8
 
 [Newton]
-MaxSteps = 8
-MaxRelativeShift = 1e-9
+MaxSteps = 10
+TargetSteps = 8
+MaxRelativeShift = 1e-5
