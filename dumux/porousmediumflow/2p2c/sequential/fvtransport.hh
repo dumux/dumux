@@ -1153,8 +1153,8 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
     {
         // saturation and hence pc and hence corresponding pressure unknown
         pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
-        Scalar Z1Bound = primaryVariablesOnBoundary[contiWEqIdx];
-        flashSolver.concentrationFlash2p2c(BCfluidState, Z1Bound, pressBound,
+        Scalar Z0Bound = primaryVariablesOnBoundary[contiWEqIdx];
+        flashSolver.concentrationFlash2p2c(BCfluidState, Z0Bound, pressBound,
             problem().spatialParams().porosity(element), problem().temperatureAtPos(globalPosFace));
 
         if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
@@ -1187,7 +1187,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                 //store old pc
                 Scalar oldPc = pcBound;
                 //update with better pressures
-                flashSolver.concentrationFlash2p2c(BCfluidState, Z1Bound, pressBound,
+                flashSolver.concentrationFlash2p2c(BCfluidState, Z0Bound, pressBound,
                         problem().spatialParams().porosity(element), problem().temperatureAtPos(globalPosFace));
                 pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(element),
                         BCfluidState.saturation(wPhaseIdx));

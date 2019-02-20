@@ -425,11 +425,11 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
         p_[wPhaseIdx] += cellDataI.pressure(wPhaseIdx);
 
         Scalar sumC = (cellDataI.massConcentration(wCompIdx) + cellDataI.massConcentration(nCompIdx));
-        Scalar Z1 = cellDataI.massConcentration(wCompIdx) / sumC;
+        Scalar Z0 = cellDataI.massConcentration(wCompIdx) / sumC;
         // initialize simple fluidstate object
         PseudoOnePTwoCFluidState<Scalar, FluidSystem> pseudoFluidState;
         CompositionalFlash<Scalar, FluidSystem> flashSolver;
-        flashSolver.concentrationFlash1p2c(pseudoFluidState, Z1, p_, cellDataI.subdomain(),
+        flashSolver.concentrationFlash1p2c(pseudoFluidState, Z0, p_, cellDataI.subdomain(),
                 cellDataI.temperature(wPhaseIdx));
 
         Scalar v_ = 1. / pseudoFluidState.density(presentPhaseIdx);
@@ -441,7 +441,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
             Dune::dinfo << "dv_dp larger 0 at Idx " << eIdxGlobalI << " , try and invert secant"<< std::endl;
 
             p_ -= 2*incp;
-            flashSolver.concentrationFlash1p2c(pseudoFluidState, Z1, p_, cellDataI.subdomain(),
+            flashSolver.concentrationFlash1p2c(pseudoFluidState, Z0, p_, cellDataI.subdomain(),
                     cellDataI.temperature(wPhaseIdx));
             v_ = 1. / pseudoFluidState.density(presentPhaseIdx);
             cellDataI.dv_dp() = (sumC * ( v_ - (1. /cellDataI.density(presentPhaseIdx)))) /incp;
@@ -950,13 +950,13 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
         pressure[nPhaseIdx] = this->pressure(eIdxGlobal);
     }
 
-    // get the overall mass of component 1:  Z1 = C^k / (C^1+C^2) [-]
+    // get the overall mass of first component:  Z0 = C^0 / (C^0+C^1) [-]
     Scalar sumConc = cellData.massConcentration(wCompIdx)
             + cellData.massConcentration(nCompIdx);
-    Scalar Z1 = cellData.massConcentration(wCompIdx)/ sumConc;
+    Scalar Z0 = cellData.massConcentration(wCompIdx)/ sumConc;
 
     CompositionalFlash<Scalar, FluidSystem> flashSolver;
-    flashSolver.concentrationFlash1p2c(pseudoFluidState, Z1, pressure, presentPhaseIdx, problem().temperatureAtPos(globalPos));
+    flashSolver.concentrationFlash1p2c(pseudoFluidState, Z0, pressure, presentPhaseIdx, problem().temperatureAtPos(globalPos));
 
     // write stuff in fluidstate
     assert(presentPhaseIdx == pseudoFluidState.presentPhaseIdx());
