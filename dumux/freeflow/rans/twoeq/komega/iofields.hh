@@ -25,7 +25,6 @@
 #define DUMUX_KOMEGA_IO_FIELDS_HH
 
 #include <dumux/freeflow/rans/iofields.hh>
-#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -35,13 +34,6 @@ namespace Dumux {
  */
 struct KOmegaIOFields
 {
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
-    }
-
     //! Initialize the KOmegaModel specific output fields.
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)

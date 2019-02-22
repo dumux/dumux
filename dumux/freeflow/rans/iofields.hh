@@ -25,7 +25,6 @@
 #define DUMUX_RANS_IO_FIELDS_HH
 
 #include <dumux/freeflow/navierstokes/iofields.hh>
-#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -35,13 +34,6 @@ namespace Dumux {
  */
 struct RANSIOFields
 {
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
-    }
-
     //! Initialize the RANS specific output fields.
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
