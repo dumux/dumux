@@ -113,31 +113,13 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::StaggeredPVNamesTestTypeTag>
 {
 private:
-    // use the ZeroEqProblem as base class for non-RANS models and for the ZeroEq model
-    // use the the KEpsilonProblem as base class for all RANS models except the ZeroEq model
-    // NOTE: this rather unpleasant hack will be removed once the RANS models have been unified
     using MTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr auto dim = MTraits::dim();
     static constexpr auto nComp = MTraits::numFluidComponents();
     static constexpr auto numEq = MTraits::numEq();
 
-    using BaseTurbulentProblem = std::conditional_t<(std::is_same<typename MTraits::Indices, KOmegaIndices<dim, nComp>>::value ||
-                                                     std::is_same<typename MTraits::Indices, FreeflowNonIsothermalIndices<KOmegaIndices<dim, nComp>, numEq>>::value),
-                                                     KOmegaProblem<TypeTag>,
-                                                     std::conditional_t<(std::is_same<typename MTraits::Indices, KEpsilonIndices<dim, nComp>>::value ||
-                                                                         std::is_same<typename MTraits::Indices, FreeflowNonIsothermalIndices<KEpsilonIndices<dim, nComp>, numEq>>::value),
-                                                                         KEpsilonProblem<TypeTag>,
-                                                                         std::conditional_t<(std::is_same<typename MTraits::Indices, LowReKEpsilonIndices<dim, nComp>>::value ||
-                                                                                             std::is_same<typename MTraits::Indices, FreeflowNonIsothermalIndices<LowReKEpsilonIndices<dim, nComp>, numEq>>::value),
-                                                                         LowReKEpsilonProblem<TypeTag>, OneEqProblem<TypeTag>>>>;
-
-    using BaseProblem = std::conditional_t<MTraits::usesTurbulenceModel() &&
-                                           !std::is_same<MTraits, RANSModelTraits<dim>>::value &&
-                                           !std::is_same<MTraits, FreeflowNIModelTraits<RANSModelTraits<dim>>>::value &&
-                                           !std::is_same<MTraits, ZeroEqNCModelTraits<dim, nComp, false, 0>>::value &&
-                                           !std::is_same<MTraits, FreeflowNIModelTraits<ZeroEqNCModelTraits<dim, nComp, false, 0>>>::value,
-                                           BaseTurbulentProblem, ZeroEqProblem<TypeTag>>;
+    using BaseProblem = std::conditional_t<MTraits::usesTurbulenceModel(), RANSProblemImpl<TypeTag, MTraits::turbulenceModel()>, NavierStokesProblem<TypeTag>>;
 
     template<class TTag>
     class MockProblem : public BaseProblem
