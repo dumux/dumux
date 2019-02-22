@@ -34,13 +34,6 @@ namespace Dumux {
  */
 struct OneEqIOFields
 {
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
-    }
-
     //! Initialize the OneEq specific output fields.
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)

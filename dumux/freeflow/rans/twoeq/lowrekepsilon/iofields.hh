@@ -25,7 +25,6 @@
 #define DUMUX_LOWREKEPSILON_IO_FIELDS_HH
 
 #include <dumux/freeflow/rans/iofields.hh>
-#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -35,13 +34,6 @@ namespace Dumux {
  */
 struct LowReKEpsilonIOFields
 {
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
-    }
-
     //! Initialize the LowReKEpsilon specific output fields.
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)

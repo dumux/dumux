@@ -25,7 +25,6 @@
 #define DUMUX_KEPSILON_IO_FIELDS_HH
 
 #include <dumux/freeflow/rans/iofields.hh>
-#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -35,13 +34,6 @@ namespace Dumux {
  */
 struct KEpsilonIOFields
 {
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
-    }
-
     //! Initialize the KEpsilon specific output fields.
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
@@ -60,7 +52,6 @@ struct KEpsilonIOFields
     template <class ModelTraits, class FluidSystem>
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
-        std::cout << "kepsi called with " << pvIdx << std::endl;
         if (pvIdx < ModelTraits::dim() + ModelTraits::numFluidComponents())
             return RANSIOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
         else if (pvIdx == ModelTraits::dim() + ModelTraits::numFluidComponents())
