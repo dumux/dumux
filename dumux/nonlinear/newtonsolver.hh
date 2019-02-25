@@ -746,7 +746,8 @@ private:
 
             // execute the method as long as the solver thinks
             // that we should do another iteration
-            while (newtonProceed(uCurrentIter, newtonConverged()))
+            bool converged = false;
+            while (newtonProceed(uCurrentIter, converged))
             {
                 // notify the solver that we're about to start
                 // a new timestep
@@ -818,6 +819,9 @@ private:
                     assembler_->assembleResidual(uCurrentIter);
                     convWriter->write(uLastIter, deltaU, assembler_->residual());
                 }
+
+                // detect if the method has converged
+                converged = newtonConverged();
             }
 
             // tell solver we are done
