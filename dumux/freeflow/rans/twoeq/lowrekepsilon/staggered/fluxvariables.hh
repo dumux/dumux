@@ -129,11 +129,11 @@ public:
 
         // average and distance
         Scalar coeff_k = arithmeticMean(insideCoeff_k, outsideCoeff_k,
-                                        (insideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
-                                        (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm());
+                                        (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
+                                        (insideScv.dofPosition() - scvf.ipGlobal()).two_norm());
         Scalar coeff_e = arithmeticMean(insideCoeff_e, outsideCoeff_e,
-                                        (insideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
-                                        (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm());
+                                        (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
+                                        (insideScv.dofPosition() - scvf.ipGlobal()).two_norm());
         Scalar distance = 0.0;
 
         // adapt boundary handling
