@@ -7,4 +7,5 @@ install(FILES
 properties.hh
 turbulenceproperties.hh
 volumevariables.hh
+higherorderapproximation.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow)

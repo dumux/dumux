@@ -136,7 +136,6 @@ public:
 
                 const auto darcyDofIdx = darcyElementIdx[0];
 
-
                 stokesFaceToDarcyStencils[scvf.dofIndex()].push_back(darcyDofIdx);
                 stokesCellCenterToDarcyStencils[stokesElementIdx].push_back(darcyDofIdx);
 

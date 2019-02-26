@@ -92,6 +92,13 @@ public:
         }
     }
 
+    //! \brief Set the order needed by the scheme
+    void setStencilOrder(const int stencilOrder)
+    {
+        stencilOrder_ = stencilOrder;
+    }
+
+
     //! Returns the stencil of a cell center dof w.r.t. other cell center dofs
     const std::vector<GridIndexType>& operator() (CellCenterIdxType, CellCenterIdxType, const GridIndexType globalI) const
     {
@@ -143,7 +150,7 @@ private:
                                          const FVElementGeometry& fvGeometry,
                                          const SubControlVolumeFace& scvf)
     {
-        stencil.push_back(scvf.dofIndex());
+        stencil.push_back(scvf.axisData().selfDof);
     }
 
     /*
@@ -163,8 +170,8 @@ private:
             auto& normalFace = fvGeometry.scvf(eIdx, data.localNormalFaceIdx);
             if(!normalFace.boundary())
             {
-                const auto outerParallelElementDofIdx = normalFace.outsideScvIdx();
-                stencil.push_back(outerParallelElementDofIdx);
+                const auto firstParallelElementDofIdx = normalFace.outsideScvIdx();
+                stencil.push_back(firstParallelElementDofIdx);
             }
         }
     }
@@ -177,21 +184,43 @@ private:
                                    const FVElementGeometry& fvGeometry,
                                    const SubControlVolumeFace& scvf)
     {
-        // the first entries are always the face dofIdx itself and the one of the opposing face
         if(stencil.empty())
         {
-            stencil.push_back(scvf.dofIndex());
-            stencil.push_back(scvf.dofIndexOpposingFace());
+            for(int i = 0; i < stencilOrder_ - 1; i++)
+            {
+                if(scvf.hasBackwardNeighbor(i))
+                {
+                    stencil.push_back(scvf.axisData().inAxisBackwardDofs[i]);
+                }
+            }
+
+            stencil.push_back(scvf.axisData().selfDof);
+            stencil.push_back(scvf.axisData().oppositeDof);
+
+            for(int i = 0; i < stencilOrder_ - 1; i++)
+            {
+                if(scvf.hasForwardNeighbor(i))
+                {
+                    stencil.push_back(scvf.axisData().inAxisForwardDofs[i]);
+                }
+            }
         }
 
         for(const auto& data : scvf.pairData())
         {
+            // add normal dofs
             stencil.push_back(data.normalPair.first);
-            const auto outerParallelFaceDofIdx = data.outerParallelFaceDofIdx;
-            if(outerParallelFaceDofIdx >= 0)
-                stencil.push_back(outerParallelFaceDofIdx);
             if(!scvf.boundary())
                 stencil.push_back(data.normalPair.second);
+
+            // add parallel dofs
+            for (int i = 0; i < stencilOrder_ /*data.parallelDofs.size()*/; i++)
+            {
+                if(!(data.parallelDofs[i] < 0))
+                {
+                    stencil.push_back(data.parallelDofs[i]);
+                }
+            }
         }
     }
 
@@ -199,6 +228,7 @@ private:
     CellCenterToFaceMap cellCenterToFaceMap_;
     FaceToCellCenterMap faceToCellCenterMap_;
     FaceToFaceMap faceToFaceMap_;
+    int stencilOrder_;
 };
 
 } // end namespace Dumux
