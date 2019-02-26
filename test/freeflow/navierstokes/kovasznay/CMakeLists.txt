@@ -8,4 +8,16 @@ dune_add_test(NAME test_ff_navierstokes_kovasznay
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay params.input
                              -Problem.Name test_ff_navierstokes_kovasznay")
+
+dune_add_test(NAME test_ff_navierstokes_kovasznay_higherorder
+              TARGET test_ff_navierstokes_kovasznay
+              LABELS freeflow
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_kovasznay_higherorder-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay_higherorder-00001.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay params.input
+                             -Problem.Name test_ff_navierstokes_kovasznay_higherorder
+                             -Discretization.TvdApproach Hou
+                             -Discretization.DifferencingScheme vanleer")
 dune_symlink_to_source_files(FILES "params.input")
