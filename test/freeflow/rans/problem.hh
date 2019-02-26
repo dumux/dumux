@@ -163,6 +163,9 @@ public:
             initializationTime_ = getParam<Scalar>("TimeLoop.Initialization", 1.0);
         else
             initializationTime_ = getParam<Scalar>("TimeLoop.Initialization", -1.0);
+
+        turbulenceModelName_ = turbulenceModelToString(ModelTraits::turbulenceModel());
+        std::cout << "Using the "<< turbulenceModelName_ << " Turbulence Model. \n";
         std::cout << std::endl;
     }
 
@@ -521,6 +524,7 @@ private:
     Scalar viscosityTilde_;
     Scalar turbulentKineticEnergy_;
     Scalar dissipation_;
+    std::string turbulenceModelName_;
     TimeLoopPtr timeLoop_;
 };
 } // end namespace Dumux

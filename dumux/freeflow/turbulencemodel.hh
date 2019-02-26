@@ -46,6 +46,25 @@ namespace Dumux {
             return 2;
     }
 
+    /**
+     * \brief return the name of the Turbulence Model
+     */
+    std::string turbulenceModelToString(TurbulenceModel turbulenceModel)
+    {
+        switch (turbulenceModel)
+        {
+            case TurbulenceModel::zeroeq: return "ZeroEq";
+            case TurbulenceModel::oneeq: return "OneEq";
+            case TurbulenceModel::lowrekepsilon: return "LowReKEpsilon";
+            case TurbulenceModel::kepsilon: return "KEpsilon";
+            case TurbulenceModel::komega: return "KOmega";
+            case TurbulenceModel::none: return "No_TurbModel";
+            default: return "Invalid"; // should never be reached
+        }
+    }
+
+
+
 } // end namespace Dumux
 
 #endif

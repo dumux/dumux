@@ -166,7 +166,9 @@ public:
             dissipation_ = turbulenceProperties.dissipationRate(inletVelocity_, diameter, kinematicViscosity);
         else
             dissipation_ = turbulenceProperties.dissipation(inletVelocity_, diameter, kinematicViscosity);
-
+        turbulenceModelName_ = turbulenceModelToString(ModelTraits::turbulenceModel());
+        std::cout << "Using the "<< turbulenceModelName_ << " Turbulence Model. \n";
+        std::cout << std::endl;
     }
 
    /*!
@@ -544,6 +546,7 @@ private:
     Scalar turbulentKineticEnergy_;
     Scalar dissipation_;
     TimeLoopPtr timeLoop_;
+    std::string turbulenceModelName_;
 };
 } // end namespace Dumux
 
