@@ -1,6 +1,7 @@
 add_input_file_links(FILES params.input)
 
 dune_add_test(NAME test_3pwateroil_sagd_box
+              LABELS porousmediumflow 3pwateroil box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=ThreePWaterOilSagdBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

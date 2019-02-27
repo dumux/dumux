@@ -1,6 +1,7 @@
 add_input_file_links(FILES params.input)
 
 dune_add_test(NAME test_richardsnc_box
+              LABELS porousmediumflow richardsnc box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsWellTracerBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -10,6 +11,7 @@ dune_add_test(NAME test_richardsnc_box
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsnc_box params.input -Problem.Name test_richardsnc_box")
 
 dune_add_test(NAME test_richardsnc_tpfa
+              LABELS porousmediumflow richardsnc tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsWellTracerCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

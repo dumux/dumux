@@ -6,7 +6,7 @@ dune_symlink_to_source_files(FILES grids)
 # but the default 2p2c implementation outputs porosity per vertex.
 # Depending on the order of the elements, the porosity would differ in these cases.
 dune_add_test(NAME test_co2_box
-              LABELS co2
+              LABELS porousmediumflow co2 box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousBox
               CMAKE_GUARD "( dune-alugrid_FOUND AND DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS )"
@@ -18,7 +18,7 @@ dune_add_test(NAME test_co2_box
                        --zeroThreshold {"porosity":1})
 
 dune_add_test(NAME test_co2_tpfa
-              LABELS co2
+              LABELS porousmediumflow co2 tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousCCTpfa
               CMAKE_GUARD "( dune-alugrid_FOUND AND DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS )"
@@ -30,7 +30,7 @@ dune_add_test(NAME test_co2_tpfa
 
 # build target for the CO2 non-isothermal test problem
 dune_add_test(NAME test_co2ni_box
-              LABELS co2
+              LABELS porousmediumflow co2 co2ni box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousNIBox
                                   ISOTHERMAL=0
@@ -43,7 +43,7 @@ dune_add_test(NAME test_co2ni_box
                        --zeroThreshold {"porosity":1})
 
 dune_add_test(NAME test_co2ni_tpfa
-              LABELS co2
+              LABELS porousmediumflow co2 co2ni tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousNICCTpfa
                                   ISOTHERMAL=0

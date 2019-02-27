@@ -2,6 +2,7 @@ add_input_file_links(FILES params.input)
 
 # isothermal tests
 dune_add_test(NAME test_3p3c_infiltration_box
+              LABELS porousmediumflow 3p3c box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePThreeCBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -11,6 +12,7 @@ dune_add_test(NAME test_3p3c_infiltration_box
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_3p3c_infiltration_box params.input -Problem.Name test_3p3c_infiltration_box")
 
 dune_add_test(NAME test_3p3c_infiltration_tpfa
+              LABELS porousmediumflow 3p3c tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePThreeCCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
