@@ -406,8 +406,8 @@ protected:
                                              domainJ,
                                              insideDistance,
                                              outsideDistance,
-                                             thermalConductivity_(volVarsI, fvGeometryI, scvI) * volVarsI.extrusionFactor(),
-                                             thermalConductivity_(volVarsJ, fvGeometryJ, scvJ) * volVarsJ.extrusionFactor(),
+                                             thermalConductivity_(volVarsI, fvGeometryI, scvI),
+                                             thermalConductivity_(volVarsJ, fvGeometryJ, scvJ),
                                              diffCoeffAvgType);
 
         return -tij * deltaT;
@@ -1026,10 +1026,7 @@ protected:
         }
 
         Scalar omegai = 1/insideDistance;
-        omegai *= volVarsI.extrusionFactor();
-
         Scalar omegaj = 1/outsideDistance;
-        omegaj *= volVarsJ.extrusionFactor();
 
         reducedDiffusionMatrixInside.invert();
         reducedDiffusionMatrixInside *= omegai*volVarsI.molarDensity(couplingPhaseIdx(domainI));
@@ -1095,8 +1092,8 @@ protected:
                                                        domainJ,
                                                        insideDistance,
                                                        outsideDistance,
-                                                       diffusionCoefficient_(volVarsI, couplingPhaseIdx(domainI), domainICompIdx) * volVarsI.extrusionFactor(),
-                                                       diffusionCoefficient_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIdx) * volVarsJ.extrusionFactor(),
+                                                       diffusionCoefficient_(volVarsI, couplingPhaseIdx(domainI), domainICompIdx),
+                                                       diffusionCoefficient_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIdx),
                                                        diffCoeffAvgType);
             diffusiveFlux[domainICompIdx] += -avgMolarDensity * tij * deltaMoleFrac;
         }
