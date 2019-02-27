@@ -231,8 +231,13 @@ private:
 
                 // velocity output
                 if (this->velocityOutput().enableOutput())
+                {
+                    auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
+                    elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+
                     for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
-                        this->velocityOutput().calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
+                        this->velocityOutput().calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                }
 
                 //! the rank
                 if (addProcessRank)
@@ -410,8 +415,13 @@ private:
 
                 // velocity output
                 if (this->velocityOutput().enableOutput())
+                {
+                    auto elemFluxVarsCache = localView(this->gridVariables().gridFluxVarsCache());
+                    elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+
                     for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
-                        this->velocityOutput().calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
+                        this->velocityOutput().calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                }
 
                 //! the rank
                 if (addProcessRank)
