@@ -27,7 +27,7 @@
  * | :- | :- |
  * | \c container/test_container_io | Test for writing and reading sequence container to and from file |
  * | \c gnuplotinterface/test_gnuplotinterface | tests the plotting of data sets, functions, and files |
- * | \c gridcreator/test_gridcreator_gmsh | Test for gmsh interface of the grid creator | 
+ * | \c gridmanager/test_gridmanager_gmsh | Test for gmsh interface of the grid manager |
  *
  * \section Implicit
  * | Tests | | Fluidsystem | Gridmanager | Mass/Mole | Non-/Isothermal | Discretization | linearSolver | AdaptiveGrid | BoundaryCondition | Homogeneity | MaterialLaw | Permeability | Gravity | JacobianRecycling | PartialReassemble | Comments |

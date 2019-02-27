@@ -1,8 +1,8 @@
 install(FILES
-cakegridcreator.hh
+cakegridmanager.hh
 cpgridmanager.hh
 gmshgriddatahandle.hh
 griddata.hh
 gridmanager.hh
-subgridgridcreator.hh
+subgridmanager.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io/grid)
