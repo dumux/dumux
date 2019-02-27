@@ -2,7 +2,7 @@ dune_symlink_to_source_files(FILES "params.input")
 
 # explicit tracer tests (mass fractions)
 dune_add_test(NAME test_tracer_explicit_tpfa
-              LABELS porousmediumflow tracer tpfa
+              LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=false USEMOLES=false
               CMAKE_GUARD HAVE_UMFPACK
@@ -13,7 +13,7 @@ dune_add_test(NAME test_tracer_explicit_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_tpfa params.input -Problem.Name test_tracer_explicit_tpfa")
 
 dune_add_test(NAME test_tracer_explicit_box
-              LABELS porousmediumflow tracer box
+              LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestBox IMPLICIT=false USEMOLES=false
               CMAKE_GUARD HAVE_UMFPACK
@@ -25,7 +25,7 @@ dune_add_test(NAME test_tracer_explicit_box
 
 # explicit tracer tests (mole fractions, should yield same result)
 dune_add_test(NAME test_tracer_explicit_tpfa_mol
-              LABELS porousmediumflow tracer tpfa
+              LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=false USEMOLES=true
               CMAKE_GUARD HAVE_UMFPACK
@@ -36,7 +36,7 @@ dune_add_test(NAME test_tracer_explicit_tpfa_mol
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_tpfa_mol params.input -Problem.Name test_tracer_explicit_tpfa_mol")
 
 dune_add_test(NAME test_tracer_explicit_box_mol
-              LABELS porousmediumflow tracer box
+              LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestBox IMPLICIT=false USEMOLES=true
               CMAKE_GUARD HAVE_UMFPACK
@@ -48,7 +48,7 @@ dune_add_test(NAME test_tracer_explicit_box_mol
 
 # implicit tracer tests
 dune_add_test(NAME test_tracer_implicit_tpfa
-              LABELS porousmediumflow tracer tpfa
+              LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=true USEMOLES=false
               CMAKE_GUARD HAVE_UMFPACK
@@ -59,7 +59,7 @@ dune_add_test(NAME test_tracer_implicit_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_tpfa params.input -Problem.Name test_tracer_implicit_tpfa")
 
 dune_add_test(NAME test_tracer_implicit_box
-              LABELS porousmediumflow tracer box
+              LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestBox IMPLICIT=true USEMOLES=false
               CMAKE_GUARD HAVE_UMFPACK

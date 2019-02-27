@@ -2,7 +2,7 @@ add_input_file_links()
 
 # non-isothermal tests
 dune_add_test(NAME test_solidenergy_tpfa
-              LABELS porousmediumflow solidenergy tpfa
+              LABELS porousmediumflow solidenergy
               SOURCES main.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy

@@ -2,7 +2,7 @@ add_input_file_links()
 
 # tracer tests
 dune_add_test(NAME test_tracer_maxwellstefan_tpfa
-              LABELS porousmediumflow tracer tpfa
+              LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=MaxwellStefanTestCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -12,7 +12,7 @@ dune_add_test(NAME test_tracer_maxwellstefan_tpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_maxwellstefan_tpfa params.input -Problem.Name test_tracer_maxwellstefan_tpfa")
 
 dune_add_test(NAME test_tracer_maxwellstefan_box
-              LABELS porousmediumflow tracer box
+              LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=MaxwellStefanTestBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

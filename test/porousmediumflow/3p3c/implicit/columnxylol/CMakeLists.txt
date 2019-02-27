@@ -2,7 +2,7 @@ add_input_file_links(FILES params.input)
 
 # non-isothermal tests
 dune_add_test(NAME test_3p3cni_columnxylol_box
-              LABELS porousmediumflow 3p3c 3p3cni box
+              LABELS porousmediumflow 3p3c 3p3cni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=ColumnBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -12,7 +12,7 @@ dune_add_test(NAME test_3p3cni_columnxylol_box
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3p3cni_columnxylol_box params.input -Problem.Name test_3p3cni_columnxylol_box")
 
 dune_add_test(NAME test_3p3cni_columnxylol_tpfa
-              LABELS porousmediumflow 3p3c 3p3cni tpfa
+              LABELS porousmediumflow 3p3c 3p3cni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=ColumnCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
