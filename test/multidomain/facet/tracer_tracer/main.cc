@@ -58,7 +58,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 
 // obtain/define some types to be used below in the property definitions and in main
-template< class BulkTypeTag, class LowDimTypeTag >
+template< class BulkTypeTag, class LowDimTypeTag, bool implicit >
 class TestTraits
 {
     using BulkFVGridGeometry = Dumux::GetPropType<BulkTypeTag, Dumux::Properties::FVGridGeometry>;
@@ -66,7 +66,7 @@ class TestTraits
 public:
     using MDTraits = Dumux::MultiDomainTraits<BulkTypeTag, LowDimTypeTag>;
     using CouplingMapper = Dumux::FacetCouplingMapper<BulkFVGridGeometry, LowDimFVGridGeometry>;
-    using CouplingManager = Dumux::FacetCouplingManager<MDTraits, CouplingMapper>;
+    using CouplingManager = Dumux::FacetCouplingManager<MDTraits, CouplingMapper, implicit>;
 };
 
 // set the coupling manager property in the sub-problems for both box and tpfa
@@ -74,8 +74,8 @@ namespace Dumux {
 namespace Properties {
 
 // set cm property for the box test
-using BoxTraits = TestTraits<Properties::TTag::OnePBulkBox, Properties::TTag::OnePLowDimBox>;
-using BoxTracerTraits = TestTraits<Properties::TTag::TracerBulkBox, Properties::TTag::TracerLowDimBox>;
+using BoxTraits = TestTraits<Properties::TTag::OnePBulkBox, Properties::TTag::OnePLowDimBox, true>;
+using BoxTracerTraits = TestTraits<Properties::TTag::TracerBulkBox, Properties::TTag::TracerLowDimBox, false>;
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePBulkBox> { using type = typename BoxTraits::CouplingManager; };
 template<class TypeTag>
@@ -86,8 +86,8 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::TracerLowDimBox> { using type = typename BoxTracerTraits::CouplingManager; };
 
 // set cm property for the tpfa test
-using TpfaTraits = TestTraits<Properties::TTag::OnePBulkTpfa, Properties::TTag::OnePLowDimTpfa>;
-using TpfaTracerTraits = TestTraits<Properties::TTag::TracerBulkTpfa, Properties::TTag::TracerLowDimTpfa>;
+using TpfaTraits = TestTraits<Properties::TTag::OnePBulkTpfa, Properties::TTag::OnePLowDimTpfa, true>;
+using TpfaTracerTraits = TestTraits<Properties::TTag::TracerBulkTpfa, Properties::TTag::TracerLowDimTpfa, false>;
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePBulkTpfa> { using type = typename TpfaTraits::CouplingManager; };
 template<class TypeTag>
@@ -98,8 +98,8 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::TracerLowDimTpfa> { using type = typename TpfaTracerTraits::CouplingManager; };
 
 // set cm property for the mpfa test
-using MpfaTraits = TestTraits<Properties::TTag::OnePBulkMpfa, Properties::TTag::OnePLowDimMpfa>;
-using MpfaTracerTraits = TestTraits<Properties::TTag::TracerBulkMpfa, Properties::TTag::TracerLowDimMpfa>;
+using MpfaTraits = TestTraits<Properties::TTag::OnePBulkMpfa, Properties::TTag::OnePLowDimMpfa, true>;
+using MpfaTracerTraits = TestTraits<Properties::TTag::TracerBulkMpfa, Properties::TTag::TracerLowDimMpfa, false>;
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePBulkMpfa> { using type = typename MpfaTraits::CouplingManager; };
 template<class TypeTag>
@@ -260,7 +260,7 @@ int main(int argc, char** argv) try
     lowDimFvGridGeometry->update();
 
     // the coupling mapper
-    using OnePTestTraits = TestTraits<BulkOnePTypeTag, LowDimOnePTypeTag>;
+    using OnePTestTraits = TestTraits<BulkOnePTypeTag, LowDimOnePTypeTag, true>;
     auto couplingMapper = std::make_shared<typename OnePTestTraits::CouplingMapper>();
     couplingMapper->update(*bulkFvGridGeometry, *lowDimFvGridGeometry, gridManager.getEmbeddings());
 
@@ -297,9 +297,6 @@ int main(int argc, char** argv) try
         bulkProblem->applyInitialSolution(x[bulkId]);
         lowDimProblem->applyInitialSolution(x[lowDimId]);
 
-        // initialize the coupling manager
-        couplingManager->init(bulkProblem, lowDimProblem, couplingMapper, x);
-
         // the grid variables
         using BulkGridVariables = GetPropType<BulkOnePTypeTag, Properties::GridVariables>;
         using LowDimGridVariables = GetPropType<LowDimOnePTypeTag, Properties::GridVariables>;
@@ -307,6 +304,9 @@ int main(int argc, char** argv) try
         auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
         bulkGridVariables->init(x[bulkId]);
         lowDimGridVariables->init(x[lowDimId]);
+
+        // initialize the coupling manager
+        couplingManager->init(bulkProblem, lowDimProblem, bulkGridVariables, lowDimGridVariables, couplingMapper, x);
 
         // intialize the vtk output module
         const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethod::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
@@ -365,7 +365,7 @@ int main(int argc, char** argv) try
     using LowDimTracerTypeTag = Properties::TTag::TRACERLOWDIMTYPETAG;
 
     // instantiate coupling manager
-    using TracerTestTraits = TestTraits<BulkTracerTypeTag, LowDimTracerTypeTag>;
+    using TracerTestTraits = TestTraits<BulkTracerTypeTag, LowDimTracerTypeTag, false>;
     using CouplingManager = typename TracerTestTraits::CouplingManager;
     auto couplingManager = std::make_shared<CouplingManager>();
 
@@ -391,9 +391,6 @@ int main(int argc, char** argv) try
     auto A = std::make_shared<JacobianMatrix>();
     auto r = std::make_shared<SolutionVector>();
 
-    // initialize the coupling manager
-    couplingManager->init(bulkProblem, lowDimProblem, couplingMapper, x);
-
     // the grid variables
     using BulkGridVariables = GetPropType<BulkTracerTypeTag, Properties::GridVariables>;
     using LowDimGridVariables = GetPropType<LowDimTracerTypeTag, Properties::GridVariables>;
@@ -401,6 +398,9 @@ int main(int argc, char** argv) try
     auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
     bulkGridVariables->init(x[bulkId]);
     lowDimGridVariables->init(x[lowDimId]);
+
+    // initialize the coupling manager
+    couplingManager->init(bulkProblem, lowDimProblem, bulkGridVariables, lowDimGridVariables, couplingMapper, x);
 
     // intialize the vtk output modules
     const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethod::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
@@ -444,10 +444,13 @@ int main(int argc, char** argv) try
     using std::max;
     timeLoop->setPeriodicCheckPoint( max(tEnd/10.0, dt) );
 
+    // set previous solution for storage evaluations
+    assembler->setPreviousSolution(xOld);
+    couplingManager->setPreviousSolution(xOld);
+
     //! start the time loop
     timeLoop->start(); do
     {
-        // set previous solution for storage evaluations
         Dune::Timer assembleTimer;
         assembler->assembleJacobianAndResidual(x);
         assembleTimer.stop();

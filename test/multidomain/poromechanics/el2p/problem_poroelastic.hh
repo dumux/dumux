@@ -139,8 +139,8 @@ public:
      */
     Scalar effectiveFluidDensity(const Element& element, const SubControlVolume& scv) const
     {
-        // get porous medium flow volume variables from coupling manager
-        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
+        // get vol vars from coupling manager
+        const auto& pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
 
         Scalar wPhaseDensity = pmFlowVolVars.density(FluidSystem::phase0Idx);
         Scalar nPhaseDensity = pmFlowVolVars.density(FluidSystem::phase1Idx);
@@ -158,8 +158,8 @@ public:
                                  const ElementVolumeVariables& elemVolVars,
                                  const FluxVarsCache& fluxVarsCache) const
     {
-        // get porous medium flow volume variables from coupling manager
-        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
+        // get vol vars from coupling manager
+        const auto& pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
 
         Scalar pw = pmFlowVolVars.pressure(FluidSystem::phase0Idx);
         Scalar pn = pmFlowVolVars.pressure(FluidSystem::phase1Idx);

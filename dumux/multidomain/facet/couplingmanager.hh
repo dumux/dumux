@@ -24,6 +24,8 @@
 #ifndef DUMUX_FACETCOUPLING_MANAGER_HH
 #define DUMUX_FACETCOUPLING_MANAGER_HH
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/indextraits.hh>
 
@@ -83,12 +85,14 @@ void makeInterpolatedVolVars(VolumeVariables& volVars,
  *
  * \tparam MDTraits The multidomain traits containing the types on all sub-domains
  * \tparam CouplingMapper Class containing maps on the coupling between dofs of different grids
+ * \tparam useImplicitAssembly specifies if an implicit time integration schemes is used or not
  * \tparam bulkDomainId The domain id of the bulk problem
  * \tparam lowDimDomainId The domain id of the lower-dimensional problem
  * \tparam bulkDM Discretization method used in the bulk domain
  */
 template< class MDTraits,
           class CouplingMapper,
+          bool useImplicitAssembly = true,
           std::size_t bulkDomainId = 0,
           std::size_t lowDimDomainId = 1,
           DiscretizationMethod bulkDM = GetPropType<typename MDTraits::template SubDomain<bulkDomainId>::TypeTag, Properties::FVGridGeometry>::discMethod >
@@ -102,21 +106,23 @@ class FacetCouplingManager;
  *
  * \tparam MDTraits The multidomain traits containing the types on all sub-domains
  * \tparam CouplingMapper Class containing maps on the coupling between dofs of different grids
+ * \tparam useImplicitAssembly specifies if an implicit time integration schemes is used or not
  * \tparam bulkDomainId The domain id of the d-dimensional bulk problem
  * \tparam facetDomainId The domain id of the (d-1)-dimensional problem living on the bulk grid facets
  * \tparam facetDomainId The domain id of the (d-2)-dimensional problem living on the bulk grid edges
  */
 template< class MDTraits,
           class CouplingMapper,
+          bool useImplicitAssembly = true,
           std::size_t bulkDomainId = 0,
           std::size_t facetDomainId = 1,
           std::size_t edgeDomainId = 2 >
 class FacetCouplingThreeDomainManager
-: public FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, facetDomainId>
-, public FacetCouplingManager<MDTraits, CouplingMapper, facetDomainId, edgeDomainId>
+: public FacetCouplingManager<MDTraits, CouplingMapper, useImplicitAssembly, bulkDomainId, facetDomainId>
+, public FacetCouplingManager<MDTraits, CouplingMapper, useImplicitAssembly, facetDomainId, edgeDomainId>
 {
-    using BulkFacetManager = FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, facetDomainId>;
-    using FacetEdgeManager = FacetCouplingManager<MDTraits, CouplingMapper, facetDomainId, edgeDomainId>;
+    using BulkFacetManager = FacetCouplingManager<MDTraits, CouplingMapper, useImplicitAssembly, bulkDomainId, facetDomainId>;
+    using FacetEdgeManager = FacetCouplingManager<MDTraits, CouplingMapper, useImplicitAssembly, facetDomainId, edgeDomainId>;
 
     // convenience aliases and instances of the domain ids
     using BulkIdType = typename MDTraits::template SubDomain<bulkDomainId>::Index;
@@ -162,6 +168,23 @@ public:
 
     /*!
      * \brief Initialize the coupling manager.
+     * \note This interface is deprecated and will be removed in the 3.2 release.
+     *       Use the interface that additionally receives the grid variables.
+     * \todo TODO remove this until the 3.2 release
+     */
+    void init(std::shared_ptr< Problem<bulkId> > bulkProblem,
+              std::shared_ptr< Problem<facetId> > facetProblem,
+              std::shared_ptr< Problem<edgeId> > edgeProblem,
+              std::shared_ptr< CouplingMapper > couplingMapper,
+              const SolutionVector& curSol)
+    {
+        DUNE_THROW(Dune::NotImplemented, "The init(problem..., couplingManager, curSol) interface in the facet coupling managers " <<
+                                         "has been removed and backward compatibility could not be achieved. Please use the new interface " <<
+                                         "that additionally receives the grid variables. This error message will be removed in the 3.2 release.");
+    }
+
+    /*!
+     * \brief Initialize the coupling manager.
      *
      * \param bulkProblem The problem to be solved on the (3d) bulk domain
      * \param facetProblem The problem to be solved on the (2d) facet domain
@@ -172,11 +195,14 @@ public:
     void init(std::shared_ptr< Problem<bulkId> > bulkProblem,
               std::shared_ptr< Problem<facetId> > facetProblem,
               std::shared_ptr< Problem<edgeId> > edgeProblem,
+              std::shared_ptr< GridVariables<bulkId> > bulkGridVars,
+              std::shared_ptr< GridVariables<facetId> > facetGridVars,
+              std::shared_ptr< GridVariables<edgeId> > edgeGridVars,
               std::shared_ptr< CouplingMapper > couplingMapper,
               const SolutionVector& curSol)
     {
-        BulkFacetManager::init(bulkProblem, facetProblem, couplingMapper, curSol);
-        FacetEdgeManager::init(facetProblem, edgeProblem, couplingMapper, curSol);
+        BulkFacetManager::init(bulkProblem, facetProblem, bulkGridVars, facetGridVars, couplingMapper, curSol);
+        FacetEdgeManager::init(facetProblem, edgeProblem, facetGridVars, edgeGridVars, couplingMapper, curSol);
     }
 
     //! Pull up functionalities from the parent classes

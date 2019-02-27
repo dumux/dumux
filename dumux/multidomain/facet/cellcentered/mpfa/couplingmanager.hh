@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <cassert>
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/numericdifferentiation.hh>
@@ -34,6 +36,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
+
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/couplingmanager.hh>
 
@@ -47,14 +50,15 @@ namespace Dumux {
  *
  * \tparam MDTraits The multidomain traits containing the types on all sub-domains
  * \tparam CouplingMapper Class containing maps on the coupling between dofs of different grids
+ * \tparam useImplicitAssembly specifies if an implicit time integration schemes is used or not
  * \tparam bulkDomainId The domain id of the bulk problem
  * \tparam lowDimDomainId The domain id of the lower-dimensional problem
  */
-template<class MDTraits, class CouplingMapper, std::size_t bulkDomainId, std::size_t lowDimDomainId>
-class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethod::ccmpfa>
-: public FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethod::cctpfa>
+template<class MDTraits, class CouplingMapper, bool useImplicitAssembly, std::size_t bulkDomainId, std::size_t lowDimDomainId>
+class FacetCouplingManager<MDTraits, CouplingMapper, useImplicitAssembly, bulkDomainId, lowDimDomainId, DiscretizationMethod::ccmpfa>
+: public FacetCouplingManager<MDTraits, CouplingMapper, useImplicitAssembly, bulkDomainId, lowDimDomainId, DiscretizationMethod::cctpfa>
 {
-    using ParentType = FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethod::cctpfa>;
+    using ParentType = FacetCouplingManager<MDTraits, CouplingMapper, useImplicitAssembly, bulkDomainId, lowDimDomainId, DiscretizationMethod::cctpfa>;
 
     // domain id instances
     using BulkIdType = typename MDTraits::template SubDomain<bulkDomainId>::Index;
@@ -97,6 +101,22 @@ public:
 
     /*!
      * \brief Initialize the coupling manager.
+     * \note This interface is deprecated and will be removed in the 3.2 release.
+     *       Use the interface that additionally receives the grid variables.
+     * \todo TODO remove this until the 3.2 release
+     */
+    void init(std::shared_ptr< Problem<bulkId> > bulkProblem,
+              std::shared_ptr< Problem<lowDimId> > lowDimProblem,
+              std::shared_ptr< CouplingMapper > couplingMapper,
+              const SolutionVector& curSol)
+    {
+        DUNE_THROW(Dune::NotImplemented, "The init(problem..., couplingManager, curSol) interface in the facet coupling managers " <<
+                                         "has been removed and backward compatibility could not be achieved. Please use the new interface " <<
+                                         "that additionally receives the grid variables. This error message will be removed in the 3.2 release.");
+    }
+
+    /*!
+     * \brief Initialize the coupling manager.
      *
      * \param bulkProblem The problem to be solved on the bulk domain
      * \param lowDimProblem The problem to be solved on the lower-dimensional domain
@@ -105,11 +125,13 @@ public:
      */
     void init(std::shared_ptr< Problem<bulkId> > bulkProblem,
               std::shared_ptr< Problem<lowDimId> > lowDimProblem,
+              std::shared_ptr< GridVariables<bulkId> > bulkGridVariables,
+              std::shared_ptr< GridVariables<lowDimId> > lowDimGridVariables,
               std::shared_ptr< CouplingMapper > couplingMapper,
               const SolutionVector& curSol)
     {
         // Initialize the parent class
-        ParentType::init(bulkProblem, lowDimProblem, couplingMapper, curSol);
+        ParentType::init(bulkProblem, lowDimProblem, bulkGridVariables, lowDimGridVariables, couplingMapper, curSol);
 
         // determine all bulk scvfs that coincide with low dim elements
         bulkScvfIsOnFacetElement_.assign(bulkProblem->fvGridGeometry().numScvf(), false);
@@ -143,6 +165,12 @@ public:
                          const TensorFunc& getT) const
     {
         const auto lowDimElemIdx = this->getLowDimElementIndex(element, scvf);
+
+        // if we don't have the requested object in the context, bind it first
+        if (!std::count(this->bulkCouplingContext().lowDimElementIndices.begin(),
+                        this->bulkCouplingContext().lowDimElementIndices.end(),
+                        lowDimElemIdx))
+            this->bindCouplingContext(bulkId, element);
 
         const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
         const auto& s = map.find(this->bulkCouplingContext().elementIdx)->second.couplingElementStencil;
@@ -243,6 +271,9 @@ public:
     template<class JacobianPattern>
     void extendJacobianPattern(LowDimIdType, JacobianPattern& pattern) const
     {
+        if (!this->useImplicitAssembly())
+            return;
+
         const auto& lowDimFVGridGeometry = this->problem(lowDimId).fvGridGeometry();
         for (const auto& element : elements(lowDimFVGridGeometry.gridView()))
         {
@@ -293,7 +324,7 @@ public:
     {
         // Since coupling only occurs via the fluxes, there are no
         // additional derivatives for explicit time integration schemes
-        if (!LowDimLocalAssembler::isImplicit())
+        if (!this->useImplicitAssembly())
             return;
 
         // lambda to update the coupling context for a given lowDim element/dofIdx

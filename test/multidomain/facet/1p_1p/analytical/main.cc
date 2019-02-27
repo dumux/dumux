@@ -264,9 +264,6 @@ int main(int argc, char** argv) try
     auto couplingMapper = std::make_shared<typename TestTraits::CouplingMapper>();
     couplingMapper->update(*bulkFvGridGeometry, *lowDimFvGridGeometry, gridManager.getEmbeddings());
 
-    // initialize the coupling manager
-    couplingManager->init(bulkProblem, lowDimProblem, couplingMapper, x);
-
     // the grid variables
     using BulkGridVariables = GetPropType<BulkProblemTypeTag, Properties::GridVariables>;
     using LowDimGridVariables = GetPropType<LowDimProblemTypeTag, Properties::GridVariables>;
@@ -274,6 +271,9 @@ int main(int argc, char** argv) try
     auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
     bulkGridVariables->init(x[bulkId]);
     lowDimGridVariables->init(x[lowDimId]);
+
+    // initialize the coupling manager
+    couplingManager->init(bulkProblem, lowDimProblem, bulkGridVariables, lowDimGridVariables, couplingMapper, x);
 
     // intialize the vtk output modulell
     const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethod::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;

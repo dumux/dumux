@@ -27,10 +27,14 @@
 #include <algorithm>
 #include <cassert>
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/indextraits.hh>
+
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
+
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/facet/couplingmanager.hh>
 
@@ -44,14 +48,15 @@ namespace Dumux {
  *
  * \tparam MDTraits The multidomain traits containing the types on all sub-domains
  * \tparam CouplingMapper Class containing maps on the coupling between dofs of different grids
+ * \tparam useImplicitAssembly specifies if an implicit time integration schemes is used or not
  * \tparam bulkDomainId The domain id of the bulk problem
  * \tparam lowDimDomainId The domain id of the lower-dimensional problem
  */
-template<class MDTraits, class CouplingMapper, std::size_t bulkDomainId, std::size_t lowDimDomainId>
-class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethod::cctpfa>
-: public virtual CouplingManager< MDTraits >
+template<class MDTraits, class CouplingMapper, bool useImplicitAssembly, std::size_t bulkDomainId, std::size_t lowDimDomainId>
+class FacetCouplingManager<MDTraits, CouplingMapper, useImplicitAssembly, bulkDomainId, lowDimDomainId, DiscretizationMethod::cctpfa>
+: public virtual CouplingManager< MDTraits, useImplicitAssembly >
 {
-    using ParentType = CouplingManager< MDTraits >;
+    using ParentType = CouplingManager< MDTraits, useImplicitAssembly >;
 
     // convenience aliases and instances of the two domain ids
     using BulkIdType = typename MDTraits::template SubDomain<bulkDomainId>::Index;
@@ -99,6 +104,10 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
 
     static constexpr bool lowDimUsesBox = FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box;
 
+    // tuple of grid variables
+    template<std::size_t id> using GridVariablesWeakPtr = std::weak_ptr<GridVariables<id>>;
+    using GridVariablesTuple = typename MDTraits::template Tuple<GridVariablesWeakPtr>;
+
     /*!
      * \brief The coupling context of the bulk domain. Contains all data of the lower-
      *        dimensional domain which is required for the computation of a bulk element
@@ -111,11 +120,13 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
         GridIndexType< bulkId > elementIdx;
         std::vector< FVElementGeometry<lowDimId> > lowDimFvGeometries;
         std::vector< VolumeVariables<lowDimId> > lowDimVolVars;
+        std::vector< GridIndexType<lowDimId> > lowDimElementIndices;
 
         void reset()
         {
             lowDimFvGeometries.clear();
             lowDimVolVars.clear();
+            lowDimElementIndices.clear();
             isSet = false;
         }
     };
@@ -160,6 +171,22 @@ public:
 
     /*!
      * \brief Initialize the coupling manager.
+     * \note This interface is deprecated and will be removed in the 3.2 release.
+     *       Use the interface that additionally receives the grid variables.
+     * \todo TODO remove this until the 3.2 release
+     */
+    void init(std::shared_ptr< Problem<bulkId> > bulkProblem,
+              std::shared_ptr< Problem<lowDimId> > lowDimProblem,
+              std::shared_ptr< CouplingMapper > couplingMapper,
+              const SolutionVector& curSol)
+    {
+        DUNE_THROW(Dune::NotImplemented, "The init(problem..., couplingManager, curSol) interface in the facet coupling managers " <<
+                                         "has been removed and backward compatibility could not be achieved. Please use the new interface " <<
+                                         "that additionally receives the grid variables. This error message will be removed in the 3.2 release.");
+    }
+
+    /*!
+     * \brief Initialize the coupling manager.
      *
      * \param bulkProblem The problem to be solved on the bulk domain
      * \param lowDimProblem The problem to be solved on the lower-dimensional domain
@@ -168,6 +195,8 @@ public:
      */
     void init(std::shared_ptr< Problem<bulkId> > bulkProblem,
               std::shared_ptr< Problem<lowDimId> > lowDimProblem,
+              std::shared_ptr< GridVariables<bulkId> > bulkGridVariables,
+              std::shared_ptr< GridVariables<lowDimId> > lowDimGridVariables,
               std::shared_ptr< CouplingMapper > couplingMapper,
               const SolutionVector& curSol)
     {
@@ -176,6 +205,10 @@ public:
         // set the sub problems
         this->setSubProblem(bulkProblem, bulkId);
         this->setSubProblem(lowDimProblem, lowDimId);
+
+        // set the grid variables pointers
+        std::get<bulkId>(gridVariablesTuple_) = bulkGridVariables;
+        std::get<lowDimId>(gridVariablesTuple_) = lowDimGridVariables;
 
         // copy the solution vector
         ParentType::updateSolution(curSol);
@@ -250,14 +283,20 @@ public:
     const VolumeVariables<lowDimId>& getLowDimVolVars(const Element<bulkId>& element,
                                                       const SubControlVolumeFace<bulkId>& scvf) const
     {
-        assert(bulkContext_.isSet);
-
         const auto lowDimElemIdx = getLowDimElementIndex(element, scvf);
+
+        // if we don't have the requested object in the context, bind it first
+        if (!std::count(bulkContext_.lowDimElementIndices.begin(),
+                        bulkContext_.lowDimElementIndices.end(),
+                        lowDimElemIdx))
+            bindCouplingContext(bulkId, element);
+
         const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
         const auto& s = map.find(bulkContext_.elementIdx)->second.couplingElementStencil;
         const auto& idxInContext = std::distance( s.begin(), std::find(s.begin(), s.end(), lowDimElemIdx) );
 
         assert(std::find(s.begin(), s.end(), lowDimElemIdx) != s.end());
+        assert(bulkContext_.isSet);
         return bulkContext_.lowDimVolVars[idxInContext];
     }
 
@@ -384,7 +423,6 @@ public:
         assert(this->problem(lowDimId).fvGridGeometry().elementMapper().index(element) == lowDimContext_.elementIdx);
 
         NumEqVector<lowDimId> sources(0.0);
-
         const auto& map = couplingMapperPtr_->couplingMap(lowDimGridId, bulkGridId);
         auto it = map.find(lowDimContext_.elementIdx);
         if (it == map.end())
@@ -412,7 +450,15 @@ public:
      *        that are coupled to the given bulk element
      */
     template< class Assembler >
-    void bindCouplingContext(BulkIdType, const Element<bulkId>& element, const Assembler& assembler)
+    void bindCouplingContext(BulkIdType, const Element<bulkId>& element, const Assembler& assembler) const
+    { bindCouplingContext(BulkIdType{}, element); }
+
+    /*!
+     * \brief For the assembly of the element residual of a bulk domain element
+     *        we need to prepare all variables of lower-dimensional domain elements
+     *        that are coupled to the given bulk element
+     */
+    void bindCouplingContext(BulkIdType, const Element<bulkId>& element) const
     {
         // clear context
         bulkContext_.reset();
@@ -430,10 +476,11 @@ public:
             const auto& elementStencil = it->second.couplingElementStencil;
             bulkContext_.lowDimFvGeometries.reserve(elementStencil.size());
             bulkContext_.lowDimVolVars.reserve(elementStencil.size());
+            bulkContext_.lowDimElementIndices.reserve(elementStencil.size());
 
             for (const auto lowDimElemIdx : elementStencil)
             {
-                const auto& ldSol = Assembler::isImplicit() ? this->curSol()[lowDimId] : assembler.prevSol()[lowDimId];
+                const auto& ldSol = ParentType::useImplicitAssembly() ? this->curSol()[lowDimId] : this->prevSol()[lowDimId];
                 const auto& ldProblem = this->problem(lowDimId);
                 const auto& ldGridGeometry = this->problem(lowDimId).fvGridGeometry();
 
@@ -459,6 +506,7 @@ public:
                 bulkContext_.isSet = true;
                 bulkContext_.lowDimFvGeometries.emplace_back( std::move(fvGeom) );
                 bulkContext_.lowDimVolVars.emplace_back( std::move(volVars) );
+                bulkContext_.lowDimElementIndices.push_back( lowDimElemIdx );
             }
         }
     }
@@ -473,7 +521,19 @@ public:
      *       for the neighboring element (where fluxes are calculated) as well.
      */
     template< class Assembler >
-    void bindCouplingContext(LowDimIdType, const Element<lowDimId>& element, const Assembler& assembler)
+    void bindCouplingContext(LowDimIdType, const Element<lowDimId>& element, const Assembler& assembler) const
+    { bindCouplingContext(LowDimIdType{}, element); }
+
+    /*!
+     * \brief For the assembly of the element residual of a bulk domain element
+     *        we need to prepare the local views of one of the neighboring bulk
+     *        domain elements. These are used later to compute the fluxes across
+     *        the faces over which the coupling occurs
+     * \note Since the low-dim coupling residua are fluxes stemming from
+     *       the bulk domain, we have to prepare the bulk coupling context
+     *       for the neighboring element (where fluxes are calculated) as well.
+     */
+    void bindCouplingContext(LowDimIdType, const Element<lowDimId>& element) const
     {
         // reset contexts
         bulkContext_.reset();
@@ -492,16 +552,16 @@ public:
             // first bind the low dim context for the first neighboring bulk element
             const auto& bulkGridGeom = this->problem(bulkId).fvGridGeometry();
             const auto bulkElem = bulkGridGeom.element(it->second.embedments[0].first);
-            bindCouplingContext(bulkId, bulkElem, assembler);
+            bindCouplingContext(bulkId, bulkElem);
 
             // then simply bind the local views of that first neighbor
             auto bulkFvGeom = localView(bulkGridGeom);
-            auto bulkElemVolVars = Assembler::isImplicit() ? localView(assembler.gridVariables(bulkId).curGridVolVars())
-                                                           : localView(assembler.gridVariables(bulkId).prevGridVolVars());
-            auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache());
+            auto bulkElemVolVars = ParentType::useImplicitAssembly() ? localView(gridVariables(bulkId).curGridVolVars())
+                                                                     : localView(gridVariables(bulkId).prevGridVolVars());
+            auto bulkElemFluxVarsCache = localView(gridVariables(bulkId).gridFluxVarsCache());
 
             // evaluate variables on old/new time level depending on time disc scheme
-            const auto& bulkSol = Assembler::isImplicit() ? this->curSol()[bulkId] : assembler.prevSol()[bulkId];
+            const auto& bulkSol = ParentType::useImplicitAssembly() ? this->curSol()[bulkId] : this->prevSol()[bulkId];
             bulkFvGeom.bind(bulkElem);
             bulkElemVolVars.bind(bulkElem, bulkFvGeom, bulkSol);
             bulkElemFluxVarsCache.bind(bulkElem, bulkFvGeom, bulkElemVolVars);
@@ -510,7 +570,7 @@ public:
             lowDimContext_.bulkFvGeometry = std::make_unique< FVElementGeometry<bulkId> >( std::move(bulkFvGeom) );
             lowDimContext_.bulkElemVolVars = std::make_unique< ElementVolumeVariables<bulkId> >( std::move(bulkElemVolVars) );
             lowDimContext_.bulkElemFluxVarsCache = std::make_unique< ElementFluxVariablesCache<bulkId> >( std::move(bulkElemFluxVarsCache) );
-            lowDimContext_.bulkLocalResidual = std::make_unique< LocalResidual<bulkId> >(assembler.localResidual(bulkId));
+            lowDimContext_.bulkLocalResidual = std::make_unique< LocalResidual<bulkId> >( &(this->problem(bulkId)) );
         }
     }
 
@@ -532,7 +592,7 @@ public:
         // Since coupling only occurs via the fluxes, the context does not
         // have to be updated in explicit time discretization schemes, where
         // they are strictly evaluated on the old time level
-        if (!BulkLocalAssembler::isImplicit())
+        if (!ParentType::useImplicitAssembly())
             return;
 
         // skip the rest if context is empty
@@ -629,7 +689,7 @@ public:
         // Since coupling only occurs via the fluxes, the context does not
         // have to be updated in explicit time discretization schemes, where
         // they are strictly evaluated on the old time level
-        if (!LowDimLocalAssembler::isImplicit())
+        if (!ParentType::useImplicitAssembly())
             return;
 
         // skip the rest if context is empty
@@ -676,7 +736,7 @@ public:
         // Since coupling only occurs via the fluxes, the context does not
         // have to be updated in explicit time discretization schemes, where
         // they are strictly evaluated on the old time level
-        if (!LowDimLocalAssembler::isImplicit())
+        if (!ParentType::useImplicitAssembly())
             return;
 
         // skip the rest if context is empty
@@ -732,7 +792,7 @@ public:
                                 UpdatableFluxVarCache& fluxVarsCache)
     {
         // update transmissibilities after low dim context has changed (implicit only)
-        if (BulkLocalAssembler::isImplicit())
+        if (ParentType::useImplicitAssembly())
             fluxVarsCache.update(bulkLocalAssembler.element(),
                                  bulkLocalAssembler.fvGeometry(),
                                  bulkLocalAssembler.curElemVolVars());
@@ -749,7 +809,7 @@ public:
                                 UpdatableFluxVarCache& fluxVarsCache)
     {
         // update transmissibilities after low dim context has changed (implicit only)
-        if (BulkLocalAssembler::isImplicit())
+        if (ParentType::useImplicitAssembly())
         {
             auto elemVolVars = localView(gridVolVars);
             elemVolVars.bind(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), this->curSol()[bulkId]);
@@ -771,6 +831,16 @@ protected:
     //! Return references to the bulk coupling contexts
     BulkCouplingContext& bulkCouplingContext() { return bulkContext_; }
     LowDimCouplingContext& lowDimCouplingContext() { return lowDimContext_; }
+
+    //! Return a reference to the grid variables of domain i
+    template<std::size_t i>
+    const GridVariables<i>& gridVariables(Dune::index_constant<i> domainIdx) const
+    {
+        if (!std::get<i>(gridVariablesTuple_).expired())
+            return *std::get<i>(gridVariablesTuple_).lock();
+        else
+            DUNE_THROW(Dune::InvalidStateException, "The grid variables pointer has already expired");
+    }
 
     //! evaluates the bulk-facet exchange fluxes for a given facet element
     template<class BulkScvfIndices>
@@ -796,6 +866,9 @@ protected:
 private:
     std::shared_ptr<CouplingMapper> couplingMapperPtr_;
 
+    //! store pointers to grid variables
+    GridVariablesTuple gridVariablesTuple_;
+
     //! store bools for all bulk elements/scvfs that indicate if they
     //! are coupled, so that we don't have to search in the map every time
     std::vector<bool> bulkElemIsCoupled_;
@@ -807,8 +880,8 @@ private:
     std::tuple<BulkStencil, LowDimStencil> emptyStencilTuple_;
 
     //! The coupling contexts of the two domains
-    BulkCouplingContext bulkContext_;
-    LowDimCouplingContext lowDimContext_;
+    mutable BulkCouplingContext bulkContext_;
+    mutable LowDimCouplingContext lowDimContext_;
 };
 
 } // end namespace Dumux

@@ -142,9 +142,6 @@ int main(int argc, char** argv) try
     poroMechProblem->applyInitialSolution(x[poroMechId]);
     SolutionVector xOld = x;
 
-    // initialize the coupling manager
-    couplingManager->init(twoPProblem, poroMechProblem, x);
-
     // the grid variables
     using TwoPGridVariables = GetPropType<TwoPTypeTag, Properties::GridVariables>;
     using PoroMechGridVariables = GetPropType<PoroMechTypeTag, Properties::GridVariables>;
@@ -152,6 +149,9 @@ int main(int argc, char** argv) try
     auto poroMechGridVariables = std::make_shared<PoroMechGridVariables>(poroMechProblem, poroMechFvGridGeometry);
     twoPGridVariables->init(x[twoPId]);
     poroMechGridVariables->init(x[poroMechId]);
+
+    // initialize the coupling manager
+    couplingManager->init(twoPProblem, poroMechProblem, twoPGridVariables, poroMechGridVariables, x);
 
     // get some time loop parameters
     using Scalar = GetPropType<TwoPTypeTag, Properties::Scalar>;
@@ -193,6 +193,10 @@ int main(int argc, char** argv) try
     // the non-linear solver
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+
+    // set previous solution for storage evaluations
+    assembler->setPreviousSolution(xOld);
+    couplingManager->setPreviousSolution(xOld);
 
     // time loop
     timeLoop->start(); do

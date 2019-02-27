@@ -214,13 +214,15 @@ int main(int argc, char** argv) try
     auto couplingMapper = std::make_shared<CouplingMapper>();
     couplingMapper->update(fvGridGeometry[bulkId], fvGridGeometry[facetId], fvGridGeometry[edgeId], gridManager.getEmbeddings());
 
-    // initialize the coupling manager
-    couplingManager->init(problem.get(bulkId), problem.get(facetId), problem.get(edgeId), couplingMapper, x);
-
     // the grid variables
     using GridVariables = MultiDomainFVGridVariables<Traits>;
     GridVariables gridVars(fvGridGeometry.getTuple(), problem.getTuple());
     gridVars.init(x);
+
+    // initialize the coupling manager
+    couplingManager->init(problem.get(bulkId), problem.get(facetId), problem.get(edgeId),
+                          gridVars.get(bulkId), gridVars.get(facetId), gridVars.get(edgeId),
+                          couplingMapper, x);
 
     // intialize the vtk output module
     const std::array<std::string, 3> vtkOutputNames{{problem[bulkId].name(), problem[facetId].name(), problem[edgeId].name()}};

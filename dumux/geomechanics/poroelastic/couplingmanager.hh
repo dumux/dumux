@@ -28,6 +28,8 @@
 #include <algorithm>
 #include <type_traits>
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalgradients.hh>
@@ -45,15 +47,17 @@ namespace Dumux {
  *        and permeability due to mechanical deformations and the influence of the pore
  *        pressure on the effecive stresses acting on the porous medium.
  *
+ * \tparam useImplicitAssembly specifies if an implicit time integration schemes is used or not
  * \tparam PMFlowId The porous medium flow domain id
  * \tparam PoroMechId The poro-mechanical domain id
  */
 template< class MDTraits,
+          bool useImplicitAssembly = true,
           std::size_t PMFlowId = 0,
           std::size_t PoroMechId = PMFlowId+1 >
-class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
+class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits, useImplicitAssembly >
 {
-    using ParentType = CouplingManager< MDTraits >;
+    using ParentType = CouplingManager< MDTraits, useImplicitAssembly >;
 
     // the sub-domain type tags
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
@@ -103,8 +107,11 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
      */
     struct PoroMechanicsCouplingContext
     {
-        // We need unique ptrs because the local views have no default constructor
+        bool isSet{false};
+        GridIndexType<PoroMechId> poroMechElementIndex;
         Element<PMFlowId> pmFlowElement;
+
+        // We need unique ptrs because the local views have no default constructor
         std::unique_ptr< FVElementGeometry<PMFlowId> > pmFlowFvGeometry;
         std::unique_ptr< ElementVolumeVariables<PMFlowId> > pmFlowElemVolVars;
     };
@@ -112,8 +119,8 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
 public:
 
     // export the domain ids
-    static constexpr auto pmFlowId = Dune::index_constant<PMFlowId>();
-    static constexpr auto poroMechId = Dune::index_constant<PoroMechId>();
+    static constexpr auto pmFlowId = typename MDTraits::template SubDomain<PMFlowId>::Index{};
+    static constexpr auto poroMechId = typename MDTraits::template SubDomain<PoroMechId>::Index{};
 
     /*!
      * \brief The types used for coupling stencils. An element of the poro-mechanical
@@ -130,6 +137,21 @@ public:
 
     /*!
      * \brief Initialize the coupling manager.
+     * \note This interface is deprecated and will be removed in the 3.2 release.
+     *       Use the interface that additionally receives the grid variables.
+     * \todo TODO remove this until the 3.2 release
+     */
+    void init(std::shared_ptr< Problem<PMFlowId> > pmFlowProblem,
+              std::shared_ptr< Problem<PoroMechId> > poroMechanicalProblem,
+              const SolutionVector& curSol)
+    {
+        DUNE_THROW(Dune::NotImplemented, "The init(problem..., couplingManager, curSol) interface in the facet coupling managers " <<
+                                         "has been removed and backward compatibility could not be achieved. Please use the new interface " <<
+                                         "that additionally receives the grid variables. This error message will be removed in the 3.2 release.");
+    }
+
+    /*!
+     * \brief Initialize the coupling manager.
      *
      * \param pmFlowProblem The porous medium flow problem
      * \param poroMechanicalProblem The poro-mechanical problem
@@ -137,11 +159,17 @@ public:
      */
     void init(std::shared_ptr< Problem<PMFlowId> > pmFlowProblem,
               std::shared_ptr< Problem<PoroMechId> > poroMechanicalProblem,
+              std::shared_ptr< GridVariables<PMFlowId> > pmFlowGridVariables,
+              std::shared_ptr< GridVariables<PoroMechId> > poroMechGridVariables,
               const SolutionVector& curSol)
     {
         // set the sub problems
         this->setSubProblem(pmFlowProblem, pmFlowId);
         this->setSubProblem(poroMechanicalProblem, poroMechId);
+
+        // set the grid variables pointers
+        std::get<pmFlowId>(gridVariablesTuple_) = pmFlowGridVariables;
+        std::get<poroMechId>(gridVariablesTuple_) = poroMechGridVariables;
 
         // copy the solution vector
         ParentType::updateSolution(curSol);
@@ -180,7 +208,14 @@ public:
     template< class Assembler >
     void bindCouplingContext(Dune::index_constant<PoroMechId> poroMechDomainId,
                              const Element<PoroMechId>& element,
-                             const Assembler& assembler)
+                             const Assembler& assembler) const
+    { bindCouplingContext(poroMechDomainId, element); }
+
+    /*!
+     * \brief For the assembly of the element residual of an element of the poro-mechanics domain,
+     *        we have to prepare the element variables of the porous medium flow domain.
+     */
+    void bindCouplingContext(Dune::index_constant<PoroMechId> poroMechDomainId, const Element<PoroMechId>& element) const
     {
         // first reset the context
         poroMechCouplingContext_.pmFlowFvGeometry.reset(nullptr);
@@ -189,11 +224,16 @@ public:
         // prepare the fvGeometry and the element volume variables
         // these quantities will be used later to obtain the effective pressure
         auto fvGeometry = localView( this->problem(pmFlowId).fvGridGeometry() );
-        auto elemVolVars = localView( assembler.gridVariables(Dune::index_constant<PMFlowId>()).curGridVolVars() );
+        auto elemVolVars = localView( gridVariables(pmFlowId).curGridVolVars() );
 
         fvGeometry.bindElement(element);
-        elemVolVars.bindElement(element, fvGeometry, this->curSol()[Dune::index_constant<PMFlowId>()]);
+        if (useImplicitAssembly)
+            elemVolVars.bindElement(element, fvGeometry, this->curSol()[pmFlowId]);
+        else
+            elemVolVars.bindElement(element, fvGeometry, this->prevSol()[pmFlowId]);
 
+        poroMechCouplingContext_.isSet = true;
+        poroMechCouplingContext_.poroMechElementIndex = this->problem(poroMechId).fvGridGeometry().elementMapper().index(element);
         poroMechCouplingContext_.pmFlowElement = element;
         poroMechCouplingContext_.pmFlowFvGeometry = std::make_unique< FVElementGeometry<PMFlowId> >(fvGeometry);
         poroMechCouplingContext_.pmFlowElemVolVars = std::make_unique< ElementVolumeVariables<PMFlowId> >(elemVolVars);
@@ -215,10 +255,13 @@ public:
         // communicate the deflected pm flow domain primary variable
         ParentType::updateCouplingContext(poroMechDomainId, poroMechLocalAssembler, pmFlowDomainId, dofIdxGlobalJ, priVarsJ, pvIdxJ);
 
-        // now, update the coupling context (i.e. elemVolVars)
-        const auto& element = poroMechCouplingContext_.pmFlowElement;
-        const auto& fvGeometry = *poroMechCouplingContext_.pmFlowFvGeometry;
-        poroMechCouplingContext_.pmFlowElemVolVars->bindElement(element, fvGeometry, this->curSol()[pmFlowDomainId]);
+        // now, maybe update the coupling context (i.e. elemVolVars)
+        if (useImplicitAssembly)
+        {
+            const auto& element = poroMechCouplingContext_.pmFlowElement;
+            const auto& fvGeometry = *poroMechCouplingContext_.pmFlowFvGeometry;
+            poroMechCouplingContext_.pmFlowElemVolVars->bindElement(element, fvGeometry, this->curSol()[pmFlowDomainId]);
+        }
     }
 
     /*!
@@ -239,9 +282,10 @@ public:
         ParentType::updateCouplingContext(poroMechDomainIdI, poroMechLocalAssembler, poroMechDomainIdJ, dofIdxGlobalJ, priVarsJ, pvIdxJ);
 
         // now, update the coupling context (i.e. elemVolVars)
-        (*poroMechCouplingContext_.pmFlowElemVolVars).bindElement(poroMechCouplingContext_.pmFlowElement,
-                                                                  *poroMechCouplingContext_.pmFlowFvGeometry,
-                                                                  this->curSol()[Dune::index_constant<PMFlowId>()]);
+        if (useImplicitAssembly)
+            (*poroMechCouplingContext_.pmFlowElemVolVars).bindElement(poroMechCouplingContext_.pmFlowElement,
+                                                                      *poroMechCouplingContext_.pmFlowFvGeometry,
+                                                                      this->curSol()[Dune::index_constant<PMFlowId>()]);
     }
 
     /*!
@@ -274,6 +318,9 @@ public:
                                 ElementVolumeVariables<PMFlowId>& elemVolVars,
                                 UpdatableFluxVarCache& elemFluxVarsCache)
     {
+        if (!useImplicitAssembly)
+            return;
+
         // update the element volume variables to obtain the updated porosity/permeability
         elemVolVars.bind(pmFlowLocalAssembler.element(),
                          pmFlowLocalAssembler.fvGeometry(),
@@ -353,14 +400,21 @@ public:
     //! Return the coupling context (used in mechanical sub-problem to compute effective pressure)
     [[deprecated("Obtain the volume variables directly calling getPMFlowVolVars(element). Will be removed after 3.1!")]]
     const PoroMechanicsCouplingContext& poroMechanicsCouplingContext() const
-    { return poroMechCouplingContext_; }
+    {
+        DUNE_THROW(Dune::NotImplemented, "This interface has been removed and backwards compatibility could not be achieved. " <<
+                                         "Please use the getPMFlowVolVars(const Element&) interface to obtain the volume " <<
+                                         "variables an element of the poromechanical subdomain is coupled to. This error "<<
+                                         "message will be removed in the 3.2 release.");
+    }
 
-
-    //! Return the porous medium flow variables an element/scv of the poromech domain couples to
+    //! Return the porous medium flow variables an scv of the poromech domain couples to
     const VolumeVariables<PMFlowId>& getPMFlowVolVars(const Element<PoroMechId>& element) const
     {
         //! If we do not yet have the queried object, build it first
         const auto eIdx = this->problem(poroMechId).fvGridGeometry().elementMapper().index(element);
+        if (!poroMechCouplingContext_.isSet || eIdx != poroMechCouplingContext_.poroMechElementIndex)
+            bindCouplingContext(poroMechId, element);
+
         return (*poroMechCouplingContext_.pmFlowElemVolVars)[eIdx];
     }
 
@@ -372,6 +426,16 @@ public:
     { return ParentType::curSol(); }
 
 private:
+    //! Return a reference to the grid variables of domain i
+    template<std::size_t i>
+    const GridVariables<i>& gridVariables(Dune::index_constant<i> domainIdx) const
+    {
+        if (!std::get<i>(gridVariablesTuple_).expired())
+            return *std::get<i>(gridVariablesTuple_).lock();
+        else
+            DUNE_THROW(Dune::InvalidStateException, "The grid variables pointer has already expired");
+    }
+
     /*!
      * \brief Initializes the pm flow domain coupling map. Since the elements
      *        of the poro-mechanical domain only couple to the same elements, we
@@ -415,11 +479,15 @@ private:
         }
     }
 
+    //! store pointers to grid variables
+    template<std::size_t id> using GridVarsWeakPtr = std::weak_ptr< GridVariables<id> >;
+    typename MDTraits::template Tuple<GridVarsWeakPtr> gridVariablesTuple_;
+
     // Container for storing the coupling element stencils for the pm flow domain
     std::vector< CouplingStencilType<PMFlowId> > pmFlowCouplingMap_;
 
     // the coupling context of the poromechanics domain
-    PoroMechanicsCouplingContext poroMechCouplingContext_;
+    mutable PoroMechanicsCouplingContext poroMechCouplingContext_;
 };
 
 } //end namespace Dumux

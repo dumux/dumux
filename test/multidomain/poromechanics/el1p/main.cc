@@ -140,9 +140,6 @@ int main(int argc, char** argv) try
     poroMechProblem->applyInitialSolution(x[poroMechId]);
     SolutionVector xOld = x;
 
-    // initialize the coupling manager
-    couplingManager->init(onePProblem, poroMechProblem, x);
-
     // the grid variables
     using OnePGridVariables = GetPropType<OnePTypeTag, Properties::GridVariables>;
     using PoroMechGridVariables = GetPropType<PoroMechTypeTag, Properties::GridVariables>;
@@ -150,6 +147,9 @@ int main(int argc, char** argv) try
     auto poroMechGridVariables = std::make_shared<PoroMechGridVariables>(poroMechProblem, poroMechFvGridGeometry);
     onePGridVariables->init(x[onePId]);
     poroMechGridVariables->init(x[poroMechId]);
+
+    // initialize the coupling manager
+    couplingManager->init(onePProblem, poroMechProblem, onePGridVariables, poroMechGridVariables, x);
 
     // intialize the vtk output module
     using OnePVtkOutputModule = Dumux::VtkOutputModule<OnePGridVariables, GetPropType<OnePTypeTag, Properties::SolutionVector>>;

@@ -137,11 +137,7 @@ public:
      */
     Scalar effectiveFluidDensity(const Element& element,
                                  const SubControlVolume& scv) const
-    {
-        // get porous medium flow volume variables from coupling manager
-        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
-        return pmFlowVolVars.density();
-    }
+    { return couplingManager().getPMFlowVolVars(element).density(); }
 
     /*!
      * \brief Returns the effective pore pressure.
@@ -151,11 +147,7 @@ public:
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& elemVolVars,
                                  const FluxVarsCache& fluxVarsCache) const
-    {
-        // get porous medium flow volume variables from coupling manager
-        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
-        return pmFlowVolVars.pressure();
-    }
+    { return couplingManager().getPMFlowVolVars(element).pressure(); }
 
     /*!
      * \brief Specifies which kind of boundary condition should be

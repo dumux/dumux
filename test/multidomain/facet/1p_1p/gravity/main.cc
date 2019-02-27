@@ -151,9 +151,6 @@ int main(int argc, char** argv) try
     bulkProblem->applyInitialSolution(x[bulkId]);
     lowDimProblem->applyInitialSolution(x[lowDimId]);
 
-    // initialize coupling manager
-    couplingManager->init(bulkProblem, lowDimProblem, couplingMapper, x);
-
     // the grid variables
     using BulkGridVariables = GetPropType<BulkProblemTypeTag, Properties::GridVariables>;
     using LowDimGridVariables = GetPropType<LowDimProblemTypeTag, Properties::GridVariables>;
@@ -161,6 +158,9 @@ int main(int argc, char** argv) try
     auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
     bulkGridVariables->init(x[bulkId]);
     lowDimGridVariables->init(x[lowDimId]);
+
+    // initialize coupling manager
+    couplingManager->init(bulkProblem, lowDimProblem, bulkGridVariables, lowDimGridVariables, couplingMapper, x);
 
     // intialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
