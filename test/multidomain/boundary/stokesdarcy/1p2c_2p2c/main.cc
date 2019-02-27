@@ -237,7 +237,7 @@ int main(int argc, char** argv) try
 
         // make the new solution the old solution
         solOld = sol;
-        darcyProblem->postTimeStep(sol[darcyIdx], *darcyGridVariables, timeLoop->timeStepSize());
+        darcyProblem->printWaterMass(sol[darcyIdx], *darcyGridVariables, timeLoop->timeStepSize());
         stokesGridVariables->advanceTimeStep();
         darcyGridVariables->advanceTimeStep();
 

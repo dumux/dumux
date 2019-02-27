@@ -122,7 +122,7 @@ public:
         return false;
     }
 
-    void postTimeStep(const SolutionVector& curSol) const
+    void printL2Error(const SolutionVector& curSol) const
     {
         if(printL2Error_)
         {

@@ -150,9 +150,9 @@ public:
         accumulatedSource_ = 0.0;
     }
 
-    void postTimeStep(const SolutionVector& curSol,
-                      const GridVariables& gridVariables,
-                      const Scalar timeStepSize)
+    void printTracerMass(const SolutionVector& curSol,
+                         const GridVariables& gridVariables,
+                         const Scalar timeStepSize)
 
     {
         // compute the mass in the entire domain to make sure the tracer is conserved

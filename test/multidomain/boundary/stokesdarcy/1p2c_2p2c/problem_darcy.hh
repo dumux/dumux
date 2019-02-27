@@ -150,9 +150,9 @@ public:
     // \{
 
     template<class SolutionVector, class GridVariables>
-    void postTimeStep(const SolutionVector& curSol,
-                      const GridVariables& gridVariables,
-                      const Scalar timeStepSize)
+    void printWaterMass(const SolutionVector& curSol,
+                        const GridVariables& gridVariables,
+                        const Scalar timeStepSize)
 
     {
         // compute the mass in the entire domain

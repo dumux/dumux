@@ -254,7 +254,7 @@ public:
     { return name_; }
 
     //! Called after every time step
-    void postTimeStep(const SolutionVector& curSol, Scalar time)
+    void plotComponentsOverTime(const SolutionVector& curSol, Scalar time)
     {
         if (plotOutput_)
         {
