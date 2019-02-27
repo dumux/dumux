@@ -121,7 +121,7 @@ int main(int argc, char** argv) try
 
     // write vtk output
     vtkWriter.write(1.0);
-    problem->postTimeStep(x);
+    problem->printL2Error(x);
 
     timer.stop();
 

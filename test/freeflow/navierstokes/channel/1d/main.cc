@@ -120,7 +120,7 @@ int main(int argc, char** argv) try
     nonLinearSolver.solve(x);
 
     // write vtk output
-    problem->postTimeStep(x);
+    problem->printL2Error(x);
     vtkWriter.write(1.0);
 
     timer.stop();

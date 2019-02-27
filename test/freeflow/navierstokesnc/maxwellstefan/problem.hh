@@ -247,9 +247,9 @@ public:
      * \param time The time
      */
      template<class SolutionVector, class GridVariables>
-     void postTimeStep(const SolutionVector& curSol,
-                       const GridVariables& gridVariables,
-                       const Scalar time)
+     void plotComponentsOverTime(const SolutionVector& curSol,
+                                 const GridVariables& gridVariables,
+                                 const Scalar time)
     {
 
         if (plotOutput_)

@@ -51,8 +51,6 @@
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
-#include <dumux/io/gnuplotinterface.hh>
-#include "plotoverline2d.hh"
 #include <dumux/material/components/constant.hh>
 
 #include "spatialparams.hh"

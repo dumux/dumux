@@ -142,23 +142,6 @@ public:
     }
 
     /*!
-     * \brief User defined output after the time integration
-     *
-     * Will be called diretly after the time integration.
-     */
-    // void postTimeStep()
-    // {
-    //     // Calculate storage terms
-    //     PrimaryVariables storage;
-    //     this->model().globalStorage(storage);
-    //
-    //     // Write mass balance information for rank 0
-    //     if (this->gridView().comm().rank() == 0) {
-    //         std::cout<<"Storage: " << storage << std::endl;
-    //     }
-    // }
-
-    /*!
      * \brief Returns the temperature \f$ K \f$
      *
      * This problem assumes a uniform temperature of 20 degrees Celsius.

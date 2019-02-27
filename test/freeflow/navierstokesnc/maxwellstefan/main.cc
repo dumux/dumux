@@ -139,7 +139,7 @@ int main(int argc, char** argv) try
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
-        problem->postTimeStep(x, *gridVariables,timeLoop->time()+timeLoop->timeStepSize());
+        problem->plotComponentsOverTime(x, *gridVariables,timeLoop->time()+timeLoop->timeStepSize());
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
