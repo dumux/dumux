@@ -250,7 +250,10 @@ public:
                                const auto& elemFluxVarsCache)
         {
             CellCenterPrimaryVariables result(0.0);
-            result[0] = elemFaceVars[scvf].velocitySelf() * scvf.area() * scvf.directionSign();
+            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+            const Scalar extrusionFactor = harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
+            result[0] = elemFaceVars[scvf].velocitySelf() * scvf.area() * extrusionFactor * scvf.directionSign();
             return result;
         };
 
