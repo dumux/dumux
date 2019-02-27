@@ -86,8 +86,8 @@ class SincosSteadyTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -101,6 +101,7 @@ class SincosSteadyTestProblem : public NavierStokesProblem<TypeTag>
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     SincosSteadyTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
