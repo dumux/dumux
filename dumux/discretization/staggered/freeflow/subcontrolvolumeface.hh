@@ -42,23 +42,24 @@ namespace Dumux {
  *        of a sub control volume we compute fluxes on. This is a specialization for free flow models.
  */
 template<class GV,
+         int geometryOrder,
          class T = StaggeredDefaultScvfGeometryTraits<GV> >
 class FreeFlowStaggeredSubControlVolumeFace
-: public SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<GV, T>, T>
+: public SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<GV, geometryOrder, T>, T>
 {
-    using ThisType = FreeFlowStaggeredSubControlVolumeFace<GV, T>;
+    using ThisType = FreeFlowStaggeredSubControlVolumeFace<GV, geometryOrder, T>;
     using ParentType = SubControlVolumeFaceBase<ThisType, T>;
     using Geometry = typename T::Geometry;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
-    using GeometryHelper = FreeFlowStaggeredGeometryHelper<GV>;
 
     using Scalar = typename T::Scalar;
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
 
     static constexpr int numPairs = 2 * (dimworld - 1);
-    static constexpr int geometryOrder = GeometryHelper::geometryOrder;
+
+    static constexpr bool useHigherOrder = geometryOrder > 1;
 
 public:
     using GlobalPosition = typename T::GlobalPosition;
@@ -255,6 +256,7 @@ public:
     *
     * \param backwardIdx The index describing how many faces backward this dof is from the opposite face
     */
+    template<bool enable = useHigherOrder, std::enable_if_t<enable, int> = 0>
     bool hasBackwardNeighbor(const int backwardIdx) const
     {
         return !(axisData().inAxisBackwardDofs[backwardIdx] < 0);
@@ -265,6 +267,7 @@ public:
     *
     * \param forwardIdx The index describing how many faces forward this dof is of the self face
     */
+    template<bool enable = useHigherOrder, std::enable_if_t<enable, int> = 0>
     bool hasForwardNeighbor(const int forwardIdx) const
     {
         return !(axisData().inAxisForwardDofs[forwardIdx] < 0);

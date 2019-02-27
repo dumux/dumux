@@ -54,6 +54,8 @@ class StaggeredFreeFlowConnectivityMap
 
     using Stencil = std::vector<GridIndexType>;
 
+    static constexpr bool useHigherOrder = false; //TODO
+
 public:
 
     //! Update the map and prepare the stencils
@@ -186,24 +188,9 @@ private:
     {
         if(stencil.empty())
         {
-            for(int i = 0; i < stencilOrder_ - 1; i++)
-            {
-                if(scvf.hasBackwardNeighbor(i))
-                {
-                    stencil.push_back(scvf.axisData().inAxisBackwardDofs[i]);
-                }
-            }
-
             stencil.push_back(scvf.axisData().selfDof);
             stencil.push_back(scvf.axisData().oppositeDof);
-
-            for(int i = 0; i < stencilOrder_ - 1; i++)
-            {
-                if(scvf.hasForwardNeighbor(i))
-                {
-                    stencil.push_back(scvf.axisData().inAxisForwardDofs[i]);
-                }
-            }
+            addHigherOrderInAxisDofs(std::integral_constant<bool, useHigherOrder>{}, scvf, stencil);
         }
 
         for(const auto& data : scvf.pairData())
@@ -223,6 +210,25 @@ private:
             }
         }
     }
+
+    void addHigherOrderInAxisDofs(std::false_type, const SubControlVolumeFace& scvf, Stencil& stencil) {}
+
+    void addHigherOrderInAxisDofs(std::true_type, const SubControlVolumeFace& scvf, Stencil& stencil)
+    {
+        for (int i = 0; i < stencilOrder_ - 1; i++)
+        {
+            if (scvf.hasBackwardNeighbor(i))
+            {
+                stencil.push_back(scvf.axisData().inAxisBackwardDofs[i]);
+            }
+
+            if (scvf.hasForwardNeighbor(i))
+            {
+                stencil.push_back(scvf.axisData().inAxisForwardDofs[i]);
+            }
+        }
+    }
+
 
     CellCenterToCellCenterMap cellCenterToCellCenterMap_;
     CellCenterToFaceMap cellCenterToFaceMap_;

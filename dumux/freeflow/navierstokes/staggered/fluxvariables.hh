@@ -86,6 +86,8 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
     static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
+    static constexpr bool useHigherOrder = false; // TODO
+
 public:
 
     using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
@@ -200,7 +202,8 @@ public:
         // The velocities of the dof at interest and the one of the opposite scvf.
         const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
         const Scalar velocityOpposite = elemFaceVars[scvf].velocityOpposite();
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
+
+        // const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
 
         // The volume variables within the current element. We only require those (and none of neighboring elements)
         // because the fluxes are calculated over the staggered face at the center of the element.
@@ -212,39 +215,37 @@ public:
             // Get the average velocity at the center of the element (i.e. the location of the staggered face).
             const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
 
-            // Check if the the velocity of the dof at interest lies up- or downstream w.r.t. to the transporting velocity.
-            const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
-
-            Scalar momentum = 0.0;
+            const auto upwindingMomenta = getFrontalUpwindingMomenta_(scvf, elemFaceVars, insideVolVars.density(), transportingVelocity);
+            const Scalar momentum = doMomentumUpwinding_(scvf, upwindingMomenta, gridFluxVarsCache);
 
             // Variables that will store the velocities of interest:
             // velocities[0]: downstream velocity
             // velocities[1]: upstream velocity
             // velocities[2]: upstream-upstream velocity
-            std::array<Scalar, 3> velocities{0.0, 0.0, 0.0};
+            // std::array<Scalar, 3> velocities{0.0, 0.0, 0.0};
 
             // Variables that will store the distances between the dofs of interest:
             // distances[0]: upstream to downstream distance
             // distances[1]: upstream-upstream to upstream distance
             // distances[2]: downstream staggered cell size
-            std::array<Scalar, 3> distances{0.0, 0.0, 0.0};
+            // std::array<Scalar, 3> distances{0.0, 0.0, 0.0};
 
-            const auto& highOrder = gridFluxVarsCache.higherOrderApproximation();
+            // const auto& highOrder = gridFluxVarsCache.higherOrderApproximation();
 
             // If a Tvd approach has been specified and I am not too near to the boundary I can use a second order
             // approximation for the velocity. In this frontal flux I use for the density always the value that I have on the scvf.
-            if (highOrder.tvdApproach() != TvdApproach::none)
-            {
-                if (canFrontalSecondOrder_(scvf, selfIsUpstream, velocities, distances, elemFaceVars[scvf]))
-                {
-                    momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], selfIsUpstream, insideVolVars.density(), highOrder.tvdApproach());
-                }
-                else
-                    momentum = highOrder.upwind(velocities[0], velocities[1], insideVolVars.density(), upwindWeight);
-            }
-            else
-                momentum = selfIsUpstream ? highOrder.upwind(velocityOpposite, velocitySelf, insideVolVars.density(), upwindWeight)
-                                          : highOrder.upwind(velocitySelf, velocityOpposite, insideVolVars.density(), upwindWeight);
+            // if (highOrder.tvdApproach() != TvdApproach::none)
+            // {
+            //     if (canFrontalSecondOrder_(scvf, selfIsUpstream, velocities, distances, elemFaceVars[scvf]))
+            //     {
+            //         momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], selfIsUpstream, insideVolVars.density(), highOrder.tvdApproach());
+            //     }
+            //     else
+            //         momentum = highOrder.upwind(velocities[0], velocities[1], insideVolVars.density());
+            // }
+            // else
+            //     momentum = selfIsUpstream ? highOrder.upwind(velocityOpposite, velocitySelf, insideVolVars.density())
+            //                               : highOrder.upwind(velocitySelf, velocityOpposite, insideVolVars.density());
 
             // Account for the orientation of the staggered face's normal outer normal vector
             // (pointing in opposite direction of the scvf's one).
@@ -310,7 +311,7 @@ public:
                                                     const GridFluxVariablesCache& gridFluxVarsCache)
     {
         FacePrimaryVariables normalFlux(0.0);
-        auto& faceVars = elemFaceVars[scvf];
+        const auto& faceVars = elemFaceVars[scvf];
         const int numSubFaces = scvf.pairData().size();
 
         // Account for all sub faces.
@@ -413,50 +414,45 @@ private:
         // of interest is located.
         const Scalar transportingVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
 
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight", 1.0);
+        const auto parallelUpwindingMomenta = getParallelUpwindingMomenta_(problem, element, scvf, normalFace, elemVolVars, faceVars,
+                                                                           transportingVelocity, localSubFaceIdx,
+                                                                           lateralFaceHasDirichletPressure, lateralFaceHasBJS);
 
-        // Check whether the own or the neighboring element is upstream.
-        const bool selfIsUpstream = ( normalFace.directionSign() == sign(transportingVelocity) );
-
-        // Get the volume variables of the own and the neighboring element
-        const auto& insideVolVars = elemVolVars[normalFace.insideScvIdx()];
-        const auto& outsideVolVars = elemVolVars[normalFace.outsideScvIdx()];
-
-        Scalar momentum = 0.0;
+        const Scalar momentum = doMomentumUpwinding_(scvf, parallelUpwindingMomenta, gridFluxVarsCache);
 
         // Variables that will store the velocities of interest:
         // velocities[0]: downstream velocity
         // velocities[1]: upsteram velocity
         // velocities[2]: upstream-upstream velocity
-        std::array<Scalar, 3> velocities{0.0, 0.0, 0.0};
+        // std::array<Scalar, 3> velocities{0.0, 0.0, 0.0};
 
         // Variables that will store the distances between the dofs of interest:
         // distances[0]: upstream to downstream distance
         // distances[1]: upstream-upstream to upstream distance
         // distances[2]: downstream staggered cell size
-        std::array<Scalar, 3> distances{0.0, 0.0, 0.0};
+        // std::array<Scalar, 3> distances{0.0, 0.0, 0.0};
 
-        const auto& highOrder = gridFluxVarsCache.higherOrderApproximation();
-
-        // If a Tvd approach has been specified and I am not too near to the boundary I can use a second order approximation.
-        if (highOrder.tvdApproach() != TvdApproach::none)
-        {
-            if (canLateralSecondOrder_(scvf, fvGeometry, selfIsUpstream, localSubFaceIdx, velocities, distances, problem, element, faceVars, lateralFaceHasDirichletPressure, lateralFaceHasBJS))
-            {
-                momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], selfIsUpstream, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), highOrder.tvdApproach());
-            }
-            else
-                momentum = highOrder.upwind(velocities[0], velocities[1], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), upwindWeight);
-        }
-        else
-        {
-            const Scalar velocityFirstParallel = scvf.hasParallelNeighbor(localSubFaceIdx, 0)
-                                               ? faceVars.velocityParallel(localSubFaceIdx, 0)
-                                               : getParallelVelocityFromBoundary_(problem, scvf, normalFace, faceVars.velocitySelf(), localSubFaceIdx, element, lateralFaceHasDirichletPressure, lateralFaceHasBJS);
-
-            momentum = selfIsUpstream ? highOrder.upwind(velocityFirstParallel, faceVars.velocitySelf(), insideVolVars.density(), upwindWeight)
-                                      : highOrder.upwind(faceVars.velocitySelf(), velocityFirstParallel, outsideVolVars.density(), upwindWeight);
-        }
+        // const auto& highOrder = gridFluxVarsCache.higherOrderApproximation();
+        //
+        // // If a Tvd approach has been specified and I am not too near to the boundary I can use a second order approximation.
+        // if (highOrder.tvdApproach() != TvdApproach::none)
+        // {
+        //     if (canLateralSecondOrder_(scvf, fvGeometry, selfIsUpstream, localSubFaceIdx, velocities, distances, problem, element, faceVars, lateralFaceHasDirichletPressure, lateralFaceHasBJS))
+        //     {
+        //         momentum = highOrder.tvd(velocities[0], velocities[1], velocities[2], distances[0], distances[1], distances[2], selfIsUpstream, selfIsUpstream ? insideVolVars.density() : outsideVolVars.density(), highOrder.tvdApproach());
+        //     }
+        //     else
+        //         momentum = highOrder.upwind(velocities[0], velocities[1], selfIsUpstream ? insideVolVars.density() : outsideVolVars.density());
+        // }
+        // else
+        // {
+        //     const Scalar velocityFirstParallel = scvf.hasParallelNeighbor(localSubFaceIdx, 0)
+        //                                        ? faceVars.velocityParallel(localSubFaceIdx, 0)
+        //                                        : getParallelVelocityFromBoundary_(problem, scvf, normalFace, faceVars.velocitySelf(), localSubFaceIdx, element, lateralFaceHasDirichletPressure, lateralFaceHasBJS);
+        //
+        //     momentum = selfIsUpstream ? highOrder.upwind(velocityFirstParallel, faceVars.velocitySelf(), insideVolVars.density())
+        //                               : highOrder.upwind(faceVars.velocitySelf(), velocityFirstParallel, outsideVolVars.density());
+        // }
 
         // Account for the orientation of the staggered normal face's outer normal vector
         // and its area (0.5 of the coinciding scfv).
@@ -881,6 +877,60 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions for the momentum equations at global position " << boundarySubFaceCenter);
         }
     }
+
+    Scalar doMomentumUpwinding_(const SubControlVolumeFace& scvf,
+                                const std::array<Scalar, 2>& momentum,
+                                const GridFluxVariablesCache& gridFluxVarsCache) const
+    {
+        const auto& upwindScheme = gridFluxVarsCache.higherOrderApproximation();
+        return upwindScheme.upwind(momentum[0], momentum[1]);
+    }
+
+    std::array<Scalar, 2> getFrontalUpwindingMomenta_(const SubControlVolumeFace& scvf,
+                                                      const ElementFaceVariables& elemFaceVars,
+                                                      const Scalar density,
+                                                      const Scalar transportingVelocity) const
+    {
+        const Scalar momentumSelf = elemFaceVars[scvf].velocitySelf() * density;
+        const Scalar momentumOpposite = elemFaceVars[scvf].velocityOpposite() * density;
+        const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
+
+        return selfIsUpstream ? std::array<Scalar, 2>{momentumOpposite, momentumSelf}
+                              : std::array<Scalar, 2>{momentumSelf, momentumOpposite};
+    }
+
+    std::array<Scalar, 2> getParallelUpwindingMomenta_(const Problem& problem,
+                                                       const Element& element,
+                                                       const SubControlVolumeFace& ownFace,
+                                                       const SubControlVolumeFace& lateralFace,
+                                                       const ElementVolumeVariables& elemVolVars,
+                                                       const FaceVariables& faceVars,
+                                                       const Scalar transportingVelocity,
+                                                       const int localSubFaceIdx,
+                                                       bool lateralFaceHasDirichletPressure,
+                                                       bool lateralFaceHasBJS) const
+    {
+
+         // Check whether the own or the neighboring element is upstream.
+        const bool selfIsUpstream = lateralFace.directionSign() == sign(transportingVelocity);
+
+        // Get the volume variables of the own and the neighboring element
+        const auto& insideVolVars = elemVolVars[lateralFace.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[lateralFace.outsideScvIdx()];
+
+        const Scalar momentumSelf = faceVars.velocitySelf() * insideVolVars.density();
+
+        const Scalar momentumParallel = ownFace.hasParallelNeighbor(localSubFaceIdx, 0)
+                                      ? faceVars.velocityParallel(localSubFaceIdx, 0) * outsideVolVars.density()
+                                      : (getParallelVelocityFromBoundary_(problem, ownFace, lateralFace,
+                                                                         faceVars.velocitySelf(), localSubFaceIdx, element,
+                                                                         lateralFaceHasDirichletPressure, lateralFaceHasBJS)
+                                         * insideVolVars.density());
+
+        return selfIsUpstream ? std::array<Scalar, 2>{momentumParallel, momentumSelf}
+                              : std::array<Scalar, 2>{momentumSelf, momentumParallel};
+    }
+
 };
 
 } // end namespace Dumux

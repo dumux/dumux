@@ -43,13 +43,20 @@ template<class Scalar, class GlobalPosition, int geometryOrder>
 struct PairData
 {
     std::array<int, geometryOrder> parallelDofs;
-    std::array<Scalar, geometryOrder+1> parallelDistances;
-    std::pair<signed int,signed int> normalPair;
+    std::array<Scalar, geometryOrder+1/*geometryOrder*/> parallelDistances; // TODO
+    std::pair<signed int, signed int> normalPair;
     int localNormalFaceIdx;
     Scalar normalDistance;
     GlobalPosition virtualFirstParallelFaceDofPos;
 };
 
+
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief In Axis Data stored per sub face
+ */
+template<class Scalar, int geometryOrder>
+struct AxisData;
 /*!
  * \ingroup StaggeredDiscretization
  * \brief In Axis Data stored per sub face
@@ -57,6 +64,14 @@ struct PairData
 template<class Scalar, int geometryOrder>
 struct AxisData
 {
+    AxisData()
+    {
+        inAxisForwardDofs.fill(-1);
+        inAxisBackwardDofs.fill(-1);
+        inAxisForwardDistances.fill(0);
+        inAxisBackwardDistances.fill(0);
+    }
+
     int selfDof;
     int oppositeDof;
     std::array<int, geometryOrder-1> inAxisForwardDofs;
@@ -65,6 +80,21 @@ struct AxisData
     std::array<Scalar, geometryOrder-1> inAxisForwardDistances;
     std::array<Scalar, geometryOrder-1> inAxisBackwardDistances;
 };
+
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief In Axis Data stored per sub face
+ */
+template<class Scalar>
+struct AxisData<Scalar, 1>
+{
+    int selfDof;
+    int oppositeDof;
+    Scalar selfToOppositeDistance;
+};
+
+// template<class Scalar, int geometryOrder>
+// using AxisData
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -83,7 +113,7 @@ inline static unsigned int directionIndex(Vector&& vector)
  * \brief Helper class constructing the dual grid finite volume geometries
  *        for the free flow staggered discretization method.
  */
-template<class GridView>
+template<class GridView, int geometryOrder>
 class FreeFlowStaggeredGeometryHelper
 {
     using Scalar = typename GridView::ctype;
@@ -107,6 +137,9 @@ class FreeFlowStaggeredGeometryHelper
     static constexpr int numfacets = dimWorld * 2;
     static constexpr int numPairs = 2 * (dimWorld - 1);
 
+    static constexpr bool useHigherOrder = geometryOrder > 1;
+
+
 public:
 
     FreeFlowStaggeredGeometryHelper(const Element& element, const GridView& gridView) : element_(element), elementGeometry_(element.geometry()), gridView_(gridView)
@@ -118,8 +151,8 @@ public:
     {
         intersection_ = intersection;
         innerNormalFacePos_.clear();
-        fillPairData_();
-        fillAxisData_();
+        fillPairData_(std::integral_constant<bool, true>{}); //TODO
+        fillAxisData_(std::integral_constant<bool, useHigherOrder>{});
     }
 
     /*!
@@ -162,33 +195,44 @@ public:
         return Dumux::directionIndex(std::move(intersection.centerUnitOuterNormal()));
     }
 
-    static constexpr int geometryOrder = 2;
-
 private:
-    /*!
-     * \brief Fills all entries of the in axis data
-     */
-    void fillAxisData_()
+
+
+    void fillAxisData_(std::false_type)
     {
-        unsigned int numForwardBackwardAxisDofs = axisData_.inAxisForwardDofs.size();
         const auto inIdx = intersection_.indexInInside();
         const auto oppIdx = localOppositeIdx_(inIdx);
 
-        this->axisData_.inAxisForwardDofs.fill(-1);
-        this->axisData_.inAxisBackwardDofs.fill(-1);
-        this->axisData_.inAxisForwardDistances.fill(0);
-        this->axisData_.inAxisBackwardDistances.fill(0);
-
         // Set the self Dof
-        this->axisData_.selfDof = gridView_.indexSet().subIndex(this->intersection_.inside(), inIdx, codimIntersection);
-        const auto self = getFacet_(inIdx, element_);
+        axisData_.selfDof = gridView_.indexSet().subIndex(intersection_.inside(), inIdx, codimIntersection);
 
         // Set the opposite Dof
-        this->axisData_.oppositeDof = gridView_.indexSet().subIndex(this->intersection_.inside(), oppIdx, codimIntersection);
-        const auto opposite = getFacet_(oppIdx, element_);
+        axisData_.oppositeDof = gridView_.indexSet().subIndex(intersection_.inside(), oppIdx, codimIntersection);
 
         // Set the Self to Opposite Distance
-        this->axisData_.selfToOppositeDistance = (self.geometry().center() - opposite.geometry().center()).two_norm();
+        const auto self = getFacet_(inIdx, element_);
+        const auto opposite = getFacet_(oppIdx, element_);
+        axisData_.selfToOppositeDistance = (self.geometry().center() - opposite.geometry().center()).two_norm();
+    }
+    /*!
+     * \brief Fills all entries of the in axis data
+     */
+    void fillAxisData_(std::true_type)
+    {
+        const auto numForwardBackwardAxisDofs = axisData_.inAxisForwardDofs.size();
+        const auto inIdx = intersection_.indexInInside();
+        const auto oppIdx = localOppositeIdx_(inIdx);
+
+        // Set the self Dof
+        axisData_.selfDof = gridView_.indexSet().subIndex(intersection_.inside(), inIdx, codimIntersection);
+
+        // Set the opposite Dof
+        axisData_.oppositeDof = gridView_.indexSet().subIndex(intersection_.inside(), oppIdx, codimIntersection);
+
+        // Set the Self to Opposite Distance
+        const auto self = getFacet_(inIdx, element_);
+        const auto opposite = getFacet_(oppIdx, element_);
+        axisData_.selfToOppositeDistance = (self.geometry().center() - opposite.geometry().center()).two_norm();
 
         // Set the Forward Dofs
         std::stack<Element> inAxisForwardElementStack;
@@ -298,10 +342,17 @@ private:
         }
     }
 
+    void fillPairData_(std::false_type)
+    {
+
+        // TODO
+
+    }
+
     /*!
      * \brief Fills all entries of the pair data
      */
-    void fillPairData_()
+    void fillPairData_(std::true_type)
     {
         // initialize values that could remain unitialized if the intersection lies on a boundary
         for(auto& data : pairData_)

@@ -29,17 +29,42 @@
 
 namespace Dumux {
 
+namespace Detail {
+
+template<class Scalar, int geometryOrder>
+struct InAxisVelocities;
+
+template<class Scalar>
+struct InAxisVelocities<Scalar, 1>
+{
+    Scalar self = 0.0;
+    Scalar opposite = 0.0;
+};
+
+template<class Scalar, int geometryOrder>
+struct InAxisVelocities
+{
+    Scalar self = 0.0;
+    Scalar opposite = 0.0;
+    std::array<Scalar, geometryOrder-1> forward{};
+    std::array<Scalar, geometryOrder-1> backward{};
+};
+
+}
+
 /*!
  * \ingroup StaggeredDiscretization
  * \brief The face variables class for free flow staggered grid models.
  *        Contains all relevant velocities for the assembly of the momentum balance.
  */
-template<class FacePrimaryVariables, int dim>
+template<class FacePrimaryVariables, int dim, int geometryOrder> // TODO doc
 class StaggeredFaceVariables
 {
     static constexpr int numPairs = (dim == 2) ? 2 : 4;
-    static constexpr int order = 2;
+    static constexpr bool useHigherOrder = geometryOrder > 1;
+
     using Scalar = typename FacePrimaryVariables::block_type;
+    using InAxisVelocities = Detail::InAxisVelocities<Scalar, geometryOrder>;
 
 public:
 
@@ -50,7 +75,7 @@ public:
     */
     void updateOwnFaceOnly(const FacePrimaryVariables& priVars)
     {
-        velocitySelf_ = priVars[0];
+        inAxisVelocities_.self = priVars[0];
     }
 
     /*!
@@ -71,52 +96,30 @@ public:
                 const FVElementGeometry& fvGeometry,
                 const SubControlVolumeFace& scvf)
     {
-        velocitySelf_ = faceSol[scvf.dofIndex()];
-        velocityOpposite_ = faceSol[scvf.dofIndexOpposingFace()];
+        inAxisVelocities_.self = faceSol[scvf.dofIndex()];
+        inAxisVelocities_.opposite = faceSol[scvf.dofIndexOpposingFace()];
 
-        // treat the velocity forward of the self face i.e. the face that is
-        // forward wrt the self face by degree i
-        velocityForward_.fill(0.0);
-        for (int i = 0; i < scvf.axisData().inAxisForwardDofs.size(); i++)
-        {
-             if(!(scvf.axisData().inAxisForwardDofs[i] < 0))
-             {
-                 velocityForward_[i]= faceSol[scvf.axisData().inAxisForwardDofs[i]];
-             }
-        }
-
-        // treat the velocity at the first backward face i.e. the face that is
-        // behind the opposite face by degree i
-        velocityBackward_.fill(0.0);
-        for (int i = 0; i < scvf.axisData().inAxisBackwardDofs.size(); i++)
-        {
-             if(!(scvf.axisData().inAxisBackwardDofs[i] < 0))
-             {
-                 velocityBackward_[i] = faceSol[scvf.axisData().inAxisBackwardDofs[i]];
-             }
-        }
+        addHigherOrderInAxisVelocities(std::integral_constant<bool, useHigherOrder>{}, faceSol, scvf);
 
         // handle all sub faces
-        for(int i = 0; i < velocityParallel_.size(); ++i)
+        for (int i = 0; i < velocityParallel_.size(); ++i)
             velocityParallel_[i].fill(0.0);
 
-        for(int i = 0; i < scvf.pairData().size(); ++i)
+        for (int i = 0; i < scvf.pairData().size(); ++i)
         {
             const auto& subFaceData = scvf.pairData(i);
 
             // treat the velocities normal to the face
             velocityNormalInside_[i] = faceSol[subFaceData.normalPair.first];
 
-            if(scvf.hasOuterNormal(i))
+            if (scvf.hasOuterNormal(i))
                 velocityNormalOutside_[i] = faceSol[subFaceData.normalPair.second];
 
             // treat the velocities parallel to the self face
-            for(int j = 0; j < subFaceData.parallelDofs.size(); j++)
+            for (int j = 0; j < geometryOrder; j++)
             {
-                if(scvf.hasParallelNeighbor(i,j))
-                {
+                if (scvf.hasParallelNeighbor(i,j))
                     velocityParallel_[i][j] = faceSol[subFaceData.parallelDofs[j]];
-                }
             }
         }
     }
@@ -126,7 +129,7 @@ public:
     */
     Scalar velocitySelf() const
     {
-        return velocitySelf_;
+        return inAxisVelocities_.self;
     }
 
     /*!
@@ -134,7 +137,7 @@ public:
     */
     Scalar velocityOpposite() const
     {
-        return velocityOpposite_;
+        return inAxisVelocities_.opposite;
     }
 
     /*!
@@ -142,9 +145,10 @@ public:
     *
     * \param backwardIdx The index describing how many faces backward this dof is from the opposite face
     */
+    template<bool enable = useHigherOrder, std::enable_if_t<enable, int> = 0>
     Scalar velocityBackward(const int backwardIdx) const
     {
-        return velocityBackward_[backwardIdx];
+        return inAxisVelocities_.backward[backwardIdx];
     }
 
     /*!
@@ -152,9 +156,10 @@ public:
     *
     * \param forwardIdx The index describing how many faces forward this dof is of the self face
     */
+    template<bool enable = useHigherOrder, std::enable_if_t<enable, int> = 0>
     Scalar velocityForward(const int forwardIdx) const
     {
-        return velocityForward_[forwardIdx];
+        return inAxisVelocities_.forward[forwardIdx];
     }
 
     /*!
@@ -163,7 +168,7 @@ public:
     * \param localSubFaceIdx The local index of the subface
     * \param parallelDegreeIdx The index describing how many faces parallel this dof is of the parallel face
     */
-    Scalar velocityParallel(const int localSubFaceIdx, const int parallelDegreeIdx) const
+    Scalar velocityParallel(const int localSubFaceIdx, const int parallelDegreeIdx = 0) const
     {
         return velocityParallel_[localSubFaceIdx][parallelDegreeIdx];
     }
@@ -189,11 +194,33 @@ public:
     }
 
 private:
-    Scalar velocitySelf_;
-    Scalar velocityOpposite_;
-    std::array<Scalar, order-1> velocityForward_;
-    std::array<Scalar, order-1> velocityBackward_;
-    std::array<std::array<Scalar, order>, numPairs> velocityParallel_;
+
+    template<class SolVector, class SubControlVolumeFace>
+    void addHigherOrderInAxisVelocities(std::false_type, const SolVector& faceSol, const SubControlVolumeFace& scvf) {}
+
+    template<class SolVector, class SubControlVolumeFace>
+    void addHigherOrderInAxisVelocities(std::true_type, const SolVector& faceSol, const SubControlVolumeFace& scvf)
+    {
+
+        // treat the velocity forward of the self face i.e. the face that is
+        // forward wrt the self face by degree i
+        for (int i = 0; i < scvf.axisData().inAxisForwardDofs.size(); i++)
+        {
+             if (!(scvf.axisData().inAxisForwardDofs[i] < 0))
+                 inAxisVelocities_.forward[i]= faceSol[scvf.axisData().inAxisForwardDofs[i]];
+        }
+
+        // treat the velocity at the first backward face i.e. the face that is
+        // behind the opposite face by degree i
+        for (int i = 0; i < scvf.axisData().inAxisBackwardDofs.size(); i++)
+        {
+             if (!(scvf.axisData().inAxisBackwardDofs[i] < 0))
+                 inAxisVelocities_.backward[i] = faceSol[scvf.axisData().inAxisBackwardDofs[i]];
+        }
+    }
+
+    InAxisVelocities inAxisVelocities_;
+    std::array<std::array<Scalar, geometryOrder>, numPairs> velocityParallel_;
     std::array<Scalar, numPairs>  velocityNormalInside_;
     std::array<Scalar, numPairs>  velocityNormalOutside_;
 

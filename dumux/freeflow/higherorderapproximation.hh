@@ -53,6 +53,8 @@ class HigherOrderApproximation
 public:
     HigherOrderApproximation(const std::string& paramGroup = "")
     {
+        upwindWeight_ = getParamFromGroup<Scalar>(paramGroup, "Flux.UpwindWeight");
+
         if (hasParamInGroup(paramGroup, "Discretization.TvdApproach"))
         {
             // Read the runtime parameters
@@ -188,15 +190,14 @@ public:
         }
     }
 
+
     /**
       * \brief Upwind Method
       */
-    Scalar upwind(const Scalar downstreamVelocity,
-                  const Scalar upstreamVelocity,
-                  const Scalar density,
-                  const Scalar upwindWeight) const
+    Scalar upwind(const Scalar downstreamMomentum,
+                  const Scalar upstreamMomentum) const
     {
-        return (upwindWeight * upstreamVelocity + (1.0 - upwindWeight) * downstreamVelocity) * density;
+        return (upwindWeight_ * upstreamMomentum + (1.0 - upwindWeight_) * downstreamMomentum);
     }
 
     /**
@@ -451,6 +452,7 @@ public:
 private:
     TvdApproach tvdApproach_;
     DifferencingScheme differencingScheme_;
+    Scalar upwindWeight_;
 
     std::function<Scalar(const Scalar, const Scalar)> limiter_;
 };
