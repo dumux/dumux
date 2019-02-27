@@ -98,13 +98,15 @@ public:
 
             auto fvGeometry = localView(*this->fvGridGeometry_);
             auto elemVolVars = localView(this->curGridVolVars());
+            auto elemFluxVarsCache = localView(this->gridFluxVarsCache());
 
             fvGeometry.bind(element);
             elemVolVars.bind(element, fvGeometry, curSol);
+            elemFluxVarsCache.bind(element, fvGeometry, curSol);
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {
-                velocityOutput.calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
+                velocityOutput.calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
 
                 for (auto&& scv : scvs(fvGeometry))
                 {

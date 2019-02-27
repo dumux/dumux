@@ -25,6 +25,7 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 #define DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/geometry/referenceelements.hh>
 
@@ -50,6 +51,7 @@ class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using VolumeVariables = typename GridVariables::VolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using FluidSystem = typename VolumeVariables::FluidSystem;
@@ -107,12 +109,27 @@ public:
     //! Returns the number of phases.
     int numFluidPhases() const override { return VolumeVariables::numFluidPhases(); }
 
-    //! Calculates the velocities for the scvs in the element.
-    //! We assume the local containers to be bound to the complete stencil.
+    //! Calculate the velocities for the scvs in the element
+    //! We assume the local containers to be bound to the complete stencil
+    DUNE_DEPRECATED_MSG("Use the new interface signature with elemFluxVarsCache")
     void calculateVelocity(VelocityVector& velocity,
                            const ElementVolumeVariables& elemVolVars,
                            const FVElementGeometry& fvGeometry,
                            const Element& element,
+                           int phaseIdx) const override
+    {
+        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
+        elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+        calculateVelocity(velocity, element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+    }
+
+    //! Calculates the velocities for the scvs in the element.
+    //! We assume the local containers to be bound to the complete stencil.
+    void calculateVelocity(VelocityVector& velocity,
+                           const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVarsCache& elemFluxVarsCache,
                            int phaseIdx) const override
     {
         using Velocity = typename VelocityVector::value_type;
@@ -121,10 +138,6 @@ public:
 
         const auto geometry = element.geometry();
         const Dune::GeometryType geomType = geometry.type();
-
-        // bind the element flux variables cache
-        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
         // the upwind term to be used for the volume flux evaluation
         auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.mobility(phaseIdx); };

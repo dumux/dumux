@@ -24,6 +24,7 @@
 #ifndef DUMUX_STAGGERED_FF_VELOCITYOUTPUT_HH
 #define DUMUX_STAGGERED_FF_VELOCITYOUTPUT_HH
 
+#include <dune/common/deprecated.hh>
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/common/parameters.hh>
 
@@ -41,8 +42,9 @@ class StaggeredFreeFlowVelocityOutput : public VelocityOutput<GridVariables>
     using Scalar = typename GridVariables::Scalar;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using VolumeVariables = typename GridVariables::VolumeVariables;
     using FluidSystem = typename VolumeVariables::FluidSystem;
     using GridView = typename FVGridGeometry::GridView;
@@ -80,10 +82,25 @@ public:
 
     //! Calculate the velocities for the scvs in the element
     //! We assume the local containers to be bound to the complete stencil
+    DUNE_DEPRECATED_MSG("Use the new interface signature with elemFluxVarsCache")
     void calculateVelocity(VelocityVector& velocity,
                            const ElementVolumeVariables& elemVolVars,
                            const FVElementGeometry& fvGeometry,
                            const Element& element,
+                           int phaseIdx) const override
+    {
+        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
+        elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+        calculateVelocity(velocity, element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+    }
+
+    //! Calculate the velocities for the scvs in the element
+    //! We assume the local containers to be bound to the complete stencil
+    void calculateVelocity(VelocityVector& velocity,
+                           const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVarsCache& elemFluxVarsCache,
                            int phaseIdx) const override
     {
         auto elemFaceVars = localView(gridVariables_.curGridFaceVars());

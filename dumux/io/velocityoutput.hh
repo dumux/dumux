@@ -28,6 +28,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/deprecated.hh>
 #include <dumux/common/parameters.hh>
 
 namespace Dumux {
@@ -42,6 +43,7 @@ class VelocityOutput
     using Scalar = typename GridVariables::Scalar;
     static constexpr int dimWorld = GridVariables::GridGeometry::GridView::dimensionworld;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using FVElementGeometry = typename GridVariables::GridGeometry::LocalView;
     using Element = typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity;
 
@@ -67,6 +69,17 @@ public:
 
     //! Calculate the velocities for the scvs in the element
     //! We assume the local containers to be bound to the complete stencil
+    virtual void calculateVelocity(VelocityVector& velocity,
+                                   const Element& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVolumeVariables& elemVolVars,
+                                   const ElementFluxVarsCache& elemFluxVarsCache,
+                                   int phaseIdx) const
+    {}
+
+    //! Calculate the velocities for the scvs in the element
+    //! We assume the local containers to be bound to the complete stencil
+    DUNE_DEPRECATED_MSG("Use the new interface signature with elemFluxVarsCache")
     virtual void calculateVelocity(VelocityVector& velocity,
                                    const ElementVolumeVariables& elemVolVars,
                                    const FVElementGeometry& fvGeometry,
