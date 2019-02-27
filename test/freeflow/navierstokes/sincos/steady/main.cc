@@ -103,6 +103,66 @@ auto createAnalyticalSolution(const Problem& problem)
     return std::make_tuple(analyticalPressure, analyticalVelocity, analyticalVelocityOnFace);
 }
 
+template<class Problem>
+auto createSourceX(const Problem& problem)
+{
+    const auto& fvGridGeometry = problem.fvGridGeometry();
+
+    using Scalar = double;
+    std::vector<Scalar> sourceX;
+
+    sourceX.resize(fvGridGeometry.numCellCenterDofs());
+
+    using Indices = typename Problem::Indices;
+
+    for (const auto& element : elements(fvGridGeometry.gridView()))
+    {
+        auto fvGeometry = localView(fvGridGeometry);
+        fvGeometry.bindElement(element);
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            auto ccDofIdx = scv.dofIndex();
+            auto ccDofPosition = scv.dofPosition();
+
+            auto sourceAtPosVal = problem.sourceAtPos(ccDofPosition);
+
+            sourceX[ccDofIdx] = sourceAtPosVal[Indices::momentumXBalanceIdx];
+        }
+    }
+
+    return sourceX;
+}
+
+template<class Problem>
+auto createSourceY(const Problem& problem)
+{
+    const auto& fvGridGeometry = problem.fvGridGeometry();
+
+    using Scalar = double;
+    std::vector<Scalar> sourceY;
+
+    sourceY.resize(fvGridGeometry.numCellCenterDofs());
+
+    using Indices = typename Problem::Indices;
+
+    for (const auto& element : elements(fvGridGeometry.gridView()))
+    {
+        auto fvGeometry = localView(fvGridGeometry);
+        fvGeometry.bindElement(element);
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            auto ccDofIdx = scv.dofIndex();
+            auto ccDofPosition = scv.dofPosition();
+
+            auto sourceAtPosVal = problem.sourceAtPos(ccDofPosition);
+
+            sourceY[ccDofIdx] = sourceAtPosVal[Indices::momentumYBalanceIdx];
+        }
+    }
+
+    return sourceY;
+}
+
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
@@ -156,6 +216,10 @@ int main(int argc, char** argv) try
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
 
+    auto sourceX = createSourceX(*problem);
+    vtkWriter.addField(sourceX, "sourceX");
+    auto sourceY = createSourceY(*problem);
+    vtkWriter.addField(sourceY, "sourceY");
     auto analyticalSolution = createAnalyticalSolution(*problem);
     vtkWriter.addField(std::get<0>(analyticalSolution), "pressureExact");
     vtkWriter.addField(std::get<1>(analyticalSolution), "velocityExact");

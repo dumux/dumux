@@ -1,6 +1,6 @@
 [Grid]
-UpperRight = 1 1
-Cells = 50 50
+UpperRight = 6.28 6.28
+Cells = 70 70
 
 [Problem]
 Name = test_sincos_steady # name passed to the output routines
@@ -13,8 +13,8 @@ LiquidDensity = 1.0
 LiquidKinematicViscosity = 0.001
 
 [Newton]
-MaxSteps = 10
-MaxRelativeShift = 1e-5
+MaxSteps = 100
+MaxRelativeShift = 1e-10
 SatisfyResidualAndShiftCriterion = true
 EnableAbsoluteResidualCriterion = true
 MaxAbsoluteResidual = 1e-10

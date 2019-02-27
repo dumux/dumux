@@ -87,7 +87,7 @@ class SincosSteadyTestProblem : public NavierStokesProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -102,6 +102,7 @@ class SincosSteadyTestProblem : public NavierStokesProblem<TypeTag>
 
 public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
     SincosSteadyTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -194,7 +195,7 @@ public:
                          int pvIdx) const
     {
         // set fixed pressure in one cell
-        return (scv.dofIndex() == 0) && pvIdx == Indices::pressureIdx;
+         return (scv.dofIndex() == 0 /*&& scv.dofIndex()==33*/) && pvIdx == Indices::pressureIdx;
     }
 
    /*!
