@@ -1,2 +1,2 @@
 dune_add_test(SOURCES test_ncpflash.cc
-              LABELS unit)
+              LABELS unit material)
