@@ -2,6 +2,7 @@ dune_symlink_to_source_files(FILES "params.input" "periodic.dgf")
 
 # test using periodic boundary conditions
 dune_add_test(NAME test_1p_periodic_tpfa
+              LABELS porousmediumflow 1p tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa FVGEOMCACHING=false
               CMAKE_GUARD dune-spgrid_FOUND
@@ -9,6 +10,7 @@ dune_add_test(NAME test_1p_periodic_tpfa
 
 dune_add_test(NAME test_1p_periodic_tpfa_sequential
               TARGET test_1p_periodic_tpfa
+              LABELS porousmediumflow 1p tpfa
               CMAKE_GUARD dune-spgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -18,6 +20,7 @@ dune_add_test(NAME test_1p_periodic_tpfa_sequential
 
 dune_add_test(NAME test_1p_periodic_tpfa_parallel
               TARGET test_1p_periodic_tpfa
+              LABELS porousmediumflow 1p tpfa
               CMAKE_GUARD dune-spgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -27,6 +30,7 @@ dune_add_test(NAME test_1p_periodic_tpfa_parallel
                         --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa params.input -Problem.Name test_1p_periodic_tpfa_parallel")
 
 dune_add_test(NAME test_1p_periodic_tpfa_caching
+              LABELS porousmediumflow 1p tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa FVGEOMCACHING=true
               CMAKE_GUARD dune-spgrid_FOUND
@@ -37,6 +41,7 @@ dune_add_test(NAME test_1p_periodic_tpfa_caching
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa params.input -Problem.Name test_1p_periodic_tpfa_caching")
 
 dune_add_test(NAME test_1p_periodic_box
+              LABELS porousmediumflow 1p box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox
               CMAKE_GUARD dune-spgrid_FOUND

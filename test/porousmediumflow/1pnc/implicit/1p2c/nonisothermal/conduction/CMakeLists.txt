@@ -3,6 +3,7 @@ add_input_file_links()
 # non-isothermal tests
 # conduction
 dune_add_test(NAME test_1p2cni_conduction_box
+              LABELS porousmediumflow 1p2c box 1p2cni
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionBox
@@ -14,6 +15,7 @@ dune_add_test(NAME test_1p2cni_conduction_box
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-9})
 
 dune_add_test(NAME test_1p2cni_conduction_tpfa
+              LABELS porousmediumflow 1p2c tpfa 1p2cni
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionCCTpfa
@@ -25,6 +27,7 @@ dune_add_test(NAME test_1p2cni_conduction_tpfa
                         --zeroThreshold {"velocity_liq \(m/s\)_0":1e-9})
 
 dune_add_test(NAME test_1p2cni_conduction_mpfa
+              LABELS porousmediumflow 1p2c mpfa 1p2cni
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionCCMpfa

@@ -2,6 +2,7 @@ add_input_file_links()
 
 # salt-water intrusion test using the box model
 dune_add_test(NAME test_1p2c_saltwaterintrusion_box
+              LABELS porousmediumflow 1p2c box
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=SaltWaterIntrusionTest

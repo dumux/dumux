@@ -3,7 +3,8 @@ add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
 # dim < dimWorld tests with Dune::Foamgrid<2,3>
-dune_add_test(NAME test_1p_fracture2d3d_box
+dune_add_test(NAME test_0p_fracture2d3d_box
+              LABELS porousmediumflow 0p box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureBox
               CMAKE_GUARD dune-foamgrid_FOUND
@@ -14,6 +15,7 @@ dune_add_test(NAME test_1p_fracture2d3d_box
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_fracture2d3d_box params.input -Problem.Name test_1p_fracture2d3d_box")
 
 dune_add_test(NAME test_1p_fracture2d3d_tpfa
+              LABELS porousmediumflow 1p tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureCCTpfa
               CMAKE_GUARD dune-foamgrid_FOUND
@@ -24,6 +26,7 @@ dune_add_test(NAME test_1p_fracture2d3d_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_fracture2d3d_tpfa params.input -Problem.Name test_1p_fracture2d3d_tpfa")
 
 dune_add_test(NAME test_1p_fracture2d3d_mpfa
+              LABELS porousmediumflow 1p mpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureCCMpfa
               CMAKE_GUARD dune-foamgrid_FOUND

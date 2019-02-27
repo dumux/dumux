@@ -16,6 +16,7 @@ target_compile_definitions(test_1p_incompressible_box_anadiff PUBLIC "TYPETAG=On
 # using tpfa and analytical Jacobian
 dune_add_test(NAME test_1p_incompressible_tpfa
               TARGET test_1p_incompressible_tpfa_anadiff
+              LABELS porousmediumflow 1p tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
@@ -24,6 +25,7 @@ dune_add_test(NAME test_1p_incompressible_tpfa
 
 # using tpfa, analytical Jacobian and quad precision
 dune_add_test(NAME test_1p_incompressible_tpfa_quad
+              LABELS porousmediumflow 1p tpfa
               SOURCES main.cc
               CMAKE_GUARD HAVE_QUAD
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfaQuad NUMDIFFMETHOD=DiffMethod::analytic
@@ -37,6 +39,7 @@ dune_add_test(NAME test_1p_incompressible_tpfa_quad
 # using mpfa and analytical Jacobian
 dune_add_test(NAME test_1p_incompressible_mpfa
               TARGET test_1p_incompressible_mpfa_anadiff
+              LABELS porousmediumflow 1p mpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
@@ -48,6 +51,7 @@ dune_add_test(NAME test_1p_incompressible_mpfa
 # using box and analytical Jacobian
 dune_add_test(NAME test_1p_incompressible_box
               TARGET test_1p_incompressible_box_anadiff
+              LABELS porousmediumflow 1p box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
@@ -56,6 +60,7 @@ dune_add_test(NAME test_1p_incompressible_box
 
 # using tpfa and numeric differentiation
 dune_add_test(NAME test_1p_incompressible_tpfa_numdiff
+              LABELS porousmediumflow 1p tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa NUMDIFFMETHOD=DiffMethod::numeric
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -68,6 +73,7 @@ dune_add_test(NAME test_1p_incompressible_tpfa_numdiff
 
 # using box and numeric differentiation
 dune_add_test(NAME test_1p_incompressible_box_numdiff
+              LABELS porousmediumflow 1p box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox NUMDIFFMETHOD=DiffMethod::numeric
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -81,6 +87,7 @@ dune_add_test(NAME test_1p_incompressible_box_numdiff
 # using tpfa and analytical Jacobian with extrusion factor
 dune_add_test(NAME test_1p_incompressible_tpfa_extrude
               TARGET test_1p_incompressible_tpfa_anadiff
+              LABELS porousmediumflow 1p tpfa
               COMMAND ./test_1p_incompressible_tpfa_anadiff
               CMD_ARGS params.input -Problem.Name test_1p_incompressible_tpfa_extrude
                                     -Problem.ExtrusionFactor 10
@@ -91,6 +98,7 @@ dune_add_test(NAME test_1p_incompressible_tpfa_extrude
 # using mpfa and analytical Jacobian with extrusion factor
 dune_add_test(NAME test_1p_incompressible_mpfa_extrude
               TARGET test_1p_incompressible_mpfa_anadiff
+              LABELS porousmediumflow 1p mpfa
               COMMAND ./test_1p_incompressible_mpfa_anadiff
               CMD_ARGS params.input -Problem.Name test_1p_incompressible_mpfa_extrude
                                     -Problem.ExtrusionFactor 10
@@ -101,6 +109,7 @@ dune_add_test(NAME test_1p_incompressible_mpfa_extrude
 # using box and analytical Jacobian with extrusion factor
 dune_add_test(NAME test_1p_incompressible_box_extrude
               TARGET test_1p_incompressible_box_anadiff
+              LABELS porousmediumflow 1p box
               COMMAND ./test_1p_incompressible_box_anadiff
               CMD_ARGS params.input -Problem.Name test_1p_incompressible_box_extrude
                                     -Problem.ExtrusionFactor 10
@@ -110,6 +119,7 @@ dune_add_test(NAME test_1p_incompressible_box_extrude
 
 # using box and analytical Jacobian with extrusion factor on distorted grid
 dune_add_test(NAME test_1p_incompressible_box_extrude_distorted
+              LABELS porousmediumflow 1p box
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
@@ -124,6 +134,7 @@ dune_add_test(NAME test_1p_incompressible_box_extrude_distorted
 
 # using mpfa and analytical Jacobian with extrusion factor on distorted grid
 dune_add_test(NAME test_1p_incompressible_mpfa_extrude_distorted
+              LABELS porousmediumflow 1p mpfa
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>

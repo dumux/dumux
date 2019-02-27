@@ -2,6 +2,7 @@ dune_symlink_to_source_files(FILES params.input)
 
 # isothermal tests
 dune_add_test(NAME test_2pnc_fuelcell_box
+              LABELS porousmediumflow 2pnc box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FuelCellBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -11,6 +12,7 @@ dune_add_test(NAME test_2pnc_fuelcell_box
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fuelcell_box -ParameterFile params.input -Problem.Name test_2pnc_fuelcell_box")
 
 dune_add_test(NAME test_2pnc_fuelcell_tpfa
+              LABELS porousmediumflow 2pnc tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FuelCellCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -21,6 +23,7 @@ dune_add_test(NAME test_2pnc_fuelcell_tpfa
 
 
 dune_add_test(NAME test_2pncni_fuelcell_box
+              LABELS porousmediumflow 2pnc box 2pncni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FuelCellNIBox NONISOTHERMAL=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
