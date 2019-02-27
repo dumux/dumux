@@ -3,8 +3,8 @@ add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
 # dim < dimWorld tests with Dune::Foamgrid<2,3>
-dune_add_test(NAME test_0p_fracture2d3d_box
-              LABELS porousmediumflow 0p box
+dune_add_test(NAME test_1p_fracture2d3d_box
+              LABELS porousmediumflow 1p box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureBox
               CMAKE_GUARD dune-foamgrid_FOUND
