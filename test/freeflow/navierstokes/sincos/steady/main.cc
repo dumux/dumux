@@ -103,6 +103,39 @@ auto createAnalyticalSolution(const Problem& problem)
     return std::make_tuple(analyticalPressure, analyticalVelocity, analyticalVelocityOnFace);
 }
 
+template<class Problem>
+auto createSource(const Problem& problem)
+{
+    using Scalar = double;
+    using Indices = typename Problem::Indices;
+
+    const auto& fvGridGeometry = problem.fvGridGeometry();
+    std::array<std::vector<Scalar>, Problem::ModelTraits::numEq()> source;
+
+    for (auto& component : source)
+    {
+        component.resize(fvGridGeometry.numCellCenterDofs());
+    }
+
+    for (const auto& element : elements(fvGridGeometry.gridView()))
+    {
+        auto fvGeometry = localView(fvGridGeometry);
+        fvGeometry.bindElement(element);
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            auto ccDofIdx = scv.dofIndex();
+            auto ccDofPosition = scv.dofPosition();
+
+            auto sourceAtPosVal = problem.sourceAtPos(ccDofPosition);
+
+            source[Indices::momentumXBalanceIdx][ccDofIdx] = sourceAtPosVal[Indices::momentumXBalanceIdx];
+            source[Indices::momentumYBalanceIdx][ccDofIdx] = sourceAtPosVal[Indices::momentumYBalanceIdx];
+        }
+    }
+
+    return source;
+}
+
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
@@ -156,10 +189,17 @@ int main(int argc, char** argv) try
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
 
+    auto source = createSource(*problem);
+    auto sourceX = source[Problem::Indices::momentumXBalanceIdx];
+    auto sourceY = source[Problem::Indices::momentumYBalanceIdx];
+    vtkWriter.addField(sourceX, "sourceX");
+    vtkWriter.addField(sourceY, "sourceY");
+
     auto analyticalSolution = createAnalyticalSolution(*problem);
     vtkWriter.addField(std::get<0>(analyticalSolution), "pressureExact");
     vtkWriter.addField(std::get<1>(analyticalSolution), "velocityExact");
     vtkWriter.addFaceField(std::get<2>(analyticalSolution), "faceVelocityExact");
+
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
