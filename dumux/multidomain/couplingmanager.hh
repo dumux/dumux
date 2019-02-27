@@ -195,7 +195,7 @@ public:
     /*!
      * \brief Sets a pointer to the previous solution vector
      */
-    void setPrevSol(const SolutionVector& prevSol)
+    void setPreviousSolution(const SolutionVector& prevSol)
     { prevSol_ = &prevSol; }
 
     // \}
@@ -318,7 +318,7 @@ private:
     /*!
      * \brief a pointer to the solution vector of the previous time step of the coupled problem
      */
-     const SolutionVector* prevSol_;
+     const SolutionVector* prevSol_ = nullptr;
 
     /*!
      * \brief A tuple of std::weak_ptrs to the sub problems
