@@ -198,11 +198,13 @@ int main(int argc, char** argv) try
 
             auto fvGeometry = localView(*fvGridGeometry);
             auto elemVolVars = localView(gridVariables->curGridVolVars());
+            auto elemFluxVarsCache = localView(gridVariables->gridFluxVarsCache());
 
             fvGeometry.bind(element);
             elemVolVars.bind(element, fvGeometry, x);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
-            velocityOutput.calculateVelocity(velocity, elemVolVars, fvGeometry, element, 0);
+            velocityOutput.calculateVelocity(velocity, element, fvGeometry, elemVolVars, elemFluxVarsCache, 0);
 
             using Scalar = Grid::ctype;
             // the y-component of the velocity should be exactly reproduced
