@@ -2,7 +2,7 @@ dune_symlink_to_source_files(FILES "params.input")
 
 # compressible instationary
 dune_add_test(NAME test_1p_compressible_instationary_tpfa
-              LABELS porousmediumflow 1p tpfa
+              LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePCompressibleTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -12,7 +12,7 @@ dune_add_test(NAME test_1p_compressible_instationary_tpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_tpfa params.input -Problem.Name test_1p_compressible_instationary_tpfa")
 
 dune_add_test(NAME test_1p_compressible_instationary_mpfa
-              LABELS porousmediumflow 1p mpfa
+              LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePCompressibleMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -22,7 +22,7 @@ dune_add_test(NAME test_1p_compressible_instationary_mpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_mpfa params.input -Problem.Name test_1p_compressible_instationary_mpfa")
 
 dune_add_test(NAME test_1p_compressible_instationary_box
-              LABELS porousmediumflow 1p box
+              LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePCompressibleBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

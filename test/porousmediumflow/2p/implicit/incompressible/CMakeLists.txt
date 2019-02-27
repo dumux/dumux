@@ -6,7 +6,7 @@ target_compile_definitions(test_2p_incompressible_tpfa PUBLIC TYPETAG=TwoPIncomp
 
 dune_add_test(NAME test_2p_incompressible_tpfa
               TARGET test_2p_incompressible_tpfa
-              LABELS porousmediumflow 2p tpfa
+              LABELS porousmediumflow 2p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_cc-reference.vtu
@@ -16,7 +16,7 @@ dune_add_test(NAME test_2p_incompressible_tpfa
 # using tpfa
 dune_add_test(NAME test_2p_incompressible_tpfa_restart
               TARGET test_2p_incompressible_tpfa
-              LABELS porousmediumflow 2p tpfa
+              LABELS porousmediumflow 2p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_cc-reference.vtu
@@ -28,7 +28,7 @@ set_tests_properties(test_2p_incompressible_tpfa_restart PROPERTIES DEPENDS test
 
 # using box
 dune_add_test(NAME test_2p_incompressible_box
-              LABELS porousmediumflow 2p box
+              LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -39,7 +39,7 @@ dune_add_test(NAME test_2p_incompressible_box
 
 # using box with interface solver
 dune_add_test(NAME test_2p_incompressible_box_ifsolver
-              LABELS porousmediumflow 2p box
+              LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox
               COMPILE_DEFINITIONS ENABLEINTERFACESOLVER=true
@@ -53,7 +53,7 @@ dune_add_test(NAME test_2p_incompressible_box_ifsolver
 
 # using tpfa with an oil-wet lens
 dune_add_test(NAME test_2p_incompressible_tpfa_oilwet
-              LABELS porousmediumflow 2p tpfa
+              LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -68,7 +68,7 @@ dune_add_test(NAME test_2p_incompressible_tpfa_oilwet
 
 # using mpfa
 dune_add_test(NAME test_2p_incompressible_mpfa
-              LABELS porousmediumflow 2p mpfa
+              LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

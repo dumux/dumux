@@ -3,7 +3,7 @@ add_subdirectory(saltwaterintrusion)
 add_input_file_links()
 
 dune_add_test(NAME test_1p2c_transport_box
-              LABELS porousmediumflow 1p2c box
+              LABELS porousmediumflow 1p2c
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestBox
@@ -15,7 +15,7 @@ dune_add_test(NAME test_1p2c_transport_box
                         --zeroThreshold {"velocity_liq \(m/s\)_1":1e-15})
 
 dune_add_test(NAME test_1p2c_transport_tpfa
-              LABELS porousmediumflow 1p2c tpfa
+              LABELS porousmediumflow 1p2c
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCTpfa
@@ -27,7 +27,7 @@ dune_add_test(NAME test_1p2c_transport_tpfa
                         --zeroThreshold {"velocity_liq \(m/s\)_1":1e-15})
 
 dune_add_test(NAME test_1p2c_transport_mpfa
-              LABELS porousmediumflow 1p2c mpfa
+              LABELS porousmediumflow 1p2c
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCMpfa

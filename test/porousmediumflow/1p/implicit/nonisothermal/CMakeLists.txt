@@ -2,7 +2,7 @@ add_input_file_links()
 
 # non-isothermal tests
 dune_add_test(NAME test_1pni_conduction_box
-              LABELS porousmediumflow 1p box 1pni
+              LABELS porousmediumflow 1p  1pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConductionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -17,7 +17,7 @@ target_compile_definitions(test_1pni_convection_box PUBLIC TYPETAG=OnePNIConvect
 
 dune_add_test(NAME test_1pni_convection_box
               TARGET test_1pni_convection_box
-              LABELS porousmediumflow 1p box 1pni
+              LABELS porousmediumflow 1p  1pni
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pni_convection_box-reference.vtp
@@ -27,7 +27,7 @@ dune_add_test(NAME test_1pni_convection_box
 
 dune_add_test(NAME test_1pni_convection_box_restart
               TARGET test_1pni_convection_box
-              LABELS porousmediumflow 1p box 1pni
+              LABELS porousmediumflow 1p  1pni
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pni_convection_box-reference.vtp
@@ -39,7 +39,7 @@ dune_add_test(NAME test_1pni_convection_box_restart
 set_tests_properties(test_1pni_convection_box_restart PROPERTIES DEPENDS test_1pni_convection_box)
 
 dune_add_test(NAME test_1pni_conduction_tpfa
-              LABELS porousmediumflow 1p tpfa 1pni
+              LABELS porousmediumflow 1p  1pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -50,7 +50,7 @@ dune_add_test(NAME test_1pni_conduction_tpfa
                        --zeroThreshold {"velocity":1e-8})
 
 dune_add_test(NAME test_1pni_convection_tpfa
-              LABELS porousmediumflow 1p tpfa 1pni
+              LABELS porousmediumflow 1p  1pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -60,7 +60,7 @@ dune_add_test(NAME test_1pni_convection_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pni_convection_tpfa params_convection.input -Problem.Name test_1pni_convection_tpfa")
 
 dune_add_test(NAME test_1pni_conduction_mpfa
-              LABELS porousmediumflow 1p mpfa 1pni
+              LABELS porousmediumflow 1p  1pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

@@ -1,7 +1,7 @@
 add_input_file_links(FILES params.input)
 
 dune_add_test(NAME test_2p2c_injection_box
-              LABELS porousmediumflow 2p2c box
+              LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionBox ENABLECACHING=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -12,7 +12,7 @@ dune_add_test(NAME test_2p2c_injection_box
 
 dune_add_test(NAME test_2p2c_injection_box_restart
               TARGET test_2p2c_injection_box
-              LABELS porousmediumflow 2p2c box
+              LABELS porousmediumflow 2p2c
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_injection_box-reference.vtu
@@ -23,7 +23,7 @@ dune_add_test(NAME test_2p2c_injection_box_restart
 set_tests_properties(test_2p2c_injection_box_restart PROPERTIES DEPENDS test_2p2c_injection_box)
 
 dune_add_test(NAME test_2p2c_injection_tpfa
-              LABELS porousmediumflow 2p2c tpfa
+              LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionCCTpfa ENABLECACHING=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -33,7 +33,7 @@ dune_add_test(NAME test_2p2c_injection_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_tpfa params.input -Problem.Name test_2p2c_injection_tpfa")
 
 dune_add_test(NAME test_2p2c_injection_mpfa
-              LABELS porousmediumflow 2p2c mpfa
+              LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionCCMpfa ENABLECACHING=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -44,7 +44,7 @@ dune_add_test(NAME test_2p2c_injection_mpfa
 
 # isothermal tests with caching
 dune_add_test(NAME test_2p2c_injection_box_caching
-              LABELS porousmediumflow 2p2c box
+              LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionBox ENABLECACHING=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -54,7 +54,7 @@ dune_add_test(NAME test_2p2c_injection_box_caching
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_box_caching params.input -Problem.Name test_2p2c_injection_box_caching")
 
 dune_add_test(NAME test_2p2c_injection_tpfa_caching
-              LABELS porousmediumflow 2p2c tpfa
+              LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionCCTpfa ENABLECACHING=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -64,7 +64,7 @@ dune_add_test(NAME test_2p2c_injection_tpfa_caching
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_tpfa_caching params.input -Problem.Name test_2p2c_injection_tpfa_caching")
 
 dune_add_test(NAME test_2p2c_injection_mpfa_caching
-              LABELS porousmediumflow 2p2c mpfa
+              LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionCCMpfa ENABLECACHING=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

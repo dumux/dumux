@@ -2,7 +2,7 @@ dune_symlink_to_source_files(FILES "params.input")
 dune_symlink_to_source_files(FILES grids)
 
 dune_add_test(NAME test_2p_cornerpoint
-              LABELS porousmediumflow 2p tpfa
+              LABELS porousmediumflow 2p
               SOURCES main.cc
               CMAKE_GUARD HAVE_OPM_GRID
               COMPILE_DEFINITIONS HAVE_ECL_INPUT=1
