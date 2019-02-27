@@ -1,4 +1,5 @@
 add_input_file_links()
+dune_symlink_to_source_files(FILES scripts)
 
 dune_add_test(NAME test_md_boundary_darcy2p2cni_rans1p2cnikepsilon
               SOURCES main.cc
