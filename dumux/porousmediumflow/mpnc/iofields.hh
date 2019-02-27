@@ -25,7 +25,6 @@
 #ifndef DUMUX_MPNC_IO_FIELDS_HH
 #define DUMUX_MPNC_IO_FIELDS_HH
 
-#include <dune/common/deprecated.hh>
 #include <dumux/io/name.hh>
 
 namespace Dumux {
@@ -66,13 +65,6 @@ public:
 
         out.addVolumeVariable([](const auto& v){ return v.porosity(); },
                               IOName::porosity());
-    }
-
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
     }
 };
 

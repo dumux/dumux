@@ -27,7 +27,6 @@
 
 #include <string>
 
-#include <dune/common/deprecated.hh>
 #include <dumux/io/name.hh>
 
 namespace Dumux {
@@ -54,13 +53,6 @@ public:
                                   "X^" + FluidSystem::componentName(compIdx));
         }
         out.addVolumeVariable( [](const auto& v){ return v.density(); }, IOName::density());
-    }
-
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
     }
 
     template <class ModelTraits, class FluidSystem, class SolidSystem = void>

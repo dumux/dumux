@@ -24,8 +24,6 @@
 #ifndef DUMUX_NAVIER_STOKES_IO_FIELDS_HH
 #define DUMUX_NAVIER_STOKES_IO_FIELDS_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/common/parameters.hh>
 #include <dumux/io/name.hh>
 
@@ -97,13 +95,6 @@ public:
 
         // add discretization-specific fields
         additionalOutput_(out, isStaggered<OutputModule>());
-    }
-
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
     }
 
     //! return the names of the primary variables
