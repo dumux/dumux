@@ -102,7 +102,7 @@ public:
 
             fvGeometry.bind(element);
             elemVolVars.bind(element, fvGeometry, curSol);
-            elemFluxVarsCache.bind(element, fvGeometry, curSol);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {
