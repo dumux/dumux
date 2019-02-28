@@ -58,7 +58,8 @@ dune_add_test(NAME test_2p_incompressible_tpfa_oilwet
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa_oilwet params.input
                                                                                                  -Problem.Name test_2p_incompressible_tpfa_oilwet
                                                                                                  -Problem.EnableGravity false
-                                                                                                 -SpatialParams.LensIsOilWet true")
+                                                                                                 -SpatialParams.LensIsOilWet true
+                                                                                                 -TimeLoop.DtInitial 130")
 
 # using mpfa
 dune_add_test(NAME test_2p_incompressible_mpfa
