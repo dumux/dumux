@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 130 # [s]
+DtInitial = 250 # [s]
 TEnd = 3000 # [s]
 
 [Grid]
