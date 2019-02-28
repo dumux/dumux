@@ -29,7 +29,7 @@
 #define DUMUX_GNUPLOT_INTERFACE_HH
 
 #if !HAVE_GNUPLOT
-#warning Gnuplot has not been found by CMake, no output possible.
+// Gnuplot has not been found by CMake, no output possible.
 #define GNUPLOT_EXECUTABLE "/usr/bin/gnuplot"
 #endif
 
@@ -386,6 +386,9 @@ private:
 #ifdef HAVE_GNUPLOT
         fputs((plotCommand + "\n").c_str(), pipe);
         fflush(pipe);
+#else
+        std::cerr << "Warning: Gnuplot has not been found by CMake, no image generation or interactive display possible." << std::endl;
+        std::cerr << "Note: The data and the gnuplot instruction file will still be created." << std::endl;
 #endif
     }
 
