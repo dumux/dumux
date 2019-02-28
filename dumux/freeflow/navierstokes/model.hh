@@ -25,7 +25,7 @@
  * This model implements a single-phase, isothermal Navier-Stokes model, solving the <B> momentum balance equation </B>
  * \f[
  \frac{\partial (\varrho \textbf{v})}{\partial t} + \nabla \cdot (\varrho \textbf{v} \textbf{v}^{\textup{T}}) = \nabla \cdot (\mu (\nabla \textbf{v} + \nabla \textbf{v}^{\textup{T}}))
-   - \nabla p + \varrho \textbf{g} - \textbf{f}
+   - \nabla p + \varrho \textbf{g} + \textbf{f}
  * \f]
  * By setting the runtime parameter <code>Problem.EnableInertiaTerms</code> to <code>false</code> the Stokes
  * equation can be solved. In this case the term
