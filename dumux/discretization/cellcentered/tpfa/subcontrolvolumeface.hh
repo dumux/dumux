@@ -135,6 +135,12 @@ public:
         corners_.resize(isGeometry.corners());
         for (int i = 0; i < isGeometry.corners(); ++i)
             corners_[i] = isGeometry.corner(i);
+
+        static Scalar percentage = Dumux::getParam<Scalar>("CMPercentage", 1e-8);
+        GlobalPosition cm = center_;
+        cm -= circumcenter_;
+        cm *= percentage;
+        circumcenter_ += cm;
     }
 
     //! The center of the sub control volume face
@@ -144,15 +150,10 @@ public:
     }
 
     //! The integration point for flux evaluations in global coordinates
-    const GlobalPosition ipGlobal() const
+    const GlobalPosition& ipGlobal() const
     {
         // Return circumcenter
-        GlobalPosition cm = center();
-        cm -= circumcenter_;
-        static Scalar percentage = Dumux::getParam<Scalar>("CMPercentage", 1e-8);
-        cm *= percentage;
-        cm += circumcenter_;
-        return cm;
+        return circumcenter_;
     }
 
     //! The area of the sub control volume face

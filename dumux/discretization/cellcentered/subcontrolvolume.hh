@@ -95,7 +95,13 @@ public:
     , center_(geometry_.value().center())
     , circumcenter_(geometry_.value().impl().circumcenter())
     , elementIndex_(elementIndex)
-    {}
+    {
+        static Scalar percentage = Dumux::getParam<Scalar>("CMPercentage", 1e-8);
+        GlobalPosition cm = center_;
+        cm -= circumcenter_;
+        cm *= percentage;
+        circumcenter_ += cm;
+    }
 
     //! The copy constrcutor
     CCSubControlVolume(const CCSubControlVolume& other) = default;
@@ -138,14 +144,9 @@ public:
     }
 
     //! The circumcenter of the sub control volume
-    const GlobalPosition circumcenter() const
+    const GlobalPosition& circumcenter() const
     {
-        GlobalPosition cm = center();
-        cm -= circumcenter_;
-        static Scalar percentage = Dumux::getParam<Scalar>("CMPercentage", 1e-8);
-        cm *= percentage;
-        cm += circumcenter_;
-        return cm;
+        return circumcenter_;
     }
 
     //! The volume of the sub control volume
