@@ -5,7 +5,7 @@ target_compile_definitions(test_ff_stokes2c_mass PUBLIC "USE_MASS=1")
 
 dune_add_test(NAME test_ff_stokes2c_diffusion_mass
               TARGET test_ff_stokes2c_mass
-              LABELS freeflow
+              LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -19,7 +19,7 @@ add_executable(test_ff_stokes2c EXCLUDE_FROM_ALL main.cc)
 
 dune_add_test(NAME test_ff_stokes2c_diffusion_mole
               TARGET test_ff_stokes2c
-              LABELS freeflow
+              LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -31,7 +31,7 @@ dune_add_test(NAME test_ff_stokes2c_diffusion_mole
 
 dune_add_test(NAME test_ff_stokes2c_advection
               TARGET test_ff_stokes2c
-              LABELS freeflow
+              LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -42,7 +42,7 @@ dune_add_test(NAME test_ff_stokes2c_advection
 
 dune_add_test(NAME test_ff_stokes2c_advection_nocaching
               SOURCES main.cc
-              LABELS freeflow
+              LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS ENABLECACHING=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -57,7 +57,7 @@ target_compile_definitions(test_ff_stokes2cni PUBLIC "NONISOTHERMAL=1")
 
 dune_add_test(NAME test_ff_stokes2cni_advection
               TARGET test_ff_stokes2cni
-              LABELS freeflow
+              LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -68,7 +68,7 @@ dune_add_test(NAME test_ff_stokes2cni_advection
 
 dune_add_test(NAME test_ff_stokes2cni_diffusion
               TARGET test_ff_stokes2cni
-              LABELS freeflow
+              LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
