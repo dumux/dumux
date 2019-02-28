@@ -1,7 +1,7 @@
 add_executable(test_md_embedded2d3d_fracture1p_tpfa EXCLUDE_FROM_ALL main.cc)
 
 dune_add_test(NAME test_md_embedded2d3d_fracture1p_tpfa_linearsolver
-              LABELS multidomain
+              LABELS multidomain embedded 1p
               TARGET test_md_embedded2d3d_fracture1p_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMAKE_GUARD dune-foamgrid_FOUND
@@ -14,7 +14,7 @@ dune_add_test(NAME test_md_embedded2d3d_fracture1p_tpfa_linearsolver
                                    -Vtk.OutputName test_md_embedded2d3d_fracture1p_tpfa_linearsolver -Problem.SolverType linear")
 
 dune_add_test(NAME test_md_embedded2d3d_fracture1p_tpfa_nonlinearsolver
-              LABELS multidomain
+              LABELS multidomain embedded 1p
               TARGET test_md_embedded2d3d_fracture1p_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMAKE_GUARD dune-foamgrid_FOUND

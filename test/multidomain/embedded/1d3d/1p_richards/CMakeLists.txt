@@ -1,5 +1,5 @@
 dune_add_test(NAME test_md_embedded1d3d_1p_richards_tpfatpfa
-              LABELS multidomain
+              LABELS multidomain embedded 1p richards
               SOURCES main.cc
               COMPILE_DEFINITIONS SOILTYPETAG=SoilCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -13,7 +13,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p_richards_tpfatpfa
                                    -Vtk.OutputName test_md_embedded1d3d_1p_richards_tpfatpfa")
 
 dune_add_test(NAME test_md_embedded1d3d_1p_richards_tpfabox
-              LABELS multidomain
+              LABELS multidomain embedded 1p richards
               SOURCES main.cc
               COMPILE_DEFINITIONS SOILTYPETAG=SoilBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

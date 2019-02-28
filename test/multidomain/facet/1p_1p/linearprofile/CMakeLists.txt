@@ -29,7 +29,7 @@ target_compile_definitions(test_md_facet_1p1p_linearprofile_surface_mpfa
                                    BULKGRIDTYPE=Dune::ALUGrid<2,3,Dune::cube,Dune::nonconforming>)
 
 dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_tpfa
-              LABELS multidomain
+              LABELS multidomain facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -41,7 +41,7 @@ dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_tpfa params.input")
 
 dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi066_tpfa
-              LABELS multidomain
+              LABELS multidomain facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -55,7 +55,7 @@ dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi066_tpfa
                                                                -Vtk.OutputName test_md_facet_1p1p_linearprofile_xi066_tpfa")
 
 dune_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_tpfa
-              LABELS multidomain
+              LABELS multidomain facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_surface_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -68,7 +68,7 @@ dune_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_tpfa
                                                               -Vtk.OutputName test_md_facet_1p1p_linearprofile_surface_xi1_tpfa")
 
 dune_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi066_tpfa
-              LABELS multidomain
+              LABELS multidomain facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_surface_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -82,7 +82,7 @@ dune_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi066_tpfa
                                                                -Vtk.OutputName test_md_facet_1p1p_linearprofile_surface_xi066_tpfa")
 
 dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_mpfa
-              LABELS multidomain
+              LABELS multidomain facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_mpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -95,7 +95,7 @@ dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_mpfa
                                                               -Vtk.OutputName test_md_facet_1p1p_linearprofile_xi1_mpfa")
 
 dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi066_mpfa
-              LABELS multidomain
+              LABELS multidomain facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_mpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -109,7 +109,7 @@ dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi066_mpfa
                                                             -Vtk.OutputName test_md_facet_1p1p_linearprofile_xi066_mpfa")
 
 dune_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_mpfa
-              LABELS multidomain
+              LABELS multidomain facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_surface_mpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -122,7 +122,7 @@ dune_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_mpfa
                                                               -Vtk.OutputName test_md_facet_1p1p_linearprofile_surface_xi1_mpfa")
 
 dune_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi066_mpfa
-              LABELS multidomain
+              LABELS multidomain facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_surface_mpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
