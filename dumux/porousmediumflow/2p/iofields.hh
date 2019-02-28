@@ -25,8 +25,6 @@
 #ifndef DUMUX_TWOP_IO_FIELDS_HH
 #define DUMUX_TWOP_IO_FIELDS_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/io/name.hh>
 
 #include "model.hh"
@@ -62,13 +60,6 @@ public:
                               IOName::capillaryPressure());
         out.addVolumeVariable([](const auto& v){ return v.porosity(); },
                               IOName::porosity());
-    }
-
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
     }
 
     template <class ModelTraits, class FluidSystem, class SolidSystem = void>

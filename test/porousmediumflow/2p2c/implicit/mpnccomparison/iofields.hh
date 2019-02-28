@@ -24,7 +24,6 @@
 #ifndef DUMUX_TWOPTWOC_MPNC_IO_FIELDS_HH
 #define DUMUX_TWOPTWOC_MPNC_IO_FIELDS_HH
 
-#include <dune/common/deprecated.hh>
 #include <dumux/io/name.hh>
 
 namespace Dumux {
@@ -75,13 +74,6 @@ public:
             for (int j = 0; j < VolumeVariables::numFluidComponents(); ++j)
                 out.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },
                                       IOName::moleFraction<FS>(i, j));
-    }
-
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
     }
 };
 

@@ -25,8 +25,6 @@
 #ifndef DUMUX_ONEP_IO_FIELDS_HH
 #define DUMUX_ONEP_IO_FIELDS_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/io/name.hh>
 
 namespace Dumux {
@@ -43,13 +41,6 @@ public:
     {
         out.addVolumeVariable([](const auto& volVars){ return volVars.pressure(); },
                               IOName::pressure());
-    }
-
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
     }
 
     template <class ModelTraits = void, class FluidSystem = void, class SolidSystem = void>

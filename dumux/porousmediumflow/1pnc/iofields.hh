@@ -26,7 +26,6 @@
 #define DUMUX_ONEPNC_IO_FIELDS_HH
 
 #include <string>
-#include <dune/common/deprecated.hh>
 #include <dumux/io/name.hh>
 
 namespace Dumux {
@@ -60,13 +59,6 @@ public:
         for (int i = 0; i < VolumeVariables::numFluidComponents(); ++i)
            out.addVolumeVariable([i](const auto& volVars){ return volVars.massFraction(0, i); },
                                      IOName::massFraction<FluidSystem>(0, i));
-    }
-
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
     }
 
     template <class ModelTraits, class FluidSystem, class SolidSystem = void>

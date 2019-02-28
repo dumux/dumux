@@ -25,7 +25,6 @@
 #ifndef DUMUX_NONEQUILBRIUM_OUTPUT_FIELDS_HH
 #define DUMUX_NONEQUILBRIUM_OUTPUT_FIELDS_HH
 
-#include <dune/common/deprecated.hh>
 #include <dumux/io/name.hh>
 
 namespace Dumux {
@@ -59,13 +58,6 @@ public:
             out.addVolumeVariable( [i](const auto& v){ return v.nusseltNumber(i); }, "nusseltNumber_" + FluidSystem::phaseName(i) );
             out.addVolumeVariable( [i](const auto& v){ return v.prandtlNumber(i); }, "prandtlNumber_" + FluidSystem::phaseName(i) );
         }
-    }
-
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
     }
 };
 

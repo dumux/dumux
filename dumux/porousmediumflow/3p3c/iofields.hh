@@ -26,7 +26,6 @@
 #define DUMUX_THREEPTHREEC_IO_FIELDS_HH
 
 #include <array>
-#include <dune/common/deprecated.hh>
 #include <dumux/io/name.hh>
 
 namespace Dumux {
@@ -65,13 +64,6 @@ public:
                                IOName::phasePresence());
         out.addVolumeVariable( [](const auto& v){ return v.permeability(); },
                                IOName::permeability());
-    }
-
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
     }
 
     template <class ModelTraits, class FluidSystem, class SolidSystem = void>

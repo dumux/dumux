@@ -24,8 +24,6 @@
 #ifndef DUMUX_FREEFLOW_NC_IO_FIELDS_HH
 #define DUMUX_FREEFLOW_NC_IO_FIELDS_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/io/name.hh>
 #include <dumux/freeflow/navierstokes/iofields.hh>
 
@@ -38,14 +36,6 @@ namespace Dumux {
 template<class BaseOutputFields, bool turbulenceModel = false>
 struct FreeflowNCIOFields
 {
-    //! Initialize the FreeflowNC specific output fields.
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
-    }
-
     //! Initialize the FreeflowNC specific output fields.
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)

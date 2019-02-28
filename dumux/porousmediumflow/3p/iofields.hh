@@ -25,7 +25,6 @@
 #ifndef DUMUX_THREEP_IO_FIELDS_HH
 #define DUMUX_THREEP_IO_FIELDS_HH
 
-#include <dune/common/deprecated.hh>
 #include <dumux/io/name.hh>
 
 namespace Dumux {
@@ -58,13 +57,6 @@ public:
                                IOName::porosity());
         out.addVolumeVariable( [](const auto& v){ return v.permeability(); },
                                IOName::permeability());
-    }
-
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
     }
 
     template <class ModelTraits, class FluidSystem, class SolidSystem = void>

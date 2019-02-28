@@ -24,7 +24,6 @@
 #ifndef DUMUX_FREEFLOW_NI_IO_FIELDS_HH
 #define DUMUX_FREEFLOW_NI_IO_FIELDS_HH
 
-#include <dune/common/deprecated.hh>
 
 #include <dumux/io/name.hh>
 
@@ -37,13 +36,6 @@ namespace Dumux {
 template<class IsothermalIOFields, bool turbulenceModel = false>
 struct FreeflowNonIsothermalIOFields
 {
-    //! Initialize the non-isothermal specific output fields.
-    template <class OutputModule>
-    DUNE_DEPRECATED_MSG("use initOutputModule instead")
-    static void init(OutputModule& out)
-    {
-        initOutputModule(out);
-    }
 
     //! Add the non-isothermal specific output fields.
     template <class OutputModule>
