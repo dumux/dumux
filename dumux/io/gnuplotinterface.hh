@@ -84,20 +84,6 @@ public:
     /*!
      * \brief Plots the files for a specific window number, writes a gnuplot and png file.
      *
-     * \param title The name of the output file
-     * \param plottingWindowNumber Change the number of the window in which the plot is shown
-     * \param terminalType Set the terminal type for the graphical output
-     */
-    DUNE_DEPRECATED_MSG("The signature of plot(string, int, string) has been changed to plot(string).")
-    void plot(const std::string &title, const unsigned int plottingWindowNumber, const std::string& terminalType = "x11")
-    {
-        setTerminalType(terminalType);
-        plot(title);
-    }
-
-    /*!
-     * \brief Plots the files for a specific window number, writes a gnuplot and png file.
-     *
      * \param filename The name of the output file
      */
     void plot(const std::string &filename = "")
@@ -215,14 +201,6 @@ public:
             assert("Could not close pipe to Gnuplot!");
     }
 
-    DUNE_DEPRECATED_MSG("The signature of addFunctionToPlot(string, string, string) has been changed to addFunctionToPlot(string, string).")
-    void addFunctionToPlot(const std::string& function,
-                           const std::string& plotName,
-                           const std::string& plotOptions)
-    {
-        addFunctionToPlot(function, "title '" + plotName + "' " + plotOptions);
-    }
-
     /*!
      * \brief Adds a function to list of plots
      *
@@ -235,14 +213,6 @@ public:
         curve_.push_back(function);
         curveOptions_.push_back(options);
         curveType_.push_back(CurveType::function);
-    }
-
-    DUNE_DEPRECATED_MSG("The signature of addFileToPlot(string, string, string) has been changed to addFileToPlot(string, string).")
-    void addFileToPlot(const std::string& file,
-                       const std::string& plotName,
-                       const std::string& plotOptions)
-    {
-        addFileToPlot(file, "title '" + plotName + "' " + plotOptions);
     }
 
     /*!
