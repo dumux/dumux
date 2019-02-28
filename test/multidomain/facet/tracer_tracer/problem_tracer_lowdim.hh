@@ -51,6 +51,7 @@ struct TracerTestLowDim { using InheritsFrom = std::tuple<Tracer>; };
 
 // define the type tags for both bulk and lowdim type tag here
 struct TracerLowDimTpfa { using InheritsFrom = std::tuple<TracerTestLowDim, CCTpfaModel>; };
+struct TracerLowDimMpfa { using InheritsFrom = std::tuple<TracerTestLowDim, CCTpfaModel>; };
 struct TracerLowDimBox { using InheritsFrom = std::tuple<TracerTestLowDim, BoxModel>; };
 } // end namespace TTag
 

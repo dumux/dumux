@@ -1,3 +1,4 @@
+add_subdirectory(mpfa)
 add_subdirectory(tpfa)
 
 install(FILES

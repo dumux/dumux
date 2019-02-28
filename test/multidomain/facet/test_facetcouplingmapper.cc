@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup FacetTests
- * \brief Tests the grid creator class for models using facet coupling.
+ * \brief Tests the coupling mapper class for models using facet coupling.
  */
 
 #include <config.h>
@@ -36,6 +36,10 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
+#include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
+#include <dumux/discretization/cellcentered/mpfa/fvgridgeometrytraits.hh>
+#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
+#include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 #include <dumux/multidomain/facet/box/fvgridgeometry.hh>
 #include <dumux/multidomain/facet/gridmanager.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
@@ -49,7 +53,25 @@
 #define USEBOXINBULK 0
 #endif
 
-//! Computes the average distance of corners to the center of a geometry.
+#ifndef USEMPFAINBULK // default to tpfa if not specified otherwise
+#define USEMPFAINBULK 0
+#endif
+
+//! Helper class to define the MpfaFVGridGeometry
+template<class GridView>
+struct MpfaGridGeometryTraits
+{
+private:
+    using NITraits = Dumux::NodalIndexSetDefaultTraits< GridView >;
+    using IndexSet = Dumux::CCMpfaDualGridNodalIndexSet< NITraits >;
+    using IVTraits = Dumux::CCMpfaODefaultInteractionVolumeTraits< IndexSet, double >;
+    using IV = Dumux::CCMpfaOInteractionVolume< IVTraits >;
+    using GGTraits = Dumux::CCMpfaFVGridGeometryTraits<GridView, IndexSet, IV, IV>;
+public:
+    using type = Dumux::CCMpfaFVGridGeometry<GridView, GGTraits, /*enableCache*/true>;
+};
+
+//! Computes the average distance of corners to the center of a geometry
 template<class Geometry>
 typename Geometry::ctype averageCornerDistance(const Geometry& geometry)
 {
@@ -76,7 +98,7 @@ void checkScvfEmbedment(const Scvf& scvf, const LowDimGeom& lowDimGeom)
 
 //! Updates a tpfa finite volume grid geometry.
 template< class BulkFVG, class FacetFVG, class GridManager,
-          std::enable_if_t<BulkFVG::discMethod == Dumux::DiscretizationMethod::cctpfa, int> = 0 >
+          std::enable_if_t<BulkFVG::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
 void updateBulkFvGeometry(BulkFVG& bulkFVG, const FacetFVG& facetFVG, const GridManager& gm)
 {
     bulkFVG.update();
@@ -109,10 +131,17 @@ int main (int argc, char *argv[]) try
     gridManager.init();
 
     // instantiate the grid geometries with caching
+    static_assert(!USEBOXINBULK || !USEMPFAINBULK, "Bulk discretization method not uniquely defined");
+
     using BulkGridView = typename BulkGrid::LeafGridView;
+    using TpfaFVGridGeometry = Dumux::CCTpfaFVGridGeometry<BulkGridView, /*caching*/true>;
+    using MpfaFVGridGeometry = typename MpfaGridGeometryTraits<BulkGridView>::type;
+    using BoxFVGridGeometry = Dumux::BoxFacetCouplingFVGridGeometry<double, BulkGridView, true>;
     using BulkFVGridGeometry = typename std::conditional< USEBOXINBULK,
-                                                          Dumux::BoxFacetCouplingFVGridGeometry<double, BulkGridView, true>,
-                                                          Dumux::CCTpfaFVGridGeometry<BulkGridView, /*caching*/true> >::type;
+                                                          BoxFVGridGeometry,
+                                                          typename std::conditional<USEMPFAINBULK,
+                                                                                    MpfaFVGridGeometry,
+                                                                                    TpfaFVGridGeometry>::type >::type;
     BulkFVGridGeometry bulkFvGeometry( gridManager.grid<0>().leafGridView() );
 
     using FacetGridView = typename FacetGrid::LeafGridView;
@@ -148,10 +177,16 @@ int main (int argc, char *argv[]) try
         // check both the map from the bulk facet as well as from the hierarchy mapper
         const auto& bulkFacetMap = i == 0 ? bulkFacetMapper.couplingMap(bulkDomainId, facetDomainId)
                                           : hierarchyMapper.couplingMap(bulkDomainId, facetDomainId);
-        if (bulkFacetMap.size() != 56)
-            DUNE_THROW(Dune::InvalidStateException, "BulkFacetMap has " << bulkFacetMap.size() << " instead of 56 entries");
+
+        const std::size_t expectedNoEntries = USEMPFAINBULK ? 263 : 56;
+        if (bulkFacetMap.size() != expectedNoEntries)
+            DUNE_THROW(Dune::InvalidStateException, "BulkFacetMap has " << bulkFacetMap.size() << " instead of " << expectedNoEntries << " entries");
         else
-            std::cout << "Found 56 entries in bulk-facet map" << std::endl;
+            std::cout << "Found " << expectedNoEntries << " entries in bulk-facet map" << std::endl;
+
+        // The rest is too cumbersome to test for mpfa
+        if (USEMPFAINBULK)
+            continue;
 
         std::size_t singleCouplings = 0;
         std::size_t doubleCouplings = 0;
@@ -214,11 +249,15 @@ int main (int argc, char *argv[]) try
         {
             const auto lowDimGeom = facetFvGeometry.element(entry.first).geometry();
 
-            const auto cStencilSize = entry.second.couplingStencil.size();
-            const std::vector<unsigned int> possibleStencilSizes = USEBOXINBULK ? std::vector<unsigned int>{6, 7, 8}
-                                                                                : std::vector<unsigned int>{2};
-            if ( !std::count(possibleStencilSizes.begin(), possibleStencilSizes.end(), cStencilSize) )
-                DUNE_THROW(Dune::InvalidStateException, "Coupling stencil size of " << cStencilSize << " is invalid");
+            // stencil sizes are too cumbersome to test for mpfa
+            if (!USEMPFAINBULK)
+            {
+                const auto cStencilSize = entry.second.couplingStencil.size();
+                const std::vector<unsigned int> possibleStencilSizes = USEBOXINBULK ? std::vector<unsigned int>{6, 7, 8}
+                                                                                    : std::vector<unsigned int>{2};
+                if ( !std::count(possibleStencilSizes.begin(), possibleStencilSizes.end(), cStencilSize) )
+                    DUNE_THROW(Dune::InvalidStateException, "Coupling stencil size of " << cStencilSize << " is invalid");
+            }
 
             for (const auto& embedment : entry.second.embedments)
             {

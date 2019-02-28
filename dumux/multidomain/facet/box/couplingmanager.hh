@@ -89,6 +89,8 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     static constexpr auto bulkGridId = CouplingMapper::template gridId<bulkDim>();
     static constexpr auto lowDimGridId = CouplingMapper::template gridId<lowDimDim>();
 
+    static constexpr bool lowDimUsesBox = FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box;
+
     /*!
      * \brief The coupling context of the bulk domain. Contains all data of the lower-
      *        dimensional domain which is required for the computation of a bulk element
@@ -291,7 +293,7 @@ public:
         const auto& idxInContext = std::distance( s.begin(), std::find(s.begin(), s.end(), lowDimElemIdx) );
         assert(std::find(s.begin(), s.end(), lowDimElemIdx) != s.end());
 
-        if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+        if (lowDimUsesBox)
             return bulkContext_.lowDimElemVolVars[idxInContext][coupledScvIdx];
         else
             return bulkContext_.lowDimElemVolVars[idxInContext][lowDimElemIdx];
@@ -303,12 +305,21 @@ public:
     const Element<lowDimId> getLowDimElement(const Element<bulkId>& element,
                                              const SubControlVolumeFace<bulkId>& scvf) const
     {
-        const auto eIdx = this->problem(bulkId).fvGridGeometry().elementMapper().index(element);
-        assert(bulkContext_.isSet);
-        assert(bulkElemIsCoupled_[eIdx]);
+        const auto lowDimElemIdx = getLowDimElementIndex(element, scvf);
+        return this->problem(lowDimId).fvGridGeometry().element(lowDimElemIdx);
+    }
 
+    /*!
+     * \brief returns the index of the lower-dimensional element coinciding with a bulk scvf.
+     */
+    const GridIndexType<lowDimId> getLowDimElementIndex(const Element<bulkId>& element,
+                                                        const SubControlVolumeFace<bulkId>& scvf) const
+    {
+        const auto eIdx = this->problem(bulkId).fvGridGeometry().elementMapper().index(element);
+
+        assert(bulkElemIsCoupled_[eIdx]);
         const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-        const auto& couplingData = map.find(eIdx)->second;
+        const auto& couplingData = map.at(eIdx);
 
         // search the low dim element idx this scvf is embedded in
         auto it = std::find_if( couplingData.elementToScvfMap.begin(),
@@ -321,8 +332,7 @@ public:
                                 } );
 
         assert(it != couplingData.elementToScvfMap.end());
-        const auto lowDimElemIdx = it->first;
-        return this->problem(lowDimId).fvGridGeometry().element(lowDimElemIdx);
+        return it->first;
     }
 
     /*!
@@ -413,7 +423,6 @@ public:
             return sources;
 
         assert(lowDimContext_.isSet);
-        const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
         for (unsigned int i = 0; i < it->second.embedments.size(); ++i)
         {
             const auto& embedment = it->second.embedments[i];
@@ -421,8 +430,7 @@ public:
             // list of scvfs in the bulk domain whose fluxes enter this scv
             // if low dim domain uses tpfa, this is all scvfs lying on this element
             // if it uses box, it is the one scvf coinciding with the given scv
-            static constexpr bool lowDimUsesBox = FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box;
-            const auto& coincidingScvfs = bulkMap.find(embedment.first)->second.elementToScvfMap.at(lowDimContext_.elementIdx);
+            const auto& coincidingScvfs = embedment.second;
             const auto& scvfList = lowDimUsesBox ? std::vector<GridIndexType<lowDimId>>{ coincidingScvfs[scv.localDofIndex()] }
                                                  : coincidingScvfs;
 
@@ -574,7 +582,7 @@ public:
             // find the low-dim elements in coupling stencil, where this dof is contained in
             const auto couplingElements = [&] ()
             {
-                if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+                if (lowDimUsesBox)
                 {
                     std::vector< Element<lowDimId> > lowDimElems;
                     std::for_each( couplingElemStencil.begin(), couplingElemStencil.end(),

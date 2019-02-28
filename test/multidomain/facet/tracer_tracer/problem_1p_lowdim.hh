@@ -49,6 +49,7 @@ namespace Properties {
 namespace TTag {
 struct OnePLowDim { using InheritsFrom = std::tuple<OneP>; };
 struct OnePLowDimTpfa { using InheritsFrom = std::tuple<OnePLowDim, CCTpfaModel>; };
+struct OnePLowDimMpfa { using InheritsFrom = std::tuple<OnePLowDim, CCTpfaModel>; };
 struct OnePLowDimBox { using InheritsFrom = std::tuple<OnePLowDim, BoxModel>; };
 } // end namespace TTag
 

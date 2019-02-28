@@ -470,7 +470,6 @@ public:
 
                 if (isOnFacet || boundary)
                 {
-                    const auto isGeometry = intersection.geometry();
                     numScvf_ += numFaceCorners;
                     numBoundaryScvf_ += int(boundary)*numFaceCorners;
 

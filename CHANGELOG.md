@@ -6,6 +6,7 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 ### Improvements and Enhancements
 
 - Added new porous medium model for the energy balance of a porous solid (general heat equation)
+- __Multidomain__: It is now possible to use the facet coupling module together with the mpfa-o scheme in the bulk domain.
 
 ### Immediate interface changes not allowing/requiring a deprecation period
 

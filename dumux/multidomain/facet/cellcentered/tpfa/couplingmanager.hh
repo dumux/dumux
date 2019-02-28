@@ -97,6 +97,8 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     static constexpr auto bulkGridId = CouplingMapper::template gridId<bulkDim>();
     static constexpr auto lowDimGridId = CouplingMapper::template gridId<lowDimDim>();
 
+    static constexpr bool lowDimUsesBox = FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box;
+
     /*!
      * \brief The coupling context of the bulk domain. Contains all data of the lower-
      *        dimensional domain which is required for the computation of a bulk element
@@ -249,25 +251,12 @@ public:
                                                       const SubControlVolumeFace<bulkId>& scvf) const
     {
         assert(bulkContext_.isSet);
-        assert(bulkScvfIsCoupled_[scvf.index()]);
-        assert(scvf.insideScvIdx() == this->problem(bulkId).fvGridGeometry().elementMapper().index(element));
 
+        const auto lowDimElemIdx = getLowDimElementIndex(element, scvf);
         const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-        const auto& couplingData = map.find(scvf.insideScvIdx())->second;
-
-        // search the low dim element idx this scvf is embedded in
-        auto it = std::find_if( couplingData.elementToScvfMap.begin(),
-                                couplingData.elementToScvfMap.end(),
-                                [&scvf] (auto& dataPair)
-                                {
-                                    const auto& scvfs = dataPair.second;
-                                    return std::find(scvfs.begin(), scvfs.end(), scvf.index()) != scvfs.end();
-                                } );
-
-        assert(it != couplingData.elementToScvfMap.end());
-        const auto lowDimElemIdx = it->first;
         const auto& s = map.find(bulkContext_.elementIdx)->second.couplingElementStencil;
         const auto& idxInContext = std::distance( s.begin(), std::find(s.begin(), s.end(), lowDimElemIdx) );
+
         assert(std::find(s.begin(), s.end(), lowDimElemIdx) != s.end());
         return bulkContext_.lowDimVolVars[idxInContext];
     }
@@ -278,12 +267,20 @@ public:
     const Element<lowDimId> getLowDimElement(const Element<bulkId>& element,
                                              const SubControlVolumeFace<bulkId>& scvf) const
     {
-        assert(bulkContext_.isSet);
+        const auto lowDimElemIdx = getLowDimElementIndex(element, scvf);
+        return this->problem(lowDimId).fvGridGeometry().element(lowDimElemIdx);
+    }
+
+    /*!
+     * \brief returns the index of the lower-dimensional element coinciding with a bulk scvf.
+     */
+    const GridIndexType<lowDimId> getLowDimElementIndex(const Element<bulkId>& element,
+                                                        const SubControlVolumeFace<bulkId>& scvf) const
+    {
         assert(bulkScvfIsCoupled_[scvf.index()]);
-        assert(scvf.insideScvIdx() == this->problem(bulkId).fvGridGeometry().elementMapper().index(element));
 
         const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-        const auto& couplingData = map.find(scvf.insideScvIdx())->second;
+        const auto& couplingData = map.at(scvf.insideScvIdx());
 
         // search the low dim element idx this scvf is embedded in
         auto it = std::find_if( couplingData.elementToScvfMap.begin(),
@@ -295,15 +292,13 @@ public:
                                 } );
 
         assert(it != couplingData.elementToScvfMap.end());
-        const auto lowDimElemIdx = it->first;
-        return this->problem(lowDimId).fvGridGeometry().element(lowDimElemIdx);
+        return it->first;
     }
 
     /*!
      * \brief Evaluates the coupling element residual of a bulk domain element with respect
      *        to a dof in the lower-dimensional domain (dofIdxGlobalJ). This is essentially
-     *        the fluxes across the bulk element facets that coincide with the lower-dimensional
-     *        element whose dof idx is dofIdxGlobalJ.
+     *        the fluxes across the bulk element facets that depend on dofIdxGlobalJ.
      */
     template< class BulkLocalAssembler >
     typename LocalResidual<bulkId>::ElementResidualVector
@@ -321,20 +316,24 @@ public:
 
         typename LocalResidual<bulkId>::ElementResidualVector res(1);
         res = 0.0;
-        res[0] = evalBulkFluxes_(bulkLocalAssembler.element(),
-                                 bulkLocalAssembler.fvGeometry(),
-                                 bulkLocalAssembler.curElemVolVars(),
-                                 bulkLocalAssembler.elemFluxVarsCache(),
-                                 bulkLocalAssembler.localResidual(),
-                                 map.find(bulkContext_.elementIdx)->second.dofToCouplingScvfMap.at(dofIdxGlobalJ));
+        res[0] = evalBulkFluxes(bulkLocalAssembler.element(),
+                                bulkLocalAssembler.fvGeometry(),
+                                bulkLocalAssembler.curElemVolVars(),
+                                bulkLocalAssembler.elemFluxVarsCache(),
+                                bulkLocalAssembler.localResidual(),
+                                map.find(bulkContext_.elementIdx)->second.dofToCouplingScvfMap.at(dofIdxGlobalJ));
         return res;
     }
 
     /*!
      * \brief Evaluates the coupling element residual of a lower-dimensional domain element
      *        with respect to a dof in the bulk domain (dofIdxGlobalJ). This is essentially
-     *        the fluxes across the facets of the neighboring bulk element that coincide with
+     *        the fluxes across the facets of the neighboring bulk elements that coincide with
      *        the given element.
+     *
+     * \note The coupling residual in this case is always the entire transfer flux from bulk
+     *       to the lowDim domain. It is therefore independent of the given dof index in the
+     *       bulk domain, which is why we directly forward to the index-independent function.
      */
     template< class LowDimLocalAssembler >
     typename LocalResidual<lowDimId>::ElementResidualVector
@@ -342,6 +341,16 @@ public:
                          const LowDimLocalAssembler& lowDimLocalAssembler,
                          BulkIdType,
                          GridIndexType<bulkId> dofIdxGlobalJ)
+    { return evalCouplingResidual(lowDimId, lowDimLocalAssembler, bulkId); }
+
+    /*!
+     * \brief Evaluates the coupling element residual of a lower-dimensional domain element
+     *        with respect to a dof in the bulk domain (dofIdxGlobalJ). This is essentially
+     *        the fluxes across the facets of the neighboring bulk elements.
+     */
+    template< class LowDimLocalAssembler >
+    typename LocalResidual<lowDimId>::ElementResidualVector
+    evalCouplingResidual(LowDimIdType, const LowDimLocalAssembler& lowDimLocalAssembler, BulkIdType)
     {
         // make sure this is called for the element for which the context was set
         assert(lowDimContext_.isSet);
@@ -382,17 +391,16 @@ public:
             return sources;
 
         assert(lowDimContext_.isSet);
-        const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
         for (const auto& embedment : it->second.embedments)
-            sources += evalBulkFluxes_(this->problem(bulkId).fvGridGeometry().element(embedment.first),
-                                       *lowDimContext_.bulkFvGeometry,
-                                       *lowDimContext_.bulkElemVolVars,
-                                       *lowDimContext_.bulkElemFluxVarsCache,
-                                       *lowDimContext_.bulkLocalResidual,
-                                       bulkMap.find(embedment.first)->second.elementToScvfMap.at(lowDimContext_.elementIdx));
+            sources += evalBulkFluxes(this->problem(bulkId).fvGridGeometry().element(embedment.first),
+                                      *lowDimContext_.bulkFvGeometry,
+                                      *lowDimContext_.bulkElemVolVars,
+                                      *lowDimContext_.bulkElemFluxVarsCache,
+                                      *lowDimContext_.bulkLocalResidual,
+                                      embedment.second);
 
         // if lowdim domain uses box, we distribute the sources equally among the scvs
-        if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+        if (lowDimUsesBox)
             sources /= fvGeometry.numScv();
 
         return sources;
@@ -436,10 +444,10 @@ public:
                 VolumeVariables<lowDimId> volVars;
 
                 // if low dim domain uses the box scheme, we have to create interpolated vol vars
-                if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+                if (lowDimUsesBox)
                 {
                     const auto elemGeom = elemJ.geometry();
-                    makeInterpolatedVolVars(volVars, ldProblem, ldSol, fvGeom, elemJ, elemGeom, elemGeom.center());
+                    FacetCoupling::makeInterpolatedVolVars(volVars, ldProblem, ldSol, fvGeom, elemJ, elemGeom, elemGeom.center());
                 }
                 // if low dim domain uses a cc scheme we can directly update the vol vars
                 else
@@ -539,7 +547,7 @@ public:
             // find the low-dim elements in coupling stencil, where this dof is contained in
             const auto couplingElements = [&] ()
             {
-                if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+                if (lowDimUsesBox)
                 {
                     std::vector< Element<lowDimId> > lowDimElems;
                     std::for_each( couplingElemStencil.begin(), couplingElemStencil.end(),
@@ -571,10 +579,10 @@ public:
                 auto& volVars = bulkContext_.lowDimVolVars[idxInContext];
                 const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
                 // if low dim domain uses the box scheme, we have to create interpolated vol vars
-                if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+                if (lowDimUsesBox)
                 {
                     const auto elemGeom = element.geometry();
-                    makeInterpolatedVolVars(volVars, ldProblem, ldSol, fvGeom, element, elemGeom, elemGeom.center());
+                    FacetCoupling::makeInterpolatedVolVars(volVars, ldProblem, ldSol, fvGeom, element, elemGeom, elemGeom.center());
                 }
                 // if low dim domain uses a cc scheme we can directly update the vol vars
                 else
@@ -692,10 +700,10 @@ public:
             const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
             const auto& element = lowDimLocalAssembler.element();
             // if low dim domain uses the box scheme, we have to create interpolated vol vars
-            if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+            if (lowDimUsesBox)
             {
                 const auto elemGeom = element.geometry();
-                makeInterpolatedVolVars(volVars, ldProblem, ldSol, fvGeom, element, elemGeom, elemGeom.center());
+                FacetCoupling::makeInterpolatedVolVars(volVars, ldProblem, ldSol, fvGeom, element, elemGeom, elemGeom.center());
             }
             // if low dim domain uses a cc scheme we can directly update the vol vars
             else
@@ -755,15 +763,23 @@ public:
     getEmptyStencil(Dune::index_constant<id>) const
     { return std::get<(id == bulkId ? 0 : 1)>(emptyStencilTuple_); }
 
-private:
+protected:
+    //! Return const references to the bulk coupling contexts
+    const BulkCouplingContext& bulkCouplingContext() const { return bulkContext_; }
+    const LowDimCouplingContext& lowDimCouplingContext() const { return lowDimContext_; }
+
+    //! Return references to the bulk coupling contexts
+    BulkCouplingContext& bulkCouplingContext() { return bulkContext_; }
+    LowDimCouplingContext& lowDimCouplingContext() { return lowDimContext_; }
+
     //! evaluates the bulk-facet exchange fluxes for a given facet element
     template<class BulkScvfIndices>
-    NumEqVector<bulkId> evalBulkFluxes_(const Element<bulkId>& elementI,
-                                        const FVElementGeometry<bulkId>& fvGeometry,
-                                        const ElementVolumeVariables<bulkId>& elemVolVars,
-                                        const ElementFluxVariablesCache<bulkId>& elemFluxVarsCache,
-                                        const LocalResidual<bulkId>& localResidual,
-                                        const BulkScvfIndices& scvfIndices) const
+    NumEqVector<bulkId> evalBulkFluxes(const Element<bulkId>& elementI,
+                                       const FVElementGeometry<bulkId>& fvGeometry,
+                                       const ElementVolumeVariables<bulkId>& elemVolVars,
+                                       const ElementFluxVariablesCache<bulkId>& elemFluxVarsCache,
+                                       const LocalResidual<bulkId>& localResidual,
+                                       const BulkScvfIndices& scvfIndices) const
     {
 
         NumEqVector<bulkId> coupledFluxes(0.0);
@@ -777,6 +793,7 @@ private:
         return coupledFluxes;
     }
 
+private:
     std::shared_ptr<CouplingMapper> couplingMapperPtr_;
 
     //! store bools for all bulk elements/scvfs that indicate if they

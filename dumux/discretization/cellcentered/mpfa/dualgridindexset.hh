@@ -45,7 +45,7 @@ struct NodalIndexSetDefaultTraits
 {
     using GridView = GV;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
-    using LocalIndexType = typename IndexTraits<GV>::SmallLocalIndex;
+    using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
     //! per default, we use dynamic data containers (iv size unknown)
     template< class T > using NodalScvDataStorage = std::vector< T >;

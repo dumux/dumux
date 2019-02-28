@@ -29,6 +29,7 @@
 
 #include <dumux/multidomain/facet/box/properties.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
+#include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
 
 #include <dumux/porousmediumflow/tracer/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -51,6 +52,7 @@ struct TracerTestBulk { using InheritsFrom = std::tuple<Tracer>; };
 
 // define the type tags
 struct TracerBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, TracerTestBulk>; };
+struct TracerBulkMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, TracerTestBulk>; };
 struct TracerBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, TracerTestBulk>; };
 } // end namespace TTag
 
@@ -110,6 +112,7 @@ class TracerBulkProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -151,6 +154,14 @@ public:
      * \param globalPos The position for which the bc type should be evaluated
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    {
+        BoundaryTypes values;
+        values.setAllNeumann();
+        return values;
+    }
+
+    //! Specifies the type of interior boundary condition at a given position.
+    BoundaryTypes interiorBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     {
         BoundaryTypes values;
         values.setAllNeumann();

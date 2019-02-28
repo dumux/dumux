@@ -23,6 +23,7 @@
 #define DUMUX_CCTPFA_FACETCOUPLING_MAPPER_HH
 
 #include <dune/common/indices.hh>
+#include <dune/common/float_cmp.hh>
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
@@ -49,6 +50,7 @@ class FacetCouplingMapper<BulkFVG, LowDimFVG, bulkId, lowDimId, DiscretizationMe
 {
     using ParentType = FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkId, lowDimId>;
     using LowDimElement = typename LowDimFVG::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename LowDimElement::Geometry::GlobalCoordinate;
 
 public:
     //! export domain ids
@@ -77,6 +79,7 @@ public:
             using LowDimIndexType = typename IndexTraits<typename LowDimFVG::GridView>::GridIndex;
             using BulkIndexType = typename IndexTraits<typename BulkFVG::GridView>::GridIndex;
 
+            const auto lowDimGeometry = lowDimElement.geometry();
             const auto lowDimElemIdx = lowDimFvGridGeometry.elementMapper().index(lowDimElement);
             auto& lowDimData = this->couplingMap_(facetGridId, bulkGridId)[lowDimElemIdx];
 
@@ -109,12 +112,10 @@ public:
                     // otherwise, do float comparison of element and scvf center
                     else
                     {
-                        const auto lowDimGeom = lowDimElement.geometry();
-                        const auto eps = lowDimGeom.volume()*1e-8;
-                        const auto diffVec = lowDimGeom.center()-scvf.center();
+                        const auto eps = lowDimGeometry.volume()*1e-8;
+                        const auto diffVec = lowDimGeometry.center()-scvf.center();
 
-                        using std::abs;
-                        if ( std::all_of(diffVec.begin(), diffVec.end(), [eps] (auto coord) { return abs(coord) < eps; }) )
+                        if ( Dune::FloatCmp::eq<GlobalPosition, Dune::FloatCmp::CmpStyle::absolute>(diffVec, GlobalPosition(0.0), eps) )
                         {
                             embeddedScvfIdx = scvf.index();
                             found = true; break;
@@ -128,9 +129,9 @@ public:
 
                 // add each dof in the low dim element to coupling stencil of the bulk element
                 auto& bulkData = this->couplingMap_(bulkGridId, facetGridId)[bulkElemIdx];
-                const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethod::cctpfa
-                                               ? std::vector<LowDimIndexType>( {lowDimElemIdx} )
-                                               : this->extractNodalDofs_(lowDimElement, lowDimFvGridGeometry);
+                const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethod::box
+                                               ? this->extractNodalDofs_(lowDimElement, lowDimFvGridGeometry)
+                                               : std::vector<LowDimIndexType>( {lowDimElemIdx} );
 
                 for (auto dofIdx : lowDimElementDofs)
                 {

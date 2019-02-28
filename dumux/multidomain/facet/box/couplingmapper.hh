@@ -79,9 +79,9 @@ public:
         using GridAdapter = CodimOneGridAdapter<Embeddings, bulkGridId, facetGridId>;
         update(bulkFvGridGeometry, lowDimFvGridGeometry, embeddings, GridAdapter(embeddings));
     }
+
     /*!
-     * \brief Update coupling maps. This is the standard
-     *        interface required by any mapper implementation.
+     * \brief Update coupling maps with a given grid adapter.
      *
      * \param bulkFvGridGeometry The finite-volume grid geometry of the bulk grid
      * \param lowDimFvGridGeometry The finite-volume grid geometry of the lower-dimensional grid
@@ -159,7 +159,7 @@ public:
                     if (scvf.interiorBoundary() && scvf.facetIndexInElement() == coupledFacetIndex)
                     {
                         // we want to order the set of scvfs lying on the lower-dimensional element such that the i-th scvf
-                        // coincides with the i-th low dim element corner. This will help later  to identify which scvf fluxes
+                        // coincides with the i-th low dim element corner. This will help later to identify which scvf fluxes
                         // enter which scv of the low dim element if the lower-dimensional domain uses the box scheme
                         const auto vIdxLocal = bulkRefElem.subEntity(coupledFacetIndex, 1, scvf.indexInElementFacet(), bulkDim);
                         const auto vIdxGlobal = bulkFvGridGeometry.vertexMapper().vertexIndex(bulkElement, vIdxLocal, bulkDim);
@@ -177,9 +177,9 @@ public:
 
                 // add each dof in the low dim element to coupling stencil of the bulk element
                 auto& bulkData = this->couplingMap_(bulkGridId, facetGridId)[bulkElemIdx];
-                const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethod::cctpfa
-                                               ? std::vector<LowDimIndexType>({lowDimElemIdx})
-                                               : this->extractNodalDofs_(lowDimElement, lowDimFvGridGeometry);
+                const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethod::box
+                                               ? this->extractNodalDofs_(lowDimElement, lowDimFvGridGeometry)
+                                               : std::vector<LowDimIndexType>({lowDimElemIdx});
 
                 for (auto lowDimDofIdx : lowDimElementDofs)
                 {

@@ -364,11 +364,17 @@ private:
     {
         // triangles, lines & tetrahedra need no reordering
         if (gt == Dune::GeometryTypes::hexahedron)
-            DUNE_THROW(Dune::NotImplemented, "Reordering of corners for hexahedra");
+        {
+            using std::swap;
+            assert(cornerIndices.size() == 8);
+            swap(cornerIndices[2], cornerIndices[3]);
+            swap(cornerIndices[6], cornerIndices[7]);
+        }
         else if (gt == Dune::GeometryTypes::quadrilateral)
         {
+            using std::swap;
             assert(cornerIndices.size() == 4);
-            std::swap(cornerIndices[2], cornerIndices[3]);
+            swap(cornerIndices[2], cornerIndices[3]);
         }
     }
 

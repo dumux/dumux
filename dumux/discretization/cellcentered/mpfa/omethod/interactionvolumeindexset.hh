@@ -141,6 +141,13 @@ public:
     std::size_t numScvs() const
     { return nodalIndexSet_.numScvs(); }
 
+    //! returns a grid scv idx for a given iv-local scv index
+    GridIndexType gridScvIndex(LocalIndexType ivLocalScvIdx) const
+    {
+        assert(ivLocalScvIdx < numScvs());
+        return gridScvIndices()[ivLocalScvIdx];
+    }
+
     //! returns a grid scvf idx for a given iv-local scvf index
     GridIndexType gridScvfIndex(LocalIndexType ivLocalScvfIdx) const
     {
