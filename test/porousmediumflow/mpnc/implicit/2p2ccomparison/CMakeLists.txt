@@ -1,8 +1,8 @@
 add_input_file_links()
 
 dune_add_test(NAME test_mpnc_2p2c_comparison_box
+              LABELS porousmediumflow mpnc
               SOURCES main.cc
-              LABELS mpnc
               COMPILE_DEFINITIONS TYPETAG=MPNCComparisonBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -11,8 +11,8 @@ dune_add_test(NAME test_mpnc_2p2c_comparison_box
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpnc_2p2c_comparison_box params.input -Problem.Name test_mpnc_2p2c_comparison_box")
 
 dune_add_test(NAME test_mpnc_2p2c_comparison_tpfa
+              LABELS porousmediumflow mpnc
               SOURCES main.cc
-              LABELS mpnc
               COMPILE_DEFINITIONS TYPETAG=MPNCComparisonCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy

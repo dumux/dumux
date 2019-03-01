@@ -4,6 +4,7 @@ add_gstat_file_links()
 
 # isothermal tests
 dune_add_test(NAME test_1p_tpfa
+              LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -13,6 +14,7 @@ dune_add_test(NAME test_1p_tpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_tpfa params.input -Problem.Name test_1p_tpfa")
 
 dune_add_test(NAME test_1p_mpfa
+              LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -22,6 +24,7 @@ dune_add_test(NAME test_1p_mpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_mpfa params.input -Problem.Name test_1p_mpfa")
 
 dune_add_test(NAME test_1p_box
+              LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -31,6 +34,7 @@ dune_add_test(NAME test_1p_box
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_box params.input -Problem.Name test_1p_box")
 
 dune_add_test(NAME test_1p_forchheimer_tpfa
+              LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa FORCHHEIMER=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -42,6 +46,7 @@ dune_add_test(NAME test_1p_forchheimer_tpfa
 
 # a gstat test (becaue it's a random permeability field we can't test against a reference solution)
 dune_add_test(NAME test_1p_gstat
+              LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa
               CMAKE_GUARD HAVE_GSTAT

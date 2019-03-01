@@ -2,8 +2,8 @@ add_input_file_links()
 
 # build target for the full kinetic test problem
 dune_add_test(NAME test_mpnc_kinetic_box
+              LABELS porousmediumflow mpnc
               SOURCES main.cc
-              LABELS mpnc
               COMPILE_DEFINITIONS TYPETAG=EvaporationAtmosphereBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy

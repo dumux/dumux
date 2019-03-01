@@ -1,6 +1,7 @@
 add_input_file_links()
 
 dune_add_test(NAME test_1pncminni_box
+              LABELS porousmediumflow 1pncmin  1pncminni
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=ThermoChemBox

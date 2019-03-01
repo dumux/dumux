@@ -1,6 +1,7 @@
 add_input_file_links("params.input")
 
 dune_add_test(NAME test_1p_pointsources_timeindependent_tpfa
+              LABELS porousmediumflow 1p
               SOURCES main.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               COMPILE_DEFINITIONS TYPETAG=OnePSingularityCCTpfa
@@ -10,6 +11,7 @@ dune_add_test(NAME test_1p_pointsources_timeindependent_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_pointsources_timeindependent_tpfa params.input -Problem.Name test_1p_pointsources_timeindependent_tpfa")
 
 dune_add_test(NAME test_1p_pointsources_timeindependent_box
+              LABELS porousmediumflow 1p
               SOURCES main.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               COMPILE_DEFINITIONS TYPETAG=OnePSingularityBox

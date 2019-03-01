@@ -3,6 +3,7 @@ add_input_file_links()
 # non-isothermal tests
 # conduction
 dune_add_test(NAME test_1p2c_nonequilibrium_box
+              LABELS porousmediumflow 1p2c
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCThermalNonequilibriumBox
@@ -14,6 +15,7 @@ dune_add_test(NAME test_1p2c_nonequilibrium_box
                         --zeroThreshold {"velocity_liq \(m/s\)_1":1e-15})
 
 dune_add_test(NAME test_1p2c_nonequilibrium_tpfa
+              LABELS porousmediumflow 1p2c
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCThermalNonequilibriumCCTpfa

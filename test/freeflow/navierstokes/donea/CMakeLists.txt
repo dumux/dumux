@@ -1,6 +1,6 @@
 dune_add_test(NAME test_ff_stokes_donea_nocaching
+              LABELS freeflow navierstokes
               SOURCES main.cc
-              LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS ENABLECACHING=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -11,8 +11,8 @@ dune_add_test(NAME test_ff_stokes_donea_nocaching
                              -Problem.Name test_ff_stokes_donea_nocaching")
 
 dune_add_test(NAME test_ff_stokes_donea
+              LABELS freeflow navierstokes
               SOURCES main.cc
-              LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS ENABLECACHING=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

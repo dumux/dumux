@@ -2,6 +2,7 @@ dune_symlink_to_source_files(FILES "params.input" "grids")
 
 # tests without gravity
 dune_add_test(NAME test_2p_fracture_box
+              LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureBox
               CMAKE_GUARD dune-foamgrid_FOUND
@@ -12,6 +13,7 @@ dune_add_test(NAME test_2p_fracture_box
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_box params.input -Problem.Name test_2p_fracture_box")
 
 dune_add_test(NAME test_2p_fracture_tpfa
+              LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureCCTpfa
               CMAKE_GUARD dune-foamgrid_FOUND
@@ -22,6 +24,7 @@ dune_add_test(NAME test_2p_fracture_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa params.input -Problem.Name test_2p_fracture_tpfa")
 
 dune_add_test(NAME test_2p_fracture_mpfa
+              LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureCCMpfa
               CMAKE_GUARD dune-foamgrid_FOUND
@@ -34,6 +37,7 @@ dune_add_test(NAME test_2p_fracture_mpfa
 # tests with gravity
 dune_add_test(NAME test_2p_fracture_gravity_box
               TARGET test_2p_fracture_box
+              LABELS porousmediumflow 2p
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -43,6 +47,7 @@ dune_add_test(NAME test_2p_fracture_gravity_box
 
 dune_add_test(NAME test_2p_fracture_gravity_tpfa
               TARGET test_2p_fracture_tpfa
+              LABELS porousmediumflow 2p
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -52,6 +57,7 @@ dune_add_test(NAME test_2p_fracture_gravity_tpfa
 
 dune_add_test(NAME test_2p_fracture_gravity_mpfa
               TARGET test_2p_fracture_mpfa
+              LABELS porousmediumflow 2p
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy

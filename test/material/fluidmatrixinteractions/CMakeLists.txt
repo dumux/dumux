@@ -1,7 +1,7 @@
 add_subdirectory(2p)
 
 dune_add_test(SOURCES test_effectivediffusivitymillingtonquirk.cc
-              LABELS unit
+              LABELS unit material
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzyData --delimiter " "
                        --files ${CMAKE_SOURCE_DIR}/test/references/effectivediffusivitymillingtonquirk-reference.dat
@@ -9,7 +9,7 @@ dune_add_test(SOURCES test_effectivediffusivitymillingtonquirk.cc
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_effectivediffusivitymillingtonquirk")
 
 dune_add_test(SOURCES test_effectivediffusivityconstanttortuosity.cc
-              LABELS unit
+              LABELS unit material
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzyData --delimiter " "
                        --files ${CMAKE_SOURCE_DIR}/test/references/effectivediffusivityconstanttau-reference.dat

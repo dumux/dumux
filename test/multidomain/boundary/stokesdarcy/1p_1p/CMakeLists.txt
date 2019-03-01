@@ -3,7 +3,7 @@ add_input_file_links()
 add_executable(test_md_boundary_darcy1p_stokes1p EXCLUDE_FROM_ALL main.cc)
 
 dune_add_test(NAME test_md_boundary_darcy1p_stokes1p_horizontal
-              LABELS multidomain freeflow
+              LABELS multidomain multidomain_boundary stokesdarcy 1p navierstokes
               TARGET test_md_boundary_darcy1p_stokes1p
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -16,7 +16,7 @@ dune_add_test(NAME test_md_boundary_darcy1p_stokes1p_horizontal
                                    -Vtk.OutputName test_md_boundary_darcy1p_stokes1p_horizontal")
 
 dune_add_test(NAME test_md_boundary_darcy1p_stokes1p_vertical
-              LABELS multidomain freeflow
+              LABELS multidomain multidomain_boundary stokesdarcy 1p navierstokes
               TARGET test_md_boundary_darcy1p_stokes1p
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

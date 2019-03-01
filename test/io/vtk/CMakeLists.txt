@@ -2,7 +2,7 @@ add_input_file_links()
 
 dune_add_test(NAME test_vtkreader_3d
               SOURCES test_vtkreader.cc
-              LABELS unit
+              LABELS unit io
               CMAKE_GUARD dune-alugrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<3,3,Dune::cube,Dune::nonconforming>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -19,7 +19,7 @@ dune_add_test(NAME test_vtkreader_3d
 
 dune_add_test(NAME test_vtkreader_2d
               SOURCES test_vtkreader.cc
-              LABELS unit
+              LABELS unit io
               CMAKE_GUARD dune-alugrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -31,7 +31,7 @@ dune_add_test(NAME test_vtkreader_2d
 
 dune_add_test(NAME test_vtkreader_2d3d
               SOURCES test_vtkreader.cc
-              LABELS unit
+              LABELS unit io
               CMAKE_GUARD dune-foamgrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::FoamGrid<2,3>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -43,7 +43,7 @@ dune_add_test(NAME test_vtkreader_2d3d
 
 dune_add_test(NAME test_vtkreader_1d
               SOURCES test_vtkreader.cc
-              LABELS unit
+              LABELS unit io
               CMAKE_GUARD dune-foamgrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::FoamGrid<1,3>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -55,4 +55,4 @@ dune_add_test(NAME test_vtkreader_1d
 
 dune_add_test(NAME test_vtk_staggeredfreeflowpvnames
               SOURCES test_vtk_staggeredfreeflowpvnames.cc
-              LABELS unit)
+              LABELS unit io)

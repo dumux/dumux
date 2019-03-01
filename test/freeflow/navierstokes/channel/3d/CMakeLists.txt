@@ -1,4 +1,5 @@
 dune_add_test(NAME test_ff_stokes_channel_3d
+              LABELS freeflow navierstokes
               SOURCES main.cc
               LABELS freeflow
               COMPILE_DEFINITIONS DIM_3D=1
@@ -12,6 +13,7 @@ dune_add_test(NAME test_ff_stokes_channel_3d
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
 
 dune_add_test(NAME test_ff_stokes_channel_pseudo3d
+              LABELS freeflow navierstokes
               SOURCES main.cc
               LABELS freeflow
               COMPILE_DEFINITIONS DIM_3D=0

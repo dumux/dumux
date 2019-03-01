@@ -2,6 +2,7 @@ add_input_file_links(FILES params.input)
 
 # non-isothermal tests
 dune_add_test(NAME test_richardsni_conduction_box
+              LABELS porousmediumflow richards richardsni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -11,6 +12,7 @@ dune_add_test(NAME test_richardsni_conduction_box
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_conduction_box params.input -Problem.Name test_richardsni_conduction_box")
 
 dune_add_test(NAME test_richardsni_conduction_tpfa
+              LABELS porousmediumflow richards richardsni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

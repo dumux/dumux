@@ -1,6 +1,6 @@
 dune_add_test(NAME test_ff_navierstokes_kovasznay
+              LABELS freeflow navierstokes
               SOURCES main.cc
-              LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -11,7 +11,7 @@ dune_add_test(NAME test_ff_navierstokes_kovasznay
 
 dune_add_test(NAME test_ff_navierstokes_kovasznay_higherorder
               TARGET test_ff_navierstokes_kovasznay
-              LABELS freeflow
+              LABELS freeflow navierstokes
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_kovasznay_higherorder-reference.vtu
