@@ -33,6 +33,7 @@
 #include <dumux/discretization/box.hh>
 
 #include <dumux/multidomain/facet/box/darcyslaw.hh>
+#include <dumux/multidomain/facet/box/fluxvariablescache.hh>
 #include <dumux/multidomain/facet/box/elementboundarytypes.hh>
 #include <dumux/multidomain/facet/box/fvgridgeometry.hh>
 #include <dumux/multidomain/facet/box/localresidual.hh>
@@ -61,6 +62,14 @@ struct AdvectionType<TypeTag, TTag::BoxFacetCouplingModel>
 {
     using type = BoxFacetCouplingDarcysLaw< GetPropType<TypeTag, Properties::Scalar>,
                                             GetPropType<TypeTag, Properties::FVGridGeometry> >;
+};
+
+//! Use the flux variables cache specific for box facet coupling models
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::BoxFacetCouplingModel>
+{
+    using type = BoxFacetCouplingFluxVariablesCache< GetPropType<TypeTag, Properties::Scalar>,
+                                                     GetPropType<TypeTag, Properties::FVGridGeometry> >;
 };
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
