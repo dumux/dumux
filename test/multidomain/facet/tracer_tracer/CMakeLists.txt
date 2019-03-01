@@ -1,7 +1,7 @@
 dune_symlink_to_source_files(FILES "grids" "params.input")
 
 dune_add_test(NAME test_md_facet_tracertracer_tpfa
-              LABELS multidomain facet tracer
+              LABELS multidomain multidomain_facet tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS ONEPBULKTYPETAG=OnePBulkTpfa
               COMPILE_DEFINITIONS ONEPLOWDIMTYPETAG=OnePLowDimTpfa
@@ -22,7 +22,7 @@ dune_add_test(NAME test_md_facet_tracertracer_tpfa
                                                               -Vtk.OutputName test_md_facet_tracertracer_tpfa")
 
 dune_add_test(NAME test_md_facet_tracertracer_mpfa
-              LABELS multidomain facet tracer
+              LABELS multidomain multidomain_facet tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS ONEPBULKTYPETAG=OnePBulkMpfa
               COMPILE_DEFINITIONS ONEPLOWDIMTYPETAG=OnePLowDimMpfa
@@ -43,7 +43,7 @@ dune_add_test(NAME test_md_facet_tracertracer_mpfa
                                                               -Vtk.OutputName test_md_facet_tracertracer_mpfa")
 
 dune_add_test(NAME test_md_facet_tracertracer_box
-              LABELS multidomain facet tracer
+              LABELS multidomain multidomain_facet tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS ONEPBULKTYPETAG=OnePBulkBox
               COMPILE_DEFINITIONS ONEPLOWDIMTYPETAG=OnePLowDimBox

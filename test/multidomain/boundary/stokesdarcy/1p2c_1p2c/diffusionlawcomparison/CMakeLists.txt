@@ -1,7 +1,7 @@
 add_input_file_links()
 
 dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_maxwellstefan
-              LABELS multidomain freeflow 1pnc
+              LABELS multidomain multidomain_boundary freeflow 1pnc
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS DIFFUSIONTYPE=MaxwellStefansLaw<TypeTag>
@@ -16,7 +16,7 @@ dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_maxwellstefan
                                         -Problem.Name test_md_boundary_darcy1p2c_stokes1p2c_comparison_ms")
 
 dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_fickslaw
-              LABELS multidomain freeflow 1pnc
+              LABELS multidomain multidomain_boundary freeflow 1pnc
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS DIFFUSIONTYPE=FicksLaw<TypeTag>

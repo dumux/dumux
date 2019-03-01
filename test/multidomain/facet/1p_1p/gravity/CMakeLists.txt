@@ -16,7 +16,7 @@ target_compile_definitions(test_md_facet_1p1p_gravity_mpfa
                                   BULKGRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>)
 
 dune_add_test(NAME test_md_facet_1p1p_gravity_xi1_tpfa
-              LABELS multidomain facet 1p
+              LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -30,7 +30,7 @@ dune_add_test(NAME test_md_facet_1p1p_gravity_xi1_tpfa
 
 
 dune_add_test(NAME test_md_facet_1p1p_gravity_xi066_tpfa
-              LABELS multidomain facet 1p
+              LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -45,7 +45,7 @@ dune_add_test(NAME test_md_facet_1p1p_gravity_xi066_tpfa
 
 
 dune_add_test(NAME test_md_facet_1p1p_gravity_xi1_mpfa
-              LABELS multidomain facet 1p
+              LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_mpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -58,7 +58,7 @@ dune_add_test(NAME test_md_facet_1p1p_gravity_xi1_mpfa
                                                               -Vtk.OutputName test_md_facet_1p1p_gravity_xi1_mpfa")
 
 dune_add_test(NAME test_md_facet_1p1p_gravity_xi066_mpfa
-              LABELS multidomain facet 1p
+              LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_mpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
