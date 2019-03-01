@@ -233,9 +233,9 @@ struct BoundaryValues { using type = UndefinedProperty; };                      
 template<class TypeTag, class MyTypeTag>
 struct StaggeredFaceSolution { using type = UndefinedProperty; };               //!< A vector containing the solution for a face (similar to ElementSolution)
 template<class TypeTag, class MyTypeTag>
-struct EnableGridFaceVariablesCache { using type = UndefinedProperty; };      //!< Switch on/off caching of face variables
+struct EnableGridFaceVariablesCache { using type = UndefinedProperty; };        //!< Switch on/off caching of face variables
 template<class TypeTag, class MyTypeTag>
-struct UpwindGeometryOrder { using type = UndefinedProperty; };      //!< Specifies the order of the upwinding scheme (1 == basic upwinding, 2 == higher order)
+struct UpwindSchemeOrder { using type = UndefinedProperty; };                   //!< Specifies the order of the upwinding scheme (1 == basic upwinding, 2 == higher order)
 
 /////////////////////////////////////////////////////////////
 // Properties used by the mpnc model

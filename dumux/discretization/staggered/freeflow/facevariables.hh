@@ -31,8 +31,14 @@ namespace Dumux {
 
 namespace Detail {
 
-template<class Scalar, int geometryOrder>
-struct InAxisVelocities;
+template<class Scalar, int upwindSchemeOrder>
+struct InAxisVelocities
+{
+    Scalar self = 0.0;
+    Scalar opposite = 0.0;
+    std::array<Scalar, upwindSchemeOrder-1> forward{};
+    std::array<Scalar, upwindSchemeOrder-1> backward{};
+};
 
 template<class Scalar>
 struct InAxisVelocities<Scalar, 1>
@@ -41,30 +47,21 @@ struct InAxisVelocities<Scalar, 1>
     Scalar opposite = 0.0;
 };
 
-template<class Scalar, int geometryOrder>
-struct InAxisVelocities
-{
-    Scalar self = 0.0;
-    Scalar opposite = 0.0;
-    std::array<Scalar, geometryOrder-1> forward{};
-    std::array<Scalar, geometryOrder-1> backward{};
-};
-
-}
+} // end namespace Detail
 
 /*!
  * \ingroup StaggeredDiscretization
  * \brief The face variables class for free flow staggered grid models.
  *        Contains all relevant velocities for the assembly of the momentum balance.
  */
-template<class FacePrimaryVariables, int dim, int geometryOrder> // TODO doc
+template<class FacePrimaryVariables, int dim, int upwindSchemeOrder> // TODO doc
 class StaggeredFaceVariables
 {
     static constexpr int numPairs = (dim == 2) ? 2 : 4;
-    static constexpr bool useHigherOrder = geometryOrder > 1;
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
     using Scalar = typename FacePrimaryVariables::block_type;
-    using InAxisVelocities = Detail::InAxisVelocities<Scalar, geometryOrder>;
+    using InAxisVelocities = Detail::InAxisVelocities<Scalar, upwindSchemeOrder>;
 
 public:
 
@@ -99,7 +96,7 @@ public:
         inAxisVelocities_.self = faceSol[scvf.dofIndex()];
         inAxisVelocities_.opposite = faceSol[scvf.dofIndexOpposingFace()];
 
-        addHigherOrderInAxisVelocities(std::integral_constant<bool, useHigherOrder>{}, faceSol, scvf);
+        addHigherOrderInAxisVelocities_(faceSol, scvf, std::integral_constant<bool, useHigherOrder>{});
 
         // handle all sub faces
         for (int i = 0; i < velocityParallel_.size(); ++i)
@@ -116,7 +113,7 @@ public:
                 velocityNormalOutside_[i] = faceSol[subFaceData.normalPair.second];
 
             // treat the velocities parallel to the self face
-            for (int j = 0; j < geometryOrder; j++)
+            for (int j = 0; j < upwindSchemeOrder; j++)
             {
                 if (scvf.hasParallelNeighbor(i,j))
                     velocityParallel_[i][j] = faceSol[subFaceData.parallelDofs[j]];
@@ -196,10 +193,10 @@ public:
 private:
 
     template<class SolVector, class SubControlVolumeFace>
-    void addHigherOrderInAxisVelocities(std::false_type, const SolVector& faceSol, const SubControlVolumeFace& scvf) {}
+    void addHigherOrderInAxisVelocities_(const SolVector& faceSol, const SubControlVolumeFace& scvf, std::false_type) {}
 
     template<class SolVector, class SubControlVolumeFace>
-    void addHigherOrderInAxisVelocities(std::true_type, const SolVector& faceSol, const SubControlVolumeFace& scvf)
+    void addHigherOrderInAxisVelocities_(const SolVector& faceSol, const SubControlVolumeFace& scvf, std::true_type)
     {
 
         // treat the velocity forward of the self face i.e. the face that is
@@ -220,7 +217,7 @@ private:
     }
 
     InAxisVelocities inAxisVelocities_;
-    std::array<std::array<Scalar, geometryOrder>, numPairs> velocityParallel_;
+    std::array<std::array<Scalar, upwindSchemeOrder>, numPairs> velocityParallel_;
     std::array<Scalar, numPairs>  velocityNormalInside_;
     std::array<Scalar, numPairs>  velocityNormalOutside_;
 

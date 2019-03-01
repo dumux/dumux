@@ -25,6 +25,10 @@
 #ifndef DUMUX_KOVASZNAY_TEST_PROBLEM_HH
 #define DUMUX_KOVASZNAY_TEST_PROBLEM_HH
 
+#ifndef UPWINDSCHEMEORDER
+#define UPWINDSCHEMEORDER 0
+#endif
+
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -68,6 +72,9 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
+
+template<class TypeTag>
+struct UpwindSchemeOrder<TypeTag, TTag::KovasznayTest> { static constexpr int value = UPWINDSCHEMEORDER; };
 } // end namespace Properties
 
 /*!
@@ -99,12 +106,14 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
+    static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
+
 public:
     KovasznayTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
-
+        std::cout<< "upwindSchemeOrder is: " << FVGridGeometry::order() << "\n";
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
         Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
         lambda_ = 0.5 * reynoldsNumber

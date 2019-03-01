@@ -39,11 +39,11 @@ namespace Dumux
  * \ingroup StaggeredDiscretization
  * \brief Parallel Data stored per sub face
  */
-template<class Scalar, class GlobalPosition, int geometryOrder>
+template<class Scalar, class GlobalPosition, int upwindSchemeOrder>
 struct PairData
 {
-    std::array<int, geometryOrder> parallelDofs;
-    std::array<Scalar, geometryOrder+1/*geometryOrder*/> parallelDistances; // TODO
+    std::array<int, upwindSchemeOrder> parallelDofs;
+    std::array<Scalar, upwindSchemeOrder+1> parallelDistances; // TODO store only two distances, not three.
     std::pair<signed int, signed int> normalPair;
     int localNormalFaceIdx;
     Scalar normalDistance;
@@ -55,13 +55,13 @@ struct PairData
  * \ingroup StaggeredDiscretization
  * \brief In Axis Data stored per sub face
  */
-template<class Scalar, int geometryOrder>
+template<class Scalar, int upwindSchemeOrder>
 struct AxisData;
 /*!
  * \ingroup StaggeredDiscretization
  * \brief In Axis Data stored per sub face
  */
-template<class Scalar, int geometryOrder>
+template<class Scalar, int upwindSchemeOrder>
 struct AxisData
 {
     AxisData()
@@ -74,11 +74,11 @@ struct AxisData
 
     int selfDof;
     int oppositeDof;
-    std::array<int, geometryOrder-1> inAxisForwardDofs;
-    std::array<int, geometryOrder-1> inAxisBackwardDofs;
+    std::array<int, upwindSchemeOrder-1> inAxisForwardDofs;
+    std::array<int, upwindSchemeOrder-1> inAxisBackwardDofs;
     Scalar selfToOppositeDistance;
-    std::array<Scalar, geometryOrder-1> inAxisForwardDistances;
-    std::array<Scalar, geometryOrder-1> inAxisBackwardDistances;
+    std::array<Scalar, upwindSchemeOrder-1> inAxisForwardDistances;
+    std::array<Scalar, upwindSchemeOrder-1> inAxisBackwardDistances;
 };
 
 /*!
@@ -93,7 +93,7 @@ struct AxisData<Scalar, 1>
     Scalar selfToOppositeDistance;
 };
 
-// template<class Scalar, int geometryOrder>
+// template<class Scalar, int upwindSchemeOrder>
 // using AxisData
 
 /*!
@@ -113,7 +113,7 @@ inline static unsigned int directionIndex(Vector&& vector)
  * \brief Helper class constructing the dual grid finite volume geometries
  *        for the free flow staggered discretization method.
  */
-template<class GridView, int geometryOrder>
+template<class GridView, int upwindSchemeOrder>
 class FreeFlowStaggeredGeometryHelper
 {
     using Scalar = typename GridView::ctype;
@@ -137,7 +137,7 @@ class FreeFlowStaggeredGeometryHelper
     static constexpr int numfacets = dimWorld * 2;
     static constexpr int numPairs = 2 * (dimWorld - 1);
 
-    static constexpr bool useHigherOrder = geometryOrder > 1;
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
 
 public:
@@ -150,9 +150,8 @@ public:
     void updateLocalFace(const IntersectionMapper& intersectionMapper_, const Intersection& intersection)
     {
         intersection_ = intersection;
-        innerNormalFacePos_.clear();
-        fillPairData_(std::integral_constant<bool, true>{}); //TODO
-        fillAxisData_(std::integral_constant<bool, useHigherOrder>{});
+        fillAxisData_();
+        fillPairData_();
     }
 
     /*!
@@ -197,29 +196,12 @@ public:
 
 private:
 
-
-    void fillAxisData_(std::false_type)
-    {
-        const auto inIdx = intersection_.indexInInside();
-        const auto oppIdx = localOppositeIdx_(inIdx);
-
-        // Set the self Dof
-        axisData_.selfDof = gridView_.indexSet().subIndex(intersection_.inside(), inIdx, codimIntersection);
-
-        // Set the opposite Dof
-        axisData_.oppositeDof = gridView_.indexSet().subIndex(intersection_.inside(), oppIdx, codimIntersection);
-
-        // Set the Self to Opposite Distance
-        const auto self = getFacet_(inIdx, element_);
-        const auto opposite = getFacet_(oppIdx, element_);
-        axisData_.selfToOppositeDistance = (self.geometry().center() - opposite.geometry().center()).two_norm();
-    }
     /*!
      * \brief Fills all entries of the in axis data
+     *        Calls a function to extend the axis data for higher order upwind methods if required.
      */
-    void fillAxisData_(std::true_type)
+    void fillAxisData_()
     {
-        const auto numForwardBackwardAxisDofs = axisData_.inAxisForwardDofs.size();
         const auto inIdx = intersection_.indexInInside();
         const auto oppIdx = localOppositeIdx_(inIdx);
 
@@ -233,9 +215,27 @@ private:
         const auto self = getFacet_(inIdx, element_);
         const auto opposite = getFacet_(oppIdx, element_);
         axisData_.selfToOppositeDistance = (self.geometry().center() - opposite.geometry().center()).two_norm();
+
+        fillOuterAxisData_(std::integral_constant<bool, useHigherOrder>{});
+    }
+
+    /*!
+     * \brief Fills the axis data with the outer Dofs and Distances.
+     *        For first order upwind methods no outer information is required.
+     */
+    void fillOuterAxisData_(std::false_type) {}
+
+    /*!
+     * \brief Fills the axis data with the outer dofs and distances.
+     *        This function builds and extended stencil and is therefore only called when higher order upwinding methods are prescribed.
+     */
+    void fillOuterAxisData_(std::true_type)
+    {
+        const auto numForwardBackwardAxisDofs = axisData_.inAxisForwardDofs.size();
 
         // Set the Forward Dofs
         std::stack<Element> inAxisForwardElementStack;
+        const auto inIdx = intersection_.indexInInside();
         auto selfFace = getFacet_(inIdx, element_);
         if(intersection_.neighbor())
         {
@@ -266,26 +266,28 @@ private:
         while(!inAxisForwardElementStack.empty())
         {
             int forwardIdx = inAxisForwardElementStack.size()-1;
-            this->axisData_.inAxisForwardDofs[forwardIdx] = gridView_.indexSet().subIndex(inAxisForwardElementStack.top(), inIdx, codimIntersection);
+            axisData_.inAxisForwardDofs[forwardIdx] = gridView_.indexSet().subIndex(inAxisForwardElementStack.top(), inIdx, codimIntersection);
             selfFace = getFacet_(inIdx, inAxisForwardElementStack.top());
             forwardFaceCoordinates[forwardIdx] = selfFace.geometry().center();
             inAxisForwardElementStack.pop();
         }
 
+        const auto self = getFacet_(inIdx, element_);
         for(int i = 0; i< forwardFaceCoordinates.size(); i++)
         {
             if(i == 0)
             {
-                this->axisData_.inAxisForwardDistances[i] = (forwardFaceCoordinates[i] - self.geometry().center()).two_norm();
+                axisData_.inAxisForwardDistances[i] = (forwardFaceCoordinates[i] - self.geometry().center()).two_norm();
             }
             else
             {
-                this->axisData_.inAxisForwardDistances[i] = (forwardFaceCoordinates[i]- forwardFaceCoordinates[i-1]).two_norm();
+                axisData_.inAxisForwardDistances[i] = (forwardFaceCoordinates[i]- forwardFaceCoordinates[i-1]).two_norm();
             }
         }
 
         // Set the Backward Dofs
         std::stack<Element> inAxisBackwardElementStack;
+        const auto oppIdx = localOppositeIdx_(inIdx);
         auto oppFace = getFacet_(oppIdx, element_);
         for(const auto& intersection : intersections(gridView_, element_))
         {
@@ -329,6 +331,7 @@ private:
             inAxisBackwardElementStack.pop();
         }
 
+        const auto opposite = getFacet_(oppIdx, element_);
         for(int i = 0; i< backwardFaceCoordinates.size(); i++)
         {
             if(i == 0)
@@ -342,32 +345,18 @@ private:
         }
     }
 
-    void fillPairData_(std::false_type)
-    {
-
-        // TODO
-
-    }
-
     /*!
-     * \brief Fills all entries of the pair data
+     * \brief Fills the pair data with the normal dofs and distances
+     *        and calls a further function to collect the parallel dofs and distances
      */
-    void fillPairData_(std::true_type)
+    void fillPairData_()
     {
         // initialize values that could remain unitialized if the intersection lies on a boundary
         for(auto& data : pairData_)
         {
-            // parallel Dofs
-            data.parallelDofs.fill(-1);
-
-            // parallel Distances
-            data.parallelDistances.fill(0.0);
-
             // outer normals
             data.normalPair.second = -1;
         }
-
-        unsigned int numParallelFaces = pairData_[0].parallelDistances.size();
 
         // set basic global positions
         const auto& elementCenter = this->element_.geometry().center();
@@ -382,10 +371,6 @@ private:
                 const int innerElementIntersectionIdx = innerElementIntersection.indexInInside();
                 setNormalPairFirstInfo_(innerElementIntersectionIdx, element_, numPairInnerNormalIdx);
                 numPairInnerNormalIdx++;
-
-                innerNormalFacePos_.reserve(numPairs);
-                const auto& innerNormalFacet = getFacet_(innerElementIntersection.indexInInside(), element_);
-                innerNormalFacePos_.emplace_back(innerNormalFacet.geometry().center());
             }
         }
 
@@ -418,6 +403,76 @@ private:
                 numPairOuterNormalIdx++;
             }
         }
+
+        fillParallelPairData_(std::integral_constant<bool, useHigherOrder>{});
+    }
+
+    /*!
+     * \brief Fills the pair data with the parallel dofs and distances
+     *        This function is only called when the simple first order upwind methods are used.
+     */
+    void fillParallelPairData_(std::false_type)
+    {
+        // initialize values that could remain unitialized if the intersection lies on a boundary
+        for(auto& data : pairData_)
+        {
+            // parallel Dofs and Distances
+            data.parallelDofs.fill(-1);
+            data.parallelDistances.fill(0.0);
+        }
+
+        // set basic global positions and stencil size definitions
+        const auto& elementCenter = element_.geometry().center();
+
+        // get the parallel Dofs
+        const int parallelLocalIdx = intersection_.indexInInside();
+        int numPairParallelIdx = 0;
+        for(const auto& intersection : intersections(gridView_, element_))
+        {
+            if( facetIsNormal_(intersection.indexInInside(), parallelLocalIdx) )
+            {
+                // Store the parallel dimension of self cell in the direction of the axis
+                auto parallelAxisIdx = directionIndex(intersection);
+                pairData_[numPairParallelIdx].parallelDistances[0] = setParallelPairDistances_(element_, parallelAxisIdx);
+
+                if( intersection.neighbor() )
+                {
+                    // If the normal intersection has a neighboring cell, go in and store the parallel information.
+                    auto outerElement = intersection.outside();
+                    pairData_[numPairParallelIdx].parallelDofs[0] = gridView_.indexSet().subIndex(outerElement, parallelLocalIdx, codimIntersection);
+                    pairData_[numPairParallelIdx].parallelDistances[1] = setParallelPairDistances_(outerElement, parallelAxisIdx);
+                }
+                else  // No parallel neighbor available
+                {
+                    // If the intersection has no neighbor we have to deal with the virtual outer parallel dof
+                    const auto& boundaryFacetCenter = intersection.geometry().center();
+                    const auto distance = boundaryFacetCenter - elementCenter;
+                    const auto virtualFirstParallelFaceDofPos = this->intersection_.geometry().center() + distance;
+
+                    pairData_[numPairParallelIdx].virtualFirstParallelFaceDofPos = std::move(virtualFirstParallelFaceDofPos);
+                }
+                numPairParallelIdx++;
+            }
+        }
+    }
+
+    /*!
+     * \brief Fills the pair data with the parallel dofs and distances.
+     *        This function builds and extended stencil and is therefore only called when higher order upwinding methods are prescribed.
+     */
+    void fillParallelPairData_(std::true_type)
+    {
+        // initialize values that could remain unitialized if the intersection lies on a boundary
+        for(auto& data : pairData_)
+        {
+            // parallel Dofs and Distances
+            data.parallelDofs.fill(-1);
+            data.parallelDistances.fill(0.0);
+        }
+
+        // set basic global positions and stencil size definitions
+        unsigned int numParallelFaces = pairData_[0].parallelDistances.size();
+        const auto& elementCenter = this->element_.geometry().center();
 
         // get the parallel Dofs
         const int parallelLocalIdx = intersection_.indexInInside();
@@ -468,7 +523,6 @@ private:
                 else
                 {
                     // If the intersection has no neighbor we have to deal with the virtual outer parallel dof
-                    const auto& elementCenter = this->element_.geometry().center();
                     const auto& boundaryFacetCenter = intersection.geometry().center();
 
                     const auto distance = boundaryFacetCenter - elementCenter;
@@ -577,9 +631,8 @@ private:
     const Element element_; //!< The respective element
     const typename Element::Geometry elementGeometry_; //!< Reference to the element geometry
     const GridView gridView_; //!< The grid view
-    AxisData<Scalar, geometryOrder> axisData_; //!< Data related to forward and backward faces
-    std::array<PairData<Scalar, GlobalPosition, geometryOrder>, numPairs> pairData_; //!< Collection of pair information related to normal and parallel faces
-    std::vector<GlobalPosition> innerNormalFacePos_;
+    AxisData<Scalar, upwindSchemeOrder> axisData_; //!< Data related to forward and backward faces
+    std::array<PairData<Scalar, GlobalPosition, upwindSchemeOrder>, numPairs> pairData_; //!< Collection of pair information related to normal and parallel faces
 };
 
 } // end namespace Dumux

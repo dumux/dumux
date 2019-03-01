@@ -42,12 +42,12 @@ namespace Dumux {
  *        of a sub control volume we compute fluxes on. This is a specialization for free flow models.
  */
 template<class GV,
-         int geometryOrder,
+         int upwindSchemeOrder,
          class T = StaggeredDefaultScvfGeometryTraits<GV> >
 class FreeFlowStaggeredSubControlVolumeFace
-: public SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<GV, geometryOrder, T>, T>
+: public SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<GV, upwindSchemeOrder, T>, T>
 {
-    using ThisType = FreeFlowStaggeredSubControlVolumeFace<GV, geometryOrder, T>;
+    using ThisType = FreeFlowStaggeredSubControlVolumeFace<GV, upwindSchemeOrder, T>;
     using ParentType = SubControlVolumeFaceBase<ThisType, T>;
     using Geometry = typename T::Geometry;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
@@ -59,7 +59,7 @@ class FreeFlowStaggeredSubControlVolumeFace
 
     static constexpr int numPairs = 2 * (dimworld - 1);
 
-    static constexpr bool useHigherOrder = geometryOrder > 1;
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
 public:
     using GlobalPosition = typename T::GlobalPosition;
@@ -207,7 +207,7 @@ public:
     }
 
     //! Returns the data for one sub face
-    const PairData<Scalar, GlobalPosition, geometryOrder>& pairData(const int idx) const
+    const PairData<Scalar, GlobalPosition, upwindSchemeOrder>& pairData(const int idx) const
     {
         return pairData_[idx];
     }
@@ -328,8 +328,8 @@ private:
 
     int dofIdx_;
     Scalar selfToOppositeDistance_;
-    AxisData<Scalar, geometryOrder> axisData_;
-    std::array<PairData<Scalar, GlobalPosition, geometryOrder>, numPairs> pairData_;
+    AxisData<Scalar, upwindSchemeOrder> axisData_;
+    std::array<PairData<Scalar, GlobalPosition, upwindSchemeOrder>, numPairs> pairData_;
 
     int localFaceIdx_;
     unsigned int dirIdx_;

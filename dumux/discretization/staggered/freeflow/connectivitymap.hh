@@ -54,7 +54,8 @@ class StaggeredFreeFlowConnectivityMap
 
     using Stencil = std::vector<GridIndexType>;
 
-    static constexpr bool useHigherOrder = false; //TODO
+    static constexpr int upwindSchemeOrder = FVGridGeometry::upwindSchemeOrder;
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
 public:
 
@@ -93,13 +94,6 @@ public:
             }
         }
     }
-
-    //! \brief Set the order needed by the scheme
-    void setStencilOrder(const int stencilOrder)
-    {
-        stencilOrder_ = stencilOrder;
-    }
-
 
     //! Returns the stencil of a cell center dof w.r.t. other cell center dofs
     const std::vector<GridIndexType>& operator() (CellCenterIdxType, CellCenterIdxType, const GridIndexType globalI) const
@@ -190,7 +184,7 @@ private:
         {
             stencil.push_back(scvf.axisData().selfDof);
             stencil.push_back(scvf.axisData().oppositeDof);
-            addHigherOrderInAxisDofs(std::integral_constant<bool, useHigherOrder>{}, scvf, stencil);
+            addHigherOrderInAxisDofs_(scvf, stencil, std::integral_constant<bool, useHigherOrder>{});
         }
 
         for(const auto& data : scvf.pairData())
@@ -201,31 +195,25 @@ private:
                 stencil.push_back(data.normalPair.second);
 
             // add parallel dofs
-            for (int i = 0; i < stencilOrder_ /*data.parallelDofs.size()*/; i++)
+            for (int i = 0; i < upwindSchemeOrder; i++)
             {
                 if(!(data.parallelDofs[i] < 0))
-                {
                     stencil.push_back(data.parallelDofs[i]);
-                }
             }
         }
     }
 
-    void addHigherOrderInAxisDofs(std::false_type, const SubControlVolumeFace& scvf, Stencil& stencil) {}
+    void addHigherOrderInAxisDofs_(const SubControlVolumeFace& scvf, Stencil& stencil, std::false_type) {}
 
-    void addHigherOrderInAxisDofs(std::true_type, const SubControlVolumeFace& scvf, Stencil& stencil)
+    void addHigherOrderInAxisDofs_(const SubControlVolumeFace& scvf, Stencil& stencil, std::true_type)
     {
-        for (int i = 0; i < stencilOrder_ - 1; i++)
+        for (int i = 0; i < upwindSchemeOrder - 1; i++)
         {
             if (scvf.hasBackwardNeighbor(i))
-            {
                 stencil.push_back(scvf.axisData().inAxisBackwardDofs[i]);
-            }
 
             if (scvf.hasForwardNeighbor(i))
-            {
                 stencil.push_back(scvf.axisData().inAxisForwardDofs[i]);
-            }
         }
     }
 
@@ -234,7 +222,6 @@ private:
     CellCenterToFaceMap cellCenterToFaceMap_;
     FaceToCellCenterMap faceToCellCenterMap_;
     FaceToFaceMap faceToFaceMap_;
-    int stencilOrder_;
 };
 
 } // end namespace Dumux
