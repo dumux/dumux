@@ -90,9 +90,9 @@ public:
 
 // Enable caching
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = false; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = false; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = true; };
 

@@ -49,9 +49,9 @@ struct TwoPTracerTestTpfa { using InheritsFrom = std::tuple<TwoPTracerTest, CCTp
 } // end namespace TTag
 // enable caching
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPTracerTest> { static constexpr bool value = true; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPTracerTest> { static constexpr bool value = false; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPTracerTest> { static constexpr bool value = true; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPTracerTest> { static constexpr bool value = false; };
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::TwoPTracerTest> { static constexpr bool value = true; };
 
