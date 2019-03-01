@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief The spatial params the incompressible test
+ * \brief The spatial params for the incompressible test
  */
 
 #ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH

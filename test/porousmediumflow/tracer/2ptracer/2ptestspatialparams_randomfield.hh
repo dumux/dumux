@@ -18,12 +18,13 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TwoPTests
- * \brief The spatial params for the incompressible 2p test.
+ * \ingroup TracerTests
+ * \brief The spatial params for the incompressible 2p test
  */
-
 #ifndef DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
+
+#include <random>
 
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
@@ -33,9 +34,31 @@
 
 namespace Dumux {
 
+//forward declaration
+template<class FVGridGeometry, class Scalar>
+class TwoPTestSpatialParams;
+
+namespace Properties {
+
+// The spatial parameters TypeTag
+NEW_TYPE_TAG(SpatialParams);
+
+// Set the spatial parameters
+SET_PROP(SpatialParams, SpatialParams)
+{
+private:
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+public:
+    using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
+};
+
+} // end namespace Properties
+
+
 /*!
- * \ingroup TwoPTests
- * \brief The spatial params for the incompressible 2p test.
+ * \ingroup TracerTests
+ * \brief The spatial params for the incompressible 2p test
  */
 template<class FVGridGeometry, class Scalar>
 class TwoPTestSpatialParams
@@ -59,12 +82,26 @@ public:
     using PermeabilityType = Scalar;
 
     TwoPTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    : ParentType(fvGridGeometry), K_(fvGridGeometry->gridView().size(0), 0.0)
     {
+        permeability_ = getParam<Scalar>("SpatialParams.Permeability");
+        permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
+
         lensIsOilWet_ = getParam<bool>("SpatialParams.LensIsOilWet", false);
 
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
+
+        // generate random fields
+        std::mt19937 rand(0);
+        std::lognormal_distribution<Scalar> K(std::log(permeability_), std::log(permeability_)*0.1);
+        std::lognormal_distribution<Scalar> KLens(std::log(permeabilityLens_), std::log(permeabilityLens_)*0.1);
+        for (const auto& element : elements(fvGridGeometry->gridView()))
+        {
+            const auto eIdx = fvGridGeometry->elementMapper().index(element);
+            const auto globalPos = element.geometry().center();
+            K_[eIdx] = isInLens_(globalPos) ? KLens(rand) : K(rand);
+        }
 
         // residual saturations
         lensMaterialParams_.setSwr(0.18);
@@ -79,8 +116,6 @@ public:
         outerMaterialParams_.setVgAlpha(0.0037);
         outerMaterialParams_.setVgn(4.7);
 
-        lensK_ = 9.05e-12;
-        outerK_ = 4.6e-10;
     }
 
     /*!
@@ -90,19 +125,13 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return The permeability
+     * \return permeability
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
-    {
-
-        // do not use a less permeable lens in the test with inverted wettability
-        if (isInLens_(element.geometry().center()) && !lensIsOilWet_)
-            return lensK_;
-        return outerK_;
-    }
+    { return K_[scv.dofIndex()]; }
 
     /*!
      * \brief Returns the porosity \f$[-]\f$
@@ -112,15 +141,18 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
+     //! Reference to the k field
+    const std::vector<Scalar>& getKField() const
+    { return K_; }
+
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law.
-     *
-     * In this test, we use element-wise distributed material parameters.
+     *        In this test, we use element-wise distributed material parameters.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return The material parameters object
+     * \return the material parameters object
      */
     template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
@@ -137,7 +169,7 @@ public:
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
      * \param globalPos The global position
-     * \return The wetting phase index
+     * \return the wetting phase index
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
@@ -176,8 +208,9 @@ private:
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
 
-    Scalar lensK_;
-    Scalar outerK_;
+    Scalar permeability_, permeabilityLens_;
+    std::vector<Scalar> K_;
+
     MaterialLawParams lensMaterialParams_;
     MaterialLawParams outerMaterialParams_;
 
