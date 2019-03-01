@@ -45,13 +45,17 @@ public:
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
         // register standardized out output fields
-        for (int compIdx = 0; compIdx < VolumeVariables::numFluidComponents(); ++compIdx)
+        for (int phaseIdx = 0; phaseIdx < VolumeVariables::numFluidPhases(); ++phaseIdx)
         {
-            out.addVolumeVariable([compIdx](const auto& v){ return v.moleFraction(0, compIdx); },
-                                  "x^" + FluidSystem::componentName(compIdx));
-            out.addVolumeVariable([compIdx](const auto& v){ return v.massFraction(0, compIdx); },
-                                  "X^" + FluidSystem::componentName(compIdx));
+            for (int compIdx = 0; compIdx < VolumeVariables::numFluidComponents(); ++compIdx)
+            {
+                out.addVolumeVariable([phaseIdx, compIdx](const auto& v){ return v.moleFraction(phaseIdx, compIdx); },
+                                      "x_" + std::string(FluidSystem::phaseName(phaseIdx) + "^" + FluidSystem::componentName(compIdx)));
+                out.addVolumeVariable([phaseIdx, compIdx](const auto& v){ return v.massFraction(phaseIdx, compIdx); },
+                                      "X_" + std::string(FluidSystem::phaseName(phaseIdx) + "^" + FluidSystem::componentName(compIdx)));
+            }
         }
+
         out.addVolumeVariable( [](const auto& v){ return v.density(); }, IOName::density());
     }
 

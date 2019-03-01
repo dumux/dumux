@@ -55,6 +55,7 @@ class TracerLocalResidual: public GetPropType<TypeTag, Properties::BaseLocalResi
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
+    static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
     static constexpr int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     static constexpr int phaseIdx = 0;
@@ -85,7 +86,8 @@ public:
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 storage[compIdx] += volVars.porosity()
                                     * volVars.molarDensity(phaseIdx)
-                                    * volVars.moleFraction(phaseIdx, compIdx);
+                                    * volVars.moleFraction(phaseIdx, compIdx)
+                                    * volVars.saturation(phaseIdx);
         }
         // formulation with mass balances
         else
@@ -93,7 +95,8 @@ public:
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 storage[compIdx] += volVars.porosity()
                                     * volVars.density(phaseIdx)
-                                    * volVars.massFraction(phaseIdx, compIdx);
+                                    * volVars.massFraction(phaseIdx, compIdx)
+                                    * volVars.saturation(phaseIdx);
         }
 
         return storage;
@@ -129,8 +132,12 @@ public:
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 // the physical quantities for which we perform upwinding
-                auto upwindTerm = [compIdx](const auto& volVars)
-                { return volVars.molarDensity()*volVars.moleFraction(phaseIdx, compIdx); };
+                auto upwindTerm = [compIdx](const VolumeVariables& volVars)
+                {
+                    return volVars.molarDensity(phaseIdx)
+                           *volVars.moleFraction(phaseIdx, compIdx);
+                           // *volVars.mobility(phaseIdx);
+                };
 
                 // advective fluxes
                 flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
@@ -144,8 +151,12 @@ public:
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 // the physical quantities for which we perform upwinding
-                auto upwindTerm = [compIdx](const auto& volVars)
-                { return volVars.density()*volVars.massFraction(phaseIdx, compIdx); };
+                auto upwindTerm = [compIdx](const VolumeVariables& volVars)
+                {
+                    return volVars.density(phaseIdx)
+                           *volVars.massFraction(phaseIdx, compIdx);
+                           // *volVars.mobility(phaseIdx);
+                };
 
                 // advective fluxes
                 flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
@@ -290,21 +301,25 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
 
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            for (const auto& scv : scvs(fvGeometry))
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                // diffusive term
-                const auto diffDeriv = useMoles ? ti[compIdx][scv.indexInElement()]
-                                                : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
+                for (const auto& scv : scvs(fvGeometry))
+                {
+                    // diffusive term
+                    const auto diffDeriv = useMoles ? ti[compIdx][scv.indexInElement()]
+                                                    : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
+
                 A[insideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] += diffDeriv;
                 A[outsideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] -= diffDeriv;
-            }
+                }
 
             A[insideScv.dofIndex()][insideScv.dofIndex()][compIdx][compIdx] += advDerivII;
             A[insideScv.dofIndex()][outsideScv.dofIndex()][compIdx][compIdx] += advDerivIJ;
             A[outsideScv.dofIndex()][outsideScv.dofIndex()][compIdx][compIdx] -= advDerivII;
             A[outsideScv.dofIndex()][insideScv.dofIndex()][compIdx][compIdx] -= advDerivIJ;
+            }
         }
     }
 

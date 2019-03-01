@@ -105,6 +105,11 @@ public:
     void setVolumeFlux(const std::vector<Scalar>& f)
     { volumeFlux_ = f; }
 
+    //! This is needed to be compatible with multiphase tracer volVars
+    Scalar saturation(const Element &element,
+                      const SubControlVolume& scv) const
+    { return 1.0; } // saturation always 1 in 1p context
+
 private:
     std::vector<Scalar> volumeFlux_;
 };

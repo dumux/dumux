@@ -116,6 +116,12 @@ public:
         return velocity(scvf) * scvf.unitOuterNormal() * scvf.area()
                * elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
     }
+
+    //! This is needed to be compatible with multiphase tracer volVars
+    Scalar saturation(const Element &element,
+                      const SubControlVolume& scv) const
+    { return 1.0; } // saturation always 1 in 1p context
+
 };
 
 } // end namespace Dumux
