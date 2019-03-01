@@ -1,4 +1,4 @@
-if(${DUNE_COMMON_VERSION} VERSION_GREATER_EQUAL "2.7")
+if(NOT (${DUNE_COMMON_VERSION} VERSION_LESS "2.7"))
 # use latexmk
 dune_add_latex_document(
   SOURCE 0_dumux-handbook.tex
