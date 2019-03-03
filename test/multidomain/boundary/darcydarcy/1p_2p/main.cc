@@ -39,7 +39,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/grid/subgridgridcreator.hh>
+#include <dumux/io/grid/subgridmanager.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/2p/model.hh>
@@ -158,8 +158,8 @@ int main(int argc, char** argv) try
     auto elementSelector1 = [radius](const auto& element)
     { return element.geometry().center().two_norm() < radius; };
 
-    auto subGrid0 = SubgridGridCreator<FullDomainGrid>::makeGrid(gridManager.grid(), elementSelector0);
-    auto subGrid1 = SubgridGridCreator<FullDomainGrid>::makeGrid(gridManager.grid(), elementSelector1);
+    auto subGrid0 = SubgridManager<FullDomainGrid>::makeGrid(gridManager.grid(), elementSelector0);
+    auto subGrid1 = SubgridManager<FullDomainGrid>::makeGrid(gridManager.grid(), elementSelector1);
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid

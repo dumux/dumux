@@ -17,7 +17,7 @@
 /*!
  * \file
  *
- * \brief Test for the cake grid creator
+ * \brief Test for the cake grid manager
  */
 
 #include<string>
@@ -30,7 +30,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/grid/cakegridcreator.hh>
+#include <dumux/io/grid/cakegridmanager.hh>
 
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
@@ -52,10 +52,10 @@ using Grid = Dune::UGGrid<dim>;
 #endif
 
 template<int dim>
-void testCakeGridCreator(const std::string& name)
+void testCakeGridManager(const std::string& name)
 {
     // using declarations
-    using GridManager = typename Dumux::CakeGridCreator<Grid<dim>>;
+    using GridManager = typename Dumux::CakeGridManager<Grid<dim>>;
     GridManager gridManager;
 
     // make the grid
@@ -78,10 +78,10 @@ int main(int argc, char** argv) try
     const auto name = Dumux::getParam<std::string>("Grid.Name");
 
     // test 3-D
-    testCakeGridCreator<3>("cake-3d-" + name);
+    testCakeGridManager<3>("cake-3d-" + name);
 
     // test 2-D
-    testCakeGridCreator<2>("cake-2d-" + name);
+    testCakeGridManager<2>("cake-2d-" + name);
 
     return 0;
 }

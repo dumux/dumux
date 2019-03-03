@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Test for the cake grid creator
+ * \brief Test for the cake grid manager
  */
 #include <config.h>
 #include <iostream>
@@ -29,7 +29,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/grid/subgridgridcreator.hh>
+#include <dumux/io/grid/subgridmanager.hh>
 #include <dumux/discretization/method.hh>
 
 /*!
@@ -110,9 +110,9 @@ int main(int argc, char** argv) try
     CircleSelector<GlobalPosition> elementSelectorThree(center);
 
     // Create three different subgrids from the same hostgrid.
-    auto subgridPtrOne = SubgridGridCreator<HostGrid>::makeGrid(hostGrid, elementSelectorOne, "SubGridOne");
-    auto subgridPtrTwo = SubgridGridCreator<HostGrid>::makeGrid(hostGrid, elementSelectorTwo, "SubGridTwo");
-    auto subgridPtrThree = SubgridGridCreator<HostGrid>::makeGrid(hostGrid, elementSelectorThree, "SubGridThree");
+    auto subgridPtrOne = SubgridManager<HostGrid>::makeGrid(hostGrid, elementSelectorOne, "SubGridOne");
+    auto subgridPtrTwo = SubgridManager<HostGrid>::makeGrid(hostGrid, elementSelectorTwo, "SubGridTwo");
+    auto subgridPtrThree = SubgridManager<HostGrid>::makeGrid(hostGrid, elementSelectorThree, "SubGridThree");
 
     std::cout << "Constructing a host grid and three subgrids took "  << timer.elapsed() << " seconds.\n";
 
