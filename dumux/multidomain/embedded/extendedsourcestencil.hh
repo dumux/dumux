@@ -29,6 +29,7 @@
 
 #include <dune/common/indices.hh>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
@@ -52,6 +53,7 @@ class ExtendedSourceStencil
     template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+    template<std::size_t id> using GridIndex = typename IndexTraits<GridView<id>>::GridIndex;
 
     static constexpr auto bulkIdx = typename MDTraits::template SubDomain<0>::Index();
     static constexpr auto lowDimIdx = typename MDTraits::template SubDomain<1>::Index();
@@ -165,7 +167,7 @@ public:
 
 private:
     //! the extended source stencil for the bulk domain due to the source average
-    const std::vector<std::size_t>& extendedSourceStencil_(const CouplingManager& couplingManager, Dune::index_constant<0> bulkDomain, const Element<0>& bulkElement) const
+    const auto& extendedSourceStencil_(const CouplingManager& couplingManager, Dune::index_constant<0> bulkDomain, const Element<0>& bulkElement) const
     {
         const auto bulkElementIdx = couplingManager.problem(bulkIdx).fvGridGeometry().elementMapper().index(bulkElement);
         if (sourceStencils_.count(bulkElementIdx))
@@ -175,7 +177,7 @@ private:
     }
 
     //! the extended source stencil for the low dim domain is empty
-    const std::vector<std::size_t>& extendedSourceStencil_(const CouplingManager& couplingManager, Dune::index_constant<1> bulkDomain, const Element<1>& lowDimElement) const
+    const auto& extendedSourceStencil_(const CouplingManager& couplingManager, Dune::index_constant<1> bulkDomain, const Element<1>& lowDimElement) const
     { return couplingManager.emptyStencil(); }
 
     //! the additional stencil for the kernel evaluations / circle averages

@@ -35,6 +35,7 @@
 #include <dune/common/timer.hh>
 #include <dune/geometry/quadraturerules.hh>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/geometry/intersectingentities.hh>
 #include <dumux/discretization/method.hh>
@@ -91,6 +92,7 @@ class EmbeddedCouplingManagerBase
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using ElementMapper = typename FVGridGeometry<id>::ElementMapper;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+    template<std::size_t id> using GridIndex = typename IndexTraits<GridView<id>>::GridIndex;
 
     enum {
         bulkDim = GridView<bulkIdx>::dimension,
@@ -102,7 +104,7 @@ class EmbeddedCouplingManagerBase
     static constexpr bool isBox()
     { return FVGridGeometry<id>::discMethod == DiscretizationMethod::box; }
 
-    using CouplingStencil = std::vector<std::size_t>;
+    using CouplingStencil = std::vector<unsigned int>;
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
     using GlueType = MixedDimensionGlue<GridView<bulkIdx>, GridView<lowDimIdx>, ElementMapper<bulkIdx>, ElementMapper<lowDimIdx>>;
 
@@ -112,7 +114,7 @@ public:
     //! export the point source traits
     using PointSourceTraits = PSTraits;
     //! export stencil types
-    using CouplingStencils = std::unordered_map<std::size_t, CouplingStencil>;
+    using CouplingStencils = std::unordered_map<unsigned int, CouplingStencil>;
 
     /*!
     * \brief call this after grid adaption
@@ -533,12 +535,12 @@ protected:
 
     //! Return a reference to the vertex indices
     template<std::size_t i>
-    std::vector<std::size_t>& vertexIndices(Dune::index_constant<i> dom, std::size_t eIdx)
+    std::vector<GridIndex<i>>& vertexIndices(Dune::index_constant<i> dom, GridIndex<i> eIdx)
     { return (i == 0) ? bulkVertexIndices_[eIdx] : lowDimVertexIndices_[eIdx]; }
 
     //! Return a reference to the vertex indices container
     template<std::size_t i>
-    std::vector<std::vector<std::size_t>>& vertexIndices(Dune::index_constant<i> dom)
+    std::vector<std::vector<GridIndex<i>>>& vertexIndices(Dune::index_constant<i> dom)
     { return (i == 0) ? bulkVertexIndices_ : lowDimVertexIndices_; }
 
     const GlueType& glue() const
@@ -563,8 +565,8 @@ private:
     std::vector<Scalar> averageDistanceToBulkCell_;
 
     //! Stencil data
-    std::vector<std::vector<std::size_t>> bulkVertexIndices_;
-    std::vector<std::vector<std::size_t>> lowDimVertexIndices_;
+    std::vector<std::vector<GridIndex<bulkIdx>>> bulkVertexIndices_;
+    std::vector<std::vector<GridIndex<lowDimIdx>>> lowDimVertexIndices_;
     CouplingStencils bulkCouplingStencils_;
     CouplingStencils lowDimCouplingStencils_;
     CouplingStencil emptyStencil_;

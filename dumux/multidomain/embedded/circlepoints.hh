@@ -36,24 +36,28 @@ namespace EmbeddedCoupling {
 /*!
  * \ingroup EmbeddedCoupling
  * \brief returns a vector of points on a circle
+ * \param points a vector of points to be filled
  * \param center the circle center
  * \param normal the normal to the circle plane
  * \param radius the circle radius
  * \param numPoints the number of points
  */
-template<class GlobalPosition>
-std::vector<GlobalPosition> circlePoints(const GlobalPosition& center,
-                                         const GlobalPosition& normal,
-                                         const typename GlobalPosition::value_type radius,
-                                         const std::size_t numPoints = 20)
+template<class GlobalPosition, class Scalar>
+void circlePoints(std::vector<GlobalPosition>& points,
+                  const std::vector<Scalar>& sincos,
+                  const GlobalPosition& center,
+                  const GlobalPosition& normal,
+                  const Scalar radius,
+                  const std::size_t numPoints = 20)
 {
-    using std::abs; using std::sin; using std::cos;
+    using std::abs;
     using ctype = typename GlobalPosition::value_type;
 
     constexpr ctype eps = 1.5e-7;
     static_assert(GlobalPosition::dimension == 3, "Only implemented for world dimension 3");
 
-    std::vector<GlobalPosition> points(numPoints);
+    // resize the points vector
+    points.resize(numPoints);
 
     // make sure n is a unit vector
     auto n = normal;
@@ -75,22 +79,44 @@ std::vector<GlobalPosition> circlePoints(const GlobalPosition& center,
     auto tangent = crossProduct(u, n);
     tangent *= radius/tangent.two_norm();
 
-    // the parameter with an offset
-    ctype t = 0 + 0.1;
     // insert the vertices
     for (std::size_t i = 0; i < numPoints; ++i)
     {
-        points[i] = GlobalPosition({u[0]*cos(t) + tangent[0]*sin(t) + center[0],
-                                    u[1]*cos(t) + tangent[1]*sin(t) + center[1],
-                                    u[2]*cos(t) + tangent[2]*sin(t) + center[2]});
+        points[i] = GlobalPosition({u[0]*sincos[2*i+1] + tangent[0]*sincos[2*i] + center[0],
+                                    u[1]*sincos[2*i+1] + tangent[1]*sincos[2*i] + center[1],
+                                    u[2]*sincos[2*i+1] + tangent[2]*sincos[2*i] + center[2]});
+    }
+}
 
+/*!
+ * \ingroup EmbeddedCoupling
+ * \brief returns a vector of points on a circle
+ * \param center the circle center
+ * \param normal the normal to the circle plane
+ * \param radius the circle radius
+ * \param numPoints the number of points
+ */
+template<class GlobalPosition, class Scalar>
+std::vector<GlobalPosition> circlePoints(const GlobalPosition& center,
+                                         const GlobalPosition& normal,
+                                         const Scalar radius,
+                                         const std::size_t numPoints = 20)
+{
+    std::vector<GlobalPosition> points;
+
+    // precompute the sin/cos
+    using std::sin; using std::cos;
+    std::vector<Scalar> sincos(2*numPoints);
+    Scalar t = 0 + 0.1; // start with an offset
+    for (std::size_t i = 0; i < numPoints; ++i)
+    {
+        sincos[2*i] = sin(t);
+        sincos[2*i + 1] = cos(t);
         t += 2*M_PI/numPoints;
-
-        // periodic t
-        if(t > 2*M_PI)
-            t -= 2*M_PI;
+        if(t > 2*M_PI) t -= 2*M_PI;
     }
 
+    circlePoints(points, sincos, center, normal, radius, numPoints);
     return points;
 }
 
