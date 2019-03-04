@@ -75,7 +75,7 @@ public:
     Scalar integrationElement(std::size_t i) const
     { return integrationElement_; }
 
-    GlobalPosition getIntegrationPoint(std::size_t i) const
+    const GlobalPosition& getIntegrationPoint(std::size_t i) const
     {
         using std::sqrt;
 
@@ -108,34 +108,53 @@ class CylinderIntegration<Scalar, CylinderIntegrationMethod::spaced>
 
 public:
     //! samples: number of samples along z axis
-    CylinderIntegration(std::size_t zSamples)
-    : zSamples_(zSamples)
-    {}
+    CylinderIntegration(std::size_t rSamples, std::size_t zSamples = 0)
+    : zSamples_(zSamples), rSamples_(rSamples), circleSamples_(0)
+    {
+        // precompute sin/cos for the circle points
+        ks_.resize(rSamples);
+        for (int j = 0; j < rSamples; ++j)
+        {
+            // number of cells in ring j
+            ks_[j] = std::floor(2*M_PI*(Scalar(j)+0.5));
+            circleSamples_ += ks_[j];
+        }
+
+        // optimization because calling too many sin/cos can be really expensive
+        sincos_.resize(rSamples);
+        for (int j = 0; j < rSamples; ++j)
+        {
+            const auto numPoints = ks_[j];
+            sincos_[j].resize(2*numPoints);
+            Scalar t = 0 + 0.1;
+            for (std::size_t i = 0; i < numPoints; ++i)
+            {
+                sincos_[j][2*i] = sin(t);
+                sincos_[j][2*i + 1] = cos(t);
+                t += 2*M_PI/numPoints;
+                if(t > 2*M_PI) t -= 2*M_PI;
+            }
+        }
+    }
 
     void setGeometry(const GlobalPosition& a, const GlobalPosition& b, Scalar radius)
     {
         const auto ab = (b-a);
         const auto height = ab.two_norm();
-        std::size_t zSamples = 1;
 
+        // compute number of samples in z and r direction
+        const std::size_t rSamples = rSamples_;
+        // compute zSamples from r samples if not specified by the user
+        const std::size_t zSamples = zSamples_ == 0 ? std::max(1, int(std::ceil(height/radius*Scalar(rSamples)))) : zSamples_;
         const auto zStep = height/Scalar(zSamples);
-        const auto rSamples = std::max(1, int(std::ceil(radius/height*Scalar(zSamples_))));
         const auto rStep = radius/Scalar(rSamples);
-        std::size_t circleSamples = 0;
-        std::vector<std::size_t> ks(rSamples);
-        for (int j = 0; j < rSamples; ++j)
-        {
-            // number of cells in ring j
-            ks[j] = std::floor(2*M_PI*(Scalar(j)+0.5));
-            circleSamples += ks[j];
-        }
 
         // compute offsets for index calculation
-        auto kOffset = ks;
+        auto kOffset = ks_;
         std::partial_sum(kOffset.begin(), kOffset.end(), kOffset.begin());
 
         // compute total number of samples
-        samples_ = zSamples*circleSamples;
+        samples_ = zSamples*circleSamples_;
         std::cout << "CylinderIntegration: number of sample points: " << samples_ << std::endl;
 
         integrationElement_.resize(samples_);
@@ -150,17 +169,18 @@ public:
             center.axpy((Scalar(i)+0.5)*zStep, ab);
 
             // generate circle point for each ring j
+            std::vector<GlobalPosition> ringPoints(ks_[rSamples-1]);
             for (std::size_t j = 0; j < rSamples; ++j)
             {
                 auto r = (Scalar(j)+0.5)*rStep;
-                const auto ringSamples = ks[j];
-                auto cPoints = EmbeddedCoupling::circlePoints(center, ab, r, ringSamples);
+                const auto ringSamples = ks_[j];
+                EmbeddedCoupling::circlePoints(ringPoints, sincos_[j], center, ab, r, ringSamples);
                 const auto ringOffest = j > 0 ? kOffset[j-1] : 0;
                 const auto integrationElement = M_PI*rStep*rStep*zStep*(1.0 + 2.0*Scalar(j))/ringSamples;
                 for (std::size_t k = 0; k < ringSamples; ++k)
                 {
-                    std::size_t idx = k + ringOffest + circleSamples*i;
-                    points_[idx] = cPoints[k];
+                    std::size_t idx = k + ringOffest + circleSamples_*i;
+                    points_[idx] = ringPoints[k];
                     integrationElement_[idx] = integrationElement;
                     integral += integrationElement_[idx];
                 }
@@ -168,19 +188,22 @@ public:
         }
     }
 
-    Scalar integrationElement(std::size_t i) const
+    Scalar integrationElement(unsigned int i) const
     { return integrationElement_[i]; }
 
-    GlobalPosition getIntegrationPoint(std::size_t i) const
+    const GlobalPosition& getIntegrationPoint(unsigned int i) const
     { return points_[i]; }
 
     std::size_t size() const
     { return samples_; }
 
 private:
-    std::size_t zSamples_, samples_;
+    std::size_t zSamples_, rSamples_, samples_, circleSamples_;
     std::vector<Scalar> integrationElement_;
     std::vector<GlobalPosition> points_;
+    std::vector<std::size_t> ks_;
+    std::vector<std::vector<Scalar>> sincos_;
+
 };
 
 } // end namespace Dumux
