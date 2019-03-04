@@ -161,9 +161,8 @@ public:
                 // subcontrolvolume face in the reference element
                 Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
-                flux /= problem_.extrusionFactor(element,
-                                                 fvGeometry.scv(scvf.insideScvIdx()),
-                                                 elementSolution(element, elemVolVars, fvGeometry));
+                const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+                flux /= insideVolVars.extrusionFactor();
                 tmpVelocity *= flux;
 
                 const int eIdxGlobal = fvGridGeometry_.elementMapper().index(element);
@@ -206,9 +205,8 @@ public:
                 // subcontrolvolume face in the reference element
                 Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
-                flux /= problem_.extrusionFactor(element,
-                                                 fvGeometry.scv(scvf.insideScvIdx()),
-                                                 elementSolution(element, elemVolVars, fvGeometry));
+                const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+                flux /= insideVolVars.extrusionFactor();
 
                 // transform the volume flux into a velocity vector
                 Velocity tmpVelocity = localNormal;
@@ -278,14 +276,12 @@ public:
             localScvfIdx = 0;
             for (auto&& scvf : scvfs(fvGeometry))
             {
+                const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
                 if (!scvf.boundary())
                 {
                     FluxVariables fluxVars;
                     fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-                    scvfFluxes[scvfIndexInInside[localScvfIdx]] += fluxVars.advectiveFlux(phaseIdx, upwindTerm)
-                                                                   /problem_.extrusionFactor(element,
-                                                                                             fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                             elementSolution(element, elemVolVars, fvGeometry));
+                    scvfFluxes[scvfIndexInInside[localScvfIdx]] += fluxVars.advectiveFlux(phaseIdx, upwindTerm)/insideVolVars.extrusionFactor();
                 }
                 else
                 {
@@ -294,10 +290,7 @@ public:
                     {
                         FluxVariables fluxVars;
                         fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-                        scvfFluxes[scvfIndexInInside[localScvfIdx]] += fluxVars.advectiveFlux(phaseIdx, upwindTerm)
-                                                                       /problem_.extrusionFactor(element,
-                                                                                                 fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                                 elementSolution(element, elemVolVars, fvGeometry));
+                        scvfFluxes[scvfIndexInInside[localScvfIdx]] += fluxVars.advectiveFlux(phaseIdx, upwindTerm)/insideVolVars.extrusionFactor();
                     }
                 }
 
