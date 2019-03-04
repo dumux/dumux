@@ -225,7 +225,6 @@ public:
 
 private:
 
-
     static constexpr Scalar eps_ = 1e-6;
 
     Scalar yMax_ = this->fvGridGeometry().bBoxMax()[1];
@@ -240,8 +239,8 @@ private:
 
     // VERSION "3stripes"
     // TODO allgemeiner Abruf der Anzahl von Zellen in Y-Richtung/ X-Richtung
-    Scalar yNumCells_ = 32;
-    Scalar xNumCells_ = 48;
+    Scalar yNumCells_ = getParam<GlobalPosition>("Grid.Cells")[1];
+    Scalar xNumCells_ = getParam<GlobalPosition>("Grid.Cells")[0];
     Scalar cellHeight_ = yMax_/yNumCells_;
     Scalar cellWidth_ = xMax_/xNumCells_;
 

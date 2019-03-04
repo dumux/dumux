@@ -72,9 +72,9 @@ public:
         // dispersivity_ = problem.spatialParams().dispersivity(element, scv, elemSol);
 
         // the spatial params special to the tracer model
-            fluidDensity_ = problem.spatialParams().fluidDensity(element, scv);
-            fluidMolarMass_ = problem.spatialParams().fluidMolarMass(element, scv);
-            fluidSaturation_ = problem.spatialParams().saturation(element, scv);
+        fluidDensity_ = problem.spatialParams().fluidDensity(element, scv);
+        fluidMolarMass_ = problem.spatialParams().fluidMolarMass(element, scv);
+        fluidSaturation_ = problem.spatialParams().saturation(element, scv);
 
         for (int compIdx = 0; compIdx < ParentType::numFluidComponents(); ++compIdx)
         {

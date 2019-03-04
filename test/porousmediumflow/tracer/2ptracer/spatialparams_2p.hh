@@ -32,28 +32,6 @@
 
 namespace Dumux {
 
-//forward declaration
-template<class FVGridGeometry, class Scalar>
-class TwoPTestSpatialParams;
-
-namespace Properties {
-
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(SpatialParams);
-
-// Set the spatial parameters
-SET_PROP(SpatialParams, SpatialParams)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
-};
-
-} // end namespace Properties
-
-
 /*!
  * \ingroup TracerTests
  * \brief The spatial params for the incompressible 2p test

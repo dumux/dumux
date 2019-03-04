@@ -55,7 +55,6 @@ class TracerLocalResidual: public GetPropType<TypeTag, Properties::BaseLocalResi
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-    static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
     static constexpr int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
     static constexpr int phaseIdx = 0;
@@ -301,25 +300,22 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
 
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            for (const auto& scv : scvs(fvGeometry))
             {
-                for (const auto& scv : scvs(fvGeometry))
-                {
-                    // diffusive term
-                    const auto diffDeriv = useMoles ? ti[compIdx][scv.indexInElement()]
-                                                    : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
+                // diffusive term
+                const auto diffDeriv = useMoles ? ti[compIdx][scv.indexInElement()]
+                                                : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
 
-                A[insideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] += diffDeriv;
-                A[outsideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] -= diffDeriv;
-                }
-
-            A[insideScv.dofIndex()][insideScv.dofIndex()][compIdx][compIdx] += advDerivII;
-            A[insideScv.dofIndex()][outsideScv.dofIndex()][compIdx][compIdx] += advDerivIJ;
-            A[outsideScv.dofIndex()][outsideScv.dofIndex()][compIdx][compIdx] -= advDerivII;
-            A[outsideScv.dofIndex()][insideScv.dofIndex()][compIdx][compIdx] -= advDerivIJ;
+            A[insideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] += diffDeriv;
+            A[outsideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] -= diffDeriv;
             }
+
+        A[insideScv.dofIndex()][insideScv.dofIndex()][compIdx][compIdx] += advDerivII;
+        A[insideScv.dofIndex()][outsideScv.dofIndex()][compIdx][compIdx] += advDerivIJ;
+        A[outsideScv.dofIndex()][outsideScv.dofIndex()][compIdx][compIdx] -= advDerivII;
+        A[outsideScv.dofIndex()][insideScv.dofIndex()][compIdx][compIdx] -= advDerivIJ;
         }
     }
 

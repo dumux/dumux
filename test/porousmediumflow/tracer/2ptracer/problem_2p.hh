@@ -182,8 +182,8 @@ public:
         NumEqVector values(0.0);
         if (onInlet_(globalPos))
         {
-            values[contiDNAPLEqIdx] = -0.05; // kg / (m * s)
-            values[Indices::conti0EqIdx] = -0.05;
+            values[contiDNAPLEqIdx] = -0.2; // kg / (m * s)
+            values[Indices::conti0EqIdx] = -0.2;
         }
 
         // in the test with the oil wet lens, use higher injection rate
