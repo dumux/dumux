@@ -197,7 +197,7 @@ protected:
                 continue;
 
             // turn (insertion) indices into actual grid element indices ...
-            std::for_each(adjoinedEntities.begin(), adjoinedEntities.end(), [&] (auto& idx) { idx = bulkInsertionToElemIdxMap[idx]; });
+            std::for_each(adjoinedEntities.begin(), adjoinedEntities.end(), [&] (auto& idx) { idx = bulkInsertionToElemIdxMap.at(idx); });
 
             // ... and add them
             addCouplingEntryPolicy(std::move(adjoinedEntities), element, lowDimFvGridGeometry, bulkFvGridGeometry);
@@ -233,14 +233,14 @@ private:
 
     //! Creates the map from element insertion index to grid element index
     template< class Embeddings, class FVGridGeometry>
-    std::vector< typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex >
+    std::map< typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex, typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex >
     makeInsertionToGridIndexMap_(std::shared_ptr<const Embeddings> embeddings, const FVGridGeometry& fvGridGeometry) const
     {
         using GridIndexType = typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex;
 
-        std::vector< GridIndexType > map(fvGridGeometry.gridView().size(0));
+        std::map< GridIndexType, GridIndexType > map;
         for (const auto& e : elements(fvGridGeometry.gridView()))
-            map[ embeddings->template insertionIndex<bulkId>(e) ] = fvGridGeometry.elementMapper().index(e);
+            map.insert( std::make_pair( embeddings->template insertionIndex<bulkId>(e), fvGridGeometry.elementMapper().index(e) ) );
 
         return map;
     }
