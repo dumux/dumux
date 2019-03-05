@@ -242,12 +242,12 @@ public:
      */
     void calculateVolumeFluxes()
     {
-        auto fluxType = [this](const auto& element,
-                               const auto& fvGeometry,
-                               const auto& elemVolVars,
-                               const auto& elemFaceVars,
-                               const auto& scvf,
-                               const auto& elemFluxVarsCache)
+        auto fluxType = [](const auto& element,
+                           const auto& fvGeometry,
+                           const auto& elemVolVars,
+                           const auto& elemFaceVars,
+                           const auto& scvf,
+                           const auto& elemFluxVarsCache)
         {
             CellCenterPrimaryVariables result(0.0);
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
