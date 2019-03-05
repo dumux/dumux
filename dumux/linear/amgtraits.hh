@@ -97,29 +97,6 @@ public:
 };
 #endif
 
-//! Box: use the non-overlapping AMG
-template<class Matrix, class Vector, class FVGridGeometry>
-struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::box>
-{
-    using Grid = typename FVGridGeometry::GridView::Traits::Grid;
-    enum {
-        dofCodim = Grid::dimension,
-        isNonOverlapping = true,
-        // TODO: see above for description of this workaround, remove second line if fixed upstream
-        isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-                     || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v
-    };
-    using MType = Matrix;
-    using VType = Dune::BlockVector<Dune::FieldVector<typename Vector::block_type::value_type, Vector::block_type::dimension>>;
-    using SolverTraits = NonoverlappingSolverTraits<MType, VType, isParallel>;
-    using Comm = typename SolverTraits::Comm;
-    using LinearOperator = typename SolverTraits::LinearOperator;
-    using ScalarProduct = typename SolverTraits::ScalarProduct;
-    using Smoother = typename SolverTraits::Smoother;
-
-    using DofMapper = typename FVGridGeometry::VertexMapper;
-};
-
 //! OverlappingSolverTraits used by discretization with overlapping parallel model
 template <class MType, class VType, bool isParallel>
 class OverlappingSolverTraits
@@ -142,6 +119,29 @@ public:
     using Smoother = Dune::BlockPreconditioner<VType,VType,Comm,Dune::SeqSSOR<MType,VType, VType> >;
 };
 #endif
+
+//! Box: use the non-overlapping AMG
+template<class Matrix, class Vector, class FVGridGeometry>
+struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::box>
+{
+    using Grid = typename FVGridGeometry::GridView::Traits::Grid;
+    enum {
+        dofCodim = Grid::dimension,
+        isNonOverlapping = false,
+        // TODO: see above for description of this workaround, remove second line if fixed upstream
+        isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
+                     || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v
+    };
+    using MType = Matrix;
+    using VType = Dune::BlockVector<Dune::FieldVector<typename Vector::block_type::value_type, Vector::block_type::dimension>>;
+    using SolverTraits = OverlappingSolverTraits<MType, VType, isParallel>;
+    using Comm = typename SolverTraits::Comm;
+    using LinearOperator = typename SolverTraits::LinearOperator;
+    using ScalarProduct = typename SolverTraits::ScalarProduct;
+    using Smoother = typename SolverTraits::Smoother;
+
+    using DofMapper = typename FVGridGeometry::VertexMapper;
+};
 
 //! Cell-centered tpfa: use the overlapping AMG
 template<class Matrix, class Vector, class FVGridGeometry>

@@ -120,9 +120,9 @@ public:
     : ParentType(gridView)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::box>::isValid(gridView))
-            DUNE_THROW(Dune::InvalidStateException, "The box discretization method only works with zero overlap for parallel computations. "
-                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+        // if (!CheckOverlapSize<DiscretizationMethod::box>::isValid(gridView))
+        //     DUNE_THROW(Dune::InvalidStateException, "The box discretization method only works with zero overlap for parallel computations. "
+        //                                              << " Set the parameter \"Grid.Overlap\" in the input file.");
     }
 
     //! the vertex mapper is the dofMapper

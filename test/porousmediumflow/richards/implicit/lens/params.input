@@ -1,10 +1,11 @@
 [TimeLoop]
 DtInitial = 100 # [s]
-TEnd = 3000 # [s]
+TEnd = 30000 # [s]
 
 [Grid]
 UpperRight = 6 4
 Cells = 24 16
+Overlap = 3
 
 [Problem]
 Name = richardslens
