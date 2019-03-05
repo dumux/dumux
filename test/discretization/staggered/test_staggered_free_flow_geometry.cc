@@ -53,13 +53,14 @@ public:
 } // end namespace Detail
 
 //! the fv grid geometry traits for this test
-template<class GridView>
+template<class GridView, int upwOrder>
 struct TestFVGGTraits : public DefaultMapperTraits<GridView>
 {
     using SubControlVolume = CCSubControlVolume<GridView>;
-    using SubControlVolumeFace = FreeFlowStaggeredSubControlVolumeFace<GridView>;
+    using SubControlVolumeFace = FreeFlowStaggeredSubControlVolumeFace<GridView, upwOrder>;
     using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
-    using GeometryHelper = FreeFlowStaggeredGeometryHelper<GridView>;
+    using GeometryHelper = FreeFlowStaggeredGeometryHelper<GridView, upwOrder>;
+    static constexpr int upwindSchemeOrder = upwOrder;
 
     struct DofTypeIndices
     {
@@ -70,8 +71,8 @@ struct TestFVGGTraits : public DefaultMapperTraits<GridView>
     template<class FVGridGeometry>
     using ConnectivityMap = StaggeredFreeFlowConnectivityMap<FVGridGeometry>;
 
-    template<class FVGridGeometry, bool enableCache>
-    using LocalView = StaggeredFVElementGeometry<FVGridGeometry, enableCache>;
+    template<class FVGridGeometry, bool cachingEnabled>
+    using LocalView = StaggeredFVElementGeometry<FVGridGeometry, cachingEnabled>;
 };
 
 } // end namespace Dumux
@@ -92,8 +93,10 @@ int main (int argc, char *argv[]) try
 
     constexpr int dim = Grid::dimension;
 
+    static constexpr int upwindSchemeOrder = 2;
+
     using FVGridGeometry = StaggeredFVGridGeometry<typename Grid::LeafGridView, /*enable caching=*/ true,
-                                                   TestFVGGTraits<typename Grid::LeafGridView> >;
+                                                   TestFVGGTraits<typename Grid::LeafGridView, upwindSchemeOrder> >;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -159,11 +162,11 @@ int main (int argc, char *argv[]) try
                 std::cout <<  std::fixed << std::left << std::setprecision(2);
 
                 std::cout << " On Axis Dof Index: \n";
-                if(fvGridGeometry.order() > 1)
+                if(fvGridGeometry.upwindStencilOrder() > 1)
                 {std::cout << " | Forward dofIdx : " << std::setw(3) << scvf.axisData().inAxisForwardDofs[0] << "\n";}
                 std::cout << " | Self dofIdx : " << std::setw(3) << scvf.dofIndex() << "\n";
                 std::cout << " | Opposite dofIdx : " << std::setw(3) << scvf.dofIndexOpposingFace() << "\n";
-                if(fvGridGeometry.order() > 1)
+                if(fvGridGeometry.upwindStencilOrder() > 1)
                 {std::cout << " | Backward dofIdx : " << std::setw(3) << scvf.axisData().inAxisBackwardDofs[0] << "\n";}
 
                 std::cout << " Normal Dof Index: \n";
@@ -176,22 +179,22 @@ int main (int argc, char *argv[]) try
                 std::cout << " Parallel Dof Index: \n";
                 for(int i = 0; i < scvf.pairData().size(); i++)
                 {
-                    for(int j = 0; j < fvGridGeometry.order(); j++)
+                    for(int j = 0; j < fvGridGeometry.upwindStencilOrder(); j++)
                     {
                         std::cout << " | Parallel Dof "<< j << " on axis " << i << ": "<<  std::setw(3) << scvf.pairData(i).parallelDofs[j] << "\n";
                     }
                 }
 
                 std::cout << " Distances: \n";
-                if(fvGridGeometry.order() > 1)
+                if(fvGridGeometry.upwindStencilOrder() > 1)
                 {std::cout << " | Opposite To Backwards Face Dist : " << std::setw(3) << scvf.axisData().inAxisBackwardDistances[0] << "\n";}
                 std::cout << " | self To Opposite Dist : " << std::setw(3) << scvf.selfToOppositeDistance() << "\n";
-                if(fvGridGeometry.order() > 1)
-                {std::cout << " | Opposite To Backwards Face Dist : " << std::setw(3) << scvf.axisData().inAxisBackwardDistances[0] << "\n";}
+                if(fvGridGeometry.upwindStencilOrder() > 1)
+                {std::cout << " | self To Forwards Face Dist : " << std::setw(3) << scvf.axisData().inAxisForwardDistances[0] << "\n";}
 
                 for(int i = 0; i < scvf.pairData().size(); i++)
                 {
-                    for(int j = 0; j < fvGridGeometry.order(); j++)
+                    for(int j = 0; j < fvGridGeometry.upwindStencilOrder(); j++)
                     {
                         std::cout << " | Parallel Distance "<< j << " on axis " << i << ": "<< std::setw(3) << scvf.pairData(i).parallelDistances[j] << "\n";
                     }
