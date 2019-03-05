@@ -350,12 +350,14 @@ public:
                 using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                 std::unordered_map<GridIndex<bulkIdx>, ShapeValues> circleShapeValues;
 
+                int insideCirclePoints = 0;
                 for (int k = 0; k < circlePoints.size(); ++k)
                 {
                     const auto circleBulkElementIndices = intersectingEntities(circlePoints[k], bulkTree);
                     if (circleBulkElementIndices.empty())
                         continue;
 
+                    ++insideCirclePoints;
                     const auto localCircleAvgWeight = circleAvgWeight / circleBulkElementIndices.size();
                     for (const auto bulkElementIdx : circleBulkElementIndices)
                     {
@@ -395,14 +397,16 @@ public:
                                                                                circleStencil.begin(), circleStencil.end());
                 }
 
+                // surface fraction that is inside the domain (only different than 1.0 on the boundary)
+                const auto surfaceFraction = Scalar(insideCirclePoints)/Scalar(circlePoints.size());
                 // loop over the bulk elements at the integration points (usually one except when it is on a face or edge or vertex)
                 for (auto bulkElementIdx : bulkElementIndices)
                 {
                     const auto id = this->idCounter_++;
 
-                    this->pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, integrationElement, std::vector<std::size_t>({bulkElementIdx}));
+                    this->pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, integrationElement*surfaceFraction, std::vector<std::size_t>({bulkElementIdx}));
                     this->pointSources(bulkIdx).back().setEmbeddings(bulkElementIndices.size());
-                    this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement, std::vector<std::size_t>({lowDimElementIdx}));
+                    this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement*surfaceFraction, std::vector<std::size_t>({lowDimElementIdx}));
                     this->pointSources(lowDimIdx).back().setEmbeddings(bulkElementIndices.size());
 
                     // pre compute additional data used for the evaluation of
@@ -758,12 +762,14 @@ public:
                 std::unordered_map<GridIndex<bulkIdx>, ShapeValues> circleShapeValues;
 
                 // go over all circle points and precompute some quantities for the circle average
+                int insideCirclePoints = 0;
                 for (int k = 0; k < circlePoints.size(); ++k)
                 {
                     circleBulkElementIndices[k] = intersectingEntities(circlePoints[k], bulkTree);
                     if (circleBulkElementIndices[k].empty())
                         continue;
 
+                    ++insideCirclePoints;
                     const auto localCircleAvgWeight = circleAvgWeight / circleBulkElementIndices[k].size();
                     for (const auto bulkElementIdx : circleBulkElementIndices[k])
                     {
@@ -803,6 +809,9 @@ public:
                                                                                circleStencil.begin(), circleStencil.end());
                 }
 
+                // surface fraction that is inside the domain (only different than 1.0 on the boundary)
+                const auto surfaceFraction = Scalar(insideCirclePoints)/Scalar(circlePoints.size());
+
                 for (int k = 0; k < circlePoints.size(); ++k)
                 {
                     const auto& circlePos = circlePoints[k];
@@ -816,9 +825,10 @@ public:
                     for (const auto bulkElementIdx : circleBulkElementIndices[k])
                     {
                         const auto id = this->idCounter_++;
-                        this->pointSources(bulkIdx).emplace_back(circlePos, id, qpweight, integrationElement, std::vector<std::size_t>({bulkElementIdx}));
+
+                        this->pointSources(bulkIdx).emplace_back(circlePos, id, qpweight, integrationElement*surfaceFraction, std::vector<std::size_t>({bulkElementIdx}));
                         this->pointSources(bulkIdx).back().setEmbeddings(circleBulkElementIndices[k].size());
-                        this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement, std::vector<std::size_t>({lowDimElementIdx}));
+                        this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement*surfaceFraction, std::vector<std::size_t>({lowDimElementIdx}));
                         this->pointSources(lowDimIdx).back().setEmbeddings(circleBulkElementIndices[k].size());
 
                         // pre compute additional data used for the evaluation of
@@ -1164,16 +1174,15 @@ public:
                 // (3) the flux scaling factor for each outside element, i.e. each id
                 const auto id = this->idCounter_++;
 
-                // place a point source at the intersection center
-                const auto center = intersectionGeometry.center();
-                this->pointSources(lowDimIdx).emplace_back(center, id, /*weight=*/1.0, intersectionGeometry.volume(), std::vector<std::size_t>({lowDimElementIdx}));
-                this->pointSources(lowDimIdx).back().setEmbeddings(is.neighbor(0));
-
+                // compute the weights for the bulk volume sources
                 const auto& outside = is.outside(outsideIdx);
                 const auto bulkElementIdx = bulkFvGridGeometry.elementMapper().index(outside);
+                const auto surfaceFactor = computeBulkSource(intersectionGeometry, radius, kernelWidth, id, lowDimElementIdx, bulkElementIdx, cylIntegration, is.neighbor(0));
 
-                // compute the weights for the bulk volume sources
-                computeBulkSource(intersectionGeometry, radius, kernelWidth, id, lowDimElementIdx, bulkElementIdx, cylIntegration, is.neighbor(0));
+                // place a point source at the intersection center
+                const auto center = intersectionGeometry.center();
+                this->pointSources(lowDimIdx).emplace_back(center, id, surfaceFactor, intersectionGeometry.volume(), std::vector<std::size_t>({lowDimElementIdx}));
+                this->pointSources(lowDimIdx).back().setEmbeddings(is.neighbor(0));
 
                 // pre compute additional data used for the evaluation of
                 // the actual solution dependent source term
@@ -1352,9 +1361,9 @@ public:
 private:
     //! compute the kernel distributed sources and add stencils
     template<class Line, class CylIntegration>
-    void computeBulkSource(const Line& line, const Scalar radius, const Scalar kernelWidth,
-                           std::size_t id, GridIndex<lowDimIdx> lowDimElementIdx, GridIndex<bulkIdx> coupledBulkElementIdx,
-                           const CylIntegration& cylIntegration, int embeddings)
+    Scalar computeBulkSource(const Line& line, const Scalar radius, const Scalar kernelWidth,
+                             std::size_t id, GridIndex<lowDimIdx> lowDimElementIdx, GridIndex<bulkIdx> coupledBulkElementIdx,
+                             const CylIntegration& cylIntegration, int embeddings)
     {
         // Monte-carlo integration on the cylinder defined by line and radius
         static const auto min = getParam<GlobalPosition>("Tissue.Grid.LowerLeft");
@@ -1364,16 +1373,17 @@ private:
         const auto& a = line.corner(0);
         const auto& b = line.corner(1);
 
-        std::ofstream file("points.log", std::ios::app);
-
+        //std::ofstream file("points.log", std::ios::app);
+        Scalar integral = 0.0;
         for (int i = 0; i < cylSamples; ++i)
         {
             const auto& point = cylIntegration.getIntegrationPoint(i);
-            file << point[0] << ", " << point[1] << ", " << point[2] << "\n";
+            //file << point[0] << ", " << point[1] << ", " << point[2] << "\n";
             //const auto bulkIndices = intersectingEntities(point, this->problem(bulkIdx).fvGridGeometry().boundingBoxTree(), true);
             if (const auto [hasIntersection, bulkElementIdx] = intersectingEntityCartesian(point, min, max, cells); hasIntersection)
             {
-                const auto localWeight = evalConstKernel_(a, b, point, radius, kernelWidth)*cylIntegration.integrationElement(i)/embeddings;
+                const auto localWeight = evalConstKernel_(a, b, point, radius, kernelWidth)*cylIntegration.integrationElement(i)/Scalar(embeddings);
+                integral += localWeight;
                 if (!bulkSourceIds_[bulkElementIdx][0].empty() && id == bulkSourceIds_[bulkElementIdx][0].back())
                 {
                     bulkSourceWeights_[bulkElementIdx][0].back() += localWeight;
@@ -1387,7 +1397,9 @@ private:
             }
         }
 
-
+        // the surface factor (which fraction of the source is inside the domain and needs to be considered)
+        const auto length = (a-b).two_norm()/Scalar(embeddings);
+        return integral/length;
     }
 
     //! add additional stencil entries for the bulk element
