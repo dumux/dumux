@@ -34,7 +34,7 @@
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/discretization/method.hh>
 
-#include "upwindvariables.hh"
+#include "staggeredupwindfluxvariables.hh"
 
 namespace Dumux {
 
@@ -204,19 +204,19 @@ public:
         const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
         const Scalar velocityOpposite = elemFaceVars[scvf].velocityOpposite();
 
-        // The volume variables within the current element. We only require those (and none of neighboring elements)
-        // because the fluxes are calculated over the staggered face at the center of the element.
-        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-
         // Advective flux.
         if (problem.enableInertiaTerms())
         {
             // Get the average velocity at the center of the element (i.e. the location of the staggered face).
             const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
-            Dumux::UpwindVariables<TypeTag, upwindSchemeOrder> upwindVariables;
-            frontalFlux += upwindVariables.computeUpwindedFrontalMomentum(scvf, elemFaceVars, elemVolVars, gridFluxVarsCache, transportingVelocity)
+
+            frontalFlux += StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedFrontalMomentum(scvf, elemFaceVars, elemVolVars, gridFluxVarsCache, transportingVelocity)
                            * transportingVelocity * -1.0 * scvf.directionSign();
         }
+
+        // The volume variables within the current element. We only require those (and none of neighboring elements)
+        // because the fluxes are calculated over the staggered face at the center of the element.
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
         // Diffusive flux.
         // The velocity gradient already accounts for the orientation
@@ -386,8 +386,7 @@ private:
         // of interest is located.
         const Scalar transportingVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
 
-        Dumux::UpwindVariables<TypeTag, upwindSchemeOrder> upwindVariables;
-        return upwindVariables.computeUpwindedLateralMomentum(problem, fvGeometry, element, scvf, normalFace, elemVolVars, faceVars,
+        return StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedLateralMomentum(problem, fvGeometry, element, scvf, normalFace, elemVolVars, faceVars,
                                                                      gridFluxVarsCache, localSubFaceIdx, lateralFaceHasDirichletPressure,
                                                                      lateralFaceHasBJS)
                * transportingVelocity * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);

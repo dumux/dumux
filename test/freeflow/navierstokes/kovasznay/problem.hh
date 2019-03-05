@@ -113,7 +113,7 @@ public:
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
-        std::cout<< "upwindSchemeOrder is: " << FVGridGeometry::order() << "\n";
+        std::cout<< "upwindSchemeOrder is: " << FVGridGeometry::upwindStencilOrder() << "\n";
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
         Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
         lambda_ = 0.5 * reynoldsNumber

@@ -48,10 +48,10 @@ enum class DifferencingScheme
   * \brief This file contains different higher order methods for approximating the velocity.
   */
 template<class Scalar>
-class UpwindingMethods
+class StaggeredUpwindMethods
 {
 public:
-    UpwindingMethods(const std::string& paramGroup = "")
+    StaggeredUpwindMethods(const std::string& paramGroup = "")
     {
         upwindWeight_ = getParamFromGroup<Scalar>(paramGroup, "Flux.UpwindWeight");
 

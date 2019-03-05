@@ -38,12 +38,31 @@ namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
+ * \brief Default traits class to be used for the sub-control volume faces
+ *        for the free-flow staggered finite volume scheme
+ * \tparam GridView the type of the grid view
+ * \tparam upwindSchemeOrder the order of the upwind scheme
+ */
+template<class GridView, int upwindSchemeOrder>
+struct FreeFlowStaggeredDefaultScvfGeometryTraits
+{
+    using Geometry = typename GridView::template Codim<1>::Geometry;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
+    using Scalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using PairData = typename FreeFlowStaggeredGeometryHelper<GridView, upwindSchemeOrder>::PairData;
+    using AxisData = typename FreeFlowStaggeredGeometryHelper<GridView, upwindSchemeOrder>::AxisData;
+};
+
+/*!
+ * \ingroup StaggeredDiscretization
  * \brief Class for a sub control volume face in the staggered method, i.e a part of the boundary
  *        of a sub control volume we compute fluxes on. This is a specialization for free flow models.
  */
 template<class GV,
          int upwindSchemeOrder,
-         class T = StaggeredDefaultScvfGeometryTraits<GV> >
+         class T = FreeFlowStaggeredDefaultScvfGeometryTraits<GV, upwindSchemeOrder>>
 class FreeFlowStaggeredSubControlVolumeFace
 : public SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<GV, upwindSchemeOrder, T>, T>
 {

@@ -28,7 +28,7 @@
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/staggered/elementfluxvariablescache.hh>
 
-#include <dumux/freeflow/upwindingmethods.hh>
+#include <dumux/freeflow/staggeredupwindmethods.hh>
 
 namespace Dumux {
 
@@ -86,7 +86,7 @@ public:
 
     StaggeredGridFluxVariablesCache(const Problem& problem, const std::string& paramGroup = "")
     : problemPtr_(&problem)
-    , upwindingMethods_(paramGroup)
+    , staggeredUpwindMethods_(paramGroup)
       {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
@@ -123,10 +123,10 @@ public:
         }
     }
 
-    //! Return the UpwindingMethods
-    const UpwindingMethods<Scalar>& upwindingMethods() const
+    //! Return the StaggeredUpwindMethods
+    const StaggeredUpwindMethods<Scalar>& staggeredUpwindMethods() const
     {
-        return upwindingMethods_;
+        return staggeredUpwindMethods_;
     }
 
     const Problem& problem() const
@@ -141,7 +141,7 @@ public:
 
 private:
     const Problem* problemPtr_;
-    UpwindingMethods<Scalar> upwindingMethods_;
+    StaggeredUpwindMethods<Scalar> staggeredUpwindMethods_;
 
     std::vector<FluxVariablesCache> fluxVarsCache_;
     std::vector<std::size_t> globalScvfIndices_;
@@ -174,7 +174,7 @@ public:
 
     StaggeredGridFluxVariablesCache(const Problem& problem, const std::string& paramGroup = "")
     : problemPtr_(&problem)
-    , upwindingMethods_(paramGroup)
+    , staggeredUpwindMethods_(paramGroup)
       {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
@@ -188,14 +188,14 @@ public:
     { return *problemPtr_; }
 
     //! Return the UpwindingMethods
-    const UpwindingMethods<Scalar>& upwindingMethods() const
+    const StaggeredUpwindMethods<Scalar>& staggeredUpwindMethods() const
     {
-        return upwindingMethods_;
+        return staggeredUpwindMethods_;
     }
 
 private:
     const Problem* problemPtr_;
-    UpwindingMethods<Scalar> upwindingMethods_;
+    StaggeredUpwindMethods<Scalar> staggeredUpwindMethods_;
 
 };
 

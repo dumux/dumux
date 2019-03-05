@@ -191,7 +191,7 @@ class StaggeredFVGridGeometry<GV, true, Traits>
 public:
     //! export discretization method
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
-    static constexpr int upwindSchemeOrder = Traits::UpwindSchemeOrder;
+    static constexpr int upwindSchemeOrder = Traits::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
     //! export the type of the fv element geometry (the local view type)
@@ -214,7 +214,7 @@ public:
     { return typename DofTypeIndices::FaceIdx{}; }
 
     //! The order of the stencil built
-    static constexpr std::size_t order()
+    static constexpr int upwindStencilOrder()
     {   return upwindSchemeOrder; }
 
     using CellCenterFVGridGeometryType = CellCenterFVGridGeometry<ThisType>;
@@ -448,7 +448,7 @@ class StaggeredFVGridGeometry<GV, false, Traits>
 public:
     //! export discretization method
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
-    static constexpr int upwindSchemeOrder = Traits::UpwindSchemeOrder;
+    static constexpr int upwindSchemeOrder = Traits::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
     using GeometryHelper = typename Traits::GeometryHelper;
@@ -473,7 +473,7 @@ public:
     { return typename DofTypeIndices::FaceIdx{}; }
 
     //! The order of the stencil built
-    static constexpr std::size_t order()
+    static constexpr int upwindStencilOrder()
     {   return upwindSchemeOrder; }
 
     using CellCenterFVGridGeometryType = CellCenterFVGridGeometry<ThisType>;
