@@ -1,0 +1,60 @@
+[TimeLoop]
+TEnd =  1e3
+DtInitial =  5
+MaxTimeStepSize = 50
+
+[Stokes.Grid]
+LowerLeft = 0 0
+UpperRight =1 1
+Cells = 3 3#4 4 # 20 20
+
+[Interface.Grid]
+LowerLeft = 0 # Stokes.Grid.LowerLeft x-coordinate
+UpperRight = 1 # Darcy.Grid.UpperRight x-coordinate
+Cells = 3#4 # Stokes/Darcy cells in x direction
+
+[Darcy.Grid]
+UpperRight = 1 0
+LowerLeft = 0 -1
+Cells = 3 3#4 4 #20 20
+
+[Stokes.Problem]
+Name = stokes
+Velocity = -1e-3
+Pressure = 1.0e5
+Temperature = 293.15
+
+[Interface.Problem]
+Name = interface
+Pressure = 1.05e5
+Saturation = 0.5
+Temperature = 298.15
+
+[Darcy.Problem]
+Name = darcy
+Pressure = 1.0e5
+Saturation = 0.5
+Temperature = 298.15
+
+[SpatialParams]
+Porosity = 0.41
+Permeability = 2.65e-10
+AlphaBJ = 1.0
+Swr = 0.005
+Snr = 0.01
+VgAlpha = 6.371e-4
+VgN = 8.0
+
+[Problem]
+EnableGravity = false
+EnableInertiaTerms = false
+
+[Vtk]
+AddVelocity = 1
+OutputName = test_md_boundary_darcy2p_interface2p_stokes1p
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-6
+
+[Newton]
+MaxRelativeShift = 1e-11
