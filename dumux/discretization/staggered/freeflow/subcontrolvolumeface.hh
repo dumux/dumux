@@ -72,6 +72,9 @@ class FreeFlowStaggeredSubControlVolumeFace
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
+    using PairData = typename T::PairData;
+    using AxisData = typename T::AxisData;
+
     using Scalar = typename T::Scalar;
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
@@ -106,7 +109,7 @@ public:
       boundary_(is.boundary()),
 
       axisData_(geometryHelper.axisData()),
-      pairData_(geometryHelper.pairData()),
+      pairData_(std::move(geometryHelper.pairData())),
       localFaceIdx_(geometryHelper.localFaceIndex()),
       dirIdx_(geometryHelper.directionIndex()),
       outerNormalSign_(sign(unitOuterNormal_[directionIndex()])),
@@ -226,19 +229,19 @@ public:
     }
 
     //! Returns the data for one sub face
-    const PairData<Scalar, GlobalPosition, upwindSchemeOrder>& pairData(const int idx) const
+    const PairData& pairData(const int idx) const
     {
         return pairData_[idx];
     }
 
     //! Return an array of all pair data
-    const auto& pairData() const
+    const std::array<PairData, numPairs>& pairData() const
     {
         return pairData_;
     }
 
     //! Return an array of all pair data
-    const auto& axisData() const
+    const AxisData& axisData() const
     {
         return axisData_;
     }
@@ -257,7 +260,7 @@ public:
     */
     bool hasParallelNeighbor(const int localSubFaceIdx, const int parallelDegreeIdx) const
     {
-        return !(pairData(localSubFaceIdx).parallelDofs[parallelDegreeIdx] < 0);
+        return pairData(localSubFaceIdx).hasParallelNeighbor[parallelDegreeIdx];
     }
 
    /*!
@@ -267,7 +270,7 @@ public:
     */
     bool hasOuterNormal(const int localSubFaceIdx) const
     {
-        return !(pairData_[localSubFaceIdx].normalPair.second < 0);
+        return pairData(localSubFaceIdx).hasNormalNeighbor;
     }
 
    /*!
@@ -278,7 +281,7 @@ public:
     template<bool enable = useHigherOrder, std::enable_if_t<enable, int> = 0>
     bool hasBackwardNeighbor(const int backwardIdx) const
     {
-        return !(axisData().inAxisBackwardDofs[backwardIdx] < 0);
+        return axisData().hasBackwardNeighbor[backwardIdx];
     }
 
    /*!
@@ -289,7 +292,7 @@ public:
     template<bool enable = useHigherOrder, std::enable_if_t<enable, int> = 0>
     bool hasForwardNeighbor(const int forwardIdx) const
     {
-        return !(axisData().inAxisForwardDofs[forwardIdx] < 0);
+        return axisData().hasForwardNeighbor[forwardIdx];
     }
 
     //! Returns the dof of the face
@@ -347,8 +350,8 @@ private:
 
     int dofIdx_;
     Scalar selfToOppositeDistance_;
-    AxisData<Scalar, upwindSchemeOrder> axisData_;
-    std::array<PairData<Scalar, GlobalPosition, upwindSchemeOrder>, numPairs> pairData_;
+    AxisData axisData_;
+    std::array<PairData, numPairs> pairData_;
 
     int localFaceIdx_;
     unsigned int dirIdx_;

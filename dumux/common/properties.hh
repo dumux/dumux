@@ -235,7 +235,7 @@ struct StaggeredFaceSolution { using type = UndefinedProperty; };               
 template<class TypeTag, class MyTypeTag>
 struct EnableGridFaceVariablesCache { using type = UndefinedProperty; };        //!< Switch on/off caching of face variables
 template<class TypeTag, class MyTypeTag>
-struct UpwindSchemeOrder { using type = UndefinedProperty; };                   //!< Specifies the order of the upwinding scheme (1 == basic upwinding, 2 == higher order)
+struct UpwindSchemeOrder { using type = UndefinedProperty; };                   //!< Specifies the order of the upwinding scheme (1 == first order, 2 == second order(tvd methods))
 
 /////////////////////////////////////////////////////////////
 // Properties used by the mpnc model

@@ -52,9 +52,11 @@ class StaggeredFreeFlowConnectivityMap
     using FaceToCellCenterMap = std::vector<std::vector<GridIndexType>>;
     using FaceToFaceMap = std::vector<std::vector<GridIndexType>>;
 
+    using SmallLocalIndex = typename IndexTraits<GridView>::SmallLocalIndex;
+
     using Stencil = std::vector<GridIndexType>;
 
-    static constexpr int upwindSchemeOrder = FVGridGeometry::upwindSchemeOrder;
+    static constexpr SmallLocalIndex upwindSchemeOrder = FVGridGeometry::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
 public:
@@ -195,9 +197,9 @@ private:
                 stencil.push_back(data.normalPair.second);
 
             // add parallel dofs
-            for (int i = 0; i < upwindSchemeOrder; i++)
+            for (SmallLocalIndex i = 0; i < upwindSchemeOrder; i++)
             {
-                if(!(data.parallelDofs[i] < 0))
+                if (data.hasParallelNeighbor[i])
                     stencil.push_back(data.parallelDofs[i]);
             }
         }
@@ -207,7 +209,7 @@ private:
 
     void addHigherOrderInAxisDofs_(const SubControlVolumeFace& scvf, Stencil& stencil, std::true_type)
     {
-        for (int i = 0; i < upwindSchemeOrder - 1; i++)
+        for (SmallLocalIndex i = 0; i < upwindSchemeOrder - 1; i++)
         {
             if (scvf.hasBackwardNeighbor(i))
                 stencil.push_back(scvf.axisData().inAxisBackwardDofs[i]);

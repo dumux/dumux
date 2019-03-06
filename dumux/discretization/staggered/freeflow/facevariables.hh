@@ -53,8 +53,11 @@ struct InAxisVelocities<Scalar, 1>
  * \ingroup StaggeredDiscretization
  * \brief The face variables class for free flow staggered grid models.
  *        Contains all relevant velocities for the assembly of the momentum balance.
+ *        When the upwindSchemeOrder is set to 2, additional velocities located at Dofs
+ *        further from the central stencil will be added and used when calculating the
+ *        advective term. When the order remains at 1, these velocities will not be provided.
  */
-template<class FacePrimaryVariables, int dim, int upwindSchemeOrder> // TODO doc
+template<class FacePrimaryVariables, int dim, int upwindSchemeOrder>
 class StaggeredFaceVariables
 {
     static constexpr int numPairs = (dim == 2) ? 2 : 4;
@@ -203,7 +206,7 @@ private:
         // forward wrt the self face by degree i
         for (int i = 0; i < scvf.axisData().inAxisForwardDofs.size(); i++)
         {
-             if (!(scvf.axisData().inAxisForwardDofs[i] < 0))
+             if (scvf.hasForwardNeighbor(i))
                  inAxisVelocities_.forward[i]= faceSol[scvf.axisData().inAxisForwardDofs[i]];
         }
 
@@ -211,7 +214,7 @@ private:
         // behind the opposite face by degree i
         for (int i = 0; i < scvf.axisData().inAxisBackwardDofs.size(); i++)
         {
-             if (!(scvf.axisData().inAxisBackwardDofs[i] < 0))
+             if (scvf.hasBackwardNeighbor(i))
                  inAxisVelocities_.backward[i] = faceSol[scvf.axisData().inAxisBackwardDofs[i]];
         }
     }
