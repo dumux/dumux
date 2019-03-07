@@ -139,6 +139,10 @@ public:
     bool interiorBoundary() const
     { return interiorBoundary_; }
 
+    //! returns bolean if the sub control volume face has a neighboring scv
+    bool neighbor() const
+    { return !boundary_ && !interiorBoundary_; }
+
     //! returns the unit nurmal vector pointing outwards
     //! of the sub-control volume that this scvf encloses
     const GlobalPosition& unitOuterNormal() const
@@ -156,7 +160,7 @@ public:
     //! This results in undefined behaviour if boundary is true
     LocalIndexType outsideScvIdx() const
     {
-        assert(!boundary());
+        assert(!boundary() && !interiorBoundary());
         return scvIndices_[1];
     }
 

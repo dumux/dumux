@@ -74,6 +74,12 @@ public:
         return asImp_().boundary();
     }
 
+    //! returns bolean if the sub control volume face has a neighboring scv
+    bool neighbor() const
+    {
+        return asImp_().neighbor();
+    }
+
     //! the unit outward pointing normal on the scv face
     GlobalPosition unitOuterNormal() const
     {

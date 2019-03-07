@@ -214,6 +214,10 @@ public:
     bool boundary() const
     { return boundary_; }
 
+    //! returns bolean if the sub control volume face has a neighboring scv
+    bool neighbor() const
+    { return !boundary_; }
+
     //! returns the unit normal vector pointing outwards
     const GlobalPosition& unitOuterNormal() const
     { return unitOuterNormal_; }
