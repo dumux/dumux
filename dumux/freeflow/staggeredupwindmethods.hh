@@ -47,7 +47,7 @@ enum class DifferencingScheme
 /**
   * \brief This file contains different higher order methods for approximating the velocity.
   */
-template<class Scalar>
+template<class Scalar, int upwindSchemeOrder>
 class StaggeredUpwindMethods
 {
 public:
@@ -55,11 +55,11 @@ public:
     {
         upwindWeight_ = getParamFromGroup<Scalar>(paramGroup, "Flux.UpwindWeight");
 
-        if (hasParamInGroup(paramGroup, "Flux.TvdApproach"))
+        if (upwindSchemeOrder > 1)
         {
             // Read the runtime parameters
-            tvdApproach_ = tvdApproachFromString(getParamFromGroup<std::string>(paramGroup, "Flux.TvdApproach"));
-            differencingScheme_ = differencingSchemeFromString(getParamFromGroup<std::string>(paramGroup, "Flux.DifferencingScheme"));
+            tvdApproach_ = tvdApproachFromString(getParamFromGroup<std::string>(paramGroup, "Flux.TvdApproach", "Uniform"));
+            differencingScheme_ = differencingSchemeFromString(getParamFromGroup<std::string>(paramGroup, "Flux.DifferencingScheme", "Minmod"));
 
             // Assign the limiter_ depending on the differencing scheme
             switch (differencingScheme_)
@@ -109,6 +109,33 @@ public:
                     break;
                 }
             }
+
+            if (!hasParamInGroup(paramGroup, "Flux.TvdApproach"))
+            {
+                std::cout << "No TvdApproach specified. Defaulting to the Uniform method." << "\n";
+                std::cout << "Other available TVD approaches for uniform (and nonuniform) grids are as follows: \n"
+                          << "  " << tvdApproachToString(TvdApproach::uniform) << ": assumes a Uniform cell size distribution\n"
+                          << "  " << tvdApproachToString(TvdApproach::li) << ": Li's approach for nonuniform cell sizes\n"
+                          << "  " << tvdApproachToString(TvdApproach::hou) << ": Hou's approach for nonuniform cell sizes \n";
+                std::cout << "Each approach can be specified as written above in the Flux group under the title TvdApproach in your input file. \n";
+            }
+            if (!hasParamInGroup(paramGroup, "Flux.DifferencingScheme"))
+            {
+
+                std::cout << "No DifferencingScheme specified. Defaulting to the Minmod scheme." << "\n";
+                std::cout << "Other available Differencing Schemes are as follows: \n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::vanleer) << ": The Vanleer flux limiter\n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::vanalbada) << ": The Vanalbada flux limiter\n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::minmod) << ": The Minmod flux limiter\n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::superbee) << ": The Superbee flux limiter\n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::umist) << ": The Umist flux limiter\n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::mclimiter) << ": The Mclimiter flux limiter\n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::wahyd) << ": The Wahyd flux limiter";
+                std::cout << "Each scheme can be specified as written above in the Flux group under the variable DifferencingScheme in your input file. \n";
+            }
+
+            std::cout << "Using the tvdApproach \"" << tvdApproachToString(tvdApproach_)
+                      << "\" and the differencing Scheme \" " << differencingSchemeToString(differencingScheme_) << "\" \n";
         }
         else
         {
@@ -116,8 +143,6 @@ public:
             tvdApproach_ = TvdApproach::none;
             differencingScheme_ = DifferencingScheme::none;
         }
-        std::cout << "Using the tvdApproach " << tvdApproachToString(tvdApproach_)
-                  << " and the differencing Scheme " << differencingSchemeToString(differencingScheme_) << "\n";
     }
 
     /**

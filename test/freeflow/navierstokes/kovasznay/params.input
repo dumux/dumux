@@ -19,7 +19,3 @@ MaxRelativeShift = 1e-5
 
 [Vtk]
 WriteFaceData = false
-
-[Flux]
-TvdApproach = Hou
-DifferencingScheme = Vanleer
