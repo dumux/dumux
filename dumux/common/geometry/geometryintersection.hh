@@ -115,7 +115,7 @@ public:
                               {3, 2, 7, 6}, {1, 0, 3, 2}, {4, 5, 6, 7}};
                     break;
                 case 4: // tetrahedron
-                    facets = {{1, 2, 0}, {0, 1, 3}, {0, 3, 2}, {1, 2, 3}};
+                    facets = {{1, 0, 2}, {0, 1, 3}, {0, 3, 2}, {1, 2, 3}};
                     break;
                 default:
                     DUNE_THROW(Dune::NotImplemented, "Collision of segment and geometry of type "
@@ -166,7 +166,6 @@ public:
                 // use unscaled epsilon since t is in local coordinates
                 if (tfirst > tlast - eps_)
                     return false;
-
             }
         }
         // If we made it until here an intersection exists. We also export
