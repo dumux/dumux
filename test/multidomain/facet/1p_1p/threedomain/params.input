@@ -29,3 +29,4 @@ Problem.Aperture = 1e-3
 
 [Vtk]
 OutputName = test_md_facet_1p1p_threedomain
+AddVelocity = true

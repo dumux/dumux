@@ -228,6 +228,16 @@ int main(int argc, char** argv) try
     const std::array<std::string, 3> vtkOutputNames{{problem[bulkId].name(), problem[facetId].name(), problem[edgeId].name()}};
     MultiDomainVtkOutputModule<Traits> vtkWriter(gridVars.getTuple(), x, vtkOutputNames);
     vtkWriter.initDefaultOutputFields();
+
+    // add velocity output
+    using BulkVelocityOutput = GetPropType<typename Traits::template SubDomain<bulkId>::TypeTag, Properties::VelocityOutput>;
+    using FacetVelocityOutput = GetPropType<typename Traits::template SubDomain<facetId>::TypeTag, Properties::VelocityOutput>;
+    using EdgeVelocityOutput = GetPropType<typename Traits::template SubDomain<edgeId>::TypeTag, Properties::VelocityOutput>;
+
+    vtkWriter[bulkId].addVelocityOutput(std::make_shared<BulkVelocityOutput>(gridVars[bulkId]));
+    vtkWriter[facetId].addVelocityOutput(std::make_shared<FacetVelocityOutput>(gridVars[facetId]));
+    vtkWriter[edgeId].addVelocityOutput(std::make_shared<EdgeVelocityOutput>(gridVars[edgeId]));
+
     vtkWriter.write(0.0);
 
     // the assembler

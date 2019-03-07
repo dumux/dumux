@@ -7,7 +7,10 @@
           1.50561 1.50403 1.50065 1.49728 1.49572
         </DataArray>
       </PointData>
-      <CellData Scalars="process rank">
+      <CellData Scalars="process rank" Vectors="velocity_liq (m/s)">
+        <DataArray type="Float32" Name="velocity_liq (m/s)" NumberOfComponents="3" format="ascii">
+          0 1268.65 0 0 2699.51 0 0 2694.76 0 0 1251.72 0
+        </DataArray>
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
           0 0 0 0
         </DataArray>
