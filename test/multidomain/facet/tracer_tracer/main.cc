@@ -321,6 +321,13 @@ int main(int argc, char** argv) try
         BulkIOFields::initOutputModule(bulkVtkWriter);
         LowDimIOFields::initOutputModule(lowDimVtkWriter);
 
+        // add velocity output
+        using BulkVelocityOutput = GetPropType<typename OnePMDTraits::template SubDomain<bulkId>::TypeTag, Properties::VelocityOutput>;
+        using LowDimVelocityOutput = GetPropType<typename OnePMDTraits::template SubDomain<lowDimId>::TypeTag, Properties::VelocityOutput>;
+
+        bulkVtkWriter.addVelocityOutput(std::make_shared<BulkVelocityOutput>(*bulkGridVariables));
+        lowDimVtkWriter.addVelocityOutput(std::make_shared<LowDimVelocityOutput>(*lowDimGridVariables));
+
         // the assembler
         using Assembler = MultiDomainFVAssembler<OnePMDTraits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
         auto assembler = std::make_shared<Assembler>( std::make_tuple(bulkProblem, lowDimProblem),
