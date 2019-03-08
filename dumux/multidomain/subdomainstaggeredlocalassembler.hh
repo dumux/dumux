@@ -668,7 +668,7 @@ public:
         //                                                                                              //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // build derivatives with for cell center dofs w.r.t. cell center dofs
+        // build derivatives for face dofs w.r.t. face dofs
         const auto& connectivityMap = fvGridGeometry.connectivityMap();
 
         for (auto&& scvf : scvfs(fvGeometry))
@@ -679,8 +679,8 @@ public:
             using FaceSolution = GetPropType<TypeTag, Properties::StaggeredFaceSolution>;
             const auto origFaceSolution = FaceSolution(scvf, curSol, fvGridGeometry);
 
-            // build derivatives with for face dofs w.r.t. cell center dofs
-            for (const auto& globalJ : connectivityMap(faceId, faceId, scvf.index()))
+            // Lambda to evaluate the derivatives for faces
+            auto evaluateFaceDerivatives = [&](const std::size_t globalJ)
             {
                 // get the faceVars of the face with respect to which we are going to build the derivative
                 auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), this->curElemFaceVars(), scvf);
@@ -719,9 +719,19 @@ public:
 
                     // restore the undeflected state of the coupling context
                     this->couplingManager().updateCouplingContext(domainI, *this, domainI, globalJ, origFaceSolution[globalJ], pvIdx);
-               }
-           }
-       }
+                }
+            };
+
+            // evaluate derivatives w.r.t. own dof
+            evaluateFaceDerivatives(scvf.dofIndex());
+
+            // get the list of face dofs that have an influence on the resdiual of the current face
+            const auto& connectivityMap = fvGridGeometry.connectivityMap();
+
+            // evaluate derivatives w.r.t. all other related face dofs
+            for (const auto& globalJ : connectivityMap(faceId, faceId, scvf.index()))
+               evaluateFaceDerivatives(globalJ);
+        }
 
         return origResiduals;
     }

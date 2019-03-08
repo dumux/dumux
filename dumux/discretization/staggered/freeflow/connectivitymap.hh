@@ -181,7 +181,6 @@ private:
     {
         if(stencil.empty())
         {
-            stencil.push_back(scvf.axisData().selfDof);
             stencil.push_back(scvf.axisData().oppositeDof);
             addHigherOrderInAxisDofs_(scvf, stencil, std::integral_constant<bool, useHigherOrder>{});
         }
