@@ -219,16 +219,15 @@ public:
         auto&& scvI = fvGeometry.scv(globalI);
 
         // resize local containers to the required size (for internal elements)
-        volumeVariables_.resize(numDofs);
-        volVarIndices_.resize(numDofs);
+        volumeVariables_.resize(numDofs+1);
+        volVarIndices_.resize(numDofs+1);
         int localIdx = 0;
 
-        // Update the volume variables of the element at hand and the neighboring elements
-        for (auto globalJ : connectivityMapI)
+        // Lambda to update the volume variables of the given index
+        auto doVolVarUpdate = [&](int globalJ)
         {
             const auto& elementJ = fvGridGeometry.element(globalJ);
             auto&& scvJ = fvGeometry.scv(globalJ);
-
             const auto elemSol = makeElementSolutionFromCellCenterPrivars<PrimaryVariables>(sol[globalJ]);
             volumeVariables_[localIdx].update(elemSol,
                                               problem,
@@ -236,7 +235,14 @@ public:
                                               scvJ);
             volVarIndices_[localIdx] = scvJ.dofIndex();
             ++localIdx;
-        }
+        };
+
+        // Update the volume variables of the element at hand
+        doVolVarUpdate(globalI);
+
+        // Update the volume variables of the neighboring elements
+        for (const auto& globalJ : connectivityMapI)
+            doVolVarUpdate(globalJ);
 
         if (fvGeometry.hasBoundaryScvf())
         {

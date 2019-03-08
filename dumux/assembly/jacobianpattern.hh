@@ -136,7 +136,7 @@ auto getJacobianPattern(const GridGeometry& gridGeometry)
             // the global index of the element at hand
             static constexpr auto cellCenterIdx = GridGeometry::cellCenterIdx();
             const auto ccGlobalI = gridGeometry.elementMapper().index(element);
-
+            pattern.add(ccGlobalI, ccGlobalI);
             for (auto&& ccGlobalJ : connectivityMap(cellCenterIdx, cellCenterIdx, ccGlobalI))
                 pattern.add(ccGlobalI, ccGlobalJ);
         }

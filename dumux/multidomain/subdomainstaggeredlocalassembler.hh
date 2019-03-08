@@ -562,10 +562,8 @@ public:
         //                                                                                              //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // build derivatives with for cell center dofs w.r.t. cell center dofs
-        const auto& connectivityMap = fvGridGeometry.connectivityMap();
-
-        for (const auto& globalJ : connectivityMap(cellCenterId, cellCenterId, cellCenterGlobalI))
+        // lambda to evaluate the derivatives for cell center dofs with respect to neighbor cells
+        auto evaluateCellCenterDerivatives = [&](const std::size_t globalJ)
         {
             // get the volVars of the element with respect to which we are going to build the derivative
             auto&& scvJ = fvGeometry.scv(globalJ);
@@ -615,7 +613,17 @@ public:
                 // restore the undeflected state of the coupling context
                 this->couplingManager().updateCouplingContext(domainI, *this, domainI, globalJ, curSol[globalJ], pvIdx);
             }
-        }
+        };
+
+        // build derivatives with for cell center dofs w.r.t. cell center dofs
+        const auto& connectivityMap = fvGridGeometry.connectivityMap();
+
+        // evaluate derivatives w.r.t. own dof
+        evaluateCellCenterDerivatives(cellCenterGlobalI);
+
+        // evaluate derivatives w.r.t. all other related cell center dofs
+        for (const auto& globalJ : connectivityMap(cellCenterId, cellCenterId, cellCenterGlobalI))
+             evaluateCellCenterDerivatives(globalJ);
 
         return origResidual;
     }
