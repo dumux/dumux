@@ -550,7 +550,7 @@ private:
             distances[0] = ownScvf.cellCenteredParallelDistance(localSubFaceIdx, 0);
             distances[1] = ownScvf.cellCenteredParallelDistance(oppositeSubFaceIdx, 0);
             if(ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
-                distances[2] = ownScvf.pairData(localSubFaceIdx).parallelDistances[1];
+                distances[2] = ownScvf.pairData(localSubFaceIdx).parallelCellWidths[0];
             else
                 distances[2] = ownScvf.area() / 2.0;
         }
@@ -558,7 +558,7 @@ private:
         {
             distances[0] = ownScvf.cellCenteredParallelDistance(localSubFaceIdx, 0);
             distances[1] = ownScvf.cellCenteredParallelDistance(localSubFaceIdx, 1);
-            distances[2] = ownScvf.pairData(localSubFaceIdx).parallelDistances[1];
+            distances[2] = ownScvf.pairData(localSubFaceIdx).parallelCellWidths[0];
         }
 
         return distances;

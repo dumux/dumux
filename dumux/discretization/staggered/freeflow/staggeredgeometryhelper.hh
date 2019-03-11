@@ -52,7 +52,7 @@ struct PairData
 
     std::bitset<upwindSchemeOrder> hasParallelNeighbor;
     std::array<GridIndexType, upwindSchemeOrder> parallelDofs;
-    std::array<Scalar, upwindSchemeOrder+1> parallelDistances; // TODO store only two distances, not three.
+    std::array<Scalar, upwindSchemeOrder> parallelCellWidths;
     bool hasNormalNeighbor = false;
     std::pair<GridIndexType, GridIndexType> normalPair;
     SmallLocalIndexType localNormalFaceIdx;
@@ -424,17 +424,14 @@ private:
         {
             if (facetIsNormal_(intersection.indexInInside(), parallelLocalIdx))
             {
-                // Store the parallel dimension of self cell in the direction of the axis
                 auto parallelAxisIdx = directionIndex(intersection);
-                pairData_[numPairParallelIdx].parallelDistances[0] = setParallelPairDistances_(element_, parallelAxisIdx);
-
                 if (intersection.neighbor())
                 {
                     // If the normal intersection has a neighboring cell, go in and store the parallel information.
                     const auto& outerElement = intersection.outside();
                     pairData_[numPairParallelIdx].hasParallelNeighbor.set(0, true);
                     pairData_[numPairParallelIdx].parallelDofs[0] = gridView_.indexSet().subIndex(outerElement, parallelLocalIdx, codimIntersection);
-                    pairData_[numPairParallelIdx].parallelDistances[1] = setParallelPairDistances_(outerElement, parallelAxisIdx);
+                    pairData_[numPairParallelIdx].parallelCellWidths[0] = setParallelPairCellWidths_(outerElement, parallelAxisIdx);
                 }
                 else  // No parallel neighbor available
                 {
@@ -457,7 +454,7 @@ private:
     void fillParallelPairData_(std::true_type)
     {
         // set basic global positions and stencil size definitions
-        const auto numParallelFaces = pairData_[0].parallelDistances.size();
+        const auto numParallelFaces = pairData_[0].parallelCellWidths.size();
         const auto& elementCenter = element_.geometry().center();
 
         // get the parallel Dofs
@@ -472,12 +469,11 @@ private:
                 {
                     auto parallelAxisIdx = directionIndex(intersection);
                     auto localNormalIntersectionIndex = intersection.indexInInside();
-                    parallelElementStack.push(element_);
+                    auto e = element_;
 
                     bool keepStacking =  (parallelElementStack.size() < numParallelFaces);
                     while(keepStacking)
                     {
-                        auto e = parallelElementStack.top();
                         for(const auto& normalIntersection : intersections(gridView_, e))
                         {
                             if( normalIntersection.indexInInside() == localNormalIntersectionIndex )
@@ -489,20 +485,18 @@ private:
                                 }
                                 else
                                 {
-                                keepStacking = false;
+                                    keepStacking = false;
                                 }
                             }
                         }
+                        e = parallelElementStack.top();
                     }
 
                     while(!parallelElementStack.empty())
                     {
-                        if(parallelElementStack.size() > 1)
-                        {
-                            pairData_[numPairParallelIdx].hasParallelNeighbor.set(parallelElementStack.size()-2, true);
-                            pairData_[numPairParallelIdx].parallelDofs[parallelElementStack.size()-2] = gridView_.indexSet().subIndex(parallelElementStack.top(), parallelLocalIdx, codimIntersection);
-                        }
-                        pairData_[numPairParallelIdx].parallelDistances[parallelElementStack.size()-1] = setParallelPairDistances_(parallelElementStack.top(), parallelAxisIdx);
+                        pairData_[numPairParallelIdx].hasParallelNeighbor.set(parallelElementStack.size()-1, true);
+                        pairData_[numPairParallelIdx].parallelDofs[parallelElementStack.size()-1] = gridView_.indexSet().subIndex(parallelElementStack.top(), parallelLocalIdx, codimIntersection);
+                        pairData_[numPairParallelIdx].parallelCellWidths[parallelElementStack.size()-1] = setParallelPairCellWidths_(parallelElementStack.top(), parallelAxisIdx);
                         parallelElementStack.pop();
                     }
 
@@ -516,10 +510,6 @@ private:
                     const auto virtualFirstParallelFaceDofPos = intersection_.geometry().center() + distance;
 
                     pairData_[numPairParallelIdx].virtualFirstParallelFaceDofPos = std::move(virtualFirstParallelFaceDofPos);
-
-                    // The distance is saved doubled because with scvf.cellCenteredSelfToFirstParallelDistance
-                    // an average between parallelDistances[0] and parallelDistances[1] will be computed
-                    pairData_[numPairParallelIdx].parallelDistances[0] = std::move(distance.two_norm() * 2);
                 }
                 numPairParallelIdx++;
             }
@@ -578,9 +568,8 @@ private:
     }
 
     //! Sets the information about the parallel distances
-    Scalar setParallelPairDistances_(const Element& element, const int parallelAxisIdx) const
+    Scalar setParallelPairCellWidths_(const Element& element, const int parallelAxisIdx) const
     {
-        Scalar distance = 0;
         std::vector<GlobalPosition> faces;
         faces.reserve(numfacets);
         for (const auto& intElement : intersections(gridView_, element))
@@ -590,27 +579,17 @@ private:
         switch(parallelAxisIdx)
         {
             case 0:
-            {
-                distance = (faces[1] - faces[0]).two_norm();
-            break;
-            }
+                return (faces[1] - faces[0]).two_norm();
             case 1:
-            {
-                distance = (faces[3] - faces[2]).two_norm();
-            break;
-            }
+                return (faces[3] - faces[2]).two_norm();
             case 2:
             {
                 assert(dim == 3);
-                distance = (faces[5] - faces[4]).two_norm();
-            break;
+                return (faces[5] - faces[4]).two_norm();
             }
             default:
-            {
                 DUNE_THROW(Dune::InvalidStateException, "Something went terribly wrong");
-            }
         }
-        return distance;
     }
 
     Intersection intersection_; //!< The intersection of interest
