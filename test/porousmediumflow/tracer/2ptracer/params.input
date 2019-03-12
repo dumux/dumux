@@ -1,0 +1,25 @@
+[TimeLoop]
+DtInitial = 10 # [s]
+TEnd = 450 # [s]
+MaxTimeStepSize = 10
+
+[Grid]
+UpperRight = 6 4
+Cells = 48 32
+
+[SpatialParams]
+LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
+LensUpperRight = 4.0 3.0 # [m] coordinates of the upper right lens corner
+outerK = 1e-09 # [m^2]
+lensK = 1e-12 # [m^2]
+
+[Problem]
+Name = test_2ptracer_lens_tpfa
+EnableGravity = true
+BinaryDiffusionCoefficient = 0.0 # only advective transport
+
+[Newton]
+EnablePartialReassembly = true
+
+[Vtk]
+AddVelocity = true
