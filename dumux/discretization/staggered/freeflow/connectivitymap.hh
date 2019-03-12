@@ -52,7 +52,12 @@ class StaggeredFreeFlowConnectivityMap
     using FaceToCellCenterMap = std::vector<std::vector<GridIndexType>>;
     using FaceToFaceMap = std::vector<std::vector<GridIndexType>>;
 
+    using SmallLocalIndex = typename IndexTraits<GridView>::SmallLocalIndex;
+
     using Stencil = std::vector<GridIndexType>;
+
+    static constexpr SmallLocalIndex upwindSchemeOrder = FVGridGeometry::upwindSchemeOrder;
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
 public:
 
@@ -91,13 +96,6 @@ public:
             }
         }
     }
-
-    //! \brief Set the order needed by the scheme
-    void setStencilOrder(const int stencilOrder)
-    {
-        stencilOrder_ = stencilOrder;
-    }
-
 
     //! Returns the stencil of a cell center dof w.r.t. other cell center dofs
     const std::vector<GridIndexType>& operator() (CellCenterIdxType, CellCenterIdxType, const GridIndexType globalI) const
@@ -186,24 +184,9 @@ private:
     {
         if(stencil.empty())
         {
-            for(int i = 0; i < stencilOrder_ - 1; i++)
-            {
-                if(scvf.hasBackwardNeighbor(i))
-                {
-                    stencil.push_back(scvf.axisData().inAxisBackwardDofs[i]);
-                }
-            }
-
             stencil.push_back(scvf.axisData().selfDof);
             stencil.push_back(scvf.axisData().oppositeDof);
-
-            for(int i = 0; i < stencilOrder_ - 1; i++)
-            {
-                if(scvf.hasForwardNeighbor(i))
-                {
-                    stencil.push_back(scvf.axisData().inAxisForwardDofs[i]);
-                }
-            }
+            addHigherOrderInAxisDofs_(scvf, stencil, std::integral_constant<bool, useHigherOrder>{});
         }
 
         for(const auto& data : scvf.pairData())
@@ -214,21 +197,33 @@ private:
                 stencil.push_back(data.normalPair.second);
 
             // add parallel dofs
-            for (int i = 0; i < stencilOrder_ /*data.parallelDofs.size()*/; i++)
+            for (SmallLocalIndex i = 0; i < upwindSchemeOrder; i++)
             {
-                if(!(data.parallelDofs[i] < 0))
-                {
+                if (data.hasParallelNeighbor[i])
                     stencil.push_back(data.parallelDofs[i]);
-                }
             }
         }
     }
+
+    void addHigherOrderInAxisDofs_(const SubControlVolumeFace& scvf, Stencil& stencil, std::false_type) {}
+
+    void addHigherOrderInAxisDofs_(const SubControlVolumeFace& scvf, Stencil& stencil, std::true_type)
+    {
+        for (SmallLocalIndex i = 0; i < upwindSchemeOrder - 1; i++)
+        {
+            if (scvf.hasBackwardNeighbor(i))
+                stencil.push_back(scvf.axisData().inAxisBackwardDofs[i]);
+
+            if (scvf.hasForwardNeighbor(i))
+                stencil.push_back(scvf.axisData().inAxisForwardDofs[i]);
+        }
+    }
+
 
     CellCenterToCellCenterMap cellCenterToCellCenterMap_;
     CellCenterToFaceMap cellCenterToFaceMap_;
     FaceToCellCenterMap faceToCellCenterMap_;
     FaceToFaceMap faceToFaceMap_;
-    int stencilOrder_;
 };
 
 } // end namespace Dumux

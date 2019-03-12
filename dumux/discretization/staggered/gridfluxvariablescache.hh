@@ -28,7 +28,7 @@
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/staggered/elementfluxvariablescache.hh>
 
-#include <dumux/freeflow/higherorderapproximation.hh>
+#include <dumux/freeflow/staggeredupwindmethods.hh>
 
 namespace Dumux {
 
@@ -38,14 +38,16 @@ namespace Dumux {
  * \tparam P The problem type
  * \tparam FVC The flux variables cache type
  */
-template<class P, class FVC, class FVCF>
+template<class P, class FVC, class FVCF, int upwOrder>
 struct StaggeredDefaultGridFluxVariablesCacheTraits
 {
     using Problem = P;
     using FluxVariablesCache = FVC;
     using FluxVariablesCacheFiller = FVCF;
+
     template<class GridFluxVariablesCache, bool cachingEnabled>
     using LocalView = StaggeredElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
+    static constexpr int upwindSchemeOrder = upwOrder;
 };
 
 /*!
@@ -56,7 +58,8 @@ template<class Problem,
          class FluxVariablesCache,
          class FluxVariablesCacheFiller,
          bool EnableGridFluxVariablesCache = false,
-         class Traits = StaggeredDefaultGridFluxVariablesCacheTraits<Problem, FluxVariablesCache, FluxVariablesCacheFiller> >
+         int upwindSchemeOrder = 1,
+         class Traits = StaggeredDefaultGridFluxVariablesCacheTraits<Problem, FluxVariablesCache, FluxVariablesCacheFiller, upwindSchemeOrder>>
 class StaggeredGridFluxVariablesCache;
 
 /*!
@@ -64,17 +67,18 @@ class StaggeredGridFluxVariablesCache;
  * \brief Flux variables cache class for staggered models.
           Specialization in case of storing the flux cache.
  */
-template<class P, class FVC, class FVCF, class Traits>
-class StaggeredGridFluxVariablesCache<P, FVC, FVCF, true, Traits>
+template<class P, class FVC, class FVCF, int upwindSchemeOrder, class Traits>
+class StaggeredGridFluxVariablesCache<P, FVC, FVCF, true, upwindSchemeOrder, Traits>
 {
     using Problem = typename Traits::Problem;
-    using ThisType = StaggeredGridFluxVariablesCache<P, FVC, FVCF, true, Traits>;
+    using ThisType = StaggeredGridFluxVariablesCache<P, FVC, FVCF, true, upwindSchemeOrder, Traits>;
 
 public:
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
     using Scalar = typename FluxVariablesCache::Scalar;
 
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
     //! export the flux variable cache filler type
     using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
 
@@ -86,7 +90,7 @@ public:
 
     StaggeredGridFluxVariablesCache(const Problem& problem, const std::string& paramGroup = "")
     : problemPtr_(&problem)
-    , higherOrderApproximation_(paramGroup)
+    , staggeredUpwindMethods_(paramGroup)
       {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
@@ -123,10 +127,10 @@ public:
         }
     }
 
-    //! Return the HigherOrderApproximation
-    const HigherOrderApproximation<Scalar>& higherOrderApproximation() const
+    //! Return the StaggeredUpwindMethods
+    const StaggeredUpwindMethods<Scalar, upwindSchemeOrder>& staggeredUpwindMethods() const
     {
-        return higherOrderApproximation_;
+        return staggeredUpwindMethods_;
     }
 
     const Problem& problem() const
@@ -141,7 +145,7 @@ public:
 
 private:
     const Problem* problemPtr_;
-    HigherOrderApproximation<Scalar> higherOrderApproximation_;
+    StaggeredUpwindMethods<Scalar, upwindSchemeOrder> staggeredUpwindMethods_;
 
     std::vector<FluxVariablesCache> fluxVarsCache_;
     std::vector<std::size_t> globalScvfIndices_;
@@ -152,11 +156,11 @@ private:
  * \brief Flux variables cache class for staggered models.
           Specialization in case of not storing the flux cache.
  */
-template<class P, class FVC, class FVCF, class Traits>
-class StaggeredGridFluxVariablesCache<P, FVC, FVCF, false, Traits>
+template<class P, class FVC, class FVCF, int upwindSchemeOrder, class Traits>
+class StaggeredGridFluxVariablesCache<P, FVC, FVCF, false, upwindSchemeOrder, Traits>
 {
     using Problem = typename Traits::Problem;
-    using ThisType = StaggeredGridFluxVariablesCache<P, FVC, FVCF, false, Traits>;
+    using ThisType = StaggeredGridFluxVariablesCache<P, FVC, FVCF, false, upwindSchemeOrder, Traits>;
 
 public:
     //! export the flux variable cache type
@@ -174,7 +178,7 @@ public:
 
     StaggeredGridFluxVariablesCache(const Problem& problem, const std::string& paramGroup = "")
     : problemPtr_(&problem)
-    , higherOrderApproximation_(paramGroup)
+    , staggeredUpwindMethods_(paramGroup)
       {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
@@ -187,15 +191,15 @@ public:
     const Problem& problem() const
     { return *problemPtr_; }
 
-    //! Return the HigherOrderApproximation
-    const HigherOrderApproximation<Scalar>& higherOrderApproximation() const
+    //! Return the UpwindingMethods
+    const StaggeredUpwindMethods<Scalar, upwindSchemeOrder>& staggeredUpwindMethods() const
     {
-        return higherOrderApproximation_;
+        return staggeredUpwindMethods_;
     }
 
 private:
     const Problem* problemPtr_;
-    HigherOrderApproximation<Scalar> higherOrderApproximation_;
+    StaggeredUpwindMethods<Scalar, upwindSchemeOrder> staggeredUpwindMethods_;
 
 };
 

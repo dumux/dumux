@@ -20,8 +20,8 @@
   * \brief This file contains different higher order methods for approximating the velocity.
   */
 
-#ifndef DUMUX_HIGHER_ORDER_VELOCITY_APPROXIMATION_HH
-#define DUMUX_HIGHER_ORDER_VELOCITY_APPROXIMATION_HH
+#ifndef DUMUX_UPWINDING_METHODS_HH
+#define DUMUX_UPWINDING_METHODS_HH
 
 #include <cmath>
 #include <functional>
@@ -47,17 +47,19 @@ enum class DifferencingScheme
 /**
   * \brief This file contains different higher order methods for approximating the velocity.
   */
-template<class Scalar>
-class HigherOrderApproximation
+template<class Scalar, int upwindSchemeOrder>
+class StaggeredUpwindMethods
 {
 public:
-    HigherOrderApproximation(const std::string& paramGroup = "")
+    StaggeredUpwindMethods(const std::string& paramGroup = "")
     {
-        if (hasParamInGroup(paramGroup, "Discretization.TvdApproach"))
+        upwindWeight_ = getParamFromGroup<Scalar>(paramGroup, "Flux.UpwindWeight");
+
+        if (upwindSchemeOrder > 1)
         {
             // Read the runtime parameters
-            tvdApproach_ = tvdApproachFromString(getParamFromGroup<std::string>(paramGroup, "Discretization.TvdApproach"));
-            differencingScheme_ = differencingSchemeFromString(getParamFromGroup<std::string>(paramGroup, "Discretization.DifferencingScheme"));
+            tvdApproach_ = tvdApproachFromString(getParamFromGroup<std::string>(paramGroup, "Flux.TvdApproach", "Uniform"));
+            differencingScheme_ = differencingSchemeFromString(getParamFromGroup<std::string>(paramGroup, "Flux.DifferencingScheme", "Minmod"));
 
             // Assign the limiter_ depending on the differencing scheme
             switch (differencingScheme_)
@@ -107,6 +109,33 @@ public:
                     break;
                 }
             }
+
+            if (!hasParamInGroup(paramGroup, "Flux.TvdApproach"))
+            {
+                std::cout << "No TvdApproach specified. Defaulting to the Uniform method." << "\n";
+                std::cout << "Other available TVD approaches for uniform (and nonuniform) grids are as follows: \n"
+                          << "  " << tvdApproachToString(TvdApproach::uniform) << ": assumes a Uniform cell size distribution\n"
+                          << "  " << tvdApproachToString(TvdApproach::li) << ": Li's approach for nonuniform cell sizes\n"
+                          << "  " << tvdApproachToString(TvdApproach::hou) << ": Hou's approach for nonuniform cell sizes \n";
+                std::cout << "Each approach can be specified as written above in the Flux group under the title TvdApproach in your input file. \n";
+            }
+            if (!hasParamInGroup(paramGroup, "Flux.DifferencingScheme"))
+            {
+
+                std::cout << "No DifferencingScheme specified. Defaulting to the Minmod scheme." << "\n";
+                std::cout << "Other available Differencing Schemes are as follows: \n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::vanleer) << ": The Vanleer flux limiter\n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::vanalbada) << ": The Vanalbada flux limiter\n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::minmod) << ": The Minmod flux limiter\n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::superbee) << ": The Superbee flux limiter\n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::umist) << ": The Umist flux limiter\n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::mclimiter) << ": The Mclimiter flux limiter\n"
+                          << "  " << differencingSchemeToString(DifferencingScheme::wahyd) << ": The Wahyd flux limiter";
+                std::cout << "Each scheme can be specified as written above in the Flux group under the variable DifferencingScheme in your input file. \n";
+            }
+
+            std::cout << "Using the tvdApproach \"" << tvdApproachToString(tvdApproach_)
+                      << "\" and the differencing Scheme \" " << differencingSchemeToString(differencingScheme_) << "\" \n";
         }
         else
         {
@@ -127,9 +156,9 @@ public:
         if (tvd == "Hou") return TvdApproach::hou;
         DUNE_THROW(ParameterException, "\nThis tvd approach : \"" << tvd << "\" is not implemented.\n"
                                        << "The available TVD approaches for uniform (and nonuniform) grids are as follows: \n"
-                                       << tvdApproachToString(TvdApproach::uniform) << ": Assumes a uniform cell size distribution\n"
-                                       << tvdApproachToString(TvdApproach::li) << ": Li's approach for nonuniform cell sizes\n"
-                                       << tvdApproachToString(TvdApproach::hou) << ": Hou's approach for nonuniform cell sizes");
+                                       << tvdApproachToString(TvdApproach::uniform) << ": assumes a uniform cell size distribution\n"
+                                       << tvdApproachToString(TvdApproach::li) << ": li's approach for nonuniform cell sizes\n"
+                                       << tvdApproachToString(TvdApproach::hou) << ": hou's approach for nonuniform cell sizes");
     }
 
     /**
@@ -152,13 +181,13 @@ public:
      */
     DifferencingScheme differencingSchemeFromString(const std::string& differencingScheme)
     {
-        if (differencingScheme == "vanleer") return DifferencingScheme::vanleer;
-        if (differencingScheme == "vanalbada") return DifferencingScheme::vanalbada;
-        if (differencingScheme == "minmod") return DifferencingScheme::minmod;
-        if (differencingScheme == "superbee") return DifferencingScheme::superbee;
-        if (differencingScheme == "umist") return DifferencingScheme::umist;
-        if (differencingScheme == "mclimiter") return DifferencingScheme::mclimiter;
-        if (differencingScheme == "wahyd") return DifferencingScheme::wahyd;
+        if (differencingScheme == "Vanleer") return DifferencingScheme::vanleer;
+        if (differencingScheme == "Vanalbada") return DifferencingScheme::vanalbada;
+        if (differencingScheme == "Minmod") return DifferencingScheme::minmod;
+        if (differencingScheme == "Superbee") return DifferencingScheme::superbee;
+        if (differencingScheme == "Umist") return DifferencingScheme::umist;
+        if (differencingScheme == "Mclimiter") return DifferencingScheme::mclimiter;
+        if (differencingScheme == "Wahyd") return DifferencingScheme::wahyd;
         DUNE_THROW(ParameterException, "\nThis differencing scheme: \"" << differencingScheme << "\" is not implemented.\n"
                                        << "The available differencing schemes are as follows: \n"
                                        << differencingSchemeToString(DifferencingScheme::vanleer) << ": The Vanleer flux limiter\n"
@@ -177,13 +206,13 @@ public:
     {
         switch (differencingScheme)
         {
-            case DifferencingScheme::vanleer: return "vanleer";
-            case DifferencingScheme::vanalbada: return "vanalbada";
-            case DifferencingScheme::minmod: return "minmod";
-            case DifferencingScheme::superbee: return "superbee";
-            case DifferencingScheme::umist: return "umist";
-            case DifferencingScheme::mclimiter: return "mclimiter";
-            case DifferencingScheme::wahyd: return "wahyd";
+            case DifferencingScheme::vanleer: return "Vanleer";
+            case DifferencingScheme::vanalbada: return "Vanalbada";
+            case DifferencingScheme::minmod: return "Minmod";
+            case DifferencingScheme::superbee: return "Superbee";
+            case DifferencingScheme::umist: return "Umist";
+            case DifferencingScheme::mclimiter: return "Mclimiter";
+            case DifferencingScheme::wahyd: return "Wahyd";
             default: return "Invalid"; // should never be reached
         }
     }
@@ -191,68 +220,19 @@ public:
     /**
       * \brief Upwind Method
       */
-    Scalar upwind(const Scalar downstreamVelocity,
-                  const Scalar upstreamVelocity,
-                  const Scalar density,
-                  const Scalar upwindWeight) const
+    Scalar upwind(const Scalar downstreamMomentum,
+                  const Scalar upstreamMomentum) const
     {
-        return (upwindWeight * upstreamVelocity + (1.0 - upwindWeight) * downstreamVelocity) * density;
-    }
-
-    /**
-      * \brief Central Differencing Method
-      */
-    Scalar centralDifference(const Scalar downstreamVelocity,
-                             const Scalar upstreamVelocity,
-                             const Scalar density) const
-    {
-        return (0.5 * (upstreamVelocity + downstreamVelocity)) * density;
-    }
-
-    /**
-      * \brief Linear Upwind Method
-      */
-    Scalar linearUpwind(const Scalar upstreamVelocity,
-                        const Scalar upUpstreamVelocity,
-                        const Scalar upstreamToDownstreamDistance,
-                        const Scalar upUpstreamToUpstreamDistance,
-                        const Scalar density) const
-    {
-        Scalar zeroOrder = upstreamVelocity;
-        Scalar firstOrder = -1.0 * ((upstreamVelocity - upUpstreamVelocity) / upUpstreamToUpstreamDistance) * ( upstreamToDownstreamDistance / -2.0);
-        return (zeroOrder + firstOrder) * density;
-    }
-
-    /**
-      * \brief QUICK upwinding Scheme: Quadratic Upstream Interpolation for Convective Kinematics
-      */
-    Scalar upwindQUICK(const Scalar downstreamVelocity,
-                       const Scalar upstreamVelocity,
-                       const Scalar upUpstreamVelocity,
-                       const Scalar upstreamToDownstreamDistance,
-                       const Scalar upUpstreamToUpstreamDistance,
-                       const Scalar density) const
-    {
-        Scalar normalDistance = (upUpstreamToUpstreamDistance + upstreamToDownstreamDistance) / 2.0;
-        Scalar zeroOrder = upstreamVelocity;
-        Scalar firstOrder = ((downstreamVelocity - upstreamVelocity) / 2.0);
-        Scalar secondOrder = -(((downstreamVelocity - upstreamVelocity) / upstreamToDownstreamDistance) - ((upstreamVelocity - upUpstreamVelocity) / upUpstreamToUpstreamDistance))
-                           * upstreamToDownstreamDistance * upstreamToDownstreamDistance / (8.0 * normalDistance);
-        return (zeroOrder + firstOrder + secondOrder) * density;
+        return (upwindWeight_ * upstreamMomentum + (1.0 - upwindWeight_) * downstreamMomentum);
     }
 
     /**
      * \brief Tvd Scheme: Total Variation Diminishing
      *
      */
-    Scalar tvd(const Scalar downstreamVelocity,
-               const Scalar upstreamVelocity,
-               const Scalar upUpstreamVelocity,
-               const Scalar upstreamToDownstreamDistance,
-               const Scalar upUpstreamToUpstreamDistance,
-               const Scalar downstreamStaggeredCellSize,
+    Scalar tvd(const std::array<Scalar,3>& momenta,
+               const std::array<Scalar,3>& distances,
                const bool selfIsUpstream,
-               const Scalar density,
                const TvdApproach tvdApproach) const
     {
         Scalar momentum = 0.0;
@@ -260,17 +240,17 @@ public:
         {
             case TvdApproach::uniform :
             {
-                momentum += tvdUniform(downstreamVelocity, upstreamVelocity, upUpstreamVelocity, density);
+                momentum += tvdUniform(momenta, distances, selfIsUpstream);
                 break;
             }
             case TvdApproach::li :
             {
-                momentum += tvdLi(downstreamVelocity, upstreamVelocity, upUpstreamVelocity, upstreamToDownstreamDistance, upUpstreamToUpstreamDistance, selfIsUpstream, density);
+                momentum += tvdLi(momenta, distances, selfIsUpstream);
                 break;
             }
             case TvdApproach::hou :
             {
-                momentum += tvdHou(downstreamVelocity, upstreamVelocity, upUpstreamVelocity, upstreamToDownstreamDistance, upUpstreamToUpstreamDistance, downstreamStaggeredCellSize, density);
+                momentum += tvdHou(momenta, distances, selfIsUpstream);
                 break;
             }
             default:
@@ -287,22 +267,24 @@ public:
      *
      * This function assumes the cell size distribution to be uniform.
      */
-    Scalar tvdUniform(const Scalar downstreamVelocity,
-                      const Scalar upstreamVelocity,
-                      const Scalar upUpstreamVelocity,
-                      const Scalar density) const
+    Scalar tvdUniform(const std::array<Scalar,3>& momenta,
+                      const std::array<Scalar,3>& distances,
+                      const bool selfIsUpstream) const
     {
         using std::isfinite;
-        const Scalar ratio = (upstreamVelocity - upUpstreamVelocity) / (downstreamVelocity - upstreamVelocity);
+        const Scalar downstreamMomentum = momenta[0];
+        const Scalar upstreamMomentum = momenta[1];
+        const Scalar upUpstreamMomentum = momenta[2];
+        const Scalar ratio = (upstreamMomentum - upUpstreamMomentum) / (downstreamMomentum - upstreamMomentum);
 
         // If the velocity field is uniform (like at the first newton step) we get a NaN
         if(ratio > 0.0 && isfinite(ratio))
         {
-            const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (downstreamVelocity - upstreamVelocity);
-            return density * (upstreamVelocity + secondOrderTerm);
+            const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (downstreamMomentum - upstreamMomentum);
+            return (upstreamMomentum + secondOrderTerm);
         }
         else
-            return density * upstreamVelocity;
+            return upstreamMomentum;
     }
 
     /**
@@ -312,31 +294,33 @@ public:
       * It tries to reconstruct the value for the velocity at the upstream-upstream point
       * if the grid was uniform.
       */
-    Scalar tvdLi(const Scalar downstreamVelocity,
-                 const Scalar upstreamVelocity,
-                 const Scalar upUpstreamVelocity,
-                 const Scalar upstreamToDownstreamDistance,
-                 const Scalar upUpstreamToUpstreamDistance,
-                 const bool selfIsUpstream,
-                 const Scalar density) const
+    Scalar tvdLi(const std::array<Scalar,3>& momenta,
+                 const std::array<Scalar,3>& distances,
+                 const bool selfIsUpstream) const
     {
         using std::isfinite;
-        // I need the information of selfIsUpstream to get the correct sign because upUpstreamToUpstreamDistance is always positive
-        const Scalar upUpstreamGradient = (upstreamVelocity - upUpstreamVelocity) / upUpstreamToUpstreamDistance * selfIsUpstream;
+        const Scalar downstreamMomentum = momenta[0];
+        const Scalar upstreamMomentum = momenta[1];
+        const Scalar upUpstreamMomentum = momenta[2];
+        const Scalar upstreamToDownstreamDistance = distances[0];
+        const Scalar upUpstreamToUpstreamDistance = distances[1];
+
+        // selfIsUpstream is required to get the correct sign because upUpstreamToUpstreamDistance is always positive
+        const Scalar upUpstreamGradient = (upstreamMomentum - upUpstreamMomentum) / upUpstreamToUpstreamDistance * selfIsUpstream;
 
         // Distance between the upUpstream node and the position where it should be if the grid were uniform.
         const Scalar correctionDistance = upUpstreamToUpstreamDistance - upstreamToDownstreamDistance;
-        const Scalar reconstrutedUpUpstreamVelocity = upUpstreamVelocity + upUpstreamGradient * correctionDistance;
-        const Scalar ratio = (upstreamVelocity - reconstrutedUpUpstreamVelocity) / (downstreamVelocity - upstreamVelocity);
+        const Scalar reconstrutedUpUpstreamVelocity = upUpstreamMomentum + upUpstreamGradient * correctionDistance;
+        const Scalar ratio = (upstreamMomentum - reconstrutedUpUpstreamVelocity) / (downstreamMomentum - upstreamMomentum);
 
         // If the velocity field is uniform (like at the first newton step) we get a NaN
         if(ratio > 0.0 && isfinite(ratio))
         {
-            const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (downstreamVelocity - upstreamVelocity);
-            return density * (upstreamVelocity + secondOrderTerm);
+            const Scalar secondOrderTerm = 0.5 * limiter_(ratio, 2.0) * (downstreamMomentum - upstreamMomentum);
+            return (upstreamMomentum + secondOrderTerm);
         }
         else
-            return density * upstreamVelocity;
+            return upstreamMomentum;
     }
 
     /**
@@ -345,16 +329,18 @@ public:
      * This function manages the non uniformities of the grid according to [Hou, Simons, Hinkelmann 2007].
      * It should behave better then the Li's version in very stretched grids.
      */
-    Scalar tvdHou(const Scalar downstreamVelocity,
-                  const Scalar upstreamVelocity,
-                  const Scalar upUpstreamVelocity,
-                  const Scalar upstreamToDownstreamDistance,
-                  const Scalar upUpstreamToUpstreamDistance,
-                  const Scalar downstreamStaggeredCellSize,
-                  const Scalar density) const
+    Scalar tvdHou(const std::array<Scalar,3>& momenta,
+                  const std::array<Scalar,3>& distances,
+                  const bool selfIsUpstream) const
     {
         using std::isfinite;
-        const Scalar ratio = (upstreamVelocity - upUpstreamVelocity) / (downstreamVelocity - upstreamVelocity)
+        const Scalar downstreamMomentum = momenta[0];
+        const Scalar upstreamMomentum = momenta[1];
+        const Scalar upUpstreamMomentum = momenta[2];
+        const Scalar upstreamToDownstreamDistance = distances[0];
+        const Scalar upUpstreamToUpstreamDistance = distances[1];
+        const Scalar downstreamStaggeredCellSize = distances[2];
+        const Scalar ratio = (upstreamMomentum - upUpstreamMomentum) / (downstreamMomentum - upstreamMomentum)
                            * upstreamToDownstreamDistance / upUpstreamToUpstreamDistance;
 
         // If the velocity field is uniform (like at the first newton step) we get a NaN
@@ -362,11 +348,11 @@ public:
         {
             const Scalar upstreamStaggeredCellSize = 0.5 * (upstreamToDownstreamDistance + upUpstreamToUpstreamDistance);
             const Scalar R = (upstreamStaggeredCellSize + downstreamStaggeredCellSize) / upstreamStaggeredCellSize;
-            const Scalar secondOrderTerm = limiter_(ratio, R) / R * (downstreamVelocity - upstreamVelocity);
-            return density * (upstreamVelocity + secondOrderTerm);
+            const Scalar secondOrderTerm = limiter_(ratio, R) / R * (downstreamMomentum - upstreamMomentum);
+            return (upstreamMomentum + secondOrderTerm);
         }
         else
-            return density * upstreamVelocity;
+            return upstreamMomentum;
     }
 
     /**
@@ -451,10 +437,11 @@ public:
 private:
     TvdApproach tvdApproach_;
     DifferencingScheme differencingScheme_;
+    Scalar upwindWeight_;
 
     std::function<Scalar(const Scalar, const Scalar)> limiter_;
 };
 
 } // end namespace Dumux
 
-#endif // DUMUX_HIGHER_ORDER_VELOCITY_APPROXIMATION_HH
+#endif // DUMUX_UPWINDING_METHODS_HH

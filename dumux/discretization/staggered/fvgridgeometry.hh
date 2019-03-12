@@ -157,8 +157,6 @@ public:
     { return this->fvGridGeometry_->numFaceDofs(); }
 };
 
-
-
 /*!
  * \ingroup StaggeredDiscretization
  * \brief Base class for the finite volume geometry vector for staggered models
@@ -193,6 +191,8 @@ class StaggeredFVGridGeometry<GV, true, Traits>
 public:
     //! export discretization method
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+    static constexpr int upwindSchemeOrder = Traits::upwindSchemeOrder;
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
@@ -213,6 +213,10 @@ public:
     static constexpr auto faceIdx()
     { return typename DofTypeIndices::FaceIdx{}; }
 
+    //! The order of the stencil built
+    static constexpr int upwindStencilOrder()
+    {   return upwindSchemeOrder; }
+
     using CellCenterFVGridGeometryType = CellCenterFVGridGeometry<ThisType>;
     using FaceFVGridGeometryType = FaceFVGridGeometry<ThisType>;
 
@@ -227,10 +231,6 @@ public:
         if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
-        if (hasParamInGroup(paramGroup, "Discretization.TvdApproach"))
-            stencilOrder_ = 2;
-        else
-            stencilOrder_ = 1;
     }
 
     //! The total number of sub control volumes
@@ -251,11 +251,6 @@ public:
         return numBoundaryScvf_;
     }
 
-    //! The order of the stencil built
-    std::size_t order() const
-    {
-        return stencilOrder_;
-    }
 
     //! The total number of intersections
     std::size_t numIntersections() const
@@ -351,7 +346,6 @@ public:
         }
 
         // build the connectivity map for an effecient assembly
-        connectivityMap_.setStencilOrder(stencilOrder_);
         connectivityMap_.update(*this);
     }
 
@@ -423,7 +417,6 @@ private:
     // mappers
     ConnectivityMap connectivityMap_;
     IntersectionMapper intersectionMapper_;
-    int stencilOrder_;
 
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
@@ -455,6 +448,8 @@ class StaggeredFVGridGeometry<GV, false, Traits>
 public:
     //! export discretization method
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+    static constexpr int upwindSchemeOrder = Traits::upwindSchemeOrder;
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
     using GeometryHelper = typename Traits::GeometryHelper;
 
@@ -477,6 +472,10 @@ public:
     static constexpr auto faceIdx()
     { return typename DofTypeIndices::FaceIdx{}; }
 
+    //! The order of the stencil built
+    static constexpr int upwindStencilOrder()
+    {   return upwindSchemeOrder; }
+
     using CellCenterFVGridGeometryType = CellCenterFVGridGeometry<ThisType>;
     using FaceFVGridGeometryType = FaceFVGridGeometry<ThisType>;
 
@@ -491,10 +490,6 @@ public:
         if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
-        if (hasParamInGroup(paramGroup, "Discretization.TvdApproach"))
-            stencilOrder_ = 2;
-        else
-            stencilOrder_ = 1;
     }
 
     //! update all fvElementGeometries (do this again after grid adaption)
@@ -547,7 +542,6 @@ public:
         }
 
         // build the connectivity map for an effecient assembly
-        connectivityMap_.setStencilOrder(stencilOrder_);
         connectivityMap_.update(*this);
     }
 
@@ -561,12 +555,6 @@ public:
     std::size_t numScvf() const
     {
         return numScvf_;
-    }
-
-    //! The order of the stencil built
-    std::size_t order() const
-    {
-        return stencilOrder_;
     }
 
     //! The total number of boundary sub control volume faces
@@ -652,7 +640,6 @@ private:
     // mappers
     ConnectivityMap connectivityMap_;
     IntersectionMapper intersectionMapper_;
-    int stencilOrder_;
 
     //! vectors that store the global data
     std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;

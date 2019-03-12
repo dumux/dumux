@@ -81,12 +81,13 @@ template<class TypeTag>
 struct GridFluxVariablesCache<TypeTag, TTag::StaggeredModel>
 {
 private:
-    static constexpr auto enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
     using FluxVariablesCacheFiller = FluxVariablesCaching::EmptyCacheFiller;
+    static constexpr auto enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
 public:
-    using type = StaggeredGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
+    using type = StaggeredGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache, upwindSchemeOrder>;
 };
 
 //! Set the face solution type

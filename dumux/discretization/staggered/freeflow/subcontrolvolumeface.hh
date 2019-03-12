@@ -38,27 +38,50 @@ namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
+ * \brief Default traits class to be used for the sub-control volume faces
+ *        for the free-flow staggered finite volume scheme
+ * \tparam GridView the type of the grid view
+ * \tparam upwindSchemeOrder the order of the upwind scheme
+ */
+template<class GridView, int upwindSchemeOrder>
+struct FreeFlowStaggeredDefaultScvfGeometryTraits
+{
+    using Geometry = typename GridView::template Codim<1>::Geometry;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
+    using Scalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using PairData = typename FreeFlowStaggeredGeometryHelper<GridView, upwindSchemeOrder>::PairData;
+    using AxisData = typename FreeFlowStaggeredGeometryHelper<GridView, upwindSchemeOrder>::AxisData;
+};
+
+/*!
+ * \ingroup StaggeredDiscretization
  * \brief Class for a sub control volume face in the staggered method, i.e a part of the boundary
  *        of a sub control volume we compute fluxes on. This is a specialization for free flow models.
  */
 template<class GV,
-         class T = StaggeredDefaultScvfGeometryTraits<GV> >
+         int upwindSchemeOrder,
+         class T = FreeFlowStaggeredDefaultScvfGeometryTraits<GV, upwindSchemeOrder>>
 class FreeFlowStaggeredSubControlVolumeFace
-: public SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<GV, T>, T>
+: public SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<GV, upwindSchemeOrder, T>, T>
 {
-    using ThisType = FreeFlowStaggeredSubControlVolumeFace<GV, T>;
+    using ThisType = FreeFlowStaggeredSubControlVolumeFace<GV, upwindSchemeOrder, T>;
     using ParentType = SubControlVolumeFaceBase<ThisType, T>;
     using Geometry = typename T::Geometry;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
-    using GeometryHelper = FreeFlowStaggeredGeometryHelper<GV>;
+
+    using PairData = typename T::PairData;
+    using AxisData = typename T::AxisData;
 
     using Scalar = typename T::Scalar;
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
 
     static constexpr int numPairs = 2 * (dimworld - 1);
-    static constexpr int geometryOrder = GeometryHelper::geometryOrder;
+
+    static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
 public:
     using GlobalPosition = typename T::GlobalPosition;
@@ -86,7 +109,7 @@ public:
       boundary_(is.boundary()),
 
       axisData_(geometryHelper.axisData()),
-      pairData_(geometryHelper.pairData()),
+      pairData_(std::move(geometryHelper.pairData())),
       localFaceIdx_(geometryHelper.localFaceIndex()),
       dirIdx_(geometryHelper.directionIndex()),
       outerNormalSign_(sign(unitOuterNormal_[directionIndex()])),
@@ -206,19 +229,19 @@ public:
     }
 
     //! Returns the data for one sub face
-    const PairData<Scalar, GlobalPosition, geometryOrder>& pairData(const int idx) const
+    const PairData& pairData(const int idx) const
     {
         return pairData_[idx];
     }
 
     //! Return an array of all pair data
-    const auto& pairData() const
+    const std::array<PairData, numPairs>& pairData() const
     {
         return pairData_;
     }
 
     //! Return an array of all pair data
-    const auto& axisData() const
+    const AxisData& axisData() const
     {
         return axisData_;
     }
@@ -237,7 +260,7 @@ public:
     */
     bool hasParallelNeighbor(const int localSubFaceIdx, const int parallelDegreeIdx) const
     {
-        return !(pairData(localSubFaceIdx).parallelDofs[parallelDegreeIdx] < 0);
+        return pairData(localSubFaceIdx).hasParallelNeighbor[parallelDegreeIdx];
     }
 
    /*!
@@ -247,7 +270,7 @@ public:
     */
     bool hasOuterNormal(const int localSubFaceIdx) const
     {
-        return !(pairData_[localSubFaceIdx].normalPair.second < 0);
+        return pairData(localSubFaceIdx).hasNormalNeighbor;
     }
 
    /*!
@@ -255,9 +278,10 @@ public:
     *
     * \param backwardIdx The index describing how many faces backward this dof is from the opposite face
     */
+    template<bool enable = useHigherOrder, std::enable_if_t<enable, int> = 0>
     bool hasBackwardNeighbor(const int backwardIdx) const
     {
-        return !(axisData().inAxisBackwardDofs[backwardIdx] < 0);
+        return axisData().hasBackwardNeighbor[backwardIdx];
     }
 
    /*!
@@ -265,9 +289,10 @@ public:
     *
     * \param forwardIdx The index describing how many faces forward this dof is of the self face
     */
+    template<bool enable = useHigherOrder, std::enable_if_t<enable, int> = 0>
     bool hasForwardNeighbor(const int forwardIdx) const
     {
-        return !(axisData().inAxisForwardDofs[forwardIdx] < 0);
+        return axisData().hasForwardNeighbor[forwardIdx];
     }
 
     //! Returns the dof of the face
@@ -325,8 +350,8 @@ private:
 
     int dofIdx_;
     Scalar selfToOppositeDistance_;
-    AxisData<Scalar, geometryOrder> axisData_;
-    std::array<PairData<Scalar, GlobalPosition, geometryOrder>, numPairs> pairData_;
+    AxisData axisData_;
+    std::array<PairData, numPairs> pairData_;
 
     int localFaceIdx_;
     unsigned int dirIdx_;

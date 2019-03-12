@@ -81,9 +81,10 @@ template<class TypeTag>
 struct FVGridGeometry<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using Traits = StaggeredFreeFlowDefaultFVGridGeometryTraits<GridView>;
+    static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Traits = StaggeredFreeFlowDefaultFVGridGeometryTraits<GridView, upwindSchemeOrder>;
 public:
     using type = StaggeredFVGridGeometry<GridView, enableCache, Traits>;
 };
@@ -95,8 +96,9 @@ struct FaceVariables<TypeTag, TTag::StaggeredFreeFlowModel>
 private:
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
+    static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
 public:
-    using type = StaggeredFaceVariables<FacePrimaryVariables, GridView::dimension>;
+    using type = StaggeredFaceVariables<FacePrimaryVariables, GridView::dimension, upwindSchemeOrder>;
 };
 
 //! Set the default global volume variables cache vector class
@@ -127,6 +129,12 @@ struct VelocityOutput<TypeTag, TTag::StaggeredFreeFlowModel>
     using type = StaggeredFreeFlowVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>,
                                                  GetPropType<TypeTag, Properties::SolutionVector>>;
 };
+
+/*!
+ * \brief  Set the order of the upwinding scheme to 1 by default.
+ */
+template<class TypeTag>
+struct UpwindSchemeOrder<TypeTag, TTag::StaggeredFreeFlowModel> { static constexpr int value = 1; };
 
 } // namespace Properties
 } // namespace Dumux
