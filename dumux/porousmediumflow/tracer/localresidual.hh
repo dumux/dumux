@@ -85,7 +85,8 @@ public:
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 storage[compIdx] += volVars.porosity()
                                     * volVars.molarDensity(phaseIdx)
-                                    * volVars.moleFraction(phaseIdx, compIdx);
+                                    * volVars.moleFraction(phaseIdx, compIdx)
+                                    * volVars.saturation(phaseIdx);
         }
         // formulation with mass balances
         else
@@ -93,7 +94,9 @@ public:
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 storage[compIdx] += volVars.porosity()
                                     * volVars.density(phaseIdx)
-                                    * volVars.massFraction(phaseIdx, compIdx);
+                                    * volVars.massFraction(phaseIdx, compIdx)
+                                    * volVars.saturation(phaseIdx);
+
         }
 
         return storage;
