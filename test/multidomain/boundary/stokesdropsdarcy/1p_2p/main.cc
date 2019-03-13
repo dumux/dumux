@@ -48,7 +48,7 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
-#include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
+#include <dumux/multidomain/boundary/stokesdropsdarcy/couplingmanager.hh>
 
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -70,21 +70,21 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::StokesOneP>
 {
     using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::InterfaceTwoP, Properties::TTag::DarcyTwoP>;
-    using type = Dumux::StokesDarcyCouplingManager<Traits>;
+    using type = Dumux::StokesDropsDarcyCouplingManager<Traits>;
 };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::InterfaceTwoP>
 {
     using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOneP, Properties::TTag::StokesOneP, TypeTag, Properties::TTag::DarcyTwoP>;
-    using type = Dumux::StokesDarcyCouplingManager<Traits>;
+    using type = Dumux::StokesDropsDarcyCouplingManager<Traits>;
 };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::DarcyTwoP>
 {
     using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOneP, Properties::TTag::StokesOneP, Properties::TTag::InterfaceTwoP, TypeTag>;
-    using type = Dumux::StokesDarcyCouplingManager<Traits>;
+    using type = Dumux::StokesDropsDarcyCouplingManager<Traits>;
 };
 
 template<class TypeTag>
@@ -175,7 +175,7 @@ int main(int argc, char** argv) try
     using Traits = StaggeredMultiDomainTraits<StokesTypeTag, StokesTypeTag, InterfaceTypeTag, DarcyTypeTag>;
 
     // the coupling manager
-    using CouplingManager = StokesDarcyCouplingManager<Traits>;
+    using CouplingManager = StokesDropsDarcyCouplingManager<Traits>;
     auto couplingManager = std::make_shared<CouplingManager>(stokesFvGridGeometry, interfaceFvGridGeometry, darcyFvGridGeometry);
 
     // the indices
@@ -208,7 +208,7 @@ int main(int argc, char** argv) try
 
     // apply initial solution for instationary problems
     stokesProblem->applyInitialSolution(sol);
-    interfaceProblem->applyInitialSolution(sol[intefaceIdx]);
+    interfaceProblem->applyInitialSolution(sol[interfaceIdx]);
     darcyProblem->applyInitialSolution(sol[darcyIdx]);
 
     auto solOld = sol;
@@ -219,6 +219,9 @@ int main(int argc, char** argv) try
     using StokesGridVariables = GetPropType<StokesTypeTag, Properties::GridVariables>;
     auto stokesGridVariables = std::make_shared<StokesGridVariables>(stokesProblem, stokesFvGridGeometry);
     stokesGridVariables->init(sol);
+    using InterfaceGridVariables = GetPropType<InterfaceTypeTag, Properties::GridVariables>;
+    auto interfaceGridVariables = std::make_shared<InterfaceGridVariables>(interfaceProblem, interfaceFvGridGeometry);
+    interfaceGridVariables->init(sol[interfaceIdx]);
     using DarcyGridVariables = GetPropType<DarcyTypeTag, Properties::GridVariables>;
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyFvGridGeometry);
     darcyGridVariables->init(sol[darcyIdx]);

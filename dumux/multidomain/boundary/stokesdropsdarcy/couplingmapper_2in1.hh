@@ -42,7 +42,8 @@ namespace Dumux {
 
 /*!
  * \ingroup StokesDropsDarcyCoupling
- * \brief Coupling mapper for Stokes and Darcy domains with equal dimension
+ * \brief Coupling mapper for Stokes and Darcy domains with equal dimension87
+ *
  *           and interface domain with lower dimension.
  */
 template<class MDTraits>
@@ -51,19 +52,19 @@ class StokesDropsDarcyCouplingMapper
     using Scalar = typename MDTraits::Scalar;
 
 public:
-    static constexpr auto stokesCellCenterIdx = typename MDTraits::template DomainIdx<0>();
-    static constexpr auto stokesFaceIdx = typename MDTraits::template DomainIdx<1>();
-    static constexpr auto cellCenterIdx = typename MDTraits::template DomainIdx<0>();
-    static constexpr auto faceIdx = typename MDTraits::template DomainIdx<1>();
+    static constexpr auto stokesCellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
+    static constexpr auto cellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto faceIdx = typename MDTraits::template SubDomain<1>::Index();
     static constexpr auto stokesIdx = stokesCellCenterIdx;
-    static constexpr auto interfaceIdx = typename MDTraits::template DomainIdx<2>();
-    static constexpr auto darcyIdx = typename MDTraits::template DomainIdx<3>();
+    static constexpr auto interfaceIdx = typename MDTraits::template SubDomain<2>::Index();
+    static constexpr auto darcyIdx = typename MDTraits::template SubDomain<3>::Index();
 
 private:
     // obtain the type tags of the sub problems
-    using StokesTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
-    using InterfaceTypeTag = typename MDTraits::template SubDomainTypeTag<2>;
-    using DarcyTypeTag = typename MDTraits::template SubDomainTypeTag<3>;
+    using StokesTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
+    using InterfaceTypeTag = typename MDTraits::template SubDomain<2>::TypeTag;
+    using DarcyTypeTag = typename MDTraits::template SubDomain<3>::TypeTag;
 
     struct ElementMapInfo // Stokes/Darcy to Interface
     {
@@ -84,12 +85,13 @@ private:
     using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
     using CouplingManager = GetPropType<StokesTypeTag, Properties::CouplingManager>;
 
-    static_assert(GetPropType<SubDomainTypeTag<stokesIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::staggered,
-                  "The free flow domain must use the staggered discretization");
-    static_assert(GetPropType<SubDomainTypeTag<interfaceIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa,
-                  "The interface domain must use the CCTpfa discretization");
-    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa,
-                  "The Darcy domain must use the CCTpfa discretization");
+    // TODO !!
+//    static_assert(GetPropType<SubDomainTypeTag<stokesIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::staggered,
+//                  "The free flow domain must use the staggered discretization");
+//    static_assert(GetPropType<SubDomainTypeTag<interfaceIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa,
+//                  "The interface domain must use the CCTpfa discretization");
+//    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa,
+//                  "The Darcy domain must use the CCTpfa discretization");
 
 public:
 
@@ -131,16 +133,16 @@ public:
             stokesFvGeometry.bindElement(stokesElement);
             const auto stokesElementIdx = stokesFvGridGeometry.elementMapper().index(stokesElement);
 
-            for(const auto& scvf : scvfs(stokesFvGeometry))
+            for(const auto& stokesScvf : scvfs(stokesFvGeometry))
             {
                 // skip the DOF if it is not on the boundary
-                if(!scvf.boundary())
+                if(!stokesScvf.boundary())
                     continue;
 
                 // get element intersecting with the scvf center
                 // for robustness, add epsilon in unit outer normal direction
-                const auto eps = (scvf.center() - stokesElement.geometry().center()).two_norm()*1e-8;
-                auto globalPos = scvf.center(); globalPos.axpy(eps, scvf.unitOuterNormal());
+                const auto eps = (stokesScvf.center() - stokesElement.geometry().center()).two_norm()*1e-8;
+                auto globalPos = stokesScvf.center(); globalPos.axpy(eps, stokesScvf.unitOuterNormal());
                 const auto darcyElementIdx = intersectingEntities(globalPos, darcyFvGridGeometry.boundingBoxTree());
                 // TODO !!
 //                const auto interfaceElementIdx = intersectingEntities(globalPos[0], interfaceFvGridGeometry.boundingBoxTree());
@@ -157,7 +159,7 @@ public:
 //                    DUNE_THROW(Dune::InvalidStateException, "Stokes face dof should only intersect with one interface element");
 
                 const auto stokesCCDofIdx = stokesElementIdx;
-                const auto stokesFaceDofIdx = scvf.dofIndex();
+                const auto stokesFaceDofIdx = stokesScvf.dofIndex();
                 const auto darcyDofIdx = darcyElementIdx[0];
                 const auto interfaceDofIdx = interfaceElementIdx;
 
@@ -175,15 +177,15 @@ public:
                 // find the corresponding Darcy sub control volume face
                 for(const auto& darcyScvf : scvfs(darcyFvGeometry))
                 {
-                    const Scalar distance = (darcyScvf.center() - scvf.center()).two_norm();
+                    const Scalar distance = (darcyScvf.center() - stokesScvf.center()).two_norm();
 
                     if(distance < eps)
                     {
                         isCoupledDarcyScvf_[darcyScvf.index()] = true;
 
-                        darcyElementToInterfaceElementMap_[darcyElementIdx[0]].push_back({interfaceElementIdx, darcyScvf.index(), scvf.index()});
-                        stokesElementToInterfaceElementMap_[stokesElementIdx].push_back({interfaceElementIdx, scvf.index(), darcyScvf.index()});
-                        interfaceElementMap_[interfaceElementIdx].push_back({stokesElementIdx, scvf.index(), darcyElementIdx[0], darcyScvf.index()});
+                        darcyElementToInterfaceElementMap_[darcyElementIdx[0]].push_back({interfaceElementIdx, darcyScvf.index()});
+                        stokesElementToInterfaceElementMap_[stokesElementIdx].push_back({interfaceElementIdx, stokesScvf.index()});
+                        interfaceElementMap_[interfaceElementIdx].push_back({stokesElementIdx, stokesScvf.index(), darcyElementIdx[0], darcyScvf.index()});
 
 //                        // TODO print maps and check all indices, dofs, ...
 //                        std::cout << "** couplingmapper: interfaceElementMap for element " << interfaceElementIdx

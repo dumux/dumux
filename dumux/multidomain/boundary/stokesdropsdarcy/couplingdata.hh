@@ -196,9 +196,9 @@ class StokesDropsDarcyCouplingDataImplementationBase
 {
     using Scalar = typename MDTraits::Scalar;
 
-//    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
-//    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
-//    template<std::size_t id> using Element = typename FVGridGeometry<id>::GridView::template Codim<0>::Entity;
+    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
+    template<std::size_t id> using Element = typename FVGridGeometry<id>::GridView::template Codim<0>::Entity;
 //    template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
 //    template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::LocalView::SubControlVolumeFace;
 //    template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::LocalView::SubControlVolume;
@@ -206,8 +206,8 @@ class StokesDropsDarcyCouplingDataImplementationBase
 //    template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
 //    template<std::size_t id> using VolumeVariables  = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
 //    template<std::size_t id> using Problem  = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-//    template<std::size_t id> using FluidSystem  = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
-//    template<std::size_t id> using ModelTraits  = GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>;
+    template<std::size_t id> using FluidSystem  = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
+    template<std::size_t id> using ModelTraits  = GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>;
 
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto interfaceIdx = CouplingManager::interfaceIdx;

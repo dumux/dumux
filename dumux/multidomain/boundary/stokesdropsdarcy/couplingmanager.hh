@@ -52,22 +52,22 @@ class StokesDropsDarcyCouplingManager
     using ParentType = StaggeredCouplingManagerBase<MDTraits, StokesDropsDarcyCouplingManager<MDTraits>>;
 
 public:
-    static constexpr auto stokesCellCenterIdx = typename MDTraits::template DomainIdx<0>();
-    static constexpr auto stokesFaceIdx = typename MDTraits::template DomainIdx<1>();
-    static constexpr auto cellCenterIdx = typename MDTraits::template DomainIdx<0>();
-    static constexpr auto faceIdx = typename MDTraits::template DomainIdx<1>();
+    static constexpr auto stokesCellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
+    static constexpr auto cellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto faceIdx = typename MDTraits::template SubDomain<1>::Index();
     static constexpr auto stokesIdx = stokesCellCenterIdx;
-    static constexpr auto interfaceIdx = typename MDTraits::template DomainIdx<2>();
-    static constexpr auto darcyIdx = typename MDTraits::template DomainIdx<3>();
+    static constexpr auto interfaceIdx = typename MDTraits::template SubDomain<2>::Index();
+    static constexpr auto darcyIdx = typename MDTraits::template SubDomain<3>::Index();
 
 private:
 
     using SolutionVector = typename MDTraits::SolutionVector;
 
     // obtain the type tags of the sub problems
-    using StokesTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
-    using InterfaceTypeTag = typename MDTraits::template SubDomainTypeTag<2>;
-    using DarcyTypeTag = typename MDTraits::template SubDomainTypeTag<3>;
+    using StokesTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
+    using InterfaceTypeTag = typename MDTraits::template SubDomain<2>::TypeTag;
+    using DarcyTypeTag = typename MDTraits::template SubDomain<3>::TypeTag;
 
     // TODO necessary? (see facetcouplingmanager)
     static constexpr auto interfaceId = InterfaceTypeTag();
@@ -82,7 +82,7 @@ private:
 
     static constexpr bool isCompositional = GetPropType<SubDomainTypeTag<0>, Properties::ModelTraits>::numFluidComponents()> 1;
 
-//    template<std::size_t id> using GridView = GetPropType<SubDomainTypeTag<id>, Properties::GridView>;
+    template<std::size_t id> using GridView = GetPropType<SubDomainTypeTag<id>, Properties::GridView>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using NumEqVector = GetPropType<SubDomainTypeTag<id>, Properties::NumEqVector>;
     template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
@@ -95,15 +95,15 @@ private:
     template<std::size_t id> using ElementFluxVariablesCache = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFluxVariablesCache>::LocalView;
 //    template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
-//    template<std::size_t id> using PrimaryVariables = typename MDTraits::template SubDomain<id>::PrimaryVariables;
+    template<std::size_t id> using PrimaryVariables = typename MDTraits::template SubDomain<id>::PrimaryVariables;
     template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::SubControlVolume;
-//    template<std::size_t id> using SubControlVolumeFace  = typename FVElementGeometry<id>::SubControlVolumeFace;
+    template<std::size_t id> using SubControlVolumeFace  = typename FVElementGeometry<id>::SubControlVolumeFace;
 //
 //    using CellCenterSolutionVector = GetPropType<StokesTypeTag, Properties::CellCenterSolutionVector>;
 
     using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
 
-//    using CouplingMapper = StokesDropsDarcyCouplingMapper<MDTraits>;
+    using CouplingMapper = StokesDropsDarcyCouplingMapper<MDTraits>;
 
     // the coupling contexts (information from the respective coupled element)
     struct StokesCouplingContext
@@ -252,13 +252,13 @@ public:
         VelocityVector faceVelocity(0.0);
         for(const auto& scvf : scvfs(stokesFvGeometry))
         {
-            if(scvf.index() == indices.scvfIdx)
+            if(scvf.index() == stokesIndex.scvfIdx)
                 faceVelocity[scvf.directionIndex()] = this->curSol()[stokesFaceIdx][scvf.dofIndex()];
         }
 
-//            using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
-//            const auto& cellCenterPriVars = this->curSol()[stokesCellCenterIdx][indices.eIdx];
-//            const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(cellCenterPriVars);
+        using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
+        const auto& cellCenterPriVars = this->curSol()[stokesCellCenterIdx][stokesIndex.eIdx];
+        const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(cellCenterPriVars);
 
         VolumeVariables<stokesIdx> stokesVolVars;
         for(const auto& scv : scvs(stokesFvGeometry))
@@ -282,7 +282,7 @@ public:
                                                         : localView(assembler.gridVariables(darcyIdx).prevGridVolVars());
         auto darcyElemFluxVarsCache = localView(assembler.gridVariables(darcyIdx).gridFluxVarsCache());
         auto darcyLocalResidual = assembler.localResidual(darcyIdx);
-        auto darcyScvfIdx = couplingMapper_.interfaceElementMap(interfaceElemIdx).darcyScvfIdx;
+        auto darcyScvfIdx = couplingMapper_.interfaceElementMap(interfaceElementIdx).darcyScvfIdx;
 
         // add the context
         interfaceCouplingContext_.push_back({stokesVolVars, faceVelocity,
@@ -560,7 +560,7 @@ public:
     template<class LocalAssemblerI>
 //    typename LocalResidual<interfaceIdx>::ElementResidualVector
     decltype(auto) evalCouplingResidual(InterfaceTypeTag,
-                                        const LocalAssemblerI& localAssemblerI,
+                                        const LocalAssemblerI& interfaceLocalAssembler,
                                         DarcyTypeTag,
                                         std::size_t dofIdxGlobalJ)
     {
@@ -617,7 +617,23 @@ public:
         return sources;
     }
 
+    // TODO inherit from stokesdarcycouplingmanager
+    /*!
+     * \brief Returns whether a given free flow scvf is coupled to the other domain
+     */
+    bool isCoupledEntity(Dune::index_constant<stokesIdx>, const SubControlVolumeFace<stokesFaceIdx>& scvf) const
+    {
+        return stokesFaceToInterfaceStencils_.count(scvf.dofIndex());
+    }
 
+    // TODO inherit from stokesdarcycouplingmanager
+    /*!
+     * \brief Returns whether a given free flow scvf is coupled to the other domain
+     */
+    bool isCoupledEntity(Dune::index_constant<darcyIdx>, const SubControlVolumeFace<darcyIdx>& scvf) const
+    {
+        return couplingMapper_.isCoupledDarcyScvf(scvf.index());
+    }
 
 protected:
 
@@ -654,7 +670,7 @@ private:
     }
 
 //    std::vector<bool> isCoupledDarcyDof_;
-//    std::shared_ptr<CouplingData> couplingData_;
+    std::shared_ptr<CouplingData> couplingData_;
 
     std::unordered_map<std::size_t, std::vector<std::size_t> > stokesCellCenterToInterfaceStencils_;
     std::unordered_map<std::size_t, std::vector<std::size_t> > stokesFaceToInterfaceStencils_;
@@ -669,7 +685,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////
     mutable std::vector<StokesCouplingContext> stokesCouplingContext_;
     mutable std::vector<InterfaceCouplingContext> interfaceCouplingContext_;
-    mutable std::vector<DarcyCouplingContext> darcyCouplingContext_;
+    mutable std::vector<DarcyDouplingContext> darcyCouplingContext_;
 
     mutable std::size_t boundStokesElemIdx_;
     mutable std::size_t boundInterfaceElemIdx_;

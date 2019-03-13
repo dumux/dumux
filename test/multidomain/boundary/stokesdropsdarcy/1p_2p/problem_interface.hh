@@ -46,7 +46,7 @@ struct InterfaceTwoP { using InheritsFrom = std::tuple<TwoP, CCTpfaModel>; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::InterfaceTwoP> { using type = Dumux::DarcySubProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::InterfaceTwoP> { using type = Dumux::InterfaceSubProblem<TypeTag>; };
 
 // Set the grid type --> one dimension less than Stokes and Darcy problem grids!
 #if ENABLE_3D
