@@ -635,6 +635,117 @@ public:
         return couplingMapper_.isCoupledDarcyScvf(scvf.index());
     }
 
+    /*!
+     * \brief The coupling stencils
+     */
+    // \{
+
+    /*!
+     * \brief The Stokes cell center coupling stencil w.r.t. interface DOFs
+     */
+    const CouplingStencil& couplingStencil(Dune::index_constant<stokesCellCenterIdx> domainI,
+                                           const Element<stokesIdx>& element,
+                                           Dune::index_constant<interfaceIdx> domainJ) const
+    {
+        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
+        if(stokesCellCenterToInterfaceStencils_.count(eIdx))
+            return stokesCellCenterToInterfaceStencils_.at(eIdx);
+        else
+            return emptyStencil_;
+    }
+
+    /*!
+     * \brief The coupling stencil of domain I, i.e. which domain J DOFs
+     *        the given domain I element's residual depends on.
+     */
+    template<std::size_t i, std::size_t j>
+    const CouplingStencil& couplingStencil(Dune::index_constant<i> domainI,
+                                           const Element<i>& element,
+                                           Dune::index_constant<j> domainJ) const
+    { return emptyStencil_; }
+
+    /*!
+     * \brief The interface coupling stencil w.r.t. Stokes cell-centered DOFs
+     */
+    const CouplingStencil& couplingStencil(Dune::index_constant<interfaceIdx> domainI,
+                                           const Element<interfaceIdx>& element,
+                                           Dune::index_constant<stokesCellCenterIdx> domainJ) const
+    {
+        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
+        if(interfaceToStokesCellCenterStencils_.count(eIdx))
+            return interfaceToStokesCellCenterStencils_.at(eIdx);
+        else
+            return emptyStencil_;
+    }
+
+    /*!
+     * \brief The coupling stencil of a Stokes face w.r.t. interface DOFs
+     */
+    const CouplingStencil& couplingStencil(Dune::index_constant<stokesFaceIdx> domainI,
+                                           const SubControlVolumeFace<stokesIdx>& scvf,
+                                           Dune::index_constant<interfaceIdx> domainJ) const
+    {
+        const auto faceDofIdx = scvf.dofIndex();
+        if(stokesFaceToInterfaceStencils_.count(faceDofIdx))
+            return stokesFaceToInterfaceStencils_.at(faceDofIdx);
+        else
+            return emptyStencil_;
+    }
+
+    /*!
+     * \brief The coupling stencil of domain I, i.e. which domain J DOFs
+     *        the given domain I element's residual depends on.
+     */
+    template<std::size_t i, std::size_t j>
+    const CouplingStencil& couplingStencil(Dune::index_constant<i> domainI,
+                                           const SubControlVolumeFace<stokesIdx>& scvf,
+                                           Dune::index_constant<j> domainJ) const
+    { return emptyStencil_; }
+
+    /*!
+     * \brief The interface coupling stencil w.r.t. Stokes face DOFs
+     */
+    const CouplingStencil& couplingStencil(Dune::index_constant<interfaceIdx> domainI,
+                                           const Element<interfaceIdx>& element,
+                                           Dune::index_constant<stokesFaceIdx> domainJ) const
+    {
+        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
+        if (interfaceToStokesFaceStencils_.count(eIdx))
+            return interfaceToStokesFaceStencils_.at(eIdx);
+        else
+            return emptyStencil_;
+    }
+
+    /*!
+     * \brief The Darcy coupling stencil w.r.t. interface DOFs
+     */
+    const CouplingStencil& couplingStencil(Dune::index_constant<darcyIdx> domainI,
+                                           const Element<darcyIdx>& element,
+                                           Dune::index_constant<interfaceIdx> domainJ) const
+    {
+        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
+        if(darcyToInterfaceStencils_.count(eIdx))
+            return darcyToInterfaceStencils_.at(eIdx);
+        else
+            return emptyStencil_;
+    }
+
+    /*!
+     * \brief The interface coupling stencil w.r.t. Darcy DOFs
+     */
+    const CouplingStencil& couplingStencil(Dune::index_constant<interfaceIdx> domainI,
+                                           const Element<interfaceIdx>& element,
+                                           Dune::index_constant<darcyIdx> domainJ) const
+    {
+        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
+        if(interfaceToDarcyStencils_.count(eIdx))
+            return interfaceToDarcyStencils_.at(eIdx);
+        else
+            return emptyStencil_;
+    }
+
+    // \}
+
 protected:
 
     //! Return a reference to an empty stencil
