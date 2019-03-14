@@ -154,9 +154,7 @@ public:
 
                 // sanity check TODO
                 if(darcyElementIdx.size() > 1)
-                    DUNE_THROW(Dune::InvalidStateException, "Stokes face dof should only intersect with one Darcy element");
-//                if(interfaceElementIdx.size() > 1)
-//                    DUNE_THROW(Dune::InvalidStateException, "Stokes face dof should only intersect with one interface element");
+                    DUNE_THROW(Dune::InvalidStateException, "Stokes face dof should only intersect with one interface element");
 
                 const auto stokesCCDofIdx = stokesElementIdx;
                 const auto stokesFaceDofIdx = stokesScvf.dofIndex();

@@ -108,7 +108,10 @@ private:
     // the coupling contexts (information from the respective coupled element)
     struct StokesCouplingContext
     {
+        Element<interfaceIdx> element;
+        FVElementGeometry<interfaceIdx> fvGeometry;
         VolumeVariables<interfaceIdx> volVars;
+        std::size_t stokesScvfIdx;
     };
 
     struct InterfaceCouplingContext
@@ -130,8 +133,9 @@ private:
 
 public:
 
-//    using ParentType::couplingStencil;
-//    using ParentType::updateCouplingContext;
+    using ParentType::couplingStencil;
+    using ParentType::updateCouplingContext;
+    using ParentType::evalCouplingResidual;
     using CouplingData = StokesDropsDarcyCouplingData<MDTraits, StokesDropsDarcyCouplingManager<MDTraits>>;
 
     //! Constructor
@@ -223,7 +227,7 @@ public:
             interfaceVolVars.update(interfaceElemSol, this->problem(interfaceIdx), interfaceElement, scv);
 
             // add the context
-            stokesCouplingContext_.push_back({/*interfaceElement, interfaceFvGeometry, indices.scvfIdx, indices.flipScvfIdx, */interfaceVolVars});
+            stokesCouplingContext_.push_back({interfaceElement, interfaceFvGeometry, /*indices.flipScvfIdx, */interfaceVolVars, indices.scvfIdx});
         }
     }
 
@@ -237,27 +241,28 @@ public:
         boundInterfaceElemIdx_ = interfaceElementIdx;
 
         // do nothing if the element is not coupled to the other domain
-        if(!couplingMapper_.interfaceElementToStokesElementMap().count(interfaceElementIdx))
+        if(!couplingMapper_.interfaceElementMap().count(interfaceElementIdx))
             return;
 
         // prepare the coupling context for Stokes
-        const auto& stokesElementIndices = couplingMapper_.interfaceElementToStokesElementMap().at(interfaceElementIdx);
-        assert(stokesElementIndices.size() == 1); // TODO add loop if more than 1 coupled element possible
-        const auto stokesIndex = stokesElementIndices[0];
+//        const auto& stokesElementIndices = couplingMapper_.interfaceElementMap().at(interfaceElementIdx);
+//        assert(stokesElementIndices.size() == 1); // TODO add loop if more than 1 coupled element possible
+//        const auto stokesIndex = stokesElementIndices[0];
+        const auto coupledIndices = couplingMapper_.interfaceElementMap().at(interfaceElementIdx)[0];
 
-        const auto& stokesElement = this->problem(stokesIdx).fvGridGeometry().boundingBoxTree().entitySet().entity(stokesIndex.eIdx);
+        const auto& stokesElement = this->problem(stokesIdx).fvGridGeometry().boundingBoxTree().entitySet().entity(coupledIndices.stokesEIdx);
         auto stokesFvGeometry = localView(this->problem(stokesIdx).fvGridGeometry());
         stokesFvGeometry.bindElement(stokesElement);
 
         VelocityVector faceVelocity(0.0);
         for(const auto& scvf : scvfs(stokesFvGeometry))
         {
-            if(scvf.index() == stokesIndex.scvfIdx)
+            if(scvf.index() == coupledIndices.stokesScvfIdx)
                 faceVelocity[scvf.directionIndex()] = this->curSol()[stokesFaceIdx][scvf.dofIndex()];
         }
 
         using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
-        const auto& cellCenterPriVars = this->curSol()[stokesCellCenterIdx][stokesIndex.eIdx];
+        const auto& cellCenterPriVars = this->curSol()[stokesCellCenterIdx][coupledIndices.stokesEIdx];
         const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(cellCenterPriVars);
 
         VolumeVariables<stokesIdx> stokesVolVars;
@@ -265,11 +270,7 @@ public:
             stokesVolVars.update(elemSol, this->problem(stokesIdx), stokesElement, scv);
 
         // prepare the coupling context for Darcy
-        const auto& darcyElementIndices = couplingMapper_.interfaceElementToDarcyElementMap().at(interfaceElementIdx);
-        assert(darcyElementIndices.size() == 1); // TODO add loop if more than 1 coupled element possible
-        const auto darcyIndex = darcyElementIndices[0];
-
-        const auto& darcyElement = this->problem(darcyIdx).fvGridGeometry().boundingBoxTree().entitySet().entity(darcyIndex);
+        const auto& darcyElement = this->problem(darcyIdx).fvGridGeometry().boundingBoxTree().entitySet().entity(coupledIndices.darcyEIdx);
         auto darcyFvGeometry = localView(this->problem(darcyIdx).fvGridGeometry());
         darcyFvGeometry.bindElement(darcyElement);
         const auto& scv = (*scvs(darcyFvGeometry).begin());
@@ -278,15 +279,15 @@ public:
         VolumeVariables<darcyIdx> darcyVolVars;
         darcyVolVars.update(darcyElemSol, this->problem(darcyIdx), darcyElement, scv);
 
-        auto darcyElemVolVars = Assembler::isImplicit() ? localView(assembler.gridvariables(darcyIdx).curGridVolVars())
+        darcyFvGeometry.bind(darcyElement); // TODO necessary?
+        auto darcyElemVolVars = Assembler::isImplicit() ? localView(assembler.gridVariables(darcyIdx).curGridVolVars())
                                                         : localView(assembler.gridVariables(darcyIdx).prevGridVolVars());
         auto darcyElemFluxVarsCache = localView(assembler.gridVariables(darcyIdx).gridFluxVarsCache());
         auto darcyLocalResidual = assembler.localResidual(darcyIdx);
-        auto darcyScvfIdx = couplingMapper_.interfaceElementMap(interfaceElementIdx).darcyScvfIdx;
 
         // add the context
         interfaceCouplingContext_.push_back({stokesVolVars, faceVelocity,
-                                             darcyElement, darcyFvGeometry, darcyElemVolVars, darcyElemFluxVarsCache, darcyLocalResidual, darcyScvfIdx});
+                                             darcyElement, darcyFvGeometry, darcyElemVolVars, darcyElemFluxVarsCache, darcyLocalResidual, coupledIndices.darcyScvfIdx});
 
     }
 
@@ -580,7 +581,6 @@ public:
         res = 0.0;
         for (const auto& scv : scvs(interfaceLocalAssembler.fvGeometry()))
              res[scv.localDofIndex()] -= source;
-
         return res;
     }
 
@@ -745,6 +745,69 @@ public:
     }
 
     // \}
+
+    // TODO copied from stokesdarcycouplingmanager, inherit?
+    /*!
+     * \brief Access the coupling data
+     */
+    const auto& couplingData() const
+    {
+        return *couplingData_;
+    }
+
+    // TODO copied from stokesdarcycouplingmanager, inherit?
+    /*!
+     * \brief Access the coupling context needed for the Stokes domain
+     */
+    const auto& stokesCouplingContext(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
+    {
+        if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
+            bindCouplingContext(stokesIdx, element);
+
+        for(const auto& context : stokesCouplingContext_)
+        {
+            if(scvf.index() == context.stokesScvfIdx)
+                return context;
+        }
+
+        DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
+    }
+
+//    /*! TODO
+//     * \brief Access the coupling context needed for the interface domain
+//     */
+//    const auto& interfaceCouplingContext(const Element<interfaceIdx>& element) const
+//    {
+//        if (interfaceCouplingContext_.empty())
+//            bindCouplingContext(interfaceIdx, element);
+//
+////        for(const auto& context : interfaceCouplingContext_)
+////        {
+////            if(scvf.index() == context.darcyScvfIdx)
+////                return context;
+////        }
+//
+//        // TODO element idx
+//        DUNE_THROW(Dune::InvalidStateException, "No coupling context found for element ... " /*<< scvf.center()*/);
+//    }
+
+//    // TODO copied from stokesdarcycouplingmanager, inherit?
+//    /*!
+//     * \brief Access the coupling context needed for the Darcy domain
+//     */
+//    const auto& darcyCouplingContext(const Element<darcyIdx>& element, const SubControlVolumeFace<darcyIdx>& scvf) const
+//    {
+//        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != scvf.insideScvIdx())
+//            bindCouplingContext(darcyIdx, element);
+//
+//        for(const auto& context : darcyCouplingContext_)
+//        {
+//            if(scvf.index() == context.darcyScvfIdx)
+//                return context;
+//        }
+//
+//        DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
+//    }
 
 protected:
 

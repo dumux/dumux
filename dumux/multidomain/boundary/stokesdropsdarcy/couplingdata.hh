@@ -102,11 +102,12 @@ struct IsSameFluidSystem<FS, FS>
  * \brief Helper struct to choose the correct index for phases and components. This is need if the porous-medium-flow model
           features more fluid phases than the free-flow model.
  * \tparam stokesIdx The domain index of the free-flow model.
+ * \tparam interfaceIdx The domain index of the interface model.
  * \tparam darcyIdx The domain index of the porous-medium-flow model.
  * \tparam FFFS The free-flow fluidsystem.
  * \tparam hasAdapter Specifies whether an adapter class for the fluidsystem is used.
  */
-template<std::size_t stokesIdx, std::size_t darcyIdx, class FFFS, bool hasAdapter>
+template<std::size_t stokesIdx, std::size_t interfaceIdx, std::size_t darcyIdx, class FFFS, bool hasAdapter>
 struct IndexHelper;
 
 /*!
@@ -117,8 +118,8 @@ struct IndexHelper;
  * \tparam darcyIdx The domain index of the porous-medium-flow model.
  * \tparam FFFS The free-flow fluidsystem.
  */
-template<std::size_t stokesIdx, std::size_t darcyIdx, class FFFS>
-struct IndexHelper<stokesIdx, darcyIdx, FFFS, false>
+template<std::size_t stokesIdx, std::size_t interfaceIdx, std::size_t darcyIdx, class FFFS>
+struct IndexHelper<stokesIdx, interfaceIdx, darcyIdx, FFFS, false>
 {
     /*!
      * \brief No adapter is used, just return the input index.
@@ -143,14 +144,20 @@ struct IndexHelper<stokesIdx, darcyIdx, FFFS, false>
  * \tparam darcyIdx The domain index of the porous-medium-flow model.
  * \tparam FFFS The free-flow fluidsystem.
  */
-template<std::size_t stokesIdx, std::size_t darcyIdx, class FFFS>
-struct IndexHelper<stokesIdx, darcyIdx, FFFS, true>
+template<std::size_t stokesIdx, std::size_t interfaceIdx, std::size_t darcyIdx, class FFFS>
+struct IndexHelper<stokesIdx, interfaceIdx, darcyIdx, FFFS, true>
 {
     /*!
      * \brief The free-flow model always uses phase index 0.
      */
     static constexpr auto couplingPhaseIdx(Dune::index_constant<stokesIdx>, int coupledPhaseIdx = 0)
     { return 0; }
+
+    /*!
+     * \brief The phase index of the porous-medium-flow model is given by the adapter fluidsytem (i.e., user input).
+     */
+    static constexpr auto couplingPhaseIdx(Dune::index_constant<interfaceIdx>, int coupledPhaseIdx = 0)
+    { return FFFS::multiphaseFluidsystemPhaseIdx; }
 
     /*!
      * \brief The phase index of the porous-medium-flow model is given by the adapter fluidsytem (i.e., user input).
@@ -199,11 +206,11 @@ class StokesDropsDarcyCouplingDataImplementationBase
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
     template<std::size_t id> using Element = typename FVGridGeometry<id>::GridView::template Codim<0>::Entity;
-//    template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
-//    template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::LocalView::SubControlVolumeFace;
+    template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
+    template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::LocalView::SubControlVolumeFace;
 //    template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::LocalView::SubControlVolume;
-//    template<std::size_t id> using Indices = typename GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>::Indices;
-//    template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
+    template<std::size_t id> using Indices = typename GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>::Indices;
+    template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
 //    template<std::size_t id> using VolumeVariables  = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
 //    template<std::size_t id> using Problem  = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using FluidSystem  = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
@@ -214,7 +221,7 @@ class StokesDropsDarcyCouplingDataImplementationBase
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
     static constexpr bool adapterUsed = ModelTraits<darcyIdx>::numFluidPhases() > 1;
-    using IndexHelper = Dumux::IndexHelper<stokesIdx, darcyIdx, FluidSystem<stokesIdx>, adapterUsed>; // TODO interfaceIdx necessary?
+    using IndexHelper = Dumux::IndexHelper<stokesIdx, interfaceIdx, darcyIdx, FluidSystem<stokesIdx>, adapterUsed>;
 
     static constexpr int enableEnergyBalance = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::ModelTraits>::enableEnergyBalance();
     static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::enableEnergyBalance() == enableEnergyBalance,
@@ -250,6 +257,80 @@ public:
      */
     const CouplingManager& couplingManager() const
     { return couplingManager_; }
+
+    // TODO copied from stokesdarcycouplingmanager, inherit ?! --> interface permeability ???
+    /*!
+     * \brief Returns the intrinsic permeability of the coupled interface element.
+     */
+    Scalar interfacePermeability(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
+    {
+        const auto& stokesContext = couplingManager().stokesCouplingContext(element, scvf);
+        return stokesContext.volVars.permeability();
+    }
+
+    // TODO copied from stokesdarcycouplingmanager, inherit ?!
+    /*!
+     * \brief Returns the momentum flux across the coupling boundary.
+     *
+     * For the normal momentum coupling, the porous medium side of the coupling condition
+     * is evaluated, i.e. -[p n]^pm.
+     *
+     */
+    template<class ElementFaceVariables>
+    Scalar momentumCouplingCondition(const Element<stokesIdx>& element,
+                                     const FVElementGeometry<stokesIdx>& fvGeometry,
+                                     const ElementVolumeVariables<stokesIdx>& stokesElemVolVars,
+                                     const ElementFaceVariables& stokesElemFaceVars,
+                                     const SubControlVolumeFace<stokesIdx>& scvf) const
+    {
+        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<interfaceIdx>, Properties::ModelTraits>::numFluidPhases();
+
+        Scalar momentumFlux(0.0);
+        const auto& stokesContext = couplingManager_.stokesCouplingContext(element, scvf);
+        const auto interfacePhaseIdx = couplingPhaseIdx(interfaceIdx);
+
+        // - p_pm * n_pm = p_pm * n_ff
+        const Scalar interfacePressure = stokesContext.volVars.pressure(interfacePhaseIdx);
+        std::cout << "** couplingdata: pressure for momCouplCond p_if = " << interfacePressure << std::endl;
+
+        if(numPhasesDarcy > 1)
+        {
+            momentumFlux = interfacePressure;
+        }
+        else // use pressure reconstruction for single phase models
+        {
+            // v = -K/mu * (gradP + rho*g)
+            const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf();
+            const Scalar mu = stokesContext.volVars.viscosity(interfacePhaseIdx);
+            const Scalar rho = stokesContext.volVars.density(interfacePhaseIdx);
+            const Scalar distance = (stokesContext.element.geometry().center() - scvf.center()).two_norm();
+            const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).gravity()[scvf.directionIndex()];
+            const Scalar reconstructedInterfacePressure = ((scvf.directionSign() * velocity * (mu/interfacePermeability(element, scvf))) + rho * g) * distance + interfacePressure;
+            momentumFlux = reconstructedInterfacePressure;
+        }
+
+        // normalize pressure
+        if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
+            momentumFlux -= couplingManager_.problem(stokesIdx).initial(scvf)[Indices<stokesIdx>::pressureIdx];
+
+        momentumFlux *= scvf.directionSign();
+
+        return momentumFlux;
+    }
+
+    // TODO copied from stokesdarcycouplingmanager, inherit ?!
+    /*!
+     * \brief Evaluate an advective flux across the interface and consider upwinding.
+     */
+    Scalar advectiveFlux(const Scalar insideQuantity, const Scalar outsideQuantity, const Scalar volumeFlow, bool insideIsUpstream) const
+    {
+        const Scalar upwindWeight = 1.0; //TODO use Flux.UpwindWeight or something like Coupling.UpwindWeight?
+
+        if(insideIsUpstream)
+            return (upwindWeight * insideQuantity + (1.0 - upwindWeight) * outsideQuantity) * volumeFlow;
+        else
+            return (upwindWeight * outsideQuantity + (1.0 - upwindWeight) * insideQuantity) * volumeFlow;
+    }
 
 
 protected:
