@@ -1,32 +1,32 @@
 [TimeLoop]
-TEnd =  1e3
+TEnd =  1e2
 DtInitial =  5
 MaxTimeStepSize = 50
 
 [Stokes.Grid]
 LowerLeft = 0 0
-UpperRight =1 1
-Cells = 3 3#4 4 # 20 20
+UpperRight = 1 1
+Cells = 20 20
 
 [Interface.Grid]
 LowerLeft = 0 # Stokes.Grid.LowerLeft x-coordinate
 UpperRight = 1 # Darcy.Grid.UpperRight x-coordinate
-Cells = 3#4 # Stokes/Darcy cells in x direction
+Cells = 20 # Stokes/Darcy cells in x direction
 
 [Darcy.Grid]
 UpperRight = 1 0
 LowerLeft = 0 -1
-Cells = 3 3#4 4 #20 20
+Cells = 20 20
 
 [Stokes.Problem]
 Name = stokes
-Velocity = -1e-3
+Velocity = 3.5
 Pressure = 1.0e5
-Temperature = 293.15
+Temperature = 298.15
 
 [Interface.Problem]
 Name = interface
-Pressure = 1.05e5
+Pressure = 1.0e5
 Saturation = 0.5
 Temperature = 298.15
 
@@ -46,7 +46,7 @@ VgAlpha = 6.371e-4
 VgN = 8.0
 
 [Problem]
-EnableGravity = false
+EnableGravity = true
 EnableInertiaTerms = false
 
 [Vtk]

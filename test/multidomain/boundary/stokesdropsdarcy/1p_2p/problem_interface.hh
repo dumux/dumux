@@ -54,7 +54,7 @@ template<class TypeTag>
 struct Grid<TypeTag, TTag::InterfaceTwoP> { using type = Dune::YaspGrid<2>; };
 #else
 template<class TypeTag>
-struct Grid<TypeTag, TTag::InterfaceTwoP> { using type = Dune::YaspGrid<1>; };
+struct Grid<TypeTag, TTag::InterfaceTwoP> { using type = Dune::YaspGrid<1, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 1> >; };
 #endif
 
 template<class TypeTag>
@@ -108,8 +108,8 @@ class InterfaceSubProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     InterfaceSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                   std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
+                        std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(fvGridGeometry, "Interface"), eps_(1e-7), couplingManager_(couplingManager)
     {
         pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
         saturation_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Saturation");
@@ -205,10 +205,6 @@ public:
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
-
-        if(couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
-            values = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scvf);
-
         return values;
     }
 

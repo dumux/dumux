@@ -72,6 +72,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
@@ -148,17 +149,39 @@ public:
                                 const SubControlVolumeFace& scvf) const
     {
         BoundaryTypes values;
+        GlobalPosition globalPos = scvf.center();
 
-        if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+        // vertical flow (1p_2p)
+//        if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+//        {
+//            values.setCouplingNeumann(Indices::conti0EqIdx);
+//            values.setCouplingNeumann(Indices::momentumYBalanceIdx);
+//            values.setBJS(Indices::momentumXBalanceIdx);
+//        }
+//        else
+//        {
+//            values.setDirichlet(Indices::velocityXIdx);
+//            values.setDirichlet(Indices::velocityYIdx);
+//        }
+
+        // horizontal (1p2c_2p2c)
+        if (onUpperBoundary_(globalPos) || onLeftBoundary_(globalPos))
+        {
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+            values.setNeumann(Indices::conti0EqIdx);
+        }
+
+        if (onRightBoundary_(globalPos))
+        {
+            values.setDirichlet(Indices::pressureIdx);
+        }
+
+        if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
             values.setCouplingNeumann(Indices::conti0EqIdx);
             values.setCouplingNeumann(Indices::momentumYBalanceIdx);
             values.setBJS(Indices::momentumXBalanceIdx);
-        }
-        else
-        {
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
         }
 
         return values;
@@ -224,10 +247,19 @@ public:
     {
         PrimaryVariables values(0.0);
 
-        values[Indices::pressureIdx] = pressure_;
-        values[Indices::velocityYIdx] = 4.0 * inletVelocity_ * globalPos[0] * (this->fvGridGeometry().bBoxMax()[0] - globalPos[0])
-                                      / (this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0])
-                                      / (this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0]);
+        // vertical flow (1p_2p)
+//        values[Indices::pressureIdx] = pressure_;
+//        values[Indices::velocityYIdx] = 4.0 * inletVelocity_ * globalPos[0] * (this->fvGridGeometry().bBoxMax()[0] - globalPos[0])
+//                                      / (this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0])
+//                                      / (this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0]);
+        // horizontal flow (1p2c_2p2c)
+//        FluidState fluidState;
+//        updateFluidStateForBC_(fluidState, pressure_);
+
+//        const Scalar density = FluidSystem::density(fluidState, 0);
+
+        values[Indices::pressureIdx] = pressure_;// + density*this->gravity()[1]*(globalPos[1] - this->fvGridGeometry().bBoxMin()[1]);
+        values[Indices::velocityXIdx] = inletVelocity_; // xVelocity_(globalPos);
         return values;
     }
 
@@ -236,18 +268,14 @@ public:
               for the Beavers-Joseph-Saffman boundary condition.
      */
     Scalar permeability(const Element& element, const SubControlVolumeFace& scvf) const
-    {
-        return couplingManager().couplingData().darcyPermeability(element, scvf);
-    }
+    { return couplingManager().couplingData().interfacePermeability(element, scvf); }
 
     /*!
      * \brief Returns the alpha value required as input parameter for the
               Beavers-Joseph-Saffman boundary condition.
      */
     Scalar alphaBJ(const SubControlVolumeFace& scvf) const
-    {
-        return 1.0;
-    }
+    { return 1.0; }
 
     // \}
 
@@ -263,6 +291,39 @@ private:
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
+
+//    //! Updates the fluid state to obtain required quantities for IC/BC
+//    void updateFluidStateForBC_(FluidState& fluidState, const Scalar pressure) const
+//    {
+//        fluidState.setTemperature(temperature_);
+//        fluidState.setPressure(0, pressure);
+//        fluidState.setSaturation(0, 1.0);
+//
+//        typename FluidSystem::ParameterCache paramCache;
+//        paramCache.updatePhase(fluidState, 0);
+//
+//        const Scalar density = FluidSystem::density(fluidState, paramCache, 0);
+//        fluidState.setDensity(0, density);
+//
+//        const Scalar molarDensity = FluidSystem::molarDensity(fluidState, paramCache, 0);
+//        fluidState.setMolarDensity(0, molarDensity);
+//
+//        const Scalar enthalpy = FluidSystem::enthalpy(fluidState, paramCache, 0);
+//        fluidState.setEnthalpy(0, enthalpy);
+//    }
+
+//    //! Set the profile of the inflow velocity (horizontal direction).
+//    const Scalar xVelocity_(const GlobalPosition &globalPos) const
+//    {
+////        const Scalar vmax = inletVelocity_;
+////        return  4 * vmax * (globalPos[1] - this->fvGridGeometry().bBoxMin()[1]) * (this->fvGridGeometry().bBoxMax()[1] - globalPos[1])
+////                / (height_() * height_());
+//    	return inletVelocity_;
+//    }
+//
+//    // the height of the free-flow domain
+//    const Scalar height_() const
+//    { return this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]; }
 
     Scalar eps_;
     Scalar inletVelocity_;

@@ -54,7 +54,7 @@ template<class TypeTag>
 struct Grid<TypeTag, TTag::DarcyTwoP> { using type = Dune::YaspGrid<3>; };
 #else
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DarcyTwoP> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::DarcyTwoP> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 #endif
 
 template<class TypeTag>
@@ -172,11 +172,9 @@ public:
 
         values.setAllNeumann(); // left/right wall
 
-        if(onLowerBoundary_(scvf.center()))
-            values.setAllDirichlet();
-
-        if(couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
-            values.setAllCouplingNeumann();
+        // TODO sets Dirichlet b.c. everywhere?! (see cclocalresidual) --> Matrix -nan
+//        if(onLowerBoundary_(scvf.center()))
+//            values.setAllDirichlet();
 
         return values;
     }
@@ -213,10 +211,6 @@ public:
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
-
-        if(couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
-            values = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scvf);
-
         return values;
     }
 
