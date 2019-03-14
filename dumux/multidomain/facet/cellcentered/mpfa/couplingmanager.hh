@@ -327,7 +327,7 @@ public:
                 volVars.update( elementSolution(element, ldSol, this->problem(lowDimId).fvGridGeometry()),
                                 this->problem(lowDimId),
                                 element,
-                                fvGeom.scv(this->lowDimCouplingContext().elementIdx) );
+                                fvGeom.scv(elemIdx) );
 
             // update the element flux variables cache (tij depend on low dim values in context)
             const auto contextElem = this->problem(bulkId).fvGridGeometry().element(this->bulkCouplingContext().elementIdx);
