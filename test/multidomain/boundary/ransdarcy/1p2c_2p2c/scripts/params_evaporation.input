@@ -1,22 +1,22 @@
 [TimeLoop]
 DtInitial = 1e-4 # [s]
-MaxTimeStepSize = 3600 # [s] 1 hr
+MaxTimeStepSize = 350 # [s]
 TEnd = 691200 # [s] 8 days
 
 [RANS.Grid]
 Verbosity = true
-Positions0 = -1.0 0.0 1.0 1.5
+Positions0 = -1.0 0.0 1.0 2.0
 Positions1 = 0.5 1.0
 Grading0 = -1.1 1.0 1.1
 Grading1 = 1.3
-Cells0 = 6 20 4
+Cells0 = 15 30 15
 Cells1 = 20
 
 [Darcy.Grid]
 Verbosity = true
 Positions0 = 0.0 1.0
 Positions1 = 0.0 0.5
-Cells0 = 20
+Cells0 = 30
 Cells1 = 20
 Grading0 = 1.0
 Grading1 = -1.3
@@ -33,7 +33,7 @@ Name = darcy
 Pressure = 1e5 # [Pa]
 Temperature = 298.15 # [K]
 InitPhasePresence = 3 # bothPhases
-InitialSaturation = 0.85 # [-]
+InitialSaturation = 0.90 # [-]
 
 [Darcy.SpatialParams]
 Porosity = 0.41
@@ -51,6 +51,8 @@ InterfaceDiffusionCoefficientAvg = FreeFlowOnly # Harmonic
 [RANS.RANS]
 UseStoredEddyViscosity = false
 EddyViscosityModel = "baldwinLomax"
+TurbulentSchmidtNumber = 0.7
+TurbulentPrandtlNumber = 0.85
 
 [RANS.KEpsilon]
 YPlusThreshold = 50. # should be small (10-30) for coarse grids large (30-60) for fine grids
@@ -58,7 +60,7 @@ YPlusThreshold = 50. # should be small (10-30) for coarse grids large (30-60) fo
 [Vtk]
 AddVelocity = true
 WriteFaceData = false
-OutputName = rectangle_interface
+OutputName = flat_interface
 
 [Component]
 SolidDensity = 2700
@@ -66,9 +68,9 @@ SolidThermalConductivity = 2.8
 SolidHeatCapacity = 790
 
 [Newton]
-TargetSteps = 5
-MaxSteps = 10
-MaxRelativeShift = 1e-6
+TargetSteps = 6
+MaxSteps = 8
+MaxRelativeShift = 1e-7
 
 [Assembly]
 NumericDifferenceMethod = 0

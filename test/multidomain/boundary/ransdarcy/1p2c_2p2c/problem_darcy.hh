@@ -161,7 +161,7 @@ public:
         initialWaterContent_ = evaluateWaterMassStorageTerm(curSol, gridVariables);
         lastWaterMass_ = initialWaterContent_;
 
-        storageFileName_ = "storage_" + ransName + ".csv";
+        storageFileName_ = "storage_" + problemName_ + "_" + ransName + ".csv";
         storageFile_.open(storageFileName_, std::ios::app);
         storageFile_ << "#Time[s]" << ";"
                      << "WaterMass[kg]" << ";"
