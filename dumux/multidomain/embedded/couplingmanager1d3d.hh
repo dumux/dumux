@@ -52,6 +52,22 @@ namespace Dumux {
 enum class EmbeddedCouplingMode
 { line, average, cylindersources, kernel };
 
+/*!
+ * \ingroup EmbeddedCoupling
+ * \brief Convert the coupling mode to a human readable name
+ */
+std::string toString(EmbeddedCouplingMode mode)
+{
+    switch (mode)
+    {
+        case EmbeddedCouplingMode::line: return "line";
+        case EmbeddedCouplingMode::average: return "average";
+        case EmbeddedCouplingMode::cylindersources: return "cylinder";
+        case EmbeddedCouplingMode::kernel: return "kernel";
+        default: return "unknown";
+    }
+}
+
 //! point source traits for the circle average coupling mode
 template<class MDTraits>
 struct CircleAveragePointSourceTraits
