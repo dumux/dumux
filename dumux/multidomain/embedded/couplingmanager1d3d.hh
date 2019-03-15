@@ -714,6 +714,9 @@ public:
         // Initialize the bulk bounding box tree
         const auto& bulkTree = this->problem(bulkIdx).fvGridGeometry().boundingBoxTree();
 
+        const auto& bulkFvGridGeometry = this->problem(bulkIdx).fvGridGeometry();
+        const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).fvGridGeometry();
+
         // initilize the maps
         // do some logging and profiling
         Dune::Timer watch;
@@ -728,15 +731,22 @@ public:
         this->preComputeVertexIndices(bulkIdx);
         this->preComputeVertexIndices(lowDimIdx);
 
+        // intersect the bounding box trees
+        this->glueGrids();
+
         // iterate over all lowdim elements
         const auto& lowDimProblem = this->problem(lowDimIdx);
-        for (const auto& lowDimElement : elements(this->gridView(lowDimIdx)))
+        // iterate over all intersection and add point sources
+        for (const auto& is : intersections(this->glue()))
         {
-            // get the Gaussian quadrature rule for the low dim element
-            const auto lowDimGeometry = lowDimElement.geometry();
-            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(lowDimGeometry.type(), order);
+            // all inside elements are identical...
+            const auto& lowDimElement = is.inside(0);
+            const auto lowDimElementIdx = lowDimFvGridGeometry.elementMapper().index(lowDimElement);
 
-            const auto lowDimElementIdx = lowDimProblem.fvGridGeometry().elementMapper().index(lowDimElement);
+            // get the intersection geometry
+            const auto intersectionGeometry = is.geometry();
+            // get the Gaussian quadrature rule for the local intersection
+            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(intersectionGeometry.type(), order);
 
             // apply the Gaussian quadrature rule and define point sources at each quadrature point
             // note that the approximation is not optimal if
@@ -748,7 +758,7 @@ public:
             for (auto&& qp : quad)
             {
                 // global position of the quadrature point
-                const auto globalPos = lowDimGeometry.global(qp.position());
+                const auto globalPos = intersectionGeometry.global(qp.position());
 
                 const auto bulkElementIndices = intersectingEntities(globalPos, bulkTree);
 
@@ -761,15 +771,15 @@ public:
                 // get points on the cylinder surface at the integration point
                 ////////////////////////////////////////////////////////////////
 
-                static const auto numIp = getParam<int>("MixedDimension.NumCircleSegments", 25);
+                static const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
                 const auto radius = lowDimProblem.spatialParams().radius(lowDimElementIdx);
-                const auto normal = lowDimGeometry.corner(1)-lowDimGeometry.corner(0);
-                const auto integrationElement = lowDimGeometry.integrationElement(qp.position())*2*M_PI*radius/Scalar(numIp);
+                const auto normal = intersectionGeometry.corner(1)-intersectionGeometry.corner(0);
+                const auto integrationElement = intersectionGeometry.integrationElement(qp.position())*2*M_PI*radius/Scalar(numIp);
                 const auto qpweight = qp.weight()/(2*M_PI*radius);
                 const auto circleAvgWeight = 2*M_PI*radius/numIp;
 
                 const auto circlePoints = EmbeddedCoupling::circlePoints(globalPos, normal, radius, numIp);
-                std::vector<std::vector<GridIndex<bulkIdx>>> circleBulkElementIndices(circlePoints.size());
+                std::vector<std::vector<std::size_t>> circleBulkElementIndices(circlePoints.size());
                 std::vector<Scalar> circleIpWeight; circleIpWeight.reserve(circlePoints.size());
                 std::vector<GridIndex<bulkIdx>> circleStencil; circleStencil.reserve(circlePoints.size());
                 // for box
@@ -797,12 +807,12 @@ public:
                         {
                             if (!static_cast<bool>(circleCornerIndices.count(bulkElementIdx)))
                             {
-                                const auto bulkElement = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx);
+                                const auto bulkElement = bulkFvGridGeometry.element(bulkElementIdx);
                                 circleCornerIndices[bulkElementIdx] = this->vertexIndices(bulkIdx, bulkElementIdx);
 
                                 // evaluate shape functions at the integration point
                                 const auto bulkGeometry = bulkElement.geometry();
-                                this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, circlePoints[k], circleShapeValues[bulkElementIdx]);
+                                this->getShapeValues(bulkIdx, bulkFvGridGeometry, bulkGeometry, circlePoints[k], circleShapeValues[bulkElementIdx]);
                             }
                         }
                     }
@@ -855,7 +865,7 @@ public:
                         {
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                             ShapeValues shapeValues;
-                            this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), lowDimGeometry, globalPos, shapeValues);
+                            this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), intersectionGeometry, globalPos, shapeValues);
                             psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                         }
                         else
@@ -869,9 +879,9 @@ public:
                             psData.addCircleInterpolation(circleCornerIndices, circleShapeValues, circleIpWeight, circleStencil);
 
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                            const auto bulkGeometry = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx).geometry();
+                            const auto bulkGeometry = bulkFvGridGeometry.element(bulkElementIdx).geometry();
                             ShapeValues shapeValues;
-                            this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, circlePos, shapeValues);
+                            this->getShapeValues(bulkIdx, bulkFvGridGeometry, bulkGeometry, circlePos, shapeValues);
                             psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
                         }
                         else
