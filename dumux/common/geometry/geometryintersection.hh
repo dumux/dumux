@@ -60,7 +60,7 @@ public:
 
 /*!
  * \ingroup Geometry
- * \brief A class for polyhedron--segment intersection in 2d space
+ * \brief A class for polygon--segment intersection in 2d space
  */
 template <class Geometry1, class Geometry2>
 class GeometryIntersection<Geometry1, Geometry2, 2, 2, 1>
@@ -80,7 +80,7 @@ private:
 
 public:
     /*!
-     * \brief Colliding segment and convex polyhedron
+     * \brief Colliding segment and convex polygon
      * \param geo1/geo2 The geometries to intersect
      * \param intersection If the geometries collide intersection holds the
      *        corner points of the intersection object in global coordinates.
