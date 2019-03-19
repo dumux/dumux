@@ -63,10 +63,6 @@ SET_TYPE_PROP(StokesFemTestProblemDrivenCavity, Problem, StokesFemTestProblemDri
 //              FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
 //                                            N2<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
-// Use nitrogen as gas phase
-//SET_TYPE_PROP(StokesFemTestProblem2, Fluid,
-//              FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-//                                            N2<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Use nitrogen as gas phase
 SET_TYPE_PROP(StokesFemTestProblemDrivenCavity, Fluid,

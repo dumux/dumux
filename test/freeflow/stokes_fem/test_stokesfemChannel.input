@@ -14,7 +14,7 @@ EnableGravity = 0 # disable gravity
 PenEps = 0.001
 LidVelocity = 10.0
 IsStabilized = 0
-InletVelocity = 1000
+InletVelocity = 1
 
 [Newton]
 MaxSteps = 10
