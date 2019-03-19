@@ -60,6 +60,121 @@ public:
 
 /*!
  * \ingroup Geometry
+ * \brief A class for polygon--segment intersection in 2d space
+ */
+template <class Geometry1, class Geometry2>
+class GeometryIntersection<Geometry1, Geometry2, 2, 2, 1>
+{
+    enum { dimworld = 2 };
+    enum { dim1 = 2 };
+    enum { dim2 = 1 };
+
+public:
+    using ctype = typename Dune::PromotionTraits<typename Geometry1::ctype, typename Geometry2::ctype>::PromotedType;
+    using Point = Dune::FieldVector<ctype, dimworld>;
+    using IntersectionType = std::array<std::vector<Point>, 1>;
+
+private:
+    static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
+    using ReferenceElements = typename Dune::ReferenceElements<ctype, dim1>;
+
+public:
+    /*!
+     * \brief Colliding segment and convex polygon
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection If the geometries collide intersection holds the
+     *        corner points of the intersection object in global coordinates.
+     */
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, IntersectionType& intersection)
+    {
+        const auto a = geo2.corner(0);
+        const auto b = geo2.corner(1);
+        const auto d = b - a;
+
+        const std::vector<std::array<int, 2>> edges = [&]()
+        {
+            std::vector<std::array<int, 2>> edges;
+            switch (geo1.corners())
+            {
+                case 4: // quadrilateral
+                    edges = {{0, 2}, {3, 1}, {1, 0}, {2, 3}};
+                    break;
+                case 3: // triangle
+                    edges = {{1, 0}, {0, 2}, {2, 1}};
+                    break;
+                default:
+                    DUNE_THROW(Dune::NotImplemented, "Collision of segment and geometry of type "
+                                   << geo1.type() << " with "<< geo1.corners() << " corners.");
+            }
+
+            return edges;
+        } ();
+
+        // The initial interval is the whole segment
+        // afterward we start clipping the interval
+        // by the lines decribed by the edges
+        ctype tfirst = 0.0;
+        ctype tlast = 1.0;
+
+        const auto center1 = geo1.center();
+        for (const auto& e : edges)
+        {
+            // compute outer normal vector of the edge
+            const auto c0 = geo1.corner(e[0]);
+            const auto c1 = geo1.corner(e[1]);
+            const auto edge = c1 - c0;
+            const auto eps = eps_*c0.two_norm();
+
+            Dune::FieldVector<ctype, dimworld> n({-1.0*edge[1], edge[0]});
+            n /= n.two_norm();
+
+            // orientation of the element is not known
+            // make sure normal points outwards of element
+            if ( n*(center1-c0) > 0.0 )
+                n *= -1.0;
+
+            const ctype denom = n*d;
+            const ctype dist = n*(a-c0);
+
+            // if denominator is zero the segment in parallel to the edge.
+            // If the distance is positive there is no intersection
+            using std::abs;
+            if (abs(denom) < eps)
+            {
+                if (dist > eps)
+                    return false;
+            }
+            else // not parallel: compute line-line intersection
+            {
+                const ctype t = -dist / denom;
+                // if entering half space cut tfirst if t is larger
+                using std::signbit;
+                if (signbit(denom))
+                {
+                    if (t > tfirst)
+                        tfirst = t;
+                }
+                // if exiting half space cut tlast if t is smaller
+                else
+                {
+                    if (t < tlast)
+                        tlast = t;
+                }
+                // there is no intersection of the interval is empty
+                // use unscaled epsilon since t is in local coordinates
+                if (tfirst > tlast - eps_)
+                    return false;
+            }
+        }
+        // If we made it until here an intersection exists. We also export
+        // the intersections geometry now s(t) = a + t(b-a) in [tfirst, tlast]
+        intersection = {std::vector<Point>({geo2.global(tfirst), geo2.global(tlast)})};
+        return true;
+    }
+};
+
+/*!
+ * \ingroup Geometry
  * \brief A class for polyhedron--segment intersection in 3d space
  */
 template <class Geometry1, class Geometry2>
@@ -115,7 +230,7 @@ public:
                               {3, 2, 7, 6}, {1, 0, 3, 2}, {4, 5, 6, 7}};
                     break;
                 case 4: // tetrahedron
-                    facets = {{1, 2, 0}, {0, 1, 3}, {0, 3, 2}, {1, 2, 3}};
+                    facets = {{1, 0, 2}, {0, 1, 3}, {0, 3, 2}, {1, 2, 3}};
                     break;
                 default:
                     DUNE_THROW(Dune::NotImplemented, "Collision of segment and geometry of type "
@@ -166,7 +281,6 @@ public:
                 // use unscaled epsilon since t is in local coordinates
                 if (tfirst > tlast - eps_)
                     return false;
-
             }
         }
         // If we made it until here an intersection exists. We also export

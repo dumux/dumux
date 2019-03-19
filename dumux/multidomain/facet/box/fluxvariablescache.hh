@@ -28,8 +28,15 @@
 #include <cassert>
 
 #include <dune/common/fvector.hh>
+#include <dune/common/exceptions.hh>
+
+#include <dune/geometry/type.hh>
+#include <dune/geometry/multilineargeometry.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
+
 #include <dumux/discretization/box/fluxvariablescache.hh>
+#include <dumux/common/geometry/geometryintersection.hh>
+#include <dumux/common/geometry/diameter.hh>
 
 namespace Dumux {
 
@@ -68,27 +75,41 @@ public:
         ParentType::update(problem, element, fvGeometry, elemVolVars, scvf);
 
         // on interior boundaries with Neumann BCs, prepare the shape values at a point
-        // inside the element whose orthogonal projection is the integration point on scvf
+        // inside the element whose orthogonal projection on the face is the integration point on scvf
         if (scvf.interiorBoundary())
         {
             isInteriorBoundaryCache_ = true;
+
+            // create a segment between the integration point and another point
+            // in -normal direction of the face. This segment must be long enough
+            // to intersect the opposite face of the element. Then, we compute the
+            // part of the segment intersecting with the element and compute the
+            // point inside the element by moving half its length into the interior.
             const auto& geometry = element.geometry();
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            auto distVec = scvf.unitOuterNormal();
+            distVec *= -1.0;
+            distVec *= diameter(geometry)*5.0; // make sure to be long enough
 
-            const auto d1 = scvf.ipGlobal() - insideScv.dofPosition();
-            const auto d2 = geometry.center() - insideScv.dofPosition();
+            auto p1 = scvf.ipGlobal();
+            auto p2 = scvf.ipGlobal();
+            p2 += distVec;
 
-            const auto d1Norm = d1.two_norm();
-            const auto d2Norm = d2.two_norm();
+            static constexpr int dimWorld = GridView::dimensionworld;
+            using Segment = Dune::MultiLinearGeometry<Scalar, 1, dimWorld>;
 
-            using std::tan;
-            using std::acos;
-            const auto angle = acos( (d1*d2)/d1Norm/d2Norm );
-            const auto dm = tan(angle)*d1Norm;
+            std::vector<GlobalPosition> corners({p1, p2});
+            Segment segment(Dune::GeometryTypes::line, corners);
 
-            ipGlobalInside_ = scvf.unitOuterNormal();
-            ipGlobalInside_ *= -1.0*dm;
-            ipGlobalInside_ += scvf.ipGlobal();
+            using Intersection = GeometryIntersection<typename Element::Geometry, Segment>;
+            typename Intersection::IntersectionType intersection;
+
+            if (!Intersection::intersection(geometry, segment, intersection))
+                DUNE_THROW(Dune::InvalidStateException, "Could not compute interior integration point");
+
+            // use center of intersection as integration point
+            ipGlobalInside_ = intersection[0][0];
+            ipGlobalInside_ += intersection[0][1];
+            ipGlobalInside_ /= 2.0;
 
             fvGeometry.feLocalBasis().evaluateFunction(geometry.local(ipGlobalInside_), shapeValuesInside_);
         }
