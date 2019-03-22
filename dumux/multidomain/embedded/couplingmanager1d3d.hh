@@ -50,7 +50,7 @@ namespace Dumux {
  * \brief The coupling mode
  */
 enum class EmbeddedCouplingMode
-{ line, average, cylindersources, kernel };
+{ line, average, cylindersources, kernel, projection };
 
 /*!
  * \ingroup EmbeddedCoupling
@@ -64,6 +64,7 @@ std::string toString(EmbeddedCouplingMode mode)
         case EmbeddedCouplingMode::average: return "average";
         case EmbeddedCouplingMode::cylindersources: return "cylinder";
         case EmbeddedCouplingMode::kernel: return "kernel";
+        case EmbeddedCouplingMode::projection: return "projection";
         default: return "unknown";
     }
 }
