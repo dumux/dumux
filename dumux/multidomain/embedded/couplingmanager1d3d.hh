@@ -1059,6 +1059,8 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::kernel>
     static constexpr bool isBox()
     { return FVGridGeometry<id>::discMethod == DiscretizationMethod::box; }
 
+    static_assert(!isBox<bulkIdx>() && !isBox<lowDimIdx>(), "The kernel coupling method is only implemented for the tpfa method");
+
     enum {
         bulkDim = GridView<bulkIdx>::dimension,
         lowDimDim = GridView<lowDimIdx>::dimension,
