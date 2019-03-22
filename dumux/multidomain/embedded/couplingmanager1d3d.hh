@@ -789,14 +789,12 @@ public:
                 std::unordered_map<GridIndex<bulkIdx>, ShapeValues> circleShapeValues;
 
                 // go over all circle points and precompute some quantities for the circle average
-                int insideCirclePoints = 0;
                 for (int k = 0; k < circlePoints.size(); ++k)
                 {
                     circleBulkElementIndices[k] = intersectingEntities(circlePoints[k], bulkTree);
                     if (circleBulkElementIndices[k].empty())
                         continue;
 
-                    ++insideCirclePoints;
                     const auto localCircleAvgWeight = circleAvgWeight / circleBulkElementIndices[k].size();
                     for (const auto bulkElementIdx : circleBulkElementIndices[k])
                     {
@@ -836,9 +834,6 @@ public:
                                                                                circleStencil.begin(), circleStencil.end());
                 }
 
-                // surface fraction that is inside the domain (only different than 1.0 on the boundary)
-                const auto surfaceFraction = Scalar(insideCirclePoints)/Scalar(circlePoints.size());
-
                 for (int k = 0; k < circlePoints.size(); ++k)
                 {
                     const auto& circlePos = circlePoints[k];
@@ -853,9 +848,9 @@ public:
                     {
                         const auto id = this->idCounter_++;
 
-                        this->pointSources(bulkIdx).emplace_back(circlePos, id, qpweight, integrationElement*surfaceFraction, std::vector<std::size_t>({bulkElementIdx}));
+                        this->pointSources(bulkIdx).emplace_back(circlePos, id, qpweight, integrationElement, std::vector<std::size_t>({bulkElementIdx}));
                         this->pointSources(bulkIdx).back().setEmbeddings(circleBulkElementIndices[k].size());
-                        this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement*surfaceFraction, std::vector<std::size_t>({lowDimElementIdx}));
+                        this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement, std::vector<std::size_t>({lowDimElementIdx}));
                         this->pointSources(lowDimIdx).back().setEmbeddings(circleBulkElementIndices[k].size());
 
                         // pre compute additional data used for the evaluation of
