@@ -49,6 +49,8 @@
 
 #include "newtonconvergencewriter.hh"
 
+#include <dune/common/deprecated.hh>
+
 namespace Dumux {
 namespace Detail {
 
@@ -193,8 +195,21 @@ public:
      *        Does time step control when the Newton fails to converge
      */
     template<class TimeLoop>
+    DUNE_DEPRECATED_MSG("Use attachConvergenceWriter(convWriter) and solve(x, *timeLoop) instead")
     void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop,
-               std::shared_ptr<ConvergenceWriter> convWriter = nullptr)
+               std::shared_ptr<ConvergenceWriter> convWriter)
+    {
+        if (!convergenceWriter_)
+            attachConvergenceWriter(convWriter);
+
+        solve(uCurrentIter, timeLoop);
+    }
+    /*!
+     * \brief Run the Newton method to solve a non-linear system.
+     *        Does time step control when the Newton fails to converge
+     */
+    template<class TimeLoop>
+    void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop)
     {
         if (assembler_->isStationaryProblem())
             DUNE_THROW(Dune::InvalidStateException, "Using time step control with stationary problem makes no sense!");
@@ -203,7 +218,7 @@ public:
         for (std::size_t i = 0; i <= maxTimeStepDivisions_; ++i)
         {
             // linearize & solve
-            const bool converged = solve_(uCurrentIter, convWriter);
+            const bool converged = solve_(uCurrentIter);
 
             if (converged)
                 return;
@@ -238,9 +253,9 @@ public:
      * \brief Run the Newton method to solve a non-linear system.
      *        The solver is responsible for all the strategic decisions.
      */
-    void solve(SolutionVector& uCurrentIter, std::shared_ptr<ConvergenceWriter> convWriter = nullptr)
+    void solve(SolutionVector& uCurrentIter)
     {
-        const bool converged = solve_(uCurrentIter, convWriter);
+        const bool converged = solve_(uCurrentIter);
         if (!converged)
             DUNE_THROW(NumericalProblem, "Newton solver didn't converge after "
                                          << numSteps_ << " iterations.\n");
@@ -256,6 +271,15 @@ public:
     {
         numSteps_ = 0;
         initPriVarSwitch_(u, HasPriVarsSwitch{});
+
+        // write the initial residual if a convergence writer was set
+        if (convergenceWriter_)
+        {
+            assembler_->assembleResidual(u);
+            SolutionVector delta(u);
+            delta = 0; // dummy vector, there is no delta before solving the linear system
+            convergenceWriter_->write(u, delta, assembler_->residual());
+        }
     }
 
     /*!
@@ -621,6 +645,18 @@ public:
     const std::string& paramGroup() const
     { return paramGroup_; }
 
+    /*!
+     * \brief Attach a convergence writer to write out intermediate results after each iteration
+     */
+    void attachConvergenceWriter(std::shared_ptr<ConvergenceWriter> convWriter)
+    { convergenceWriter_ = convWriter; }
+
+    /*!
+     * \brief Detach the convergence writer to stop the output
+     */
+    void detachConvergenceWriter()
+    { convergenceWriter_ = nullptr; }
+
 protected:
 
     void computeResidualReduction_(const SolutionVector &uCurrentIter)
@@ -724,7 +760,7 @@ private:
      * \brief Run the Newton method to solve a non-linear system.
      *        The solver is responsible for all the strategic decisions.
      */
-    bool solve_(SolutionVector& uCurrentIter, std::shared_ptr<ConvergenceWriter> convWriter = nullptr)
+    bool solve_(SolutionVector& uCurrentIter)
     {
         // the given solution is the initial guess
         SolutionVector uLastIter(uCurrentIter);
@@ -814,10 +850,10 @@ private:
                 newtonEndStep(uCurrentIter, uLastIter);
 
                 // if a convergence writer was specified compute residual and write output
-                if (convWriter)
+                if (convergenceWriter_)
                 {
                     assembler_->assembleResidual(uCurrentIter);
-                    convWriter->write(uLastIter, deltaU, assembler_->residual());
+                    convergenceWriter_->write(uLastIter, deltaU, assembler_->residual());
                 }
 
                 // detect if the method has converged
@@ -1240,6 +1276,9 @@ private:
     std::unique_ptr<PrimaryVariableSwitch> priVarSwitch_;
     //! if we switched primary variables in the last iteration
     bool priVarsSwitchedInLastIteration_ = false;
+
+    //! convergence writer
+    std::shared_ptr<ConvergenceWriter> convergenceWriter_ = nullptr;
 };
 
 } // end namespace Dumux
