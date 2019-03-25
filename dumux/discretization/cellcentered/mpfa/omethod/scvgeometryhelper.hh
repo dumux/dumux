@@ -81,7 +81,7 @@ public:
             const auto& firstGridScvf = fvGeometry.scvf(iv.localScvf(scv.localScvfIndex(0)).gridScvfIndex());
             const auto& secondGridScvf = fvGeometry.scvf(iv.localScvf(scv.localScvfIndex(1)).gridScvfIndex());
 
-            std::array<typename LocalScvType::GlobalCoordinate, 4> corners;
+            typename MLGTraits::template CornerStorage<dim, dimWorld>::Type corners;
             corners[0] = fvGeometry.scv( scv.gridScvIndex() ).center();
             corners[1] = firstGridScvf.facetCorner();
             corners[2] = secondGridScvf.facetCorner();
