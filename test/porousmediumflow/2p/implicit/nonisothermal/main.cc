@@ -158,6 +158,7 @@ int main(int argc, char** argv) try
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using NewtonConvergenceWriter = Dumux::NewtonConvergenceWriter<GridView, SolutionVector>;
     auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(leafGridView, fvGridGeometry->numDofs());
+    nonLinearSolver.attachConvergenceWriter(convergenceWriter);
 
     // time loop
     timeLoop->start(); do
@@ -165,8 +166,11 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
+        // reset the convergence writer so that each time can be easily identified in the pvd file
+        convergenceWriter->reset(timeLoop->timeStepIndex());
+
         // solve the non-linear system with time step control
-        nonLinearSolver.solve(x, *timeLoop, convergenceWriter);
+        nonLinearSolver.solve(x, *timeLoop);
 
         // make the new solution the old solution
         xOld = x;
