@@ -1,5 +1,5 @@
 [TimeManager]
-TInitEnd = 0.01      # [s]
+TInitEnd = 1e6     # [s]
 
 TEnd = 12960000 #        # [s]
 #TEnd = 54000        # [s]

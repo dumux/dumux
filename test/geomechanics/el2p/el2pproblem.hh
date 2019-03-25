@@ -25,11 +25,13 @@
 #define DUMUX_EL2P_TESTPROBLEM_HH
 
 #include <dune/pdelab/finiteelementmap/qkfem.hh>
-#include <dumux/material/components/simpleh2o.hh>
+// OLD #include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/simpleh2orelativepressure.hh>
 
 
 // #include <dumux/material/fluidsystems/brineco2.hh>
-#include <dumux/material/fluidsystems/h2oair.hh>
+// OLD #include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/material/fluidsystems/h2oairrelativepressure.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/geomechanics/el2p/model.hh>
 #include <dumux/geomechanics/el2p/amgbackend.hh>
@@ -236,7 +238,7 @@ public:
          FluidSystem::init(/*Tmin=*/273,
                            /*Tmax=*/300,
                            /*nT=*/5,
-                           /*pmin=*/0,
+                           /*pmin=*/-1e5,
                            /*pmax=*/1e6,
                            /*np=*/10);
 
@@ -326,6 +328,7 @@ public:
 
             // initial approximate pressure distribution at start of initialization run
             pInit_[vIdxGlobal] = -(1.0e5 + wTdepth(globalPos) * waterDensity_ * 9.81);
+            // pInit_[vIdxGlobal] = -wTdepth(globalPos) * waterDensity_ * 9.81;
         }
     }
 
@@ -627,7 +630,8 @@ public:
 //           values[saturationIdx] = 1.-sw;
 //         } else
 //         {
-          values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
+          // OLD values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
+          values[pressureIdx] = 1000. * 9.81 * wTdepth(globalPos);
           //std::cout<< "pressure=" <<values[pressureIdx] << std::endl;
           values[saturationIdx] = 0.0;
 //         }
@@ -697,14 +701,17 @@ public:
         Scalar rb_ = 2.0E-4; //[1/s] =K/B conductance
         Scalar ks_ = 1.39e-6;
 
-        const Scalar pW = elemVolVars[scvIdx].pressure(pressureIdx);
-        const Scalar pN = elemVolVars[scvIdx].pressure(nPhaseIdx);
+        // OLD const Scalar pW = elemVolVars[scvIdx].pressure(pressureIdx);
+        // OLD const Scalar pN = elemVolVars[scvIdx].pressure(nPhaseIdx);
+        const Scalar pW = 1e5 + elemVolVars[scvIdx].pressure(pressureIdx);
+        const Scalar pN = 1e5 + elemVolVars[scvIdx].pressure(nPhaseIdx);
         const Scalar satW = elemVolVars[scvIdx].saturation(wPhaseIdx);
         const Scalar satN = elemVolVars[scvIdx].saturation(nPhaseIdx);
 
         if (onInlet_(globalPos))
         {
-
+            if(initializationRun_ == false)
+            {
                if (satW > 1. - eps_){
                    //std::cout << "saturation above 1 \n" ;
                     values[contiWEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
@@ -715,10 +722,13 @@ public:
                 else {
                    //std::cout << "saturation below 1, infiltration \n" ;
                     values[contiWEqIdx] = -avgRain_*1000.;
-                    if (pN>1.e5) {
-                    values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
-                    }
+                    if (pN>1.e5) { values[contiNEqIdx] = satN * (pN-1.e5) * rb_; }
                 }
+            }
+            else
+            {
+                values = 0.0;
+            }
         }
 
      }

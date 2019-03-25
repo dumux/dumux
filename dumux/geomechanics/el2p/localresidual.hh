@@ -75,6 +75,7 @@ public:
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
+        massUpwindWeight_ = 0.5;
         massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit,
                 MassUpwindWeight);
     }
@@ -173,6 +174,7 @@ public:
             if (this->problem_().coupled() == true) {
                 Keff.mv(fluxVars.potentialGrad(phaseIdx), tmpVec);
             } else {
+//                 std::cout << "fluxVars.intrinsicPermeability()" << fluxVars.intrinsicPermeability() << std::endl;
                 fluxVars.intrinsicPermeability().mv(
                         fluxVars.potentialGrad(phaseIdx), tmpVec);
             }
@@ -192,6 +194,14 @@ public:
                             * up.mobility(phaseIdx)
                             + (1.0 - massUpwindWeight_) * dn.density(phaseIdx)
                                     * dn.mobility(phaseIdx));
+
+//             if (std::abs(normalFlux) > 1.e-15)
+//             {
+//                 std::cout << "massUpwindWeight_" << massUpwindWeight_ << std::endl;
+//                 std::cout << "up.density(phaseIdx)" << up.density(phaseIdx) << std::endl;
+//                 std::cout << "up.mobility(phaseIdx)" << up.mobility(phaseIdx) << std::endl;
+//                 std::cout << "normalFlux" << normalFlux << std::endl;
+//             }
 
             // if geomechanical feedback on flow is taken into account add the flux contribution
             // of the displacement velocity
