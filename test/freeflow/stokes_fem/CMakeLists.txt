@@ -1,3 +1,2 @@
-add_executable(test_stokesfem test_stokesfem test_stokesfem.cc)
 add_executable(test_stokesfemChannel test_stokesfemChannel test_stokesfemChannel.cc)
 add_executable(test_stokesfemDrivenCavity test_stokesfemDrivenCavity test_stokesfemDrivenCavity.cc)
