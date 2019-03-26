@@ -96,7 +96,7 @@ SET_TYPE_PROP(El2P_TestProblem, Problem, El2P_TestProblem<TypeTag>);
 //
 //};
 
-// Set the wetting phase
+// Set the wetting phase first
 SET_PROP(El2P_TestProblem, WettingPhase)
 {
 private:
