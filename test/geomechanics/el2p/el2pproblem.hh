@@ -817,7 +817,7 @@ public:
         this->model().globalStorage(mass);
         double time = this->timeManager().time()+this->timeManager().timeStepSize();
 
-        if(time>1.0)
+        if(time>1001.0)
         this->newtonController().setMaxRelativeShift(1.e-5);//khodam from 1e-5
 
         // Write mass balance information for rank 0
