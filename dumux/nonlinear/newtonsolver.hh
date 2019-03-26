@@ -853,7 +853,7 @@ private:
                 if (convergenceWriter_)
                 {
                     assembler_->assembleResidual(uCurrentIter);
-                    convergenceWriter_->write(uLastIter, deltaU, assembler_->residual());
+                    convergenceWriter_->write(uCurrentIter, deltaU, assembler_->residual());
                 }
 
                 // detect if the method has converged
