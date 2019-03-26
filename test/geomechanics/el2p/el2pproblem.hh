@@ -88,11 +88,30 @@ public:
 // Set the problem property
 SET_TYPE_PROP(El2P_TestProblem, Problem, El2P_TestProblem<TypeTag>);
 
-// Set fluid configuration
-SET_PROP(El2P_TestProblem, FluidSystem)
+//// Set fluid configuration
+//SET_PROP(El2P_TestProblem, FluidSystem)
+//{
+////     typedef BrineCO2FluidSystem<TypeTag> type;
+       //typedef Dumux::H2OAirRelPressFluidSystem<TypeTag> type;
+//
+//};
+
+// Set the wetting phase
+SET_PROP(El2P_TestProblem, WettingPhase)
 {
-//     typedef BrineCO2FluidSystem<TypeTag> type;
-    typedef Dumux::H2OAirRelPressFluidSystem<TypeTag> type;
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+public:
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2ORelPress<Scalar> > type;
+};
+
+// Set the non-wetting phase
+SET_PROP(El2P_TestProblem, NonwettingPhase)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+public:
+    typedef FluidSystems::GasPhase<Scalar, AirRelPress<Scalar> > type;
 };
 
 
@@ -235,12 +254,12 @@ public:
         std::cout << "El2P_TestProblem: Initializing the fluid system for the el2p model\n";
 
         // initialize the tables of the fluid system
-         FluidSystem::init(/*Tmin=*/273,
-                           /*Tmax=*/300,
-                           /*nT=*/5,
-                           /*pmin=*/-1e5,
-                           /*pmax=*/1e6,
-                           /*np=*/10);
+         //FluidSystem::init(/*Tmin=*/273,
+                           ///*Tmax=*/300,
+                           ///*nT=*/5,
+                           ///*pmin=*/-1e5,
+                           ///*pmax=*/1e6,
+                           ///*np=*/10);
 
         // resize the pressure field vector with the number of vertices
         pInit_.resize(gridView.size(dim));
