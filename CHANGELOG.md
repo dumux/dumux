@@ -7,12 +7,25 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 
 - Added new porous medium model for the energy balance of a porous solid (general heat equation)
 - __Multidomain__: It is now possible to use the facet coupling module together with the mpfa-o scheme in the bulk domain.
+- Added a `StaggeredNewtonConvergenceWriter` for the staggered grid discretization scheme
 
 ### Immediate interface changes not allowing/requiring a deprecation period
+
+- `NewtonConvergenceWriter`'s first template argument has changed from `GridView`, the `FVGridGeometry`. This allows to call the `resize()` method after a grid change without any arguments.
+  Here is an example of how to instatiate the convergence writer:
+  ```
+  using NewtonConvergenceWriter = Dumux::NewtonConvergenceWriter<FVGridGeometry, SolutionVector>;
+  auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(*fvGridGeometry);
+  ```
+
 
 ### Deprecated classes/files, to be removed after 3.1:
 
 ### Deprecated member functions, to be removed after 3.1:
+
+- The convergence writer is no longer passed to `NewtonSolver`'s `solve()` method.
+  For outputting convergence data, please use `newtonSolver.attachConvergenceWriter(convWriter)` in `main.cc` (directly after instantiating the writer).
+  To stop the output, the writer can also be detached again using `newtonSolver.detachConvergenceWriter()`.
 
 ### Deleted classes/files, property names, constants/enums
 
