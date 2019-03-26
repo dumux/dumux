@@ -92,7 +92,7 @@ SET_TYPE_PROP(El2P_TestProblem, Problem, El2P_TestProblem<TypeTag>);
 SET_PROP(El2P_TestProblem, FluidSystem)
 {
 //     typedef BrineCO2FluidSystem<TypeTag> type;
-    typedef Dumux::H2OAirFluidSystem<TypeTag> type;
+    typedef Dumux::H2OAirRelPressFluidSystem<TypeTag> type;
 };
 
 
@@ -327,8 +327,8 @@ public:
             GlobalPosition globalPos = vertex.geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
-            pInit_[vIdxGlobal] = -(1.0e5 + wTdepth(globalPos) * waterDensity_ * 9.81);
-            // pInit_[vIdxGlobal] = -wTdepth(globalPos) * waterDensity_ * 9.81;
+            // pInit_[vIdxGlobal] = -(1.0e5 + wTdepth(globalPos) * waterDensity_ * 9.81);
+            pInit_[vIdxGlobal] = -wTdepth(globalPos) * waterDensity_ * 9.81;
         }
     }
 

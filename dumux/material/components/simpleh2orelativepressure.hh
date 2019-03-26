@@ -231,6 +231,8 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
+
+std::cout << "I am here: simpleh2orelativepressure Density" << std::endl;
         return 1000.;
     }
 
@@ -266,6 +268,7 @@ public:
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
+std::cout << "I am here: simpleh2orelativepressure Viscosity" << std::endl;
         return 1e-03;
     }
 

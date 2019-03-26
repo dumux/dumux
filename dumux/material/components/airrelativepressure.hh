@@ -81,6 +81,8 @@ public:
     */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
+
+std::cout << "I am here: airrelativepressure Density" << std::endl;
         // Assume an ideal gas
         return IdealGas::density(molarMass(), temperature, pressure+1e5);
     }

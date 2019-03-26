@@ -35,6 +35,10 @@
 #include <dumux/material/fluidsystems/defaultcomponents.hh>
 //#include <dumux/material/components/air.hh>
 #include <dumux/material/components/airrelativepressure.hh>
+#include <dumux/material/components/simpleh2orelativepressure.hh>
+//#include <dumux/material/components/h2o.hh>
+
+#include <dumux/material/components/tabulatedcomponent.hh>
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
@@ -90,8 +94,8 @@ namespace FluidSystems
  * effects are not considered.
  */
 template <class Scalar,
-          class H2Otype = TabulatedComponent<Scalar, H2O<Scalar> >,
-          bool useComplexRelations = true>
+          class H2Otype = TabulatedComponent<Scalar, SimpleH2ORelPress<Scalar> >,
+          bool useComplexRelations = false>
 class H2OAirRelPress
 : public BaseFluidSystem<Scalar, H2OAirRelPress<Scalar, H2Otype, useComplexRelations> >
 {
@@ -332,7 +336,7 @@ public:
     static Scalar criticalMolarVolume(int compIdx)
     {
         DUNE_THROW(Dune::NotImplemented,
-                   "H2OAirFluidSystem::criticalMolarVolume()");
+                   "H2OAirRelPressFluidSystem::criticalMolarVolume()");
     }
 
     /*!
@@ -423,7 +427,6 @@ public:
         const Scalar T = fluidState.temperature(phaseIdx);
         const Scalar p = fluidState.pressure(phaseIdx);
 
-
         Scalar sumMoleFrac = 0;
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             sumMoleFrac += fluidState.moleFraction(phaseIdx, compIdx);
@@ -453,7 +456,7 @@ public:
             if (!useComplexRelations)
                 // for the gas phase assume an ideal gas
                 return
-                    IdealGas::molarDensity(T, p)
+                    IdealGas::molarDensity(T, p+1e5)
                     * fluidState.averageMolarMass(nPhaseIdx)
                     / max(1e-5, sumMoleFrac);
 
@@ -848,7 +851,7 @@ NEW_PROP_TAG(Components);
  * is not necessary for non-tabularized ones.
  */
 template<class TypeTag>
-class H2OAirFluidSystem
+class H2OAirRelPressFluidSystem
 : public FluidSystems::H2OAirRelPress<typename GET_PROP_TYPE(TypeTag, Scalar),
                               typename GET_PROP(TypeTag, Components)::H2O,
                              GET_PROP_VALUE(TypeTag, EnableComplicatedFluidSystem)>
