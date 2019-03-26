@@ -155,9 +155,8 @@ int main(int argc, char** argv) try
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     //the convergence writer
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using NewtonConvergenceWriter = Dumux::NewtonConvergenceWriter<GridView, SolutionVector>;
-    auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(leafGridView, fvGridGeometry->numDofs());
+    using NewtonConvergenceWriter = Dumux::NewtonConvergenceWriter<FVGridGeometry, SolutionVector>;
+    auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(*fvGridGeometry);
     nonLinearSolver.attachConvergenceWriter(convergenceWriter);
 
     // time loop
