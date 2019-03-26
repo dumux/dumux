@@ -78,8 +78,8 @@ public:
         outerMaterialParams_.setVgAlpha(0.0037);
         outerMaterialParams_.setVgn(4.7);
 
-        lensK_ = 9.05e-12;
-        outerK_ = 4.6e-10;
+        lensK_ = getParam<Scalar>("SpatialParams.lensK", 9.05e-12);
+        outerK_ = getParam<Scalar>("SpatialParams.outerK", 4.6e-10);
     }
 
     /*!

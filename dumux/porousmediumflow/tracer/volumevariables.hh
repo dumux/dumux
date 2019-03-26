@@ -21,16 +21,29 @@
  * \ingroup TracerModel
  * \brief Quantities required by the tracer model in a control volume.
  */
-
 #ifndef DUMUX_TRACER_VOLUME_VARIABLES_HH
 #define DUMUX_TRACER_VOLUME_VARIABLES_HH
 
+#include <type_traits>
 #include <array>
+#include <dune/common/std/type_traits.hh>
 
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
 namespace Dumux {
+
+namespace Detail {
+// helper structs and functions detecting if the user-defined spatial params class
+// has user-specified functions saturation() for multi-phase tracer.
+template <typename T, typename ...Ts>
+using SaturationDetector = decltype(std::declval<T>().spatialParams().saturation(std::declval<Ts>()...));
+
+template<class T, typename ...Args>
+static constexpr bool hasSaturation()
+{ return Dune::Std::is_detected<SaturationDetector, T, Args...>::value; }
+
+} // end namespace Detail
 
 /*!
  * \ingroup TracerModel
@@ -74,6 +87,7 @@ public:
         // the spatial params special to the tracer model
         fluidDensity_ = problem.spatialParams().fluidDensity(element, scv);
         fluidMolarMass_ = problem.spatialParams().fluidMolarMass(element, scv);
+        fluidSaturation_ = saturation_(problem, element, scv);
 
         for (int compIdx = 0; compIdx < ParentType::numFluidComponents(); ++compIdx)
         {
@@ -87,9 +101,9 @@ public:
      *
      * We always forward to the fluid state with the phaseIdx property (see class description).
      *
-     * \param pIdx TODO docme!
+     * \param phaseIdx The phase index
      */
-    Scalar density(int pIdx = 0) const
+    Scalar density(int phaseIdx = 0) const
     { return fluidDensity_; }
 
     /*!
@@ -102,12 +116,14 @@ public:
      * \brief Returns the saturation.
      *
      * This method is here for compatibility reasons with other models. The saturation
-     * is always 1.0 in a one-phasic context.
-     *
-     * \param pIdx The phase index
+     * is always 1.0 in a one-phasic context, if two-phases or richards are considered,
+     * the spatialParams serve as way to pass the saturation from the main-file to the
+     * volVars and then to the localresidual for the tracer model.
+
+     * \param phaseIdx The phase index
      */
-    Scalar saturation(int pIdx = 0) const
-    { return 1.0; }
+    Scalar saturation(int phaseIdx = 0) const
+    { return fluidSaturation_ ; }
 
     /*!
      * \brief Returns the mobility.
@@ -115,53 +131,53 @@ public:
      * This method is here for compatibility reasons with other models. The mobility is always 1
      * for one-phasic models where the velocity field is given
      *
-     * \param pIdx The phase index
+     * \param phaseIdx The phase index
      */
-    Scalar mobility(int pIdx = 0) const
+    Scalar mobility(int phaseIdx = 0) const
     { return 1.0; }
 
     /*!
      * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
      *
-     * \param pIdx The phase index
+     * \param phaseIdx The phase index
      */
-    Scalar molarDensity(int pIdx = 0) const
+    Scalar molarDensity(int phaseIdx = 0) const
     { return fluidDensity_/fluidMolarMass_; }
 
     /*!
      * \brief Returns the mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
      *
-     * \param pIdx The phase index
+     * \param phaseIdx The phase index
      * \param compIdx The index of the component
      */
-    Scalar moleFraction(int pIdx, int compIdx) const
+    Scalar moleFraction(int phaseIdx, int compIdx) const
     { return useMoles ? moleOrMassFraction_[compIdx] : moleOrMassFraction_[compIdx]/FluidSystem::molarMass(compIdx)*fluidMolarMass_; }
 
     /*!
      * \brief Returns the mass fraction \f$\mathrm{[kg/kg]}\f$ of a component in the phase.
      *
-     * \param pIdx The phase index
+     * \param phaseIdx The phase index
      * \param compIdx The index of the component
      */
-    Scalar massFraction(int pIdx, int compIdx) const
+    Scalar massFraction(int phaseIdx, int compIdx) const
     { return useMoles ? moleOrMassFraction_[compIdx]*FluidSystem::molarMass(compIdx)/fluidMolarMass_ : moleOrMassFraction_[compIdx]; }
 
     /*!
      * \brief Returns the concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
      *
-     * \param pIdx The phase index
+     * \param phaseIdx The phase index
      * \param compIdx The index of the component
      */
-    Scalar molarity(int pIdx, int compIdx) const
-    { return moleFraction(pIdx, compIdx)*molarDensity(); }
+    Scalar molarity(int phaseIdx, int compIdx) const
+    { return moleFraction(phaseIdx, compIdx)*molarDensity(); }
 
     /*!
      * \brief Returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
      *
-     * \param pIdx The phase index
+     * \param phaseIdx The phase index
      * \param compIdx The index of the component
      */
-    Scalar diffusionCoefficient(int pIdx, int compIdx) const
+    Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     { return diffCoeff_[compIdx]; }
 
     // /*!
@@ -180,6 +196,37 @@ public:
 protected:
     SolidState solidState_;
     Scalar fluidDensity_, fluidMolarMass_;
+    Scalar fluidSaturation_ = 1.0;
+    /*!
+     * \brief Gets the saturation in an scv.
+     *
+     * \param problem the problem to solve
+     * \param element the element (codim-0-entity) the scv belongs to
+     * \param scv the sub control volume
+     * \note this gets selected if the user uses the multiphase tracer
+     */
+     template<class Problem, class Element, class Scv,
+              std::enable_if_t<Detail::hasSaturation<Problem, Element, Scv>(), int> = 0>
+     Scalar saturation_(const Problem& problem,
+                        const Element& element,
+                        const Scv& scv)
+     { return problem.spatialParams().saturation(element, scv); }
+
+    /*!
+     * \brief Gets the saturation in an scv.
+     *
+     * \param problem the problem to solve
+     * \param element the element (codim-0-entity) the scv belongs to
+     * \param scv the sub control volume
+     * \note this gets selected if the user a single phase tracer
+     */
+    template<class Problem, class Element, class Scv,
+             std::enable_if_t<!Detail::hasSaturation<Problem, Element, Scv>(), int> = 0>
+    Scalar saturation_(const Problem& problem,
+                       const Element &element,
+                       const Scv &scv)
+    { return 1.0; }
+
     // DispersivityType dispersivity_;
     std::array<Scalar, ParentType::numFluidComponents()> diffCoeff_;
     std::array<Scalar, ParentType::numFluidComponents()> moleOrMassFraction_;
