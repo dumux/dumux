@@ -25,9 +25,10 @@
 #ifndef DUMUX_NEWTON_CONVERGENCE_WRITER_HH
 #define DUMUX_NEWTON_CONVERGENCE_WRITER_HH
 
-#include <dune/common/exceptions.hh>
+#include <string>
+
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
-#include <dumux/common/parameters.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 
@@ -49,12 +50,15 @@ struct ConvergenceWriterInterface
  *       to write out multiple Newton solves with a unique id, if you don't call use all
  *       Newton iterations just come after each other in the pvd file.
  */
-// template <class Scalar, class GridView, int numEq>
-template <class GridView, class SolutionVector>
+template <class FVGridGeometry, class SolutionVector>
 class NewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector>
 {
+    using GridView = typename FVGridGeometry::GridView;
     static constexpr auto numEq = SolutionVector::block_type::dimension;
     using Scalar = typename SolutionVector::block_type::value_type;
+
+    static_assert(FVGridGeometry::discMethod != DiscretizationMethod::staggered,
+                  "This convergence writer does not work for the staggered method, use the StaggeredNewtonConvergenceWriter instead");
 public:
     /*!
      * \brief Constructor
@@ -62,14 +66,14 @@ public:
      * \param size the size of the solution data
      * \param name base name of the vtk output
      */
-    NewtonConvergenceWriter(const GridView& gridView,
-                            std::size_t size,
+    NewtonConvergenceWriter(const FVGridGeometry& fvGridGeometry,
                             const std::string& name = "newton_convergence")
-    : writer_(gridView, name, "", "")
+    : fvGridGeometry_(fvGridGeometry)
+    , writer_(fvGridGeometry.gridView(), name, "", "")
     {
-        resize(size);
+        resize();
 
-        if (size == gridView.size(GridView::dimension))
+        if (FVGridGeometry::discMethod == DiscretizationMethod::box)
         {
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             {
@@ -78,7 +82,7 @@ public:
                 writer_.addVertexData(def_[eqIdx], "defect_" + std::to_string(eqIdx));
             }
         }
-        else if (size == gridView.size(0))
+        else
         {
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             {
@@ -87,21 +91,19 @@ public:
                 writer_.addCellData(def_[eqIdx], "defect_" + std::to_string(eqIdx));
             }
         }
-        else
-        {
-            DUNE_THROW(Dune::InvalidStateException, "Wrong size of output fields in the Newton convergence writer!");
-        }
     }
 
     //! Resizes the output fields. This has to be called whenever the grid changes
-    void resize(std::size_t size)
+    void resize()
     {
+        const auto numDofs = fvGridGeometry_.numDofs();
+
         // resize the output fields
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
         {
-            def_[eqIdx].resize(size);
-            delta_[eqIdx].resize(size);
-            x_[eqIdx].resize(size);
+            def_[eqIdx].resize(numDofs);
+            delta_[eqIdx].resize(numDofs);
+            x_[eqIdx].resize(numDofs);
         }
     }
 
@@ -110,9 +112,9 @@ public:
     void reset(std::size_t newId = 0UL)
     { id_ = newId; iteration_ = 0UL; }
 
-    void write(const SolutionVector &uLastIter,
-               const SolutionVector &deltaU,
-               const SolutionVector &residual) override
+    void write(const SolutionVector& uLastIter,
+               const SolutionVector& deltaU,
+               const SolutionVector& residual) override
     {
         assert(uLastIter.size() == deltaU.size() && uLastIter.size() == residual.size());
 
@@ -133,6 +135,8 @@ public:
 private:
     std::size_t id_ = 0UL;
     std::size_t iteration_ = 0UL;
+
+    const FVGridGeometry& fvGridGeometry_;
 
     Dune::VTKSequenceWriter<GridView> writer_;
 

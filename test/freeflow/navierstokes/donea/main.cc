@@ -43,6 +43,7 @@
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/nonlinear/staggerednewtonconvergencewriter.hh>
 
 #include "problem.hh"
 
@@ -115,6 +116,10 @@ int main(int argc, char** argv) try
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
+
+    using NewtonConvergenceWriter = StaggeredNewtonConvergenceWriter<FVGridGeometry, SolutionVector>;
+    auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(*fvGridGeometry);
+    nonLinearSolver.attachConvergenceWriter(convergenceWriter);
 
     // linearize & solve
     Dune::Timer timer;
