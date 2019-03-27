@@ -24,7 +24,6 @@
 #ifndef DUMUX_FV_LOCAL_RESIDUAL_HH
 #define DUMUX_FV_LOCAL_RESIDUAL_HH
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/istl/bvector.hh>
 
@@ -130,53 +129,6 @@ public:
     // \{
 
     /*!
-     * \brief Compute the local residual, i.e. the deviation of the
-     *        equations from zero for instationary problems.
-     *
-     * \param problem The problem to solve
-     * \param element The DUNE Codim<0> entity for which the residual
-     *                ought to be calculated
-     * \param fvGeometry The finite-volume geometry of the element
-     * \param prevElemVolVars The volume averaged variables for all
-     *                        sub-control volumes of the element at the previous time level
-     * \param curElemVolVars The volume averaged variables for all
-     *                       sub-control volumes of the element at the current  time level
-     * \param bcTypes The types of the boundary conditions for all boundary entities of an element
-     * \param elemFluxVarsCache The flux variable caches for the element stencil
-     */
-    DUNE_DEPRECATED_MSG("eval is deprecated because it doesn't allow to specify on which time level to evaluate. Use evalFluxAndSource, and evalStorage instead!")
-    ElementResidualVector eval(const Problem& problem,
-                               const Element& element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& prevElemVolVars,
-                               const ElementVolumeVariables& curElemVolVars,
-                               const ElementBoundaryTypes &bcTypes,
-                               const ElementFluxVariablesCache& elemFluxVarsCache) const
-    {
-        assert(timeLoop_ && "no time loop set for storage term evaluation");
-
-        // initialize the residual vector for all scvs in this element
-        ElementResidualVector residual(fvGeometry.numScv());
-        residual = 0.0;
-
-        // evaluate the volume terms (storage + source terms)
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            //! foward to the local residual specialized for the discretization methods
-            asImp().evalStorage(residual, problem, element, fvGeometry, prevElemVolVars, curElemVolVars, scv);
-            asImp().evalSource(residual, problem, element, fvGeometry, curElemVolVars, scv);
-        }
-
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            //! foward to the local residual specialized for the discretization methods
-            asImp().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
-        }
-
-        return residual;
-    }
-
-    /*!
      * \brief Compute the storage local residual, i.e. the deviation of the
      *        storage term from zero for instationary problems.
      *
@@ -204,30 +156,6 @@ public:
             asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, scv);
 
         return residual;
-    }
-
-    /*!
-     * \brief Compute the local residual, i.e. the deviation of the
-     *        equations from zero for stationary problem.
-     *
-     * \param problem The problem to solve
-     * \param element The DUNE Codim<0> entity for which the residual
-     *                ought to be calculated
-     * \param fvGeometry The finite-volume geometry of the element
-     * \param curElemVolVars The volume averaged variables for all
-     *                       sub-control volumes of the element at the current  time level
-     * \param bcTypes The types of the boundary conditions for all boundary entities of an element
-     * \param elemFluxVarsCache The flux variable caches for the element stencil
-     */
-    DUNE_DEPRECATED_MSG("Use evalFluxAndSource instead!")
-    ElementResidualVector eval(const Problem& problem,
-                               const Element& element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& curElemVolVars,
-                               const ElementBoundaryTypes &bcTypes,
-                               const ElementFluxVariablesCache& elemFluxVarsCache) const
-    {
-        return evalFluxAndSource(element, fvGeometry, curElemVolVars, elemFluxVarsCache, bcTypes);
     }
 
     ElementResidualVector evalFluxAndSource(const Element& element,
