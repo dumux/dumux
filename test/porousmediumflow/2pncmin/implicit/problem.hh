@@ -368,10 +368,8 @@ public:
         const auto& volVars = elemVolVars[scv];
 
         Scalar moleFracNaCl_wPhase = volVars.moleFraction(liquidPhaseIdx, NaClIdx);
-        Scalar moleFracNaCl_nPhase = volVars.moleFraction(gasPhaseIdx, NaClIdx);
         Scalar massFracNaCl_Max_wPhase = this->spatialParams().solubilityLimit();
         Scalar moleFracNaCl_Max_wPhase = massToMoleFrac_(massFracNaCl_Max_wPhase);
-        Scalar moleFracNaCl_Max_nPhase = moleFracNaCl_Max_wPhase / volVars.pressure(gasPhaseIdx);
         Scalar saltPorosity = this->spatialParams().minimalPorosity(element, scv);
 
         // liquid phase
@@ -381,11 +379,6 @@ public:
                                                * abs(moleFracNaCl_wPhase - moleFracNaCl_Max_wPhase);
         if (moleFracNaCl_wPhase < moleFracNaCl_Max_wPhase)
             precipSalt *= -1;
-
-        // gas phase
-        precipSalt += volVars.porosity() * volVars.molarDensity(gasPhaseIdx)
-                                         * volVars.saturation(gasPhaseIdx)
-                                         * abs(moleFracNaCl_nPhase - moleFracNaCl_Max_nPhase);
 
         // make sure we don't dissolve more salt than previously precipitated
         if (precipSalt*timeStepSize_ + volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidComponentMolarDensity(sPhaseIdx)< 0)
