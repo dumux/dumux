@@ -291,9 +291,8 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
 
         DimVector divDivIVel = divGradVel;
-        DimVector diffus = divGradVel + divDivIVel;
 
-        Scalar stabTerm(0.0), tau(0.0), S(0.0);
+        Scalar tau(0.0), S(0.0);
 
         tau = 1*secVars.stabAlpha(secVars.velocity()[0], secVars.kinematicViscosity(), 1)*secVars.velocity()[0] +
               1*secVars.stabAlpha(secVars.velocity()[1], secVars.kinematicViscosity(), 1)*secVars.velocity()[1];
