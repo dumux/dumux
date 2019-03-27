@@ -25,6 +25,9 @@
 #ifndef DUMUX_1P_SINGULARITY_PROBLEM_HH
 #define DUMUX_1P_SINGULARITY_PROBLEM_HH
 
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
@@ -35,6 +38,10 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "../spatialparams.hh"
+
+#ifndef GRIDTYPE // default to yasp grid if not provided by CMake
+#define GRIDTYPE Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >
+#endif
 
 namespace Dumux {
 template <class TypeTag>
@@ -58,8 +65,7 @@ struct FluidSystem<TypeTag, TTag::OnePSingularity>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePSingularity>
-{ using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+struct Grid<TypeTag, TTag::OnePSingularity> { using type = GRIDTYPE; };
 
 // Set the problem property
 template<class TypeTag>
