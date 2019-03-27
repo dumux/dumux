@@ -338,7 +338,6 @@ int count = 0;
             // evaluate stabilization term contributions
             DimVector stabTerms = asImp_().computeStabilizationTerms(element, ipData, curSecVars, curElemSol);
 
-            Scalar massStabTerm = asImp_().massStab(element, ipData, curSecVars, curElemSol);
 
             storage *= curSecVars.extrusionFactor();
             prevStorage *= curSecVars.extrusionFactor();
