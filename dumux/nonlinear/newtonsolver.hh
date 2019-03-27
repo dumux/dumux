@@ -234,10 +234,10 @@ public:
                 if (verbose_)
                     std::cout << "Newton solver did not converge with dt = "
                               << timeLoop.timeStepSize() << " seconds. Retrying with time step of "
-                              << timeLoop.timeStepSize()/2 << " seconds\n";
+                              << timeLoop.timeStepSize() * retryTimeStepReductionFactor_ << " seconds\n";
 
-                // try again with dt = dt/2
-                timeLoop.setTimeStepSize(timeLoop.timeStepSize()/2);
+                // try again with dt = dt * retryTimeStepReductionFactor_
+                timeLoop.setTimeStepSize(timeLoop.timeStepSize() * retryTimeStepReductionFactor_);
             }
 
             else
@@ -1169,6 +1169,7 @@ private:
         reassemblyShiftWeight_ = getParamFromGroup<Scalar>(group, "Newton.ReassemblyShiftWeight", 1e-3);
 
         maxTimeStepDivisions_ = getParamFromGroup<std::size_t>(group, "Newton.MaxTimeStepDivisions", 10);
+        retryTimeStepReductionFactor_ = getParamFromGroup<Scalar>(group, "Newton.RetryTimeStepReductionFactor", 0.5);
 
         verbose_ = comm_.rank() == 0;
         numSteps_ = 0;
@@ -1247,6 +1248,7 @@ private:
 
     // time step control
     std::size_t maxTimeStepDivisions_;
+    Scalar retryTimeStepReductionFactor_;
 
     // further parameters
     bool useLineSearch_;
