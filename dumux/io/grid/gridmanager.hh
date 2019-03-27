@@ -75,6 +75,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/io/vtk/vtkreader.hh>
 
 #include "griddata.hh"
 
@@ -142,7 +143,7 @@ public:
 
     std::shared_ptr<GridData> getGridData() const
     {
-        if (!enableDgfGridPointer_ && !enableGmshDomainMarkers_)
+        if (!gridData_)
             DUNE_THROW(Dune::IOError, "No grid data available");
 
         return gridData_;
@@ -191,23 +192,28 @@ protected:
     }
 
     /*!
-     * \brief Makes a grid from a file. We currently support *.dgf (Dune Grid Format) and *.msh (Gmsh mesh format).
+     * \brief Makes a grid from a file. We currently support
+     *     - dgf (Dune Grid Format)
+     *     - msh (Gmsh mesh format)
+     *     - vtp/vtu (VTK file formats)
      */
     void makeGridFromFile(const std::string& fileName,
                           const std::string& modelParamGroup)
     {
         // We found a file in the input file...does it have a supported extension?
         const std::string extension = getFileExtension(fileName);
-        if (extension != "dgf" && extension != "msh")
-            DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " only supports DGF (*.dgf) and Gmsh (*.msh) grid files but the specified filename has extension: *."<< extension);
+        if (extension != "dgf" && extension != "msh" && extension != "vtu" && extension != "vtp")
+            DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " doesn't support grid files with extension: *."<< extension);
 
-        // make the grid
+        // Dune Grid Format (DGF) files
         if (extension == "dgf")
         {
             enableDgfGridPointer_ = true;
             dgfGridPtr() = Dune::GridPtr<Grid>(fileName.c_str(), Dune::MPIHelper::getCommunicator());
             gridData_ = std::make_shared<GridData>(dgfGridPtr_);
         }
+
+        // Gmsh mesh format
         else if (extension == "msh")
         {
             // get some optional parameters
@@ -233,6 +239,20 @@ protected:
                 Dune::GmshReader<Grid>::read(*gridFactory, fileName, verbose, boundarySegments);
                 gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());
             }
+        }
+
+        // VTK file formats for unstructured grids
+        else if (extension == "vtu" || extension == "vtp")
+        {
+            if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+                DUNE_THROW(Dune::NotImplemented, "Reading grids in parallel from VTK file formats is currently not supported!");
+
+            VTKReader vtkReader(fileName);
+            VTKReader::Data cellData, pointData;
+            auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
+            const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
+            gridPtr() = vtkReader.readGrid(*gridFactory, cellData, pointData, verbose);
+            gridData_ = std::make_shared<GridData>(gridPtr_, std::move(gridFactory), std::move(cellData), std::move(pointData));
         }
     }
 

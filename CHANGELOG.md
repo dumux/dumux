@@ -9,6 +9,9 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 - __Multidomain__: It is now possible to use the facet coupling module together with the mpfa-o scheme in the bulk domain.
 - Added a `StaggeredNewtonConvergenceWriter` for the staggered grid discretization scheme
 - The box scheme works now on grids with prism / wedge elements in 3D
+- The GridManager now support reading unstructured grids and data from vtu/vtp files (ASCII, XML format) sequential
+  This means for UGGrid and FoamGrid you can now specify a grid in such a format in the input file
+  `Grid.File = mygrid.vtu` / `Grid.File = mygrid.vtp` and the associated data is available in the grid data object
 
 ### Immediate interface changes not allowing/requiring a deprecation period
 
