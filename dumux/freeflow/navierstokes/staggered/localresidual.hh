@@ -204,8 +204,6 @@ public:
             if (bcTypes.isSymmetry())
                 return result;
 
-            const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
-
             // treat Dirichlet and outflow BCs
             result = computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
 
@@ -213,13 +211,13 @@ public:
             static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
             if (bcTypes.hasNeumann())
             {
-                for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
+                const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+                const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
+
+                for (int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                 {
-                    if(bcTypes.isNeumann(eqIdx + cellCenterOffset))
-                    {
-                        result[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx + cellCenterOffset]
-                                                              * extrusionFactor * scvf.area();
-                    }
+                    if (bcTypes.isNeumann(eqIdx + cellCenterOffset))
+                        result[eqIdx] = neumannFluxes[eqIdx + cellCenterOffset] * extrusionFactor * scvf.area();
                 }
             }
 
