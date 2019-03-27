@@ -247,8 +247,6 @@ public:
     {
         Scalar alpha(0.0);
         Scalar reynolds(0.0);
-        Scalar reynoldsHalf(0.0);
-        Scalar funcCosH(0.0);
 
         Scalar H(0.0), alphaDash(0.0);
         reynolds = (velocity*meshWidth) / viscosity;
