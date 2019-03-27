@@ -175,7 +175,7 @@ public:
         values.setAllDirichlet();
 
         // set pressure at one point
-        const Scalar middle = (this->bBoxMax()[1] - this->bBoxMin()[1])/2;
+        //const Scalar middle = (this->bBoxMax()[1] - this->bBoxMin()[1])/2;
         // if (onRightBoundary_(globalPos) && globalPos[1] > middle - eps_ && globalPos[1] < middle + eps_)
         //     values.setDirichlet(pressureIdx);
 
@@ -202,8 +202,6 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
-        const Scalar velocityVariation = 0.2;
 
         values = initialAtPos(globalPos);
 
@@ -225,7 +223,6 @@ public:
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
     {
         Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
 
         const Scalar v0 = inletVelocity_;
 
