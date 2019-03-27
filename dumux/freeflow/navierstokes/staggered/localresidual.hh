@@ -201,30 +201,28 @@ public:
             const auto bcTypes = problem.boundaryTypes(element, scvf);
 
             // no fluxes occur over symmetry boundaries
-            if (!bcTypes.isSymmetry())
+            if (bcTypes.isSymmetry())
+                return result;
+
+            // treat Dirichlet and outflow BCs
+            result = computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+
+            // treat Neumann BCs, i.e. overwrite certain fluxes by user-specified values
+            static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
+            if (bcTypes.hasNeumann())
             {
                 const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+                const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
 
-                // treat Dirichlet and outflow BCs
-                result = computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
-
-                // treat Neumann BCs, i.e. overwrite certain fluxes by user-specified values
-                static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
-                if(bcTypes.hasNeumann())
+                for (int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                 {
-                    for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
-                    {
-                        if(bcTypes.isNeumann(eqIdx + cellCenterOffset))
-                        {
-                            result[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx + cellCenterOffset]
-                                                                  * extrusionFactor * scvf.area();
-                        }
-                    }
+                    if (bcTypes.isNeumann(eqIdx + cellCenterOffset))
+                        result[eqIdx] = neumannFluxes[eqIdx + cellCenterOffset] * extrusionFactor * scvf.area();
                 }
-
-                // account for wall functions, if used
-                incorporateWallFunction_(result, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars);
             }
+
+            // account for wall functions, if used
+            incorporateWallFunction_(result, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars);
         }
         return result;
     }
