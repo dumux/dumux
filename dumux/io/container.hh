@@ -30,8 +30,11 @@
 #include <iostream>
 #include <fstream>
 #include <iterator>
+#include <iomanip>
+#include <limits>
 
 namespace Dumux {
+
 
 /*!
  * \ingroup InputOutput
@@ -46,6 +49,8 @@ void writeContainerToFile(const Container& v,
                           const std::string& filename)
 {
     std::ofstream outfile(filename, std::ios::out);
+    outfile << std::scientific;
+    outfile << std::setprecision(std::numeric_limits<typename Container::value_type>::max_digits10+1);
     std::ostream_iterator<typename Container::value_type> it(outfile, "\n");
     std::copy(v.begin(),v.end(), it);
 }

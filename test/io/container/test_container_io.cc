@@ -109,7 +109,7 @@ int main()
     passed = passed && Dumux::testContainerWriter<std::array<int, 2>>({{1, 2}});
     passed = passed && Dumux::testContainerWriter<std::array<std::string, 2>>({{"1.0", "2.0"}});
     passed = passed && Dumux::testContainerWriter<std::array<Dune::FieldVector<double, 3>, 2>>(
-                        std::array<Dune::FieldVector<double, 3>, 2>{{Dune::FieldVector<double, 3>(0.0), Dune::FieldVector<double, 3>(1.0)}});
+                        std::array<Dune::FieldVector<double, 3>, 2>{{Dune::FieldVector<double, 3>(0.0000100012004), Dune::FieldVector<double, 3>(1.12341502e-10)}});
     if (!passed) return 1;
 
     return 0;
