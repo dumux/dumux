@@ -183,6 +183,8 @@ def is_fuzzy_equal_node(node1, node2, absolute, relative, zeroValueThreshold, ve
         if not convertedFromParallelVtu and list(node1.attrib.items()) != list(node2.attrib.items()):
             if verbose:
                 print('Attributes differ in node: {}'.format(node1.tag))
+                print('Attributes1: ', list(node1.attrib.items()))
+                print('Attributes2: ', list(node2.attrib.items()))
                 is_equal = False
             else:
                 return False
@@ -363,7 +365,7 @@ def sort_vtk(root):
 
 # sorts the data by point coordinates so that it is independent of index numbering
 def sort_vtk_by_coordinates(root1, root2, verbose, convertedFromParallelVtu=False):
-    if not is_fuzzy_equal_node(root1.find(".//Points/DataArray"), root2.find(".//Points/DataArray"), absolute=1e-2, relative=1.5e-7, zeroValueThreshold=dict(), verbose=False, convertedFromParallelVtu=False):
+    if not is_fuzzy_equal_node(root1.find(".//Points/DataArray"), root2.find(".//Points/DataArray"), absolute=1e-2, relative=1.5e-7, zeroValueThreshold=dict(), verbose=True, convertedFromParallelVtu=False):
         if verbose:
             print("Sorting vtu by coordinates...")
         for root in [root1, root2]:
