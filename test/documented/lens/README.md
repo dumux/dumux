@@ -24,6 +24,7 @@ struct Grid<TypeTag, TTag::RichardsLens> { using type = Dune::YaspGrid<2, Dune::
 ```
 
 `params.input`
+
 **original code:**
 ```c++
 [Grid]
