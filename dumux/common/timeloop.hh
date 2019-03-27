@@ -80,6 +80,17 @@ public:
      *        the end of the simulation.
      */
     virtual Scalar timeStepSize() const = 0;
+
+    /*!
+     * \brief Advance time step.
+     */
+    virtual void advanceTimeStep() = 0;
+
+    /*!
+     * \brief Set the current time step size to a given value.
+     * \param dt The new value for the time step size \f$\mathrm{[s]}\f$
+     */
+    virtual void setTimeStepSize(Scalar dt) = 0;
 };
 
 /*!
@@ -155,7 +166,7 @@ public:
     /*!
      * \brief Advance time step.
      */
-    void advanceTimeStep()
+    void advanceTimeStep() override
     {
         timeStepIdx_++;
         time_ += timeStepSize_;
@@ -167,7 +178,7 @@ public:
         timeAfterLastTimeStep_ = cpuTime;
 
         // ensure that using current dt we don't exceed tEnd in next time step
-        setTimeStepSize(timeStepSize_);
+        TimeLoop<Scalar>::setTimeStepSize(timeStepSize_);
     }
 
     /*!
@@ -231,7 +242,7 @@ public:
      *
      * \param dt The new value for the time step size \f$\mathrm{[s]}\f$
      */
-    void setTimeStepSize(Scalar dt)
+    void setTimeStepSize(Scalar dt) override
     {
         using std::min;
         computeMaxTimeStepSize_();
@@ -408,7 +419,7 @@ public:
     /*!
      * \brief Advance time step.
      */
-    void advanceTimeStep()
+    void advanceTimeStep() override
     {
         // advance time index and time
         TimeLoop<Scalar>::advanceTimeStep();
@@ -449,7 +460,7 @@ public:
      *
      * \param dt The new value for the time step size \f$\mathrm{[s]}\f$
      */
-    void setTimeStepSize(Scalar dt)
+    void setTimeStepSize(Scalar dt) override
     {
         using std::min;
         TimeLoop<Scalar>::setTimeStepSize(min(dt, computeStepSizeRespectingCheckPoints_()));
