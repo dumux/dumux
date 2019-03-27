@@ -8,6 +8,7 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 - Added new porous medium model for the energy balance of a porous solid (general heat equation)
 - __Multidomain__: It is now possible to use the facet coupling module together with the mpfa-o scheme in the bulk domain.
 - Added a `StaggeredNewtonConvergenceWriter` for the staggered grid discretization scheme
+- The box scheme works now on grids with prism / wedge elements in 3D
 
 ### Immediate interface changes not allowing/requiring a deprecation period
 
