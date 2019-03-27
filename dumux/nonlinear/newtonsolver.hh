@@ -807,6 +807,10 @@ private:
                 assembleLinearSystem(uCurrentIter);
                 assembleTimer.stop();
 
+                static constexpr auto faceId = typename Dune::index_constant<1>();
+                Dune::printvector(std::cout, assembler_->residual()[faceId], "", "");
+                exit(0);
+
                 ///////////////
                 // linear solve
                 ///////////////

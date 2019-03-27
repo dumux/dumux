@@ -57,7 +57,7 @@ public:
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::SincosSteadyTest> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+struct Grid<TypeTag, TTag::SincosSteadyTest> { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<double, 2> >; };
 
 // Set the problem property
 template<class TypeTag>
@@ -110,18 +110,18 @@ public:
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
         enableInertiaTerms_ = getParam<bool>("Problem.EnableInertiaTerms");
 
-        using CellArray = std::array<unsigned int, dimWorld>;
-        CellArray numCells = getParam<CellArray>("Grid.Cells");
-
-        const unsigned int refinement = getParam<unsigned int>("Grid.Refinement", 0);
-        for(unsigned int i = 0; i < refinement; i++)
-        {
-            numCells[0] *= 2;
-            numCells[1] *= 2;
-        }
-
-        cellSizeX_ = (this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0]) / numCells[0];
-        cellSizeY_ = (this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]) / numCells[1];
+//         using CellArray = std::array<unsigned int, dimWorld>;
+//         CellArray numCells = getParam<CellArray>("Grid.Cells");
+//
+//         const unsigned int refinement = getParam<unsigned int>("Grid.Refinement", 0);
+//         for(unsigned int i = 0; i < refinement; i++)
+//         {
+//             numCells[0] *= 2;
+//             numCells[1] *= 2;
+//         }
+//
+//         cellSizeX_ = (this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0]) / numCells[0];
+//         cellSizeY_ = (this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]) / numCells[1];
     }
 
    /*!
@@ -245,19 +245,20 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 0.0;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
-
-        return values;
+//         PrimaryVariables values;
+//         values[Indices::pressureIdx] = 0.0;
+//         values[Indices::velocityXIdx] = 0.0;
+//         values[Indices::velocityYIdx] = 0.0;
+//
+//         return values;
+        return analyticalSolution(globalPos);
     }
 
 private:
     static constexpr Scalar eps_ = 1e-6;
-
+/*
     Scalar cellSizeX_;
-    Scalar cellSizeY_;
+    Scalar cellSizeY_;*/
 
     Scalar kinematicViscosity_;
     bool enableInertiaTerms_;

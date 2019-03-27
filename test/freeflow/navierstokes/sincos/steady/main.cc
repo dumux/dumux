@@ -182,6 +182,7 @@ int main(int argc, char** argv) try
 
     // try to create a grid (from the given grid file or the input file)
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
+
     gridManager.init();
 
     ////////////////////////////////////////////////////////////
@@ -205,6 +206,7 @@ int main(int argc, char** argv) try
     SolutionVector x;
     x[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
     x[FVGridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
+    problem->applyInitialSolution(x);
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
