@@ -406,9 +406,34 @@ public:
                                       p_[map[localScvIdx][6]],
                                       p_[map[localScvIdx][7]]} };
         }
+        case 6: // prism
+        {
+            //! Only build the maps the first time we encounter a prism
+            static const std::uint8_t vo = 1; //!< vertex offset in point vector p
+            static const std::uint8_t eo = 7; //!< edge offset in point vector p
+            static const std::uint8_t fo = 16; //!< face offset in point vector p
+            static const std::uint8_t map[6][8] =
+            {
+                {vo+0, eo+3, eo+4, fo+3, eo+0, fo+0, fo+1,    0},
+                {vo+1, eo+5, eo+3, fo+3, eo+1, fo+2, fo+0,    0},
+                {vo+2, eo+4, eo+5, fo+3, eo+2, fo+1, fo+2,    0},
+                {vo+3, eo+7, eo+6, fo+4, eo+0, fo+1, fo+0,    0},
+                {vo+4, eo+6, eo+8, fo+4, eo+1, fo+0, fo+2,    0},
+                {vo+5, eo+8, eo+7, fo+4, eo+2, fo+2, fo+1,    0}
+            };
+
+            return ScvCornerStorage{ {p_[map[localScvIdx][0]],
+                                      p_[map[localScvIdx][1]],
+                                      p_[map[localScvIdx][2]],
+                                      p_[map[localScvIdx][3]],
+                                      p_[map[localScvIdx][4]],
+                                      p_[map[localScvIdx][5]],
+                                      p_[map[localScvIdx][6]],
+                                      p_[map[localScvIdx][7]]} };
+        }
         case 8: // hexahedron
         {
-            //! Only build the maps the first time we encounter a quadrilateral
+            //! Only build the maps the first time we encounter a hexahedron
             static const std::uint8_t vo = 1; //!< vertex offset in point vector p
             static const std::uint8_t eo = 9; //!< edge offset in point vector p
             static const std::uint8_t fo = 21; //!< face offset in point vector p
@@ -448,7 +473,7 @@ public:
         {
         case 4: // tetrahedron
         {
-            //! Only build the maps the first time we encounter a triangle
+            //! Only build the maps the first time we encounter a tetrahedron
             static const std::uint8_t eo = 5; //!< edge offset in point vector p
             static const std::uint8_t fo = 11; //!< face offset in point vector p
             static const std::uint8_t map[6][4] =
@@ -466,9 +491,32 @@ public:
                                        p_[map[localScvfIdx][2]],
                                        p_[map[localScvfIdx][3]]} };
         }
+        case 6: // prism
+        {
+            //! Only build the maps the first time we encounter a prism
+            static const std::uint8_t eo = 7; //!< edge offset in point vector p
+            static const std::uint8_t fo = 16; //!< face offset in point vector p
+            static const std::uint8_t map[9][4] =
+            {
+                {eo+0, fo+0, fo+1, 0},
+                {eo+1, fo+2, fo+0, 0},
+                {eo+2, fo+1, fo+2, 0},
+                {eo+3, fo+0, fo+3, 0},
+                {eo+4, fo+0, fo+1, 0},
+                {eo+5, fo+2, fo+3, 0},
+                {eo+6, fo+4, fo+0, 0},
+                {eo+7, fo+1, fo+4, 0},
+                {eo+8, fo+4, fo+2, 0}
+            };
+
+            return ScvfCornerStorage{ {p_[map[localScvfIdx][0]],
+                                       p_[map[localScvfIdx][1]],
+                                       p_[map[localScvfIdx][2]],
+                                       p_[map[localScvfIdx][3]]} };
+        }
         case 8: // hexahedron
         {
-            //! Only build the maps the first time we encounter a quadrilateral
+            //! Only build the maps the first time we encounter a hexahedron
             static const std::uint8_t eo = 9; //!< edge offset in point vector p
             static const std::uint8_t fo = 21; //!< face offset in point vector p
             static const std::uint8_t map[12][4] =
