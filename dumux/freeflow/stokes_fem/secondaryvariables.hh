@@ -187,7 +187,7 @@ public:
 
 
     Scalar epsGeneral(DimVector velocity, Scalar pressure) const {
-    Scalar eps(0.0),k(0.0), normU(0.0);
+    Scalar k(0.0), normU(0.0);
     //set specific k, usually 1e-9 < k < 1e-3
     k = 1e-3;
 
