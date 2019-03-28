@@ -189,8 +189,6 @@ public:
    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
    {
        PrimaryVariables values(0.0);
-       const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
-       const Scalar velocityVariation = 0.2;
 
        if (onRightBoundary_(globalPos))
        values[Indices::velocityXIdx] = 0;
