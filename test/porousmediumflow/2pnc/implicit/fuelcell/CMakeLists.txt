@@ -8,7 +8,7 @@ dune_add_test(NAME test_2pnc_fuelcell_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pnc_fuelcell_box-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fuelcell_box-00015.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fuelcell_box-00014.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fuelcell_box -ParameterFile params.input -Problem.Name test_2pnc_fuelcell_box")
 
 dune_add_test(NAME test_2pnc_fuelcell_tpfa
@@ -18,7 +18,7 @@ dune_add_test(NAME test_2pnc_fuelcell_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pnc_fuelcell_tpfa-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fuelcell_tpfa-00015.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fuelcell_tpfa-00014.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fuelcell_tpfa -ParameterFile params.input -Problem.Name test_2pnc_fuelcell_tpfa")
 
 
@@ -29,5 +29,5 @@ dune_add_test(NAME test_2pncni_fuelcell_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncni_fuelcell_box-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2pncni_fuelcell_box-00015.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2pncni_fuelcell_box-00014.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncni_fuelcell_box -ParameterFile params.input -Problem.Name test_2pncni_fuelcell_box")
