@@ -22,7 +22,7 @@ dune_add_test(NAME test_ff_rans2c_kepsilon_wallfunctions
                             COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_kepsilon_wallfunctions-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_kepsilon_wallfunctions-00028.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_kepsilon_wallfunctions-00027.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_kepsilon params_wallfunction.input
                              -Problem.Name test_ff_rans2c_kepsilon_wallfunctions")
 
@@ -100,7 +100,7 @@ dune_add_test(NAME test_ff_rans2cni_kepsilon_wallfunction
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_kepsilon_wallfunction-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon_wallfunction-00024.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon_wallfunction-00023.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon params_nonisothermal_wallfunction.input
                              -Problem.Name test_ff_rans2cni_kepsilon_wallfunction")
 
