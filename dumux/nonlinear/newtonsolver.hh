@@ -183,6 +183,15 @@ public:
     { targetSteps_ = targetSteps; }
 
     /*!
+     * \brief Set the number of minimum iterations for the Newton
+     *        method.
+     *
+     * \param minSteps Minimum number of iterations
+     */
+    void setMinSteps(int minSteps)
+    { minSteps_ = minSteps; }
+
+    /*!
      * \brief Set the number of iterations after which the Newton
      *        method gives up.
      *
@@ -290,12 +299,12 @@ public:
      */
     virtual bool newtonProceed(const SolutionVector &uCurrentIter, bool converged)
     {
-        if (numSteps_ < 2)
-            return true; // we always do at least two iterations
-        else if (converged) {
+        if (numSteps_ < minSteps_)
+            return true;
+        else if (converged)
             return false; // we are below the desired tolerance
-        }
-        else if (numSteps_ >= maxSteps_) {
+        else if (numSteps_ >= maxSteps_)
+        {
             // We have exceeded the allowed number of steps. If the
             // maximum relative shift was reduced by a factor of at least 4,
             // we proceed even if we are above the maximum number of steps.
@@ -726,6 +735,8 @@ protected:
 
     //! optimal number of iterations we want to achieve
     int targetSteps_;
+    //! minimum number of iterations we do
+    int minSteps_;
     //! maximum number of iterations we do before giving up
     int maxSteps_;
     //! actual number of steps done so far
@@ -1148,6 +1159,7 @@ private:
         setMaxAbsoluteResidual(getParamFromGroup<Scalar>(group, "Newton.MaxAbsoluteResidual"));
         setResidualReduction(getParamFromGroup<Scalar>(group, "Newton.ResidualReduction"));
         setTargetSteps(getParamFromGroup<int>(group, "Newton.TargetSteps"));
+        setMinSteps(getParamFromGroup<int>(group, "Newton.MinSteps"));
         setMaxSteps(getParamFromGroup<int>(group, "Newton.MaxSteps"));
 
         enablePartialReassembly_ = getParamFromGroup<bool>(group, "Newton.EnablePartialReassembly");
