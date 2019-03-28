@@ -291,9 +291,7 @@ public:
      */
     virtual bool newtonProceed(const SolutionVector &uCurrentIter, bool converged)
     {
-        if (numSteps_ < 2)
-            return true; // we always do at least two iterations
-        else if (converged) {
+        if (converged) {
             return false; // we are below the desired tolerance
         }
         else if (numSteps_ >= maxSteps_) {
