@@ -204,3 +204,25 @@ dune_add_test(NAME test_gridmanager_dgf_ug_parallel
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_ug_parallel-element-00001.pvtu
                                ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2-quad-vertex-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_ug_parallel-vertex-00000.pvtu)
+
+dune_add_test(NAME test_gridmanager_vtk_foam
+              SOURCES test_gridmanager_vtk.cc
+              LABELS unit io
+              COMPILE_DEFINITIONS FOAMGRID
+              CMAKE_GUARD dune-foamgrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_foam
+                       --files ${CMAKE_CURRENT_BINARY_DIR}/grids/lupine.vtp
+                               ${CMAKE_CURRENT_BINARY_DIR}/test-gridmanager-vtk-foamgrid-0.vtp)
+
+dune_add_test(NAME test_gridmanager_vtk_ug
+              SOURCES test_gridmanager_vtk.cc
+              LABELS unit io
+              COMPILE_DEFINITIONS UGGRID
+              CMAKE_GUARD dune-uggrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_ug
+                       --files ${CMAKE_CURRENT_BINARY_DIR}/grids/lens.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test-gridmanager-vtk-uggrid-0.vtu)

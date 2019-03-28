@@ -114,7 +114,24 @@ public:
     }
 
     /*!
-     * \brief Read a grid from a vtk/vtu/vtp file, reading cell and point data
+     * \brief Read a grid from a vtk/vtu/vtp file, ignoring cell and point data
+     * \note use this signature if the factory might be needed outside to interpret the data via the factory's insertion indices
+     * \param verbose if the output should be verbose
+     */
+    template<class Grid>
+    std::unique_ptr<Grid> readGrid(Dune::GridFactory<Grid>& factory, bool verbose = false) const
+    {
+        static_assert(!Dune::Capabilities::isCartesian<Grid>::v, "Grid reader only supports unstructured grid implementations");
+
+        if (verbose) std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
+
+        readGrid_(factory, verbose);
+
+        return std::unique_ptr<Grid>(factory.createGrid());
+    }
+
+    /*!
+     * \brief Read a grid from a vtk/vtu/vtp file, reading all cell and point data
      * \note the factory will be needed outside to interpret the data via the factory's insertion indices
      * \param factory the (emtpy) grid factory
      * \param cellData the cell data arrays to be filled

@@ -34,6 +34,7 @@
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/io/file/dgfparser/parser.hh>
 #include <dune/grid/io/file/dgfparser/gridptr.hh>
+#include <dumux/io/vtk/vtkreader.hh>
 
 // UGGrid specific includes
 #if HAVE_UG
@@ -68,22 +69,41 @@ class GridData
     using Vertex = typename Grid::template Codim<Grid::dimension>::Entity;
     using DataHandle = GmshGridDataHandle<Grid, Dune::GridFactory<Grid>, std::vector<int>>;
 
+    enum DataSourceType { dgf, gmsh, vtk };
+
 public:
     //! constructor for gmsh grid data
     GridData(std::shared_ptr<Grid> grid, std::shared_ptr<Dune::GridFactory<Grid>> factory,
              std::vector<int>&& elementMarkers, std::vector<int>&& boundaryMarkers, std::vector<int>&& faceMarkers = std::vector<int>{})
-    : gmshGrid_(grid)
+    : gridPtr_(grid)
     , gridFactory_(factory)
     , elementMarkers_(elementMarkers)
     , boundaryMarkers_(boundaryMarkers)
     , faceMarkers_(faceMarkers)
+    , dataSourceType_(DataSourceType::gmsh)
     {}
 
     //! constructor for dgf grid data
     GridData(Dune::GridPtr<Grid> grid)
     : dgfGrid_(grid)
-    , isDgfData_(true)
+    , dataSourceType_(DataSourceType::dgf)
     {}
+
+    //! constructor for gmsh grid data
+    GridData(std::shared_ptr<Grid> grid, std::shared_ptr<Dune::GridFactory<Grid>> factory,
+             VTKReader::Data&& cellData, VTKReader::Data&& pointData)
+    : gridPtr_(grid)
+    , gridFactory_(factory)
+    , cellData_(cellData)
+    , pointData_(pointData)
+    , dataSourceType_(DataSourceType::vtk)
+    {}
+
+
+    /*!
+     * \name DGF interface functions
+     */
+    // \{
 
     /*!
      * \brief Call the parameters function of the DGF grid pointer if available for vertex data
@@ -91,8 +111,13 @@ public:
      */
     const std::vector<double>& parameters(const Vertex& vertex) const
     {
-        if (isDgfData_)
+        if (dataSourceType_ == DataSourceType::dgf)
+        {
+            if (vertex.level() != 0)
+                DUNE_THROW(Dune::IOError, "You can only obtain parameters for level 0 vertices!");
+
             return dgfGrid_.parameters(vertex);
+        }
         else
             DUNE_THROW(Dune::InvalidStateException, "The parameters method is only available if the grid was constructed with a DGF file.");
     }
@@ -102,7 +127,7 @@ public:
      */
     const std::vector<double>& parameters(const Element& element) const
     {
-        if (isDgfData_)
+        if (dataSourceType_ == DataSourceType::dgf)
         {
             if (element.hasFather())
             {
@@ -127,11 +152,18 @@ public:
     template <class GridImp, class IntersectionImp>
     const Dune::DGFBoundaryParameter::type& parameters(const Dune::Intersection<GridImp, IntersectionImp>& intersection) const
     {
-        if (isDgfData_)
+        if (dataSourceType_ == DataSourceType::dgf)
             return dgfGrid_.parameters(intersection);
         else
             DUNE_THROW(Dune::InvalidStateException, "The parameters method is only available if the grid was constructed with a DGF file.");
     }
+
+    // \}
+
+    /*!
+     * \name Gmsh interface functions
+     */
+    // \{
 
     /*!
      * \brief Return the boundary domain marker (Gmsh physical entity number) of an intersection
@@ -140,7 +172,7 @@ public:
      */
     int getBoundaryDomainMarker(int boundarySegmentIndex) const
     {
-        if (!gmshGrid_)
+        if (dataSourceType_ != DataSourceType::gmsh)
             DUNE_THROW(Dune::InvalidStateException, "Domain markers are only available for gmsh grids.");
         if (boundarySegmentIndex >= boundaryMarkers_.size())
             DUNE_THROW(Dune::RangeError, "Boundary segment index "<< boundarySegmentIndex << " bigger than number of boundary segments in grid.\n"
@@ -169,7 +201,7 @@ public:
      */
     int getElementDomainMarker(const Element& element) const
     {
-        if (!gmshGrid_)
+        if (dataSourceType_ != DataSourceType::gmsh)
             DUNE_THROW(Dune::InvalidStateException, "Domain markers are only available for gmsh grids.");
 
         // parameters are only given for level 0 elements
@@ -179,8 +211,8 @@ public:
 
         // in the parallel case the data is load balanced and then accessed with indices of the index set
         // for UGGrid element data is read on all processes since UGGrid can't communicate element data (yet)
-        if (gmshGrid_->comm().size() > 1 && !Detail::isUG<Grid>::value)
-            return elementMarkers_[gmshGrid_->levelGridView(0).indexSet().index(level0element)];
+        if (gridPtr_->comm().size() > 1 && !Detail::isUG<Grid>::value)
+            return elementMarkers_[gridPtr_->levelGridView(0).indexSet().index(level0element)];
         else
             return elementMarkers_[gridFactory_->insertionIndex(level0element)];
     }
@@ -192,7 +224,7 @@ public:
     template<bool ug = Detail::isUG<Grid>::value, typename std::enable_if_t<!ug, int> = 0>
     DataHandle createGmshDataHandle()
     {
-        return DataHandle(*gmshGrid_, *gridFactory_, elementMarkers_, boundaryMarkers_, faceMarkers_);
+        return DataHandle(*gridPtr_, *gridFactory_, elementMarkers_, boundaryMarkers_, faceMarkers_);
     }
 
     /*!
@@ -202,12 +234,62 @@ public:
     template<bool ug = Detail::isUG<Grid>::value, typename std::enable_if_t<ug, int> = 0>
     DataHandle createGmshDataHandle()
     {
-        return DataHandle(*gmshGrid_, *gridFactory_, elementMarkers_, boundaryMarkers_);
+        return DataHandle(*gridPtr_, *gridFactory_, elementMarkers_, boundaryMarkers_);
     }
 
+    // \}
+
+    /*!
+     * \name VTK interface functions
+     */
+    // \{
+
+    /*!
+     * \brief Get a element parameter
+     * \param element the element
+     * \param fieldName the name of the field to read from the vtk data
+     */
+    double getParameter(const Element& element, const std::string& fieldName) const
+    {
+        if (dataSourceType_ != DataSourceType::vtk)
+            DUNE_THROW(Dune::InvalidStateException, "This access function is only available for data from VTK files.");
+
+        if (cellData_.count(fieldName) == 0)
+            DUNE_THROW(Dune::IOError, "No field with the name " << fieldName << " found in cell data");
+
+        // parameters are only given for level 0 elements
+        auto level0element = element;
+        while (level0element.hasFather())
+            level0element = level0element.father();
+
+        return cellData_.at(fieldName)[gridFactory_->insertionIndex(level0element)];
+    }
+
+    /*!
+     * \brief Call the parameters function of the DGF grid pointer if available for vertex data
+     * \param vertex the vertex
+     * \param fieldName the name of the field to read from the vtk data
+     * \note You can only pass vertices that exist on level 0!
+     */
+    double getParameter(const Vertex& vertex, const std::string& fieldName) const
+    {
+        if (dataSourceType_ != DataSourceType::vtk)
+            DUNE_THROW(Dune::InvalidStateException, "This access function is only available for data from VTK files.");
+
+        if (vertex.level() != 0)
+            DUNE_THROW(Dune::IOError, "You can only obtain parameters for level 0 vertices!");
+
+        if (pointData_.count(fieldName) == 0)
+            DUNE_THROW(Dune::IOError, "No field with the name " << fieldName << " found in point data");
+
+        return pointData_.at(fieldName)[gridFactory_->insertionIndex(vertex)];
+    }
+
+    // \}
+
 private:
-    // grid and grid factor for gmsh grid data
-    std::shared_ptr<Grid> gmshGrid_;
+    // grid and grid factor for gmsh grid data / vtk grid data
+    std::shared_ptr<Grid> gridPtr_;
     std::shared_ptr<Dune::GridFactory<Grid>> gridFactory_;
 
     /*!
@@ -218,9 +300,17 @@ private:
     std::vector<int> boundaryMarkers_;
     std::vector<int> faceMarkers_;
 
+    /*!
+     * \brief Cell and vertex data obtained from VTK files
+     */
+    VTKReader::Data cellData_, pointData_;
+
     // dgf grid data
     Dune::GridPtr<Grid> dgfGrid_;
-    bool isDgfData_ = false;
+
+    // specify which type of data we have
+    // TODO unfortunately all grid readers provide different data types, should be streamlined (changes in Dune)
+    DataSourceType dataSourceType_;
 };
 
 } // namespace Dumux

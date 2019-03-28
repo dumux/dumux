@@ -1,0 +1,10 @@
+[FoamGrid]
+Grid.File = ./grids/lupine.vtp
+Grid.Verbosity = true
+Grid.CellData = p radius
+
+[UGGrid]
+Grid.File = ./grids/lens.vtu
+Grid.Verbosity = true
+Grid.CellData = processrank
+Grid.PointData = S_aq S_napl p_aq p_napl pc rho_aq rho_napl mob_aq mob_napl porosity
