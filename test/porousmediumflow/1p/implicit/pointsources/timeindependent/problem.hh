@@ -198,8 +198,8 @@ public:
      */
     void addPointSources(std::vector<PointSource>& pointSources) const
     {
-        // inject 10 kg/s water at position (0, 0);
-        pointSources.push_back(PointSource({0, 0}, {10}));
+        // inject 10 kg/s water at origin;
+        pointSources.push_back(PointSource(GlobalPosition(0.0), {10}));
     }
 
     /*!
