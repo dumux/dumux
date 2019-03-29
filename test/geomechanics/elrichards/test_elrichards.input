@@ -1,0 +1,98 @@
+[TimeManager]
+TInitEnd = 10 #.01       # [s]
+#TEnd = 540000       # 150 h-->[s]
+TEnd = 360000       # 15 h-->[s]
+#TEnd = 12960000       # 150*3600*24[s 2e6
+DtInitial = 0.01      # [s] 1000
+EpisodeLength =  3600#12960000 #  [s]1e6
+
+
+
+[Grid]
+#UpperRight = 30 30 30
+#Cells = 5 10 30
+#Refinement = 0
+#File = ./grids/shaoSimplex3D.msh
+#File = ./grids/simplecube.msh #a simple cube for test
+#File = ./grids/simplecubePos.msh #a simple cube for test positive z values
+#File = ./grids/shao2layercube2.msh #coordinate similar to 2layer,but gw is one meter lower to have cube grid everywhere
+#File = ./grids/shao2layercubeDarham.msh #coordinate similar to 2layer,but gw is one meter lower to have cube grid everywhere, mesh is hexahydron but not regularized as cube
+#File= ./grids/shao23simple.msh #similar to 23degree but has just one layer and becomes simpler
+#File= ./grids/simpleSlope.msh # just for test
+#File = ./grids/shaoSlopeNewcubeZ.msh # in dumux depth in Z direction, upward positive, and gravity downward. this is the Lu model for 3D
+#File = ./grids/Lu2D.msh #for 3d to 2D final previous coordinates
+#File = ./grids/Lu2DCompare.msh # new series to be compared with comsol coarse
+#File = ./grids/fullyfineTest.msh #refined the one which runs for fullz coupled (coarse)
+
+#File = ./grids/Lu2DveryFine.msh #very fine cube msh to compare with comsol (Sander Report)
+File = ./grids/Lu2DveryFineFullyC.msh # fine cube msh to compare with fully coupled-Final coarser
+#File = ./grids/Fine.Lu.msh # very fine for test(final2 Fine)
+
+
+
+[Problem]
+Name = Elichards2DLu
+EnableGravity = 1 # enable gravity
+[Implicit]
+EnablePartialReassemble = 1 # enable partial reassembly of the Jacobian matrix
+EnableJacobianRecycling = 1 #
+[Newton]
+TargetSteps = 18 # set the "desireable" number of newton iterations of a time step
+
+
+[Injection]
+#DepthBOR = 35     # Depth at the bottom of the scenario [m]
+
+
+[FailureParameters]
+#M_PI = 3.14159265358979323846  # pi 
+FrictionAngle = 30.0 #*M_PI/180 #[deg to rad] theta in model.hh
+#FrictionAngleOver = 30 #35 #*M_PI/6 #[deg to rad] theta in model.hh
+#FrictionAngleUnder = 30 #35 #*M_PI/6 #[deg to rad] theta in model.hh
+Cohesion = 15000 #[Pa] S0 in model.hh line 620, they are all in SI unit
+#CohesionOver = 15000 #3000 #[Pa] S0 in model.hh line 620, they are all in SI unit
+#CohesionUnder = 15000 #6000 #[Pa] S0 in model.hh line 620, they are all in SI unit
+E = 1e7 #[Pa] Young’s modulus
+nu = 0.33 #Poisson ratio
+#nu2Layer = 0.33 #0.35
+rockDensity = 2000 #[kg/m3]
+#rockDensity2Layer = 2000 #1580 #15500/9.81 [kg/m3]
+
+
+[HydraulicParameters]
+alpha = 0.000163196 # =1.6/9804.139432 #[1/m to 1/pa] van Genuchten parameter a_ in localoperator.hh
+#alphaOver = 0.000163196 # 6.94e-4 #6.8/9804.139432
+#alphaUnder = 0.000163196 # 2.75e-4  #2.7/9804.139432
+ks = 1.39e-6#[m/s] hydraulic conductivity = 5mm/h
+<<<<<<< Updated upstream
+#ksOver = 1.39e-6 # 7.194e-6 #2.59/(3600*100) #[cm/h--> m/s]
+#ksUnder = 1.39e-6 # 1.67e-7 #0.06/(3600*100) #[cm/h--> m/s]
+residualWaterContent = 0 #0.034
+#residualWaterContentOver = 0 #0.041
+#residualWaterContentUnder = 0 #0.09
+#avgRain= 3.7e-8 #480[mm]/(150[d]*24[h]*[3600] to [m/s]
+#avgRain = 5.5E-7 #2[mm/h]
+#avgRain = 5.5E-6 #20[mm/h]
+avgRain = 1.11E-6 #4[mm/h]
+#avgRain = 2.78E-7 #1[mm/h]
+
+#=======
+#ksOver = 62.16 #[cm/d] Wei Shao et al. ( 2014 ) 
+#ksUnder = 1.44 #[cm/d]
+#residualWaterContent = 0 #0.034
+>>>>>>> Stashed changes
+n = 1.37
+#nOver =  1.37# 1.47 #0.322O Brooks Corey=m in vG #I think n in brooks corey is equivalent to m in vG and with this value it didnt run
+#nUnder = 1.37#1.15 #0.131 Brooks Corey= m in vG
+#m = 0.270072993 # m=1-1/n  spacialparams, vangenuchtenparams
+phi = 0.46 #porosity read in spacialparams, vangenuchtenparams
+#phiOver = 0.46 #0.412
+#phiUnder = 0.46 #0.385
+l = 0.5
+#l= 1
+#lOver = 0.5#1
+#lUnder = 0.5#1
+
+
+#[LinearSolver]
+#Verbosity = 1

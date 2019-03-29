@@ -25,6 +25,7 @@ CMAKE_FLAGS=" \
   -DUG_DIR=ug_installation_path \
   -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE \
   -DSUPERLU_ROOT=/home/shirin/DUMUX2.12C/SuperLU_4.3 \
+  -DUG_DIR=/home/shirin/DUMUX2.12C/ug-3.12.1 \
   "
 
 # optional configure flags
