@@ -4,8 +4,9 @@ TInitEnd = 1e3     # [s]
 TEnd = 12960000 #        # [s]
 #TEnd = 54000        # [s]
 DtInitial = 0.01       # [s]
-EpisodeLength = 3600  # [s] # these values are hit in the output
-#EpisodeLength = 3600  # [s]
+DtInitialMainSimulation = 0.01       # [s]
+EpisodeLength = 1000  # [s] # these values are hit in the output
+EpisodeLengthMainSimulation = 3600  # [s]
 
 
 [Grid]

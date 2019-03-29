@@ -111,7 +111,7 @@ public:
         elTwoPGradients_(problem, element, elemVolVars);
         calculateDDt_(problem, element, elemVolVars);
 
-        K_ = problem.spatialParams().intrinsicPermeability(element, fvGeometry, fIdx);
+        K_ = problem.spatialParams().intrinsicPermeability(element, fvGeometry, fIdx);//New
     }
 
 public:

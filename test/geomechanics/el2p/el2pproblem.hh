@@ -27,8 +27,6 @@
 #include <dune/pdelab/finiteelementmap/qkfem.hh>
 // OLD #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/simpleh2orelativepressure.hh>
-
-
 // #include <dumux/material/fluidsystems/brineco2.hh>
 // OLD #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidsystems/h2oairrelativepressure.hh>
@@ -259,7 +257,7 @@ public:
                            ///*nT=*/5,
                            ///*pmin=*/-1e5,
                            ///*pmax=*/1e6,
-                           ///*np=*/10);
+                           ///*np=*/10);//this is removed after we removed the fluid system
 
         // resize the pressure field vector with the number of vertices
         pInit_.resize(gridView.size(dim));
@@ -435,10 +433,11 @@ public:
 
 //        stress[0] = k0_ * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
 
-       stress[0] = 0.5 *( sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
+//        stress[0] = 0.5 *( sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) +  rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
+       stress[0] = (0.25 + 7*0.35*(0.001 + 1/(std::abs((zMax(globalPos) - globalPos[dimWorld-1]))))) *( sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) +  rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (a depth dependent coeficient
 
        if(dimWorld >=2)
-       stress[1] =  sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
+       stress[1] =  sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
 
        if(dimWorld == 3)
        stress[2] = sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
@@ -817,7 +816,7 @@ public:
         this->model().globalStorage(mass);
         double time = this->timeManager().time()+this->timeManager().timeStepSize();
 
-        if(time>1001.0)
+        if(time>1001.0)//khodam: this time should be a bit bigger than than TinitEnd
         this->newtonController().setMaxRelativeShift(1.e-5);//khodam from 1e-5
 
         // Write mass balance information for rank 0
@@ -843,6 +842,12 @@ public:
         // At the end of the initializationRun
         if (this->timeManager().time() == GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd))
         {
+            // overwrite episodelength
+            episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLengthMainSimulation)); // fixed value from input file
+
+            // overwrite dt
+            dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.DtInitialMainSimulation)); // fixed value from input file
+
             this->timeManager().setTimeStepSize(dt_);
 
             this->setCoupled(true);
@@ -852,6 +857,10 @@ public:
             // output is written
             this->setOutput(true);
         }
+
+        // another loop for another specific time
+        // change episodeLength again
+        // change dt again
     }
 
 private:
