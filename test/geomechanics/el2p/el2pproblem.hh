@@ -434,7 +434,7 @@ public:
 //        stress[0] = k0_ * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
 
 //        stress[0] = 0.5 *( sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) +  rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
-       stress[0] = (0.25 + 7*0.35*(0.001 + 1/(std::abs((zMax(globalPos) - globalPos[dimWorld-1]))))) *( sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) +  rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (a depth dependent coeficient
+       stress[0] = 0.67 *( sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) +  rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (a depth dependent coeficient
 
        if(dimWorld >=2)
        stress[1] =  sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
