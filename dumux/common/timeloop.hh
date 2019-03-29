@@ -94,6 +94,11 @@ public:
      * \param dt The new value for the time step size \f$\mathrm{[s]}\f$
      */
     virtual void setTimeStepSize(Scalar dt) = 0;
+
+    /*!
+     * \brief Returns true if the simulation is finished.
+     */
+    virtual bool finished() const = 0;
 };
 
 /*!
@@ -293,7 +298,7 @@ public:
      * This is the case if either setFinished(true) has been called or
      * if the end time is reached.
      */
-    bool finished() const
+    bool finished() const override
     {
         return finished_ || endTime_-time_ < 1e-10*time_;
     }
