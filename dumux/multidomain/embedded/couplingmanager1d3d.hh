@@ -1066,6 +1066,15 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::kernel>
         lowDimDim = GridView<lowDimIdx>::dimension,
         dimWorld = GridView<bulkIdx>::dimensionworld
     };
+
+    // detect if a class (the spatial params) has a kernelWidthFactor() function
+    template <typename T, typename ...Ts>
+    using VariableKernelWidthDetector = decltype(std::declval<T>().kernelWidthFactor(std::declval<Ts>()...));
+
+    template<class T, typename ...Args>
+    static constexpr bool hasKernelWidthFactor()
+    { return Dune::Std::is_detected<VariableKernelWidthDetector, T, Args...>::value; }
+
 public:
     static constexpr EmbeddedCouplingMode couplingMode = EmbeddedCouplingMode::kernel;
 
@@ -1163,11 +1172,13 @@ public:
         // Monte-carlo integration on the cylinder defined by line and radius
         static const int samples = getParam<int>("MixedDimension.NumMCSamples");
         CylinderIntegration<Scalar, CylinderIntegrationMethod::spaced> cylIntegration(samples, 1);
-        static const auto kernelWidthFactor = getParam<Scalar>("MixedDimension.KernelWidthFactor");
 
-        std::ofstream file("points.log", std::ios::app);
-        file << "x, y, z\n";
-        file.close();
+        static const auto writeIntegrationPointsToFile = getParam<bool>("MixedDimension.WriteIntegrationPointsToFile", false);
+        if (writeIntegrationPointsToFile)
+        {
+            std::ofstream ipPointFile("kernel_points.log", std::ios::trunc);
+            ipPointFile << "x,y,z\n";
+        }
 
         for (const auto& is : intersections(this->glue()))
         {
@@ -1182,6 +1193,7 @@ public:
             //  * 1d: a new point source
             //  * 3d: a new kernel volume source
             const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
+            const auto kernelWidthFactor = kernelWidthFactor_(this->problem(lowDimIdx).spatialParams(), lowDimElementIdx);
             const auto kernelWidth = kernelWidthFactor*radius;
             const auto a = intersectionGeometry.corner(0);
             const auto b = intersectionGeometry.corner(1);
@@ -1258,7 +1270,7 @@ public:
 
                 // add it to the internal data vector
                 this->averageDistanceToBulkCell().push_back(avgMinDist);
-                fluxScalingFactor_.push_back(this->problem(bulkIdx).fluxScalingFactor(avgMinDist, radius));
+                fluxScalingFactor_.push_back(this->problem(bulkIdx).fluxScalingFactor(avgMinDist, radius, kernelWidth));
 
                 // export the lowdim coupling stencil
                 // we insert all vertices / elements and make it unique later
@@ -1397,15 +1409,30 @@ private:
         const auto& a = line.corner(0);
         const auto& b = line.corner(1);
 
-        //std::ofstream file("points.log", std::ios::app);
+        // optionally write debugging / visual output of the integration points
+        static const auto writeIntegrationPointsToFile = getParam<bool>("MixedDimension.WriteIntegrationPointsToFile", false);
+        if (writeIntegrationPointsToFile)
+        {
+            std::ofstream ipPointFile("kernel_points.log", std::ios::app);
+            for (int i = 0; i < cylSamples; ++i)
+            {
+                const auto& point = cylIntegration.getIntegrationPoint(i);
+                const auto [hasIntersection, bulkElementIdx] = intersectingEntityCartesian(point, min, max, cells);
+                if (hasIntersection)
+                    ipPointFile << point[0] << "," << point[1] << "," << point[2] << '\n';
+            }
+        }
+
         Scalar integral = 0.0;
         for (int i = 0; i < cylSamples; ++i)
         {
             const auto& point = cylIntegration.getIntegrationPoint(i);
-            //file << point[0] << ", " << point[1] << ", " << point[2] << "\n";
+            // TODO: below only works for Cartesian grids with ijk numbering (e.g. level 0 YaspGrid (already fails when refined))
+            // more general is the bounding box tree solution which always works, however it's much slower
             //const auto bulkIndices = intersectingEntities(point, this->problem(bulkIdx).fvGridGeometry().boundingBoxTree(), true);
             if (const auto [hasIntersection, bulkElementIdx] = intersectingEntityCartesian(point, min, max, cells); hasIntersection)
             {
+                assert(bulkElementIdx < this->problem(bulkIdx).fvGridGeometry().gridView().size(0));
                 const auto localWeight = evalConstKernel_(a, b, point, radius, kernelWidth)*cylIntegration.integrationElement(i)/Scalar(embeddings);
                 integral += localWeight;
                 if (!bulkSourceIds_[bulkElementIdx][0].empty() && id == bulkSourceIds_[bulkElementIdx][0].back())
@@ -1518,6 +1545,25 @@ private:
         auto proj = a; proj.axpy(t, ab);
         const auto r = (proj - x3d).two_norm();
         return r;
+    }
+
+    /*!
+     * \brief Get the kernel width factor from the spatial params (if possible)
+     */
+    template<class SpatialParams>
+    auto kernelWidthFactor_(const SpatialParams& spatialParams, unsigned int eIdx)
+    -> std::enable_if_t<hasKernelWidthFactor<SpatialParams, unsigned int>(), Scalar>
+    { return spatialParams.kernelWidthFactor(eIdx); }
+
+    /*!
+     * \brief Get the kernel width factor (constant) from the input file (if possible)
+     */
+    template<class SpatialParams>
+    auto kernelWidthFactor_(const SpatialParams& spatialParams, unsigned int eIdx)
+    -> std::enable_if_t<!hasKernelWidthFactor<SpatialParams, unsigned int>(), Scalar>
+    {
+        static const Scalar kernelWidthFactor = getParam<Scalar>("MixedDimension.KernelWidthFactor");
+        return kernelWidthFactor;
     }
 
     //! the extended source stencil object for kernel coupling
