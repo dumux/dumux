@@ -809,14 +809,14 @@ public:
         if (onInlet_(globalPos))
         {
 //             if(initializationRun_ == false)
-            {
+//             {
 //                 if (satW > 1. - eps_)
 //                 {
-// /*                    std::cout << "saturation above 1 - outflow" << std::endl;*/
+// // /*                    std::cout << "saturation above 1 - outflow" << std::endl;*/
 //                     values[contiEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
-// //                     values[contiNEqIdx] = 0.0;
-//
-//
+// // //                     values[contiNEqIdx] = 0.0;
+// //
+// //
 //                 }
 //                 else
 //                 {
@@ -827,7 +827,7 @@ public:
 //              if(initializationRun_ == true){
 //                  values[contiEqIdx] = 0;
 //                 }
-            }
+//             }
 //             else
 //             {
 //                 values = 0.0;
@@ -927,8 +927,8 @@ public:
         this->model().globalStorage(mass);
         double time = this->timeManager().time()+this->timeManager().timeStepSize();
 
-        if(time>1001.0)
-        this->newtonController().setMaxRelativeShift(1.e-1);//khodam from 1e-5
+        if(time>11.0)
+        this->newtonController().setMaxRelativeShift(1.e-3);//khodam from 1e-5
 
         // Write mass balance information for rank 0
         if (this->gridView().comm().rank() == 0) {
@@ -955,7 +955,7 @@ public:
         {
             this->timeManager().setTimeStepSize(dt_);
 
-//             this->setCoupled(true);
+            this->setCoupled(true);
             // pressure field resulting from the initialization period is applied for the initial
             // and the Dirichlet boundary conditions
             this->setPressure();
