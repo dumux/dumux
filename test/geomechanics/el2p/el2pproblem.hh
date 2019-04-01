@@ -281,7 +281,8 @@ public:
         this->spatialParams().setEpisode(this->timeManager().episodeIndex());
 
 //         depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);
-        episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
+//         episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
+        episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.DtInitialMainSimulation);
 
         dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.DtInitial);
     }
@@ -816,7 +817,7 @@ public:
         this->model().globalStorage(mass);
         double time = this->timeManager().time()+this->timeManager().timeStepSize();
 
-        if(time>1001.0)//khodam: this time should be a bit bigger than than TinitEnd
+        if(time>10.0)//khodam: this time should be a bit bigger than than TinitEnd
         this->newtonController().setMaxRelativeShift(1.e-5);//khodam from 1e-5
 
         // Write mass balance information for rank 0
@@ -843,12 +844,15 @@ public:
         if (this->timeManager().time() == GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd))
         {
             // overwrite episodelength
-            episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLengthMainSimulation)); // fixed value from input file
+            episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLengthMainSimulation); // fixed value from input file
+//             episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLength); // fixed value from input file
 
             // overwrite dt
-            dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.DtInitialMainSimulation)); // fixed value from input file
+//             dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.DtInitialMainSimulation); // fixed value from input file
+            dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLengthMainSimulation); // fixed value from input file
 
             this->timeManager().setTimeStepSize(dt_);
+//              this->timeManager().setTimeStepSize(episodeLength_);
 
             this->setCoupled(true);
             // pressure field resulting from the initialization period is applied for the initial

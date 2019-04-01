@@ -287,7 +287,8 @@ public:
 
 //         depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);//later I need to define a function for depth
 //          depthBOR(globalPos) = yMax(globalPos)-globalPos[1];
-        episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
+//         episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
+        episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.DtInitialMainSimulation);
 
         dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.DtInitial);
      }
@@ -808,30 +809,24 @@ public:
 
         if (onInlet_(globalPos))
         {
-//             if(initializationRun_ == false)
-//             {
-//                 if (satW > 1. - eps_)
-//                 {
-// // /*                    std::cout << "saturation above 1 - outflow" << std::endl;*/
-//                     values[contiEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
-// // //                     values[contiNEqIdx] = 0.0;
-// //
-// //
-//                 }
-//                 else
-//                 {
+            if(initializationRun_ == false)
+            {
+               if (satW > 1. - eps_)
+                {
+//                     std::cout << "saturation above 1 - outflow" << std::endl;
+                    values[contiEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
+
+                }
+              else
+                {
 //                     std::cout << "saturation below 1 - inflow" << std::endl;
                     values[contiEqIdx] = -avgRain_*waterDensity_;//-ks_*waterDensity_; //  kg / (m2 * s) in 2D is kg/(m*s) inflow
-//                     values[contiEqIdx] = - 1.e6;
-//             std::cout << "I am here " << std::endl;
-//              if(initializationRun_ == true){
-//                  values[contiEqIdx] = 0;
-//                 }
-//             }
-//             else
-//             {
-//                 values = 0.0;
-//             }
+                }
+            }
+            else
+            {
+                values = 0.0;
+            }
         }
 
 //         else if (rightBoundaryO_(globalPos))
@@ -927,8 +922,8 @@ public:
         this->model().globalStorage(mass);
         double time = this->timeManager().time()+this->timeManager().timeStepSize();
 
-        if(time>11.0)
-        this->newtonController().setMaxRelativeShift(1.e-3);//khodam from 1e-5
+        if(time>10.0)
+        this->newtonController().setMaxRelativeShift(1.e-5);//khodam from 1e-5
 
         // Write mass balance information for rank 0
         if (this->gridView().comm().rank() == 0) {
@@ -953,7 +948,16 @@ public:
         // At the end of the initializationRun
         if (this->timeManager().time() == GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd))
         {
+            // overwrite episodelength
+            episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLengthMainSimulation); // fixed value from input file
+//             episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLength); // fixed value from input file
+
+            // overwrite dt
+//             dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.DtInitialMainSimulation); // fixed value from input file
+            dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLengthMainSimulation); // fixed value from input file
+
             this->timeManager().setTimeStepSize(dt_);
+//              this->timeManager().setTimeStepSize(episodeLength_);
 
             this->setCoupled(true);
             // pressure field resulting from the initialization period is applied for the initial

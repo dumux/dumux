@@ -33,6 +33,7 @@
 
 #include <dune/pdelab/gridfunctionspace/localfunctionspace.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>//???????should we change this to richards?
+// #include <dumux/porousmediumflow/richards/implicit/fluxvariables.hh>//???????should we change this to richards?
 #include "properties.hh"
 
 namespace Dumux

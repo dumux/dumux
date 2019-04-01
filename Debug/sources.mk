@@ -1,0 +1,96 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+C_UPPER_SRCS := 
+CXX_SRCS := 
+C++_SRCS := 
+OBJ_SRCS := 
+CC_SRCS := 
+ASM_SRCS := 
+CPP_SRCS := 
+C_SRCS := 
+O_SRCS := 
+S_UPPER_SRCS := 
+CC_DEPS := 
+C++_DEPS := 
+EXECUTABLES := 
+C_UPPER_DEPS := 
+CXX_DEPS := 
+OBJS := 
+CPP_DEPS := 
+C_DEPS := 
+
+# Every subdirectory with source files must be described here
+SUBDIRS := \
+tutorial/tutorial_sequential \
+tutorial/tutorial_implicit \
+tutorial/solution/ex1 \
+tutorial/ex3 \
+tutorial/ex2 \
+tutorial/ex1 \
+test/porousmediumflow/richards/implicit \
+test/porousmediumflow/mpnc/implicit \
+test/porousmediumflow/co2/implicit \
+test/porousmediumflow/3pwateroil/implicit \
+test/porousmediumflow/3p3c/implicit \
+test/porousmediumflow/3p/implicit \
+test/porousmediumflow/2pncmin/implicit \
+test/porousmediumflow/2pnc/implicit \
+test/porousmediumflow/2pminc/implicit \
+test/porousmediumflow/2pdfm/implicit \
+test/porousmediumflow/2p2c/sequential \
+test/porousmediumflow/2p2c/implicit \
+test/porousmediumflow/2p1c/implicit \
+test/porousmediumflow/2p/sequential \
+test/porousmediumflow/2p/implicit \
+test/porousmediumflow/2p/implicit/pointsources \
+test/porousmediumflow/1p2c/implicit \
+test/porousmediumflow/1p/sequential \
+test/porousmediumflow/1p/implicit \
+test/porousmediumflow/1p/implicit/pointsources \
+test/multidomain/2czeroeq2p2c \
+test/multidomain/2cstokes2p2c \
+test/multidomain/2cnizeroeq2p2cni \
+test/multidomain/2cnistokes2p2cni \
+test/material/tabulation \
+test/material/pengrobinson \
+test/material/ncpflash \
+test/material/immiscibleflash \
+test/material/fluidsystems \
+test/material/fluidmatrixinteractions \
+test/material/fluidmatrixinteractions/2p \
+test/io/gridcreator \
+test/io/gnuplotinterface \
+test/io/container \
+test/geomechanics/elastic \
+test/geomechanics/el2p \
+test/geomechanics/el1p2c \
+test/freeflow/zeroeq2cni \
+test/freeflow/zeroeq2c \
+test/freeflow/zeroeq \
+test/freeflow/stokes2cni \
+test/freeflow/stokes2c \
+test/freeflow/stokes \
+test/freeflow/navierstokes \
+test/common/spline \
+test/common/propertysystem \
+test/common/generalproblem \
+test/common/boundingboxtree \
+build-cmake/test/geomechanics/el2p/CMakeFiles/test_el2p.dir \
+build-cmake/CMakeFiles \
+build-cmake/CMakeFiles/FortranCInterface/symbols \
+build-cmake/CMakeFiles/FortranCInterface/VerifyCXX/CMakeFiles/VerifyFortranC.dir \
+build-cmake/CMakeFiles/FortranCInterface/VerifyCXX/CMakeFiles/VerifyFortran.dir \
+build-cmake/CMakeFiles/FortranCInterface/VerifyCXX/CMakeFiles/FortranCInterface/symbols \
+build-cmake/CMakeFiles/FortranCInterface/VerifyCXX/CMakeFiles/FortranCInterface/CMakeFiles/symbols.dir/symbols \
+build-cmake/CMakeFiles/FortranCInterface/VerifyCXX/CMakeFiles/FortranCInterface/CMakeFiles/symbols.dir \
+build-cmake/CMakeFiles/FortranCInterface/VerifyCXX/CMakeFiles/FortranCInterface/CMakeFiles/myfort.dir \
+build-cmake/CMakeFiles/FortranCInterface/VerifyCXX/CMakeFiles/FortranCInterface/CMakeFiles/FortranCInterface.dir \
+build-cmake/CMakeFiles/FortranCInterface/CMakeFiles/symbols.dir/symbols \
+build-cmake/CMakeFiles/FortranCInterface/CMakeFiles/symbols.dir \
+build-cmake/CMakeFiles/FortranCInterface/CMakeFiles/myfort.dir \
+build-cmake/CMakeFiles/FortranCInterface/CMakeFiles/FortranCInterface.dir \
+build-cmake/CMakeFiles/3.5.1/CompilerIdCXX \
+build-cmake/CMakeFiles/3.5.1/CompilerIdC \
+
