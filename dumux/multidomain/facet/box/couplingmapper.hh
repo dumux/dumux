@@ -125,8 +125,15 @@ public:
                 // find the bulk element facet that lies on this low dim element (assumes conformity!)
                 bool found = false;
                 unsigned int coupledFacetIndex;
+                std::vector<unsigned int> handledFacets;
                 for (const auto& is : intersections(bulkFvGridGeometry.gridView(), bulkElement))
                 {
+                    // skip already handled facets (necessary for e.g. Dune::FoamGrid)
+                    if (std::count(handledFacets.begin(), handledFacets.end(), is.indexInInside()))
+                        continue;
+
+                    handledFacets.push_back(is.indexInInside());
+
                     // determine if it lies on low dim element by comparing corner indices
                     const auto numCorners = is.geometry().corners();
                     std::vector<BulkIndexType> facetIndices(numCorners);
@@ -173,7 +180,7 @@ public:
 
                 // ensure we found all scvfs
                 if (foundCounter != numElementCorners)
-                    DUNE_THROW(Dune::InvalidStateException, "Could not find all coupling scvfs in the bulk element");
+                    DUNE_THROW(Dune::InvalidStateException, "Found " << foundCounter << " instead of " << numElementCorners << " coupling scvfs in the bulk element");
 
                 // add each dof in the low dim element to coupling stencil of the bulk element
                 auto& bulkData = this->couplingMap_(bulkGridId, facetGridId)[bulkElemIdx];
