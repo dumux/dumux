@@ -11,6 +11,7 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/geometry/geometryintersection.hh>
+#include <dumux/common/geometry/triangulation.hh>
 #include <test/common/geometry/writetriangulation.hh>
 
 template<int dimworld = 3>
@@ -21,20 +22,22 @@ void testSegTriangle(const Dune::FieldVector<double, dimworld>& a,
                      const Dune::FieldVector<double, dimworld>& p,
                      bool expectIntersection = true)
 {
+    using GlobalPosition = Dune::FieldVector<double, dimworld>;
+    using CornerStorage = std::vector<GlobalPosition>;
     using TriGeometry = Dune::MultiLinearGeometry<double, 2, dimworld>;
     using SegGeometry = Dune::MultiLinearGeometry<double, 1, dimworld>;
-    using Test = Dumux::GeometryIntersection<TriGeometry, SegGeometry>;
+    using Policy = Dumux::IntersectionPolicy::PointPolicy<double, dimworld>;
+    using Test = Dumux::GeometryIntersection<TriGeometry, SegGeometry, Policy>;
     typename Test::IntersectionType intersection;
 
-    if (Test::template intersection<2>(a, b, c, p, q, intersection))
+    const auto tria = TriGeometry(Dune::GeometryTypes::triangle, CornerStorage({a, b, c}));
+    const auto seg = SegGeometry(Dune::GeometryTypes::line, CornerStorage({q, p}));
+    if (Test::intersection(tria, seg, intersection))
     {
-        if (intersection.size() != 1)
-            DUNE_THROW(Dune::InvalidStateException, "Found more than one intersection poin!");
-
         if (expectIntersection)
-            std::cout << "Found intersection point: " << intersection[0] << std::endl;
+            std::cout << "Found intersection point: " << intersection << std::endl;
         else
-            DUNE_THROW(Dune::InvalidStateException, "Found false positive: " << intersection[0]);
+            DUNE_THROW(Dune::InvalidStateException, "Found false positive: " << intersection);
     }
     else
     {
@@ -74,7 +77,7 @@ int main(int argc, char* argv[]) try
     using Geometry3D = Dune::MultiLinearGeometry<double, 3, dimworld>;
     using Geometry2D = Dune::MultiLinearGeometry<double, 2, dimworld>;
     using Test = Dumux::GeometryIntersection<Geometry3D, Geometry2D>;
-    typename Test::IntersectionType intersections;
+    typename Test::Intersection intersectionPolygon;
 
     std::vector<Dune::FieldVector<double, dimworld>> cubeCorners({
         {0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 1.0, 0.0},
@@ -93,20 +96,22 @@ int main(int argc, char* argv[]) try
     Geometry2D quad(Dune::GeometryTypes::cube(dimworld-1), quadCorners);
     Geometry2D tri(Dune::GeometryTypes::simplex(dimworld-1), triCorners);
 
-    if (Test::intersection(cube, quad, intersections))
+    if (Test::intersection(cube, quad, intersectionPolygon))
     {
-        Dumux::writeVTKPolyDataTriangle(intersections, "quad_intersections");
-        if (intersections.size() != 4)
-            DUNE_THROW(Dune::InvalidStateException, "Should be 4 intersections!");
+        const auto triangulation = Dumux::triangulate<2, dimworld>(intersectionPolygon);
+        Dumux::writeVTKPolyDataTriangle(triangulation, "quad_intersections");
+        if (triangulation.size() != 4)
+            DUNE_THROW(Dune::InvalidStateException, "Found " << triangulation.size() << " instead of 4 intersections!");
     }
     else
         DUNE_THROW(Dune::InvalidStateException, "No intersections found!");
 
-    if (Test::intersection(cube, tri, intersections))
+    if (Test::intersection(cube, tri, intersectionPolygon))
     {
-        Dumux::writeVTKPolyDataTriangle(intersections, "tri_intersections");
-        if (intersections.size() != 6)
-            DUNE_THROW(Dune::InvalidStateException, "Should be 4 intersections!");
+        const auto triangulation = Dumux::triangulate<2, dimworld>(intersectionPolygon);
+        Dumux::writeVTKPolyDataTriangle(triangulation, "tri_intersections");
+        if (triangulation.size() != 6)
+            DUNE_THROW(Dune::InvalidStateException, "Found " << triangulation.size() << " instead of 6 intersections!");
     }
     else
         DUNE_THROW(Dune::InvalidStateException, "No intersections found!");

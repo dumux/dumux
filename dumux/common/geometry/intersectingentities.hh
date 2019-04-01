@@ -24,12 +24,15 @@
 
 #include <cmath>
 #include <type_traits>
+
 #include <dune/common/fvector.hh>
+
 #include <dumux/common/math.hh>
 #include <dumux/common/geometry/boundingboxtree.hh>
 #include <dumux/common/geometry/intersectspointgeometry.hh>
 #include <dumux/common/geometry/geometryintersection.hh>
 #include <dumux/common/geometry/boundingboxtreeintersection.hh>
+#include <dumux/common/geometry/triangulation.hh>
 
 namespace Dumux {
 
@@ -149,13 +152,25 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
         const auto geometryA = treeA.entitySet().entity(eIdxA).geometry();
         const auto geometryB = treeB.entitySet().entity(eIdxB).geometry();
 
-        using IntersectionAlgorithm = GeometryIntersection< std::decay_t<decltype(geometryA)>,
-                                                            std::decay_t<decltype(geometryB)> >;
-        typename IntersectionAlgorithm::IntersectionType intersection;
+        using GeometryA = std::decay_t<decltype(geometryA)>;
+        using GeometryB = std::decay_t<decltype(geometryB)>;
+        using Policy = IntersectionPolicy::DefaultPolicy<GeometryA, GeometryB>;
+        using IntersectionAlgorithm = GeometryIntersection<GeometryA, GeometryB, Policy>;
+        using Intersection = typename IntersectionAlgorithm::Intersection;
+        Intersection intersection;
+
         if (IntersectionAlgorithm::intersection(geometryA, geometryB, intersection))
         {
-            for (int i = 0; i < intersection.size(); ++i)
-                intersections.emplace_back(eIdxA, eIdxB, std::move(intersection[i]));
+            static constexpr int dimIntersection = Policy::dimIntersection;
+
+            if (dimIntersection >= 2)
+            {
+                const auto triangulation = triangulate<2, dimworld>(intersection);
+                for (unsigned int i = 0; i < triangulation.size(); ++i)
+                    intersections.emplace_back(eIdxA, eIdxB, std::move(triangulation[i]));
+            }
+            else
+                intersections.emplace_back(eIdxA, eIdxB, intersection);
         }
     }
 
