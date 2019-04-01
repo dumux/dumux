@@ -368,14 +368,13 @@ public:
     using Filler = TpfaDarcysLawCacheFiller<FVGridGeometry>;
 
     //! we store the transmissibilities associated with the interior
-    //! cell, outside cell, and the fracture facet in an array. Access
-    //! to this array should be done using the following indices:
+    //! cell and the fracture facet in an array. Access to this array
+    //! should be done using the following indices:
     static constexpr int insideTijIdx = 0;
     static constexpr int facetTijIdx = 1;
-    static constexpr int firstOutsideTijIdx = 2;
 
     //! Export transmissibility storage type
-    using AdvectionTransmissibilityContainer = std::vector<Scalar>;
+    using AdvectionTransmissibilityContainer = std::array<Scalar, 2>;
 
     //! update subject to a given problem
     template< class Problem, class ElementVolumeVariables >
@@ -400,15 +399,11 @@ public:
     { return tij_[insideTijIdx]; }
 
     //! returns the transmissibility associated with the outside cell
-    Scalar advectionTijOutside(unsigned int idxInOutside) const
-    { return tij_[firstOutsideTijIdx+idxInOutside]; }
-
-    //! returns the transmissibility associated with the outside cell
     Scalar advectionTijFacet() const
     { return tij_[facetTijIdx]; }
 
 private:
-    std::vector<Scalar> tij_;
+    AdvectionTransmissibilityContainer tij_;
 };
 
 /*!
@@ -466,13 +461,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
         if (scvf.boundary())
             return fluxVarsCache.advectionTijInside()*pInside + fluxVarsCache.advectionTijFacet()*pFacet;
         else
-        {
-            Scalar flux = fluxVarsCache.advectionTijInside()*pInside + fluxVarsCache.advectionTijFacet()*pFacet;
-            for (unsigned int idxInOutside = 0; idxInOutside < scvf.numOutsideScvs(); ++idxInOutside)
-                flux += fluxVarsCache.advectionTijOutside(idxInOutside)
-                        *elemVolVars[scvf.outsideScvIdx(idxInOutside)].pressure(phaseIdx);
-            return flux;
-        }
+            return fluxVarsCache.advectionTijInside()*pInside + fluxVarsCache.advectionTijFacet()*pFacet;
     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations
@@ -488,25 +477,24 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
         if (!problem.couplingManager().isCoupled(element, scvf))
         {
             //! use the standard darcy's law and only compute one transmissibility
-            tij.resize(1);
             tij[Cache::insideTijIdx] = TpfaDarcysLaw::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
             return tij;
         }
 
         //! xi factor for the coupling conditions
         static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
-        static const Scalar xiMinusOne = xi - 1.0;
+
+        // On surface grids only xi = 1.0 can be used, as the coupling condition
+        // for xi != 1.0 does not generalize for surface grids where the normal
+        // vectors of the inside/outside elements have different orientations.
+        if (Dune::FloatCmp::ne(xi, 1.0, 1e-6))
+            DUNE_THROW(Dune::InvalidStateException, "Xi != 1.0 cannot be used on surface grids");
 
         const auto area = scvf.area();
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
         const auto wIn = area*computeTpfaTransmissibility(scvf, insideScv, insideVolVars.permeability(), insideVolVars.extrusionFactor());
-
-        // resize transmissibility container
-        const auto numOutsideScvs = scvf.numOutsideScvs();
-        tij.resize(2+numOutsideScvs);
-        std::fill(tij.begin(), tij.end(), 0.0);
 
         // proceed depending on the interior BC types used
         const auto iBcTypes = problem.interiorBoundaryTypes(element, scvf);
@@ -523,84 +511,9 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
                                         /sqrt(facetVolVars.extrusionFactor())
                                         *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
 
-            // The fluxes across this face and the outside face can be expressed in matrix form:
-            // \f$\mathbf{C} \bar{\mathbf{u}} + \mathbf{D} \mathbf{u} + \mathbf{E} \mathbf{u}_\gamma\f$,
-            // where \f$\gamma$\f denotes the domain living on the facets and \f$\bar{\mathbf{u}}$\f are
-            // intermediate face unknowns in the matrix domain. Equivalently, flux continuity reads:
-            // \f$\mathbf{A} \bar{\mathbf{u}} = \mathbf{B} \mathbf{u} + \mathbf{M} \mathbf{u}_\gamma\f$.
-            // Combining the two, we can eliminate the intermediate unknowns and compute the transmissibilities.
-            if (!scvf.boundary() && !Dune::FloatCmp::eq(xi, 1.0, 1e-6))
-            {
-                // assemble matrices
-                const Scalar xiWIn = xi*wIn;
-                const Scalar xiMinusOneWIn = xiMinusOne*wIn;
-                const auto numDofs = numOutsideScvs+1;
-
-                Dune::DynamicMatrix<Scalar> A(numDofs, numDofs, 0.0);
-                Dune::DynamicMatrix<Scalar> B(numDofs, numDofs, 0.0);
-                Dune::DynamicVector<Scalar> M(numDofs, 0.0);
-
-                A[0][0] = xiWIn+wFacet;
-                B[0][0] = xiWIn;
-                M[0] = wFacet;
-
-                for (unsigned int i = 0; i < numOutsideScvs; ++i)
-                {
-                    const auto outsideScvIdx = scvf.outsideScvIdx(i);
-                    const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-                    const auto& flipScvf = fvGeometry.flipScvf(scvf.index(), i);
-                    const auto wOut = area*computeTpfaTransmissibility(flipScvf,
-                                                                       fvGeometry.scv(outsideScvIdx),
-                                                                       outsideVolVars.permeability(),
-                                                                       outsideVolVars.extrusionFactor());
-                    const auto wFacetOut = 2.0*area*insideVolVars.extrusionFactor()
-                                                   /sqrt(facetVolVars.extrusionFactor())
-                                                   *vtmv(flipScvf.unitOuterNormal(),
-                                                         facetVolVars.permeability(),
-                                                         flipScvf.unitOuterNormal());
-                    // assemble local system matrices
-                    const auto xiWOut = xi*wOut;
-                    const auto xiMinusOneWOut = xiMinusOne*wOut;
-                    const auto curDofIdx = i+1;
-
-                    M[curDofIdx] = wFacetOut;
-                    A[curDofIdx][0] += xiMinusOneWIn;
-                    B[curDofIdx][0] += xiMinusOneWIn;
-
-                    for (unsigned int otherDofIdx = 0; otherDofIdx < numDofs; ++otherDofIdx)
-                    {
-                        if (otherDofIdx == curDofIdx)
-                        {
-                            A[curDofIdx][curDofIdx] += xiWOut+wFacetOut;
-                            B[curDofIdx][curDofIdx] += xiWOut;
-                        }
-                        else
-                        {
-                            A[otherDofIdx][curDofIdx] += xiMinusOneWOut;
-                            B[otherDofIdx][curDofIdx] += xiMinusOneWOut;
-                        }
-                    }
-                }
-
-                A.invert();
-
-                // compute transmissibilities
-                for (unsigned int i = 0; i < numDofs; ++i)
-                {
-                    tij[Cache::insideTijIdx] -= A[0][i]*B[i][0];
-                    tij[Cache::facetTijIdx] -= A[0][i]*M[i];
-                    for (unsigned int idxInOutside = 0; idxInOutside < numOutsideScvs; ++idxInOutside)
-                        tij[Cache::firstOutsideTijIdx+idxInOutside] -= A[0][i]*B[i][idxInOutside+1];
-                }
-                std::for_each(tij.begin(), tij.end(), [wIn] (auto& t) { t *= wIn; });
-                tij[Cache::insideTijIdx] += wIn;
-            }
-            else
-            {
-                // TODO: check for division by zero??
-                tij[Cache::insideTijIdx] = wFacet*wIn/(wIn+wFacet);
-                tij[Cache::facetTijIdx] = -tij[Cache::insideTijIdx];
-            }
+            // TODO: check for division by zero??
+            tij[Cache::insideTijIdx] = wFacet*wIn/(wIn+wFacet);
+            tij[Cache::facetTijIdx] = -tij[Cache::insideTijIdx];
         }
         else if (iBcTypes.hasOnlyDirichlet())
         {
