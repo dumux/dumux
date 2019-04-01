@@ -25,6 +25,7 @@
 #define DUMUX_MULTIDOMAIN_FACET_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/float_cmp.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
@@ -293,6 +294,13 @@ private:
 
         // xi factor for coupling conditions
         static const Scalar xi = getParamFromGroup<Scalar>(this->problem().paramGroup(), "FacetCoupling.Xi", 1.0);
+
+        // On surface grids only xi = 1.0 can be used, as the coupling condition
+        // for xi != 1.0 does not generalize for surface grids where the normal
+        // vectors of the inside/outside elements have different orientations.
+        if (dim < dimWorld)
+            if (Dune::FloatCmp::ne(xi, 1.0, 1e-6))
+                DUNE_THROW(Dune::InvalidStateException, "Xi != 1.0 cannot be used on surface grids");
 
         // resize omegas
         Helper::resizeVector(wijk, iv.numFaces());
