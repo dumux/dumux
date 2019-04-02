@@ -357,6 +357,10 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
+    //! the coupling manager
+    CouplingManager& couplingManager()
+    { return *couplingManager_; }
+
     //! the full Jacobian matrix
     JacobianMatrix& jacobian()
     { return *jacobian_; }
