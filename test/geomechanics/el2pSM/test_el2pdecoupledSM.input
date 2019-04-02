@@ -1,10 +1,11 @@
 [TimeManager]
-TInitEnd =0.01  # [s]
-TEnd =  12960000   #  [s]
-#TEnd =  54000   #  [s]
-DtInitial = 0.01 #   [s]
-EpisodeLengthInit =  0.005 #  [s]
-EpisodeLengthMainSimulation =  86400 # [s]
+TInitEnd =99  # [s] this should be large enough for initiation otherwise doesnt run for main solution
+#TEnd =  12960000   #  [s]
+TEnd =  360000   #  [s] =150h
+DtInitial = 5 #   [s]
+EpisodeLengthInit =  5 #  [s]
+DtInitialMainSimulation = 1   # [s] this values is hit first in the output. first dt
+EpisodeLengthMainSimulation =  900 # [s]  in next steps this value is hit but if it is too big some time in between could be taken as well (if the episode description in problem changes, both might hit every time)
 NumIterationsInit = 1
 NumIterations = 1
 MaxRelDiffPw = 1.0e-6
@@ -18,13 +19,14 @@ FirstEvalOriginalRhsIteration = 100
 
 [Grid]
 Refine = 0
-#File = ./Lu2D.msh  #very coarse mesh cube previous coordinates
-#File = ./Lu2Dfine.msh  #fine cube msh 
-#File = ./Lu2DCompare.msh   #made with comsol
-#File = ./Lu2DveryFine.msh #very fine cube msh to compare with comsol-new final
-#File = ./COMSOLvsDUMUX.msh #very fine cube msh to compare with comsol Final
-File = ./Lu2DveryFineFullyC.msh # fine cube msh to compare with fully coupled-Final coarse
-#File = ./fullyfineTest.msh #refined the one which runs for fully coupled Final
+#File = ./grids/Lu2D.msh  #very coarse mesh cube previous coordinates
+#File = ./grids/Lu2Dfine.msh  #fine cube msh 
+#File = ./grids/Lu2DCompare.msh   #made with comsol
+#File = ./grids/Lu2DveryFine.msh #very fine cube msh to compare with comsol-new final
+#File = ./grids/COMSOLvsDUMUX.msh #very fine cube msh to compare with comsol Final
+File = ./grids/Lu2DveryFineFullyC.msh # fine cube msh to compare with fully coupled-Final coarse
+#File = ./grids/fullyfineTest.msh #refined the one which runs for fully coupled Final
+#File = ./grids/Fine.Lu.msh # very fine for test(final2 Fine)
 
 
 [Damping]
@@ -73,9 +75,12 @@ PoreComp = 0.0 #3.0e-9 #!!!
 
 [TransportParameters]
 Kinit = 1.E-12  # initial permeability [m²]
-ks = 1.39e-6 #Hydraulic conductivity[m/s]
-avgRain = 3.7E-8 #[m/s] 400 mm in 150d
+ks = 1.39e-6 #Hydraulic conductivity[m/s]=5mm/h
+#avgRain = 3.7E-8 #[m/s] 400 mm in 150d
 #avgRain = 3.7E-7 #[m/s] 400 mm in 15d
+#avgRain = 5.5E-7 #2[mm/h]
+avgRain = 1.11E-6 #4[mm/h]
+#avgRain = 2.78E-7 #1[mm/h]
 
 Phi   = 0.46     # porosity
 swr = 0 #0.034  # Residual water content
@@ -94,7 +99,7 @@ MobilityUpwindWeight = 1.0
 PlotFluidMatrixInteractions = false
 
 # [LinearSolver]
-# Verbosity = 2
+ Verbosity = 2
 
 
 
