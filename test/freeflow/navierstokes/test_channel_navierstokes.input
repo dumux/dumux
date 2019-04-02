@@ -31,3 +31,4 @@ precResidReduction = 1e-13
 
 [Algorithm]
 AlgorithmType = 4
+#no SIMPLEC for Stokes
