@@ -154,8 +154,9 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
 /*!
  * \ingroup Geometry
  * \brief Find out whether a point is inside a interval (p0, p1, p2, p3) (dimworld is 3)
+ * \note We assume the given interval has non-zero length and use it to scale the epsilon
  */
-template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 3), int> = 0>
+template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 3 || dimworld == 2), int> = 0>
 bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
                             const Dune::FieldVector<ctype, dimworld>& p0,
                             const Dune::FieldVector<ctype, dimworld>& p1)
@@ -167,69 +168,14 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
     const GlobalPosition v1 = p1 - p0;
     const GlobalPosition v2 = point - p0;
 
-    // check if point and p0 are the same
     const ctype v1norm = v1.two_norm();
     const ctype v2norm = v2.two_norm();
+
+    // check if point and p0 are the same
     if (v2norm < v1norm*eps_)
         return true;
 
-    // if not check if p0 and p1 are the same
-    // then we know that point is not in the interval
-    if (v1norm < eps_)
-        return false;
-
-    // if the cross product is zero the points are on a line
-    const GlobalPosition n = crossProduct(v1, v2);
-
-    // early return if the vector length is larger than zero
-    if (n.two_norm() > v1norm*eps_)
-        return false;
-
-    // we know the points are aligned
-    // if the dot product is positive and the length in range
-    // the point is in the interval
-    return (v1.dot(v2) > 0.0 && v2norm < v1norm*(1 + eps_));
-}
-
-/*!
- * \ingroup Geometry
- * \brief Find out whether a point is inside a interval (p0, p1, p2, p3) (dimworld is 2)
- */
-template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 2), int> = 0>
-bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
-                            const Dune::FieldVector<ctype, dimworld>& p0,
-                            const Dune::FieldVector<ctype, dimworld>& p1)
-{
-    using GlobalPosition = Dune::FieldVector<ctype, dimworld>;
-    static constexpr ctype eps_ = 1.0e-7;
-
-    // compute the vectors between p0 and the other points
-    const GlobalPosition v1 = p1 - p0;
-    const GlobalPosition v2 = point - p0;
-
-    // check if point and p0 are the same
-    const ctype v1norm = v1.two_norm();
-    const ctype v2norm = v2.two_norm();
-    if (v2norm < v1norm*eps_)
-        return true;
-
-    // if not check if p0 and p1 are the same
-    // then we know that point is not in the interval
-    if (v1norm < eps_)
-        return false;
-
-    // if the cross product is zero the points are on a line
-    const ctype n = crossProduct(v1, v2);
-
-    // early return if the cross product is larger than zero
-    using std::abs;
-    if (abs(n) > v1norm*eps_)
-        return false;
-
-    // we know the points are aligned
-    // if the dot product is positive and the length in range
-    // the point is in the interval
-    return (v1.dot(v2) > 0.0 && v2norm < v1norm*(1 + eps_));
+    return (v1.dot(v2) > v1norm*v2norm*(1.0 - eps_) && v2norm < v1norm*(1.0 + eps_));
 }
 
 /*!
