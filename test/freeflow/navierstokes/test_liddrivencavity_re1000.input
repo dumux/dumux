@@ -32,3 +32,6 @@ UpwindWeight = 0.5 # set to 0.5 for reproducing Ghia et al. (1982)
 
 #[LinearSolver]
 #Verbosity = 2
+
+[Algorithm]
+AlgorithmType = 2
