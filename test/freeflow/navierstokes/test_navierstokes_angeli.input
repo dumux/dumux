@@ -1,11 +1,13 @@
 [TimeLoop]
-DtInitial = 1e-13 # [s]
+DtInitial = 1e-4 # [s]
 TEnd = 1e-2 # [s]
+HaveMaxTimeStepSize = true
+MaxTimeStepSize = 1e-4
 
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
-Cells = 20 20
+Cells = 40 40
 
 [Problem]
 Name = test_angeli # name passed to the output routines
@@ -21,7 +23,7 @@ NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
 MaxSteps = 100
-MaxRelativeShift = 1e-5
+MaxRelativeShift = 1e-12
 TargetSteps = 100
 
 [Vtk]
@@ -29,3 +31,6 @@ WriteFaceData = false
 
 [Underrelaxation]
 HundredTimesVelocityUnderrelaxationFactor = 70
+
+[Algorithm]
+AlgorithmType = 2

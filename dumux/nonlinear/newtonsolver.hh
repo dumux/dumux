@@ -700,13 +700,20 @@ public:
         // that we want to avoid failing in the next Newton
         // iteration which would require another linearization
         // of the problem.
+
+        bool haveMaxTimeStepSize = getParamFromGroup<bool>("", "TimeLoop.HaveMaxTimeStepSize", false);
+        Scalar maxTimeStepSize = getParamFromGroup<Scalar>("", "TimeLoop.MaxTimeStepSize");
+
         if (numSteps_ > targetSteps_) {
             Scalar percent = Scalar(numSteps_ - targetSteps_)/targetSteps_;
             return oldTimeStep/(1.0 + percent);
         }
 
         Scalar percent = Scalar(targetSteps_ - numSteps_)/targetSteps_;
-        return oldTimeStep*(1.0 + percent/1.2);
+
+        Scalar newTimeStep = oldTimeStep*(1.0 + percent/1.2);
+
+        return (!haveMaxTimeStepSize || newTimeStep <= maxTimeStepSize) ? newTimeStep : oldTimeStep;
     }
 
     /*!
