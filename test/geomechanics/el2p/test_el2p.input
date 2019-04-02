@@ -1,5 +1,5 @@
 [TimeManager]
-TInitEnd = 9     # [s] sometimes if the initial time is too short, it doesnt converge
+TInitEnd = 99     # [s] sometimes if the initial time is too short, it doesnt converge
 #TEnd = 12960000 #        # [s]
 TEnd = 360000        # [s]
 DtInitial = 0.01       # [s]

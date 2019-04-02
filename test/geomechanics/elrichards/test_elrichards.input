@@ -1,5 +1,5 @@
 [TimeManager]
-TInitEnd = 9 #.01       # [s]
+TInitEnd = 99 #.01       # [s]
 #TEnd = 12960000       # 150 h-->150*3600*24[s]
 TEnd = 360000       # 15 h-->[s]
 DtInitial = 0.01      # [s] 1000

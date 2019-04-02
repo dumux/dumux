@@ -261,15 +261,6 @@ public:
         // fill the pressure field vector with zeros
         std::fill( pInit_.begin(), pInit_.end(), 0.0 );
 
-         pcInit_.resize(gridView_.size(dimWorld));//khodam
-        // fill the pressure field vector with zeros
-        std::fill( pcInit_.begin(), pcInit_.end(), 0.0 );//khodam
-
-
-         swInit_.resize(gridView_.size(dimWorld));//khodam
-        // fill the pressure field vector with zeros
-        std::fill( swInit_.begin(), swInit_.end(), 0.0 );//khodam
-
         // variable which determines if output should be written (initially set to false)
         output_ = false;
         // define if current run is initialization run
@@ -327,7 +318,7 @@ public:
 
             // initial approximate pressure distribution at start of initialization run
 //                 pInit_[vIdxGlobal] = -(pnRef_+waterDensity_*9.81*wTdepth(globalPos)); //initial 'water'pressure
-                pInit_[vIdxGlobal] = -(waterDensity_*9.81*wTdepth(globalPos)); //initial 'water'pressure
+                pInit_[vIdxGlobal] = -(waterDensity_* 9.81 *wTdepth(globalPos)); //initial 'water'pressure
         }
     }
 
@@ -402,12 +393,12 @@ public:
           return -25.0;
     }
 
+
     Scalar depth(const GlobalPosition &globalPos) const
     {
         return  zMax(globalPos) - globalPos[1];//distance from the surface
     }
 
-//     Scalar waterTable = -15;
 
     Scalar wTdepth(const GlobalPosition &globalPos) const
     {
@@ -415,24 +406,6 @@ public:
     }
 
 
-
-//     const Scalar swr = materialParams.swr();//khodam
-
-//     Scalar pcInit(const GlobalPosition &globalPos) const//khodam
-//     {
-//        return std::max(0.0, waterDensity_*9.81*(0. + globalPos[1]));
-//     }
-
-    Scalar swInit(const GlobalPosition &globalPos) const//khodam
-    {
-       return std::min(1.0,  pow(pow(alpha_* std::max(0.0, waterDensity_*9.81*(0. + globalPos[1])), n_) + 1, -m_));
-    }
-
-
-
-          Scalar n_ = 1.37; //GET_RUNTIME_PARAM(TypeTag, Scalar, HydraulicParameters.n);//khodam
-          Scalar m_ = 1.0 - (1.0 / n_);//khodam
-          Scalar alpha_ = 0.000163196;//GET_RUNTIME_PARAM(TypeTag, Scalar, HydraulicParameters.alpha);//khodam
  // function which returns an in-situ stress field that needs to be provided
     // for the principal stress calculation
     GlobalPosition initialStress(const GlobalPosition globalPos, const int dofIdxGlobal) const
@@ -445,74 +418,52 @@ public:
 
        // retrieve materialParams for calculate of capillary pressure
      const MaterialLawParams& materialParams = this->spatialParams().materialLawParams(globalPos);
+     const Scalar swr = materialParams.swr();
 
-/*
-     Scalar i_ = 86; //number of elements along the depth, or number of devisions that we wanna measure sw along the depth, therefore we have i+1 measurements for each globalPos
+//      const Scalar meterUeberGW[eIdx] = globalPos[1] +0;
+//      const Scalar pc  = std::max(0.0, 9.81*1000.0*meterUeberGW);
+//
+//      Scalar n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, HydraulicParameters.n);//khodam
+//      Scalar m_ = 1.0 - (1.0 / n_);//khodam
+//      Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, HydraulicParameters.alpha);//khodam
+//
+//      const Scalar sw = std::min(1.0, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam: use the numerical solution for sw
+
+    //calculate the average sw above a point where stress is calculated
+     Scalar i_ = 20; //number of elements along the depth, or number of devisions that we wanna measure sw along the depth, therefore we have i+1 measurements for each globalPos
 //      Scalar z_ = (zMax(globalPos)-zMin(globalPos))/i_;//distance of two points that we measure in them or size of the steps .
      Scalar z_ = (zMax(globalPos)-globalPos[1])/i_;//distance of two points that we measure in them or size of the steps .which reduces near the surface
-     //std::cout<< "z= " << z_ <<std::endl;
-     int n_ = floor((zMax(globalPos)-globalPos[1])/z_);//number of sections into which the lenght is diveded.  depth dependent. floor0( -7.7 ) --> -7 floor0( 7.7 ) --> 7
-    // std::cout<< "n("<< globalPos << ") is " << n_ <<std::endl;
-     //std::cout<< "distance "<<  zMax(globalPos)-globalPos[2] <<std::endl;
-
-
-//      Scalar pc=pnRef_-(pnRef_+waterDensity_*9.81*wTdepth(globalPos));
-//      Scalar swnew = MaterialLaw::sw(materialParams, pc);
+     int g_ = floor((zMax(globalPos)-globalPos[1])/z_);//number of sections into which the lenght is diveded.  depth dependent. floor0( -7.7 ) --> -7 floor0( 7.7 ) --> 7
      Scalar swnew =0.;
      GlobalPosition currentGlobalPos = globalPos;
 
     // loop over poins, number of points is number of sections + 1
-     for (int j=0; j<n_ + 1; ++j)
+     for (int j=0; j<g_ + 1; ++j)
        {
-
-              //std::cout<< "j("<< currentGlobalPos << ") is " << j <<std::endl;
-              currentGlobalPos[1] = globalPos[1]+j*z_;//each time we add one step size to the location for the next measurement location
-              //std::cout<< "cgp2="<< currentGlobalPos[2]  <<std::endl;
-               const Scalar swr = materialParams.swr();
-               const Scalar pc = std::max(0.0, gravity * waterDensity_* -depth(currentGlobalPos));
+              currentGlobalPos[1] = globalPos[1] + j*z_;//each time we add one step size to the location for the next measurement location
+              const Scalar pc = std::max(0.0, gravity * waterDensity_* currentGlobalPos[1]);
+//               std::cout<< "pc("<< currentGlobalPos[1] << ") is " << pc <<std::endl;
                Scalar sw = std::min(1.0, (MaterialLaw::sw(materialParams, pc)));
-
-              //std::cout<< "sw("<< currentGlobalPos[2] << ") is " << sw <<std::endl;
+//               std::cout<< "sw("<< currentGlobalPos[1] << ") is " << sw <<std::endl;
                swnew =  (swnew + sw);
         }
 
-           swnew =  (swnew)/(n_ + 1.);// averaged along the considered height
+      swnew =  (swnew)/(g_ + 1.);// averaged along the considered height
+//       std::cout<< "swnew("<< globalPos << ") is " << swnew <<std::endl;
 
 
-         //std::cout<< "swnew("<< globalPos << ") is " << swnew <<std::endl;
+//   initial total stress field here assumed to be isotropic, lithostatic
 
-         stress[0] = 0.67 *( 1.e5  + rockDensity * gravity * ( zMax(globalPos)- globalPos[dim-1]) + (waterDensity_* gravity * porosity* swnew* ( zMax(globalPos)- globalPos[dim-1])));//+ (1 - swnew) * 1.e5);
-         if(dim >=2)
-          stress[1] = 1.e5  + (rockDensity * gravity * ( zMax(globalPos)- globalPos[dim-1])) + (waterDensity_* gravity *porosity* swnew* ( zMax(globalPos)- globalPos[dim-1]));// + (1 - swnew) * 1.e5;
-         if(dim == 3)
-          stress[2] = ((1 - porosity) * rockDensity * gravity * ( zMax(globalPos)- globalPos[dim-1])) + (waterDensity_* gravity *porosity* swnew*( zMax(globalPos)- globalPos[dim-1]));
+//        Scalar nu_ = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.nu);
+//        Scalar k0_ = nu_ / (1 - nu_);//khodam sigma h/sigma v = nu/(1-nu) and nu shouldnt be more than 0.5
 
-
-      return stress;
-    }*/
-
-
-
-//           const Scalar swr = materialParams.swr();
-//           const Scalar meterUeberGW[eIdx] = globalPos[1] +0;
-//           const Scalar pc  = std::max(0.0, 9.81*1000.0*meterUeberGW);
-//
-//           Scalar n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, HydraulicParameters.n);//khodam
-//           Scalar m_ = 1.0 - (1.0 / n_);//khodam
-//           Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, HydraulicParameters.alpha);//khodam
-
-//           const Scalar sw = std::min(1.0, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam: use the numerical solution for sw
-//here we have considered that the system is fully saturated. else the water weight should be multiplied by the saturation. and is the same for hydrostatic pressure= rho*g*h*Se
-      // initial total stress field here assumed to be isotropic, lithostatic
-       stress[0] =  0.67 *( pnRef_ + swInit(globalPos) * porosity * waterDensity_ * gravity * depth(globalPos) +  rockDensity * gravity * ((zMax(globalPos) - globalPos[dimWorld-1]))) ; //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction (0.5 - 0.63)*pnRef_ +
-
+       stress[0] = 0.67 *( swnew * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) +  rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (a depth dependent coeficient
 
        if(dimWorld >=2)
-       stress[1] = pnRef_ + swInit(globalPos) * porosity *waterDensity_ * gravity * depth(globalPos) +  rockDensity * gravity * (zMax(globalPos) - globalPos[dimWorld-1]) ;
-
+       stress[1] =  swnew * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
 
        if(dimWorld == 3)
-       stress[2] = swInit(globalPos) * ( waterDensity_ * porosity * gravity * (depth(globalPos))) +  rockDensity * gravity * (zMax(globalPos) - globalPos[dimWorld-1]);
+       stress[2] = swnew * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
 
       return stress;
     }
@@ -641,61 +592,38 @@ public:
         if(onInlet_(globalPos))
         {
 //             values.setDirichlet(contiEqIdx);
-//             if (initializationRun_ == true)
-//             {
-// //                 values.setDirichlet(contiEqIdx);
-//                 values.setDirichlet(momentumXEqIdx);
-//                 values.setDirichlet(momentumYEqIdx);
-//                 //values.setDirichlet(momentumZEqIdx);
-//             }
-//             else {
-//                 values.setDirichlet(contiEqIdx);
-//             }
-          }
 
-        if (leftBoundaryO_(globalPos)|| rightBoundaryO_(globalPos)){
+         }
+
+        if (leftBoundaryO_(globalPos)|| rightBoundaryO_(globalPos))
+        {
             values.setDirichlet(momentumXEqIdx);//this part is aplied all the time
-            //values.setDirichlet(momentumYEqIdx);
-//             if (initializationRun_ == true)
-//             {
-// //                 values.setDirichlet(contiEqIdx);
-// //                 values.setDirichlet(momentumYEqIdx);
-//             }
-          }
+
+         }
 
 
-        if (leftBoundaryU_(globalPos)){
+        if (leftBoundaryU_(globalPos))
+        {
             values.setDirichlet(momentumXEqIdx);//this part is aplied all the time
-            //values.setDirichlet(momentumYEqIdx);
+
             if (initializationRun_ == true)
             {
                 values.setDirichlet(contiEqIdx);
-//                 values.setDirichlet(momentumYEqIdx);
             }
           }
 
-        if ( rightBoundaryU_(globalPos)){
+        if ( rightBoundaryU_(globalPos))
+        {
             values.setDirichlet(contiEqIdx);
             values.setDirichlet(momentumXEqIdx);//this part is aplied all the time
-            //values.setDirichlet(momentumYEqIdx);
-            if (initializationRun_ == true)
-            {
-//                 values.setDirichlet(momentumYEqIdx);
-            }
          }
 
 
 
-        if (onLowerBoundary_(globalPos)){
-
+        if (onLowerBoundary_(globalPos))
+        {
             values.setDirichlet(momentumXEqIdx);
             values.setDirichlet(momentumYEqIdx);
-
-//             if(initializationRun_ == true)
-//             {
-//                 values.setDirichlet(momentumXEqIdx);
-//                 //values.setDirichlet(momentumYEqIdx);
-//            }
         }
 
     }
@@ -712,9 +640,7 @@ public:
     void dirichlet(PrimaryVariables &values, const Vertex &vertex) const//based on vertex and element
     {
         const GlobalPosition globalPos = vertex.geometry().center();
-
         dirichletAtPos(values, globalPos);
-        values[contiEqIdx] = -pInit_[this->vertexMapper().index(vertex)];
      }
 
     /*!
@@ -734,44 +660,13 @@ public:
           values[contiEqIdx] =(waterDensity_*9.81*wTdepth(globalPos));
 
 
-//         if(onInlet_(globalPos)){
+//         if(onInlet_(globalPos))
+//           {
 //              values[contiEqIdx] = pnRef_;//pnRef_; We assume that the pressure at the surface is in equilibrium with the air pressure (from paper:Prediction of Evaporation Losses from Shallow Water Table using a numerical Model,C P Kumar, equation 12)
-//         }
-//         else {
-//             values[contiEqIdx] =pnRef_+waterDensity_*9.81*wTdepth(globalPos);
-//         }
-//          if (rightBoundary_(globalPos)){
-//              values[contiEqIdx] =pnRef_+waterDensity_*9.81*depth;
-//         }
+//           }
+
 
     }
-//     static Scalar invertPcGW_(const Scalar pcIn,
-//                               const MaterialLawParams &pcParams)
-//     {
-//         Scalar lower(0.0);
-//         Scalar upper(1.0);
-//         const unsigned int maxIterations = 25;
-//         const Scalar bisLimit = 1.0;
-//
-//         Scalar sw, pcGW;
-//         for (unsigned int k = 1; k <= maxIterations; k++)
-//         {
-//             sw = 0.5*(upper + lower);
-//             pcGW = MaterialLaw::pc(pcParams, sw);
-//             const Scalar delta = std::abs(pcGW - pcIn);
-//             if (delta < bisLimit)
-//                 return sw;
-//
-//             if (k == maxIterations)
-//                 return sw;
-//
-//             if (pcGW > pcIn)
-//                 lower = sw;
-//             else
-//                 upper = sw;
-//         }
-//         return sw;
-//     }
 
     /*!
      * \brief Evaluate the boundary conditions for a neumann
@@ -787,6 +682,10 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      */
 //     void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
+//     {
+//          Scalar avgRain_ = GET_RUNTIME_PARAM(TypeTag, Scalar, HydraulicParameters.avgRain);
+//          values[contiEqIdx] = -avgRain_*waterDensity_;
+//     }
      void solDependentNeumann(PrimaryVariables &values,
                       const Element &element,
                       const FVElementGeometry &fvGeometry,
@@ -813,14 +712,12 @@ public:
             {
                if (satW > 1. - eps_)
                 {
-//                     std::cout << "saturation above 1 - outflow" << std::endl;
                     values[contiEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
 
                 }
               else
                 {
-//                     std::cout << "saturation below 1 - inflow" << std::endl;
-                    values[contiEqIdx] = -avgRain_*waterDensity_;//-ks_*waterDensity_; //  kg / (m2 * s) in 2D is kg/(m*s) inflow
+                    values[contiEqIdx] = -avgRain_*waterDensity_;// kg / (m2 * s) in 2D is kg/(m*s) inflow
                 }
             }
             else
@@ -829,33 +726,7 @@ public:
             }
         }
 
-//         else if (rightBoundaryO_(globalPos))
-//         {
-//              if(initializationRun_ == true)
-//                  values[contiEqIdx] = 0;
-//              else
-//              {
-//                 Scalar pressure = elemVolVars[scvIdx].pressure(wPhaseIdx);
-//                       values[momentumXEqIdx] = 0;
-//                       values[momentumYEqIdx] = 0;
-//                      // values[momentumZEqIdx] = 0;
-//                // if (pressure <0.0+eps_)
-//                     values[contiEqIdx] =0.0;
-//                // else
-//                 //{
-//                      //values[contiEqIdx] = 0.0;//+ks_*waterDensity_; //  kg / (m2 * s) in 2D is kg/(m*s) inflow
-//             //values[contiEqIdx] = +pressure/(1000*9.81)*rb_*waterDensity_;//+ks_*waterDensity_; //  kg / (m2 * s) in 2D is kg/(m*s) inflow
-//
-// //                      Scalar pn = 1e5; //khodam
-// //                      Scalar pc = 1e5-pwIdx; //pc [pa]
-// //                      Scalar sw = MaterialLaw::sw(this->spatialParams().materialLawParams(globalPos),pc);
-// //                      Scalar kh_=ks_*pow (sw,0.5)*pow(1-pow(1-pow(sw,1/0.27),0.27),2);//Moalem hydraulic conductivity
-// //                      values[contiEqIdx] = +kh_*waterDensity_;
-//                // }
-//               }
-//          }
      }
-
 
 
     /*!
@@ -922,7 +793,7 @@ public:
         this->model().globalStorage(mass);
         double time = this->timeManager().time()+this->timeManager().timeStepSize();
 
-        if(time>10.0)
+        if(time>100.0)//khodam: this time should be a bit bigger than than TinitEnd
         this->newtonController().setMaxRelativeShift(1.e-5);//khodam from 1e-5
 
         // Write mass balance information for rank 0
@@ -951,7 +822,6 @@ public:
             // overwrite episodelength
             episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLengthMainSimulation); // fixed value from input file
 //             episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLength); // fixed value from input file
-
             // overwrite dt
 //             dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.DtInitialMainSimulation); // fixed value from input file
             dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLengthMainSimulation); // fixed value from input file
@@ -971,12 +841,6 @@ public:
 
 
 private:
-//     Model& model_;
-   // void initial_(PrimaryVariables &values, const GlobalPosition &globalPos) const
-    //{
-    //    Scalar depth = zMax(globalPos) - globalPos[2];
-   // }
-
 
     bool onInlet_(const GlobalPosition &globalPos) const
     {
@@ -1008,22 +872,16 @@ private:
         return (globalPos[0] > 35. - eps_ && globalPos[1] < 0. + eps_);
     }
 
-//     }
+
     static constexpr Scalar eps_ = 3e-6;
     Scalar pnRef_;
-//     Scalar depthBOR_;
-    static constexpr Scalar waterDensity_ = 1000;
+    Scalar waterDensity_ = 1000;
     Scalar episodeLength_;// = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
-
     std::vector<Scalar> pInit_;
-    std::vector<Scalar> pcInit_;//khodam
-    std::vector<Scalar> swInit_;//khodam
 
     GridView gridView_;
     Scalar dt_;
     Scalar temperature_;
-
-
 
 public:
     bool initializationRun_, coupled_, output_;
@@ -1167,6 +1025,7 @@ public:
                     // if coordinates are identical write the pressure value for this
                     // vertex (with index vIdxGlobal) into the values vector
                     values[pwIdx] = pInit_[vIdxGlobal];
+
                     // the value of this vertex is set
                     valueSet = true;
 
@@ -1175,12 +1034,8 @@ public:
                     Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, HydraulicParameters.alpha);
 
                     const Scalar meterUeberGW = globalPos[1] +0;
-                    const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
-//                     const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
+                    const Scalar pc = std::max(0.0, waterDensity_ * 9.81 * meterUeberGW);
                     const Scalar sw = pow(pow(alpha_*pc, n_) + 1, -m_);
-
-
-
                 }
             }
 
@@ -1191,9 +1046,7 @@ public:
                                 << std::endl;
             }
 
-            // initialize saturation values
-            //values[saturationIdx] = 0;
-        }
+    }
 
     /*!
      * \brief Fill the vector pInit_ for initialization
@@ -1214,8 +1067,8 @@ public:
 
 private:
     static constexpr Scalar eps_ = 3e-6;
+    Scalar waterDensity_ = 1000;
     Scalar pnRef_;
-//     Scalar depthBOR_;
     std::vector<Scalar> pInit_;
     GridView gridView_;
     VertexMapper vertexMapper_;
