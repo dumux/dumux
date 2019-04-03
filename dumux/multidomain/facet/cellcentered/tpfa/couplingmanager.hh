@@ -181,10 +181,8 @@ public:
         ParentType::updateSolution(curSol);
 
         // determine all bulk elements/scvfs that couple to low dim elements
-        bulkElemIsCoupled_.clear();
-        bulkElemIsCoupled_.resize(bulkProblem->fvGridGeometry().gridView().size(0), false);
-        bulkScvfIsCoupled_.clear();
-        bulkScvfIsCoupled_.resize(bulkProblem->fvGridGeometry().numScvf(), false);
+        bulkElemIsCoupled_.assign(bulkProblem->fvGridGeometry().gridView().size(0), false);
+        bulkScvfIsCoupled_.assign(bulkProblem->fvGridGeometry().numScvf(), false);
 
         const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
         for (const auto& entry : bulkMap)
