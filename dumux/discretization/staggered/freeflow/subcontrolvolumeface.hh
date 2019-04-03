@@ -24,10 +24,14 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FREE_FLOW_SUBCONTROLVOLUMEFACE_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FREE_FLOW_SUBCONTROLVOLUMEFACE_HH
 
+#include <array>
 #include <utility>
 #include <dune/common/fvector.hh>
+#include <dune/geometry/type.hh>
+#include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/indextraits.hh>
+#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
@@ -35,6 +39,20 @@
 #include <typeinfo>
 
 namespace Dumux {
+
+#ifndef DOXYGEN
+namespace Detail {
+// helper struct detecting if the container class storing the scvf's corners has a resize function
+// for g++ > 5.3, this can be replaced by a lambda
+struct hasResize
+{
+    template<class Container>
+    auto operator()(Container&& c)
+    -> decltype(c.resize(1))
+    {}
+};
+} // end namespace Detail
+#endif
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -46,13 +64,33 @@ namespace Dumux {
 template<class GridView, int upwindSchemeOrder>
 struct FreeFlowStaggeredDefaultScvfGeometryTraits
 {
-    using Geometry = typename GridView::template Codim<1>::Geometry;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Scalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
     using PairData = typename FreeFlowStaggeredGeometryHelper<GridView, upwindSchemeOrder>::PairData;
     using AxisData = typename FreeFlowStaggeredGeometryHelper<GridView, upwindSchemeOrder>::AxisData;
+
+
+    using Grid = typename GridView::Grid;
+    static constexpr int dim = Grid::dimension;
+    static constexpr int dimWorld = Grid::dimensionworld;
+
+    // we use geometry traits that use static corner vectors to and a fixed geometry type
+    template <class ct>
+    struct ScvfMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
+    {
+        // we use static vectors to store the corners as we know
+        // the number of corners in advance (2^(dim-1) corners (1<<(dim-1))
+        template< int mydim, int cdim >
+        struct CornerStorage
+        {
+            using Type = std::array< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
+        };
+    };
+
+    using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar> >;
+    using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
+    using GlobalPosition = typename CornerStorage::value_type;
 };
 
 /*!
@@ -71,6 +109,7 @@ class FreeFlowStaggeredSubControlVolumeFace
     using Geometry = typename T::Geometry;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
+    using CornerStorage = typename T::CornerStorage;
 
     using PairData = typename T::PairData;
     using AxisData = typename T::AxisData;
@@ -115,7 +154,8 @@ public:
       outerNormalSign_(sign(unitOuterNormal_[directionIndex()])),
       isGhostFace_(false)
       {
-          corners_.resize(isGeometry.corners());
+          using HasResize = decltype(isValid(Detail::hasResize())(corners_));
+          maybeResizeCornerStorage_(HasResize{}, isGeometry.corners());
           for (int i = 0; i < isGeometry.corners(); ++i)
               corners_[i] = isGeometry.corner(i);
       }
@@ -359,8 +399,14 @@ public:
     }
 
 private:
+    void maybeResizeCornerStorage_(std::true_type /*hasResize*/, std::size_t size)
+    { corners_.resize(size); }
+
+    void maybeResizeCornerStorage_(std::false_type /*hasResize*/, std::size_t size)
+    {}
+
     Dune::GeometryType geomType_;
-    std::vector<GlobalPosition> corners_;
+    CornerStorage corners_;
     Scalar area_;
     GlobalPosition center_;
     GlobalPosition unitOuterNormal_;
