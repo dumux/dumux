@@ -668,6 +668,32 @@ public:
      *        the intersection object in global coordinates.
      * \note This overload is used when point-like intersections are seeked
      */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection == 1, int> = 0>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
+    {
+        static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
+
+        ctype tfirst, tlast;
+        if (intersect_(geo1, geo2, tfirst, tlast))
+        {
+            // the intersection exists. Export the intersections geometry now:
+            // s(t) = a + t(b-a) in [tfirst, tlast]
+            intersection = Intersection({geo2.global(tfirst), geo2.global(tlast)});
+            return true;
+        }
+
+        return false;
+    }
+
+    /*!
+     *  \brief Colliding segment and convex polyhedron
+     *  \note Algorithm based on the one from "Real-Time Collision Detection" by Christer Ericson,
+     *        published by Morgan Kaufmann Publishers, (c) 2005 Elsevier Inc. (Chapter 5.3.6)
+     * \param geo1/geo2 The geometries to intersect
+     * \param is If the geometries collide, is holds the corner points of
+     *        the intersection object in global coordinates.
+     * \note This overload is used when point-like intersections are seeked
+     */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 0, int> = 0>
     static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& is)
     {
@@ -725,7 +751,102 @@ public:
     }
 
 private:
-    // triangle--segment intersection with points as input
+    /*!
+     * \brief Obtain local coordinates of start/end point of the intersecting segment.
+     */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection == 1, int> = 0>
+    static bool intersect_(const Geometry1& geo1, const Geometry2& geo2, ctype& tfirst, ctype& tlast)
+    {
+        const auto a = geo2.corner(0);
+        const auto b = geo2.corner(1);
+        const auto d = b - a;
+
+        const std::vector<std::array<int, 2>> edges = [&]()
+        {
+            std::vector<std::array<int, 2>> edges;
+            switch (geo1.corners())
+            {
+                case 4: // quadrilateral
+                    edges = {{0, 2}, {3, 1}, {1, 0}, {2, 3}};
+                    break;
+                case 3: // triangle
+                    edges = {{1, 0}, {0, 2}, {2, 1}};
+                    break;
+                default:
+                    DUNE_THROW(Dune::NotImplemented, "Collision of segment and geometry of type "
+                                   << geo1.type() << " with "<< geo1.corners() << " corners.");
+            }
+
+            return edges;
+        } ();
+
+        // The initial interval is the whole segment
+        // afterward we start clipping the interval
+        // by the lines decribed by the edges
+        tfirst = 0.0;
+        tlast = 1.0;
+
+        const auto center1 = geo1.center();
+        const auto normal1 = crossProduct(geo1.corner(1) - geo1.corner(0),
+                                          geo1.corner(2) - geo1.corner(0));
+
+        for (const auto& e : edges)
+        {
+            // compute outer normal vector of the edge
+            const auto c0 = geo1.corner(e[0]);
+            const auto c1 = geo1.corner(e[1]);
+            const auto edge = c1 - c0;
+            const auto eps = eps_*c0.two_norm();
+
+            Dune::FieldVector<ctype, dimworld> n = crossProduct(edge, normal1);
+            n /= n.two_norm();
+
+            // orientation of the element is not known
+            // make sure normal points outwards of element
+            if ( n*(center1-c0) > 0.0 )
+                n *= -1.0;
+
+            const ctype denom = n*d;
+            const ctype dist = n*(a-c0);
+
+            // if denominator is zero the segment in parallel to the edge.
+            // If the distance is positive there is no intersection
+            using std::abs;
+            if (abs(denom) < eps)
+            {
+                if (dist > eps)
+                    return false;
+            }
+            else // not parallel: compute line-line intersection
+            {
+                const ctype t = -dist / denom;
+                // if entering half space cut tfirst if t is larger
+                using std::signbit;
+                if (signbit(denom))
+                {
+                    if (t > tfirst)
+                        tfirst = t;
+                }
+                // if exiting half space cut tlast if t is smaller
+                else
+                {
+                    if (t < tlast)
+                        tlast = t;
+                }
+                // there is no intersection of the interval is empty
+                // use unscaled epsilon since t is in local coordinates
+                if (tfirst > tlast - eps_)
+                    return false;
+            }
+        }
+
+        // If we made it until here an intersection exists.
+        return true;
+    }
+
+    /*!
+     * \brief triangle--segment point-like intersection with points as input.
+     */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 0, int> = 0>
     static bool intersect_(const Point& a, const Point& b, const Point& c,
                            const Point& p, const Point& q,
