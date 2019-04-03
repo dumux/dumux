@@ -25,7 +25,8 @@
 #ifndef DUMUX_FACETCOUPLING_CODIM_ONE_GRID_ADAPTER_HH
 #define DUMUX_FACETCOUPLING_CODIM_ONE_GRID_ADAPTER_HH
 
-#include <memory>
+#include <cassert>
+#include <vector>
 
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -64,9 +65,6 @@ class CodimOneGridAdapter
     using BulkGridVertex = typename BulkGridView::template Codim<BulkGridView::dimension>::Entity;
     using BulkIndexType = typename IndexTraits<BulkGridView>::GridIndex;
 
-    // Find out if the given bulk grid is the one with highest dimensionality among the created grids
-    static constexpr bool bulkHasHighestDimension = (int(BulkGridView::dimension) == Embeddings::bulkDim);
-
     // check if provided id combination makes sense
     static_assert( int(FacetGridView::dimension) == int(BulkGridView::dimension) - 1,
                    "Grid dimension mismatch! Please check the provided domain ids!" );
@@ -86,8 +84,18 @@ public:
         for (const auto& v : vertices(bulkGridView))
             bulkInsertionToGridVIdx_[embeddings->template insertionIndex<bulkGridId>(v)] = bulkVertexMapper_.index(v);
 
-        // maybe set up index map from hierachy insertion to bulk insertion indices
-        makeBulkIndexMap_();
+        // Determine map from the hierarchy's vertex idx to bulk insertion idx
+        // There is one unique set of vertex indices within the hierarchy.
+        // Obtain the hierarchy indices that make up the bulk grid. These
+        // are ordered corresponding to their insertion (thus loopIdx = insertionIdx)
+        hierarchyToBulkInsertionIdx_.resize(embeddingsPtr_->numVerticesInHierarchy());
+        bulkGridHasHierarchyVertex_.resize(embeddingsPtr_->numVerticesInHierarchy(), false);
+        const auto& bulkHierarchyIndices = embeddingsPtr_->gridHierarchyIndices(bulkGridId);
+        for (std::size_t insIdx = 0; insIdx < bulkHierarchyIndices.size(); ++insIdx)
+        {
+            hierarchyToBulkInsertionIdx_[ bulkHierarchyIndices[insIdx] ] = insIdx;
+            bulkGridHasHierarchyVertex_[ bulkHierarchyIndices[insIdx] ] = true;
+        }
 
         // determine which bulk vertices lie on facet elements
         bulkVertexIsOnFacetGrid_.resize(bulkGridView.size(BulkGridView::dimension), false);
@@ -95,9 +103,10 @@ public:
         for (const auto& v : vertices(facetGridView))
         {
             const auto insIdx = embeddings->template insertionIndex<facetGridId>(v);
-            const auto highestLevelInsIdx = embeddings->lowDimVertexIndices(facetGridId)[insIdx];
-            const auto bulkGridIdx = getBulkGridVertexIndex_(highestLevelInsIdx);
-            bulkVertexIsOnFacetGrid_[ bulkGridIdx ] = true;
+            const auto hierarchyInsIdx = embeddings->gridHierarchyIndices(facetGridId)[insIdx];
+
+            if (bulkGridHasHierarchyVertex_[hierarchyInsIdx])
+                bulkVertexIsOnFacetGrid_[ getBulkGridVertexIndex_(hierarchyInsIdx) ] = true;
         }
 
         // determine the bulk vertex indices that make up facet elements & connectivity
@@ -137,8 +146,8 @@ public:
     BulkIndexType bulkGridVertexIndex(const FacetGridVertex& v) const
     {
         const auto insIdx = embeddingsPtr_->template insertionIndex<facetGridId>(v);
-        const auto highestLevelInsIdx = embeddingsPtr_->lowDimVertexIndices(facetGridId)[insIdx];
-        return getBulkGridVertexIndex_(highestLevelInsIdx);
+        const auto hierarchyInsIdx = embeddingsPtr_->gridHierarchyIndices(facetGridId)[insIdx];
+        return getBulkGridVertexIndex_(hierarchyInsIdx);
     }
 
     /*!
@@ -231,34 +240,11 @@ public:
     { return embeddingsPtr_->template adjoinedEntityIndices<facetGridId>(e).size(); }
 
 private:
-    //! Determine map from the insertion idx of the highest-dimensional grid to bulk insertion idx
-    template< bool isHighest = bulkHasHighestDimension, std::enable_if_t<!isHighest, int> = 0 >
-    void makeBulkIndexMap_()
-    {
-        // obtain highest-dimensional grid using the bulkId from grid creator
-        const auto& highestLevelGridView = embeddingsPtr_->template gridView<Embeddings::bulkGridId>();
-        highestLevelInsertionToBulkInsertionIdx_.resize(highestLevelGridView.size(Embeddings::bulkDim));
-
-        // indices in grid creator stem from the grid file, which has one set of vertices
-        // for the entire hierarchy. Thus, the vertex indices we obtain from the grid creator
-        // that make up this bulk grid (lower-dimensional within the hierarchy), correspond to
-        // the highest-dimensional grid's insertion indices.
-        const auto& vertexInsIndices = embeddingsPtr_->lowDimVertexIndices(bulkGridId);
-        for (std::size_t insIdx = 0; insIdx < vertexInsIndices.size(); ++insIdx)
-            highestLevelInsertionToBulkInsertionIdx_[ vertexInsIndices[insIdx] ] = insIdx;
-    }
-
-    //! If the given bulk grid is on the highest level of grid creation, we do not need the map
-    template< bool isHighest = bulkHasHighestDimension, std::enable_if_t<isHighest, int> = 0 >
-    void makeBulkIndexMap_()
-    {}
-
     //! Obtains the bulk grid vertex index from a given insertion index on the hierarchy
-    BulkIndexType getBulkGridVertexIndex_(BulkIndexType highestLevelInsertionIdx) const
+    BulkIndexType getBulkGridVertexIndex_(BulkIndexType hierarchyInsertionIdx) const
     {
-        return bulkHasHighestDimension
-               ? bulkInsertionToGridVIdx_[ highestLevelInsertionIdx ]
-               : bulkInsertionToGridVIdx_[ highestLevelInsertionToBulkInsertionIdx_[ highestLevelInsertionIdx] ];
+        assert(bulkGridHasHierarchyVertex_[hierarchyInsertionIdx]);
+        return bulkInsertionToGridVIdx_[ hierarchyToBulkInsertionIdx_[hierarchyInsertionIdx] ];
     }
 
     // shared pointer to the embedment data
@@ -270,7 +256,8 @@ private:
     // data stored on grid vertices
     std::vector<bool> bulkVertexIsOnFacetGrid_;
     std::vector<BulkIndexType> bulkInsertionToGridVIdx_;
-    std::vector<BulkIndexType> highestLevelInsertionToBulkInsertionIdx_;
+    std::vector<BulkIndexType> hierarchyToBulkInsertionIdx_;
+    std::vector<bool> bulkGridHasHierarchyVertex_;
 
     // data stored for elements on the codim one grid
     std::vector< std::vector<BulkIndexType> > facetElementsAtBulkVertex_;
