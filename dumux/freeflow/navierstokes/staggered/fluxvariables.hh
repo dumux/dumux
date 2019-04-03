@@ -25,6 +25,7 @@
 #define DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
 
 #include <array>
+#include <dune/common/std/optional.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/exceptions.hh>
@@ -33,6 +34,7 @@
 
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/discretization/method.hh>
+
 
 #include "staggeredupwindfluxvariables.hh"
 
@@ -281,18 +283,18 @@ public:
         const int numSubFaces = scvf.pairData().size();
 
         // Account for all sub faces.
-        for(int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
+        for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
         {
             const auto eIdx = scvf.insideScvIdx();
             // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this normal face.
             const auto& normalFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localNormalFaceIdx);
 
-            bool lateralFaceHasDirichletPressure = false; // check for Dirichlet boundary condition for the pressure
-            bool lateralFaceHasBJS = false; // check for Beavers-Joseph-Saffman boundary condition
+            // create a boundaryTypes object (will be empty if not at a boundary)
+            Dune::Std::optional<BoundaryTypes> lateralFaceBoundaryTypes;
 
             // Check if there is face/element parallel to our face of interest where the dof lives on. If there is no parallel neighbor,
             // we are on a boundary where we have to check for boundary conditions.
-            if(!scvf.hasParallelNeighbor(localSubFaceIdx,0))
+            if (!scvf.hasParallelNeighbor(localSubFaceIdx, 0))
             {
                 // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
                 // the sub faces's center.
@@ -311,15 +313,15 @@ public:
                 const auto localSubFace = normalFace.makeBoundaryFace(localSubFaceCenter);
 
                 // Retrieve the boundary types that correspond to the sub face.
-                const auto bcTypes = problem.boundaryTypes(element, localSubFace);
+                lateralFaceBoundaryTypes.emplace(problem.boundaryTypes(element, localSubFace));
 
                 // Check if we have a symmetry boundary condition. If yes, the tangential part of the momentum flux can be neglected
                 // and we may skip any further calculations for the given sub face.
-                if(bcTypes.isSymmetry())
+                if (lateralFaceBoundaryTypes->isSymmetry())
                     continue;
 
                 // Handle Neumann boundary conditions. No further calculations are then required for the given sub face.
-                if(bcTypes.isNeumann(Indices::velocity(scvf.directionIndex())))
+                if (lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex())))
                 {
                     normalFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, localSubFace)[Indices::velocity(scvf.directionIndex())]
                                                   * elemVolVars[normalFace.insideScvIdx()].extrusionFactor() * normalFace.area() * 0.5;
@@ -330,28 +332,25 @@ public:
                 if (incorporateWallFunction_(normalFlux, problem, element, fvGeometry, scvf, normalFace, localSubFace, elemVolVars, elemFaceVars))
                     continue;
 
-                // Check if we have a Beavers-Joseph-Saffman condition or a Dirichlet condition for the velocity or a Dirichlet condition for the pressure.
-                // Then the parallel velocity at the boundary is calculated accordingly for the advective part and the diffusive part of the normal momentum flux.
-                if (bcTypes.isDirichlet(Indices::pressureIdx))
-                    lateralFaceHasDirichletPressure = true;
-                else if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
-                    lateralFaceHasBJS = true;
-                else if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())) == false)
+                // Check the consistency of the boundary conditions
+                if (!lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx) &&
+                    !lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex())) &&
+                    !lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())))
+                {
                     DUNE_THROW(Dune::InvalidStateException,  "Something went wrong with the boundary conditions "
-                           "for the momentum equations at global position " << localSubFaceCenter);
+                    "for the momentum equations at global position " << localSubFaceCenter);
+                }
             }
 
             // If there is no symmetry or Neumann boundary condition for the given sub face, proceed to calculate the tangential momentum flux.
             if (problem.enableInertiaTerms())
                 normalFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
                                                                          scvf, normalFace, elemVolVars, faceVars,
-                                                                         gridFluxVarsCache, localSubFaceIdx,
-                                                                         lateralFaceHasDirichletPressure, lateralFaceHasBJS);
+                                                                         gridFluxVarsCache, lateralFaceBoundaryTypes, localSubFaceIdx);
 
             normalFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
                                                                      scvf, normalFace, elemVolVars, faceVars,
-                                                                     localSubFaceIdx,
-                                                                     lateralFaceHasDirichletPressure, lateralFaceHasBJS);
+                                                                     lateralFaceBoundaryTypes, localSubFaceIdx);
         }
         return normalFlux;
     }
@@ -387,13 +386,15 @@ private:
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const FaceVariables& faceVars,
                                                                     const GridFluxVariablesCache& gridFluxVarsCache,
-                                                                    const int localSubFaceIdx,
-                                                                    const bool lateralFaceHasDirichletPressure,
-                                                                    const bool lateralFaceHasBJS)
+                                                                    const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                                                    const int localSubFaceIdx)
     {
         // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
         // of interest is located.
         const Scalar transportingVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
+
+        const bool lateralFaceHasDirichletPressure = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx);
+        const bool lateralFaceHasBJS = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex()));
 
         return StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedLateralMomentum(problem, fvGeometry, element, scvf, normalFace, elemVolVars, faceVars,
                                                                      gridFluxVarsCache, localSubFaceIdx, lateralFaceHasDirichletPressure,
@@ -430,9 +431,8 @@ private:
                                                                     const SubControlVolumeFace& normalFace,
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const FaceVariables& faceVars,
-                                                                    const int localSubFaceIdx,
-                                                                    const bool lateralFaceHasDirichletPressure,
-                                                                    const bool lateralFaceHasBJS)
+                                                                    const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                                                    const int localSubFaceIdx)
     {
         FacePrimaryVariables normalDiffusiveFlux(0.0);
 
@@ -477,7 +477,7 @@ private:
 
         // If we have a Dirichlet condition for the pressure we assume to have zero parallel gradient
         // so we can skip the computation.
-        if (!lateralFaceHasDirichletPressure)
+        if (!lateralFaceBoundaryTypes || !lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx))
         {
             // For the parallel derivative, get the velocities at the current (own) scvf
             // and at the parallel one at the neighboring scvf.
@@ -487,7 +487,7 @@ private:
                                                ? faceVars.velocityParallel(localSubFaceIdx,0)
                                                : getParallelVelocityFromBoundary_(problem, scvf, normalFace,
                                                                                   innerParallelVelocity, localSubFaceIdx,
-                                                                                  element, false, lateralFaceHasBJS);
+                                                                                  element, lateralFaceBoundaryTypes);
 
             // The velocity gradient already accounts for the orientation
             // of the staggered face's outer normal vector.
@@ -610,27 +610,26 @@ private:
                                             const Scalar velocitySelf,
                                             const int localSubFaceIdx,
                                             const Element& element,
-                                            const bool lateralFaceHasDirichletPressure,
-                                            const bool lateralFaceHasBJS) const
+                                            const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes) const
     {
-        // If there is a Dirichlet condition for the pressure we assume zero gradient for the velocity,
-        // so the velocity at the boundary equal to that on the scvf.
-        if (lateralFaceHasDirichletPressure)
-            return velocitySelf;
+        assert(normalFace.boundary());
 
-        //    ________________
-        //    --------#######o                 || frontal face of staggered half-control-volume
-        //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
-        //    |      ||      |                 x  dof position
-        //    |      ||      x~~~~> vel.Self   -- element boundaries
-        //    |      ||      |                 __ domain boundary
-        //    |      ||      |                 o  position at which the boundary conditions will be evaluated
-        //    ----------------
-
-        const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
-        if (lateralFaceHasBJS)
+        if (lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex())))
             return problem.bjsVelocity(element, scvf, normalFace, localSubFaceIdx, velocitySelf);
-        return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
+        else
+        {
+            //    ________________
+            //    --------#######o                 || frontal face of staggered half-control-volume
+            //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
+            //    |      ||      |                 x  dof position
+            //    |      ||      x~~~~> vel.Self   -- element boundaries
+            //    |      ||      |                 __ domain boundary
+            //    |      ||      |                 o  position at which the boundary conditions will be evaluated
+            //    ----------------
+
+            const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
+            return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
+        }
     }
 };
 
