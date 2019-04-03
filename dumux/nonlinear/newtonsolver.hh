@@ -43,6 +43,7 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/typetraits/vector.hh>
 #include <dumux/common/typetraits/isvalid.hh>
+#include <dumux/common/timeloop.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/assembly/partialreassembler.hh>
@@ -92,6 +93,7 @@ class NewtonSolver
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using SolutionVector = typename Assembler::ResidualType;
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
+    using TimeLoop = TimeLoopBase<Scalar>;
 
     using PrimaryVariableSwitch = typename Detail::GetPVSwitch<Assembler>::type;
     using HasPriVarsSwitch = typename Detail::GetPVSwitch<Assembler>::value_t; // std::true_type or std::false_type
@@ -194,7 +196,6 @@ public:
      * \brief Run the Newton method to solve a non-linear system.
      *        Does time step control when the Newton fails to converge
      */
-    template<class TimeLoop>
     DUNE_DEPRECATED_MSG("Use attachConvergenceWriter(convWriter) and solve(x, *timeLoop) instead")
     void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop,
                std::shared_ptr<ConvergenceWriter> convWriter)
@@ -204,11 +205,11 @@ public:
 
         solve(uCurrentIter, timeLoop);
     }
+
     /*!
      * \brief Run the Newton method to solve a non-linear system.
      *        Does time step control when the Newton fails to converge
      */
-    template<class TimeLoop>
     void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop)
     {
         if (assembler_->isStationaryProblem())

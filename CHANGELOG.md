@@ -21,7 +21,10 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
   using NewtonConvergenceWriter = Dumux::NewtonConvergenceWriter<FVGridGeometry, SolutionVector>;
   auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(*fvGridGeometry);
   ```
-
+- The interface of the abstract `TimeLoopBase` class has been extended by `virtual void advanceTimeStep()`, `virtual void setTimeStepSize(Scalar dt)`,
+  `virtual Scalar maxTimeStepSize()`, and `virtual bool finished()`, thus forcing the inheriting classes to implement those functions.
+  `TimeLoop` is no longer a template argument in `NewtonSolver`'s `solve()` method, thereby increasing
+  type safety and providing better compiler error messages.
 
 ### Deprecated classes/files, to be removed after 3.1:
 
