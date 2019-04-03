@@ -1,12 +1,11 @@
 [TimeManager]
-TInitEnd = 1e3     # [s]
-
-TEnd = 12960000 #        # [s]
-#TEnd = 54000        # [s]
+TInitEnd = 99     # [s] sometimes if the initial time is too short, it doesnt converge
+#TEnd = 12960000 #        # [s]
+TEnd = 360000        # [s]
 DtInitial = 0.01       # [s]
-DtInitialMainSimulation = 0.01       # [s]
-EpisodeLength = 1000  # [s] # these values are hit in the output
-EpisodeLengthMainSimulation = 3600  # [s]
+DtInitialMainSimulation = 1   # [s] this values is hit first in the output. first dt
+#EpisodeLength = 1  # [s]
+EpisodeLengthMainSimulation = 900  # [s]  in next steps this value is hit but if it is too big some time in between could be taken as well (if the episode description in problem changes, both might hit every time)
 
 
 [Grid]
@@ -52,11 +51,13 @@ alpha = 0.000163196 # [1/m] to [1/pa] = 1.6/9804.139432
 swr = 0  # Residual water content
 snr = 0
 
-avgRain = 3.7E-8 #[m/s] 400 mm in 150d low intensity
+#avgRain = 3.7E-8 #[m/s] 400 mm in 150d low intensity
 #avgRain = 3.7E-7 #[m/s] 400 mm in 15d high intensity
 
 #avgRain = 5.5E-6 #20[mm/h]
 #avgRain =1.39e-6 #Ks
+avgRain = 1.11E-6 #4[mm/h]
+#avgRain = 2.78E-7 #1[mm/h]
 
 
 [Fluid]

@@ -280,8 +280,8 @@ public:
         // (during intialization episode hydraulic different parameters might be applied)
         this->spatialParams().setEpisode(this->timeManager().episodeIndex());
 
-//         depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);
-        episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
+//         episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
+        episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.DtInitialMainSimulation);
 
         dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.DtInitial);
     }
@@ -312,17 +312,18 @@ public:
           return 5.;
     }
 
+
         Scalar zMin(const GlobalPosition &globalPos) const
     {
           return -25.0;
     }
+
 
     Scalar depth(const GlobalPosition &globalPos) const
     {
         return  zMax(globalPos) - globalPos[1];//distance from the surface
     }
 
-//     Scalar waterTable = -15;
 
     Scalar wTdepth(const GlobalPosition &globalPos) const
     {
@@ -349,16 +350,14 @@ public:
         }
     }
 
-    // allows to change the coupled_ variable which defines if geomechanical feedback on flow is taken
-    // into account
+    // allows to change the coupled_ variable which defines if geomechanical feedback on flow is taken into account
     void setCoupled(bool coupled)
     {
         coupled_ = coupled;
         std::cout << "coupled_ is now set to " << coupled << std::endl ;
     }
 
-    // returns the coupled_ variable which defines if geomechanical feedback on flow is taken
-    // into account
+    // returns the coupled_ variable which defines if geomechanical feedback on flow is taken into account
     bool coupled() const
     {
         return coupled_;
@@ -383,7 +382,7 @@ public:
         for(const auto& vertex : vertices(gridView_))
         {
             int vIdxGlobal = this->vertexMapper().index(vertex);
-            pInit_[vIdxGlobal] = -this->model().curSol().base()[vIdxGlobal*2][0];
+            pInit_[vIdxGlobal] = -this->model().curSol().base()[vIdxGlobal][0];
         }
     }
 
@@ -411,40 +410,59 @@ public:
 
       //khodam az problem
        const auto& materialLawParams = this->spatialParams().materialLawParams(globalPos);
-          const Scalar swr = materialLawParams.swr();
-          const Scalar snr = materialLawParams.snr();
+       const Scalar swr = materialLawParams.swr();
+       const Scalar snr = materialLawParams.snr();
 
 
-          const Scalar meterUeberGW = globalPos[1] +0;
-          const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
+//      const Scalar meterUeberGW[eIdx] = globalPos[1] +0;
+//      const Scalar pc  = std::max(0.0, 9.81*1000.0*meterUeberGW);
+//
+//      Scalar n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, HydraulicParameters.n);//khodam
+//      Scalar m_ = 1.0 - (1.0 / n_);//khodam
+//      Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, HydraulicParameters.alpha);//khodam
+//
+//      const Scalar sw = std::min(1.0, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam: use the numerical solution for sw
 
-          Scalar n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.n);//khodam
-          Scalar m_ = 1.0 - (1.0 / n_);//khodam
-          Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.alpha);//khodam
+    //calculate the average sw above a point where stress is calculated
+     Scalar i_ = 20; //number of elements along the depth, or number of devisions that we wanna measure sw along the depth, therefore we have i+1 measurements for each globalPos
+//      Scalar z_ = (zMax(globalPos)-zMin(globalPos))/i_;//distance of two points that we measure in them or size of the steps .
+     Scalar z_ = (zMax(globalPos)-globalPos[1])/i_;//distance of two points that we measure in them or size of the steps .which reduces near the surface
+     int g_ = floor((zMax(globalPos)-globalPos[1])/z_);//number of sections into which the lenght is diveded.  depth dependent. floor0( -7.7 ) --> -7 floor0( 7.7 ) --> 7
+     Scalar swnew =0.;
+     GlobalPosition currentGlobalPos = globalPos;
 
-          const Scalar sw = std::min(1.0-snr, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam: use the numerical solution for sw
+    // loop over poins, number of points is number of sections + 1
+     for (int j=0; j<g_ + 1; ++j)
+       {
+              currentGlobalPos[1] = globalPos[1] + j*z_;//each time we add one step size to the location for the next measurement location
+              const Scalar pc = std::max(0.0, gravity * waterDensity_* currentGlobalPos[1]);
+//               std::cout<< "pc("<< currentGlobalPos[1] << ") is " << pc <<std::endl;
+               Scalar sw = std::min(1.0, (MaterialLaw::sw(materialLawParams, pc)));
+//               std::cout<< "sw("<< currentGlobalPos[1] << ") is " << sw <<std::endl;
+               swnew =  (swnew + sw);
+        }
 
-      // initial total stress field here assumed to be isotropic, lithostatic
-          //Asked Martin: Pref_ shouldnt be added because this is just stress and Pref is considered in Peff later on.
+      swnew =  (swnew)/(g_ + 1.);// averaged along the considered height
+//       std::cout<< "swnew("<< globalPos << ") is " << swnew <<std::endl;
 
 
-//         Scalar nu_ = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.nu);
-//         Scalar k0_ = nu_ / (1 - nu_);//khodam sigma h/sigma v = nu/(1-nu) and nu shouldnt be more than 0.5
+//   initial total stress field here assumed to be isotropic, lithostatic
 
-//        stress[0] = k0_ * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
+//        Scalar nu_ = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.nu);
+//        Scalar k0_ = nu_ / (1 - nu_);//khodam sigma h/sigma v = nu/(1-nu) and nu shouldnt be more than 0.5
 
-//        stress[0] = 0.5 *( sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) +  rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
-       stress[0] = 0.67 *( sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) +  rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (a depth dependent coeficient
+       stress[0] = 0.67 *( swnew * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) +  rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (a depth dependent coeficient
 
        if(dimWorld >=2)
-       stress[1] =  sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
+       stress[1] =  swnew * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
 
        if(dimWorld == 3)
-       stress[2] = sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
-
+       stress[2] = swnew * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]))) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1]));
 
       return stress;
     }
+
+
     /*!
      * \name Problem parameters
      */
@@ -547,55 +565,43 @@ public:
         // The solid displacement normal to the lateral boundaries is fixed.
         if(onInlet_(globalPos))
         {
-//             if (initializationRun_ == true)
-//             {
-// //                 values.setDirichlet(pressureIdx, contiWEqIdx);
-// //                 values.setDirichlet(saturationIdx, contiNEqIdx);
-//                 values.setDirichlet(uxIdx);
-//                 values.setDirichlet(uyIdx);
-//             }
-
-          }
+//            values.setDirichlet(pressureIdx, contiWEqIdx);
+//            values.setDirichlet(saturationIdx, contiNEqIdx);
+         }
 
 
-        if (leftBoundaryO_(globalPos)|| rightBoundaryO_(globalPos)){
+        if (leftBoundaryO_(globalPos)|| rightBoundaryO_(globalPos))
+        {
 
             values.setDirichlet(uxIdx);//this part is aplied all the time
 
-//             if (initializationRun_ == true)
-//             {
-//                 values.setDirichlet(uyIdx);
-//             }
-          }
 
-        if (leftBoundaryU_(globalPos)){
-            values.setDirichlet(uxIdx);//this part is aplied all the time
-            //values.setDirichlet(momentumYEqIdx);
+        }
+
+        if (leftBoundaryU_(globalPos))
+        {
+            values.setDirichlet(uxIdx);
+
             if (initializationRun_ == true)
             {
                 values.setDirichlet(pressureIdx, contiWEqIdx);
                 values.setDirichlet(saturationIdx, contiNEqIdx);
-//                 values.setDirichlet(uyIdx);
             }
-          }
+        }
 
 
-        if ( rightBoundaryU_(globalPos)){
+        if ( rightBoundaryU_(globalPos))
+        {
             values.setDirichlet(pressureIdx, contiWEqIdx);
             values.setDirichlet(saturationIdx, contiNEqIdx);
-            values.setDirichlet(uxIdx);//this part is aplied all the time
-            if (initializationRun_ == true)
-            {
-//                 values.setDirichlet(uyIdx);
-            }
+            values.setDirichlet(uxIdx);
          }
 
 
-        if (onLowerBoundary_(globalPos)){ //fixed boundary
-
+        if (onLowerBoundary_(globalPos))//fixed boundary
+        {
              values.setDirichlet(uxIdx);
              values.setDirichlet(uyIdx);
-
         }
      }
 
@@ -632,27 +638,10 @@ public:
     {
         values = 0.0;
 
-
-//         if (onInlet_(globalPos)|| rightBoundaryO_(globalPos)){
-//         if (onInlet_(globalPos)){
-//
-//           const auto& materialLawParams = this->spatialParams().materialLawParams(globalPos);
-//           const Scalar swr = materialLawParams.swr();
-//           const Scalar snr = materialLawParams.snr();
-//
-//
-//           const Scalar meterUeberGW = globalPos[1] +0;
-//           const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
-//           const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
-//           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
-//           values[saturationIdx] = 1.-sw;
-//         } else
-//         {
           // OLD values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
-          values[pressureIdx] = 1000. * 9.81 * wTdepth(globalPos);
+          values[pressureIdx] = waterDensity_ * 9.81 * wTdepth(globalPos);
           //std::cout<< "pressure=" <<values[pressureIdx] << std::endl;
           values[saturationIdx] = 0.0;
-//         }
     }
 
 //     static Scalar invertPcGW_(const Scalar pcIn,
@@ -730,16 +719,16 @@ public:
         {
             if(initializationRun_ == false)
             {
-               if (satW > 1. - eps_){
-                   //std::cout << "saturation above 1 \n" ;
-                    values[contiWEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
+               if (satW > 1. - eps_)
+               {
+                    values[contiWEqIdx] = rb_ * pW/9.81; // [kg/(m2*s)]
 //                     values[contiNEqIdx] = 0.0;
 
                     if (pN>1.e5) values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
                }
-                else {
-                   //std::cout << "saturation below 1, infiltration \n" ;
-                    values[contiWEqIdx] = -avgRain_*1000.;
+                else
+                {
+                    values[contiWEqIdx] = -avgRain_* waterDensity_;
                     if (pN>1.e5) { values[contiNEqIdx] = satN * (pN-1.e5) * rb_; }
                 }
             }
@@ -816,7 +805,7 @@ public:
         this->model().globalStorage(mass);
         double time = this->timeManager().time()+this->timeManager().timeStepSize();
 
-        if(time>1001.0)//khodam: this time should be a bit bigger than than TinitEnd
+        if(time>100.0)//khodam: this time should be a bit bigger than than TinitEnd
         this->newtonController().setMaxRelativeShift(1.e-5);//khodam from 1e-5
 
         // Write mass balance information for rank 0
@@ -843,12 +832,15 @@ public:
         if (this->timeManager().time() == GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd))
         {
             // overwrite episodelength
-            episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLengthMainSimulation)); // fixed value from input file
+            episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLengthMainSimulation); // fixed value from input file
+//             episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLength); // fixed value from input file
 
             // overwrite dt
-            dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.DtInitialMainSimulation)); // fixed value from input file
+//             dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.DtInitialMainSimulation); // fixed value from input file
+            dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.EpisodeLengthMainSimulation); // fixed value from input file
 
             this->timeManager().setTimeStepSize(dt_);
+//              this->timeManager().setTimeStepSize(episodeLength_);
 
             this->setCoupled(true);
             // pressure field resulting from the initialization period is applied for the initial
@@ -866,7 +858,7 @@ public:
 private:
     static constexpr Scalar eps_ = 3e-6;
     Scalar depthBOR_;
-    static constexpr Scalar waterDensity_ = 1000;
+    Scalar waterDensity_ = 1000;
     Scalar episodeLength_;// = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
 
     std::vector<Scalar> pInit_;
@@ -1070,7 +1062,7 @@ public:
                     Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.alpha);
 
                     const Scalar meterUeberGW_ = globalPos[1] + 0;
-                    const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW_);//Pc>0 is unsaturated and Pc<=0 is saturated
+                    const Scalar pc = std::max(0.0, waterDensity_* 9.81 * meterUeberGW_);//Pc>0 is unsaturated and Pc<=0 is saturated
 //                     const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
                     const Scalar sw = pow(pow(alpha_*pc, n_) + 1, -m_);
 
@@ -1110,7 +1102,7 @@ public:
 
 private:
     static constexpr Scalar eps_ = 3e-6;
-    Scalar depthBOR_;
+    Scalar waterDensity_ = 1000.0;
     std::vector<Scalar> pInit_;
     GridView gridView_;
     VertexMapper vertexMapper_;

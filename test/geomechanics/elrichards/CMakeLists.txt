@@ -19,7 +19,7 @@ endif()
 #install sources
 install(FILES
 elrichardsco2tables.hh
-elrichardsproblem.hh
-elrichardsspatialparams.hh
+elrichardsproblemFinal.hh
+elrichardsspatialparamsShao.hh
 test_elrichards.cc
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/geomechanics/elrichards)

@@ -1,11 +1,11 @@
 [TimeManager]
-TInitEnd = 10 #.01       # [s]
-#TEnd = 540000       # 150 h-->[s]
+TInitEnd = 99 #.01       # [s]
+#TEnd = 12960000       # 150 h-->150*3600*24[s]
 TEnd = 360000       # 15 h-->[s]
-#TEnd = 12960000       # 150*3600*24[s 2e6
 DtInitial = 0.01      # [s] 1000
-EpisodeLength =  3600#12960000 #  [s]1e6
-
+DtInitialMainSimulation = 1       # [s]his values is hit first in the output. first dt
+#EpisodeLength =  3600#12960000 #  [s]1e6
+EpisodeLengthMainSimulation = 900  # [s]in next steps this value is hit but if it is too big some time in between could be taken as well (if the episode description in problem changes, both might hit every time)
 
 
 [Grid]
