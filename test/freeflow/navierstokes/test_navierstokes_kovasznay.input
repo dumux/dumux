@@ -23,4 +23,4 @@ WriteFaceData = false
 AlgorithmType = 2
 
 [Underrelaxation]
-HundredTimesVelocityUnderrelaxationFactor = 0.9
+HundredTimesVelocityUnderrelaxationFactor = 90
