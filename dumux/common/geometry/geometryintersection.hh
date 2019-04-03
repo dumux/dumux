@@ -94,6 +94,92 @@ using DefaultPolicy = typename DefaultPolicyChooser<Geometry1, Geometry2>::type;
 
 } // end namespace IntersectionPolicy
 
+namespace Impl {
+
+/*!
+ * \ingroup Geometry
+ * \brief Algorithm to find segment-like intersections of a polgon/polyhedron with a
+ *        segment. The result is stored in the form of the local coordinates tfirst
+ *        and tlast on the segment geo1.
+ * \param geo1 the first geometry
+ * \param geo2 the second geometry (dimGeo2 < dimGeo1)
+ * \param baseEps the base epsilon used for floating point comparisons
+ * \param tfirst stores the local coordinate of beginning of intersection segment
+ * \param tlast stores the local coordinate of the end of intersection segment
+ * \param getFacetCornerIndices Function to obtain the facet corner indices on geo1
+ * \param computeNormal Function to obtain the normal vector on a facet on geo1
+ */
+template< class Geo1, class Geo2, class ctype,
+          class GetFacetCornerIndices, class ComputeNormalFunction >
+bool computeSegmentIntersection(const Geo1& geo1, const Geo2& geo2, ctype baseEps,
+                                ctype& tfirst, ctype& tlast,
+                                const GetFacetCornerIndices& getFacetCornerIndices,
+                                const ComputeNormalFunction& computeNormal)
+{
+    static_assert(int(Geo2::mydimension) == 1, "Geometry2 must be a segment");
+    static_assert(int(Geo1::mydimension) > int(Geo2::mydimension),
+                  "Dimension of Geometry1 must be higher than that of Geometry2");
+
+    const auto a = geo2.corner(0);
+    const auto b = geo2.corner(1);
+    const auto d = b - a;
+
+    // The initial interval is the whole segment.
+    // Afterwards we start clipping the interval
+    // at the intersections with the facets of geo1
+    tfirst = 0.0;
+    tlast = 1.0;
+
+    const auto facets = getFacetCornerIndices(geo1);
+    for (const auto& f : facets)
+    {
+        const auto n = computeNormal(f);
+
+        const auto c0 = geo1.corner(f[0]);
+        const ctype denom = n*d;
+        const ctype dist = n*(a-c0);
+
+        // use first edge of the facet to scale eps
+        const auto edge1 = geo1.corner(f[1]) - geo1.corner(f[0]);
+        const ctype eps = baseEps*edge1.two_norm();
+
+        // if denominator is zero the segment in parallel to the edge.
+        // If the distance is positive there is no intersection
+        using std::abs;
+        if (abs(denom) < eps)
+        {
+            if (dist > eps)
+                return false;
+        }
+        else // not parallel: compute line-line intersection
+        {
+            const ctype t = -dist / denom;
+            // if entering half space cut tfirst if t is larger
+            using std::signbit;
+            if (signbit(denom))
+            {
+                if (t > tfirst)
+                    tfirst = t;
+            }
+            // if exiting half space cut tlast if t is smaller
+            else
+            {
+                if (t < tlast)
+                    tlast = t;
+            }
+            // there is no intersection of the interval is empty
+            // use unscaled epsilon since t is in local coordinates
+            if (tfirst > tlast - baseEps)
+                return false;
+        }
+    }
+
+    // If we made it until here an intersection exists.
+    return true;
+}
+
+} // end namespace Impl
+
 /*!
  * \ingroup Geometry
  * \brief A class for geometry collision detection and intersection calculation
@@ -209,43 +295,33 @@ private:
      */
      static bool intersect_(const Geometry1& geo1, const Geometry2& geo2, ctype& tfirst, ctype& tlast)
      {
-         const auto a = geo2.corner(0);
-         const auto b = geo2.corner(1);
-         const auto d = b - a;
-
-         const std::vector<std::array<int, 2>> edges = [&]()
+         // lambda to obtain the facet corners on geo1
+         auto getFacetCorners = [] (const Geometry1& geo1)
          {
-             std::vector<std::array<int, 2>> edges;
+             std::vector< std::array<int, 2> > facetCorners;
              switch (geo1.corners())
              {
                  case 4: // quadrilateral
-                     edges = {{0, 2}, {3, 1}, {1, 0}, {2, 3}};
+                     facetCorners = {{0, 2}, {3, 1}, {1, 0}, {2, 3}};
                      break;
                  case 3: // triangle
-                     edges = {{1, 0}, {0, 2}, {2, 1}};
+                     facetCorners = {{1, 0}, {0, 2}, {2, 1}};
                      break;
                  default:
                      DUNE_THROW(Dune::NotImplemented, "Collision of segment and geometry of type "
                                     << geo1.type() << " with "<< geo1.corners() << " corners.");
              }
 
-             return edges;
-         } ();
+             return facetCorners;
+         };
 
-         // The initial interval is the whole segment
-         // afterward we start clipping the interval
-         // by the lines decribed by the edges
-         tfirst = 0.0;
-         tlast = 1.0;
-
+         // lambda to obtain the normal on a facet
          const auto center1 = geo1.center();
-         for (const auto& e : edges)
+         auto computeNormal = [&geo1, &center1] (const std::array<int, 2>& facetCorners)
          {
-             // compute outer normal vector of the edge
-             const auto c0 = geo1.corner(e[0]);
-             const auto c1 = geo1.corner(e[1]);
+             const auto c0 = geo1.corner(facetCorners[0]);
+             const auto c1 = geo1.corner(facetCorners[1]);
              const auto edge = c1 - c0;
-             const auto eps = eps_*c0.two_norm();
 
              Dune::FieldVector<ctype, dimworld> n({-1.0*edge[1], edge[0]});
              n /= n.two_norm();
@@ -255,42 +331,10 @@ private:
              if ( n*(center1-c0) > 0.0 )
                  n *= -1.0;
 
-             const ctype denom = n*d;
-             const ctype dist = n*(a-c0);
+             return n;
+         };
 
-             // if denominator is zero the segment in parallel to the edge.
-             // If the distance is positive there is no intersection
-             using std::abs;
-             if (abs(denom) < eps)
-             {
-                 if (dist > eps)
-                     return false;
-             }
-             else // not parallel: compute line-line intersection
-             {
-                 const ctype t = -dist / denom;
-                 // if entering half space cut tfirst if t is larger
-                 using std::signbit;
-                 if (signbit(denom))
-                 {
-                     if (t > tfirst)
-                         tfirst = t;
-                 }
-                 // if exiting half space cut tlast if t is smaller
-                 else
-                 {
-                     if (t < tlast)
-                         tlast = t;
-                 }
-                 // there is no intersection of the interval is empty
-                 // use unscaled epsilon since t is in local coordinates
-                 if (tfirst > tlast - eps_)
-                     return false;
-             }
-         }
-
-         // If we made it until here an intersection exists.
-         return true;
+         return Impl::computeSegmentIntersection(geo1, geo2, eps_, tfirst, tlast, getFacetCorners, computeNormal);
      }
 };
 
@@ -383,84 +427,42 @@ private:
      */
      static bool intersect_(const Geometry1& geo1, const Geometry2& geo2, ctype& tfirst, ctype& tlast)
      {
-         const auto a = geo2.corner(0);
-         const auto b = geo2.corner(1);
-         const auto d = b - a;
-
-         // The initial interval is the whole segment
-         // afterward we start clipping the interval
-         // by the planes decribed by the facet
-         tfirst = 0.0;
-         tlast = 1.0;
-
-         const std::vector<std::vector<int>> facets = [&]()
+         // lambda to obtain facet corners on geo1
+         auto getFacetCorners = [] (const Geometry1& geo1)
          {
-             std::vector<std::vector<int>> facets;
+             std::vector< std::vector<int> > facetCorners;
              // sort facet corner so that normal n = (p1-p0)x(p2-p0) always points outwards
              switch (geo1.corners())
              {
                  // todo compute intersection geometries
                  case 8: // hexahedron
-                     facets = {{2, 0, 6, 4}, {1, 3, 5, 7}, {0, 1, 4, 5},
+                     facetCorners = {{2, 0, 6, 4}, {1, 3, 5, 7}, {0, 1, 4, 5},
                                {3, 2, 7, 6}, {1, 0, 3, 2}, {4, 5, 6, 7}};
                      break;
                  case 4: // tetrahedron
-                     facets = {{1, 0, 2}, {0, 1, 3}, {0, 3, 2}, {1, 2, 3}};
+                     facetCorners = {{1, 0, 2}, {0, 1, 3}, {0, 3, 2}, {1, 2, 3}};
                      break;
                  default:
                      DUNE_THROW(Dune::NotImplemented, "Collision of segment and geometry of type "
                                     << geo1.type() << ", "<< geo1.corners() << " corners.");
              }
 
-             return facets;
-         }();
+             return facetCorners;
+         };
 
-         for (const auto& f : facets)
+         // lambda to obtain the normal on a facet
+         auto computeNormal = [&geo1] (const std::vector<int>& facetCorners)
          {
-             // compute normal vector by cross product
-             const auto v0 = geo1.corner(f[1]) - geo1.corner(f[0]);
-             const auto v1 = geo1.corner(f[2]) - geo1.corner(f[0]);
-             const auto eps = eps_*v0.two_norm();
+             const auto v0 = geo1.corner(facetCorners[1]) - geo1.corner(facetCorners[0]);
+             const auto v1 = geo1.corner(facetCorners[2]) - geo1.corner(facetCorners[0]);
 
              auto n = crossProduct(v0, v1);
              n /= n.two_norm();
 
-             const ctype denom = n*d;
-             const ctype dist = n*(a-geo1.corner(f[0]));
+             return n;
+         };
 
-             // if denominator is zero the segment in parallel to
-             // the plane. If the distance is positive there is no intersection
-             using std::abs;
-             if (abs(denom) < eps)
-             {
-                 if (dist > eps)
-                     return false;
-             }
-             else // not parallel: compute line-plane intersection
-             {
-                 const ctype t = -dist / denom;
-                 // if entering half space cut tfirst if t is larger
-                 using std::signbit;
-                 if (signbit(denom))
-                 {
-                     if (t > tfirst)
-                         tfirst = t;
-                 }
-                 // if exiting half space cut tlast if t is smaller
-                 else
-                 {
-                     if (t < tlast)
-                         tlast = t;
-                 }
-                 // there is no intersection of the interval is empty
-                 // use unscaled epsilon since t is in local coordinates
-                 if (tfirst > tlast - eps_)
-                     return false;
-             }
-         }
-
-         // If we made it until here an intersection exists.
-         return true;
+         return Impl::computeSegmentIntersection(geo1, geo2, eps_, tfirst, tlast, getFacetCorners, computeNormal);
      }
 };
 
@@ -757,46 +759,36 @@ private:
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 1, int> = 0>
     static bool intersect_(const Geometry1& geo1, const Geometry2& geo2, ctype& tfirst, ctype& tlast)
     {
-        const auto a = geo2.corner(0);
-        const auto b = geo2.corner(1);
-        const auto d = b - a;
-
-        const std::vector<std::array<int, 2>> edges = [&]()
+        // lambda to obtain the facet corners on geo1
+        auto getFacetCorners = [] (const Geometry1& geo1)
         {
-            std::vector<std::array<int, 2>> edges;
+            std::vector< std::array<int, 2> > facetCorners;
             switch (geo1.corners())
             {
                 case 4: // quadrilateral
-                    edges = {{0, 2}, {3, 1}, {1, 0}, {2, 3}};
+                    facetCorners = {{0, 2}, {3, 1}, {1, 0}, {2, 3}};
                     break;
                 case 3: // triangle
-                    edges = {{1, 0}, {0, 2}, {2, 1}};
+                    facetCorners = {{1, 0}, {0, 2}, {2, 1}};
                     break;
                 default:
                     DUNE_THROW(Dune::NotImplemented, "Collision of segment and geometry of type "
                                    << geo1.type() << " with "<< geo1.corners() << " corners.");
             }
 
-            return edges;
-        } ();
-
-        // The initial interval is the whole segment
-        // afterward we start clipping the interval
-        // by the lines decribed by the edges
-        tfirst = 0.0;
-        tlast = 1.0;
+            return facetCorners;
+        };
 
         const auto center1 = geo1.center();
         const auto normal1 = crossProduct(geo1.corner(1) - geo1.corner(0),
                                           geo1.corner(2) - geo1.corner(0));
 
-        for (const auto& e : edges)
+        // lambda to obtain the normal on a facet
+        auto computeNormal = [&center1, &normal1, &geo1] (const std::array<int, 2>& facetCorners)
         {
-            // compute outer normal vector of the edge
-            const auto c0 = geo1.corner(e[0]);
-            const auto c1 = geo1.corner(e[1]);
+            const auto c0 = geo1.corner(facetCorners[0]);
+            const auto c1 = geo1.corner(facetCorners[1]);
             const auto edge = c1 - c0;
-            const auto eps = eps_*c0.two_norm();
 
             Dune::FieldVector<ctype, dimworld> n = crossProduct(edge, normal1);
             n /= n.two_norm();
@@ -806,42 +798,10 @@ private:
             if ( n*(center1-c0) > 0.0 )
                 n *= -1.0;
 
-            const ctype denom = n*d;
-            const ctype dist = n*(a-c0);
+            return n;
+        };
 
-            // if denominator is zero the segment in parallel to the edge.
-            // If the distance is positive there is no intersection
-            using std::abs;
-            if (abs(denom) < eps)
-            {
-                if (dist > eps)
-                    return false;
-            }
-            else // not parallel: compute line-line intersection
-            {
-                const ctype t = -dist / denom;
-                // if entering half space cut tfirst if t is larger
-                using std::signbit;
-                if (signbit(denom))
-                {
-                    if (t > tfirst)
-                        tfirst = t;
-                }
-                // if exiting half space cut tlast if t is smaller
-                else
-                {
-                    if (t < tlast)
-                        tlast = t;
-                }
-                // there is no intersection of the interval is empty
-                // use unscaled epsilon since t is in local coordinates
-                if (tfirst > tlast - eps_)
-                    return false;
-            }
-        }
-
-        // If we made it until here an intersection exists.
-        return true;
+        return Impl::computeSegmentIntersection(geo1, geo2, eps_, tfirst, tlast, getFacetCorners, computeNormal);
     }
 
     /*!
