@@ -204,7 +204,7 @@ public:
 
         // determine all bulk elements that couple to low dim elements
         const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-        bulkElemIsCoupled_.resize(bulkProblem->fvGridGeometry().gridView().size(0), false);
+        bulkElemIsCoupled_.assign(bulkProblem->fvGridGeometry().gridView().size(0), false);
         std::for_each( bulkMap.begin(),
                        bulkMap.end(),
                        [&] (const auto& entry) { bulkElemIsCoupled_[entry.first] = true; });
