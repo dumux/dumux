@@ -233,12 +233,12 @@ private:
 
     //! Creates the map from element insertion index to grid element index
     template< class Embeddings, class FVGridGeometry>
-    std::map< typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex, typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex >
+    std::unordered_map< typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex, typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex >
     makeInsertionToGridIndexMap_(std::shared_ptr<const Embeddings> embeddings, const FVGridGeometry& fvGridGeometry) const
     {
         using GridIndexType = typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex;
 
-        std::map< GridIndexType, GridIndexType > map;
+        std::unordered_map< GridIndexType, GridIndexType > map;
         for (const auto& e : elements(fvGridGeometry.gridView()))
             map.insert( std::make_pair( embeddings->template insertionIndex<bulkId>(e), fvGridGeometry.elementMapper().index(e) ) );
 
