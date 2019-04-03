@@ -245,28 +245,49 @@ public:
                         uGradient[coordDir].axpy((*this)[i].displacement(coordDir), vShapeGradient[i]);
                 }
 
+            Scalar divTest = 0.0;
+
             // calculate the divergence of u
-            (*this)[scvIdx].divU = 0.0;
+            //(*this)[scvIdx].divU = 0.0;
 
             for (int coordDir = 0; coordDir < dim; coordDir++)
-                (*this)[scvIdx].divU += uGradient[coordDir][coordDir];
+                //(*this)[scvIdx].divU += uGradient[coordDir][coordDir];
+                divTest += uGradient[coordDir][coordDir];
+
+            int eIdx = problem.model().elementMapper().index(element);
+            // Test to see if it runs with any Scalar value: it does! Scalar divTest = 0.01*std::cos(eIdx); // (*this)[scvIdx].divU;
+            // Scalar divTest = (*this)[scvIdx].divU;
+            if (divTest>0.01)
+            {
+              //if (divTest>0.017) {std::cout << "divU at [" << eIdx << "][" << scvIdx << "] = " << divTest << std::endl;}
+              divTest=0.01;
+            }
+            if (divTest<-0.01)
+            {
+              std::cout << "divU at [" << eIdx << "][" << scvIdx << "] = " << divTest << std::endl;
+              divTest=-0.01;
+            }
+
+//             if (eIdx = 297)
+            // std::cout << "divU at [" << eIdx << "][" << scvIdx << "] = " << (*this)[scvIdx].divU << std::endl;
 
             // calculate the effective porosity
             if(problem.coupled() == true)
                 {
-                    if ((*this)[scvIdx].divU < -(*this)[scvIdx].porosity())
-                    {
-                        (*this)[scvIdx].effPorosity = (*this)[scvIdx].porosity();
-                        std::cout<<"volume change too large"<<std::endl;
-                    }
-                else
+                     if (divTest < -(*this)[scvIdx].porosity())
+                     {
+                         (*this)[scvIdx].effPorosity = (*this)[scvIdx].porosity();
+                         std::cout<<"volume change too large"<<std::endl;
+                     }
+                 else
                     // this equation would be correct if the bulk volume could change (Vol_new = Vol_init *(1+div u)), however, we
                     // have a constant bulk volume therefore we should apply phi_eff = phi_init + div u
                     // but this causes convergence problems. Since div u is very small here the chosen relation is
                     // assumed to be a good approximation
-                     (*this)[scvIdx].effPorosity = ((*this)[scvIdx].porosity() + (*this)[scvIdx].divU)/(1.0 + (*this)[scvIdx].divU);
+
+                     (*this)[scvIdx].effPorosity = ((*this)[scvIdx].porosity() + divTest)/(1.0 + divTest);
                 }
-            else
+             else
                 (*this)[scvIdx].effPorosity = (*this)[scvIdx].porosity();
         }
     }
