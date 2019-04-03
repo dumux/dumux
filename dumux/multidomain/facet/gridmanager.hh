@@ -251,6 +251,7 @@ public:
         if (id > bulkGridId)
             lowDimGridVertexIndices_[id-1] = std::move(lowDimGridVertexIndices);
     }
+private:
     //! data on connectivity between the grids
     std::array<EmbedmentMap, numGrids> embeddedEntityMaps_;
     std::array<EmbedmentMap, numGrids> adjoinedEntityMaps_;
@@ -258,7 +259,6 @@ public:
     //! Contains the hierarchy insertion indices that make up a lower-dimensional grid
     std::array<std::vector<GridIndexType>, numGrids-1> lowDimGridVertexIndices_;
 
-private:
     //! tuple to store the grids
     using Indices = std::make_index_sequence<numGrids>;
     template<std::size_t id> using GridViewPtr = std::shared_ptr<GridView<id>>;
@@ -308,11 +308,6 @@ public:
     //! returns the i-th grid
     template<std::size_t id>
     const Grid<id>& grid() const
-    { return *std::get<id>(gridPtrTuple_); }
-
-    //! returns the i-th grid
-    template<std::size_t id>
-    Grid<id>& grid()
     { return *std::get<id>(gridPtrTuple_); }
 
     //! return a pointer to the grid data object
@@ -367,6 +362,12 @@ public:
             std::get<id>(this->gridPtrTuple_)->loadBalance();
         });
     }
+
+protected:
+    //! return non-const reference to i-th grid
+    template<std::size_t id>
+    Grid<id>& grid_()
+    { return *std::get<id>(gridPtrTuple_); }
 
 private:
     //! Returns the filename extension of a given filename
@@ -441,14 +442,12 @@ private:
     //! tuple to store the grids
     using Indices = std::make_index_sequence<numGrids>;
     using GridPtrTuple = typename makeFromIndexedType<std::tuple, GridPtr, Indices>::type;
-  protected:
     GridPtrTuple gridPtrTuple_;
-  private:
+
     //! grid data, i.e. parameters and markers
     bool enableEntityMarkers_;
     std::shared_ptr<GridData> gridDataPtr_;
 
-  protected:
     //! data on embeddings
     std::shared_ptr<Embeddings> embeddingsPtr_;
 };
