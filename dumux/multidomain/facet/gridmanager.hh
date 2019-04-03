@@ -369,6 +369,10 @@ protected:
     Grid<id>& grid_()
     { return *std::get<id>(gridPtrTuple_); }
 
+    //! return non-const pointer to the object containing embeddings
+    std::shared_ptr<Embeddings> getEmbeddings_()
+    { return embeddingsPtr_; }
+
 private:
     //! Returns the filename extension of a given filename
     static std::string getFileExtension(const std::string& fileName)
