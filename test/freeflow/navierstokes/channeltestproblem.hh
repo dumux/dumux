@@ -195,7 +195,6 @@ public:
 
         if(isInlet(globalPos))
         {
-            values[Indices::velocityXIdx] = inletVelocity_;
 #if NONISOTHERMAL
         // give the system some time so that the pressure can equilibrate, then start the injection of the hot liquid
         if(time() >= 200.0)
@@ -227,19 +226,10 @@ public:
 
         if(isInlet(globalPos))
         {
-            values[Indices::velocityXIdx] = 1000;
-//             if (isLowerLeftFace_(globalPos)){
-//                 values[Indices::velocityXIdx] = 0;
-//             }
-//             else if (isUpperLeftFace_(globalPos)){
-//                 values[Indices::velocityXIdx] = 0;
-//             }
-//             else {
-//                 const auto& y = globalPos[1];
-//                 const auto& yMax = this->fvGridGeometry().bBoxMax()[1];
-//                 const auto& vMax = inletVelocity_;
-//                 values[Indices::velocityXIdx] = 4 * vMax * y * (yMax - y)/(yMax * yMax);
-//             }
+            const auto& y = globalPos[1];
+            const auto& yMax = this->fvGridGeometry().bBoxMax()[1];
+            const auto& vMax = inletVelocity_;
+            values[Indices::velocityXIdx] = 4 * vMax * y * (yMax - y)/(yMax * yMax);
         }
 
 #if NONISOTHERMAL
