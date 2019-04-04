@@ -477,7 +477,8 @@ private:
             }
         }
 
-        // If we have a Dirichlet condition for the pressure we assume to have zero parallel gradient
+        // Consider the shear stress caused by the gradient of the velocities parallel to our face of interest.
+        // If we have a Dirichlet condition for the pressure at the lateral face we assume to have a zero parallel velocity gradient
         // so we can skip the computation.
         if (!lateralFaceBoundaryTypes || !lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx))
         {
@@ -485,16 +486,22 @@ private:
             // and at the parallel one at the neighboring scvf.
             const Scalar innerParallelVelocity = faceVars.velocitySelf();
 
-            const Scalar velocityFirstParallel = scvf.hasParallelNeighbor(localSubFaceIdx,0)
-                                               ? faceVars.velocityParallel(localSubFaceIdx,0)
-                                               : getParallelVelocityFromBoundary_(problem, scvf, normalFace,
-                                                                                  innerParallelVelocity, localSubFaceIdx,
-                                                                                  element, lateralFaceBoundaryTypes);
+            const auto getParallelVelocity = [&]()
+            {
+                if (scvf.hasParallelNeighbor(localSubFaceIdx, 0))
+                    return faceVars.velocityParallel(localSubFaceIdx, 0);
+                else if (lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())))
+                    return problem.dirichlet(element, makeParallelGhostFace_(scvf, localSubFaceIdx))[Indices::velocity(scvf.directionIndex())];
+                else
+                    return problem.bjsVelocity(element, scvf, normalFace, localSubFaceIdx, innerParallelVelocity);
+            };
+
+            const Scalar outerParallelVelocity = getParallelVelocity();
 
             // The velocity gradient already accounts for the orientation
             // of the staggered face's outer normal vector.
-            const Scalar parallelGradient = (velocityFirstParallel - innerParallelVelocity)
-                                          / scvf.cellCenteredParallelDistance(localSubFaceIdx,0);
+            const Scalar parallelGradient = (outerParallelVelocity - innerParallelVelocity)
+                                          / scvf.cellCenteredParallelDistance(localSubFaceIdx, 0);
 
             normalDiffusiveFlux -= muAvg * parallelGradient;
         }
@@ -555,6 +562,15 @@ private:
     //! helper function to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
     SubControlVolumeFace makeParallelGhostFace_(const SubControlVolumeFace& ownScvf, const int localSubFaceIdx) const
     {
+        //    ________________
+        //    --------#######o                 || frontal face of staggered half-control-volume
+        //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
+        //    |      ||      |                 x  dof position
+        //    |      ||      x~~~~> vel.Self   -- element boundaries
+        //    |      ||      |                 __ domain boundary
+        //    |      ||      |                 o  position at which the boundary conditions will be evaluated
+        //    ----------------
+
         return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos);
     };
 
@@ -590,48 +606,6 @@ private:
         }
         else
             return false;
-    }
-
-    /*!
-     * \brief Return the outer parallel velocity for normal faces that are on the boundary and therefore have no neighbor.
-     *
-     * Calls the problem to retrieve a fixed value set on the boundary.
-     *
-     * \param problem The problem
-     * \param scvf The SubControlVolumeFace that is normal to the boundary
-     * \param normalFace The face at the boundary
-     * \param velocitySelf the velocity at scvf
-     * \param localSubFaceIdx The local index of the face that is on the boundary
-     * \param element The element that is on the boundary
-     * \param lateralFaceHasDirichletPressure @c true if there is a dirichlet condition for the pressure on the boundary
-     * \param lateralFaceHasBJS @c true if there is a BJS condition fot the velocity on the boundary
-     */
-    Scalar getParallelVelocityFromBoundary_(const Problem& problem,
-                                            const SubControlVolumeFace& scvf,
-                                            const SubControlVolumeFace& normalFace,
-                                            const Scalar velocitySelf,
-                                            const int localSubFaceIdx,
-                                            const Element& element,
-                                            const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes) const
-    {
-        assert(normalFace.boundary());
-
-        if (lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex())))
-            return problem.bjsVelocity(element, scvf, normalFace, localSubFaceIdx, velocitySelf);
-        else
-        {
-            //    ________________
-            //    --------#######o                 || frontal face of staggered half-control-volume
-            //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
-            //    |      ||      |                 x  dof position
-            //    |      ||      x~~~~> vel.Self   -- element boundaries
-            //    |      ||      |                 __ domain boundary
-            //    |      ||      |                 o  position at which the boundary conditions will be evaluated
-            //    ----------------
-
-            const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
-            return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
-        }
     }
 };
 
