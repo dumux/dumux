@@ -751,7 +751,11 @@ protected:
             const auto dirichletAtCc = (assembler_->problem()).dirichletAtPos(scv.dofPosition());
             originalFullU[cellCenterIdx][scvIdx] = dirichletAtCc[pressureIdx];
         }
-        //TODO add the same for originalFullU[faceIdx]. It is OK for the donea test, when starting with 0, because u=0 at the boundary, but it should be written in a more generic form!
+        for (auto& scvfDofIdx : problem.dirichletBoundaryScvfsIndexSet()){
+            const auto scvf = (assembler_->fvGridGeometry()).boundaryScvf(scvfDofIdx);
+            const auto dirichletAtFace = (assembler_->problem()).dirichletAtPos(scvf.dofPosition());
+            originalFullU[faceIdx][scvfDofIdx] = dirichletAtFace[scvf.directionIndex()];
+        }
 
         // the given solution is the initial guess
         SolutionVector uLastIter(uCurrentIter);
@@ -1487,7 +1491,11 @@ private:
             const auto dirichletAtCc = ((this->assembler_)->problem()).dirichletAtPos(scv.dofPosition());
             originalFullU[cellCenterIdx][scvIdx] = dirichletAtCc[pressureIdx];
         }
-        //TODO add the same for originalFullU[faceIdx]. It is OK for the donea test, when starting with 0, because u=0 at the boundary, but it should be written in a more generic form!
+        for (auto& scvfDofIdx : problem.dirichletBoundaryScvfsIndexSet()){
+            const auto scvf = (this->assembler_->fvGridGeometry()).boundaryScvf(scvfDofIdx);
+            const auto dirichletAtFace = (this->assembler_->problem()).dirichletAtPos(scvf.dofPosition());
+            originalFullU[faceIdx][scvfDofIdx] = dirichletAtFace[scvf.directionIndex()];
+        }
 
         // the given solution is the initial guess
         SolutionVector uLastIter(uCurrentIter);
