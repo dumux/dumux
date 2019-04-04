@@ -31,7 +31,9 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
+#include <dumux/multidomain/facet/box/properties.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
+#include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 
@@ -47,6 +49,8 @@ namespace Properties {
 namespace TTag {
 struct OnePFacet { using InheritsFrom = std::tuple<OneP>; };
 struct OnePFacetTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePFacet>; };
+struct OnePFacetMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, OnePFacet>; };
+struct OnePFacetBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePFacet>; };
 } // end namespace TTag
 
 // Set the grid type
