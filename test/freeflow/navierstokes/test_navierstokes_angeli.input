@@ -22,6 +22,7 @@ LiquidKinematicViscosity = 0.1
 NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
+EnableSIMPLEAbsoluteResidualCriterion = true
 MaxSteps = 100
 MaxRelativeShift = 1e-12
 TargetSteps = 100

@@ -570,6 +570,8 @@ public:
 
             if (enableShiftCriterion_)
                 std::cout << ", maximum relative shift = " << shift_;
+            if (enableSIMPLEAbsoluteResidualCriterion_)
+                std::cout << ", L2 norm of residual = " << l2Norm_;
             if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
                 std::cout << ", residual = " << residualNorm_;
             else if (enableResidualCriterion_)
@@ -620,6 +622,10 @@ public:
         if (enableShiftCriterion_ && !enableResidualCriterion_)
         {
             return shift_ <= shiftTolerance_;
+        }
+        else if (enableSIMPLEAbsoluteResidualCriterion_)
+        {
+            return l2Norm_ <= shiftTolerance_;
         }
         else if (!enableShiftCriterion_ && enableResidualCriterion_)
         {
@@ -981,6 +987,7 @@ protected:
     bool useChop_;
     bool enableAbsoluteResidualCriterion_;
     bool enableShiftCriterion_;
+    bool enableSIMPLEAbsoluteResidualCriterion_;
     bool enableResidualCriterion_;
     bool satisfyResidualAndShiftCriterion_;
 
@@ -999,6 +1006,8 @@ protected:
     std::size_t totalWastedIter_ = 0; //! Newton steps in solves that didn't converge
     std::size_t totalSucceededIter_ = 0; //! Newton steps in solves that converged
     std::size_t numConverged_ = 0; //! total number of converged solves
+
+    Scalar l2Norm_ = 0.;
 
     template<class VectorType, class IndexType>
     VectorType constructFullVectorFromReducedVector_(const VectorType& currentReducedVector,
@@ -1344,6 +1353,7 @@ protected:
 
         enableAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableAbsoluteResidualCriterion");
         enableShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableShiftCriterion");
+        enableSIMPLEAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableSIMPLEAbsoluteResidualCriterion");
         enableResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableResidualCriterion") || enableAbsoluteResidualCriterion_;
         satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.SatisfyResidualAndShiftCriterion");
 
@@ -1743,6 +1753,17 @@ private:
                     //pressure step
                     auto pressureStepRHS = rC;
                     C.mmv(uCurrentIter[faceIdx], pressureStepRHS);
+
+                    /////////////////// residual output intermezzo begin
+
+                    SolutionVector outputResidual;
+                    outputResidual[faceIdx] = velocityStepRHS;
+                    outputResidual[cellCenterIdx] = pressureStepRHS;
+
+                    this->l2Norm_ = outputResidual.two_norm();
+
+                    /////////////////// residual output intermezzo end
+
                     C.umv(deltaUTilde, pressureStepRHS);
 
                     CellCenterSolutionVector pressureCorrection;
@@ -1882,6 +1903,17 @@ private:
                     //pressure step
                     auto pressureStepRHS = rC;
                     C.mmv(uCurrentIter[faceIdx], pressureStepRHS);
+
+                    /////////////////// residual output intermezzo begin
+
+                    SolutionVector outputResidual;
+                    outputResidual[faceIdx] = velocityStepRHS;
+                    outputResidual[cellCenterIdx] = pressureStepRHS;
+
+                    this->l2Norm_ = outputResidual.two_norm();
+
+                    /////////////////// residual output intermezzo end
+
                     C.umv(deltaUTilde, pressureStepRHS);
 
                     CellCenterSolutionVector pressureCorrection;
