@@ -426,7 +426,7 @@ private:
                     static const int numDiffMethod = getParamFromGroup<int>(this->problem(lowDimId).paramGroup(), "Assembly.NumericDifferenceMethod");
                     static const NumericEpsilon< Scalar<lowDimId>, numEq > eps{this->problem(lowDimId).paramGroup()};
                     NumericDifferentiation::partialDerivative(evalResiduals, origPriVars[pvIdx], partialDerivs,
-                                                              origResidual, eps(origPriVars, pvIdx), numDiffMethod);
+                                                              origResidual, eps(origPriVars[pvIdx], pvIdx), numDiffMethod);
 
                     // update the global stiffness matrix with the current partial derivatives
                     // A[i][col][eqIdx][pvIdx] is the rate of change of the residual of equation
