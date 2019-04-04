@@ -332,10 +332,12 @@ public:
                 if (incorporateWallFunction_(normalFlux, problem, element, fvGeometry, scvf, normalFace, localSubFace, elemVolVars, elemFaceVars))
                     continue;
 
-                // Check the consistency of the boundary conditions
-                if (!lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx) &&
-                    !lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex())) &&
-                    !lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())))
+                // Check the consistency of the boundary conditions, only one of the following must be set
+                std::bitset<3> admittableBcTypes;
+                admittableBcTypes.set(0, lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx));
+                admittableBcTypes.set(1, lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex())));
+                admittableBcTypes.set(2, lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())));
+                if (admittableBcTypes.count() != 1)
                 {
                     DUNE_THROW(Dune::InvalidStateException,  "Something went wrong with the boundary conditions "
                     "for the momentum equations at global position " << localSubFaceCenter);
