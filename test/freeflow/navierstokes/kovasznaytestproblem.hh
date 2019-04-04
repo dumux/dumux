@@ -102,7 +102,8 @@ public:
         using CellArray = std::array<unsigned int, dimWorld>;
         const auto numCells = getParam<CellArray>("Grid.Cells");
 
-        cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
+        cellSizeX_ = (this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0]) / numCells[0];
+        cellSizeY_ = (this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]) / numCells[1];
 
         createAnalyticalSolution_();
     }
@@ -229,7 +230,19 @@ public:
         values[Indices::velocityXIdx] = 0.0;
         values[Indices::velocityYIdx] = 0.0;
 
-        return /*values*/dirichletAtPos(globalPos);
+        if (globalPos[0] < (this->fvGridGeometry().bBoxMin()[0] + eps_) ||
+            globalPos[0] > (this->fvGridGeometry().bBoxMax()[0] - eps_) ||
+            globalPos[1] < (this->fvGridGeometry().bBoxMin()[1] + eps_) ||
+            globalPos[1] > (this->fvGridGeometry().bBoxMax()[1] - eps_))
+        {
+            values[Indices::velocityXIdx] = dirichletAtPos(globalPos)[Indices::velocityXIdx];
+            values[Indices::velocityYIdx] = dirichletAtPos(globalPos)[Indices::velocityYIdx];
+        }
+
+        if (isLowerLeftCell_(globalPos))
+            values[Indices::pressureIdx] = dirichletAtPos(globalPos)[Indices::pressureIdx];
+
+        return values;
     }
 
    /*!
@@ -302,6 +315,7 @@ private:
 
     Scalar eps_;
     Scalar cellSizeX_;
+    Scalar cellSizeY_;
 
     Scalar kinematicViscosity_;
     Scalar lambda_;
