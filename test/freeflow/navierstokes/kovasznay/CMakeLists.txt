@@ -12,7 +12,7 @@ dune_add_test(NAME test_ff_navierstokes_kovasznay
 
 dune_add_test(NAME test_ff_navierstokes_kovasznay_higherorder
               SOURCES main.cc
-              LABELS freeflow
+              LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS UPWINDSCHEMEORDER=2
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

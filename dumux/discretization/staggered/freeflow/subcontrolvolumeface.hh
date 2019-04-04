@@ -252,6 +252,20 @@ public:
         return isGhostFace_;
     }
 
+    //! Returns the length of the face in a certain direction (adaptation of area() for 3d)
+    Scalar faceLength(const int localSubFaceIdx) const
+    {
+        if (dimworld == 3)
+        {
+            if (localSubFaceIdx < 2)
+                return (corner(1) - corner(0)).two_norm();
+            else
+                return (corner(2) - corner(0)).two_norm();
+        }
+        else
+            return (corner(1) - corner(0)).two_norm();
+    }
+
    /*!
     * \brief Check if the face has a parallel neighbor
     *
@@ -333,8 +347,13 @@ public:
     */
     Scalar cellCenteredParallelDistance(const int localSubFaceIdx, const int parallelDegreeIdx) const
     {
-        return (pairData(localSubFaceIdx).parallelDistances[parallelDegreeIdx] +
-                pairData(localSubFaceIdx).parallelDistances[parallelDegreeIdx+1]) * 0.5;
+        if (parallelDegreeIdx == 0)
+            return (faceLength(localSubFaceIdx) + pairData(localSubFaceIdx).parallelCellWidths[0]) * 0.5;
+        else
+        {
+            assert((parallelDegreeIdx == 1) && "Only the width of the first two parallel cells (indicies 0 and 1) is stored for each scvf.");
+            return (pairData(localSubFaceIdx).parallelCellWidths[0] + pairData(localSubFaceIdx).parallelCellWidths[1]) * 0.5;
+        }
     }
 
 

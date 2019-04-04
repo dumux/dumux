@@ -89,7 +89,7 @@ int main (int argc, char *argv[]) try
     // parse command line arguments and input file
     Parameters::init(argc, argv);
 
-    using Grid = Dune::YaspGrid<2>;
+    using Grid = Dune::YaspGrid<3>;
 
     constexpr int dim = Grid::dimension;
 
@@ -105,7 +105,7 @@ int main (int argc, char *argv[]) try
     // make a grid
     GlobalPosition lower(0.0);
     GlobalPosition upper(10.0);
-    std::array<unsigned int, dim> els{{5, 5}};
+    std::array<unsigned int, dim> els{{5, 5, 5}};
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
 
     auto leafGridView = grid->leafGridView();
@@ -196,7 +196,15 @@ int main (int argc, char *argv[]) try
                 {
                     for(int j = 0; j < fvGridGeometry.upwindStencilOrder(); j++)
                     {
-                        std::cout << " | Parallel Distance "<< j << " on axis " << i << ": "<< std::setw(3) << scvf.pairData(i).parallelDistances[j] << "\n";
+                        std::cout << " | Parallel Cell Widths "<< j << " on axis " << i << ": "<< std::setw(3) << scvf.pairData(i).parallelCellWidths[j] << "\n";
+                    }
+                }
+
+                for(int i = 0; i < scvf.pairData().size(); i++)
+                {
+                    for(int j = 0; j < fvGridGeometry.upwindStencilOrder(); j++)
+                    {
+                        std::cout << " | Cell Centered Parallel Distance "<< j << " on axis " << i << ": "<< std::setw(3) << scvf.cellCenteredParallelDistance(i,j) << "\n";
                     }
                 }
                 std::cout << std::endl;
