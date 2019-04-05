@@ -1,8 +1,8 @@
 [Grid]
 Positions0 = 0 6.3
 Positions1 = 0 6.3
-Cells0 = 126
-Cells1 = 126
+Cells0 = 50
+Cells1 = 50
 Grading0 = 1.0
 Grading1 = 1.0
 
@@ -14,7 +14,7 @@ EnableInertiaTerms = true
 
 [Component]
 LiquidDensity = 1.0
-LiquidKinematicViscosity = 0.001
+LiquidKinematicViscosity = 0#100#0.001
 
 [Newton]
 MaxSteps = 100
@@ -22,7 +22,11 @@ MaxRelativeShift = 1e-10
 SatisfyResidualAndShiftCriterion = true
 EnableAbsoluteResidualCriterion = true
 MaxAbsoluteResidual = 1e-10
+UseLineSearch = true
 
 [Vtk]
 WriteFaceData = false
 AddProcessRank = false
+
+[Flux]
+UpwindWeight = 0.5

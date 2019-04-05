@@ -169,6 +169,11 @@ public:
                                              const ElementFaceVariables& elemFaceVars,
                                              const GridFluxVariablesCache& gridFluxVarsCache)
     {
+        if (::printstuff)
+        {
+            std::cout << "fronmtal flux is " << computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache) << std::endl;
+            std::cout << "lateral flux is " << computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache) << std::endl;
+        }
         return computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache) +
                computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache);
     }
@@ -212,7 +217,14 @@ public:
 
             frontalFlux += StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedFrontalMomentum(scvf, elemFaceVars, elemVolVars, gridFluxVarsCache, transportingVelocity)
                            * transportingVelocity * -1.0 * scvf.directionSign();
+
+           if (::printstuff)
+               std::cout << "after inertia " << StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedFrontalMomentum(scvf, elemFaceVars, elemVolVars, gridFluxVarsCache, transportingVelocity)
+                              * transportingVelocity * -1.0 * scvf.directionSign() << " transportingVelocity "  << transportingVelocity << " transported " << StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedFrontalMomentum(scvf, elemFaceVars, elemVolVars, gridFluxVarsCache, transportingVelocity) <<  std::endl;
         }
+
+        // if (::printstuff)
+        //     std::cout << "after inertia " << frontalFlux << std::endl;
 
         // The volume variables within the current element. We only require those (and none of neighboring elements)
         // because the fluxes are calculated over the staggered face at the center of the element.
@@ -228,6 +240,9 @@ public:
         const Scalar factor = enableUnsymmetrizedVelocityGradient ? 1.0 : 2.0;
         frontalFlux -= factor * insideVolVars.effectiveViscosity() * gradV;
 
+        // if (::printstuff)
+        //     std::cout << "after gradv " << frontalFlux << std::endl;
+
         // The pressure term.
         // If specified, the pressure can be normalized using the initial value on the scfv of interest.
         // The scvf is used to normalize by the same value from the left and right side.
@@ -239,6 +254,9 @@ public:
         // Account for the orientation of the staggered face's normal outer normal vector
         // (pointing in opposite direction of the scvf's one).
         frontalFlux += pressure * -1.0 * scvf.directionSign();
+
+        if (::printstuff)
+            std::cout << "after pressure " << pressure * -1.0 * scvf.directionSign() << " insideVolVars.pressure() " << insideVolVars.pressure() << " problem.initial(scvf)[Indices::pressureIdx] "<<  problem.initial(scvf)[Indices::pressureIdx] <<   std::endl;
 
         // Handle inflow or outflow conditions.
         // Treat the staggered half-volume adjacent to the boundary as if it was on the opposite side of the boundary.
@@ -339,10 +357,10 @@ public:
                                                                          gridFluxVarsCache, localSubFaceIdx,
                                                                          lateralFaceHasDirichletPressure, lateralFaceHasBJS);
 
-            normalFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
-                                                                     scvf, normalFace, elemVolVars, faceVars,
-                                                                     localSubFaceIdx,
-                                                                     lateralFaceHasDirichletPressure, lateralFaceHasBJS);
+            // normalFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
+            //                                                          scvf, normalFace, elemVolVars, faceVars,
+            //                                                          localSubFaceIdx,
+            //                                                          lateralFaceHasDirichletPressure, lateralFaceHasBJS);
         }
         return normalFlux;
     }
@@ -385,6 +403,15 @@ private:
         // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
         // of interest is located.
         const Scalar transportingVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
+
+        if (::printstuff)
+        {
+            std::cout << "lateral transportingVelocity " << transportingVelocity << std::endl;
+            std::cout << "lateral transported " << StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedLateralMomentum(problem, fvGeometry, element, scvf, normalFace, elemVolVars, faceVars,
+                                                                         gridFluxVarsCache, localSubFaceIdx, lateralFaceHasDirichletPressure,
+                                                                         lateralFaceHasBJS) << std::endl;
+
+        }
 
         return StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedLateralMomentum(problem, fvGeometry, element, scvf, normalFace, elemVolVars, faceVars,
                                                                      gridFluxVarsCache, localSubFaceIdx, lateralFaceHasDirichletPressure,
@@ -463,6 +490,12 @@ private:
 
                 // Account for the orientation of the staggered normal face's outer normal vector.
                 normalDiffusiveFlux -= muAvg * normalGradient * normalFace.directionSign();
+
+                if (::printstuff)
+                {
+                    std::cout << "Lateral cross diff flux " << muAvg * normalGradient * normalFace.directionSign() << " (innerNormalVelocity " << innerNormalVelocity <<  " outerNormalVelocity  "  << outerNormalVelocity << ", dist " << scvf.pairData(localSubFaceIdx).normalDistance << ")";
+                    std::cout << " deltaV " << normalDeltaV << " gradient " << normalGradient << " mu " << muAvg << std::endl;
+                }
             }
         }
 
@@ -486,7 +519,15 @@ private:
                                           / scvf.cellCenteredParallelDistance(localSubFaceIdx,0);
 
             normalDiffusiveFlux -= muAvg * parallelGradient;
+
+            if (::printstuff)
+                std::cout << "Parallel diff flux " << muAvg * parallelGradient << std::endl;
         }
+
+        assert(std::abs(normalDiffusiveFlux * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace)) < 1e-10);
+
+
+
 
         // Account for the area of the staggered normal face (0.5 of the coinciding scfv).
         return normalDiffusiveFlux * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);

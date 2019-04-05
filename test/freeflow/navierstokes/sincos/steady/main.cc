@@ -22,6 +22,7 @@
  * \brief Test for the instationary staggered grid Navier-Stokes model
  *        with analytical solution.
  */
+ bool printstuff = false;
 #include <config.h>
 
 #include <ctime>

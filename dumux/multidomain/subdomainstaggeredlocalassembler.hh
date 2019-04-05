@@ -650,7 +650,19 @@ public:
 
         // treat the local residua of the face dofs:
         for (auto&& scvf : scvfs(fvGeometry))
+        {
+            if (scvf.dofIndex() == 2556)
+            {
+                std::cout << "printing for elem " << fvGridGeometry.elementMapper().index(element) << std::endl;
+                ::printstuff = true;
+            }
+
+
             origResiduals[scvf.localFaceIdx()] = this->evalLocalResidualForFace(scvf);
+
+            ::printstuff = false;
+
+        }
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
         //                                                                                              //
