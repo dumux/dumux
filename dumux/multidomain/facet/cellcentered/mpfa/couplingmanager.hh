@@ -112,7 +112,7 @@ public:
         ParentType::init(bulkProblem, lowDimProblem, couplingMapper, curSol);
 
         // determine all bulk scvfs that coincide with low dim elements
-        bulkScvfIsOnFacetElement_.resize(bulkProblem->fvGridGeometry().numScvf(), false);
+        bulkScvfIsOnFacetElement_.assign(bulkProblem->fvGridGeometry().numScvf(), false);
         const auto& bulkMap = couplingMapper->couplingMap(bulkGridId, lowDimGridId);
         for (const auto& entry : bulkMap)
             for (const auto& couplingEntry : entry.second.elementToScvfMap)

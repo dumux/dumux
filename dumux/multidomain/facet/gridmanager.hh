@@ -215,12 +215,20 @@ public:
         else return typename std::unordered_map< GridIndexType, std::vector<GridIndexType> >::mapped_type();
     }
 
-    //! Returns the maps of the embedded entities
+    //! Returns const reference to maps of the embedded entities
     const std::unordered_map< GridIndexType, std::vector<GridIndexType> >& embeddedEntityMap(std::size_t id) const
     { assert(id < numGrids); return embeddedEntityMaps_[id]; }
 
-    //! Returns the maps of the adjoined entities of dimension d+1
+    //! Returns non-const reference to maps of the embedded entities
+    std::unordered_map< GridIndexType, std::vector<GridIndexType> >& embeddedEntityMap(std::size_t id)
+    { assert(id < numGrids); return embeddedEntityMaps_[id]; }
+
+    //! Returns const reference to the maps of the adjoined entities of dimension d+1
     const std::unordered_map< GridIndexType, std::vector<GridIndexType> >& adjoinedEntityMap(std::size_t id) const
+    { assert(id < numGrids); return adjoinedEntityMaps_[id]; }
+
+    //! Returns non-const reference to the maps of the adjoined entities of dimension d+1
+    std::unordered_map< GridIndexType, std::vector<GridIndexType> >& adjoinedEntityMap(std::size_t id)
     { assert(id < numGrids); return adjoinedEntityMaps_[id]; }
 
     //! Returns the hierachy's insertion indices that make up the grid for the given id
@@ -362,6 +370,16 @@ public:
             std::get<id>(this->gridPtrTuple_)->loadBalance();
         });
     }
+
+protected:
+    //! return non-const reference to i-th grid
+    template<std::size_t id>
+    Grid<id>& grid_()
+    { return *std::get<id>(gridPtrTuple_); }
+
+    //! return non-const pointer to the object containing embeddings
+    std::shared_ptr<Embeddings> getEmbeddings_()
+    { return embeddingsPtr_; }
 
 private:
     //! Returns the filename extension of a given filename
