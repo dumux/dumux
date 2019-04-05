@@ -38,9 +38,9 @@
 namespace Dumux {
 
 template<typename T>
-bool testContainerIO(const T& c0)
+bool testContainerIO(const T& c0, int floatPrecision = 6)
 {
-    writeContainerToFile(c0, "container.txt");
+    writeContainerToFile(c0, "container.txt", floatPrecision);
     auto c1 = readFileToContainer<T>("container.txt");
     return std::equal(c0.begin(), c0.end(), c1.begin());
 }
@@ -78,6 +78,11 @@ int main()
     passed = passed && Dumux::testContainerIO<std::vector<double>>(doublei);
     passed = passed && Dumux::testContainerIO<std::list<double>>(doublei);
     passed = passed && Dumux::testContainerIO<std::deque<double>>(doublei);
+    if (!passed) return 1;
+
+    auto doublepreci = {1.23456789123456, 1.23456789123456, 9.87654321987654};
+    passed = passed && Dumux::testContainerIO<std::vector<double>>(doublepreci, 15);
+    passed = passed && !Dumux::testContainerIO<std::vector<double>>(doublepreci, 7);
     if (!passed) return 1;
 
     auto inti = {5, 6, 7, 5, 2, 8};
