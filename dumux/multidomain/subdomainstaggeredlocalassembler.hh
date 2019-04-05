@@ -538,11 +538,6 @@ public:
     CellCenterResidualValue assembleCellCenterJacobianAndResidualImpl(JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
     {
         assert(domainI == cellCenterId);
-        //////////////////////////////////////////////////////////////////////////////////////////////////
-        // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
-        // neighboring elements we do so by computing the derivatives of the fluxes which depend on the //
-        // actual element. In the actual element we evaluate the derivative of the entire residual.     //
-        //////////////////////////////////////////////////////////////////////////////////////////////////
 
         // get some aliases for convenience
         const auto& element = this->element();
@@ -554,13 +549,9 @@ public:
         const auto cellCenterGlobalI = fvGridGeometry.elementMapper().index(element);
         const auto origResidual = this->evalLocalResidualForCellCenter();
 
-        //////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                                                                              //
-        // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
-        // neighboring elements we do so by computing the derivatives of the fluxes which depend on the //
-        // actual element. In the actual element we evaluate the derivative of the entire residual.     //
-        //                                                                                              //
-        //////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Calculate derivatives of all cell center residuals in the element w.r.t. to other cell center dofs. //
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // lambda to evaluate the derivatives for cell center dofs with respect to neighbor cells
         auto evaluateCellCenterDerivatives = [&](const std::size_t globalJ)
@@ -615,7 +606,7 @@ public:
             }
         };
 
-        // build derivatives with for cell center dofs w.r.t. cell center dofs
+        // get the list of cell center dofs that have an influence on the cell center resdiual of the current element
         const auto& connectivityMap = fvGridGeometry.connectivityMap();
 
         // evaluate derivatives w.r.t. own dof
@@ -638,11 +629,6 @@ public:
     auto assembleFaceJacobianAndResidualImpl(JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
     {
         assert(domainI == faceId);
-        //////////////////////////////////////////////////////////////////////////////////////////////////
-        // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
-        // neighboring elements we do so by computing the derivatives of the fluxes which depend on the //
-        // actual element. In the actual element we evaluate the derivative of the entire residual.     //
-        //////////////////////////////////////////////////////////////////////////////////////////////////
 
         // get some aliases for convenience
         const auto& problem = this->problem();
@@ -660,16 +646,12 @@ public:
         for (auto&& scvf : scvfs(fvGeometry))
             origResiduals[scvf.localFaceIdx()] = this->evalLocalResidualForFace(scvf);
 
-        //////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                                                                              //
-        // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
-        // neighboring elements we do so by computing the derivatives of the fluxes which depend on the //
-        // actual element. In the actual element we evaluate the derivative of the entire residual.     //
-        //                                                                                              //
-        //////////////////////////////////////////////////////////////////////////////////////////////////
-
-        // build derivatives for face dofs w.r.t. face dofs
-        const auto& connectivityMap = fvGridGeometry.connectivityMap();
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
+        // Calculate derivatives of all face residuals in the element w.r.t. to other face dofs.         //
+        // Note that we do an element-wise assembly, therefore this is only the contribution of the      //
+        // current element while the contribution of the element on the opposite side of the scvf will   //
+        // be added separately.                                                                          //
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
 
         for (auto&& scvf : scvfs(fvGeometry))
         {
@@ -746,9 +728,9 @@ public:
     void assembleJacobianCellCenterCoupling(Dune::index_constant<1> domainJ, JacobianBlock& A,
                                             const CellCenterResidualValue& origResidual, GridVariables& gridVariables)
     {
-        // ////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // // Calculate derivatives of all dofs in the element with respect to all dofs in the coupling stencil. //
-        // ////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //  Calculate derivatives of all cell center residuals in the element w.r.t. to all coupled faces dofs //
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // get some aliases for convenience
         const auto& element = this->element();
@@ -809,9 +791,9 @@ public:
     void assembleJacobianCellCenterCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
                                             const CellCenterResidualValue& res, GridVariables& gridVariables)
     {
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Calculate derivatives of all dofs in the element with respect to all dofs in the coupling stencil. //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //  Calculate derivatives of all cell center residuals in the element w.r.t. all dofs in the coupling stencil. //
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // get some aliases for convenience
         const auto& element = this->element();
@@ -868,9 +850,9 @@ public:
     void assembleJacobianFaceCoupling(Dune::index_constant<0> domainJ, JacobianBlock& A,
                                       const ElementResidualVector& origResiduals, GridVariables& gridVariables)
     {
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Calculate derivatives of all dofs in the element with respect to all dofs in the coupling stencil. //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        //  Calculate derivatives of all face residuals in the element w.r.t. all coupled cell center dofs //
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // get some aliases for convenience
         const auto& problem = this->problem();
@@ -943,9 +925,9 @@ public:
     void assembleJacobianFaceCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
                                       const ElementResidualVector& res, GridVariables& gridVariables)
     {
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Calculate derivatives of all dofs in the element with respect to all dofs in the coupling stencil. //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //  Calculate derivatives of all face residuals in the element w.r.t. all dofs in the coupling stencil. //
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // get some aliases for convenience
         const auto& fvGeometry = this->fvGeometry();
