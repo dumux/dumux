@@ -28,6 +28,8 @@
 #define DUMUX_IO_CONTAINER_HH
 
 #include <iostream>
+#include <ios>
+#include <iomanip>
 #include <fstream>
 #include <iterator>
 
@@ -43,9 +45,11 @@ namespace Dumux {
  */
 template<typename Container>
 void writeContainerToFile(const Container& v,
-                          const std::string& filename)
+                          const std::string& filename,
+                          int floatPrecision = 6)
 {
     std::ofstream outfile(filename, std::ios::out);
+    outfile << std::scientific << std::setprecision(floatPrecision);
     std::ostream_iterator<typename Container::value_type> it(outfile, "\n");
     std::copy(v.begin(),v.end(), it);
 }
