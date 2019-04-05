@@ -373,30 +373,43 @@ private:
                                                              bool lateralFaceHasBJS,
                                                              std::true_type)
     {
-        std::array<Scalar, 3> momenta{0.0, 0.0, 0.0};
         const SubControlVolumeFace& lateralFace = fvGeometry.scvf(ownScvf.insideScvIdx(), ownScvf.pairData(localSubFaceIdx).localNormalFaceIdx);
-
-        // Check whether the own or the neighboring element is upstream.
-        const bool selfIsUpstream = lateralFace.directionSign() == sign(transportingVelocity);
 
         // Get the volume variables of the own and the neighboring element
         const auto& insideVolVars = elemVolVars[lateralFace.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[lateralFace.outsideScvIdx()];
 
-        // The local index of the faces that is opposite to localSubFaceIdx
-        const int oppositeSubFaceIdx = localSubFaceIdx % 2 ? localSubFaceIdx - 1 : localSubFaceIdx + 1;
+        // If the lateral face lies on a boundary, we assume that the parallel velocity on the boundary is actually known,
+        // thus we always use this value for the computation of the transported momentum.
+        if (!ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
+        {
+            const Scalar boundaryMomentum = getParallelVelocityFromBoundary_(problem, ownScvf, lateralFace,
+                                                                             faceVars.velocitySelf(), localSubFaceIdx,
+                                                                             element, lateralFaceHasDirichletPressure,
+                                                                             lateralFaceHasBJS) * insideVolVars.density();
+
+             return std::array<Scalar, 3>{boundaryMomentum, boundaryMomentum, boundaryMomentum};
+        }
+
+        // Check whether the own or the neighboring element is upstream.
+        const bool selfIsUpstream = lateralFace.directionSign() == sign(transportingVelocity);
+
+        std::array<Scalar, 3> momenta;
 
         if (selfIsUpstream)
         {
             momenta[1] = faceVars.velocitySelf() * insideVolVars.density();
 
-            if(ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
+            if (ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
                 momenta[0] = faceVars.velocityParallel(localSubFaceIdx, 0) * insideVolVars.density();
             else
                 momenta[0] = getParallelVelocityFromBoundary_(problem, ownScvf, lateralFace,
                                                               faceVars.velocitySelf(), localSubFaceIdx,
                                                               element, lateralFaceHasDirichletPressure,
                                                               lateralFaceHasBJS) * insideVolVars.density();
+
+            // The local index of the faces that is opposite to localSubFaceIdx
+            const int oppositeSubFaceIdx = localSubFaceIdx % 2 ? localSubFaceIdx - 1 : localSubFaceIdx + 1;
 
             // The "upstream-upstream" velocity is retrieved from the other parallel neighbor or from the boundary.
             if (ownScvf.hasParallelNeighbor(oppositeSubFaceIdx, 0))
@@ -423,8 +436,8 @@ private:
                                                                    (momenta[1]/outsideVolVars.density())) * outsideVolVars.density();
             }
         }
-        return momenta;
 
+        return momenta;
     }
 
     /*!
@@ -446,13 +459,10 @@ private:
     {
          // Check whether the own or the neighboring element is upstream.
         const SubControlVolumeFace& lateralFace = fvGeometry.scvf(ownScvf.insideScvIdx(), ownScvf.pairData(localSubFaceIdx).localNormalFaceIdx);
-        const bool selfIsUpstream = lateralFace.directionSign() == sign(transportingVelocity);
 
         // Get the volume variables of the own and the neighboring element
         const auto& insideVolVars = elemVolVars[lateralFace.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[lateralFace.outsideScvIdx()];
-
-        const Scalar momentumSelf = faceVars.velocitySelf() * insideVolVars.density();
 
         const Scalar momentumParallel = ownScvf.hasParallelNeighbor(localSubFaceIdx, 0)
                                       ? faceVars.velocityParallel(localSubFaceIdx, 0) * outsideVolVars.density()
@@ -460,6 +470,14 @@ private:
                                                                          faceVars.velocitySelf(), localSubFaceIdx, element,
                                                                          lateralFaceHasDirichletPressure, lateralFaceHasBJS)
                                       * insideVolVars.density());
+
+        // If the lateral face lies on a boundary, we assume that the parallel velocity on the boundary is actually known,
+        // thus we always use this value for the computation of the transported momentum.
+        if (!ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
+            return std::array<Scalar, 2>{momentumParallel, momentumParallel};
+
+        const bool selfIsUpstream = lateralFace.directionSign() == sign(transportingVelocity);
+        const Scalar momentumSelf = faceVars.velocitySelf() * insideVolVars.density();
 
         return selfIsUpstream ? std::array<Scalar, 2>{momentumParallel, momentumSelf}
                               : std::array<Scalar, 2>{momentumSelf, momentumParallel};
