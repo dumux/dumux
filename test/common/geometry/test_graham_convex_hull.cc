@@ -13,6 +13,7 @@
 #include <dune/common/timer.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/geometry/triangulation.hh>
 #include <dumux/common/geometry/grahamconvexhull.hh>
 #include <test/common/geometry/writetriangulation.hh>
 
@@ -115,7 +116,7 @@ int main(int argc, char* argv[]) try
     writeVTKPolyData(convexHullPoints, "convexhull");
 
     Dune::Timer timer2;
-    auto triangles = Dumux::triangulateConvexHull(convexHullPoints);
+    auto triangles = Dumux::triangulate<2, 3>(convexHullPoints);
     std::cout << "Computed triangulation of convex hull with " << convexHullPoints.size()
               << " points in " << timer2.elapsed() << " seconds." << std::endl;
 

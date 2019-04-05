@@ -88,27 +88,26 @@ public:
             const auto& geometry = element.geometry();
             auto distVec = scvf.unitOuterNormal();
             distVec *= -1.0;
-            distVec *= diameter(geometry)*5.0; // make sure to be long enough
+            distVec *= diameter(geometry)*5.0; // make sure segment will be long enough
 
-            auto p1 = scvf.ipGlobal();
+            const auto p1 = scvf.ipGlobal();
             auto p2 = scvf.ipGlobal();
             p2 += distVec;
 
             static constexpr int dimWorld = GridView::dimensionworld;
             using Segment = Dune::MultiLinearGeometry<Scalar, 1, dimWorld>;
 
-            std::vector<GlobalPosition> corners({p1, p2});
-            Segment segment(Dune::GeometryTypes::line, corners);
+            using Policy = IntersectionPolicy::SegmentPolicy<typename GridView::ctype, dimWorld>;
+            using IntersectionAlgorithm = GeometryIntersection<typename Element::Geometry, Segment, Policy>;
+            typename IntersectionAlgorithm::Intersection intersection;
 
-            using Intersection = GeometryIntersection<typename Element::Geometry, Segment>;
-            typename Intersection::IntersectionType intersection;
-
-            if (!Intersection::intersection(geometry, segment, intersection))
+            Segment segment(Dune::GeometryTypes::line, std::vector<GlobalPosition>({p1, p2}));
+            if (!IntersectionAlgorithm::intersection(geometry, segment, intersection))
                 DUNE_THROW(Dune::InvalidStateException, "Could not compute interior integration point");
 
             // use center of intersection as integration point
-            ipGlobalInside_ = intersection[0][0];
-            ipGlobalInside_ += intersection[0][1];
+            ipGlobalInside_ = intersection[0];
+            ipGlobalInside_ += intersection[1];
             ipGlobalInside_ /= 2.0;
 
             fvGeometry.feLocalBasis().evaluateFunction(geometry.local(ipGlobalInside_), shapeValuesInside_);

@@ -27,10 +27,12 @@
 #include <array>
 #include <algorithm>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/geometry/triangulation.hh>
 
 namespace Dumux {
 
@@ -181,32 +183,9 @@ grahamConvexHull2d3d(std::vector<Dune::FieldVector<ctype, 3>>& points)
  */
 template<class ctype>
 std::vector<std::array<Dune::FieldVector<ctype, 3>, 3> >
+DUNE_DEPRECATED_MSG("Please use triangulate")
 triangulateConvexHull(const std::vector<Dune::FieldVector<ctype, 3>>& convexHull)
-{
-    using Point = Dune::FieldVector<ctype, 3>;
-    using Triangle = std::array<Point, 3>;
-
-    if (convexHull.size() < 3)
-        DUNE_THROW(Dune::InvalidStateException, "Try to triangulate point cloud with less than 3 points!");
-
-    if (convexHull.size() == 3)
-        return std::vector<Triangle>(1, {convexHull[0], convexHull[1], convexHull[2]});
-
-    Point midPoint(0.0);
-    for (const auto p : convexHull)
-        midPoint += p;
-    midPoint /= convexHull.size();
-
-    std::vector<Triangle> triangulation;
-    triangulation.reserve(convexHull.size());
-
-    for (std::size_t i = 0; i < convexHull.size()-1; ++i)
-        triangulation.emplace_back(Triangle{midPoint, convexHull[i], convexHull[i+1]});
-
-    triangulation.emplace_back(Triangle{midPoint, convexHull[convexHull.size()-1], convexHull[0]});
-
-    return triangulation;
-}
+{ return triangulate<2, 3>(convexHull); }
 
 } // end namespace Dumux
 

@@ -9,4 +9,5 @@ intersectingentities.hh
 intersectspointgeometry.hh
 intersectspointsimplex.hh
 makegeometry.hh
+triangulation.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/common/geometry)
