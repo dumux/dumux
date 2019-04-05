@@ -125,7 +125,6 @@ auto getJacobianPattern(const GridGeometry& gridGeometry)
     const auto numDofs = gridGeometry.numDofs();
     Dune::MatrixIndexSet pattern(numDofs, numDofs);
 
-
     const auto& connectivityMap = gridGeometry.connectivityMap();
 
     // evaluate the acutal pattern
@@ -136,7 +135,7 @@ auto getJacobianPattern(const GridGeometry& gridGeometry)
             // the global index of the element at hand
             static constexpr auto cellCenterIdx = GridGeometry::cellCenterIdx();
             const auto ccGlobalI = gridGeometry.elementMapper().index(element);
-
+            pattern.add(ccGlobalI, ccGlobalI);
             for (auto&& ccGlobalJ : connectivityMap(cellCenterIdx, cellCenterIdx, ccGlobalI))
                 pattern.add(ccGlobalI, ccGlobalJ);
         }
@@ -150,6 +149,7 @@ auto getJacobianPattern(const GridGeometry& gridGeometry)
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const auto faceGlobalI = scvf.dofIndex();
+                pattern.add(faceGlobalI, faceGlobalI);
                 for (auto&& faceGlobalJ : connectivityMap(faceIdx, faceIdx, scvf.index()))
                     pattern.add(faceGlobalI, faceGlobalJ);
             }

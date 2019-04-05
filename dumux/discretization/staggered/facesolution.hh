@@ -50,9 +50,11 @@ public:
         const auto& connectivityMap = fvGridGeometry.connectivityMap();
         const auto& stencil = connectivityMap(FVGridGeometry::faceIdx(), FVGridGeometry::faceIdx(), scvf.index());
 
-        facePriVars_.reserve(stencil.size());
-        map_.reserve(stencil.size());
+        facePriVars_.reserve(stencil.size()+1);
+        map_.reserve(stencil.size()+1);
 
+        map_.push_back(scvf.dofIndex());
+        facePriVars_.push_back(sol[scvf.dofIndex()]);
         for(const auto dofJ : stencil)
         {
             map_.push_back(dofJ);

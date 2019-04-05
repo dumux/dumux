@@ -132,9 +132,6 @@ private:
                                                const FVElementGeometry& fvGeometry,
                                                const SubControlVolumeFace& scvf)
     {
-        // the first entry is always the cc dofIdx itself
-        if(stencil.empty())
-            stencil.push_back(scvf.insideScvIdx());
         if(!scvf.boundary())
             stencil.push_back(scvf.outsideScvIdx());
     }
@@ -184,7 +181,6 @@ private:
     {
         if(stencil.empty())
         {
-            stencil.push_back(scvf.axisData().selfDof);
             stencil.push_back(scvf.axisData().oppositeDof);
             addHigherOrderInAxisDofs_(scvf, stencil, std::integral_constant<bool, useHigherOrder>{});
         }
