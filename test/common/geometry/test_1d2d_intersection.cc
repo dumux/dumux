@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <initializer_list>
+#include <type_traits>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
@@ -13,31 +14,26 @@
 
 
 #ifndef DOXYGEN
-template<int dimworld>
-Dune::MultiLinearGeometry<double, 1, dimworld>
-makeLine(std::initializer_list<Dune::FieldVector<double, dimworld>>&& c,
-         double thirdCoord = 1.0)
+Dune::MultiLinearGeometry<double, 1, 2>
+makeLine(std::initializer_list<Dune::FieldVector<double, 2>>&& c, std::integral_constant<int, 2>)
 {
-    if (dimworld == 2)
-        return {Dune::GeometryTypes::line, c};
+    return {Dune::GeometryTypes::line, c};
+}
 
-    // add value for the third coordinate
-    else if (dimworld == 3)
+Dune::MultiLinearGeometry<double, 1, 3>
+makeLine(std::initializer_list<Dune::FieldVector<double, 2>>&& c, std::integral_constant<int, 3>)
+{
+    std::vector<Dune::FieldVector<double, 3>> corners;
+    for (auto& corner : c)
     {
-        std::vector<Dune::FieldVector<double, dimworld>> corners;
-        for (auto& corner : c)
-        {
-            Dune::FieldVector<double, dimworld> coord;
-            coord[0] = corner[0];
-            coord[1] = corner[1];
-            coord[2] = thirdCoord;
-            corners.emplace_back(std::move(coord));
-        }
-
-        return {Dune::GeometryTypes::line, corners};
+        Dune::FieldVector<double, 3> coord;
+        coord[0] = corner[0];
+        coord[1] = corner[1];
+        coord[2] = 1.0;
+        corners.emplace_back(std::move(coord));
     }
-    else
-        DUNE_THROW(Dune::InvalidStateException, "dimWorld must be greater than 2 or 3");
+
+    return {Dune::GeometryTypes::line, corners};
 }
 
 template<int dimworld, class Policy>
@@ -72,77 +68,79 @@ void performTests(std::vector<bool>& returns, const Quadrilateral& quad, const T
     using PointPolicy = Dumux::IntersectionPolicy::PointPolicy<double, dimworld>;
     using SegmentPolicy = Dumux::IntersectionPolicy::SegmentPolicy<double, dimworld>;
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {0.0, 0.0}, {1.0, 0.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {0.0, 0.0}, {1.0, 0.0} }), false));
+    std::integral_constant<int, dimworld> dm;
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {0.0, 0.0}, {0.0, 1.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {0.0, 0.0}, {0.0, 1.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {0.0, 0.0}, {1.0, 0.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {0.0, 0.0}, {1.0, 0.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {0.0, 0.0}, {1.0, 1.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {0.0, 0.0}, {1.0, 1.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {0.0, 0.0}, {0.0, 1.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {0.0, 0.0}, {0.0, 1.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {1.0, 0.0}, {1.0, 1.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {1.0, 0.0}, {1.0, 1.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {0.0, 0.0}, {1.0, 1.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {0.0, 0.0}, {1.0, 1.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {1.0, 1.0}, {0.0, 1.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {1.0, 1.0}, {0.0, 1.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {1.0, 0.0}, {1.0, 1.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {1.0, 0.0}, {1.0, 1.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {0.5, 0.0}, {0.5, 1.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {0.5, 0.0}, {0.5, 1.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {1.0, 1.0}, {0.0, 1.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {1.0, 1.0}, {0.0, 1.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {0.0, 0.5}, {1.0, 0.5} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {0.0, 0.5}, {1.0, 0.5} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {0.5, 0.0}, {0.5, 1.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {0.5, 0.0}, {0.5, 1.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {0.5, 0.5}, {0.5, 2.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {0.5, 0.5}, {0.5, 2.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {0.0, 0.5}, {1.0, 0.5} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {0.0, 0.5}, {1.0, 0.5} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {0.5, 0.5}, {0.5, -2.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {0.5, 0.5}, {0.5, -2.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {0.5, 0.5}, {0.5, 2.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {0.5, 0.5}, {0.5, 2.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {0.5, 0.5}, {-2.0, 0.5} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {0.5, 0.5}, {-2.0, 0.5} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {0.5, 0.5}, {0.5, -2.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {0.5, 0.5}, {0.5, -2.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {0.5, 0.5}, {2.0, 0.5} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {0.5, 0.5}, {2.0, 0.5} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {0.5, 0.5}, {-2.0, 0.5} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {0.5, 0.5}, {-2.0, 0.5} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {0.5, 0.0}, {0.5, -2.0} }), false));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {0.5, 0.0}, {0.5, -2.0} })));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {0.5, 0.5}, {2.0, 0.5} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {0.5, 0.5}, {2.0, 0.5} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine<dimworld>({ {0.5, 1.0}, {0.5, 2.0} }), false));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine<dimworld>({ {0.5, 1.0}, {0.5, 2.0} })));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {0.5, 0.0}, {0.5, -2.0} }, dm), false));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {0.5, 0.0}, {0.5, -2.0} }, dm)));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine<dimworld>({ {0.0, 0.0}, {1.0, 0.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine<dimworld>({ {0.0, 0.0}, {1.0, 0.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(quad, makeLine({ {0.5, 1.0}, {0.5, 2.0} }, dm), false));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {0.5, 1.0}, {0.5, 2.0} }, dm)));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine<dimworld>({ {0.0, 0.0}, {0.0, 1.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine<dimworld>({ {0.0, 0.0}, {0.0, 1.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine({ {0.0, 0.0}, {1.0, 0.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {0.0, 0.0}, {1.0, 0.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine<dimworld>({ {0.0, 0.0}, {1.0, 1.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine<dimworld>({ {0.0, 0.0}, {1.0, 1.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine({ {0.0, 0.0}, {0.0, 1.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {0.0, 0.0}, {0.0, 1.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine<dimworld>({ {0.5, 0.0}, {0.5, 1.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine<dimworld>({ {0.5, 0.0}, {0.5, 1.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine({ {0.0, 0.0}, {1.0, 1.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {0.0, 0.0}, {1.0, 1.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine<dimworld>({ {0.0, 0.5}, {1.0, 0.5} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine<dimworld>({ {0.0, 0.5}, {1.0, 0.5} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine({ {0.5, 0.0}, {0.5, 1.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {0.5, 0.0}, {0.5, 1.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine<dimworld>({ {0.5, 0.5}, {0.0, 0.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine<dimworld>({ {0.5, 0.5}, {0.0, 0.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine({ {0.0, 0.5}, {1.0, 0.5} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {0.0, 0.5}, {1.0, 0.5} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine<dimworld>({ {0.0, 0.0}, {0.5, 0.5} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine<dimworld>({ {0.0, 0.0}, {0.5, 0.5} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine({ {0.5, 0.5}, {0.0, 0.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {0.5, 0.5}, {0.0, 0.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine<dimworld>({ {0.5, 0.5}, {-2.0, 0.5} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine<dimworld>({ {0.5, 0.5}, {-2.0, 0.5} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine({ {0.0, 0.0}, {0.5, 0.5} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {0.0, 0.0}, {0.5, 0.5} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine<dimworld>({ {0.5, 0.5}, {0.5, -2.0} })));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine<dimworld>({ {0.5, 0.5}, {0.5, -2.0} }), false));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine({ {0.5, 0.5}, {-2.0, 0.5} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {0.5, 0.5}, {-2.0, 0.5} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine<dimworld>({ {1.0, 1.0}, {0.0, 1.0} }), false));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine<dimworld>({ {1.0, 1.0}, {0.0, 1.0} })));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine({ {0.5, 0.5}, {0.5, -2.0} }, dm)));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {0.5, 0.5}, {0.5, -2.0} }, dm), false));
 
-    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine<dimworld>({ {1.0, 0.0}, {1.0, 1.0} }), false));
-    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine<dimworld>({ {1.0, 0.0}, {1.0, 1.0} })));
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine({ {1.0, 1.0}, {0.0, 1.0} }, dm), false));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {1.0, 1.0}, {0.0, 1.0} }, dm)));
+
+    returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine({ {1.0, 0.0}, {1.0, 1.0} }, dm), false));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {1.0, 0.0}, {1.0, 1.0} }, dm)));
 }
 
 #endif
