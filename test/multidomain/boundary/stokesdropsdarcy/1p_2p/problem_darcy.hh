@@ -175,6 +175,8 @@ public:
         // TODO sets Dirichlet b.c. everywhere?! (see cclocalresidual) --> Matrix -nan
 //        if(onLowerBoundary_(scvf.center()))
 //            values.setAllDirichlet();
+        if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+            values.setAllCouplingNeumann();
 
         return values;
     }
@@ -211,6 +213,10 @@ public:
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
+
+        if(couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+            values[Indices::conti0EqIdx] = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scvf);
+
         return values;
     }
 
