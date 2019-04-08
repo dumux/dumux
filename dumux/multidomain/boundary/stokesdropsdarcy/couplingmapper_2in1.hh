@@ -82,16 +82,15 @@ private:
 
     // the sub domain type tags
     template<std::size_t id>
-    using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     using CouplingManager = GetPropType<StokesTypeTag, Properties::CouplingManager>;
 
-    // TODO !!
-//    static_assert(GetPropType<SubDomainTypeTag<stokesIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::staggered,
-//                  "The free flow domain must use the staggered discretization");
-//    static_assert(GetPropType<SubDomainTypeTag<interfaceIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa,
-//                  "The interface domain must use the CCTpfa discretization");
-//    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa,
-//                  "The Darcy domain must use the CCTpfa discretization");
+    static_assert(GetPropType<SubDomainTypeTag<stokesIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::staggered,
+                  "The free flow domain must use the staggered discretization");
+    static_assert(GetPropType<SubDomainTypeTag<interfaceIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa,
+                  "The interface domain must use the CCTpfa discretization");
+    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa,
+                  "The Darcy domain must use the CCTpfa discretization");
 
 public:
 
@@ -185,7 +184,7 @@ public:
                         stokesElementToInterfaceElementMap_[stokesElementIdx].push_back({interfaceElementIdx, stokesScvf.index()});
                         interfaceElementMap_[interfaceElementIdx].push_back({stokesElementIdx, stokesScvf.index(), darcyElementIdx[0], darcyScvf.index()});
 
-//                        // TODO print maps and check all indices, dofs, ...
+//                        // print maps and check all indices, dofs, ...
 //                        std::cout << "** couplingmapper: interfaceElementMap for element " << interfaceElementIdx
 //                                  << ": coupled stokes element = " << interfaceElementMap_[interfaceElementIdx][0].stokesEIdx
 //                                  << ", coupled stokes scvf = " << interfaceElementMap_[interfaceElementIdx][0].stokesScvfIdx
@@ -224,7 +223,6 @@ public:
         return interfaceElementMap_;
     }
 
-    // TODO
     /*!
      * \brief A map that returns information on all Darcy and Stokes elements coupled to an interface element
      */
