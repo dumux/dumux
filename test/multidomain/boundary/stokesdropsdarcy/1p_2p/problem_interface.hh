@@ -169,7 +169,7 @@ public:
                                 const SubControlVolumeFace& scvf) const
     {
         BoundaryTypes values;
-        values.setAllNeumann(); // left/right wall
+        values.setAllDirichlet(); // left/right wall
         return values;
     }
 
@@ -233,9 +233,11 @@ public:
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolume &scv) const
     {
-        // TODO add sink/source terms from couplingmanager!
+        NumEqVector values(0.0);
         // q_ff, q_pm
-        return NumEqVector(0.0);
+        values[Indices::conti0EqIdx] = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scv);
+
+        return values;
     }
 
     // \}
