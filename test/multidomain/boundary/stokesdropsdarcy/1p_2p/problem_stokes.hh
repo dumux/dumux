@@ -217,6 +217,19 @@ public:
     {
         NumEqVector values(0.0);
 
+        const auto& globalPos = scvf.dofPosition();
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+
+        FluidState fluidState;
+        updateFluidStateForBC_(fluidState, elemVolVars[scv].pressure());
+
+        const Scalar density = fluidState.density(0);
+
+        if(onLeftBoundary_(globalPos))
+        {
+            values[Indices::conti0EqIdx] = -xVelocity_(globalPos) * density;
+        }
+
         if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
             values[Indices::conti0EqIdx] = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
@@ -253,13 +266,13 @@ public:
 //                                      / (this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0])
 //                                      / (this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0]);
         // horizontal flow (1p2c_2p2c)
-//        FluidState fluidState;
-//        updateFluidStateForBC_(fluidState, pressure_);
+        FluidState fluidState;
+        updateFluidStateForBC_(fluidState, pressure_);
 
-//        const Scalar density = FluidSystem::density(fluidState, 0);
+        const Scalar density = FluidSystem::density(fluidState, 0);
 
-        values[Indices::pressureIdx] = pressure_;// + density*this->gravity()[1]*(globalPos[1] - this->fvGridGeometry().bBoxMin()[1]);
-        values[Indices::velocityXIdx] = inletVelocity_; // xVelocity_(globalPos);
+        values[Indices::pressureIdx] = pressure_ + density*this->gravity()[1]*(globalPos[1] - this->fvGridGeometry().bBoxMin()[1]);
+        values[Indices::velocityXIdx] = xVelocity_(globalPos);
         return values;
     }
 
@@ -292,38 +305,37 @@ private:
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
 
-//    //! Updates the fluid state to obtain required quantities for IC/BC
-//    void updateFluidStateForBC_(FluidState& fluidState, const Scalar pressure) const
-//    {
-//        fluidState.setTemperature(temperature_);
-//        fluidState.setPressure(0, pressure);
-//        fluidState.setSaturation(0, 1.0);
-//
-//        typename FluidSystem::ParameterCache paramCache;
-//        paramCache.updatePhase(fluidState, 0);
-//
-//        const Scalar density = FluidSystem::density(fluidState, paramCache, 0);
-//        fluidState.setDensity(0, density);
-//
-//        const Scalar molarDensity = FluidSystem::molarDensity(fluidState, paramCache, 0);
-//        fluidState.setMolarDensity(0, molarDensity);
-//
-//        const Scalar enthalpy = FluidSystem::enthalpy(fluidState, paramCache, 0);
-//        fluidState.setEnthalpy(0, enthalpy);
-//    }
+    //! Updates the fluid state to obtain required quantities for IC/BC
+    void updateFluidStateForBC_(FluidState& fluidState, const Scalar pressure) const
+    {
+        fluidState.setTemperature(temperature_);
+        fluidState.setPressure(0, pressure);
+        fluidState.setSaturation(0, 1.0);
 
-//    //! Set the profile of the inflow velocity (horizontal direction).
-//    const Scalar xVelocity_(const GlobalPosition &globalPos) const
-//    {
-////        const Scalar vmax = inletVelocity_;
-////        return  4 * vmax * (globalPos[1] - this->fvGridGeometry().bBoxMin()[1]) * (this->fvGridGeometry().bBoxMax()[1] - globalPos[1])
-////                / (height_() * height_());
-//    	return inletVelocity_;
-//    }
-//
-//    // the height of the free-flow domain
-//    const Scalar height_() const
-//    { return this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]; }
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updatePhase(fluidState, 0);
+
+        const Scalar density = FluidSystem::density(fluidState, paramCache, 0);
+        fluidState.setDensity(0, density);
+
+        const Scalar molarDensity = FluidSystem::molarDensity(fluidState, paramCache, 0);
+        fluidState.setMolarDensity(0, molarDensity);
+
+        const Scalar enthalpy = FluidSystem::enthalpy(fluidState, paramCache, 0);
+        fluidState.setEnthalpy(0, enthalpy);
+    }
+
+    //! Set the profile of the inflow velocity (horizontal direction).
+    const Scalar xVelocity_(const GlobalPosition &globalPos) const
+    {
+        const Scalar vmax = inletVelocity_;
+        return  4 * vmax * (globalPos[1] - this->fvGridGeometry().bBoxMin()[1]) * (this->fvGridGeometry().bBoxMax()[1] - globalPos[1])
+                / (height_() * height_());
+    }
+
+    // the height of the free-flow domain
+    const Scalar height_() const
+    { return this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]; }
 
     Scalar eps_;
     Scalar inletVelocity_;
