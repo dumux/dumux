@@ -283,7 +283,7 @@ public:
                                      const ElementFaceVariables& stokesElemFaceVars,
                                      const SubControlVolumeFace<stokesIdx>& scvf) const
     {
-        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<interfaceIdx>, Properties::ModelTraits>::numFluidPhases();
+        static constexpr auto numPhasesInterface = GetPropType<SubDomainTypeTag<interfaceIdx>, Properties::ModelTraits>::numFluidPhases();
 
         Scalar momentumFlux(0.0);
         const auto& stokesContext = couplingManager_.stokesCouplingContext(element, scvf);
@@ -291,11 +291,11 @@ public:
 
         // - p_pm * n_pm = p_pm * n_ff
         const Scalar interfacePressure = stokesContext.volVars.pressure(interfacePhaseIdx);
-        std::cout << "** couplingdata: pressure for momCouplCond p_if = " << interfacePressure << std::endl;
 
-        if(numPhasesDarcy > 1)
+        if(numPhasesInterface > 1)
         {
             momentumFlux = interfacePressure;
+//            std::cout << "** couplingdata: momentumCouplingCondition: p_if = " << momentumFlux << std::endl;
         }
         else // use pressure reconstruction for single phase models
         {
@@ -364,6 +364,8 @@ class StokesDropsDarcyCouplingDataImplementation<MDTraits, CouplingManager, enab
     static constexpr auto interfaceIdx = typename MDTraits::template SubDomain<2>::Index();
     static constexpr auto darcyIdx = typename MDTraits::template SubDomain<3>::Index();
 
+    static constexpr auto interfaceNormal = 1.0; // interface parallel to x-direction, normal to y-direction
+
     // the sub domain type tags
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
@@ -372,7 +374,7 @@ class StokesDropsDarcyCouplingDataImplementation<MDTraits, CouplingManager, enab
     template<std::size_t id> using Element = typename FVGridGeometry<id>::GridView::template Codim<0>::Entity;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::LocalView::SubControlVolumeFace;
-//    template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::LocalView::SubControlVolume;
+    template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::LocalView::SubControlVolume;
 //    template<std::size_t id> using Indices = typename GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>::Indices;
     template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
     template<std::size_t id> using ElementFaceVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFaceVariables>::LocalView;
@@ -391,7 +393,7 @@ public:
     using ParentType::couplingPhaseIdx;
 
     /*!
-      * \name Free-flow / interface coupling (adapted from boundarycouplingdata)
+      * \name Coupling conditions between free flow / interface / porous medium
       */
      // \{
 
@@ -410,7 +412,13 @@ public:
         const Scalar interfaceDensity = stokesContext.volVars.density(couplingPhaseIdx(interfaceIdx));
         const bool insideIsUpstream = sign(velocity) == scvf.directionSign();
 
-        return massFlux_(velocity * scvf.directionSign(), stokesDensity, interfaceDensity, insideIsUpstream);
+//        return massFlux_(velocity * scvf.directionSign(), stokesDensity, interfaceDensity, insideIsUpstream);
+        const auto massFlux = massFlux_(velocity * scvf.directionSign(), stokesDensity, interfaceDensity, insideIsUpstream);
+        const Scalar usedVelocity = velocity * scvf.directionSign();
+//        std::cout << "** couplingdata: massCouplingCondition for Stokes: massFlux = " << massFlux
+//                  << ", v = " << usedVelocity << ", rho_ff = " << stokesDensity << ", rho_if = " << interfaceDensity
+//                  << std::endl;
+        return massFlux;
     }
 
     /*!
@@ -419,29 +427,71 @@ public:
     Scalar massCouplingCondition(const Element<interfaceIdx>& element,
                                  const FVElementGeometry<interfaceIdx>& fvGeometry,
                                  const ElementVolumeVariables<interfaceIdx>& interfaceElemVolVars,
-                                 const SubControlVolumeFace<interfaceIdx>& scvf) const
+                                 const SubControlVolume<interfaceIdx>& scv) const
     {
-        const auto& interfaceContext = this->couplingManager().interfaceCouplingContext(element, scvf);
-        const Scalar velocity = interfaceContext.stokesVelocity * scvf.unitOuterNormal();
-        const Scalar interfaceDensity = interfaceElemVolVars[scvf.insideScvIdx()].density(couplingPhaseIdx(interfaceIdx));
-        const Scalar stokesDensity = interfaceContext.stokesVolVars.density();
-        const bool insideIsUpstream = velocity > 0.0;
+        const auto& interfaceContext = this->couplingManager().interfaceCouplingContext(element, scv);
 
-        return massFlux_(velocity, interfaceDensity, stokesDensity, insideIsUpstream);
+        // flux from free flow
+        const Scalar topVelocity = -1.0 * interfaceContext.stokesVelocity[interfaceNormal];
+        const Scalar interfaceDensity = interfaceElemVolVars[scv.dofIndex()].density(couplingPhaseIdx(interfaceIdx));
+        const Scalar stokesDensity = interfaceContext.stokesVolVars.density();
+        const bool topInsideIsUpstream = topVelocity > 0.0;
+
+        auto massFlux = -1.0 * massFlux_(topVelocity, interfaceDensity, stokesDensity, topInsideIsUpstream);
+//        std::cout << "** couplingdata: massCouplingCondition for Interface: massFluxFF = " << massFlux
+//                  << ", v = " << topVelocity << std::endl;
+
+        // compute velocity at the interface (pressure gradient between interface and porous medium)
+        const Scalar diffP = interfaceElemVolVars[scv.dofIndex()].pressure(couplingPhaseIdx(interfaceIdx)) - interfaceContext.darcyVolVars.pressure(couplingPhaseIdx(darcyIdx));
+        // TODO sign of diffP determines volvars = if-volvars / pm-volvars !!
+        const Scalar diffY = scv.center()[interfaceNormal] - interfaceContext.darcyElementCenter[interfaceNormal];
+        const Scalar darcyDensity = interfaceContext.darcyVolVars.density(couplingPhaseIdx(darcyIdx));
+        const Scalar gravity = -1.0 * this->couplingManager().problem(interfaceIdx).gravity()[interfaceNormal];
+        const Scalar permeability = interfaceContext.darcyVolVars.permeability();
+        const Scalar viscosity = interfaceContext.darcyVolVars.viscosity(couplingPhaseIdx(darcyIdx));
+        const Scalar relPermeability = 1.0; // TODO
+        const Scalar bottomVelocity = -1.0 * permeability * relPermeability / viscosity * (diffP/diffY - gravity * darcyDensity);
+
+        // TODO flux from porous medium
+        const bool bottomInsideIsUpstream = bottomVelocity > 0.0;
+        auto massFluxPM = -1.0 * massFlux_(bottomVelocity, interfaceDensity, darcyDensity, bottomInsideIsUpstream);
+//        std::cout << "** couplingdata: massCouplingCondition for Interface: massFluxPM = " << massFluxPM
+//                  << ", v = " << bottomVelocity << std::endl;
+        massFlux += massFluxPM;
+
+        return massFlux;
     }
-    // \}
 
     /*!
-      * \name Porous medium / interface coupling
-      */
-     // \{
+     * \brief Returns the mass flux across the coupling boundary as seen from the interface domain.
+     */
+    Scalar massCouplingCondition(const Element<darcyIdx>& element,
+                                 const FVElementGeometry<darcyIdx>& fvGeometry,
+                                 const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                 const SubControlVolumeFace<darcyIdx>& scvf) const
+    {
+        const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
+        // compute velocity at the interface (pressure gradient between interface and porous medium)
+        const Scalar diffP = darcyContext.volVars.pressure(couplingPhaseIdx(interfaceIdx)) - darcyElemVolVars[scvf.insideScvIdx()].pressure(couplingPhaseIdx(darcyIdx));
+        // TODO sign of diffP determines volvars = if-volvars / pm-volvars !!
+        const auto& scv = (*scvs(fvGeometry).begin());
+        const Scalar diffY = darcyContext.elementCenter - scv.center()[interfaceNormal];
+        const Scalar darcyDensity = darcyElemVolVars[scvf.insideScvIdx()].density(couplingPhaseIdx(darcyIdx));
+        const Scalar gravity = -1.0 * this->couplingManager().problem(darcyIdx).gravity()[interfaceNormal];
+        const Scalar permeability = darcyElemVolVars[scvf.insideScvIdx()].permeability();
+        const Scalar viscosity = darcyElemVolVars[scvf.insideScvIdx()].viscosity(couplingPhaseIdx(darcyIdx));
+        const Scalar relPermeability = 1.0; // TODO
+        const Scalar velocity = - 1.0 * permeability * relPermeability / viscosity * (diffP/diffY - gravity * darcyDensity); // TODO use Darcy's law?
+        const Scalar interfaceDensity = darcyContext.volVars.density(couplingPhaseIdx(interfaceIdx));
+        const bool insideIsUpstream = velocity > 0.0;
 
-    // --> in couplingmanager (evalCouplingResidual)
-
+        return massFlux_(velocity, darcyDensity, interfaceDensity, insideIsUpstream);
+//        const auto massFlux = massFlux_(velocity, darcyDensity, interfaceDensity, insideIsUpstream);
+//        std::cout << "** couplingdata: massCouplingCondition for Darcy: massFlux = " << massFlux
+//                  << ", v = " << velocity << std::endl;
+//        return massFlux;
+    }
     // \}
-
-
-
 
 private:
     /*!
