@@ -72,9 +72,6 @@ class StaggeredUpwindFluxVariables
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
-    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
-    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
-
 public:
     /*!
      * \brief Returns the momentum in the frontal directon.
@@ -90,23 +87,20 @@ public:
                                                                const GridFluxVariablesCache& gridFluxVarsCache,
                                                                const Scalar transportingVelocity)
     {
-        Scalar momentum(0.0);
         const bool canHigherOrder = canFrontalSecondOrder_(scvf, transportingVelocity, std::integral_constant<bool, useHigherOrder>{});
 
         if (canHigherOrder)
         {
             const auto upwindingMomenta = getFrontalUpwindingMomenta_(scvf, elemFaceVars, elemVolVars[scvf.insideScvIdx()].density(),
                                                                       transportingVelocity, std::integral_constant<bool, useHigherOrder>{});
-            momentum = doFrontalMomentumUpwinding_(scvf, upwindingMomenta, transportingVelocity, gridFluxVarsCache);
+            return doFrontalMomentumUpwinding_(scvf, upwindingMomenta, transportingVelocity, gridFluxVarsCache);
         }
         else
         {
             const auto upwindingMomenta = getFrontalUpwindingMomenta_(scvf, elemFaceVars, elemVolVars[scvf.insideScvIdx()].density(),
                                                                       transportingVelocity, std::integral_constant<bool, false>{});
-            momentum = doFrontalMomentumUpwinding_(scvf, upwindingMomenta, transportingVelocity, gridFluxVarsCache);
+            return doFrontalMomentumUpwinding_(scvf, upwindingMomenta, transportingVelocity, gridFluxVarsCache);
         }
-
-        return momentum;
     }
 
     /*!
@@ -137,7 +131,6 @@ public:
         // Check whether the own or the neighboring element is upstream.
         const bool selfIsUpstream = ( normalFace.directionSign() == sign(transportingVelocity) );
 
-        Scalar momentum(0.0);
         const bool canHigherOrder = canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx, std::integral_constant<bool, useHigherOrder>{});
 
         if (canHigherOrder)
@@ -146,7 +139,7 @@ public:
                                                                               transportingVelocity, localSubFaceIdx,
                                                                               lateralFaceHasDirichletPressure, lateralFaceHasBJS,
                                                                               std::integral_constant<bool, useHigherOrder>{});
-            momentum = doLateralMomentumUpwinding_(scvf, normalFace, parallelUpwindingMomenta, transportingVelocity, localSubFaceIdx, gridFluxVarsCache);
+            return doLateralMomentumUpwinding_(scvf, normalFace, parallelUpwindingMomenta, transportingVelocity, localSubFaceIdx, gridFluxVarsCache);
         }
         else
         {
@@ -154,10 +147,8 @@ public:
                                                                               transportingVelocity, localSubFaceIdx,
                                                                               lateralFaceHasDirichletPressure, lateralFaceHasBJS,
                                                                               std::integral_constant<bool, false>{});
-            momentum = doLateralMomentumUpwinding_(scvf, normalFace, parallelUpwindingMomenta, transportingVelocity, localSubFaceIdx, gridFluxVarsCache);
+            return doLateralMomentumUpwinding_(scvf, normalFace, parallelUpwindingMomenta, transportingVelocity, localSubFaceIdx, gridFluxVarsCache);
         }
-
-        return momentum;
     }
 
 private:
@@ -174,9 +165,7 @@ private:
     static bool canFrontalSecondOrder_(const SubControlVolumeFace& ownScvf,
                                        const Scalar transportingVelocity,
                                        std::false_type)
-    {
-        return false;
-    }
+    { return false; }
 
     /*!
      * \brief Returns whether or not the face in question is far enough from the wall to handle higher order methods.
@@ -199,19 +188,9 @@ private:
         const bool selfIsUpstream = ownScvf.directionSign() != sign(transportingVelocity);
 
         if (selfIsUpstream)
-        {
-            if (ownScvf.hasForwardNeighbor(0))
-                return true;
-            else
-                return false;
-        }
+            return ownScvf.hasForwardNeighbor(0);
         else
-        {
-            if (ownScvf.hasBackwardNeighbor(0))
-                return true;
-            else
-                return false;
-        }
+            return ownScvf.hasBackwardNeighbor(0);
     }
 
     /*!
@@ -253,7 +232,7 @@ private:
                                                              std::true_type)
     {
         const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
-        std::array<Scalar, 3> momenta{0.0, 0.0, 0.0};
+        std::array<Scalar, 3> momenta;
 
         if (selfIsUpstream)
         {
@@ -320,7 +299,7 @@ private:
     {
         // Depending on selfIsUpstream the downstream and the (up)upstream distances are saved.
         // distances {upstream to downstream distance, up-upstream to upstream distance, downstream staggered cell size}
-        std::array<Scalar, 3> distances{0.0, 0.0, 0.0};
+        std::array<Scalar, 3> distances;
 
         if (selfIsUpstream)
         {
@@ -362,10 +341,7 @@ private:
         else
         {
             // The self velocity is downstream. If there is no parallel neighbor I cannot use a second order approximation.
-            if (!ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
-                return false;
-            else
-                return true;
+            return ownScvf.hasParallelNeighbor(localSubFaceIdx, 0);
         }
     }
 
@@ -540,16 +516,16 @@ private:
                                                       const bool selfIsUpstream)
     {
         // distances {upstream to downstream distance, up-upstream to upstream distance, downstream staggered cell size}
-        std::array<Scalar, 3> distances{0.0, 0.0, 0.0};
-
-        // The local index of the faces that is opposite to localSubFaceIdx
-        const int oppositeSubFaceIdx = localSubFaceIdx % 2 ? localSubFaceIdx - 1 : localSubFaceIdx + 1;
+        std::array<Scalar, 3> distances;
 
         if (selfIsUpstream)
         {
+            // The local index of the faces that is opposite to localSubFaceIdx
+            const int oppositeSubFaceIdx = localSubFaceIdx % 2 ? localSubFaceIdx - 1 : localSubFaceIdx + 1;
+
             distances[0] = ownScvf.cellCenteredParallelDistance(localSubFaceIdx, 0);
             distances[1] = ownScvf.cellCenteredParallelDistance(oppositeSubFaceIdx, 0);
-            if(ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
+            if (ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
                 distances[2] = ownScvf.pairData(localSubFaceIdx).parallelCellWidths[0];
             else
                 distances[2] = ownScvf.area() / 2.0;
@@ -592,10 +568,13 @@ private:
         if (lateralFaceHasDirichletPressure)
             return velocitySelf;
 
-        const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
         if (lateralFaceHasBJS)
             return problem.bjsVelocity(element, scvf, normalFace, localSubFaceIdx, velocitySelf);
-        return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
+        else
+        {
+            const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
+            return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
+        }
     }
 
     /*!
@@ -633,10 +612,7 @@ private:
         else if (bcTypes.isSymmetry() || bcTypes.isDirichlet(Indices::pressureIdx))
             return parallelVelocity;
         else if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
-        {
-            const SubControlVolumeFace ghostFace = makeParallelGhostFace_(scvf, localIdx);
             return problem.bjsVelocity(boundaryElement, scvf, boundaryNormalFace, localIdx, parallelVelocity);
-        }
         else
         {
             // Neumann conditions are not well implemented
