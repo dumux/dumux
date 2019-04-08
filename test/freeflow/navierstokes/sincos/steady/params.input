@@ -22,3 +22,6 @@ MaxAbsoluteResidual = 1e-10
 [Vtk]
 WriteFaceData = false
 AddProcessRank = false
+
+[Flux]
+UpwindWeight = 0.5
