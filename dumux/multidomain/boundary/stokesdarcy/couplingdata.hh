@@ -301,19 +301,11 @@ public:
                                      const ElementFaceVariables& stokesElemFaceVars,
                                      const SubControlVolumeFace<stokesIdx>& scvf) const
     {
-        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
-
         Scalar momentumFlux(0.0);
         const auto& stokesContext = couplingManager_.stokesCouplingContext(element, scvf);
-        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
-
         // - p_pm * n_pm = p_pm * n_ff
-        const Scalar darcyPressure = stokesContext.volVars.pressure(darcyPhaseIdx);
-
-        if(numPhasesDarcy > 1)
-            momentumFlux = darcyPressure;
-        else // use pressure reconstruction for single phase models; use tag dispatch to choose correct function for Darcy or Forchheimer
-            momentumFlux = pressureAtInterface_(element, scvf, stokesElemFaceVars, stokesContext, AdvectionType());
+        //use tag dispatch to choose correct function for Darcy or Forchheimer
+        momentumFlux = pressureAtInterface_(element, scvf, stokesElemFaceVars, stokesContext, AdvectionType());
         // TODO: generalize for permeability tensors
 
         // normalize pressure
@@ -450,13 +442,15 @@ protected:
         const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
         const Scalar cellCenterPressure = context.volVars.pressure(darcyPhaseIdx);
 
-        // v = -K/mu * (gradP + rho*g)
+        // v = -kr/mu*K * (gradP + rho*g) = -mobility*K * (gradP + rho*g)
         const Scalar velocity = elemFaceVars[scvf].velocitySelf();
-        const Scalar mu = context.volVars.viscosity(darcyPhaseIdx);
-        const Scalar rho = context.volVars.density(darcyPhaseIdx);
+        const Scalar mobility = context.volVars.mobility(darcyPhaseIdx);
         const Scalar distance = (context.element.geometry().center() - scvf.center()).two_norm();
+
+        const Scalar rho = context.volVars.density(darcyPhaseIdx);
         const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).gravity()[scvf.directionIndex()];
-        const Scalar interfacePressure = ((scvf.directionSign() * velocity * (mu/darcyPermeability(element, scvf))) + rho * g) * distance + cellCenterPressure;
+        const Scalar interfacePressure = ((scvf.directionSign() * velocity * (1/(darcyPermeability(element, scvf)*mobility))) + rho * g) * distance + cellCenterPressure;
+
         return interfacePressure;
     }
 
@@ -470,6 +464,10 @@ protected:
                                 const CouplingContext& context,
                                 const ForchheimersLaw&) const
     {
+        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
+        if (numPhasesDarcy > 1)
+             DUNE_THROW(Dune::NotImplemented, "Forchheimer for multiphase flow is currently not implemented in the coupling conditions");
+
         const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
         const Scalar cellCenterPressure = context.volVars.pressure(darcyPhaseIdx);
         using std::abs;
