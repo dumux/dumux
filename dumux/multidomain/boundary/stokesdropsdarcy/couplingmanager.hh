@@ -69,9 +69,13 @@ private:
     using InterfaceTypeTag = typename MDTraits::template SubDomain<2>::TypeTag;
     using DarcyTypeTag = typename MDTraits::template SubDomain<3>::TypeTag;
 
+    using StokesIdType = typename MDTraits::template SubDomain<stokesIdx>::Index;
+    using InterfaceIdType = typename MDTraits::template SubDomain<interfaceIdx>::Index;
+    using DarcyIdType = typename MDTraits::template SubDomain<darcyIdx>::Index;
+
     // TODO necessary? (see facetcouplingmanager)
-    static constexpr auto interfaceId = InterfaceTypeTag();
-    static constexpr auto darcyId = DarcyTypeTag();
+    static constexpr auto interfaceId = InterfaceIdType();
+    static constexpr auto darcyId = DarcyIdType();
 
     using CouplingStencils = std::unordered_map<std::size_t, std::vector<std::size_t> >;
     using CouplingStencil = CouplingStencils::mapped_type;
@@ -102,6 +106,7 @@ private:
 //    using CellCenterSolutionVector = GetPropType<StokesTypeTag, Properties::CellCenterSolutionVector>;
 
     using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
+    using GlobalPosition = typename Element<interfaceIdx>::Geometry::GlobalCoordinate;
 
     using CouplingMapper = StokesDropsDarcyCouplingMapper<MDTraits>;
 
@@ -116,18 +121,29 @@ private:
 
     struct InterfaceCouplingContext
     {
+        Element<stokesIdx> stokesElement;
+        FVElementGeometry<stokesIdx> stokesFvGeometry;
         VolumeVariables<stokesIdx> stokesVolVars;
         VelocityVector stokesVelocity;
         Element<darcyIdx> darcyElement;
         FVElementGeometry<darcyIdx> darcyFvGeometry;
         ElementVolumeVariables<darcyIdx> darcyElemVolVars;
+        VolumeVariables<darcyIdx> darcyVolVars;
         ElementFluxVariablesCache<darcyIdx> darcyElemFluxVarsCache;
         LocalResidual<darcyIdx> darcyLocalResidual;
+        std::size_t darcyElemIdx;
         std::size_t darcyScvfIdx;
+        std::size_t interfaceElementIdx;
+        VelocityVector darcyElementCenter; // TODO remove, needed for velocity at interface if/pm
     };
 
     struct DarcyDouplingContext
     {
+        Element<interfaceIdx> element;
+        FVElementGeometry<interfaceIdx> fvGeometry;
+        VolumeVariables<interfaceIdx> volVars;
+        std::size_t darcyScvfIdx;
+        GlobalPosition elementCenter; // TODO remove, needed for velocity at interface if/pm
     };
 
 
@@ -286,8 +302,9 @@ public:
         auto darcyLocalResidual = assembler.localResidual(darcyIdx);
 
         // add the context
-        interfaceCouplingContext_.push_back({stokesVolVars, faceVelocity,
-                                             darcyElement, darcyFvGeometry, darcyElemVolVars, darcyElemFluxVarsCache, darcyLocalResidual, coupledIndices.darcyScvfIdx});
+        interfaceCouplingContext_.push_back({stokesElement, stokesFvGeometry, stokesVolVars, faceVelocity,
+                                             darcyElement, darcyFvGeometry, darcyElemVolVars, darcyVolVars, darcyElemFluxVarsCache, darcyLocalResidual, coupledIndices.darcyEIdx, coupledIndices.darcyScvfIdx,
+                                             interfaceElementIdx, scv.center()});
 
     }
 
@@ -299,33 +316,31 @@ public:
     void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element) const
     {
         darcyCouplingContext_.clear();
-//
-//        const auto darcyElementIdx = this->problem(darcyIdx).fvGridGeometry().elementMapper().index(element);
-//        boundDarcyElemIdx_ = darcyElementIdx;
-//
-//        // do nothing if the element is not coupled to the other domain
-//        if(!couplingMapper_.darcyElementToInterfaceElementMap().count(darcyElementIdx))
-//            return;
-//
-//        // prepare the coupling context
-//        const auto& interfaceElementIndices = couplingMapper_.darcyElementToInterfaceElementMap().at(darcyElementIdx);
-//        auto interfaceFvGeometry = localView(this->problem(interfaceIdx).fvGridGeometry());
-//
-//        for(auto&& indices : interfaceElementIndices)
-//        {
-//            const auto& interfaceElement = this->problem(interfaceIdx).fvGridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
-//            interfaceFvGeometry.bindElement(interfaceElement);
-//
-////            VolumeVariables<interfaceIdx> interfaceVolVars;
-////            for(const auto& scv : scvs(interfaceFvGeometry))
-////            {
-////                interfaceVolVars.update(elemSol, this->problem(interfaceIdx), interfaceElement, scv);
-////
-////            }
-//
-//            // add the context
-//            darcyCouplingContext_.push_back({});
-//        }
+
+        const auto darcyElementIdx = this->problem(darcyIdx).fvGridGeometry().elementMapper().index(element);
+        boundDarcyElemIdx_ = darcyElementIdx;
+
+        // do nothing if the element is not coupled to the other domain
+        if(!couplingMapper_.darcyElementToInterfaceElementMap().count(darcyElementIdx))
+            return;
+
+        // prepare the coupling context
+        const auto& interfaceIndices = couplingMapper_.darcyElementToInterfaceElementMap().at(darcyElementIdx);
+        auto interfaceFvGeometry = localView(this->problem(interfaceIdx).fvGridGeometry());
+
+        for(auto&& indices : interfaceIndices)
+        {
+            const auto& interfaceElement = this->problem(interfaceIdx).fvGridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
+            interfaceFvGeometry.bindElement(interfaceElement);
+
+            const auto interfaceElemSol = elementSolution(interfaceElement, this->curSol()[interfaceIdx], this->problem(interfaceIdx).fvGridGeometry());
+            VolumeVariables<interfaceIdx> interfaceVolVars;
+            const auto& scv = (*scvs(interfaceFvGeometry).begin());
+            interfaceVolVars.update(interfaceElemSol, this->problem(interfaceIdx), interfaceElement, scv);
+
+            // add the context
+            darcyCouplingContext_.push_back({interfaceElement, interfaceFvGeometry, interfaceVolVars, indices.scvfIdx, scv.center()});
+        }
     }
 
     /*!
@@ -394,13 +409,13 @@ public:
                                Dune::index_constant<stokesCellCenterIdx> domainJ,
                                const std::size_t dofIdxGlobalJ,
                                const PrimaryVariables<stokesCellCenterIdx>& priVars,
-                               unsigned int pvIdxJ)
+                               int pvIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
 
         for (auto& data : interfaceCouplingContext_)
         {
-            const auto stokesElemIdx = this->problem(stokesIdx).fvGridGeometry().elementMapper().index(data.element);
+            const auto stokesElemIdx = this->problem(stokesIdx).fvGridGeometry().elementMapper().index(data.stokesElement);
 
             if(stokesElemIdx != dofIdxGlobalJ)
                 continue;
@@ -408,8 +423,8 @@ public:
             using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
             const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(priVars);
 
-            for(const auto& scv : scvs(data.fvGeometry))
-                data.volVars.update(elemSol, this->problem(stokesIdx), data.element, scv);
+            for(const auto& scv : scvs(data.stokesFvGeometry))
+                data.stokesVolVars.update(elemSol, this->problem(stokesIdx), data.stokesElement, scv);
         }
     }
 
@@ -422,17 +437,17 @@ public:
                                const LocalAssemblerI& localAssemblerI,
                                Dune::index_constant<stokesFaceIdx> domainJ,
                                const std::size_t dofIdxGlobalJ,
-                               const PrimaryVariables<1>& priVars,
-                               unsigned int pvIdxJ)
+                               const PrimaryVariables<stokesFaceIdx>& priVars,
+                               int pvIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
 
         for (auto& data : interfaceCouplingContext_)
         {
-            for(const auto& scvf : scvfs(data.fvGeometry))
+            for(const auto& scvf : scvfs(data.stokesFvGeometry))
             {
                 if(scvf.dofIndex() == dofIdxGlobalJ)
-                    data.velocity[scvf.directionIndex()] = priVars;
+                    data.stokesVelocity[scvf.directionIndex()] = priVars;
             }
         }
     }
@@ -441,12 +456,12 @@ public:
      * \brief Update the coupling context for the Darcy residual w.r.t. the interface DOFs
      */
     template<class LocalAssemblerI>
-    void updateCouplingContext(Dune::index_constant<darcyIdx> domainI,
+    void updateCouplingContext(DarcyIdType domainI,
                                const LocalAssemblerI& localAssemblerI,
-                               Dune::index_constant<interfaceIdx> domainJ,
+                               InterfaceIdType domainJ,
                                const std::size_t dofIdxGlobalJ,
                                const PrimaryVariables<interfaceIdx>& priVars,
-                               unsigned int pvdIdxJ)
+                               int pvdIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
 
@@ -459,7 +474,19 @@ public:
 
         for (auto& data : darcyCouplingContext_)
         {
-            // TODO ... (darcycouplingcontext still empty...)
+            const auto interfaceElemIdx = this->problem(interfaceIdx).fvGridGeometry().elementMapper().index(data.element);
+
+            if(interfaceElemIdx != dofIdxGlobalJ)
+                continue;
+
+            const auto interfaceElemSol = elementSolution(data.element, this->curSol()[interfaceIdx], this->problem(interfaceIdx).fvGridGeometry());
+
+            for(const auto& scv : scvs(data.fvGeometry))
+            {
+                data.volVars.update(interfaceElemSol, this->problem(interfaceIdx), data.element, scv);
+                // TODO update necessary? segfault! (extrusion factor)
+//                data.darcyElemVolVars[dofIdxGlobalJ].update(darcyElemSol, this->problem(darcyIdx), data.darcyElement, scv);
+            }
         }
 
 
@@ -469,12 +496,12 @@ public:
      * \brief Update the coupling context for the interface residual w.r.t. the Darcy DOFs
      */
     template<class LocalAssemblerI>
-    void updateCouplingContext(Dune::index_constant<interfaceIdx> domainI,
+    void updateCouplingContext(InterfaceIdType domainI,
                                const LocalAssemblerI& localAssemblerI,
-                               Dune::index_constant<darcyIdx> domainJ,
+                               DarcyIdType domainJ,
                                const std::size_t dofIdxGlobalJ,
                                const PrimaryVariables<darcyIdx>& priVars,
-                               unsigned int pvdIdxJ)
+                               int pvdIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
 
@@ -487,23 +514,20 @@ public:
 
         for (auto& data : interfaceCouplingContext_)
         {
-            const auto darcyFvGridGeometry = this->problem(darcyIdx).fvGridGeometry;
-            const auto darcyElement = darcyFvGridGeometry.element(dofIdxGlobalJ);
+            const auto darcyElemIdx = this->problem(darcyIdx).fvGridGeometry().elementMapper().index(data.darcyElement);
 
-            // update corresponding volume variables in coupling context
-            const auto& scv = interfaceCouplingContext_.darcyFvGeometry->scv(dofIdxGlobalJ);
-            const auto elemSol = elementSolution(darcyElement, this->curSol()[darcyIdx], darcyFvGridGeometry);
-            (*interfaceCouplingContext_.darcyElemVolVars)[dofIdxGlobalJ].update(elemSol, this->problem(darcyIdx), darcyElement, scv);
+            if(darcyElemIdx != dofIdxGlobalJ)
+                continue;
 
-            // update the element flux variables cache (tij might be solution-dependent)
-            if (dofIdxGlobalJ == darcyCouplingContext_.elementIdx)
-                interfaceCouplingContext_.darcyElemFluxVarsCache->update(darcyElement,
-                                                                         *interfaceCouplingContext_.darcyFvGeometry,
-                                                                         *interfaceCouplingContext_.darcyElemVolVars);
-            else
-                interfaceCouplingContext_.darcyElemFluxVarsCache->update(this->problem(darcyIdx).fvGridGeometry().element(darcyCouplingContext_.elementIdx),
-                                                                               *interfaceCouplingContext_.darcyFvGeometry,
-                                                                         *interfaceCouplingContext_.darcyElemVolVars );
+            const auto darcyElemSol = elementSolution(data.darcyElement, this->curSol()[darcyIdx], this->problem(darcyIdx).fvGridGeometry());
+
+            for(const auto& scv : scvs(data.darcyFvGeometry))
+            {
+                data.darcyVolVars.update(darcyElemSol, this->problem(darcyIdx), data.darcyElement, scv);
+                // TODO update necessary? segfault! (extrusion factor)
+//                data.darcyElemVolVars[dofIdxGlobalJ].update(darcyElemSol, this->problem(darcyIdx), data.darcyElement, scv);
+
+            }
         }
     }
 
@@ -518,104 +542,108 @@ public:
 
     // \}
 
-    /*!
-     * \brief Evaluates the coupling element residual of a Darcy element with respect
-     *        to a DOF in the lower-dimensional interface domain (dofIdxGlobalJ).
-     *
-     * This is essentially the fluxes across the Darcy element facets that coincide
-     * with the lower-dimensional interface element whose DOF index is dofIdxGlobalJ.
-     */
-    template<class LocalAssemblerI>
-//    typename LocalResidual<darcyIdx>::ElementResidualVector
-    decltype(auto) evalCouplingResidual(DarcyTypeTag,
-                                        const LocalAssemblerI& darcyLocalAssembler,
-                                        InterfaceTypeTag,
-                                        std::size_t dofIdxGlobalJ)
-    {
-//        const auto& map = couplingMapper_->couplingMap(bulkGridId, lowDimGridId);
+
+//    /*!
+//     * \brief Evaluates the coupling element residual of a Darcy element with respect
+//     *        to a DOF in the lower-dimensional interface domain (dofIdxGlobalJ).
+//     *
+//     * This is essentially the fluxes across the Darcy element facets that coincide
+//     * with the lower-dimensional interface element whose DOF index is dofIdxGlobalJ.
+//     */
+//    template<class LocalAssemblerI>
+////    typename LocalResidual<darcyIdx>::ElementResidualVector
+//    decltype(auto) evalCouplingResidual(DarcyIdType,
+//                                        const LocalAssemblerI& darcyLocalAssembler,
+//                                        InterfaceIdType,
+//                                        std::size_t dofIdxGlobalJ)
+//    {
+////        const auto& map = couplingMapper_->couplingMap(bulkGridId, lowDimGridId);
+////
+////        // TODO
+////        assert(bulkContext_.isSet);
+////        assert(bulkElemIsCoupled_[bulkContext_.elementIdx]);
+////        assert(map.find(bulkContext_.elementIdx) != map.end());
+////        assert(bulkContext_.elementIdx == this->problem(bulkId).fvGridGeometry().elementMapper().index(bulkLocalAssembler.element()));
+//        std::cout << "** couplingmanager: evalCouplingResidual(darcy -> interface) " << std::endl;
+//
+//        typename LocalResidual<darcyIdx>::ElementResidualVector res(1);
+//        res = 0.0;
+//        res[0] = evalDarcyFluxes_(darcyLocalAssembler.element(),
+//                                 darcyLocalAssembler.fvGeometry(),
+//                                 darcyLocalAssembler.curElemVolVars(),
+//                                 darcyLocalAssembler.elemFluxVarsCache(),
+//                                 darcyLocalAssembler.localResidual(),
+//                                 interfaceCouplingContext_[dofIdxGlobalJ/*=interfaceElemIdx*/].darcyScvfIdx);
+//        return res;
+//    }
+
+//    /*!
+//     * \brief Evaluates the coupling element residual of a lower-dimensional interface domain element
+//     *        with respect to a DOF in the Darcy domain (dofIdxGlobalJ).
+//     *
+//     * This is essentially the fluxes across the facets of the neighboring Darcy element
+//     * that coincide with the given interface element.
+//     */
+//    template<class LocalAssemblerI>
+////    typename LocalResidual<interfaceIdx>::ElementResidualVector
+//    decltype(auto) evalCouplingResidual(InterfaceIdType,
+//                                        const LocalAssemblerI& interfaceLocalAssembler,
+//                                        DarcyIdType,
+//                                        std::size_t dofIdxGlobalJ)
+//    {
+//        // make sure this is called for the element for which the context was set
+////        assert(lowDimContext_.isSet);
+////        assert(this->problem(lowDimId).fvGridGeometry().elementMapper().index(lowDimLocalAssembler.element()) == lowDimContext_.elementIdx);
+//
+//        // evaluate sources for the first scv
+//        // the sources are element-wise & scv-independent since we use tpfa in bulk domain
+//        std::cout << "** couplingmanager: evalCouplingResidual(interface -> darcy) " << std::endl;
+//        const auto source = evalSourcesFromDarcy(interfaceLocalAssembler.element(),
+//                                                interfaceLocalAssembler.fvGeometry(),
+//                                                interfaceLocalAssembler.curElemVolVars(),
+//                                                *scvs(interfaceLocalAssembler.fvGeometry()).begin());
+//
+//        // fill element residual vector with the sources
+//        typename LocalResidual<interfaceIdx>::ElementResidualVector res(interfaceLocalAssembler.fvGeometry().numScv());
+//        res = 0.0;
+//        for (const auto& scv : scvs(interfaceLocalAssembler.fvGeometry()))
+//             res[scv.localDofIndex()] -= source;
+//        return res;
+//    }
+
+//    /*!
+//     * \brief Computes the sources in a lower-dimensional interface element stemming from the Darcy domain.
+//     */
+//    // TODO move to couplingdata.hh ??
+//    NumEqVector<interfaceIdx> evalSourcesFromDarcy(const Element<interfaceIdx>& element,
+//                                                   const FVElementGeometry<interfaceIdx>& fvGeometry,
+//                                                   const ElementVolumeVariables<interfaceIdx>& elemVolVars,
+//                                                   const SubControlVolume<interfaceIdx>& scv)
+//    {
+//        // make sure the this is called for the element of the context
+//        assert(this->problem(interfaceId).fvGridGeometry().elementMapper().index(element) == interfaceCouplingContext_[0].darcyElemIdx); // TODO remove [0] ?
+//
+//        NumEqVector<interfaceId> sources(0.0);
 //
 //        // TODO
-//        assert(bulkContext_.isSet);
-//        assert(bulkElemIsCoupled_[bulkContext_.elementIdx]);
-//        assert(map.find(bulkContext_.elementIdx) != map.end());
-//        assert(bulkContext_.elementIdx == this->problem(bulkId).fvGridGeometry().elementMapper().index(bulkLocalAssembler.element()));
-
-        typename LocalResidual<darcyIdx>::ElementResidualVector res(1);
-        res = 0.0;
-        res[0] = evalDarcyFluxes_(darcyLocalAssembler.element(),
-                                 darcyLocalAssembler.fvGeometry(),
-                                 darcyLocalAssembler.curElemVolVars(),
-                                 darcyLocalAssembler.elemFluxVarsCache(),
-                                 darcyLocalAssembler.localResidual(),
-                                 interfaceCouplingContext_[dofIdxGlobalJ/*=interfaceElemIdx*/].darcyScvfIdx);
-        return res;
-    }
-
-    /*!
-     * \brief Evaluates the coupling element residual of a lower-dimensional interface domain element
-     *        with respect to a DOF in the Darcy domain (dofIdxGlobalJ).
-     *
-     * This is essentially the fluxes across the facets of the neighboring Darcy element
-     * that coincide with the given interface element.
-     */
-    template<class LocalAssemblerI>
-//    typename LocalResidual<interfaceIdx>::ElementResidualVector
-    decltype(auto) evalCouplingResidual(InterfaceTypeTag,
-                                        const LocalAssemblerI& interfaceLocalAssembler,
-                                        DarcyTypeTag,
-                                        std::size_t dofIdxGlobalJ)
-    {
-        // make sure this is called for the element for which the context was set
-//        assert(lowDimContext_.isSet);
-//        assert(this->problem(lowDimId).fvGridGeometry().elementMapper().index(lowDimLocalAssembler.element()) == lowDimContext_.elementIdx);
-
-        // evaluate sources for the first scv
-        // the sources are element-wise & scv-independent since we use tpfa in bulk domain
-        const auto source = evalSourcesFromDarcy(interfaceLocalAssembler.element(),
-                                                interfaceLocalAssembler.fvGeometry(),
-                                                interfaceLocalAssembler.curElemVolVars(),
-                                                *scvs(interfaceLocalAssembler.fvGeometry()).begin());
-
-        // fill element residual vector with the sources
-        typename LocalResidual<interfaceIdx>::ElementResidualVector res(interfaceLocalAssembler.fvGeometry().numScv());
-        res = 0.0;
-        for (const auto& scv : scvs(interfaceLocalAssembler.fvGeometry()))
-             res[scv.localDofIndex()] -= source;
-        return res;
-    }
-
-    /*!
-     * \brief Computes the sources in a lower-dimensional interface element stemming from the Darcy domain.
-     */
-    // TODO move to couplingdata.hh ??
-    NumEqVector<interfaceIdx> evalSourcesFromDarcy(const Element<interfaceIdx>& element,
-                                                   const FVElementGeometry<interfaceIdx>& fvGeometry,
-                                                   const ElementVolumeVariables<interfaceIdx>& elemVolVars,
-                                                   const SubControlVolume<interfaceIdx>& scv)
-    {
-        // make sure the this is called for the element of the context
-        assert(this->problem(interfaceId).fvGridGeometry().elementMapper().index(element) == interfaceCouplingContext_.darcyEIdx);
-
-        NumEqVector<interfaceId> sources(0.0);
-
-        // TODO
-//        const auto& map = couplingMapperPtr_->couplingMap(lowDimGridId, bulkGridId);
-//        auto it = map.find(lowDimContext_.elementIdx);
-//        if (it == map.end())
-//            return sources;
-
-//        assert(lowDimContext_.isSet);
-//        const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-//        for (const auto& embedment : it->second.embedments) // for all bulk elements
-        // TODO loop?! only one darcy element coupled to interface element!
-        sources += evalDarcyFluxes_(this->problem(darcyIdx).fvGridGeometry().element(interfaceCouplingContext_.darcyEIdx),
-                                    *interfaceCouplingContext_.darcyFvGeometry,
-                                    *interfaceCouplingContext_.darcyElemVolVars,
-                                    *interfaceCouplingContext_.darcyElemFluxVarsCache,
-                                    *interfaceCouplingContext_.darcyLocalResidual,
-                                    interfaceCouplingContext_.darcyScvfIdx);
-        return sources;
-    }
+////        const auto& map = couplingMapperPtr_->couplingMap(lowDimGridId, bulkGridId);
+////        auto it = map.find(lowDimContext_.elementIdx);
+////        if (it == map.end())
+////            return sources;
+//
+////        assert(lowDimContext_.isSet);
+////        const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
+////        for (const auto& embedment : it->second.embedments) // for all bulk elements
+//        // TODO loop?! only one darcy element coupled to interface element!
+//        assert(interfaceCouplingContext_.size() == 1);
+//        sources += evalDarcyFluxes_(this->problem(darcyIdx).fvGridGeometry().element(interfaceCouplingContext_[0].darcyElemIdx),
+//                                    interfaceCouplingContext_[0].darcyFvGeometry,
+//                                    interfaceCouplingContext_[0].darcyElemVolVars,
+//                                    interfaceCouplingContext_[0].darcyElemFluxVarsCache,
+//                                    interfaceCouplingContext_[0].darcyLocalResidual,
+//                                    interfaceCouplingContext_[0].darcyScvfIdx);
+//        return sources;
+//    }
 
     // TODO inherit from stokesdarcycouplingmanager
     /*!
@@ -773,41 +801,42 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
     }
 
-//    /*! TODO
-//     * \brief Access the coupling context needed for the interface domain
-//     */
-//    const auto& interfaceCouplingContext(const Element<interfaceIdx>& element) const
-//    {
+    /*! TODO
+     * \brief Access the coupling context needed for the interface domain
+     */
+    const auto& interfaceCouplingContext(const Element<interfaceIdx>& element, const SubControlVolume<interfaceIdx>& scv) const
+    {
+        // TODO !!! bindCouplingContext(interfaceIdx, element, assembler) --> implement without assembler ?!
 //        if (interfaceCouplingContext_.empty())
 //            bindCouplingContext(interfaceIdx, element);
-//
-////        for(const auto& context : interfaceCouplingContext_)
-////        {
-////            if(scvf.index() == context.darcyScvfIdx)
-////                return context;
-////        }
-//
-//        // TODO element idx
-//        DUNE_THROW(Dune::InvalidStateException, "No coupling context found for element ... " /*<< scvf.center()*/);
-//    }
 
-//    // TODO copied from stokesdarcycouplingmanager, inherit?
-//    /*!
-//     * \brief Access the coupling context needed for the Darcy domain
-//     */
-//    const auto& darcyCouplingContext(const Element<darcyIdx>& element, const SubControlVolumeFace<darcyIdx>& scvf) const
-//    {
-//        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != scvf.insideScvIdx())
-//            bindCouplingContext(darcyIdx, element);
-//
-//        for(const auto& context : darcyCouplingContext_)
-//        {
-//            if(scvf.index() == context.darcyScvfIdx)
-//                return context;
-//        }
-//
-//        DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
-//    }
+        for(const auto& context : interfaceCouplingContext_)
+        {
+            if(scv.elementIndex() == context.interfaceElementIdx)
+                return context;
+        }
+
+        // TODO element idx
+        DUNE_THROW(Dune::InvalidStateException, "No coupling context found for element ... " /*<< scvf.center()*/);
+    }
+
+    // TODO copied from stokesdarcycouplingmanager, inherit?
+    /*!
+     * \brief Access the coupling context needed for the Darcy domain
+     */
+    const auto& darcyCouplingContext(const Element<darcyIdx>& element, const SubControlVolumeFace<darcyIdx>& scvf) const
+    {
+        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != scvf.insideScvIdx())
+            bindCouplingContext(darcyIdx, element);
+
+        for(const auto& context : darcyCouplingContext_)
+        {
+            if(scvf.index() == context.darcyScvfIdx)
+                return context;
+        }
+
+        DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
+    }
 
 protected:
 
@@ -823,25 +852,26 @@ protected:
 
 private:
 
-    //TODO doc me
-    template<class DarcyScvfIndices>
-    NumEqVector<darcyIdx> evalDarcyFluxes_(const Element<darcyIdx>& elementI,
-                                           const FVElementGeometry<darcyIdx>& fvGeometry,
-                                           const ElementVolumeVariables<darcyIdx>& elemVolVars,
-                                           const ElementFluxVariablesCache<darcyIdx>& elemFluxVarsCache,
-                                           const LocalResidual<darcyIdx>& localResidual,
-                                           const DarcyScvfIndices& scvfIndices) const
-    {
-        NumEqVector<darcyIdx> coupledFluxes(0.0);
-        for (const auto& scvfIdx : scvfIndices)
-            coupledFluxes += localResidual.evalFlux(this->problem(darcyIdx),
-                                                    elementI,
-                                                    fvGeometry,
-                                                    elemVolVars,
-                                                    elemFluxVarsCache,
-                                                    fvGeometry.scvf(scvfIdx));
-        return coupledFluxes;
-    }
+//    //TODO doc me
+//    template<class DarcyScvfIndices>
+//    NumEqVector<darcyIdx> evalDarcyFluxes_(const Element<darcyIdx>& elementI,
+//                                           const FVElementGeometry<darcyIdx>& fvGeometry,
+//                                           const ElementVolumeVariables<darcyIdx>& elemVolVars,
+//                                           const ElementFluxVariablesCache<darcyIdx>& elemFluxVarsCache,
+//                                           const LocalResidual<darcyIdx>& localResidual,
+//                                           const DarcyScvfIndices& scvfIdx) const
+//    {
+//        NumEqVector<darcyIdx> coupledFluxes(0.0);
+//        std::cout << "** couplingmanager: evalDarcyFluxes_ ... " << std::endl;
+//        // for (const auto& scvfIdx : scvfIndices) TODO only 1 scvfIdx !
+//            coupledFluxes += localResidual.evalFlux(this->problem(darcyIdx),
+//                                                    elementI,
+//                                                    fvGeometry,
+//                                                    elemVolVars,
+//                                                    elemFluxVarsCache,
+//                                                    fvGeometry.scvf(scvfIdx));
+//        return coupledFluxes;
+//    }
 
 //    std::vector<bool> isCoupledDarcyDof_;
     std::shared_ptr<CouplingData> couplingData_;
