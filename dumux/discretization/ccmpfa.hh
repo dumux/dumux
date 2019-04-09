@@ -43,7 +43,6 @@
 #include <dumux/discretization/cellcentered/mpfa/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/mpfa/gridfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
-#include <dumux/discretization/cellcentered/mpfa/fluxvariablescachefiller.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
@@ -131,7 +130,7 @@ private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-    using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
+    using FluxVariablesCacheFiller = GetPropType<TypeTag, Properties::FluxVariablesCacheFiller>;
 
     using PrimaryInteractionVolume = GetPropType<TypeTag, Properties::PrimaryInteractionVolume>;
     using SecondaryInteractionVolume = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
