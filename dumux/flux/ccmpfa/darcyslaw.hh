@@ -58,8 +58,6 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
 
     //! Class that fills the cache corresponding to mpfa Darcy's Law
     class MpfaDarcysLawCacheFiller
@@ -67,7 +65,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     public:
         //! Function to fill an MpfaDarcysLawCache of a given scvf
         //! This interface has to be met by any advection-related cache filler class
-        template<class FluxVariablesCacheFiller>
+        template<class FluxVariablesCache, class FluxVariablesCacheFiller>
         static void fill(FluxVariablesCache& scvfFluxVarsCache,
                          const Problem& problem,
                          const Element& element,
@@ -92,6 +90,8 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     class MpfaDarcysLawCache
     {
         using DualGridNodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
+        using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+
         using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
 
         static constexpr bool considerSecondaryIVs = FVGridGeometry::MpfaHelper::considerSecondaryIVs();
@@ -158,6 +158,7 @@ public:
     using Cache = MpfaDarcysLawCache;
 
     //! Compute the advective flux across an scvf
+    template<class ElementFluxVariablesCache>
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
