@@ -104,13 +104,11 @@ public:
                 bool forceUpdate = false)
     {
         // only do the update if fluxes are solution dependent or if update is forced
-        // TODO: so far, the staggered models do not use any fluxVar caches, therefore an empty cache filler
-        // is used which does not implement isSolDependent
-        if (/*FluxVariablesCacheFiller::isSolDependent ||*/ forceUpdate)
+        if (FluxVariablesCacheFiller::isSolDependent || forceUpdate)
         {
             // instantiate helper class to fill the caches
             // FluxVariablesCacheFiller filler(problem()); TODO: use proper ctor
-            FluxVariablesCacheFiller filler;
+            FluxVariablesCacheFiller filler(problem());
 
             fluxVarsCache_.resize(fvGridGeometry.numScvf());
             for (const auto& element : elements(fvGridGeometry.gridView()))

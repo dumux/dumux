@@ -184,10 +184,6 @@ public:
 template<class TypeTag>
 struct FluxVariables<TypeTag, TTag::NavierStokesNC> { using type = FreeflowNCFluxVariables<TypeTag>; };
 
-//! The flux variables cache class, by default the one for free flow
-template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::NavierStokesNC> { using type = FreeFlowFluxVariablesCache<TypeTag>; };
-
 //! The specific I/O fields
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::NavierStokesNC> { using type = FreeflowNCIOFields<NavierStokesIOFields>; };
