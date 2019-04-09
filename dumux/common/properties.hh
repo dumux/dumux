@@ -116,6 +116,8 @@ struct FluxVariables { using type = UndefinedProperty; };                       
 template<class TypeTag, class MyTypeTag>
 struct FluxVariablesCache { using type = UndefinedProperty; };                  //!< Stores data associated with flux vars
 template<class TypeTag, class MyTypeTag>
+struct FluxVariablesCacheFiller { using type = UndefinedProperty; };            //!< The engine behind the global flux cache (how to fill caches for the stencil)
+template<class TypeTag, class MyTypeTag>
 struct GridFluxVariablesCache { using type = UndefinedProperty; };              //!< The global vector of flux variable containers
 template<class TypeTag, class MyTypeTag>
 struct EnableGridFluxVariablesCache { using type = UndefinedProperty; };        //!< specifies if data on flux vars should be saved (faster, but more memory consuming)
