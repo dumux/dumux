@@ -79,9 +79,6 @@ public:
     //! export the flux variable cache type
     using FluxVariablesCache = typename GFVC::FluxVariablesCache;
 
-    //! export the flux variable cache filler type
-    using FluxVariablesCacheFiller = typename GFVC::FluxVariablesCacheFiller;
-
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = true;
 
@@ -89,6 +86,9 @@ public:
     using GridFluxVariablesCache = GFVC;
 
 private:
+    //! the flux variable cache filler type
+    using FluxVariablesCacheFiller = typename GFVC::Traits::FluxVariablesCacheFiller;
+
     //! Class to store the flux variables caches related to boundary interaction volumes
     class BoundaryCacheData
     {
@@ -343,6 +343,9 @@ private:
 template<class GFVC>
 class CCMpfaElementFluxVariablesCache<GFVC, false>
 {
+    //! the flux variable cache filler type
+    using FluxVariablesCacheFiller = typename GFVC::Traits::FluxVariablesCacheFiller;
+
 public:
     //! export the interaction volume types
     using PrimaryInteractionVolume = typename GFVC::PrimaryInteractionVolume;
@@ -355,8 +358,6 @@ public:
     //! export the flux variable cache type
     using FluxVariablesCache = typename GFVC::FluxVariablesCache;
 
-    //! export the flux variable cache filler type
-    using FluxVariablesCacheFiller = typename GFVC::FluxVariablesCacheFiller;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = false;

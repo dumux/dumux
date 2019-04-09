@@ -67,20 +67,23 @@ class StaggeredGridFluxVariablesCache;
  * \brief Flux variables cache class for staggered models.
           Specialization in case of storing the flux cache.
  */
-template<class P, class FVC, class FVCF, int upwindSchemeOrder, class Traits>
-class StaggeredGridFluxVariablesCache<P, FVC, FVCF, true, upwindSchemeOrder, Traits>
+template<class P, class FVC, class FVCF, int upwindSchemeOrder, class TheTraits>
+class StaggeredGridFluxVariablesCache<P, FVC, FVCF, true, upwindSchemeOrder, TheTraits>
 {
-    using Problem = typename Traits::Problem;
-    using ThisType = StaggeredGridFluxVariablesCache<P, FVC, FVCF, true, upwindSchemeOrder, Traits>;
+    using Problem = typename TheTraits::Problem;
+    using ThisType = StaggeredGridFluxVariablesCache<P, FVC, FVCF, true, upwindSchemeOrder, TheTraits>;
 
+    //!  the flux variable cache filler type
+    using FluxVariablesCacheFiller = typename TheTraits::FluxVariablesCacheFiller;
 public:
+    //! the flux var cache traits
+    using Traits = TheTraits;
+
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
     using Scalar = typename FluxVariablesCache::Scalar;
 
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
-    //! export the flux variable cache filler type
-    using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = true;
@@ -91,7 +94,7 @@ public:
     StaggeredGridFluxVariablesCache(const Problem& problem, const std::string& paramGroup = "")
     : problemPtr_(&problem)
     , staggeredUpwindMethods_(paramGroup)
-      {}
+    {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
     template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
@@ -156,19 +159,23 @@ private:
  * \brief Flux variables cache class for staggered models.
           Specialization in case of not storing the flux cache.
  */
-template<class P, class FVC, class FVCF, int upwindSchemeOrder, class Traits>
-class StaggeredGridFluxVariablesCache<P, FVC, FVCF, false, upwindSchemeOrder, Traits>
+template<class P, class FVC, class FVCF, int upwindSchemeOrder, class TheTraits>
+class StaggeredGridFluxVariablesCache<P, FVC, FVCF, false, upwindSchemeOrder, TheTraits>
 {
-    using Problem = typename Traits::Problem;
-    using ThisType = StaggeredGridFluxVariablesCache<P, FVC, FVCF, false, upwindSchemeOrder, Traits>;
+    using Problem = typename TheTraits::Problem;
+    using ThisType = StaggeredGridFluxVariablesCache<P, FVC, FVCF, false, upwindSchemeOrder, TheTraits>;
 
+    //!  the flux variable cache filler type
+    using FluxVariablesCacheFiller = typename TheTraits::FluxVariablesCacheFiller;
 public:
+    //! the flux var cache traits
+    using Traits = TheTraits;
+
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
-    using Scalar = typename FluxVariablesCache::Scalar;
 
-    //! export the flux variable cache filler type
-    using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
+    //! the scalar type
+    using Scalar = typename FluxVariablesCache::Scalar;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = false;

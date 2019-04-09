@@ -62,18 +62,20 @@ class CCTpfaGridFluxVariablesCache;
  * \brief Flux variable caches on a gridview with grid caching enabled
  * \note The flux caches of the gridview are stored which is memory intensive but faster
  */
-template<class P, class FVC, class FVCF, class Traits>
-class CCTpfaGridFluxVariablesCache<P, FVC, FVCF, true, Traits>
+template<class P, class FVC, class FVCF, class TheTraits>
+class CCTpfaGridFluxVariablesCache<P, FVC, FVCF, true, TheTraits>
 {
-    using Problem = typename Traits::Problem;
-    using ThisType = CCTpfaGridFluxVariablesCache<P, FVC, FVCF, true, Traits>;
+    using Problem = typename TheTraits::Problem;
+    using ThisType = CCTpfaGridFluxVariablesCache<P, FVC, FVCF, true, TheTraits>;
 
+    //! the flux variable cache filler type
+    using FluxVariablesCacheFiller = typename TheTraits::FluxVariablesCacheFiller;
 public:
+    //! the flux variables cache traits
+    using Traits = TheTraits;
+
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
-
-    //! export the flux variable cache filler type
-    using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = true;
@@ -167,18 +169,20 @@ private:
  * \ingroup CCTpfaDiscretization
  * \brief Flux variable caches on a gridview with grid caching disabled
  */
-template<class P, class FVC, class FVCF, class Traits>
-class CCTpfaGridFluxVariablesCache<P, FVC, FVCF, false, Traits>
+template<class P, class FVC, class FVCF, class TheTraits>
+class CCTpfaGridFluxVariablesCache<P, FVC, FVCF, false, TheTraits>
 {
-    using Problem = typename Traits::Problem;
-    using ThisType = CCTpfaGridFluxVariablesCache<P, FVC, FVCF, false, Traits>;
+    using Problem = typename TheTraits::Problem;
+    using ThisType = CCTpfaGridFluxVariablesCache<P, FVC, FVCF, false, TheTraits>;
 
+    //! the flux variable cache filler type
+    using FluxVariablesCacheFiller = typename TheTraits::FluxVariablesCacheFiller;
 public:
+    //! the flux variables cache traits
+    using Traits = TheTraits;
+
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
-
-    //! export the flux variable cache filler type
-    using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = false;
