@@ -56,7 +56,6 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
 
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -89,7 +88,7 @@ public:
      * \param scvf The corresponding sub-control volume face
      * \param forceUpdateAll if true, forces all caches to be updated (even the solution-independent ones)
      */
-    template<class FluxVariablesCacheContainer>
+    template<class FluxVariablesCacheContainer, class FluxVariablesCache>
     void fill(FluxVariablesCacheContainer& fluxVarsCacheContainer,
               FluxVariablesCache& scvfFluxVarsCache,
               const Element& element,
@@ -122,7 +121,7 @@ private:
     { return *problemPtr_; }
 
     //! method to fill the advective quantities
-    template<bool advectionEnabled = doAdvection>
+    template<class FluxVariablesCache, bool advectionEnabled = doAdvection>
     typename std::enable_if<advectionEnabled>::type
     fillAdvection_(FluxVariablesCache& scvfFluxVarsCache,
                    const Element& element,
@@ -138,7 +137,7 @@ private:
     }
 
     //! do nothing if advection is not enabled
-    template<bool advectionEnabled = doAdvection>
+    template<class FluxVariablesCache, bool advectionEnabled = doAdvection>
     typename std::enable_if<!advectionEnabled>::type
     fillAdvection_(FluxVariablesCache& scvfFluxVarsCache,
                    const Element& element,
@@ -148,7 +147,7 @@ private:
     {}
 
     //! method to fill the diffusive quantities
-    template<bool diffusionEnabled = doDiffusion>
+    template<class FluxVariablesCache, bool diffusionEnabled = doDiffusion>
     typename std::enable_if<diffusionEnabled>::type
     fillDiffusion_(FluxVariablesCache& scvfFluxVarsCache,
                    const Element& element,
@@ -171,7 +170,7 @@ private:
     }
 
     //! do nothing if diffusion is not enabled
-    template<bool diffusionEnabled = doDiffusion>
+    template<class FluxVariablesCache, bool diffusionEnabled = doDiffusion>
     typename std::enable_if<!diffusionEnabled>::type
     fillDiffusion_(FluxVariablesCache& scvfFluxVarsCache,
                    const Element& element,
@@ -181,7 +180,7 @@ private:
     {}
 
     //! method to fill the quantities related to heat conduction
-    template<bool heatConductionEnabled = doHeatConduction>
+    template<class FluxVariablesCache, bool heatConductionEnabled = doHeatConduction>
     typename std::enable_if<heatConductionEnabled>::type
     fillHeatConduction_(FluxVariablesCache& scvfFluxVarsCache,
                         const Element& element,
@@ -197,7 +196,7 @@ private:
     }
 
     //! do nothing if heat conduction is disabled
-    template<bool heatConductionEnabled = doHeatConduction>
+    template<class FluxVariablesCache, bool heatConductionEnabled = doHeatConduction>
     typename std::enable_if<!heatConductionEnabled>::type
     fillHeatConduction_(FluxVariablesCache& scvfFluxVarsCache,
                         const Element& element,
@@ -224,7 +223,6 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
 
     using PrimaryInteractionVolume = GetPropType<TypeTag, Properties::PrimaryInteractionVolume>;
     using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle;
@@ -266,7 +264,7 @@ public:
      * \param scvf The corresponding sub-control volume face
      * \param forceUpdateAll if true, forces all caches to be updated (even the solution-independent ones)
      */
-    template<class FluxVarsCacheStorage, class IVDataStorage>
+    template<class FluxVarsCacheStorage, class FluxVariablesCache, class IVDataStorage>
     void fill(FluxVarsCacheStorage& fluxVarsCacheStorage,
               FluxVariablesCache& scvfFluxVarsCache,
               IVDataStorage& ivDataStorage,
@@ -301,7 +299,7 @@ public:
                 secondaryIvDataHandle_ = &ivDataStorage.secondaryDataHandles.back();
 
                 // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_(fluxVarsCacheStorage, *secondaryIv_, *secondaryIvDataHandle_, ivIndexInContainer, true);
+                fillCachesInInteractionVolume_<FluxVariablesCache>(fluxVarsCacheStorage, *secondaryIv_, *secondaryIvDataHandle_, ivIndexInContainer, true);
             }
             else
             {
@@ -310,7 +308,7 @@ public:
                 secondaryIvDataHandle_ = &ivDataStorage.secondaryDataHandles[ivIndexInContainer];
 
                 // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_(fluxVarsCacheStorage, *secondaryIv_, *secondaryIvDataHandle_, ivIndexInContainer);
+                fillCachesInInteractionVolume_<FluxVariablesCache>(fluxVarsCacheStorage, *secondaryIv_, *secondaryIvDataHandle_, ivIndexInContainer);
             }
         }
         else
@@ -331,7 +329,7 @@ public:
                 primaryIvDataHandle_ = &ivDataStorage.primaryDataHandles.back();
 
                 // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_(fluxVarsCacheStorage, *primaryIv_, *primaryIvDataHandle_, ivIndexInContainer, true);
+                fillCachesInInteractionVolume_<FluxVariablesCache>(fluxVarsCacheStorage, *primaryIv_, *primaryIvDataHandle_, ivIndexInContainer, true);
             }
             else
             {
@@ -340,7 +338,7 @@ public:
                 primaryIvDataHandle_ = &ivDataStorage.primaryDataHandles[ivIndexInContainer];
 
                 // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_(fluxVarsCacheStorage, *primaryIv_, *primaryIvDataHandle_, ivIndexInContainer);
+                fillCachesInInteractionVolume_<FluxVariablesCache>(fluxVarsCacheStorage, *primaryIv_, *primaryIvDataHandle_, ivIndexInContainer);
             }
         }
     }
@@ -377,7 +375,7 @@ private:
     const ElementVolumeVariables& elemVolVars() const { return *elemVolVarsPtr_; }
 
     //! Method to fill the flux var caches within an interaction volume
-    template<class FluxVarsCacheStorage, class InteractionVolume, class DataHandle>
+    template<class FluxVariablesCache, class FluxVarsCacheStorage, class InteractionVolume, class DataHandle>
     void fillCachesInInteractionVolume_(FluxVarsCacheStorage& fluxVarsCacheStorage,
                                         InteractionVolume& iv,
                                         DataHandle& handle,
@@ -420,6 +418,7 @@ private:
     //! fills the advective quantities (enabled advection)
     template< class InteractionVolume,
               class DataHandle,
+              class FluxVariablesCache,
               bool enableAdvection = doAdvection,
               typename std::enable_if_t<enableAdvection, int> = 0 >
     void fillAdvection_(InteractionVolume& iv,
@@ -464,6 +463,7 @@ private:
     //! do nothing if advection is not enabled
     template< class InteractionVolume,
               class DataHandle,
+              class FluxVariablesCache,
               bool enableAdvection = doAdvection,
               typename std::enable_if_t<!enableAdvection, int> = 0 >
     void fillAdvection_(InteractionVolume& iv,
@@ -476,6 +476,7 @@ private:
     //! fills the diffusive quantities (diffusion enabled)
     template< class InteractionVolume,
               class DataHandle,
+              class FluxVariablesCache,
               bool enableDiffusion = doDiffusion,
               typename std::enable_if_t<enableDiffusion, int> = 0 >
     void fillDiffusion_(InteractionVolume& iv,
@@ -537,6 +538,7 @@ private:
     //! do nothing if diffusion is not enabled
     template< class InteractionVolume,
               class DataHandle,
+              class FluxVariablesCache,
               bool enableDiffusion = doDiffusion,
               typename std::enable_if_t<!enableDiffusion, int> = 0 >
     void fillDiffusion_(InteractionVolume& iv,
@@ -549,6 +551,7 @@ private:
     //! fills the quantities related to heat conduction (heat conduction enabled)
     template< class InteractionVolume,
               class DataHandle,
+              class FluxVariablesCache,
               bool enableHeatConduction = doHeatConduction,
               typename std::enable_if_t<enableHeatConduction, int> = 0 >
     void fillHeatConduction_(InteractionVolume& iv,
@@ -593,6 +596,7 @@ private:
     //! do nothing if heat conduction is disabled
     template< class InteractionVolume,
               class DataHandle,
+              class FluxVariablesCache,
               bool enableHeatConduction = doHeatConduction,
               typename std::enable_if_t<!enableHeatConduction, int> = 0 >
     void fillHeatConduction_(InteractionVolume& iv,
@@ -644,9 +648,9 @@ private:
               class DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>,
               typename std::enable_if_t<DiffusionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
     void fillDiffusionHandle_(InteractionVolume& iv,
-                             DataHandle& handle,
-                             bool forceUpdateAll,
-                             int phaseIdx, int compIdx)
+                              DataHandle& handle,
+                              bool forceUpdateAll,
+                              int phaseIdx, int compIdx)
     {
         using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
 
