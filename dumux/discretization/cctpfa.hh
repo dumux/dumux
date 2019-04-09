@@ -39,7 +39,6 @@
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/tpfa/gridfluxvariablescache.hh>
-#include <dumux/discretization/cellcentered/tpfa/fluxvariablescachefiller.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 
 namespace Dumux {
@@ -82,7 +81,7 @@ private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-    using FluxVariablesCacheFiller = CCTpfaFluxVariablesCacheFiller<TypeTag>;
+    using FluxVariablesCacheFiller = GetPropType<TypeTag, Properties::FluxVariablesCacheFiller>;
 public:
     using type = CCTpfaGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
 };

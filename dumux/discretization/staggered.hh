@@ -83,7 +83,7 @@ struct GridFluxVariablesCache<TypeTag, TTag::StaggeredModel>
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-    using FluxVariablesCacheFiller = FluxVariablesCaching::EmptyCacheFiller;
+    using FluxVariablesCacheFiller =  GetPropType<TypeTag, Properties::FluxVariablesCacheFiller>;
     static constexpr auto enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
 public:
