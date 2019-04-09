@@ -140,8 +140,7 @@ public:
         globalScvfIndices_.resize(numScvf);
 
         // instantiate helper class to fill the caches
-        // FluxVariablesCacheFiller filler(gridFluxVarsCache().problem()); TODO: use proper ctor
-        FluxVariablesCacheFiller filler;
+        FluxVariablesCacheFiller filler(gridFluxVarsCache().problem());
 
         std::size_t localScvfIdx = 0;
         // fill the containers
@@ -164,8 +163,7 @@ public:
               const ElementVolumeVariables& elemVolVars)
     {
         // instantiate helper class to fill the caches
-        // FluxVariablesCacheFiller filler(problem); TODO: use proper ctor
-        FluxVariablesCacheFiller filler;
+        FluxVariablesCacheFiller filler(gridFluxVarsCache().problem());
 
         // find the number of scv faces that need to be prepared
         const auto numScvf = fvGeometry.numScvf();
