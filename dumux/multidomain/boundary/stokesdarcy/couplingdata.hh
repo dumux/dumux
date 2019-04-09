@@ -494,7 +494,44 @@ protected:
         return interfacePressure;
     }
 
+    /*!
+     * \brief Returns the pressure at the interface using Darcy's law for reconstruction
+     */
+    Scalar pressureAtInterface_(const Element<darcyIdx>& element,
+                                const SubControlVolumeFace<darcyIdx>& scvf,
+                                const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                const Scalar velocity) const
+    {
+        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+        const auto& darcyVolVars =  darcyElemVolVars[scvf.insideScvIdx()];
+        const Scalar cellCenterPressure = darcyVolVars.pressure(darcyPhaseIdx);
 
+        // v = -kr/mu*K * (gradP + rho*g) = -mobility*K * (gradP + rho*g)
+        const Scalar mobility = darcyVolVars.mobility(darcyPhaseIdx);
+        const Scalar rho = darcyVolVars.density(darcyPhaseIdx);
+        const Scalar distance = (element.geometry().center() - scvf.center()).two_norm();
+        const Scalar g = couplingManager_.problem(darcyIdx).gravity()*scvf.unitOuterNormal();
+        const Scalar interfacePressure = ((velocity * (-1/(darcyVolVars.permeability()*mobility))) + rho * g) * distance + cellCenterPressure;
+        return interfacePressure;
+    }
+
+    /*!
+     * \brief Returns the capillary pressure of muliphase models
+     */
+    template<const int numFluidPhases, typename std::enable_if_t<(numFluidPhases > 1), int> = 0>
+    Scalar capillaryPressure_(const VolumeVariables<darcyIdx>& volVars) const
+    {
+        return  volVars.capillaryPressure();
+    }
+
+    /*!
+     * \brief Returns the capillary pressure of muliphase models
+     */
+    template<const int numFluidPhases, typename std::enable_if_t<(numFluidPhases == 1), int> = 0>
+    Scalar capillaryPressure_(const VolumeVariables<darcyIdx>& volVars) const
+    {
+       DUNE_THROW(Dune::InvalidStateException, "capillary pressure for one phase models does not exist");
+    }
 
 private:
     const CouplingManager& couplingManager_;
@@ -547,13 +584,27 @@ public:
                                  const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
                                  const SubControlVolumeFace<darcyIdx>& scvf) const
     {
+        Scalar flux(0.0);
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
         const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
         const Scalar darcyDensity = darcyElemVolVars[scvf.insideScvIdx()].density(couplingPhaseIdx(darcyIdx));
         const Scalar stokesDensity = darcyContext.volVars.density();
         const bool insideIsUpstream = velocity > 0.0;
 
-        return massFlux_(velocity, darcyDensity, stokesDensity, insideIsUpstream);
+        flux += massFlux_(velocity, darcyDensity, stokesDensity, insideIsUpstream);
+
+        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
+        if(numPhasesDarcy > 1)
+        {
+            for (int phaseIdx = 0; phaseIdx < numPhasesDarcy; phaseIdx++)
+            {
+                if (phaseIdx == couplingPhaseIdx(darcyIdx))
+                    continue;
+
+                flux += massFluxOtherPhase_(element, fvGeometry, darcyElemVolVars, scvf, velocity, phaseIdx);
+            }
+        }
+        return flux;
     }
 
     /*!
@@ -584,6 +635,7 @@ public:
                                    const SubControlVolumeFace<darcyIdx>& scvf,
                                    const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
+        Scalar energyFlux(0.0);
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
         const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
         const auto& stokesVolVars = darcyContext.volVars;
@@ -591,8 +643,20 @@ public:
         const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
         const bool insideIsUpstream = velocity > 0.0;
 
-        return energyFlux_(darcyIdx, stokesIdx, fvGeometry, darcyContext.fvGeometry, scvf,
+        energyFlux += energyFlux_(darcyIdx, stokesIdx, fvGeometry, darcyContext.fvGeometry, scvf,
                            darcyVolVars, stokesVolVars, velocity, insideIsUpstream, diffCoeffAvgType);
+
+        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
+        if(numPhasesDarcy > 1)
+        {
+            for (int phaseIdx = 0; phaseIdx < numPhasesDarcy; phaseIdx++)
+            {
+                if (phaseIdx == couplingPhaseIdx(darcyIdx))
+                    continue;
+                energyFlux += massFluxOtherPhase_(element, fvGeometry, darcyElemVolVars, scvf, velocity, phaseIdx)*darcyVolVars.enthalpy(phaseIdx);
+            }
+        }
+        return energyFlux;
     }
 
     /*!
@@ -628,6 +692,34 @@ private:
                      bool insideIsUpstream) const
     {
         return this->advectiveFlux(insideDensity, outSideDensity, velocity, insideIsUpstream);
+    }
+
+    Scalar massFluxOtherPhase_(const Element<darcyIdx>& element,
+                               const FVElementGeometry<darcyIdx>& fvGeometry,
+                               const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                               const SubControlVolumeFace<darcyIdx>& scvf,
+                               const Scalar velocity,
+                               int phaseIdx) const
+    {
+        Scalar couplingPressureAtInterface = this->pressureAtInterface_(element, scvf, darcyElemVolVars, velocity);
+
+        const int numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
+
+        const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
+        const Scalar pc = this-> template capillaryPressure_<numPhasesDarcy>(darcyVolVars);
+
+        //pc = pn-pw --> pw = pn-pc
+        const Scalar pwAtInterface = couplingPressureAtInterface-pc;
+
+        // calculate flux: v = -kr/mu*K * (gradP + rho*g) = -mobility*K * (gradP + rho*g)
+        //the mobility and density are always taken form inside the pm as water does not flow into the stokes region
+        const Scalar mobility = darcyVolVars.mobility(phaseIdx);
+        const Scalar rho = darcyVolVars.density(phaseIdx);
+        const Scalar distance = (element.geometry().center() - scvf.center()).two_norm();
+        const Scalar g = this->couplingManager().problem(darcyIdx).gravity()*scvf.unitOuterNormal();
+        const Scalar flux = -rho*mobility*darcyVolVars.permeability()*((pwAtInterface-darcyVolVars.pressure(phaseIdx))/distance + rho*g);
+
+        return flux;
     }
 
     /*!
@@ -734,10 +826,22 @@ public:
         const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
         const bool insideIsUpstream = velocity > 0.0;
 
-        return massFlux_(darcyIdx, stokesIdx, fvGeometry,
-                         scvf, darcyVolVars, stokesVolVars,
-                         outsideScv, velocity, insideIsUpstream,
-                         diffCoeffAvgType);
+        flux+= massFlux_(darcyIdx, stokesIdx, fvGeometry,
+                        scvf, darcyVolVars, stokesVolVars,
+                        outsideScv, velocity, insideIsUpstream,
+                        diffCoeffAvgType);
+        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
+        if(numPhasesDarcy > 1)
+        {
+            for (int phaseIdx = 0; phaseIdx < numPhasesDarcy; phaseIdx++)
+            {
+                if (phaseIdx == couplingPhaseIdx(darcyIdx))
+                    continue;
+
+                flux += massFluxOtherPhase_(element, fvGeometry, darcyElemVolVars, scvf, velocity, phaseIdx);
+            }
+        }
+        return flux;
     }
 
     /*!
@@ -775,6 +879,7 @@ public:
                                    const SubControlVolumeFace<darcyIdx>& scvf,
                                    const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
+        Scalar energyFlux(0.0);
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
         const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
         const auto& stokesVolVars = darcyContext.volVars;
@@ -782,8 +887,22 @@ public:
         const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
         const bool insideIsUpstream = velocity > 0.0;
 
-        return energyFlux_(darcyIdx, stokesIdx, fvGeometry, darcyContext.fvGeometry, scvf,
-                           darcyVolVars, stokesVolVars, velocity, insideIsUpstream, diffCoeffAvgType);
+        energyFlux += energyFlux_(darcyIdx, stokesIdx, fvGeometry, darcyContext.fvGeometry, scvf,
+                                  darcyVolVars, stokesVolVars, velocity, insideIsUpstream, diffCoeffAvgType);
+        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
+        if(numPhasesDarcy > 1)
+        {
+            for (int phaseIdx = 0; phaseIdx < numPhasesDarcy; phaseIdx++)
+            {
+                if (phaseIdx == couplingPhaseIdx(darcyIdx))
+                    continue;
+                for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    energyFlux += massFluxOtherPhase_(element, fvGeometry, darcyElemVolVars, scvf, velocity, phaseIdx)[compIdx]*darcyVolVars.enthalpy(phaseIdx);
+                }
+            }
+        }
+        return energyFlux;
     }
 
     /*!
@@ -868,6 +987,42 @@ protected:
         // convert to total mass/mole balance, if set be user
         if(replaceCompEqIdx < numComponents)
             flux[replaceCompEqIdx] = std::accumulate(flux.begin(), flux.end(), 0.0);
+
+        return flux;
+    }
+
+    NumEqVector massFluxOtherPhase_(const Element<darcyIdx>& element,
+                                    const FVElementGeometry<darcyIdx>& fvGeometry,
+                                    const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                    const SubControlVolumeFace<darcyIdx>& scvf,
+                                    const Scalar velocity,
+                                    int phaseIdx) const
+    {
+        NumEqVector flux(0.0);
+
+        Scalar couplingPressureAtInterface = this->pressureAtInterface_(element, scvf, darcyElemVolVars, velocity);
+
+        const int numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
+
+        const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
+        const Scalar pc = this-> template capillaryPressure_<numPhasesDarcy>(darcyVolVars);
+
+        //pc = pn-pw --> pw = pn-pc
+        const Scalar pwAtInterface = couplingPressureAtInterface-pc;
+
+        //the mobility and density are always taken form inside the pm as water does not flow into the stokes region
+        const Scalar mobility = darcyVolVars.mobility(phaseIdx);
+        const Scalar moleOrMassDensity = useMoles ? darcyVolVars.molarDensity(phaseIdx) : darcyVolVars.density(phaseIdx);
+        const Scalar distance = (element.geometry().center() - scvf.center()).two_norm();
+        const Scalar g = this->couplingManager().problem(darcyIdx).gravity()*scvf.unitOuterNormal();
+
+        for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            const Scalar massOrMoleFraction = useMoles ? darcyVolVars.moleFraction(phaseIdx, compIdx) : darcyVolVars.massFraction(phaseIdx, compIdx);
+
+            // calculate flux: v = -kr/mu*K * (gradP + rho*g) = -mobility*K * (gradP + rho*g)
+            flux[compIdx] = -moleOrMassDensity*massOrMoleFraction*mobility*darcyVolVars.permeability()*((pwAtInterface-darcyVolVars.pressure(phaseIdx))/distance + moleOrMassDensity*g);
+        }
 
         return flux;
     }
