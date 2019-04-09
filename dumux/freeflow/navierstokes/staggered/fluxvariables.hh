@@ -459,11 +459,13 @@ private:
         //self
         // Account for the orientation of the staggered normal face's outer normal vector
         // and its area (0.5 of the coinciding scfv).
-        if(scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(Indices::velocity(scvf.directionIndex()))){
-            simpleMomentumBalanceSummands.RHS -= transportingVelocity * density * normalFace.directionSign() * normalFace.area()  * 0.5 * extrusionFactor_(elemVolVars, normalFace) * faceVars.velocitySelf() * selfUpwindFactor;
-        }
-        else {
-            simpleMomentumBalanceSummands.selfCoefficient += transportingVelocity * density * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace) * selfUpwindFactor;
+        if(scvf.hasParallelNeighbor(localSubFaceIdx)){
+            if(scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(Indices::velocity(scvf.directionIndex()))){
+                simpleMomentumBalanceSummands.RHS -= transportingVelocity * density * normalFace.directionSign() * normalFace.area()  * 0.5 * extrusionFactor_(elemVolVars, normalFace) * faceVars.velocitySelf() * selfUpwindFactor;
+            }
+            else {
+                simpleMomentumBalanceSummands.selfCoefficient += transportingVelocity * density * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace) * selfUpwindFactor;
+            }
         }
 
         //parallel
@@ -494,7 +496,7 @@ private:
 
             const Scalar velocityParallel = getParallelVelocityFromBoundary();
 
-            simpleMomentumBalanceSummands.RHS -= transportingVelocity * density * velocityParallel * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace) * parallelUpwindFactor;
+            simpleMomentumBalanceSummands.RHS -= transportingVelocity * density * velocityParallel * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);
         }
     }
 
