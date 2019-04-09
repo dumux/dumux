@@ -48,6 +48,9 @@ class StaggeredElementFluxVariablesCache;
 template<class GFVC>
 class StaggeredElementFluxVariablesCache<GFVC, true>
 {
+    //! the type of the flux variables cache filler
+    using FluxVariablesCacheFiller = typename GFVC::Traits::FluxVariablesCacheFiller;
+
 public:
     //! export the type of the grid flux variables cache
     using GridFluxVariablesCache = GFVC;
@@ -55,8 +58,6 @@ public:
     //! export the type of the flux variables cache
     using FluxVariablesCache = typename GFVC::FluxVariablesCache;
 
-    //! export the type of the flux variables cache filler
-    using FluxVariablesCacheFiller = typename GFVC::FluxVariablesCacheFiller;
 
     StaggeredElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
@@ -110,15 +111,15 @@ private:
 template<class GFVC>
 class StaggeredElementFluxVariablesCache<GFVC, false>
 {
+    //! the type of the flux variables cache filler
+    using FluxVariablesCacheFiller = typename GFVC::Traits::FluxVariablesCacheFiller;
+
 public:
     //! export the type of the grid flux variables cache
     using GridFluxVariablesCache = GFVC;
 
     //! export the type of the flux variables cache
     using FluxVariablesCache = typename GFVC::FluxVariablesCache;
-
-    //! export the type of the flux variables cache filler
-    using FluxVariablesCacheFiller = typename GFVC::FluxVariablesCacheFiller;
 
     StaggeredElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
