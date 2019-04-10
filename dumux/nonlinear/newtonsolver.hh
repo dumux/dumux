@@ -571,7 +571,7 @@ public:
             if (enableShiftCriterion_)
                 std::cout << ", maximum relative shift = " << shift_;
             if (enableSIMPLEAbsoluteResidualCriterion_)
-                std::cout << ", L2 norm of residual = " << l2Norm_;
+                std::cout << ", L2 norm of residual = " << std::setprecision(std::numeric_limits<Scalar>::digits10 + 1) << l2Norm_;
             if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
                 std::cout << ", residual = " << residualNorm_;
             else if (enableResidualCriterion_)
@@ -1357,7 +1357,7 @@ protected:
         enableResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableResidualCriterion") || enableAbsoluteResidualCriterion_;
         satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.SatisfyResidualAndShiftCriterion");
 
-        if (!enableShiftCriterion_ && !enableResidualCriterion_)
+        if (!enableShiftCriterion_ && !enableResidualCriterion_ && !enableSIMPLEAbsoluteResidualCriterion_)
         {
             DUNE_THROW(Dune::NotImplemented,
                        "at least one of NewtonEnableShiftCriterion or "
