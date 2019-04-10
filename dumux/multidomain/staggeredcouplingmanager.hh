@@ -37,15 +37,10 @@ namespace Dumux {
  * \ingroup StaggeredDiscretization
  * \brief Base coupling manager for the staggered discretization.
  */
-template<class MDTraits, class Implementation>
-class StaggeredCouplingManagerBase: public CouplingManager<MDTraits>
+template<class MDTraits>
+class StaggeredCouplingManager: virtual public CouplingManager<MDTraits>
 {
     using ParentType = CouplingManager<MDTraits>;
-    template<std::size_t id>
-    using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
-    template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-
-    using StaggeredSubDomainTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
 
     template<std::size_t id> using FVGridGeometry = typename MDTraits::template SubDomain<id>::FVGridGeometry;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
@@ -55,8 +50,7 @@ class StaggeredCouplingManagerBase: public CouplingManager<MDTraits>
     using Element = typename GridView<0>::template Codim<0>::Entity;
 
     using GridIndexType = typename IndexTraits< GridView<0> >::GridIndex;
-    using CouplingStencils = std::unordered_map<GridIndexType, std::vector<GridIndexType> >;
-    using CouplingStencil = typename CouplingStencils::mapped_type;
+    using CouplingStencil = std::vector<GridIndexType>;
 
 public:
 
@@ -64,8 +58,8 @@ public:
 
     using Traits = MDTraits;
 
-    static constexpr auto cellCenterIdx = Dune::index_constant<0>();
-    static constexpr auto faceIdx = Dune::index_constant<1>();
+    static constexpr auto cellCenterIdx = FVGridGeometry<0>::cellCenterIdx();
+    static constexpr auto faceIdx = FVGridGeometry<0>::faceIdx();
 
     /*!
      * \copydoc Dumux::CouplingManager::updateCouplingContext()
@@ -230,16 +224,6 @@ public:
         }
 
     }
-
-};
-
-template<class MDTraits>
-class StaggeredCouplingManager : public StaggeredCouplingManagerBase<MDTraits, StaggeredCouplingManager<MDTraits>>
-{
-    using ParentType = StaggeredCouplingManagerBase<MDTraits, StaggeredCouplingManager<MDTraits>>;
-
-public:
-    using ParentType::ParentType;
 
 };
 

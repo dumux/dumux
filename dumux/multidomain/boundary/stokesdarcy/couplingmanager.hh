@@ -45,10 +45,10 @@ namespace Dumux {
  */
 template<class MDTraits>
 class StokesDarcyCouplingManager
-: public StaggeredCouplingManagerBase<MDTraits, StokesDarcyCouplingManager<MDTraits>>
+: public StaggeredCouplingManager<MDTraits>
 {
     using Scalar = typename MDTraits::Scalar;
-    using ParentType = StaggeredCouplingManagerBase<MDTraits, StokesDarcyCouplingManager<MDTraits>>;
+    using ParentType = StaggeredCouplingManager<MDTraits>;
 
 public:
     static constexpr auto stokesCellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
