@@ -502,7 +502,7 @@ public:
                 {eo+1, fo+2, fo+0, 0},
                 {eo+2, fo+1, fo+2, 0},
                 {eo+3, fo+0, fo+3, 0},
-                {eo+4, fo+0, fo+1, 0},
+                {eo+4, fo+3, fo+1, 0},
                 {eo+5, fo+2, fo+3, 0},
                 {eo+6, fo+4, fo+0, 0},
                 {eo+7, fo+1, fo+4, 0},
