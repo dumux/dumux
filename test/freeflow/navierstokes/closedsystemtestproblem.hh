@@ -91,6 +91,7 @@ public:
         using CellArray = std::array<unsigned int, dimWorld>;
         const CellArray numCells = getParam<CellArray>("Grid.Cells");
         cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
+        cellSizeY_ = this->fvGridGeometry().bBoxMax()[1] / numCells[1];
     }
 
    /*!
@@ -176,7 +177,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[Indices::pressureIdx] = 1.0e+5;
+        values[Indices::pressureIdx] = 1.1e+5;
         values[Indices::velocityXIdx] = 0.0;
         values[Indices::velocityYIdx] = 0.0;
 
@@ -187,12 +188,13 @@ private:
 
     bool isLowerLeftCell_(const GlobalPosition& globalPos) const
     {
-        return globalPos[0] < (0.5*cellSizeX_ + eps_) && globalPos[1] < eps_;
+        return globalPos[0] < (0.5*cellSizeX_ + eps_) && globalPos[1] < (0.5*cellSizeY_ + eps_);
     }
 
     Scalar eps_;
     Scalar lidVelocity_;
     Scalar cellSizeX_;
+    Scalar cellSizeY_;
 };
 } //end namespace
 
