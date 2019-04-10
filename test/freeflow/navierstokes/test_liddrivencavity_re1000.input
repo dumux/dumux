@@ -15,11 +15,13 @@ EnableGravity = false
 
 [Component]
 LiquidDensity = 1
-LiquidKinematicViscosity = 1e-3
+LiquidKinematicViscosity = 1e-2
 
 [Newton]
 MaxSteps = 100
 MaxRelativeShift = 1e-7
+EnableShiftCriterion = false
+EnableSIMPLEAbsoluteResidualCriterion = true
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-8
@@ -33,5 +35,15 @@ UpwindWeight = 0.5 # set to 0.5 for reproducing Ghia et al. (1982)
 #[LinearSolver]
 #Verbosity = 2
 
+[LinearSolver2]
+schurGMResRestart = 100
+schurResidualReduction = 1e-10
+schurVerbosity = 0
+schurMaxIter = 2000
+precVerbosityA = 0
+precVerbositySchurAppr = 0
+precMaxIter = 2000
+precResidReduction = 1e-13
+
 [Algorithm]
-AlgorithmType = 2
+AlgorithmType = 6

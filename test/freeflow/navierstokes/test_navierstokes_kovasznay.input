@@ -1,7 +1,7 @@
 [Grid]
 LowerLeft = -0.5 -0.5
 UpperRight = 2 1.5
-Cells = 20 20
+Cells = 5 5
 
 [Problem]
 Name = test_kovasznay # name passed to the output routines
@@ -13,14 +13,27 @@ LiquidDensity = 1
 LiquidKinematicViscosity = 0.025
 
 [ Newton ]
-MaxSteps = 1500
+EnableShiftCriterion = false
+EnableSIMPLEAbsoluteResidualCriterion = true
+MaxSteps = 15000
 MaxRelativeShift = 1e-5
 
 [Vtk]
 WriteFaceData = false
 
 [Algorithm]
-AlgorithmType = 2
+AlgorithmType = 4
+
+[LinearSolver2]
+schurGMResRestart = 100
+schurResidualReduction = 1e-10
+schurVerbosity = 0
+schurMaxIter = 2000
+precVerbosityA = 0
+precVerbositySchurAppr = 0
+precMaxIter = 2000
+precResidReduction = 1e-13
 
 [Underrelaxation]
-HundredTimesVelocityUnderrelaxationFactor = 90
+HundredTimesVelocityUnderrelaxationFactor = 10
+HundredTimesPressureUnderrelaxationFactor = 10

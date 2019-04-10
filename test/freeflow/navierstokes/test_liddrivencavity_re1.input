@@ -1,10 +1,12 @@
 [TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 2 # [s]
+HaveMaxTimeStepSize = true
+MaxTimeStepSize = 1
 
 [Grid]
 UpperRight = 1 1
-Cells = 20 20
+Cells = 10 10
 
 [Problem]
 Name = test_liddrivencavity_re1 # name passed to the output routines
@@ -13,14 +15,31 @@ EnableGravity = false
 
 [Component]
 LiquidDensity = 1
-LiquidKinematicViscosity = 1
+LiquidKinematicViscosity = 1e+3
 
 [ Newton ]
-MaxSteps = 10
-MaxRelativeShift = 1e-5
+EnableShiftCriterion = false
+EnableSIMPLEAbsoluteResidualCriterion = true
+MaxSteps = 10000
+MaxRelativeShift = 1e-9
 
 [Vtk]
 WriteFaceData = false
 
+[LinearSolver2]
+schurGMResRestart = 100
+schurResidualReduction = 1e-10
+schurVerbosity = 0
+schurMaxIter = 2000
+precVerbosityA = 0
+precVerbositySchurAppr = 0
+precMaxIter = 2000
+precResidReduction = 1e-13
+
 [Algorithm]
-AlgorithmType = 2
+AlgorithmType = 3
+
+
+[Underrelaxation]
+HundredTimesVelocityUnderrelaxationFactor = 1
+HundredTimesPressureUnderrelaxationFactor = 1

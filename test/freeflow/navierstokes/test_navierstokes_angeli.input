@@ -1,13 +1,13 @@
 [TimeLoop]
-DtInitial = 1e-4 # [s]
+DtInitial = 1e-8 # [s]
 TEnd = 1e-2 # [s]
 HaveMaxTimeStepSize = true
-MaxTimeStepSize = 1e-4
+MaxTimeStepSize = 1e-8
 
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
-Cells = 40 40
+Cells = 50 50
 
 [Problem]
 Name = test_angeli # name passed to the output routines
@@ -22,16 +22,27 @@ LiquidKinematicViscosity = 0.1
 NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
+EnableShiftCriterion = false
 EnableSIMPLEAbsoluteResidualCriterion = true
-MaxSteps = 100
-MaxRelativeShift = 1e-12
-TargetSteps = 100
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+TargetSteps = 10
 
 [Vtk]
 WriteFaceData = false
 
 [Underrelaxation]
-HundredTimesVelocityUnderrelaxationFactor = 70
+HundredTimesVelocityUnderrelaxationFactor = 100
+
+[LinearSolver2]
+schurGMResRestart = 100
+schurResidualReduction = 1e-10
+schurVerbosity = 0
+schurMaxIter = 2000
+precVerbosityA = 0
+precVerbositySchurAppr = 0
+precMaxIter = 2000
+precResidReduction = 1e-13
 
 [Algorithm]
-AlgorithmType = 2
+AlgorithmType = 4

@@ -8,8 +8,10 @@ EnableGravity = false
 PrintL2Error = false
 
 [ Newton ]
-MaxSteps = 100
+MaxSteps = 10000
 MaxRelativeShift = 1e-10
+EnableShiftCriterion = false
+EnableSIMPLEAbsoluteResidualCriterion = true
 
 [Vtk]
 WriteFaceData = false
@@ -30,5 +32,9 @@ precMaxIter = 2000
 precResidReduction = 1e-13
 
 [Algorithm]
-AlgorithmType = 4
+AlgorithmType = 2
 #no SIMPLEC for Stokes
+
+[Underrelaxation]
+HundredTimesVelocityUnderrelaxationFactor = 1
+HundredTimesPressureUnderrelaxationFactor = 1
