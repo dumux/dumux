@@ -42,7 +42,7 @@ namespace Dumux {
 /*!
  * \ingroup StokesDropsDarcyCoupling
  * \brief Coupling manager for Stokes and Darcy domains with equal dimension
- *           and interface domain with lower dimension.
+ *        and interface domain with lower dimension.
  */
 template<class MDTraits>
 class StokesDropsDarcyCouplingManager
@@ -61,7 +61,6 @@ public:
     static constexpr auto darcyIdx = typename MDTraits::template SubDomain<3>::Index();
 
 private:
-
     using SolutionVector = typename MDTraits::SolutionVector;
 
     // obtain the type tags of the sub problems
@@ -79,8 +78,6 @@ private:
     // the sub domain type tags
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
-
-    static constexpr bool isCompositional = GetPropType<SubDomainTypeTag<0>, Properties::ModelTraits>::numFluidComponents()> 1;
 
     template<std::size_t id> using GridView = GetPropType<SubDomainTypeTag<id>, Properties::GridView>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
@@ -101,7 +98,7 @@ private:
 
     using CouplingMapper = StokesDropsDarcyCouplingMapper<MDTraits>;
 
-    // the coupling contexts (information from the respective coupled element)
+    // the coupling contexts (information about the respective coupled element/s)
     struct StokesCouplingContext
     {
         Element<interfaceIdx> element;
@@ -118,10 +115,7 @@ private:
         VelocityVector stokesVelocity;
         Element<darcyIdx> darcyElement;
         FVElementGeometry<darcyIdx> darcyFvGeometry;
-        ElementVolumeVariables<darcyIdx> darcyElemVolVars;
         VolumeVariables<darcyIdx> darcyVolVars;
-        ElementFluxVariablesCache<darcyIdx> darcyElemFluxVarsCache;
-        LocalResidual<darcyIdx> darcyLocalResidual;
         std::size_t darcyElemIdx;
         std::size_t darcyScvfIdx;
         std::size_t interfaceElementIdx;
@@ -139,7 +133,6 @@ private:
 
 
 public:
-
     using ParentType::couplingStencil;
     using ParentType::updateCouplingContext;
     using ParentType::evalCouplingResidual;
@@ -162,9 +155,9 @@ public:
               std::shared_ptr<const Problem<darcyIdx>> darcyProblem,
               const SolutionVector& curSol)
     {
-        // TODO compare interface gravity too!
-//        if(Dune::FloatCmp::ne(stokesProblem->gravity(), darcyProblem->gravity()))
-//              DUNE_THROW(Dune::InvalidStateException, "Both models must use the same gravity vector");
+
+        if(Dune::FloatCmp::ne(stokesProblem->gravity(), darcyProblem->gravity()))
+              DUNE_THROW(Dune::InvalidStateException, "All models must use the same gravity vector");
 
         this->setSubProblems(std::make_tuple(stokesProblem, stokesProblem, interfaceProblem, darcyProblem));
         this->curSol() = curSol;
@@ -201,11 +194,13 @@ public:
      */
     // \{
 
+    /*!
+     * \brief Prepares all data and variables that are necessary to evaluate the residual of a Stokes element (i.e. Stokes information)
+     */
     template<std::size_t i, class Assembler, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
     void bindCouplingContext(Dune::index_constant<i> domainI, const Element<stokesCellCenterIdx>& element, const Assembler& assembler) const
     { bindCouplingContext(domainI, element); }
 
-    // TODO doc me
     template<std::size_t i, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
     void bindCouplingContext(Dune::index_constant<i> domainI, const Element<stokesCellCenterIdx>& element) const
     {
@@ -238,9 +233,14 @@ public:
         }
     }
 
-    // TODO doc me
+    /*!
+     * \brief Prepares all data and variables that are necessary to evaluate the residual of an interface element (i.e. interface information)
+     */
     template<class Assembler>
     void bindCouplingContext(Dune::index_constant<interfaceIdx> domainI, const Element<interfaceIdx>& element, const Assembler& assembler) const
+    { bindCouplingContext(domainI, element); }
+
+    void bindCouplingContext(Dune::index_constant<interfaceIdx> domainI, const Element<interfaceIdx>& element) const
     {
         interfaceCouplingContext_.clear();
 
@@ -287,19 +287,17 @@ public:
         darcyVolVars.update(darcyElemSol, this->problem(darcyIdx), darcyElement, scv);
 
         darcyFvGeometry.bind(darcyElement); // TODO necessary?
-        auto darcyElemVolVars = Assembler::isImplicit() ? localView(assembler.gridVariables(darcyIdx).curGridVolVars())
-                                                        : localView(assembler.gridVariables(darcyIdx).prevGridVolVars());
-        auto darcyElemFluxVarsCache = localView(assembler.gridVariables(darcyIdx).gridFluxVarsCache());
-        auto darcyLocalResidual = assembler.localResidual(darcyIdx);
 
         // add the context
         interfaceCouplingContext_.push_back({stokesElement, stokesFvGeometry, stokesVolVars, faceVelocity,
-                                             darcyElement, darcyFvGeometry, darcyElemVolVars, darcyVolVars, darcyElemFluxVarsCache, darcyLocalResidual, coupledIndices.darcyEIdx, coupledIndices.darcyScvfIdx,
+                                             darcyElement, darcyFvGeometry, darcyVolVars, coupledIndices.darcyEIdx, coupledIndices.darcyScvfIdx,
                                              interfaceElementIdx, scv.center()});
 
     }
 
-    // TODO doc me
+    /*!
+     * \brief Prepares all data and variables that are necessary to evaluate the residual of a Darcy element (i.e. Darcy information)
+     */
     template<class Assembler>
     void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element, const Assembler& assembler) const
     { bindCouplingContext(domainI, element); }
@@ -393,7 +391,6 @@ public:
     /*!
      * \brief Update the coupling context for the interface residual w.r.t. the Stokes cell-center DOFs
      */
-    // TODO copied from stokesdarcy/couplingmanager (Darcy wrt Stokes cc)
     template<class LocalAssemblerI>
     void updateCouplingContext(Dune::index_constant<interfaceIdx> domainI,
                                const LocalAssemblerI& localAssemblerI,
@@ -422,7 +419,6 @@ public:
     /*!
      * \brief Update the coupling context for the interface residual w.r.t. the Stokes face DOFs
      */
-    // TODO copied from stokesdarcy/couplingmanager (Darcy wrt Stokes face)
     template<class LocalAssemblerI>
     void updateCouplingContext(Dune::index_constant<interfaceIdx> domainI,
                                const LocalAssemblerI& localAssemblerI,
@@ -456,13 +452,6 @@ public:
     {
         this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
 
-        // TODO copied from facetcouplingmanager
-//        // Since coupling only occurs via the fluxes, the context does not
-//        // have to be updated in explicit time discretization schemes, where
-//        // they are strictly evaluated on the old time level
-//        if (!LocalAssemblerI::isImplicit())
-//            return;
-
         for (auto& data : darcyCouplingContext_)
         {
             const auto interfaceElemIdx = this->problem(interfaceIdx).fvGridGeometry().elementMapper().index(data.element);
@@ -473,13 +462,8 @@ public:
             const auto interfaceElemSol = elementSolution(data.element, this->curSol()[interfaceIdx], this->problem(interfaceIdx).fvGridGeometry());
 
             for(const auto& scv : scvs(data.fvGeometry))
-            {
                 data.volVars.update(interfaceElemSol, this->problem(interfaceIdx), data.element, scv);
-                // TODO update necessary? segfault! (extrusion factor)
-//                data.darcyElemVolVars[dofIdxGlobalJ].update(darcyElemSol, this->problem(darcyIdx), data.darcyElement, scv);
-            }
         }
-
 
     }
 
@@ -496,13 +480,6 @@ public:
     {
         this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
 
-        // TODO copied from facetcouplingmanager
-//        // Since coupling only occurs via the fluxes, the context does not
-//        // have to be updated in explicit time discretization schemes, where
-//        // they are strictly evaluated on the old time level
-//        if (!LocalAssemblerI::isImplicit())
-//            return;
-
         for (auto& data : interfaceCouplingContext_)
         {
             const auto darcyElemIdx = this->problem(darcyIdx).fvGridGeometry().elementMapper().index(data.darcyElement);
@@ -513,36 +490,26 @@ public:
             const auto darcyElemSol = elementSolution(data.darcyElement, this->curSol()[darcyIdx], this->problem(darcyIdx).fvGridGeometry());
 
             for(const auto& scv : scvs(data.darcyFvGeometry))
-            {
                 data.darcyVolVars.update(darcyElemSol, this->problem(darcyIdx), data.darcyElement, scv);
-                // TODO update necessary? segfault! (extrusion factor)
-//                data.darcyElemVolVars[dofIdxGlobalJ].update(darcyElemSol, this->problem(darcyIdx), data.darcyElement, scv);
-
-            }
         }
     }
 
 
     // \}
 
-
     // TODO inherit from stokesdarcycouplingmanager
     /*!
      * \brief Returns whether a given free flow scvf is coupled to the other domain
      */
     bool isCoupledEntity(Dune::index_constant<stokesIdx>, const SubControlVolumeFace<stokesFaceIdx>& scvf) const
-    {
-        return stokesFaceToInterfaceStencils_.count(scvf.dofIndex());
-    }
+    { return stokesFaceToInterfaceStencils_.count(scvf.dofIndex()); }
 
     // TODO inherit from stokesdarcycouplingmanager
     /*!
      * \brief Returns whether a given free flow scvf is coupled to the other domain
      */
     bool isCoupledEntity(Dune::index_constant<darcyIdx>, const SubControlVolumeFace<darcyIdx>& scvf) const
-    {
-        return couplingMapper_.isCoupledDarcyScvf(scvf.index());
-    }
+    { return couplingMapper_.isCoupledDarcyScvf(scvf.index()); }
 
     /*!
      * \brief The coupling stencils
@@ -687,9 +654,8 @@ public:
      */
     const auto& interfaceCouplingContext(const Element<interfaceIdx>& element, const SubControlVolume<interfaceIdx>& scv) const
     {
-        // TODO !!! bindCouplingContext(interfaceIdx, element, assembler) --> implement without assembler ?!
-//        if (interfaceCouplingContext_.empty())
-//            bindCouplingContext(interfaceIdx, element);
+        if (interfaceCouplingContext_.empty())
+            bindCouplingContext(interfaceIdx, element);
 
         for(const auto& context : interfaceCouplingContext_)
         {
