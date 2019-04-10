@@ -1760,6 +1760,17 @@ private:
                     outputResidual[faceIdx] = velocityStepRHS;
                     outputResidual[cellCenterIdx] = pressureStepRHS;
 
+                    if(algorithmType == 4){
+                        //SIMPLER
+                        velocityStepRHS = rN;
+                        velocityStepRHS *= -1.0;
+
+                        A.umv(uCurrentIter[faceIdx], velocityStepRHS);
+                        B.umv(reducedULastIter[cellCenterIdx], velocityStepRHS);
+
+                        outputResidual[faceIdx] = velocityStepRHS;
+                    }
+
                     this->l2Norm_ = outputResidual.two_norm();
 
                     /////////////////// residual output intermezzo end
