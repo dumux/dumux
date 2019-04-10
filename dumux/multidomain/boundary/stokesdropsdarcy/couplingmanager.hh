@@ -35,7 +35,7 @@
 #include <dumux/discretization/staggered/elementsolution.hh>
 
 #include "couplingdata.hh"
-#include "couplingmapper_2in1.hh" // TODO exchange if 3domains used
+#include "couplingmapper.hh"
 
 namespace Dumux {
 

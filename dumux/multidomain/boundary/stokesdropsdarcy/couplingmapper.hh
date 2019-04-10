@@ -119,11 +119,11 @@ public:
         const auto& interfaceFvGridGeometry = interfaceProblem.fvGridGeometry();
         const auto& darcyFvGridGeometry = darcyProblem.fvGridGeometry();
 
-        isCoupledDarcyScvf_.resize(darcyFvGridGeometry.numScvf(), false);
-
         auto stokesFvGeometry = localView(stokesFvGridGeometry);
         auto interfaceFvGeometry = localView(interfaceFvGridGeometry);
         auto darcyFvGeometry = localView(darcyFvGridGeometry);
+
+        isCoupledDarcyScvf_.resize(darcyFvGridGeometry.numScvf(), false);
 
         const auto& stokesGridView = stokesFvGridGeometry.gridView();
 
@@ -143,17 +143,18 @@ public:
                 const auto eps = (stokesScvf.center() - stokesElement.geometry().center()).two_norm()*1e-8;
                 auto globalPos = stokesScvf.center(); globalPos.axpy(eps, stokesScvf.unitOuterNormal());
                 const auto darcyElementIdx = intersectingEntities(globalPos, darcyFvGridGeometry.boundingBoxTree());
-                // TODO !!
-//                const auto interfaceElementIdx = intersectingEntities(globalPos[0], interfaceFvGridGeometry.boundingBoxTree());
-                const auto interfaceElementIdx = stokesElementIdx;
+//                const auto interfaceElementIdx = intersectingEntities(globalPos, interfaceFvGridGeometry.boundingBoxTree());
+                const auto interfaceElementIdx = stokesElementIdx; // TODO !!!
 
                 // skip if no intersection was found
                 if(darcyElementIdx.empty())
                     continue;
 
-                // sanity check TODO
+                // sanity check
+//                if(interfaceElementIdx.size() > 1)
+//                    DUNE_THROW(Dune::InvalidStateException, "Stokes face dof should only intersect with one interface element");
                 if(darcyElementIdx.size() > 1)
-                    DUNE_THROW(Dune::InvalidStateException, "Stokes face dof should only intersect with one interface element");
+                    DUNE_THROW(Dune::InvalidStateException, "Interface dof should only intersect with one darcy element");
 
                 const auto stokesCCDofIdx = stokesElementIdx;
                 const auto stokesFaceDofIdx = stokesScvf.dofIndex();
@@ -186,10 +187,10 @@ public:
 
 //                        // print maps and check all indices, dofs, ...
 //                        std::cout << "** couplingmapper: interfaceElementMap for element " << interfaceElementIdx
-//                                  << ": coupled stokes element = " << interfaceElementMap_[interfaceElementIdx][0].stokesEIdx
-//                                  << ", coupled stokes scvf = " << interfaceElementMap_[interfaceElementIdx][0].stokesScvfIdx
-//                                  << ", coupled darcy element = " << interfaceElementMap_[interfaceElementIdx][0].darcyEIdx
-//                                  << ", coupled darcy scvf = " << interfaceElementMap_[interfaceElementIdx][0].darcyScvfIdx
+//                                  << ": coupled stokes element = " << interfaceElementMap_[interfaceElementIdx[0]][0].stokesEIdx
+//                                  << ", coupled stokes scvf = " << interfaceElementMap_[interfaceElementIdx[0]][0].stokesScvfIdx
+//                                  << ", coupled darcy element = " << interfaceElementMap_[interfaceElementIdx[0]][0].darcyEIdx
+//                                  << ", coupled darcy scvf = " << interfaceElementMap_[interfaceElementIdx[0]][0].darcyScvfIdx
 //                                  << std::endl;
 
                     }
