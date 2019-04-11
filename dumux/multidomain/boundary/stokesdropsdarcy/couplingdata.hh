@@ -414,7 +414,7 @@ public:
 
 //        return massFlux_(velocity * scvf.directionSign(), stokesDensity, interfaceDensity, insideIsUpstream);
         const auto massFlux = massFlux_(velocity * scvf.directionSign(), stokesDensity, interfaceDensity, insideIsUpstream);
-        const Scalar usedVelocity = velocity * scvf.directionSign();
+//        const Scalar usedVelocity = velocity * scvf.directionSign();
 //        std::cout << "** couplingdata: massCouplingCondition for Stokes: massFlux = " << massFlux
 //                  << ", v = " << usedVelocity << ", rho_ff = " << stokesDensity << ", rho_if = " << interfaceDensity
 //                  << std::endl;
@@ -448,9 +448,8 @@ public:
         const Scalar darcyDensity = interfaceContext.darcyVolVars.density(couplingPhaseIdx(darcyIdx));
         const Scalar gravity = -1.0 * this->couplingManager().problem(interfaceIdx).gravity()[interfaceNormal];
         const Scalar permeability = interfaceContext.darcyVolVars.permeability();
-        const Scalar viscosity = interfaceContext.darcyVolVars.viscosity(couplingPhaseIdx(darcyIdx));
-        const Scalar relPermeability = 1.0; // TODO
-        const Scalar bottomVelocity = -1.0 * permeability * relPermeability / viscosity * (diffP/diffY - gravity * darcyDensity);
+        const Scalar mobility = interfaceContext.darcyVolVars.mobility(couplingPhaseIdx(darcyIdx));
+        const Scalar bottomVelocity = -1.0 * mobility * permeability * (diffP/diffY - gravity * darcyDensity);
 
         // TODO flux from porous medium
         const bool bottomInsideIsUpstream = bottomVelocity > 0.0;
@@ -479,17 +478,16 @@ public:
         const Scalar darcyDensity = darcyElemVolVars[scvf.insideScvIdx()].density(couplingPhaseIdx(darcyIdx));
         const Scalar gravity = -1.0 * this->couplingManager().problem(darcyIdx).gravity()[interfaceNormal];
         const Scalar permeability = darcyElemVolVars[scvf.insideScvIdx()].permeability();
-        const Scalar viscosity = darcyElemVolVars[scvf.insideScvIdx()].viscosity(couplingPhaseIdx(darcyIdx));
-        const Scalar relPermeability = 1.0; // TODO
-        const Scalar velocity = - 1.0 * permeability * relPermeability / viscosity * (diffP/diffY - gravity * darcyDensity); // TODO use Darcy's law?
+        const Scalar mobility = darcyElemVolVars[scvf.insideScvIdx()].mobility(couplingPhaseIdx(darcyIdx));
+        const Scalar velocity = - 1.0 * permeability * mobility * (diffP/diffY - gravity * darcyDensity);
         const Scalar interfaceDensity = darcyContext.volVars.density(couplingPhaseIdx(interfaceIdx));
         const bool insideIsUpstream = velocity > 0.0;
 
-        return massFlux_(velocity, darcyDensity, interfaceDensity, insideIsUpstream);
-//        const auto massFlux = massFlux_(velocity, darcyDensity, interfaceDensity, insideIsUpstream);
+//        return massFlux_(velocity, darcyDensity, interfaceDensity, insideIsUpstream);
+        const auto massFlux = massFlux_(velocity, darcyDensity, interfaceDensity, insideIsUpstream);
 //        std::cout << "** couplingdata: massCouplingCondition for Darcy: massFlux = " << massFlux
 //                  << ", v = " << velocity << std::endl;
-//        return massFlux;
+        return massFlux;
     }
     // \}
 
