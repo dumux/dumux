@@ -1,0 +1,39 @@
+[Darcy.Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 20 20
+
+[Darcy2.Grid]
+LowerLeft = 0 1
+UpperRight = 1 2
+Cells = 20 20
+
+[Mortar.Grid]
+LowerLeft = 0 1
+UpperRight = 1 1
+Cells = 20
+
+[Mortar]
+ProjectionIntegrationOrder = 1
+
+[Darcy.Problem]
+Name = darcy
+
+[Darcy2.Problem]
+Name = darcy2
+
+[Darcy.SpatialParams]
+Permeability = 1e-6 # m^2
+AlphaBeaversJoseph = 1.0
+
+[Darcy2.SpatialParams]
+Permeability = 1e-6 # m^2
+AlphaBeaversJoseph = 1.0
+
+[Vtk]
+AddVelocity = 1
+OutputName = stokesdarcy
+
+[Problem]
+EnableGravity = false
+EnableInertiaTerms = false

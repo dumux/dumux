@@ -2,5 +2,5 @@ Module: dumux
 Version: 3.1-git
 Maintainer: dumux@listserv.uni-stuttgart.de
 Depends: dune-common (>= 2.6) dune-grid (>= 2.6) dune-localfunctions (>= 2.6) dune-istl (>= 2.6)
-Suggests: dune-alugrid (>=2.6) dune-foamgrid (>=2.6) dune-uggrid (>=2.6) opm-common opm-grid dune-subgrid dune-spgrid (>= 2.6)
+Suggests: dune-alugrid (>=2.6) dune-foamgrid (>=2.6) dune-uggrid (>=2.6) dune-functions (>=2.6) opm-common opm-grid dune-subgrid dune-spgrid (>= 2.6)
 Whitespace-Hook: Yes
