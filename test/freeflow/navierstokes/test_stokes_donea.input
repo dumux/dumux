@@ -1,6 +1,6 @@
 [Grid]
 UpperRight = 1 1
-Cells = 40 40
+Cells =5 5
 
 [Problem]
 Name = test_donea # name passed to the output routines
@@ -21,6 +21,9 @@ WriteFaceData = false
 # 1: exact solution
 InitialConditionType = 0
 
+[ Component ]
+LiquidKinematicViscosity = 1e-3
+
 [LinearSolver2]
 schurGMResRestart = 100
 schurResidualReduction = 1e-10
@@ -36,5 +39,5 @@ AlgorithmType = 2
 #no SIMPLEC for Stokes
 
 [Underrelaxation]
-HundredTimesVelocityUnderrelaxationFactor = 1
-HundredTimesPressureUnderrelaxationFactor = 1
+HundredTimesVelocityUnderrelaxationFactor = 100
+HundredTimesPressureUnderrelaxationFactor = 100
