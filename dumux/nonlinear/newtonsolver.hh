@@ -572,6 +572,8 @@ public:
                 std::cout << ", maximum relative shift = " << shift_;
             if (enableSIMPLEAbsoluteResidualCriterion_)
                 std::cout << ", L2 norm of residual = " << std::setprecision(std::numeric_limits<Scalar>::digits10 + 1) << l2Norm_;
+            if (enableSIMPLENewtonResidualCriterion_)
+                std::cout << ", L2 norm of residual = " << std::setprecision(std::numeric_limits<Scalar>::digits10 + 1) << l2NormNewton_;
             if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
                 std::cout << ", residual = " << residualNorm_;
             else if (enableResidualCriterion_)
@@ -626,6 +628,10 @@ public:
         else if (enableSIMPLEAbsoluteResidualCriterion_)
         {
             return l2Norm_ <= shiftTolerance_;
+        }
+        else if (enableSIMPLENewtonResidualCriterion_)
+        {
+            return l2NormNewton_ <= shiftTolerance_;
         }
         else if (!enableShiftCriterion_ && enableResidualCriterion_)
         {
@@ -988,6 +994,7 @@ protected:
     bool enableAbsoluteResidualCriterion_;
     bool enableShiftCriterion_;
     bool enableSIMPLEAbsoluteResidualCriterion_;
+    bool enableSIMPLENewtonResidualCriterion_;
     bool enableResidualCriterion_;
     bool satisfyResidualAndShiftCriterion_;
 
@@ -1008,6 +1015,7 @@ protected:
     std::size_t numConverged_ = 0; //! total number of converged solves
 
     Scalar l2Norm_ = 0.;
+    Scalar l2NormNewton_ = 0.;
 
     template<class VectorType, class IndexType>
     VectorType constructFullVectorFromReducedVector_(const VectorType& currentReducedVector,
@@ -1354,10 +1362,11 @@ protected:
         enableAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableAbsoluteResidualCriterion");
         enableShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableShiftCriterion");
         enableSIMPLEAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableSIMPLEAbsoluteResidualCriterion");
+        enableSIMPLENewtonResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableSIMPLENewtonResidualCriterion", false);
         enableResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableResidualCriterion") || enableAbsoluteResidualCriterion_;
         satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.SatisfyResidualAndShiftCriterion");
 
-        if (!enableShiftCriterion_ && !enableResidualCriterion_ && !enableSIMPLEAbsoluteResidualCriterion_)
+        if (!enableShiftCriterion_ && !enableResidualCriterion_ && !enableSIMPLEAbsoluteResidualCriterion_ && !enableSIMPLENewtonResidualCriterion_)
         {
             DUNE_THROW(Dune::NotImplemented,
                        "at least one of NewtonEnableShiftCriterion or "
@@ -1773,6 +1782,18 @@ private:
 
                     this->l2Norm_ = outputResidual.two_norm();
 
+                    if (enableSIMPLENewtonResidualCriterion_)
+                    {
+                        SolutionVector newtonSolution;
+                        Dune::loadMatrixMarket (newtonSolution[faceIdx], "face.txt");
+                        Dune::loadMatrixMarket (newtonSolution[cellCenterIdx], "cell.txt");
+
+                        SolutionVector diff = newtonSolution; //uLastIter just for simplicity, not a reduced thing
+                        diff -= uLastIter;
+
+                        this->l2NormNewton_ = diff.two_norm();
+                    }
+
                     /////////////////// residual output intermezzo end
 
                     C.umv(deltaUTilde, pressureStepRHS);
@@ -1922,6 +1943,18 @@ private:
                     outputResidual[cellCenterIdx] = pressureStepRHS;
 
                     this->l2Norm_ = outputResidual.two_norm();
+
+                    if (enableSIMPLENewtonResidualCriterion_)
+                    {
+                        SolutionVector newtonSolution;
+                        Dune::loadMatrixMarket (newtonSolution[faceIdx], "face.txt");
+                        Dune::loadMatrixMarket (newtonSolution[cellCenterIdx], "cell.txt");
+
+                        SolutionVector diff = newtonSolution; //uLastIter just for simplicity, not a reduced thing
+                        diff -= uLastIter;
+
+                        this->l2NormNewton_ = diff.two_norm();
+                    }
 
                     /////////////////// residual output intermezzo end
 
