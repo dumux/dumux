@@ -232,8 +232,12 @@ public:
     { assert(id < numGrids); return adjoinedEntityMaps_[id]; }
 
     //! Returns the hierachy's insertion indices that make up the grid for the given id
-    const std::vector<GridIndexType>& lowDimVertexIndices(std::size_t id) const
-    { assert(id > 0 && id < numGrids); return lowDimGridVertexIndices_[id-1]; }
+    const std::vector<GridIndexType>& gridHierarchyIndices(std::size_t id) const
+    { assert(id < numGrids); return gridVertexIndices_[id]; }
+
+    //! Returns the number of vertices contained in the entire grid hierarch
+    std::size_t numVerticesInHierarchy() const
+    { return numVerticesInHierarchy_; }
 
     /*!
      * \brief Sets the required data for a specific grid on the hierarchy.
@@ -249,23 +253,25 @@ public:
                   std::shared_ptr<GridFactory<id>> gridFactoryPtr,
                   EmbedmentMap&& embeddedEntityMap,
                   EmbedmentMap&& adjoinedEntityMap,
-                  std::vector<GridIndexType>&& lowDimGridVertexIndices = std::vector<GridIndexType>() )
+                  std::vector<GridIndexType>&& gridVertexIndices,
+                  std::size_t numVerticesInHierarchy )
     {
         std::get<id>(gridViewPtrTuple_) = std::make_shared<GridView<id>>(gridPtr->leafGridView());
         std::get<id>(gridFactoryPtrTuple_) = gridFactoryPtr;
         embeddedEntityMaps_[id] = std::move(embeddedEntityMap);
         adjoinedEntityMaps_[id] = std::move(adjoinedEntityMap);
-
-        if (id > bulkGridId)
-            lowDimGridVertexIndices_[id-1] = std::move(lowDimGridVertexIndices);
+        gridVertexIndices_[id] = std::move(gridVertexIndices);
+        numVerticesInHierarchy_ = numVerticesInHierarchy;
     }
+
 private:
     //! data on connectivity between the grids
     std::array<EmbedmentMap, numGrids> embeddedEntityMaps_;
     std::array<EmbedmentMap, numGrids> adjoinedEntityMaps_;
 
     //! Contains the hierarchy insertion indices that make up a lower-dimensional grid
-    std::array<std::vector<GridIndexType>, numGrids-1> lowDimGridVertexIndices_;
+    std::size_t numVerticesInHierarchy_;
+    std::array<std::vector<GridIndexType>, numGrids> gridVertexIndices_;
 
     //! tuple to store the grids
     using Indices = std::make_index_sequence<numGrids>;
@@ -396,7 +402,8 @@ private:
     template<typename MeshFileReader>
     void passDataFromReader(MeshFileReader& reader, bool domainMarkers, bool boundarySegments)
     {
-        const auto& bulkGridVertices = reader.bulkGridVertices();
+        const auto& vertices = reader.gridVertices();
+
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(gridPtrTuple_)), [&](const auto id)
         {
@@ -404,12 +411,8 @@ private:
             auto factoryPtr = std::make_shared<GridFactory>();
 
             // insert grid vertices
-            if (id == 0)
-                for (const auto& v : bulkGridVertices)
-                    factoryPtr->insertVertex(v);
-            else
-                for (const auto idx : reader.lowDimVertexIndices(id))
-                    factoryPtr->insertVertex(bulkGridVertices[idx]);
+            for (const auto idx : reader.vertexIndices(id))
+                factoryPtr->insertVertex(vertices[idx]);
 
             // insert elements
             for (const auto& e : reader.elementData(id))
@@ -434,17 +437,12 @@ private:
             }
 
             // copy the embeddings
-            if (id == 0)
-                embeddingsPtr_->template setData<id>( gridPtr,
-                                                         factoryPtr,
-                                                         std::move(reader.embeddedEntityMap(id)),
-                                                         std::move(reader.adjoinedEntityMap(id)) );
-            else
-                embeddingsPtr_->template setData<id>( gridPtr,
-                                                         factoryPtr,
-                                                         std::move(reader.embeddedEntityMap(id)),
-                                                         std::move(reader.adjoinedEntityMap(id)),
-                                                         std::move( reader.lowDimVertexIndices(id)) );
+            embeddingsPtr_->template setData<id>( gridPtr,
+                                                  factoryPtr,
+                                                  std::move(reader.embeddedEntityMap(id)),
+                                                  std::move(reader.adjoinedEntityMap(id)),
+                                                  std::move(reader.vertexIndices(id)),
+                                                  vertices.size() );
 
             // set the grid pointer
             std::get<id>(gridPtrTuple_) = gridPtr;
