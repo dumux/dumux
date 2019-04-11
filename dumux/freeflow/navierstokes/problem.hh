@@ -74,6 +74,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -205,18 +206,18 @@ public:
 
     //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph-Saffman condition is used
     const Scalar bjsVelocity(const Element& element,
-                             const SubControlVolumeFace& scvf,
-                             const SubControlVolumeFace& normalFace,
-                             const Scalar& localSubFaceIdx,
-                             const Scalar& velocitySelf) const
+                             const SubControlVolume& scv,
+                             const SubControlVolumeFace& faceOnPorousBoundary,
+                             const Scalar velocitySelf) const
     {
         // du/dy = alpha/sqrt(K) * u_boundary
         // du/dy = (u_center - u_boundary) / deltaY
         // u_boundary = u_center / (alpha/sqrt(K)*deltaY + 1)
         using std::sqrt;
-        const Scalar K = asImp_().permeability(element, normalFace);
-        const Scalar alpha = asImp_().alphaBJ(normalFace);
-        return velocitySelf / (alpha / sqrt(K) * scvf.cellCenteredParallelDistance(localSubFaceIdx,0) + 1.0);
+        const Scalar K = asImp_().permeability(element, faceOnPorousBoundary);
+        const Scalar alpha = asImp_().alphaBJ(faceOnPorousBoundary);
+        const Scalar distance = (faceOnPorousBoundary.center() - scv.center()).two_norm();
+        return velocitySelf / (alpha / sqrt(K) * distance + 1.0);
     }
 
 private:

@@ -493,7 +493,10 @@ private:
                 else if (lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())))
                     return problem.dirichlet(element, makeParallelGhostFace_(scvf, localSubFaceIdx))[Indices::velocity(scvf.directionIndex())];
                 else
-                    return problem.bjsVelocity(element, scvf, normalFace, localSubFaceIdx, innerParallelVelocity);
+                {
+                    const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+                    return problem.bjsVelocity(element, scv, normalFace, innerParallelVelocity);
+                }
             };
 
             const Scalar outerParallelVelocity = getParallelVelocity();

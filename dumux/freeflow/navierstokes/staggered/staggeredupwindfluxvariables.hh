@@ -64,6 +64,7 @@ class StaggeredUpwindFluxVariables
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
@@ -383,9 +384,9 @@ private:
         // thus we always use this value for the computation of the transported momentum.
         if (!ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
         {
-            const Scalar boundaryMomentum = getParallelVelocityFromBoundary_(problem, ownScvf, lateralFace,
+            const Scalar boundaryMomentum = getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf, lateralFace,
                                                                              faceVars.velocitySelf(), localSubFaceIdx,
-                                                                             element, lateralFaceHasDirichletPressure,
+                                                                             lateralFaceHasDirichletPressure,
                                                                              lateralFaceHasBJS) * insideVolVars.density();
 
              return std::array<Scalar, 3>{boundaryMomentum, boundaryMomentum, boundaryMomentum};
@@ -403,9 +404,9 @@ private:
             if (ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
                 momenta[0] = faceVars.velocityParallel(localSubFaceIdx, 0) * insideVolVars.density();
             else
-                momenta[0] = getParallelVelocityFromBoundary_(problem, ownScvf, lateralFace,
+                momenta[0] = getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf, lateralFace,
                                                               faceVars.velocitySelf(), localSubFaceIdx,
-                                                              element, lateralFaceHasDirichletPressure,
+                                                              lateralFaceHasDirichletPressure,
                                                               lateralFaceHasBJS) * insideVolVars.density();
 
             // The local index of the faces that is opposite to localSubFaceIdx
@@ -466,8 +467,8 @@ private:
 
         const Scalar momentumParallel = ownScvf.hasParallelNeighbor(localSubFaceIdx, 0)
                                       ? faceVars.velocityParallel(localSubFaceIdx, 0) * outsideVolVars.density()
-                                      : (getParallelVelocityFromBoundary_(problem, ownScvf, lateralFace,
-                                                                         faceVars.velocitySelf(), localSubFaceIdx, element,
+                                      : (getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf, lateralFace,
+                                                                         faceVars.velocitySelf(), localSubFaceIdx,
                                                                          lateralFaceHasDirichletPressure, lateralFaceHasBJS)
                                       * insideVolVars.density());
 
@@ -573,11 +574,12 @@ private:
      * \param lateralFaceHasBJS @c true if there is a BJS condition fot the velocity on the boundary
      */
     static Scalar getParallelVelocityFromBoundary_(const Problem& problem,
+                                                   const Element& element,
+                                                   const FVElementGeometry& fvGeometry,
                                                    const SubControlVolumeFace& scvf,
                                                    const SubControlVolumeFace& normalFace,
                                                    const Scalar velocitySelf,
                                                    const int localSubFaceIdx,
-                                                   const Element& element,
                                                    const bool lateralFaceHasDirichletPressure,
                                                    const bool lateralFaceHasBJS)
     {
@@ -587,7 +589,10 @@ private:
             return velocitySelf;
 
         if (lateralFaceHasBJS)
-            return problem.bjsVelocity(element, scvf, normalFace, localSubFaceIdx, velocitySelf);
+        {
+            const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
+            return problem.bjsVelocity(element, scv, normalFace, velocitySelf);
+        }
         else
         {
             //     ________________
@@ -658,7 +663,10 @@ private:
         else if (bcTypes.isSymmetry() || bcTypes.isDirichlet(Indices::pressureIdx))
             return parallelVelocity;
         else if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
-            return problem.bjsVelocity(boundaryElement, scvf, boundaryNormalFace, localIdx, parallelVelocity);
+        {
+            const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
+            return problem.bjsVelocity(boundaryElement, scv,boundaryNormalFace, parallelVelocity);
+        }
         else
         {
             // Neumann conditions are not well implemented

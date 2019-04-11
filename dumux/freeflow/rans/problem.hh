@@ -64,6 +64,7 @@ class RANSProblemBase : public NavierStokesProblem<TypeTag>
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -332,21 +333,22 @@ public:
                 const int numSubFaces = scvf.pairData().size();
                 for(int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
                 {
-                    const auto& normalFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData()[localSubFaceIdx].localNormalFaceIdx);
+                    const auto& lateralFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData()[localSubFaceIdx].localLateralFaceIdx);
 
                     // adapt calculations for Beavers-Joseph-Saffman condition
-                    unsigned int normalNormDim = normalFace.directionIndex();
-                    if (normalFace.boundary() && (asImp_().boundaryTypes(element, normalFace).isBJS(Indices::velocity(velIdx))))
+                    unsigned int normalNormDim = lateralFace.directionIndex();
+                    if (lateralFace.boundary() && (asImp_().boundaryTypes(element, lateralFace).isBJS(Indices::velocity(velIdx))))
                     {
                         unsigned int neighborIdx = neighborIdx_[elementIdx][normalNormDim][0];
-                        if (normalFace.center()[normalNormDim] < cellCenter_[elementIdx][normalNormDim])
+                        if (lateralFace.center()[normalNormDim] < cellCenter_[elementIdx][normalNormDim])
                             neighborIdx = neighborIdx_[elementIdx][normalNormDim][1];
 
-                        bjsVelocityAverage[normalNormDim] += ParentType::bjsVelocity(element, scvf, normalFace, localSubFaceIdx, velocity_[elementIdx][velIdx]);
+                        const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
+                        bjsVelocityAverage[normalNormDim] += ParentType::bjsVelocity(element, scv, lateralFace, velocity_[elementIdx][velIdx]);
                         if (bjsNumFaces[normalNormDim] > 0 && neighborIdx != bjsNeighbor[normalNormDim])
                             DUNE_THROW(Dune::InvalidStateException, "Two different neighborIdx should not occur");
                         bjsNeighbor[normalNormDim] = neighborIdx;
-                        normalNormCoordinate[normalNormDim] = normalFace.center()[normalNormDim];
+                        normalNormCoordinate[normalNormDim] = lateralFace.center()[normalNormDim];
                         bjsNumFaces[normalNormDim]++;
                     }
                 }
@@ -446,7 +448,7 @@ public:
                                       const ElementVolumeVariables& elemVolVars,
                                       const ElementFaceVariables& elemFaceVars,
                                       const SubControlVolumeFace& scvf,
-                                      const SubControlVolumeFace& localSubFace) const
+                                      const SubControlVolumeFace& lateralBoundaryFace) const
     { return FacePrimaryVariables(0.0); }
 
     /*!
