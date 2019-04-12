@@ -296,10 +296,10 @@ public:
             {
                 // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
                 // the sub faces's center.
-                auto localSubFaceCenter = scvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos - normalFace.center();
+                auto localSubFaceCenter = scvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos + normalFace.center();
                 localSubFaceCenter *= 0.5;
-                localSubFaceCenter += normalFace.center();
-                const auto localSubFace = makeGhostFace_(normalFace, localSubFaceCenter);
+
+                const auto localSubFace = normalFace.makeBoundaryFace(localSubFaceCenter);
 
                 // Retrieve the boundary types that correspond to the sub face.
                 const auto bcTypes = problem.boundaryTypes(element, localSubFace);
@@ -541,17 +541,10 @@ private:
 
 private:
 
-    //! helper function to conveniently create a ghost face used to retrieve boundary values from the problem
-    SubControlVolumeFace makeGhostFace_(const SubControlVolumeFace& ownScvf, const GlobalPosition& pos) const
-    {
-        return SubControlVolumeFace(pos, std::vector<unsigned int>{ownScvf.insideScvIdx(), ownScvf.outsideScvIdx()},
-                                    ownScvf.directionIndex(), ownScvf.axisData().selfDof, ownScvf.index());
-    };
-
     //! helper function to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
     SubControlVolumeFace makeParallelGhostFace_(const SubControlVolumeFace& ownScvf, const int localSubFaceIdx) const
     {
-        return makeGhostFace_(ownScvf, ownScvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos);
+        return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos);
     };
 
     //! helper function to get the averaged extrusion factor for a face
