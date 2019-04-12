@@ -47,14 +47,10 @@ class StaggeredFreeFlowConnectivityMap
     using CellCenterIdxType = typename FVGridGeometry::DofTypeIndices::CellCenterIdx;
     using FaceIdxType = typename FVGridGeometry::DofTypeIndices::FaceIdx;
 
-    using CellCenterToCellCenterMap = std::vector<std::vector<GridIndexType>>;
-    using CellCenterToFaceMap = std::vector<std::vector<GridIndexType>>;
-    using FaceToCellCenterMap = std::vector<std::vector<GridIndexType>>;
-    using FaceToFaceMap = std::vector<std::vector<GridIndexType>>;
-
     using SmallLocalIndex = typename IndexTraits<GridView>::SmallLocalIndex;
 
     using Stencil = std::vector<GridIndexType>;
+    using Map = std::vector<Stencil>;
 
     static constexpr SmallLocalIndex upwindSchemeOrder = FVGridGeometry::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
@@ -72,11 +68,6 @@ public:
         faceToCellCenterMap_.resize(2*numDofsFace - numBoundaryFacets);
         faceToFaceMap_.resize(2*numDofsFace - numBoundaryFacets);
 
-        std::vector<Stencil> fullFaceToCellCenterStencils;
-        fullFaceToCellCenterStencils.resize(numDofsFace);
-        std::vector<Stencil> fullfaceToFaceStencils;
-        fullfaceToFaceStencils.resize(numDofsFace);
-
         for(auto&& element: elements(fvGridGeometry.gridView()))
         {
             // restrict the FvGeometry locally and bind to the element
@@ -86,10 +77,18 @@ public:
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
             {
+                // handle the cell center dof stencils first
                 const auto dofIdxCellCenter = fvGridGeometry.elementMapper().index(element);
-                computeCellCenterToCellCenterStencil_(cellCenterToCellCenterMap_[dofIdxCellCenter], element, fvGeometry, scvf);
-                computeCellCenterToFaceStencil_(cellCenterToFaceMap_[dofIdxCellCenter], element, fvGeometry, scvf);
 
+                // the stencil for cell center dofs w.r.t. to other cell center dofs,
+                // includes all neighboring element indices
+                if (!scvf.boundary())
+                    cellCenterToCellCenterMap_[dofIdxCellCenter].push_back(scvf.outsideScvIdx());
+
+                // the stencil for cell center dofs w.r.t. face dofs, includes the face dof indices of the current element
+                cellCenterToFaceMap_[dofIdxCellCenter].push_back(scvf.dofIndex());
+
+                // handle the face dof stencils
                 const auto scvfIdx = scvf.index();
                 computeFaceToCellCenterStencil_(faceToCellCenterMap_[scvfIdx], fvGeometry, scvf);
                 computeFaceToFaceStencil_(faceToFaceMap_[scvfIdx], fvGeometry, scvf);
@@ -98,55 +97,30 @@ public:
     }
 
     //! Returns the stencil of a cell center dof w.r.t. other cell center dofs
-    const std::vector<GridIndexType>& operator() (CellCenterIdxType, CellCenterIdxType, const GridIndexType globalI) const
+    const Stencil& operator() (CellCenterIdxType, CellCenterIdxType, const GridIndexType globalI) const
     {
         return cellCenterToCellCenterMap_[globalI];
     }
 
     //! Returns the stencil of a cell center dof w.r.t. face dofs
-    const std::vector<GridIndexType>& operator() (CellCenterIdxType, FaceIdxType, const GridIndexType globalI) const
+    const Stencil& operator() (CellCenterIdxType, FaceIdxType, const GridIndexType globalI) const
     {
         return cellCenterToFaceMap_[globalI];
     }
 
     //! Returns the stencil of a face dof w.r.t. cell center dofs
-    const std::vector<GridIndexType>& operator() (FaceIdxType, CellCenterIdxType, const GridIndexType globalI) const
+    const Stencil& operator() (FaceIdxType, CellCenterIdxType, const GridIndexType globalI) const
     {
         return faceToCellCenterMap_[globalI];
     }
 
     //! Returns the stencil of a face dof w.r.t. other face dofs
-    const std::vector<GridIndexType>& operator() (FaceIdxType, FaceIdxType, const GridIndexType globalI) const
+    const Stencil& operator() (FaceIdxType, FaceIdxType, const GridIndexType globalI) const
     {
         return faceToFaceMap_[globalI];
     }
 
 private:
-
-    /*
-     * \brief Computes the stencil for cell center dofs w.r.t to other cell center dofs.
-     *        Basically, these are the dof indices of the neighboring elements plus the dof index of the element itself.
-     */
-    void computeCellCenterToCellCenterStencil_(Stencil& stencil,
-                                               const Element& element,
-                                               const FVElementGeometry& fvGeometry,
-                                               const SubControlVolumeFace& scvf)
-    {
-        if(!scvf.boundary())
-            stencil.push_back(scvf.outsideScvIdx());
-    }
-
-    /*
-     * \brief Computes the stencil for cell center dofs w.r.t to face dofs.
-     *        Basically, these are the dof indices of the element's faces.
-     */
-    void computeCellCenterToFaceStencil_(Stencil& stencil,
-                                         const Element& element,
-                                         const FVElementGeometry& fvGeometry,
-                                         const SubControlVolumeFace& scvf)
-    {
-        stencil.push_back(scvf.axisData().selfDof);
-    }
 
     /*
      * \brief Computes the stencil for face dofs w.r.t to cell center dofs.
@@ -158,12 +132,12 @@ private:
                                          const SubControlVolumeFace& scvf)
     {
         const auto eIdx = scvf.insideScvIdx();
-        stencil.push_back(scvf.insideScvIdx());
+        stencil.push_back(eIdx);
 
-        for(const auto& data : scvf.pairData())
+        for (const auto& data : scvf.pairData())
         {
             auto& normalFace = fvGeometry.scvf(eIdx, data.localNormalFaceIdx);
-            if(!normalFace.boundary())
+            if (!normalFace.boundary())
             {
                 const auto firstParallelElementDofIdx = normalFace.outsideScvIdx();
                 stencil.push_back(firstParallelElementDofIdx);
@@ -179,17 +153,14 @@ private:
                                    const FVElementGeometry& fvGeometry,
                                    const SubControlVolumeFace& scvf)
     {
-        if(stencil.empty())
-        {
-            stencil.push_back(scvf.axisData().oppositeDof);
-            addHigherOrderInAxisDofs_(scvf, stencil, std::integral_constant<bool, useHigherOrder>{});
-        }
+        stencil.push_back(scvf.axisData().oppositeDof);
+        addHigherOrderInAxisDofs_(scvf, stencil, std::integral_constant<bool, useHigherOrder>{});
 
-        for(const auto& data : scvf.pairData())
+        for (const auto& data : scvf.pairData())
         {
             // add normal dofs
             stencil.push_back(data.normalPair.first);
-            if(!scvf.boundary())
+            if (!scvf.boundary())
                 stencil.push_back(data.normalPair.second);
 
             // add parallel dofs
@@ -215,11 +186,10 @@ private:
         }
     }
 
-
-    CellCenterToCellCenterMap cellCenterToCellCenterMap_;
-    CellCenterToFaceMap cellCenterToFaceMap_;
-    FaceToCellCenterMap faceToCellCenterMap_;
-    FaceToFaceMap faceToFaceMap_;
+    Map cellCenterToCellCenterMap_;
+    Map cellCenterToFaceMap_;
+    Map faceToCellCenterMap_;
+    Map faceToFaceMap_;
 };
 
 } // end namespace Dumux
