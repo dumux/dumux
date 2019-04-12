@@ -120,21 +120,6 @@ public:
               corners_[i] = isGeometry.corner(i);
       }
 
-    //! Constructor for a ghost face outside of the domain. Only needed to retrieve the center and scvIndices
-    FreeFlowStaggeredSubControlVolumeFace(const GlobalPosition& dofPosition,
-                                          const std::vector<GridIndexType>& scvIndices,
-                                          const unsigned int dirIdx,
-                                          const int dofIdx,
-                                          const int scvfIndex)
-    : center_(dofPosition),
-      scvfIndex_(scvfIndex),
-      scvIndices_(scvIndices),
-      dofIdx_(dofIdx),
-      selfToOppositeDistance_(0.0),
-      dirIdx_(dirIdx),
-      isGhostFace_(true)
-      {    axisData_.selfDof = dofIdx; }
-
     //! The center of the sub control volume face
     const GlobalPosition& center() const
     {
@@ -356,6 +341,21 @@ public:
         }
     }
 
+    /*!
+    * \brief Returns a copy of the own scvf whith a user-specified center position.
+    *        This is needed for retrieving boundary conditions when the actual center does not coincide with the position
+    *        on which the boundary condition is defined.
+    *
+    * \param pos The desired position of the boundary scvf's center
+    */
+    FreeFlowStaggeredSubControlVolumeFace makeBoundaryFace(const GlobalPosition& pos) const
+    {
+        FreeFlowStaggeredSubControlVolumeFace boundaryFace = *this;
+        boundaryFace.center_ = pos;
+        boundaryFace.boundary_ = true;
+        boundaryFace.isGhostFace_ = true;
+        return boundaryFace;
+    }
 
 private:
     Dune::GeometryType geomType_;

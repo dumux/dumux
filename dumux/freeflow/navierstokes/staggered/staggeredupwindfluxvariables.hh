@@ -615,7 +615,7 @@ private:
         const SubControlVolumeFace& boundaryNormalFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData(localIdx).localNormalFaceIdx);
         GlobalPosition boundarySubFaceCenter = scvf.pairData(localIdx).virtualFirstParallelFaceDofPos + boundaryNormalFace.center();
         boundarySubFaceCenter *= 0.5;
-        const SubControlVolumeFace boundarySubFace = makeGhostFace_(boundaryNormalFace, boundarySubFaceCenter);
+        const SubControlVolumeFace boundarySubFace = boundaryNormalFace.makeBoundaryFace(boundarySubFaceCenter);
 
         // The boundary condition is checked, in case of symmetry or Dirichlet for the pressure
         // a gradient of zero is assumed in the direction normal to the bounadry, while if there is
@@ -638,18 +638,10 @@ private:
         }
     }
 
-
-    //! helper function to conveniently create a ghost face used to retrieve boundary values from the problem
-    static SubControlVolumeFace makeGhostFace_(const SubControlVolumeFace& ownScvf, const GlobalPosition& pos)
-    {
-        return SubControlVolumeFace(pos, std::vector<unsigned int>{ownScvf.insideScvIdx(), ownScvf.outsideScvIdx()},
-                                    ownScvf.directionIndex(), ownScvf.axisData().selfDof, ownScvf.index());
-    };
-
     //! helper function to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
     static SubControlVolumeFace makeParallelGhostFace_(const SubControlVolumeFace& ownScvf, const int localSubFaceIdx)
     {
-        return makeGhostFace_(ownScvf, ownScvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos);
+        return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos);
     };
 };
 
