@@ -590,6 +590,15 @@ private:
             return problem.bjsVelocity(element, scvf, normalFace, localSubFaceIdx, velocitySelf);
         else
         {
+            //     ________________
+            //     ---------------o                 || frontal face of staggered half-control-volume
+            //     |      ||      # current scvf    #  ghostFace of interest, lies on boundary
+            //     |      ||      #                 x  dof position
+            //     |      ||      x~~~~> vel.Self   -- element boundaries
+            //     |      ||      #                 __ domain boundary
+            //     |      ||      #                 o  position at which the boundary conditions will be evaluated
+            //     ---------------#
+
             const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
             return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
         }
@@ -615,6 +624,16 @@ private:
         const SubControlVolumeFace& boundaryNormalFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData(localIdx).localNormalFaceIdx);
         GlobalPosition boundarySubFaceCenter = scvf.pairData(localIdx).virtualFirstParallelFaceDofPos + boundaryNormalFace.center();
         boundarySubFaceCenter *= 0.5;
+
+        //    ________________
+        //    --------####o###                 || frontal face of staggered half-control-volume
+        //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
+        //    |      ||      |                 x  dof position
+        //    |      ||      x~~~~> vel.Self   -- element boundaries
+        //    |      ||      |                 __ domain boundary
+        //    |      ||      |                 o  position at which the boundary conditions will be evaluated
+        //    ----------------                    (boundarySubFaceCenter)
+
         const SubControlVolumeFace boundarySubFace = boundaryNormalFace.makeBoundaryFace(boundarySubFaceCenter);
 
         // The boundary condition is checked, in case of symmetry or Dirichlet for the pressure
@@ -624,6 +643,15 @@ private:
 
         if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
         {
+            //    ________________
+            //    --------#######o                 || frontal face of staggered half-control-volume
+            //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
+            //    |      ||      |                 x  dof position
+            //    |      ||      x~~~~> vel.Self   -- element boundaries
+            //    |      ||      |                 __ domain boundary
+            //    |      ||      |                 o  position at which the boundary conditions will be evaluated
+            //    ----------------
+
             const SubControlVolumeFace ghostFace = makeParallelGhostFace_(scvf, localIdx);
             return problem.dirichlet(boundaryElement, ghostFace)[Indices::velocity(scvf.directionIndex())];
         }

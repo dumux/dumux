@@ -299,6 +299,15 @@ public:
                 auto localSubFaceCenter = scvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos + normalFace.center();
                 localSubFaceCenter *= 0.5;
 
+                //    ________________
+                //    --------####o###                 || frontal face of staggered half-control-volume
+                //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
+                //    |      ||      |                 x  dof position
+                //    |      ||      x~~~~> vel.Self   -- element boundaries
+                //    |      ||      |                 __ domain boundary
+                //    |      ||      |                 o  position at which the boundary conditions will be evaluated
+                //    ----------------                    (localSubFaceCenter)
+
                 const auto localSubFace = normalFace.makeBoundaryFace(localSubFaceCenter);
 
                 // Retrieve the boundary types that correspond to the sub face.
@@ -609,12 +618,20 @@ private:
         if (lateralFaceHasDirichletPressure)
             return velocitySelf;
 
+        //    ________________
+        //    --------#######o                 || frontal face of staggered half-control-volume
+        //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
+        //    |      ||      |                 x  dof position
+        //    |      ||      x~~~~> vel.Self   -- element boundaries
+        //    |      ||      |                 __ domain boundary
+        //    |      ||      |                 o  position at which the boundary conditions will be evaluated
+        //    ----------------
+
         const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
         if (lateralFaceHasBJS)
             return problem.bjsVelocity(element, scvf, normalFace, localSubFaceIdx, velocitySelf);
         return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
     }
-
 };
 
 } // end namespace Dumux
