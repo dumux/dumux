@@ -589,51 +589,6 @@ private:
     }
 
     /*!
-     * \brief Return a velocity value from a boundary for which the boundary conditions have to be checked.
-     *
-     * \param problem The problem
-     * \param scvf The SubControlVolumeFace that is normal to the boundary
-     * \param localIdx The local index of the face that is on the boundary
-     * \param boundaryElement The element that is on the boundary
-     * \param parallelVelocity The velocity over scvf
-     */
-    Scalar getParallelVelocityFromOtherBoundary_(const Problem& problem,
-                                                 const FVElementGeometry& fvGeometry,
-                                                 const SubControlVolumeFace& scvf,
-                                                 const int localIdx,
-                                                 const Element& boundaryElement,
-                                                 const Scalar parallelVelocity) const
-    {
-        // A ghost subface at the boundary is created, featuring the location of the sub face's center
-        const SubControlVolumeFace& boundaryNormalFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData(localIdx).localNormalFaceIdx);
-        GlobalPosition boundarySubFaceCenter = scvf.pairData(localIdx).virtualFirstParallelFaceDofPos + boundaryNormalFace.center();
-        boundarySubFaceCenter *= 0.5;
-        const SubControlVolumeFace boundarySubFace = makeGhostFace_(boundaryNormalFace, boundarySubFaceCenter);
-
-        // The boundary condition is checked, in case of symmetry or Dirichlet for the pressure
-        // a gradient of zero is assumed in the direction normal to the bounadry, while if there is
-        // Dirichlet of BJS for the velocity the related values are exploited.
-        const auto bcTypes = problem.boundaryTypes(boundaryElement, boundarySubFace);
-
-        if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
-        {
-            const SubControlVolumeFace ghostFace = makeParallelGhostFace_(scvf, localIdx);
-            return problem.dirichlet(boundaryElement, ghostFace)[Indices::velocity(scvf.directionIndex())];
-        }
-        else if (bcTypes.isSymmetry() || bcTypes.isDirichlet(Indices::pressureIdx))
-            return parallelVelocity;
-        else if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
-        {
-            const SubControlVolumeFace ghostFace = makeParallelGhostFace_(scvf, localIdx);
-            return problem.bjsVelocity(boundaryElement, scvf, boundaryNormalFace, localIdx, parallelVelocity);
-        }
-        else
-        {
-            // Neumann conditions are not well implemented
-            DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions for the momentum equations at global position " << boundarySubFaceCenter);
-        }
-    }
-    /*!
      * \brief Return the outer parallel velocity for normal faces that are on the boundary and therefore have no neighbor.
      *
      * Calls the problem to retrieve a fixed value set on the boundary.
