@@ -314,8 +314,8 @@ public:
 
         if(numPhasesDarcy > 1)
             momentumFlux = darcyPressure;
-        else // use pressure reconstruction for single phase models; use tag dispatch to choose correct function for Darcy or Forchheimer
-            momentumFlux = pressureAtInterface_(element, scvf, stokesElemFaceVars, stokesContext, AdvectionType());
+        else // use pressure reconstruction for single phase models
+            momentumFlux = pressureAtInterface_(element, scvf, stokesElemFaceVars, stokesContext);
         // TODO: generalize for permeability tensors
 
         // normalize pressure
@@ -441,64 +441,77 @@ protected:
     }
 
     /*!
-     * \brief Returns the pressure at the interface using Darcy's law for reconstruction
+     * \brief Returns the pressure at the interface
      */
     template<class ElementFaceVariables, class CouplingContext>
     Scalar pressureAtInterface_(const Element<stokesIdx>& element,
                                 const SubControlVolumeFace<stokesIdx>& scvf,
                                 const ElementFaceVariables& elemFaceVars,
-                                const CouplingContext& context,
-                                const DarcysLaw&) const
+                                const CouplingContext& context) const
     {
-        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
-        const Scalar cellCenterPressure = context.volVars.pressure(darcyPhaseIdx);
-
-        // v = -K/mu * (gradP + rho*g)
-        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
-        const Scalar mu = context.volVars.viscosity(darcyPhaseIdx);
-        const Scalar rho = context.volVars.density(darcyPhaseIdx);
-        const Scalar distance = (context.element.geometry().center() - scvf.center()).two_norm();
-        const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).spatialParams().gravity(scvf.center())[scvf.directionIndex()];
-        const Scalar interfacePressure = ((scvf.directionSign() * velocity * (mu/darcyPermeability(element, scvf))) + rho * g) * distance + cellCenterPressure;
-        return interfacePressure;
+        auto  velocity = scvf.unitOuterNormal();
+        velocity *= elemFaceVars[scvf].velocitySelf();
+        const auto& darcyScvf = context.fvGeometry.scvf(context.darcyScvfIdx);
+        return computeCouplingPhasePressureAtInterface_(context.element, context.fvGeometry, darcyScvf, context.volVars, velocity, AdvectionType());
     }
 
     /*!
      * \brief Returns the pressure at the interface using Forchheimers's law for reconstruction
      */
-    template<class ElementFaceVariables, class CouplingContext>
-    Scalar pressureAtInterface_(const Element<stokesIdx>& element,
-                                const SubControlVolumeFace<stokesIdx>& scvf,
-                                const ElementFaceVariables& elemFaceVars,
-                                const CouplingContext& context,
-                                const ForchheimersLaw&) const
+     Scalar computeCouplingPhasePressureAtInterface_(const Element<darcyIdx>& element,
+                                                     const FVElementGeometry<darcyIdx>& fvGeometry,
+                                                     const SubControlVolumeFace<darcyIdx>& scvf,
+                                                     const VolumeVariables<darcyIdx>& volVars,
+                                                     const typename Element<stokesIdx>::Geometry::GlobalCoordinate& couplingPhaseVelocity,
+                                                     ForchheimersLaw) const
     {
         const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
-        const Scalar cellCenterPressure = context.volVars.pressure(darcyPhaseIdx);
-        using std::abs;
+        const Scalar cellCenterPressure = volVars.pressure(darcyPhaseIdx);
         using std::sqrt;
 
         // v + cF * sqrt(K) * rho/mu * v * abs(v) + K/mu grad(p + rho z) = 0
-        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
-        const Scalar mu = context.volVars.viscosity(darcyPhaseIdx);
-        const Scalar rho = context.volVars.density(darcyPhaseIdx);
-        const Scalar distance = (context.element.geometry().center() - scvf.center()).two_norm();
-        const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).spatialParams().gravity(scvf.center())[scvf.directionIndex()];
+        const auto velocity = couplingPhaseVelocity;
+        const Scalar mu = volVars.viscosity(darcyPhaseIdx);
+        const Scalar rho = volVars.density(darcyPhaseIdx);
+        const Scalar distance = (element.geometry().center() - scvf.center()).two_norm();
+        const Scalar g = scvf.unitOuterNormal() * couplingManager_.problem(darcyIdx).gravity();
 
         // get the Forchheimer coefficient
-        Scalar cF = 0.0;
-        for (const auto& darcyScvf : scvfs(context.fvGeometry))
-        {
-            if (darcyScvf.index() == context.darcyScvfIdx)
-                cF = couplingManager_.problem(darcyIdx).spatialParams().forchCoeff(darcyScvf);
-        }
+        Scalar cF = couplingManager_.problem(darcyIdx).spatialParams().forchCoeff(scvf);
 
-        const Scalar interfacePressure = ((scvf.directionSign() * velocity * (mu/darcyPermeability(element, scvf)))
-                                        + (scvf.directionSign() * velocity * abs(velocity) * rho * 1.0/sqrt(darcyPermeability(element, scvf)) * cF)
+        const Scalar interfacePressure = ((-(scvf.unitOuterNormal() * velocity) * (mu/darcyPermeability(element, scvf)))
+                                        + (-(scvf.unitOuterNormal() * velocity) * velocity.two_norm() * rho * 1.0/sqrt(darcyPermeability(element, scvf)) * cF)
                                         +  rho * g) * distance + cellCenterPressure;
         return interfacePressure;
     }
 
+    /*!
+     * \brief Returns the pressure at the interface using Darcy's law for reconstruction
+     */
+    Scalar computeCouplingPhasePressureAtInterface_(const Element<darcyIdx>& element,
+                                                    const FVElementGeometry<darcyIdx>& fvGeometry,
+                                                    const SubControlVolumeFace<darcyIdx>& scvf,
+                                                    const VolumeVariables<darcyIdx>& volVars,
+                                                    const typename Element<stokesIdx>::Geometry::GlobalCoordinate& couplingPhaseVelocity,
+                                                    DarcysLaw) const
+    {
+        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+        const Scalar couplingPhaseCellCenterPressure = volVars.pressure(darcyPhaseIdx);
+        const Scalar couplingPhaseMobility = volVars.mobility(darcyPhaseIdx);
+        const Scalar couplingPhaseDensity = volVars.density(darcyPhaseIdx);
+        const auto K = volVars.permeability();
+
+        // v = -kr/mu*K * (gradP + rho*g) = -mobility*K * (gradP + rho*g)
+        // TODO docu
+        const auto alpha = vtmv(scvf.unitOuterNormal(), K, couplingManager_.problem(darcyIdx).gravity());
+
+        auto distanceVector = scvf.center() - element.geometry().center();
+        distanceVector /= distanceVector.two_norm2();
+        const Scalar ti = vtmv(distanceVector, K, scvf.unitOuterNormal());
+
+        return (1/couplingPhaseMobility * (scvf.unitOuterNormal() * couplingPhaseVelocity) + couplingPhaseDensity * alpha)/ti
+               + couplingPhaseCellCenterPressure;
+    }
 
 
 private:
