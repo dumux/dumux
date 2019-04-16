@@ -439,19 +439,9 @@ protected:
                                 const CouplingContext& context,
                                 const DarcysLaw&) const
     {
-        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
-        const Scalar cellCenterPressure = context.volVars.pressure(darcyPhaseIdx);
-
-        // v = -kr/mu*K * (gradP + rho*g) = -mobility*K * (gradP + rho*g)
-        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
-        const Scalar mobility = context.volVars.mobility(darcyPhaseIdx);
-        const Scalar distance = (context.element.geometry().center() - scvf.center()).two_norm();
-
-        const Scalar rho = context.volVars.density(darcyPhaseIdx);
-        const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).gravity()[scvf.directionIndex()];
-        const Scalar interfacePressure = ((scvf.directionSign() * velocity * (1/(darcyPermeability(element, scvf)*mobility))) + rho * g) * distance + cellCenterPressure;
-
-        return interfacePressure;
+        auto  velocity = scvf.unitOuterNormal();
+        velocity *= elemFaceVars[scvf].velocitySelf();
+        return computeCouplingPhasePressureAtInterface_(stokesIdx, context.element, context.volVars, scvf, velo);
     }
 
     /*!
@@ -513,6 +503,38 @@ protected:
         const Scalar g = couplingManager_.problem(darcyIdx).gravity()*scvf.unitOuterNormal();
         const Scalar interfacePressure = ((velocity * (-1/(darcyVolVars.permeability()*mobility))) + rho * g) * distance + cellCenterPressure;
         return interfacePressure;
+    }
+
+    template<std::size_t i>
+    Scalar computeCouplingPhasePressureAtInterface_(Dune::index_constant<i>,
+                                                    const Element<darcyIdx>& element,
+                                                    const VolumeVariables<darcyIdx>& volVars,
+                                                    const SubControlVolumeFace<i>& scvf,
+                                                    const typename Element<stokesIdx>::Geometry::GlobalCoordinate& couplingPhaseVelocity) const
+    {
+        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+        const Scalar couplingPhaseCellCenterPressure = volVars.pressure(darcyPhaseIdx);
+        const Scalar couplingPhaseMobility = volVars.mobility(darcyPhaseIdx);
+        const Scalar couplingPhaseDensity = volVars.density(darcyPhaseIdx);
+        const auto K = volVars.permeability();
+
+        // get the unit normal pointing towards the Stokes domain
+        auto unitOuterNormal = scvf.unitOuterNormal();
+        if (i == stokesIdx)
+            unitOuterNormal *= -1;
+
+        // v = -kr/mu*K * (gradP + rho*g) = -mobility*K * (gradP + rho*g)
+
+        // TODO docu
+
+        const auto alpha = vtmv(unitOuterNormal, K, couplingManager_.problem(darcyIdx).gravity());
+
+        auto distanceVector = scvf.center() - element.geometry().center();
+        distanceVector /= distanceVector.two_norm2();
+        const Scalar ti = vtmv(distanceVector, K, unitOuterNormal);
+
+        return (1/couplingPhaseMobility * (unitOuterNormal * couplingPhaseVelocity) + couplingPhaseDensity * alpha)/ti
+               + couplingPhaseCellCenterPressure;
     }
 
     /*!
