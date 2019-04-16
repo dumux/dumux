@@ -296,10 +296,19 @@ public:
             {
                 // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
                 // the sub faces's center.
-                auto localSubFaceCenter = scvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos - normalFace.center();
+                auto localSubFaceCenter = scvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos + normalFace.center();
                 localSubFaceCenter *= 0.5;
-                localSubFaceCenter += normalFace.center();
-                const auto localSubFace = makeGhostFace_(normalFace, localSubFaceCenter);
+
+                //    ________________
+                //    --------####o###                 || frontal face of staggered half-control-volume
+                //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
+                //    |      ||      |                 x  dof position
+                //    |      ||      x~~~~> vel.Self   -- element boundaries
+                //    |      ||      |                 __ domain boundary
+                //    |      ||      |                 o  position at which the boundary conditions will be evaluated
+                //    ----------------                    (localSubFaceCenter)
+
+                const auto localSubFace = normalFace.makeBoundaryFace(localSubFaceCenter);
 
                 // Retrieve the boundary types that correspond to the sub face.
                 const auto bcTypes = problem.boundaryTypes(element, localSubFace);
@@ -541,17 +550,10 @@ private:
 
 private:
 
-    //! helper function to conveniently create a ghost face used to retrieve boundary values from the problem
-    SubControlVolumeFace makeGhostFace_(const SubControlVolumeFace& ownScvf, const GlobalPosition& pos) const
-    {
-        return SubControlVolumeFace(pos, std::vector<unsigned int>{ownScvf.insideScvIdx(), ownScvf.outsideScvIdx()},
-                                    ownScvf.directionIndex(), ownScvf.axisData().selfDof, ownScvf.index());
-    };
-
     //! helper function to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
     SubControlVolumeFace makeParallelGhostFace_(const SubControlVolumeFace& ownScvf, const int localSubFaceIdx) const
     {
-        return makeGhostFace_(ownScvf, ownScvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos);
+        return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos);
     };
 
     //! helper function to get the averaged extrusion factor for a face
@@ -589,51 +591,6 @@ private:
     }
 
     /*!
-     * \brief Return a velocity value from a boundary for which the boundary conditions have to be checked.
-     *
-     * \param problem The problem
-     * \param scvf The SubControlVolumeFace that is normal to the boundary
-     * \param localIdx The local index of the face that is on the boundary
-     * \param boundaryElement The element that is on the boundary
-     * \param parallelVelocity The velocity over scvf
-     */
-    Scalar getParallelVelocityFromOtherBoundary_(const Problem& problem,
-                                                 const FVElementGeometry& fvGeometry,
-                                                 const SubControlVolumeFace& scvf,
-                                                 const int localIdx,
-                                                 const Element& boundaryElement,
-                                                 const Scalar parallelVelocity) const
-    {
-        // A ghost subface at the boundary is created, featuring the location of the sub face's center
-        const SubControlVolumeFace& boundaryNormalFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData(localIdx).localNormalFaceIdx);
-        GlobalPosition boundarySubFaceCenter = scvf.pairData(localIdx).virtualFirstParallelFaceDofPos + boundaryNormalFace.center();
-        boundarySubFaceCenter *= 0.5;
-        const SubControlVolumeFace boundarySubFace = makeGhostFace_(boundaryNormalFace, boundarySubFaceCenter);
-
-        // The boundary condition is checked, in case of symmetry or Dirichlet for the pressure
-        // a gradient of zero is assumed in the direction normal to the bounadry, while if there is
-        // Dirichlet of BJS for the velocity the related values are exploited.
-        const auto bcTypes = problem.boundaryTypes(boundaryElement, boundarySubFace);
-
-        if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
-        {
-            const SubControlVolumeFace ghostFace = makeParallelGhostFace_(scvf, localIdx);
-            return problem.dirichlet(boundaryElement, ghostFace)[Indices::velocity(scvf.directionIndex())];
-        }
-        else if (bcTypes.isSymmetry() || bcTypes.isDirichlet(Indices::pressureIdx))
-            return parallelVelocity;
-        else if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
-        {
-            const SubControlVolumeFace ghostFace = makeParallelGhostFace_(scvf, localIdx);
-            return problem.bjsVelocity(boundaryElement, scvf, boundaryNormalFace, localIdx, parallelVelocity);
-        }
-        else
-        {
-            // Neumann conditions are not well implemented
-            DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions for the momentum equations at global position " << boundarySubFaceCenter);
-        }
-    }
-    /*!
      * \brief Return the outer parallel velocity for normal faces that are on the boundary and therefore have no neighbor.
      *
      * Calls the problem to retrieve a fixed value set on the boundary.
@@ -661,12 +618,20 @@ private:
         if (lateralFaceHasDirichletPressure)
             return velocitySelf;
 
+        //    ________________
+        //    --------#######o                 || frontal face of staggered half-control-volume
+        //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
+        //    |      ||      |                 x  dof position
+        //    |      ||      x~~~~> vel.Self   -- element boundaries
+        //    |      ||      |                 __ domain boundary
+        //    |      ||      |                 o  position at which the boundary conditions will be evaluated
+        //    ----------------
+
         const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
         if (lateralFaceHasBJS)
             return problem.bjsVelocity(element, scvf, normalFace, localSubFaceIdx, velocitySelf);
         return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
     }
-
 };
 
 } // end namespace Dumux
