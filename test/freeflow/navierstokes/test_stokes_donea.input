@@ -1,6 +1,6 @@
 [Grid]
 UpperRight = 1 1
-Cells =5 5
+Cells = 10 10
 
 [Problem]
 Name = test_donea # name passed to the output routines
@@ -12,6 +12,7 @@ MaxSteps = 10000
 MaxRelativeShift = 1e-10
 EnableShiftCriterion = false
 EnableSIMPLEAbsoluteResidualCriterion = true
+MaxTimeStepDivisions = 0
 
 [Vtk]
 WriteFaceData = false
@@ -22,7 +23,7 @@ WriteFaceData = false
 InitialConditionType = 0
 
 [ Component ]
-LiquidKinematicViscosity = 1e-3
+LiquidKinematicViscosity = 1
 
 [LinearSolver2]
 schurGMResRestart = 100
@@ -33,11 +34,3 @@ precVerbosityA = 0
 precVerbositySchurAppr = 0
 precMaxIter = 2000
 precResidReduction = 1e-13
-
-[Algorithm]
-AlgorithmType = 2
-#no SIMPLEC for Stokes
-
-[Underrelaxation]
-HundredTimesVelocityUnderrelaxationFactor = 100
-HundredTimesPressureUnderrelaxationFactor = 100

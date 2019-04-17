@@ -1,8 +1,6 @@
 [TimeLoop]
-DtInitial = 1 # [s]
-TEnd = 2 # [s]
-HaveMaxTimeStepSize = true
-MaxTimeStepSize = 1
+DtInitial = 1e-1 # [s]
+TEnd = 1e-1 # [s]
 
 [Grid]
 UpperRight = 1 1
@@ -15,13 +13,14 @@ EnableGravity = false
 
 [Component]
 LiquidDensity = 1
-LiquidKinematicViscosity = 1e+3
+LiquidKinematicViscosity = 1
 
 [ Newton ]
 EnableShiftCriterion = false
 EnableSIMPLEAbsoluteResidualCriterion = true
 MaxSteps = 10000
-MaxRelativeShift = 1e-9
+MaxRelativeShift = 1e-8
+MaxTimeStepDivisions = 0
 
 [Vtk]
 WriteFaceData = false
@@ -35,11 +34,3 @@ precVerbosityA = 0
 precVerbositySchurAppr = 0
 precMaxIter = 2000
 precResidReduction = 1e-13
-
-[Algorithm]
-AlgorithmType = 3
-
-
-[Underrelaxation]
-HundredTimesVelocityUnderrelaxationFactor = 1
-HundredTimesPressureUnderrelaxationFactor = 1

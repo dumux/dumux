@@ -1,8 +1,6 @@
 [TimeLoop]
-DtInitial = 1e-4 # [s]
-TEnd = 1e+4 # [s]
-#HaveMaxTimeStepSize = true
-#MaxTimeStepSize = 1e-4
+DtInitial = 1e-2 # [s]
+TEnd = 1e-2 # [s]
 
 [Grid]
 UpperRight = 10 1
@@ -15,7 +13,7 @@ EnableGravity = false
 
 [Component]
 LiquidDensity = 1
-LiquidKinematicViscosity = 1e-03
+LiquidKinematicViscosity = 1
 
 [ Newton ]
 EnableShiftCriterion = false
@@ -23,6 +21,7 @@ EnableSIMPLEAbsoluteResidualCriterion = true
 MaxSteps = 500
 MaxRelativeShift = 1e-8
 TargetSteps = 500
+MaxTimeStepDivisions = 0
 
 [Vtk]
 WriteFaceData = false
@@ -36,13 +35,3 @@ precVerbosityA = 0
 precVerbositySchurAppr = 0
 precMaxIter = 2000
 precResidReduction = 1e-13
-
-[Algorithm]
-AlgorithmType = 4
-#no SIMPLEC for Stokes
-
-[Underrelaxation]
-HundredTimesVelocityUnderrelaxationFactor = 100
-HundredTimesPressureUnderrelaxationFactor = 100
-HundredTimesPISOSecondStepVelocityUnderrelaxationFactor = 100
-HundredTimesPISOSecondStepPressureUnderrelaxationFactor = 100
