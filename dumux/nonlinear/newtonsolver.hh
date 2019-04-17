@@ -1782,7 +1782,7 @@ private:
 
                     this->l2Norm_ = outputResidual.two_norm();
 
-                    if (enableSIMPLENewtonResidualCriterion_)
+                    if (this->enableSIMPLENewtonResidualCriterion_)
                     {
                         SolutionVector newtonSolution;
                         Dune::loadMatrixMarket (newtonSolution[faceIdx], "face.txt");
@@ -1944,7 +1944,7 @@ private:
 
                     this->l2Norm_ = outputResidual.two_norm();
 
-                    if (enableSIMPLENewtonResidualCriterion_)
+                    if (this->enableSIMPLENewtonResidualCriterion_)
                     {
                         SolutionVector newtonSolution;
                         Dune::loadMatrixMarket (newtonSolution[faceIdx], "face.txt");
