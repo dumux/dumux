@@ -141,7 +141,8 @@ public:
     //! Constructor
     StokesDropsDarcyCouplingManager(std::shared_ptr<const FVGridGeometry<stokesIdx>> stokesFvGridGeometry,
                                     std::shared_ptr<const FVGridGeometry<interfaceIdx>> interfaceFvGridGeometry,
-                                    std::shared_ptr<const FVGridGeometry<darcyIdx>> darcyFvGridGeometry) : couplingMapper_(*this)
+                                    std::shared_ptr<const FVGridGeometry<darcyIdx>> darcyFvGridGeometry)
+                                   : couplingMapper_(*this)
     { }
 
     /*!
@@ -155,7 +156,6 @@ public:
               std::shared_ptr<const Problem<darcyIdx>> darcyProblem,
               const SolutionVector& curSol)
     {
-
         if(Dune::FloatCmp::ne(stokesProblem->gravity(), darcyProblem->gravity()))
               DUNE_THROW(Dune::InvalidStateException, "All models must use the same gravity vector");
 
@@ -363,7 +363,6 @@ public:
     /*!
      * \brief Update the coupling context for the Stokes residual w.r.t. the interface DOFs
      */
-    // TODO copied from stokesdarcy/couplingmanager (Stokes wrt Darcy)
     template<std::size_t i, class LocalAssemblerI, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
     void updateCouplingContext(Dune::index_constant<i> domainI,
                                const LocalAssemblerI& localAssemblerI,
