@@ -49,6 +49,7 @@
 #include <dumux/multidomain/newtonsolver.hh>
 
 #include <dumux/multidomain/boundary/stokesdropsdarcy/couplingmanager.hh>
+#include <dumux/multidomain/boundary/stokesdropsdarcy/dropmanager.hh>
 
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -178,6 +179,10 @@ int main(int argc, char** argv) try
     using CouplingManager = StokesDropsDarcyCouplingManager<Traits>;
     auto couplingManager = std::make_shared<CouplingManager>(stokesFvGridGeometry, interfaceFvGridGeometry, darcyFvGridGeometry);
 
+    // the drop manager
+    using DropManager = DropManager<Traits>;
+    auto dropManager = std::make_shared<DropManager>();
+
     // the indices
     constexpr auto stokesCellCenterIdx = CouplingManager::stokesCellCenterIdx;
     constexpr auto stokesFaceIdx = CouplingManager::stokesFaceIdx;
@@ -214,6 +219,7 @@ int main(int argc, char** argv) try
     auto solOld = sol;
 
     couplingManager->init(stokesProblem, interfaceProblem, darcyProblem, sol);
+    dropManager->init(interfaceProblem);
 
     // the grid variables
     using StokesGridVariables = GetPropType<StokesTypeTag, Properties::GridVariables>;
@@ -281,8 +287,13 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(solOld);
 
+        // evaluate drop formation condition, compute drop volume
+        dropManager->evaluateDropFormation(solOld, *interfaceFvGridGeometry);
+
         // solve the non-linear system with time step control
         nonLinearSolver.solve(sol, *timeLoop);
+
+        // update drop ... // TODO
 
         // make the new solution the old solution
         solOld = sol;

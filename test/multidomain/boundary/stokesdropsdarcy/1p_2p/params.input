@@ -6,17 +6,18 @@ MaxTimeStepSize = 50
 [Stokes.Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
-Cells = 20 20
+Cells = 6 6 # 20 20
 
 [Interface.Grid]
 LowerLeft = 0 # Stokes.Grid.LowerLeft x-coordinate
 UpperRight = 1 # Darcy.Grid.UpperRight x-coordinate
-Cells = 20 # Stokes/Darcy cells in x direction
+Cells = 6 # Stokes/Darcy cells in x direction
+DropDomains = 2
 
 [Darcy.Grid]
 UpperRight = 1 0
 LowerLeft = 0 -1
-Cells = 20 20
+Cells = 6 6 # 20 20
 
 [Stokes.Problem]
 Name = stokes
@@ -44,6 +45,8 @@ Swr = 0.005
 Snr = 0.01
 VgAlpha = 6.371e-4
 VgN = 8.0
+Theta = 130 # contact angle (Promo Chaozhong Chap. 8 / Baber2014a)
+SurfaceTension = 0.0625 # Baber2014a, h2oairdropsfluidsystem
 
 [Problem]
 EnableGravity = true

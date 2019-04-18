@@ -115,6 +115,8 @@ public:
         saturation_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Saturation");
         temperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Temperature");
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+
+        numberOfDropDomains_ = getParamFromGroup<int>(this->paramGroup(), "Grid.DropDomains");
     }
 
     /*!
@@ -261,6 +263,10 @@ public:
 
     // \}
 
+    //! TODO
+    int getNumberOfDropDomains() const
+    { return numberOfDropDomains_; }
+
     /*!
      * \brief Get the coupling manager
      */
@@ -284,6 +290,7 @@ private:
     Scalar pressure_;
     Scalar saturation_;
     Scalar temperature_;
+    int numberOfDropDomains_;
     std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManager_;
 };

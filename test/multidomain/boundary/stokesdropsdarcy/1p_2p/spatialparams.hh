@@ -58,6 +58,8 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
+    struct poreClass {Scalar meanPoreRadius; Scalar percentage; };
+
     ConservationSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
@@ -71,6 +73,26 @@ public:
         // parameters for the vanGenuchten law
         params_.setVgAlpha(getParam<Scalar>("SpatialParams.VgAlpha"));
         params_.setVgn(getParam<Scalar>("SpatialParams.VgN"));
+
+        contactAngle_ = M_PI / 180 * getParam<Scalar>("SpatialParams.Theta");
+        surfaceTension_ = getParam<Scalar>("SpatialParams.SurfaceTension");
+
+        // pore size distribution
+        // Acosta et al. (2006) -- used in Baber2014
+        const int numberOfClasses = 4;
+        poreClasses_.resize(numberOfClasses);
+        // 0-100nm -> 50nm
+        poreClasses_[0].meanPoreRadius = 5e-8;
+        poreClasses_[0].percentage = 0.15;
+        // 100-1000nm -> 500nm
+        poreClasses_[1].meanPoreRadius = 5e-7;
+        poreClasses_[1].percentage = 0.3;
+        // 1000 - 10 000nm -> 5000nm
+        poreClasses_[2].meanPoreRadius = 5e-6;
+        poreClasses_[2].percentage = 0.3;
+        // 10 000nm -100 000mn -> 50 000nm
+        poreClasses_[3].meanPoreRadius = 50e-6;
+        poreClasses_[3].percentage = 0.25;
     }
 
     /*!
@@ -89,12 +111,37 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
 
+    /*! \brief Defines the porosity in [-].
+     */
+    Scalar porosityInterface() const
+    { return porosity_; }
+
     /*! \brief Defines the Beavers-Joseph coefficient in [-].
      *
      * \param globalPos The global position
      */
     Scalar beaversJosephCoeffAtPos(const GlobalPosition& globalPos) const
     { return alphaBJ_; }
+
+    /*
+     * \brief Sets the pore size distribution (mean radii and percentage).
+     */
+     std::vector<poreClass> poreSizeDistribution() const
+    { return poreClasses_; }
+
+     /*
+      * \brief Returns the contact angle.
+      */
+     // TODO not constant -> move to ?
+     Scalar contactAngle() const
+     { return contactAngle_; }
+
+     /*
+      * \brief Returns the surface tension.
+      */
+     // TODO move to fluid system
+     Scalar surfaceTension() const
+     { return surfaceTension_; }
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law.
@@ -126,6 +173,9 @@ private:
     Scalar permeability_;
     Scalar porosity_;
     Scalar alphaBJ_;
+    Scalar contactAngle_;
+    Scalar surfaceTension_;
+    std::vector<poreClass> poreClasses_;
     MaterialLawParams params_;
     static constexpr Scalar eps_ = 1.0e-7;
 };
