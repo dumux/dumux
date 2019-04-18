@@ -29,7 +29,7 @@
 #warning "This header is deprecated. Use the new subgridmanager."
 
 #include <dune/common/deprecated.hh>
-#include "subgridgridmanager.hh"
+#include "subgridmanager.hh"
 
 namespace Dumux {
 
