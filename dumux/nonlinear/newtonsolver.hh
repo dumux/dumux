@@ -1718,7 +1718,7 @@ private:
 
                     if(algorithmType == 4){
                     //SIMPLER
-                        FaceToFaceMatrixBlock invDiagAAminusOne = getInvDiagAAminusOne_(invDiagA, A, numDofsFaceReduced);
+                        FaceToFaceMatrixBlock invDiagAAminusOne = getInvDiagAAminusOne_(A, invDiagA, numDofsFaceReduced);
 
                         FaceSolutionVector uHat;
                         uHat.resize(numDofsFaceReduced);
@@ -1859,7 +1859,7 @@ private:
                         //PISO
                         SolutionVector secondULastIter(uCurrentIter);
 
-                        FaceToFaceMatrixBlock invDiagAAminusOne = getInvDiagAAminusOne_(invDiagA, A, numDofsFaceReduced);
+                        FaceToFaceMatrixBlock invDiagAAminusOne = getInvDiagAAminusOne_(A, invDiagA, numDofsFaceReduced);
 
                         CCToFaceMatrixBlock matrixForSecondPressureStepRHS;
                         Dune::matMultMat(matrixForSecondPressureStepRHS, C, invDiagAAminusOne);
@@ -2072,13 +2072,15 @@ private:
         }
     }
 
-    FaceToFaceMatrixBlock getInvDiagAAminusOne_(FaceToFaceMatrixBlock& A, FaceToFaceMatrixBlock& invDiagA, std::size_t numDofsFaceReduced){
+    FaceToFaceMatrixBlock getInvDiagAAminusOne_(FaceToFaceMatrixBlock A, const FaceToFaceMatrixBlock& invDiagA, std::size_t numDofsFaceReduced){
         //get a unity matrix of size numDofsFaceReduced
         FaceToFaceMatrixBlock ones;
         ones.setBuildMode(FaceToFaceMatrixBlock::random);
+
         setOnesPattern_(ones, numDofsFaceReduced);
+
         typename FaceToFaceMatrixBlock::RowIterator row = A.begin();
-        row = A.begin();
+
         for(; row != A.end(); ++row)
         {
             using size_type = typename FaceToFaceMatrixBlock::size_type;
