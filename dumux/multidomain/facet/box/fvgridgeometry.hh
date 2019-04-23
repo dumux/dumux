@@ -228,8 +228,15 @@ public:
             }
 
             // construct the sub control volume faces on the domain/interior boundaries
+            // skip handled facets (necessary for e.g. Dune::FoamGrid)
+            std::vector<unsigned int> handledFacets;
             for (const auto& intersection : intersections(this->gridView(), element))
             {
+                if (std::count(handledFacets.begin(), handledFacets.end(), intersection.indexInInside()))
+                    continue;
+
+                handledFacets.push_back(intersection.indexInInside());
+
                 // determine if all corners live on the facet grid
                 const auto isGeometry = intersection.geometry();
                 const auto numFaceCorners = isGeometry.corners();
@@ -444,9 +451,16 @@ public:
             const auto elementGeometry = element.geometry();
             const auto referenceElement = ReferenceElements::general(elementGeometry.type());
 
-            // store the sub control volume face indices on the domain boundary
+            // store the sub control volume face indices on the domain/interior boundary
+            // skip handled facets (necessary for e.g. Dune::FoamGrid)
+            std::vector<unsigned int> handledFacets;
             for (const auto& intersection : intersections(this->gridView(), element))
             {
+                if (std::count(handledFacets.begin(), handledFacets.end(), intersection.indexInInside()))
+                    continue;
+
+                handledFacets.push_back(intersection.indexInInside());
+
                 // determine if all corners live on the facet grid
                 const auto isGeometry = intersection.geometry();
                 const auto numFaceCorners = isGeometry.corners();

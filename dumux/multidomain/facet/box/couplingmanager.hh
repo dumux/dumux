@@ -159,9 +159,9 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
         template<bool s = bulkIsSurfaceGrid, std::enable_if_t<s, int> = 0>
         void resize(std::size_t numEmbedments)
         {
-            bulkFvGeometries.resize(numEmbedments, nullptr);
-            bulkElemVolVars.resize(numEmbedments, nullptr);
-            bulkElemFluxVarsCache.resize(numEmbedments, nullptr);
+            bulkFvGeometries.resize(numEmbedments);
+            bulkElemVolVars.resize(numEmbedments);
+            bulkElemFluxVarsCache.resize(numEmbedments);
             bulkElemBcTypes.resize(numEmbedments);
         }
 

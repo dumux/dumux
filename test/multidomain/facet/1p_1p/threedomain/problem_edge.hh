@@ -31,7 +31,9 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
+#include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/ccmpfa.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
@@ -48,6 +50,8 @@ namespace Properties {
 namespace TTag {
 struct OnePEdge { using InheritsFrom = std::tuple<OneP>; };
 struct OnePEdgeTpfa { using InheritsFrom = std::tuple<OnePEdge, CCTpfaModel>; };
+struct OnePEdgeMpfa { using InheritsFrom = std::tuple<OnePEdge, CCTpfaModel>; };
+struct OnePEdgeBox { using InheritsFrom = std::tuple<OnePEdge, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type

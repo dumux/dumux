@@ -58,7 +58,6 @@ class VertexEnrichmentHelper
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     static_assert(dim == 2 || dim == 3, "Grid dimension must be two or three");
-    static_assert(dim == dimWorld, "Enrichment helper still appears to be buggy for surface grids!");
     static_assert(dimWorld == int(CodimOneGridView::dimensionworld), "world dimension mismatch");
 
     using Intersection = typename GridView::Intersection;
@@ -234,10 +233,15 @@ private:
 
         // keep track of facets handled already while searching
         unsigned int foundCounter = 0;
+        std::vector<unsigned int> handledFacets;
         for (const auto& is : intersections(gridView, element))
         {
-            // skip intersections that were found already
+            // skip if on previous intersection again
             if (is.indexInInside() == prevIntersection.indexInInside())
+                continue;
+
+            // skip intersection if handled already (necessary for e.g. Dune::FoamGrid)
+            if (std::count(handledFacets.begin(), handledFacets.end(), is.indexInInside()))
                 continue;
 
             // determine all vertex indices of this face
@@ -252,6 +256,7 @@ private:
             if (std::find(faceVertexIndices.begin(), faceVertexIndices.end(), vIdxGlobal) != faceVertexIndices.end())
             {
                 foundCounter++;
+                handledFacets.push_back(is.indexInInside());
 
                 // keep searching in the outside element only if ...
                 // ... this is a not (processor) boundary
@@ -306,7 +311,7 @@ private:
         }
 
         if (foundCounter != numIsToFind)
-            DUNE_THROW(Dune::InvalidStateException, "Could not find all intersections at the vertex");
+            DUNE_THROW(Dune::InvalidStateException, "Found " << foundCounter << " instead of " << numIsToFind << " intersections around vertex");
     }
 };
 
