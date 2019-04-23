@@ -103,6 +103,7 @@
 
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/iofields.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
 namespace Dumux {
 namespace Properties {
@@ -192,6 +193,11 @@ struct IOFields<TypeTag, TTag::TwoPNCMinNI>
     using MineralizationIOF = MineralizationIOFields<TwoPNCIOFields>;
     using type = EnergyIOFields<MineralizationIOF>;
 };
+
+//! Use the effective thermal conductivities calculated using the Somerton method
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::TwoPNCMinNI>
+{ using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux
