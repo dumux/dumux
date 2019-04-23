@@ -42,7 +42,12 @@ struct EmptyCacheFiller
 };
 
 //! An empty flux variables cache
-struct EmptyCache {};
+template<class S>
+struct EmptyCache
+{
+    //! export type used for scalar values
+    using Scalar = S;
+};
 
 #ifndef DOXYGEN // hide the empty caches from doxygen
 // an empty cache filler
