@@ -57,7 +57,11 @@ using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementat
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::box>
 : public BoxFluxVariablesCache<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::FVGridGeometry>>
-{};
+{
+public:
+    //! export type used for scalar values
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+};
 
 // the following classes choose the cache type: empty if the law disabled and the law's cache if it's enabled
 // if advections is disabled the advection type is still instatiated if we use std::conditional_t and has to be a full type
@@ -77,7 +81,11 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
 : public AdvectionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableAdvection()>
 , public DiffusionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableMolecularDiffusion()>
 , public EnergyCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance()>
-{};
+{
+public:
+    //! export type used for scalar values
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+};
 
 //! Specialization of the flux variables cache for the cell centered finite volume mpfa scheme.
 //! Stores data which is commonly used by all the different types of processes.
@@ -92,6 +100,9 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
     using MpfaHelper = typename GetPropType<TypeTag, Properties::FVGridGeometry>::MpfaHelper;
     static constexpr bool considerSecondary = MpfaHelper::considerSecondaryIVs();
 public:
+    //! export type used for scalar values
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
     //! Returns whether or not this cache has been updated
     bool isUpdated() const { return isUpdated_; }
 
