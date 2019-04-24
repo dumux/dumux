@@ -1166,7 +1166,7 @@ protected:
             const int domainICompIdx = couplingCompIdx(domainI, compIdx);
             const int domainJCompIdx = couplingCompIdx(domainJ, compIdx);
 
-            const bool insideDiffFluxIsUpstream = std::signbit(diffusiveFlux[domainICompIdx]);
+            const bool insideDiffFluxIsUpstream = diffusiveFlux[domainICompIdx] > 0;
             const Scalar componentEnthalpy = insideDiffFluxIsUpstream ?
                                              getComponentEnthalpy(insideVolVars, couplingPhaseIdx(domainI), domainICompIdx)
                                            : getComponentEnthalpy(outsideVolVars, couplingPhaseIdx(domainJ), domainJCompIdx);
