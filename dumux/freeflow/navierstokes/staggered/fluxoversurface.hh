@@ -143,11 +143,15 @@ public:
     /*!
      * \brief The constructor
      */
+    template<class Sol>
     FluxOverSurface(const GridVariables& gridVariables,
-                    const SolutionVector& sol)
+                    const Sol& sol)
     : gridVariables_(gridVariables),
       sol_(sol)
     {
+        static_assert(std::is_same<Sol, SolutionVector>::value, "Make sure that sol has the same type as SolutionVector."
+                                                                "Use StaggeredVtkOutputModule<GridVariables, decltype(sol)> when calling the constructor.");
+
         verbose_  = getParamFromGroup<bool>(problem_().paramGroup(), "FluxOverSurface.Verbose", false);
     }
 

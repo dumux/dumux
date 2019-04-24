@@ -82,8 +82,9 @@ class StaggeredVtkOutputModule
 
 public:
 
+    template<class Sol>
     StaggeredVtkOutputModule(const GridVariables& gridVariables,
-                             const SolutionVector& sol,
+                             const Sol& sol,
                              const std::string& name,
                              const std::string& paramGroup = "",
                              Dune::VTK::DataMode dm = Dune::VTK::conforming,
@@ -95,6 +96,9 @@ public:
                       gridVariables.curGridVolVars().problem().fvGridGeometry().gridView().comm().size() )
 
     {
+        static_assert(std::is_same<Sol, SolutionVector>::value, "Make sure that sol has the same type as SolutionVector."
+                                                                "Use StaggeredVtkOutputModule<GridVariables, decltype(sol)> when calling the constructor.");
+
         // enable velocity output per default
         this->addVelocityOutput(std::make_shared<StaggeredFreeFlowVelocityOutput<GridVariables, SolutionVector>>(gridVariables, sol));
         writeFaceVars_ = getParamFromGroup<bool>(paramGroup, "Vtk.WriteFaceData", false);
