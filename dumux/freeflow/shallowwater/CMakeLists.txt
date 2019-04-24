@@ -4,9 +4,9 @@ boundaryfluxes.hh
 fluxvariables.hh
 fluxvariablescache.hh
 indices.hh
+iofields.hh
 localresidual.hh
 model.hh
-properties.hh
+problem.hh
 volumevariables.hh
-vtkoutputfields.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflox/shallowwater/)
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/shallowwater/)
