@@ -22,7 +22,6 @@
  * \brief This file includes a unction to construct the Riemann problem
  *
  */
-
 #ifndef DUMUX_FLUX_SHALLOW_WATER_RIEMANN_PROBLEM_HH
 #define DUMUX_FLUX_SHALLOW_WATER_RIEMANN_PROBLEM_HH
 
@@ -31,6 +30,7 @@
 
 namespace Dumux {
 namespace ShallowWater {
+
 /*!
  * \ingroup ShallowWater
  * \brief Construct Riemann Problem and solve it
@@ -61,7 +61,6 @@ namespace ShallowWater {
  * \param grav gravity constant
  *
  */
-
 template<class Scalar, class GlobalPosition>
 std::array<Scalar,3> riemannProblem(Scalar waterDepthLeft,
                                     Scalar waterDepthRight,
@@ -132,6 +131,7 @@ std::array<Scalar,3> riemannProblem(Scalar waterDepthLeft,
 
     return localFlux;
 }
+
 } // end namespace ShallowWater
 } // end namespace Dumux
 
