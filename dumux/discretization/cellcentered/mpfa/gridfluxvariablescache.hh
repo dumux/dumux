@@ -94,6 +94,9 @@ class CCMpfaGridFluxVariablesCache<TheTraits, true>
 {
     using Problem = typename TheTraits::Problem;
     using ThisType = CCMpfaGridFluxVariablesCache<TheTraits, true>;
+
+    //! the flux variable cache filler type
+    using FluxVariablesCacheFiller = typename TheTraits::FluxVariablesCacheFiller;
 public:
     //! export the Traits
     using Traits = TheTraits;
@@ -109,16 +112,12 @@ public:
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
 
-    //! export the flux variable cache filler type
-    using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
-
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = true;
 
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
-public:
     //! The constructor
     CCMpfaGridFluxVariablesCache(const Problem& problem)
     : problemPtr_(&problem)
@@ -295,6 +294,9 @@ class CCMpfaGridFluxVariablesCache<TheTraits, false>
 {
     using Problem = typename TheTraits::Problem;
     using ThisType = CCMpfaGridFluxVariablesCache<TheTraits, false>;
+
+    //! the flux variable cache filler type
+    using FluxVariablesCacheFiller = typename TheTraits::FluxVariablesCacheFiller;
 public:
     //! export the Traits
     using Traits = TheTraits;
@@ -309,9 +311,6 @@ public:
 
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
-
-    //! export the flux variable cache filler type
-    using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = false;

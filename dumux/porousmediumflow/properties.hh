@@ -31,6 +31,7 @@
 
 #include <dumux/porousmediumflow/fluxvariables.hh>
 #include <dumux/porousmediumflow/fluxvariablescache.hh>
+#include <dumux/porousmediumflow/fluxvariablescachefiller.hh>
 #include <dumux/porousmediumflow/nonisothermal/localresidual.hh>
 #include <dumux/porousmediumflow/velocityoutput.hh>
 
@@ -58,6 +59,11 @@ struct FluxVariables<TypeTag, TTag::PorousMediumFlow> { using type = PorousMediu
 //! The flux variables cache class for models involving flow in porous media
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::PorousMediumFlow> { using type = PorousMediumFluxVariablesCache<TypeTag>; };
+
+//! The flux variables cache filler (FluxVariablesCache is the data type,
+//! the filler knows how to build up the caches for the stencil efficiently)
+template<class TypeTag>
+struct FluxVariablesCacheFiller<TypeTag, TTag::PorousMediumFlow> { using type = PorousMediumFluxVariablesCacheFiller<TypeTag>; };
 
 //! By default, we use darcy's law for the advective fluxes
 template<class TypeTag>

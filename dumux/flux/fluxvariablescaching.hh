@@ -27,29 +27,42 @@
 namespace Dumux {
 namespace FluxVariablesCaching {
 
-#ifndef DOXYGEN // hide the empty caches from doxygen
-
 //! The empty filler class corresponding to EmptyCache
 struct EmptyCacheFiller
 {
+    EmptyCacheFiller() = default;
+
+    template<class Problem>
+    EmptyCacheFiller(const Problem& p) {}
+
+    static constexpr bool isSolDependent = false; // the cache is empty
+
     template<typename... Args>
     static void fill(Args&&... args) {}
 };
 
+//! An empty flux variables cache
+template<class S>
+struct EmptyCache
+{
+    //! export type used for scalar values
+    using Scalar = S;
+};
+
+#ifndef DOXYGEN // hide the empty caches from doxygen
 // an empty cache filler
 // \note Never use the _EmptyCache directly as it lead to ambiguous definitions
 struct _EmptyCache
 { using Filler = EmptyCacheFiller; };
-
 #endif // DOXYGEN
 
 /*!
  * \ingroup Discretization
  * \brief Empty caches to use in a constitutive flux law/process, e.g. Darcy's law
  */
-class EmptyAdvectionCache : public _EmptyCache {};
-class EmptyDiffusionCache : public _EmptyCache {};
-class EmptyHeatConductionCache : public _EmptyCache {};
+struct EmptyAdvectionCache : public _EmptyCache {};
+struct EmptyDiffusionCache : public _EmptyCache {};
+struct EmptyHeatConductionCache : public _EmptyCache {};
 
 } // end namespace FluxVariablesCaching
 } // end namespace Dumux

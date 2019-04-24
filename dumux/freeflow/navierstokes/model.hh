@@ -57,7 +57,6 @@
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "fluxvariables.hh"
-#include "fluxvariablescache.hh"
 #include "indices.hh"
 #include "iofields.hh"
 
@@ -207,10 +206,6 @@ public:
 //! The flux variables
 template<class TypeTag>
 struct FluxVariables<TypeTag, TTag::NavierStokes> { using type = NavierStokesFluxVariables<TypeTag>; };
-
-//! The flux variables cache class, by default the one for free flow
-template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::NavierStokes> { using type = FreeFlowFluxVariablesCache<TypeTag>; };
 
 //! The specific I/O fields
 template<class TypeTag>
