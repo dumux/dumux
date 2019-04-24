@@ -28,6 +28,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
 #include <dumux/flux/fourierslaw.hh>
+#include <dumux/flux/fluxvariablescaching.hh>
 #include "turbulencemodel.hh"
 
 namespace Dumux {
@@ -38,6 +39,16 @@ namespace Properties {
 namespace TTag {
 struct FreeFlow { using InheritsFrom = std::tuple<ModelProperties>; };
 } // end namespace TTag
+
+//! The flux variables cache class, by default the one for free flow
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::FreeFlow> { using type = FluxVariablesCaching::EmptyCache<GetPropType<TypeTag, Properties::Scalar>>; };
+
+//! The flux variables cache filler (FluxVariablesCache is the data type,
+//! the filler knows how to build up the caches for the stencil efficiently)
+//! For the free flow model there is no need for a cache and filler
+template<class TypeTag>
+struct FluxVariablesCacheFiller<TypeTag, TTag::FreeFlow> { using type = FluxVariablesCaching::EmptyCacheFiller; };
 
 //! Use Fourier's Law as default heat conduction type
 template<class TypeTag>
