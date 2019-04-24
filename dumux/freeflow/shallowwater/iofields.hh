@@ -27,10 +27,6 @@
 #include <dumux/io/name.hh>
 #include <string>
 
-#include <dune/common/fvector.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/common/parameters.hh>
-
 namespace Dumux{
 
 /*!
