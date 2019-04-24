@@ -48,7 +48,10 @@ class ShallowWaterFlux
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    public:
+public:
+
+    using Cache = FluxVariablesCaching::EmptyAdvectionCache;
+    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller;
 
     /*!
      * \ingroup Flux
@@ -59,10 +62,6 @@ class ShallowWaterFlux
      *
      * \todo The choice of the Riemann solver should be more flexible
      */
-
-    using Cache = FluxVariablesCaching::EmptyAdvectionCache;
-    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller;
-
     static NumEqVector flux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
