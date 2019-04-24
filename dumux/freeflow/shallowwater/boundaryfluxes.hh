@@ -103,6 +103,8 @@ std::array<Scalar,3> fixedDischargeBoundary(Scalar dischargeBoundary,
 
     return cellStateRight;
 }
-} // end namespcae ShallowWater
+
+} // end namespace ShallowWater
 } // end namespace Dumux
+
 #endif

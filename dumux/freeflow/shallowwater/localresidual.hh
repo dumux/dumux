@@ -51,13 +51,12 @@ class ShallowWaterResidual : public GetPropType<TypeTag, Properties::BaseLocalRe
     using Element = typename GridView::template Codim<0>::Entity;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
-    //using DiffusionType = GetPropType<TypeTag, Properties::DiffusionType>;
 
 public:
 
     using ParentType::ParentType;
 
-        /*!
+    /*!
      * \brief Evaluate the rate of change of all conservation
      *        quantites (e.g. mass, momentum) within a sub-control
      *        volume of a finite volume element.
