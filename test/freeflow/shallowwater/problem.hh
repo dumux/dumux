@@ -90,12 +90,11 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::ShallowWaterModel> { static c
  * \ingroup Shallow water equations model
  * \ingroup ImplicitTestProblems
  *
- * \brief A simple dam break test (1D wet dam break). 
+ * \brief A simple dam break test (1D wet dam break).
  *
  * The domain is 20 meters long with a gate in the middle. On the left
  * side the water depth is 4 meters and on the right side the depth is 1 meter.
- * All boundaries are set to no-flow. 
- *      
+ * All boundaries are set to no-flow.
  *
  * This problem uses the \ref ShallowWaterModel
  *
@@ -199,8 +198,6 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& nxy = scvf.unitOuterNormal();
-        const auto& ip = scvf.ipGlobal();
-
 
         auto riemannFlux = ShallowWater::riemannProblem(insideVolVars.waterDepth(),
                                                         insideVolVars.waterDepth(),
