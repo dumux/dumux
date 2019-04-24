@@ -67,14 +67,13 @@
 #include <dumux/common/properties/model.hh>
 
 #include <dumux/flux/shallowwaterflux.hh>
+#include <dumux/flux/fluxvariablescaching.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "fluxvariables.hh"
-#include "fluxvariablescache.hh"
 #include "indices.hh"
 #include "iofields.hh"
-#include "fluxvariablescachefiller.hh"
 
 namespace Dumux {
 
@@ -113,7 +112,7 @@ namespace Properties {
 
 //! Type tag for shallow water equation model inherits from model properties
 namespace TTag {
-struct ShallowWater { using InheritsFrom = std::tuple<ModelProperties>;};
+struct ShallowWater { using InheritsFrom = std::tuple<ModelProperties>; };
 }// end namespace TTag
 
 //! The grid flux variables cache with an empty ShallowWaterFluxVariablesCacheFiller
@@ -124,7 +123,7 @@ private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-    using FluxVariablesCacheFiller = ShallowWaterFluxVariablesCacheFiller<TypeTag>;
+    using FluxVariablesCacheFiller = GetPropType<TypeTag, Properties::FluxVariablesCacheFiller>;
 public:
     using type = CCTpfaGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
 };
@@ -170,11 +169,16 @@ public:
 
 
 template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::ShallowWater> {using type = ShallowWaterFluxVariablesCache<TypeTag>;};
+struct FluxVariablesCache<TypeTag, TTag::ShallowWater>
+{
+    using type = FluxVariablesCaching::EmptyCache< GetPropType<TypeTag, Properties::Scalar> >;
+};
+
+template<class TypeTag>
+struct FluxVariablesCacheFiller<TypeTag, TTag::ShallowWater> { using type = FluxVariablesCaching::EmptyCacheFiller; };
 
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::ShallowWater> {using type = ShallowWaterIOFields;};
-
 
 template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::ShallowWater> {using type = ShallowWaterFlux<TypeTag>;};
