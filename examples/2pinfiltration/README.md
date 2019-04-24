@@ -10,8 +10,25 @@ Soil contamination problem where DNAPL infiltrates a fully water saturated mediu
 
 
 ## Infiltration (point source)
+### problem.hh
+The point sources are specified in the problem.hh file by the addPointSources method, in which you can add an arbitrary number of point sources to the vector of point sources.
+To instantiate a point source the position and the infiltration values are needed.
+For the definition of the PointSource class see dumux/common/pointsource.hh
+```C++
+void addPointSources(std::vector<PointSource>& pointSources) const
+{
+    // inject 0.1 kg/s of non-wetting phase at position (0.502, 3.02);
+    pointSources.push_back(PointSource({0.502, 3.02}, {0, 0.1}));
+}
+```
 
-
+### main.cc
+In the main.cc file the computePointSourceMap method deals with the point sources. It must be called during the initialisation (l. 97) and after each refinement of the mesh (ll. 135, 151 and 205).
+```C++
+problem->computePointSourceMap();
+```
+The computePointSourceMap method is inherited from the fvproblem and therefore specified in the dumux/common/fvproblem.hh.
+It calls the addPointSource method specified in the problem.hh file.
 
 ## Adaptive grid
 ### main.cc
