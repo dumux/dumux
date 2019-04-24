@@ -32,7 +32,7 @@ The grid adaptation is prepared during the initialization by the following steps
 * do refinement for the initial conditions using the indicator (ll. 140-144)
 * update grid data after adaption (ll. 147-152)
 
-The indicator ... 
+The indicator ...
 
 During the time loop, the refinement indicator is computed (l. 191) and the respective elements to be refined are marked (ll. 194-196).
 
