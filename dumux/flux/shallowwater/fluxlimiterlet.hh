@@ -22,7 +22,6 @@
  * \brief Function to limit the fluxes
  *
  */
-
 #ifndef DUMUX_FLUX_SHALLOW_WATER_FLUX_LIMITER_LET_HH
 #define DUMUX_FLUX_SHALLOW_WATER_FLUX_LIMITER_LET_HH
 
@@ -31,6 +30,7 @@
 
 namespace Dumux {
 namespace ShallowWater {
+
 /*!
  * \ingroup ShallowWater
  * \brief Flux limiter function to scale fluxes for small water depths.
@@ -80,6 +80,7 @@ static Scalar fluxLimiterLET(const Scalar& valueLeft,
 
         return mobility;
 }
+
 } // end namespace ShallowWater
 } // end namespace Dumux
 

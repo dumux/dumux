@@ -456,6 +456,7 @@ std::array<Scalar,3> exactRiemann(const Scalar& dl,
 
         return flux;
 }
+
 } // end namespace ShallowWater
 } // end namespace Dumux
 
