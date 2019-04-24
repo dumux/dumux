@@ -27,7 +27,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 
-
 namespace Dumux{
 
 /*!
@@ -84,7 +83,6 @@ public:
      * \brief Returns the diffusive flux (e.g. diffusion of tracer)
      *
      */
-
     NumEqVector diffusiveFlux() const
     {
         NumEqVector fluxVector(0.0);

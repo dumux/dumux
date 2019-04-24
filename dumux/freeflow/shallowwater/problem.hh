@@ -33,8 +33,6 @@ namespace Dumux{
 /*!
  * \ingroup ShallowWaterModel
  * \brief ShallowWater problem base class.
- *
- *
  */
 template<class TypeTag>
 class ShallowWaterProblem : public FVProblem<TypeTag>
@@ -50,7 +48,7 @@ class ShallowWaterProblem : public FVProblem<TypeTag>
 public:
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
 
-        /*!
+    /*!
      * \brief Constructor, passing the spatial parameters
      *
      * \param fvGridGeometry The finite volume grid geometry

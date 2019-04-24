@@ -60,7 +60,6 @@
  * overall computation time drastically.
  *
  */
-
 #ifndef DUMUX_FREEFLOW_SHALLOW_WATER_MODEL_HH
 #define DUMUX_FREEFLOW_SHALLOW_WATER_MODEL_HH
 
@@ -83,7 +82,6 @@ namespace Dumux {
  * \ingroup ShallowWaterModel
  * \brief Specifies a number properties of shallow water models.
  */
-
 template <class TypeTag>
 struct ShallowWaterModelTraits
 {
