@@ -136,10 +136,10 @@ private:
 
         for (const auto& data : scvf.pairData())
         {
-            auto& normalFace = fvGeometry.scvf(eIdx, data.localNormalFaceIdx);
-            if (!normalFace.boundary())
+            auto& lateralFace = fvGeometry.scvf(eIdx, data.localLateralFaceIdx);
+            if (!lateralFace.boundary())
             {
-                const auto firstParallelElementDofIdx = normalFace.outsideScvIdx();
+                const auto firstParallelElementDofIdx = lateralFace.outsideScvIdx();
                 stencil.push_back(firstParallelElementDofIdx);
             }
         }
@@ -159,9 +159,9 @@ private:
         for (const auto& data : scvf.pairData())
         {
             // add normal dofs
-            stencil.push_back(data.normalPair.first);
+            stencil.push_back(data.lateralPair.first);
             if (!scvf.boundary())
-                stencil.push_back(data.normalPair.second);
+                stencil.push_back(data.lateralPair.second);
 
             // add parallel dofs
             for (SmallLocalIndex i = 0; i < upwindSchemeOrder; i++)

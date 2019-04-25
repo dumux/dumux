@@ -53,11 +53,11 @@ struct PairData
     std::bitset<upwindSchemeOrder> hasParallelNeighbor;
     std::array<GridIndexType, upwindSchemeOrder> parallelDofs;
     std::array<Scalar, upwindSchemeOrder> parallelCellWidths;
-    bool hasNormalNeighbor = false;
-    std::pair<GridIndexType, GridIndexType> normalPair;
-    SmallLocalIndexType localNormalFaceIdx;
-    Scalar normalDistance;
-    GlobalPosition virtualFirstParallelFaceDofPos;
+    bool hasOuterLateral = false;
+    std::pair<GridIndexType, GridIndexType> lateralPair;
+    SmallLocalIndexType localLateralFaceIdx;
+    Scalar lateralDistance;
+    GlobalPosition virtualBoundaryFaceDofPos;
 };
 
 
@@ -350,7 +350,7 @@ private:
     }
 
     /*!
-     * \brief Fills the pair data with the normal dofs and distances
+     * \brief Fills the pair data with the lateral dofs and distances
      *        and calls a further function to collect the parallel dofs and distances
      */
     void fillPairData_()
@@ -359,23 +359,23 @@ private:
         pairData_ = {};
 
         // set basic global positions
-        const auto& elementCenter = element_.geometry().center();
-        const auto& FacetCenter = intersection_.geometry().center();
+        const auto& selfElementCenter = element_.geometry().center();
+        const auto& selfFacetCenter = intersection_.geometry().center();
 
-        // get the inner normal Dof Index
-        SmallLocalIndexType numPairInnerNormalIdx = 0;
+        // get the inner lateral Dof Index
+        SmallLocalIndexType numPairInnerLateralIdx = 0;
         for (const auto& innerElementIntersection : intersections(gridView_, element_))
         {
             if (facetIsNormal_(innerElementIntersection.indexInInside(), intersection_.indexInInside()))
             {
                 const auto innerElementIntersectionIdx = innerElementIntersection.indexInInside();
-                setNormalPairFirstInfo_(innerElementIntersectionIdx, element_, numPairInnerNormalIdx);
-                numPairInnerNormalIdx++;
+                setLateralPairFirstInfo_(innerElementIntersectionIdx, element_, numPairInnerLateralIdx);
+                numPairInnerLateralIdx++;
             }
         }
 
-        // get the outer normal Dof Index
-        SmallLocalIndexType numPairOuterNormalIdx = 0;
+        // get the outer lateral Dof Index
+        SmallLocalIndexType numPairOuterLateralIdx = 0;
         if (intersection_.neighbor())
         {
             // the direct neighbor element and the respective intersection index
@@ -387,20 +387,25 @@ private:
                 if (facetIsNormal_(directNeighborElementIntersection.indexInInside(), intersection_.indexInOutside()))
                 {
                     const auto directNeighborElemIsIdx = directNeighborElementIntersection.indexInInside();
-                    setNormalPairSecondInfo_(directNeighborElemIsIdx, directNeighborElement, numPairOuterNormalIdx);
-                    numPairOuterNormalIdx++;
+                    setLateralPairSecondInfo_(directNeighborElemIsIdx, directNeighborElement, numPairOuterLateralIdx);
+                    numPairOuterLateralIdx++;
                 }
             }
         }
         else // intersection is on boundary
         {
-            // fill the normal pair entries
-            for(SmallLocalIndexType pairIdx = 0; pairIdx < numPairs; ++pairIdx)
+            for (const auto& intersection : intersections(gridView_, element_))
             {
-                assert(!pairData_[pairIdx].hasNormalNeighbor);
-                const auto distance = FacetCenter - elementCenter;
-                pairData_[pairIdx].normalDistance = std::move(distance.two_norm());
-                numPairOuterNormalIdx++;
+                if (facetIsNormal_(intersection.indexInInside(), intersection_.indexInInside()))
+                {
+                    assert(!pairData_[numPairOuterLateralIdx].hasOuterLateral);
+                    const auto boundaryDistanceOffset = intersection.geometry().center() - selfElementCenter;
+                    pairData_[numPairOuterLateralIdx].virtualBoundaryFaceDofPos = std::move(boundaryDistanceOffset + selfElementCenter);
+
+                    const auto normalDistanceoffset = selfFacetCenter - selfElementCenter;
+                    pairData_[numPairOuterLateralIdx].lateralDistance = std::move(normalDistanceoffset.two_norm());
+                    numPairOuterLateralIdx++;
+                }
             }
         }
 
@@ -427,7 +432,7 @@ private:
                 auto parallelAxisIdx = directionIndex(intersection);
                 if (intersection.neighbor())
                 {
-                    // If the normal intersection has a neighboring cell, go in and store the parallel information.
+                    // If the lateral intersection has a neighboring cell, go in and store the parallel information.
                     const auto& outerElement = intersection.outside();
                     pairData_[numPairParallelIdx].hasParallelNeighbor.set(0, true);
                     pairData_[numPairParallelIdx].parallelDofs[0] = gridView_.indexSet().subIndex(outerElement, parallelLocalIdx, codimIntersection);
@@ -438,9 +443,9 @@ private:
                     // If the intersection has no neighbor we have to deal with the virtual outer parallel dof
                     const auto& boundaryFacetCenter = intersection.geometry().center();
                     const auto distance = boundaryFacetCenter - elementCenter;
-                    const auto virtualFirstParallelFaceDofPos = intersection_.geometry().center() + distance;
+                    const auto virtualBoundaryFaceDofPos = intersection_.geometry().center() + distance;
 
-                    pairData_[numPairParallelIdx].virtualFirstParallelFaceDofPos = std::move(virtualFirstParallelFaceDofPos);
+                    pairData_[numPairParallelIdx].virtualBoundaryFaceDofPos = std::move(virtualBoundaryFaceDofPos);
                 }
                 numPairParallelIdx++;
             }
@@ -468,19 +473,19 @@ private:
                 if( intersection.neighbor() )
                 {
                     auto parallelAxisIdx = directionIndex(intersection);
-                    auto localNormalIntersectionIndex = intersection.indexInInside();
+                    auto localLateralIntersectionIndex = intersection.indexInInside();
                     auto e = element_;
 
                     bool keepStacking =  (parallelElementStack.size() < numParallelFaces);
                     while(keepStacking)
                     {
-                        for(const auto& normalIntersection : intersections(gridView_, e))
+                        for(const auto& lateralIntersection : intersections(gridView_, e))
                         {
-                            if( normalIntersection.indexInInside() == localNormalIntersectionIndex )
+                            if( lateralIntersection.indexInInside() == localLateralIntersectionIndex )
                             {
-                                if( normalIntersection.neighbor() )
+                                if( lateralIntersection.neighbor() )
                                 {
-                                    parallelElementStack.push(normalIntersection.outside());
+                                    parallelElementStack.push(lateralIntersection.outside());
                                     keepStacking = (parallelElementStack.size() < numParallelFaces);
                                 }
                                 else
@@ -507,9 +512,9 @@ private:
                     const auto& boundaryFacetCenter = intersection.geometry().center();
 
                     const auto distance = boundaryFacetCenter - elementCenter;
-                    const auto virtualFirstParallelFaceDofPos = intersection_.geometry().center() + distance;
+                    const auto virtualBoundaryFaceDofPos = intersection_.geometry().center() + distance;
 
-                    pairData_[numPairParallelIdx].virtualFirstParallelFaceDofPos = std::move(virtualFirstParallelFaceDofPos);
+                    pairData_[numPairParallelIdx].virtualBoundaryFaceDofPos = std::move(virtualBoundaryFaceDofPos);
                 }
                 numPairParallelIdx++;
             }
@@ -542,29 +547,29 @@ private:
         return element.template subEntity <1> (localFacetIdx);
     };
 
-    //! Sets the information about the normal faces (within the element)
-    void setNormalPairFirstInfo_(const int isIdx, const Element& element, const int numPairsIdx)
+    //! Sets the information about the lateral faces (within the element)
+    void setLateralPairFirstInfo_(const int isIdx, const Element& element, const int numPairsIdx)
     {
-        // store the inner normal dofIdx
-        pairData_[numPairsIdx].normalPair.first = gridView_.indexSet().subIndex(element, isIdx, codimIntersection);
+        // store the inner lateral dofIdx
+        pairData_[numPairsIdx].lateralPair.first = gridView_.indexSet().subIndex(element, isIdx, codimIntersection);
 
-        // store the local normal facet index
-        pairData_[numPairsIdx].localNormalFaceIdx = isIdx;
+        // store the local lateral facet index
+        pairData_[numPairsIdx].localLateralFaceIdx = isIdx;
     }
 
-    //! Sets the information about the normal faces (in the neighbor element)
-    void setNormalPairSecondInfo_(const int isIdx, const Element& element, const int numPairsIdx)
+    //! Sets the information about the lateral faces (in the neighbor element)
+    void setLateralPairSecondInfo_(const int isIdx, const Element& element, const int numPairsIdx)
     {
         // store the dofIdx
-        pairData_[numPairsIdx].hasNormalNeighbor = true;
-        pairData_[numPairsIdx].normalPair.second = gridView_.indexSet().subIndex(element, isIdx, codimIntersection);
+        pairData_[numPairsIdx].hasOuterLateral = true;
+        pairData_[numPairsIdx].lateralPair.second = gridView_.indexSet().subIndex(element, isIdx, codimIntersection);
 
         // store the element distance
-        const auto& outerNormalFacet = getFacet_(isIdx, element);
-        const auto outerNormalFacetPos = outerNormalFacet.geometry().center();
-        const auto& innerNormalFacet = getFacet_(isIdx, element_);
-        const auto innerNormalFacetPos = innerNormalFacet.geometry().center();
-        pairData_[numPairsIdx].normalDistance = (innerNormalFacetPos - outerNormalFacetPos).two_norm();
+        const auto& outerLateralFacet = getFacet_(isIdx, element);
+        const auto outerLateralFacetPos = outerLateralFacet.geometry().center();
+        const auto& innerLateralFacet = getFacet_(isIdx, element_);
+        const auto innerLateralFacetPos = innerLateralFacet.geometry().center();
+        pairData_[numPairsIdx].lateralDistance = (innerLateralFacetPos - outerLateralFacetPos).two_norm();
     }
 
     //! Sets the information about the parallel distances
@@ -597,7 +602,7 @@ private:
     const typename Element::Geometry elementGeometry_; //!< Reference to the element geometry
     const GridView gridView_; //!< The grid view
     AxisData axisData_; //!< Data related to forward and backward faces
-    std::array<PairData, numPairs> pairData_; //!< Collection of pair information related to normal and parallel faces
+    std::array<PairData, numPairs> pairData_; //!< Collection of pair information related to lateral and parallel faces
 };
 
 } // end namespace Dumux

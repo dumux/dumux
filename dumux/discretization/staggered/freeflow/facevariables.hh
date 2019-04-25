@@ -110,10 +110,10 @@ public:
             const auto& subFaceData = scvf.pairData(i);
 
             // treat the velocities normal to the face
-            velocityNormalInside_[i] = faceSol[subFaceData.normalPair.first];
+            velocityLateralInside_[i] = faceSol[subFaceData.lateralPair.first];
 
-            if (scvf.hasOuterNormal(i))
-                velocityNormalOutside_[i] = faceSol[subFaceData.normalPair.second];
+            if (scvf.hasOuterLateral(i))
+                velocityLateralOutside_[i] = faceSol[subFaceData.lateralPair.second];
 
             // treat the velocities parallel to the self face
             for (int j = 0; j < upwindSchemeOrder; j++)
@@ -178,9 +178,9 @@ public:
     *
     * \param localSubFaceIdx The local index of the subface
     */
-    Scalar velocityNormalInside(const int localSubFaceIdx) const
+    Scalar velocityLateralInside(const int localSubFaceIdx) const
     {
-        return velocityNormalInside_[localSubFaceIdx];
+        return velocityLateralInside_[localSubFaceIdx];
     }
 
     /*!
@@ -188,9 +188,9 @@ public:
     *
     * \param localSubFaceIdx The local index of the subface
     */
-    Scalar velocityNormalOutside(const int localSubFaceIdx) const
+    Scalar velocityLateralOutside(const int localSubFaceIdx) const
     {
-        return velocityNormalOutside_[localSubFaceIdx];
+        return velocityLateralOutside_[localSubFaceIdx];
     }
 
 private:
@@ -221,8 +221,8 @@ private:
 
     InAxisVelocities inAxisVelocities_;
     std::array<std::array<Scalar, upwindSchemeOrder>, numPairs> velocityParallel_;
-    std::array<Scalar, numPairs>  velocityNormalInside_;
-    std::array<Scalar, numPairs>  velocityNormalOutside_;
+    std::array<Scalar, numPairs>  velocityLateralInside_;
+    std::array<Scalar, numPairs>  velocityLateralOutside_;
 
 };
 
