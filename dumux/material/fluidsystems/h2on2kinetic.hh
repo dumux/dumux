@@ -68,8 +68,7 @@ public:
     {
         const Scalar T = fluidState.temperature(phaseIdx);
         const Scalar p = fluidState.pressure(phaseIdx);
-        Valgrind::CheckDefined(T);
-        Valgrind::CheckDefined(p);
+
         switch (phaseIdx){
             case ParentType::liquidPhaseIdx:
                 switch(compIdx){

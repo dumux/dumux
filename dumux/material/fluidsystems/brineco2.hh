@@ -683,6 +683,41 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
+    /*!
+     * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
+     * \param fluidState The fluid state
+     * \param phaseIdx The index of the phase
+     * \param componentIdx The index of the component
+     */
+    template <class FluidState>
+    static Scalar componentEnthalpy(const FluidState& fluidState, int phaseIdx, int componentIdx)
+    {
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
+
+        if (phaseIdx == liquidPhaseIdx)
+        {
+            if (componentIdx == BrineOrH2OIdx)
+                return H2O::liquidEnthalpy(T, p);
+            else if (componentIdx == CO2Idx)
+                return CO2::liquidEnthalpy(T, p);
+            else if (componentIdx == NaClIdx)
+                DUNE_THROW(Dune::NotImplemented, "The component enthalpy for NaCl is not implemented.");
+            DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
+        }
+        else if (phaseIdx == gasPhaseIdx)
+        {
+            if (componentIdx == BrineOrH2OIdx)
+                return H2O::gasEnthalpy(T, p);
+            else if (componentIdx == CO2Idx)
+                return CO2::gasEnthalpy(T, p);
+            else if (componentIdx == NaClIdx)
+                DUNE_THROW(Dune::InvalidStateException, "Implementation assumes NaCl not to be present in gas phase");
+            DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+    }
+
     using Base::thermalConductivity;
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.

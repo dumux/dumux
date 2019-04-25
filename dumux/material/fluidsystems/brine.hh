@@ -378,6 +378,32 @@ public:
         return h_ls1*1E3; /*J/kg*/
     }
 
+    /*!
+     * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param componentIdx The index of the component to consider
+     *
+     */
+    template <class FluidState>
+    static Scalar componentEnthalpy(const FluidState &fluidState,
+                                    int phaseIdx,
+                                    int componentIdx)
+    {
+        const Scalar T = fluidState.temperature(liquidPhaseIdx);
+        const Scalar p = fluidState.pressure(liquidPhaseIdx);
+
+        if (phaseIdx == liquidPhaseIdx)
+        {
+            if (componentIdx == H2OIdx)
+                return H2O::liquidEnthalpy(T, p);
+            else if (componentIdx == NaClIdx)
+                DUNE_THROW(Dune::NotImplemented, "The component enthalpy for NaCl is not implemented.");
+            DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+    }
+
     using Base::molarDensity;
     /*!
      * \brief The molar density \f$\rho_{mol,\alpha}\f$ of
