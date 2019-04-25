@@ -1,0 +1,43 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 2 # [s]
+
+[Grid]
+UpperRight = 10 1
+Cells = 100 50
+
+[Problem]
+Name = test_channel_navierstokes_stationary # name passed to the output routines
+InletVelocity = 1000
+EnableGravity = false
+
+[Component]
+LiquidKinematicViscosity = 1
+
+[ Newton ]
+EnableShiftCriterion = false
+EnableSIMPLEAbsoluteResidualCriterion = true
+MaxSteps = 10000
+MaxRelativeShift = 1e-3
+TargetSteps = 10000
+
+[Vtk]
+WriteFaceData = false
+
+[LinearSolver2]
+schurGMResRestart = 100
+schurResidualReduction = 1e-10
+schurVerbosity = 0
+schurMaxIter = 2000
+precVerbosityA = 0
+precVerbositySchurAppr = 0
+precMaxIter = 2000
+precResidReduction = 1e-13
+
+[Algorithm]
+AlgorithmType = 4
+#no SIMPLEC for Stokes
+
+[Underrelaxation]
+HundredTimesVelocityUnderrelaxationFactor = 1
+HundredTimesPressureUnderrelaxationFactor = 1
