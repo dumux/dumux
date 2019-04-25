@@ -452,18 +452,56 @@ private:
                              ? insideVolVars.effectiveViscosity()
                              : (insideVolVars.effectiveViscosity() + outsideVolVars.effectiveViscosity()) * 0.5;
 
+        // Consider the shear stress caused by the gradient of the velocities normal to our face of interest.
         if (!enableUnsymmetrizedVelocityGradient)
         {
-            // If we are at a boundary, a gradient of zero is implictly assumed for all velocities,
-            // thus no further calculations are required.
-            if (!scvf.boundary())
+            // Create a boundaryTypes object (will be empty if not at a boundary).
+            Dune::Std::optional<BoundaryTypes> bcTypes;
+            const auto& boundaryFace = scvf.makeBoundaryFace(scvf.pairData(localSubFaceIdx).virtualBoundaryFaceDofPos);
+
+            // Get the boundary conditions if we are at a boundary.
+            if (scvf.boundary())
+                bcTypes.emplace(problem.boundaryTypes(element, scvf));
+
+            // Check if we have to do the computation
+            const bool enable = [&]()
+            {
+                // Always consider this term in the interior domain.
+                if (!scvf.boundary())
+                    return true;
+
+                // If we are at a boundary and a Dirichlet BC for pressure is set, a gradient of zero is implictly assumed for all velocities,
+                // thus no further calculations are required.
+                if (bcTypes && bcTypes->isDirichlet(Indices::pressureIdx))
+                    return false;
+
+                // If we are at a boundary and neither a Dirichlet BC or a Beavers-Joseph slip condition for the tangential velocity is set,
+                // we cannot calculate a velocity gradient and thus skip this part. TODO: is this the right approach?
+                return (bcTypes && (bcTypes->isDirichlet(Indices::velocity(lateralFace.directionIndex())) ||
+                                    bcTypes->isBJS(Indices::velocity(lateralFace.directionIndex()))));
+            }();
+
+            if (enable)
             {
                 // For the velocityGrad_ji gradient, get the velocities perpendicular to the velocity at the current scvf.
                 // The inner one is located at staggered face within the own element,
                 // the outer one at the respective staggered face of the element on the other side of the
                 // current scvf.
                 const Scalar innerLateralVelocity = faceVars.velocityLateralInside(localSubFaceIdx);
-                const Scalar outerLateralVelocity = faceVars.velocityLateralOutside(localSubFaceIdx);
+                const Scalar outerLateralVelocity = [&]()
+                {
+                    if (!scvf.boundary())
+                        return faceVars.velocityLateralOutside(localSubFaceIdx);
+                    else if (bcTypes->isDirichlet(Indices::velocity(lateralFace.directionIndex())))
+                        return problem.dirichlet(element, boundaryFace)[Indices::velocity(lateralFace.directionIndex())];
+                    else
+                    {
+                        // Compute the BJS slip velocity at the boundary. Note that the relevant velocity gradient is now
+                        // perpendicular to the own scvf.
+                        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+                        return problem.bjsVelocity(element, scv, scvf, innerLateralVelocity);
+                    }
+                }();
 
                 // Calculate the velocity gradient in positive coordinate direction.
                 const Scalar lateralDeltaV = scvf.normalInPosCoordDir()
