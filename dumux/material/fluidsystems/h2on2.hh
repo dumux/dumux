@@ -707,10 +707,8 @@ public:
                                     int phaseIdx,
                                     int componentIdx)
     {
-        Scalar T = fluidState.temperature(gasPhaseIdx);
-        Scalar p = fluidState.pressure(gasPhaseIdx);
-        Valgrind::CheckDefined(T);
-        Valgrind::CheckDefined(p);
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
 
         if (phaseIdx == liquidPhaseIdx)
         {
