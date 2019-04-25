@@ -117,38 +117,37 @@ public:
                                                                const FVElementGeometry& fvGeometry,
                                                                const Element& element,
                                                                const SubControlVolumeFace& scvf,
-                                                               const SubControlVolumeFace& normalFace,
                                                                const ElementVolumeVariables& elemVolVars,
                                                                const FaceVariables& faceVars,
                                                                const GridFluxVariablesCache& gridFluxVarsCache,
                                                                const int localSubFaceIdx,
-                                                               const bool lateralFaceHasDirichletPressure,
-                                                               const bool lateralFaceHasBJS)
+                                                               const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
     {
+        const auto eIdx = scvf.insideScvIdx();
+        const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+
         // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
         // of interest is located.
-        const Scalar transportingVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
+        const Scalar transportingVelocity = faceVars.velocityLateralInside(localSubFaceIdx);
 
         // Check whether the own or the neighboring element is upstream.
-        const bool selfIsUpstream = ( normalFace.directionSign() == sign(transportingVelocity) );
+        const bool selfIsUpstream = ( lateralFace.directionSign() == sign(transportingVelocity) );
 
         const bool canHigherOrder = canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx, std::integral_constant<bool, useHigherOrder>{});
 
         if (canHigherOrder)
         {
             const auto parallelUpwindingMomenta = getLateralUpwindingMomenta_(problem, fvGeometry, element, scvf, elemVolVars, faceVars,
-                                                                              transportingVelocity, localSubFaceIdx,
-                                                                              lateralFaceHasDirichletPressure, lateralFaceHasBJS,
+                                                                              transportingVelocity, localSubFaceIdx, lateralFaceBoundaryTypes,
                                                                               std::integral_constant<bool, useHigherOrder>{});
-            return doLateralMomentumUpwinding_(scvf, normalFace, parallelUpwindingMomenta, transportingVelocity, localSubFaceIdx, gridFluxVarsCache);
+            return doLateralMomentumUpwinding_(fvGeometry, scvf, parallelUpwindingMomenta, transportingVelocity, localSubFaceIdx, gridFluxVarsCache);
         }
         else
         {
             const auto parallelUpwindingMomenta = getLateralUpwindingMomenta_(problem, fvGeometry, element, scvf, elemVolVars, faceVars,
-                                                                              transportingVelocity, localSubFaceIdx,
-                                                                              lateralFaceHasDirichletPressure, lateralFaceHasBJS,
+                                                                              transportingVelocity, localSubFaceIdx, lateralFaceBoundaryTypes,
                                                                               std::integral_constant<bool, false>{});
-            return doLateralMomentumUpwinding_(scvf, normalFace, parallelUpwindingMomenta, transportingVelocity, localSubFaceIdx, gridFluxVarsCache);
+            return doLateralMomentumUpwinding_(fvGeometry, scvf, parallelUpwindingMomenta, transportingVelocity, localSubFaceIdx, gridFluxVarsCache);
         }
     }
 
@@ -370,11 +369,10 @@ private:
                                                              const FaceVariables& faceVars,
                                                              const Scalar transportingVelocity,
                                                              const int localSubFaceIdx,
-                                                             bool lateralFaceHasDirichletPressure,
-                                                             bool lateralFaceHasBJS,
+                                                             const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                              std::true_type)
     {
-        const SubControlVolumeFace& lateralFace = fvGeometry.scvf(ownScvf.insideScvIdx(), ownScvf.pairData(localSubFaceIdx).localNormalFaceIdx);
+        const SubControlVolumeFace& lateralFace = fvGeometry.scvf(ownScvf.insideScvIdx(), ownScvf.pairData(localSubFaceIdx).localLateralFaceIdx);
 
         // Get the volume variables of the own and the neighboring element
         const auto& insideVolVars = elemVolVars[lateralFace.insideScvIdx()];
@@ -384,10 +382,9 @@ private:
         // thus we always use this value for the computation of the transported momentum.
         if (!ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
         {
-            const Scalar boundaryMomentum = getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf, lateralFace,
+            const Scalar boundaryMomentum = getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf,
                                                                              faceVars.velocitySelf(), localSubFaceIdx,
-                                                                             lateralFaceHasDirichletPressure,
-                                                                             lateralFaceHasBJS) * insideVolVars.density();
+                                                                             lateralFaceBoundaryTypes) * insideVolVars.density();
 
              return std::array<Scalar, 3>{boundaryMomentum, boundaryMomentum, boundaryMomentum};
         }
@@ -404,10 +401,9 @@ private:
             if (ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
                 momenta[0] = faceVars.velocityParallel(localSubFaceIdx, 0) * insideVolVars.density();
             else
-                momenta[0] = getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf, lateralFace,
+                momenta[0] = getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf,
                                                               faceVars.velocitySelf(), localSubFaceIdx,
-                                                              lateralFaceHasDirichletPressure,
-                                                              lateralFaceHasBJS) * insideVolVars.density();
+                                                              lateralFaceBoundaryTypes) * insideVolVars.density();
 
             // The local index of the faces that is opposite to localSubFaceIdx
             const int oppositeSubFaceIdx = localSubFaceIdx % 2 ? localSubFaceIdx - 1 : localSubFaceIdx + 1;
@@ -454,12 +450,11 @@ private:
                                                              const FaceVariables& faceVars,
                                                              const Scalar transportingVelocity,
                                                              const int localSubFaceIdx,
-                                                             bool lateralFaceHasDirichletPressure,
-                                                             bool lateralFaceHasBJS,
+                                                             const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                              std::false_type)
     {
          // Check whether the own or the neighboring element is upstream.
-        const SubControlVolumeFace& lateralFace = fvGeometry.scvf(ownScvf.insideScvIdx(), ownScvf.pairData(localSubFaceIdx).localNormalFaceIdx);
+        const SubControlVolumeFace& lateralFace = fvGeometry.scvf(ownScvf.insideScvIdx(), ownScvf.pairData(localSubFaceIdx).localLateralFaceIdx);
 
         // Get the volume variables of the own and the neighboring element
         const auto& insideVolVars = elemVolVars[lateralFace.insideScvIdx()];
@@ -467,9 +462,9 @@ private:
 
         const Scalar momentumParallel = ownScvf.hasParallelNeighbor(localSubFaceIdx, 0)
                                       ? faceVars.velocityParallel(localSubFaceIdx, 0) * outsideVolVars.density()
-                                      : (getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf, lateralFace,
-                                                                         faceVars.velocitySelf(), localSubFaceIdx,
-                                                                         lateralFaceHasDirichletPressure, lateralFaceHasBJS)
+                                      : (getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf,
+                                                                          faceVars.velocitySelf(), localSubFaceIdx,
+                                                                          lateralFaceBoundaryTypes)
                                       * insideVolVars.density());
 
         // If the lateral face lies on a boundary, we assume that the parallel velocity on the boundary is actually known,
@@ -489,8 +484,8 @@ private:
      *
      *        Fowards to Frontal Momentum Upwinding method
      */
-    static Scalar doLateralMomentumUpwinding_(const SubControlVolumeFace& scvf,
-                                              const SubControlVolumeFace& normalScvf,
+    static Scalar doLateralMomentumUpwinding_(const FVElementGeometry& fvGeometry,
+                                              const SubControlVolumeFace& scvf,
                                               const std::array<Scalar, 2>& momenta,
                                               const Scalar transportingVelocity,
                                               const int localSubFaceIdx,
@@ -503,20 +498,22 @@ private:
      * \brief Returns the upwinded momentum for higher order upwind schemes
      *
      * \param scvf The sub control volume face
-     * \param normalScvf The normal sub control volume face
      * \param momenta The momenta to be upwinded
      * \param transportingVelocity The average of the self and opposite velocities.
      * \param localSubFaceIdx  The local index of the subface
      * \param gridFluxVarsCache The grid flux variables cache
      */
-    static Scalar doLateralMomentumUpwinding_(const SubControlVolumeFace& scvf,
-                                              const SubControlVolumeFace& normalScvf,
+    static Scalar doLateralMomentumUpwinding_(const FVElementGeometry& fvGeometry,
+                                              const SubControlVolumeFace& scvf,
                                               const std::array<Scalar, 3>& momenta,
                                               const Scalar transportingVelocity,
                                               const int localSubFaceIdx,
                                               const GridFluxVariablesCache& gridFluxVarsCache)
     {
-        const bool selfIsUpstream = ( normalScvf.directionSign() == sign(transportingVelocity) );
+        const auto eIdx = scvf.insideScvIdx();
+        const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+
+        const bool selfIsUpstream = ( lateralFace.directionSign() == sign(transportingVelocity) );
         const auto& upwindScheme = gridFluxVarsCache.staggeredUpwindMethods();
         std::array<Scalar,3> distances = getLateralDistances_(scvf, localSubFaceIdx, selfIsUpstream);
         return upwindScheme.tvd(momenta, distances, selfIsUpstream, upwindScheme.tvdApproach());
@@ -542,8 +539,8 @@ private:
             // The local index of the faces that is opposite to localSubFaceIdx
             const int oppositeSubFaceIdx = localSubFaceIdx % 2 ? localSubFaceIdx - 1 : localSubFaceIdx + 1;
 
-            distances[0] = ownScvf.cellCenteredParallelDistance(localSubFaceIdx, 0);
-            distances[1] = ownScvf.cellCenteredParallelDistance(oppositeSubFaceIdx, 0);
+            distances[0] = ownScvf.parallelDofsDistance(localSubFaceIdx, 0);
+            distances[1] = ownScvf.parallelDofsDistance(oppositeSubFaceIdx, 0);
             if (ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
                 distances[2] = ownScvf.pairData(localSubFaceIdx).parallelCellWidths[0];
             else
@@ -551,8 +548,8 @@ private:
         }
         else
         {
-            distances[0] = ownScvf.cellCenteredParallelDistance(localSubFaceIdx, 0);
-            distances[1] = ownScvf.cellCenteredParallelDistance(localSubFaceIdx, 1);
+            distances[0] = ownScvf.parallelDofsDistance(localSubFaceIdx, 0);
+            distances[1] = ownScvf.parallelDofsDistance(localSubFaceIdx, 1);
             distances[2] = ownScvf.pairData(localSubFaceIdx).parallelCellWidths[0];
         }
 
@@ -566,23 +563,23 @@ private:
      *
      * \param problem The problem
      * \param scvf The SubControlVolumeFace that is normal to the boundary
-     * \param normalFace The face at the boundary
      * \param velocitySelf the velocity at scvf
      * \param localSubFaceIdx The local index of the face that is on the boundary
      * \param element The element that is on the boundary
-     * \param lateralFaceHasDirichletPressure @c true if there is a dirichlet condition for the pressure on the boundary
-     * \param lateralFaceHasBJS @c true if there is a BJS condition fot the velocity on the boundary
+     * \param lateralFaceBoundaryTypes stores the type of boundary at the lateral face
      */
     static Scalar getParallelVelocityFromBoundary_(const Problem& problem,
                                                    const Element& element,
                                                    const FVElementGeometry& fvGeometry,
                                                    const SubControlVolumeFace& scvf,
-                                                   const SubControlVolumeFace& normalFace,
                                                    const Scalar velocitySelf,
                                                    const int localSubFaceIdx,
-                                                   const bool lateralFaceHasDirichletPressure,
-                                                   const bool lateralFaceHasBJS)
+                                                   const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
     {
+        // Find out what boundary type is set on the lateral face
+        const bool lateralFaceHasDirichletPressure = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx);
+        const bool lateralFaceHasBJS = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex()));
+
         // If there is a Dirichlet condition for the pressure we assume zero gradient for the velocity,
         // so the velocity at the boundary equal to that on the scvf.
         if (lateralFaceHasDirichletPressure)
@@ -590,8 +587,11 @@ private:
 
         if (lateralFaceHasBJS)
         {
+            const auto eIdx = scvf.insideScvIdx();
+            const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+
             const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
-            return problem.bjsVelocity(element, scv, normalFace, velocitySelf);
+            return problem.bjsVelocity(element, scv, lateralFace, velocitySelf);
         }
         else
         {
@@ -626,31 +626,31 @@ private:
                                                         const Scalar parallelVelocity)
     {
         // A ghost subface at the boundary is created, featuring the location of the sub face's center
-        const SubControlVolumeFace& boundaryNormalFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData(localIdx).localNormalFaceIdx);
-        GlobalPosition boundarySubFaceCenter = scvf.pairData(localIdx).virtualFirstParallelFaceDofPos + boundaryNormalFace.center();
-        boundarySubFaceCenter *= 0.5;
+        const SubControlVolumeFace& lateralFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData(localIdx).localLateralFaceIdx);
+        GlobalPosition lateralBoundaryFaceCenter = scvf.pairData(localIdx).virtualBoundaryFaceDofPos + lateralFace.center();
+        lateralBoundaryFaceCenter *= 0.5;
 
         //    ________________
         //    --------####o###                 || frontal face of staggered half-control-volume
-        //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
+        //    |      ||      | current scvf    #  lateralBoundaryFace of interest, lies on lateral boundary
         //    |      ||      |                 x  dof position
         //    |      ||      x~~~~> vel.Self   -- element boundaries
         //    |      ||      |                 __ domain boundary
         //    |      ||      |                 o  position at which the boundary conditions will be evaluated
-        //    ----------------                    (boundarySubFaceCenter)
+        //    ----------------                    (lateralBoundaryFaceCenter)
 
-        const SubControlVolumeFace boundarySubFace = boundaryNormalFace.makeBoundaryFace(boundarySubFaceCenter);
+        const SubControlVolumeFace lateralBoundaryFace = lateralFace.makeBoundaryFace(lateralBoundaryFaceCenter);
 
         // The boundary condition is checked, in case of symmetry or Dirichlet for the pressure
         // a gradient of zero is assumed in the direction normal to the bounadry, while if there is
         // Dirichlet of BJS for the velocity the related values are exploited.
-        const auto bcTypes = problem.boundaryTypes(boundaryElement, boundarySubFace);
+        const auto bcTypes = problem.boundaryTypes(boundaryElement, lateralBoundaryFace);
 
         if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
         {
             //    ________________
             //    --------#######o                 || frontal face of staggered half-control-volume
-            //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
+            //    |      ||      | current scvf    #  lateralBoundaryFace of interest, lies on lateral boundary
             //    |      ||      |                 x  dof position
             //    |      ||      x~~~~> vel.Self   -- element boundaries
             //    |      ||      |                 __ domain boundary
@@ -665,19 +665,19 @@ private:
         else if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
         {
             const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
-            return problem.bjsVelocity(boundaryElement, scv,boundaryNormalFace, parallelVelocity);
+            return problem.bjsVelocity(boundaryElement, scv, lateralFace, parallelVelocity);
         }
         else
         {
             // Neumann conditions are not well implemented
-            DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions for the momentum equations at global position " << boundarySubFaceCenter);
+            DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions for the momentum equations at global position " << lateralBoundaryFaceCenter);
         }
     }
 
     //! helper function to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
     static SubControlVolumeFace makeParallelGhostFace_(const SubControlVolumeFace& ownScvf, const int localSubFaceIdx)
     {
-        return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos);
+        return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).virtualBoundaryFaceDofPos);
     };
 };
 

@@ -223,12 +223,12 @@ public:
         // Diffusive flux.
         // The velocity gradient already accounts for the orientation
         // of the staggered face's outer normal vector.
-        const Scalar gradV = (velocityOpposite - velocitySelf) / scvf.selfToOppositeDistance();
+        const Scalar velocityGrad_ii = (velocityOpposite - velocitySelf) / scvf.selfToOppositeDistance();
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
         const Scalar factor = enableUnsymmetrizedVelocityGradient ? 1.0 : 2.0;
-        frontalFlux -= factor * insideVolVars.effectiveViscosity() * gradV;
+        frontalFlux -= factor * insideVolVars.effectiveViscosity() * velocityGrad_ii;
 
         // The pressure term.
         // If specified, the pressure can be normalized using the initial value on the scfv of interest.
@@ -278,7 +278,7 @@ public:
                                                     const ElementFaceVariables& elemFaceVars,
                                                     const GridFluxVariablesCache& gridFluxVarsCache)
     {
-        FacePrimaryVariables normalFlux(0.0);
+        FacePrimaryVariables lateralFlux(0.0);
         const auto& faceVars = elemFaceVars[scvf];
         const int numSubFaces = scvf.pairData().size();
 
@@ -286,8 +286,8 @@ public:
         for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
         {
             const auto eIdx = scvf.insideScvIdx();
-            // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this normal face.
-            const auto& normalFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localNormalFaceIdx);
+            // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this lateral face.
+            const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
 
             // create a boundaryTypes object (will be empty if not at a boundary)
             Dune::Std::optional<BoundaryTypes> lateralFaceBoundaryTypes;
@@ -298,22 +298,22 @@ public:
             {
                 // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
                 // the sub faces's center.
-                auto localSubFaceCenter = scvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos + normalFace.center();
-                localSubFaceCenter *= 0.5;
+                auto lateralBoundaryFaceCenter = scvf.pairData(localSubFaceIdx).virtualBoundaryFaceDofPos + lateralFace.center();
+                lateralBoundaryFaceCenter *= 0.5;
 
                 //    ________________
                 //    --------####o###                 || frontal face of staggered half-control-volume
-                //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
+                //    |      ||      | current scvf    #  lateralBoundaryFace of interest, lies on lateral boundary
                 //    |      ||      |                 x  dof position
                 //    |      ||      x~~~~> vel.Self   -- element boundaries
                 //    |      ||      |                 __ domain boundary
                 //    |      ||      |                 o  position at which the boundary conditions will be evaluated
-                //    ----------------                    (localSubFaceCenter)
+                //    ----------------                    (lateralBoundaryFaceCenter)
 
-                const auto localSubFace = normalFace.makeBoundaryFace(localSubFaceCenter);
+                const auto lateralBoundaryFace = lateralFace.makeBoundaryFace(lateralBoundaryFaceCenter);
 
                 // Retrieve the boundary types that correspond to the sub face.
-                lateralFaceBoundaryTypes.emplace(problem.boundaryTypes(element, localSubFace));
+                lateralFaceBoundaryTypes.emplace(problem.boundaryTypes(element, lateralBoundaryFace));
 
                 // Check if we have a symmetry boundary condition. If yes, the tangential part of the momentum flux can be neglected
                 // and we may skip any further calculations for the given sub face.
@@ -323,13 +323,13 @@ public:
                 // Handle Neumann boundary conditions. No further calculations are then required for the given sub face.
                 if (lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex())))
                 {
-                    normalFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, localSubFace)[Indices::velocity(scvf.directionIndex())]
-                                                  * elemVolVars[normalFace.insideScvIdx()].extrusionFactor() * normalFace.area() * 0.5;
+                    lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
+                                                  * elemVolVars[lateralFace.insideScvIdx()].extrusionFactor() * lateralFace.area() * 0.5;
                     continue;
                 }
 
                 // Handle wall-function fluxes (only required for RANS models)
-                if (incorporateWallFunction_(normalFlux, problem, element, fvGeometry, scvf, normalFace, localSubFace, elemVolVars, elemFaceVars))
+                if (incorporateWallFunction_(lateralFlux, problem, element, fvGeometry, scvf, lateralBoundaryFace, elemVolVars, elemFaceVars))
                     continue;
 
                 // Check the consistency of the boundary conditions, only one of the following must be set
@@ -340,21 +340,21 @@ public:
                 if (admittableBcTypes.count() != 1)
                 {
                     DUNE_THROW(Dune::InvalidStateException,  "Something went wrong with the boundary conditions "
-                    "for the momentum equations at global position " << localSubFaceCenter);
+                    "for the momentum equations at global position " << lateralBoundaryFaceCenter);
                 }
             }
 
             // If there is no symmetry or Neumann boundary condition for the given sub face, proceed to calculate the tangential momentum flux.
             if (problem.enableInertiaTerms())
-                normalFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
-                                                                         scvf, normalFace, elemVolVars, faceVars,
+                lateralFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
+                                                                         scvf, elemVolVars, faceVars,
                                                                          gridFluxVarsCache, lateralFaceBoundaryTypes, localSubFaceIdx);
 
-            normalFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
-                                                                     scvf, normalFace, elemVolVars, faceVars,
+            lateralFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
+                                                                     scvf, elemVolVars, faceVars,
                                                                      lateralFaceBoundaryTypes, localSubFaceIdx);
         }
-        return normalFlux;
+        return lateralFlux;
     }
 
 private:
@@ -384,24 +384,22 @@ private:
                                                                     const FVElementGeometry& fvGeometry,
                                                                     const Element& element,
                                                                     const SubControlVolumeFace& scvf,
-                                                                    const SubControlVolumeFace& normalFace,
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const FaceVariables& faceVars,
                                                                     const GridFluxVariablesCache& gridFluxVarsCache,
                                                                     const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                                     const int localSubFaceIdx)
     {
+        const auto eIdx = scvf.insideScvIdx();
+        const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+
         // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
         // of interest is located.
-        const Scalar transportingVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
+        const Scalar transportingVelocity = faceVars.velocityLateralInside(localSubFaceIdx);
 
-        const bool lateralFaceHasDirichletPressure = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx);
-        const bool lateralFaceHasBJS = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex()));
-
-        return StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedLateralMomentum(problem, fvGeometry, element, scvf, normalFace, elemVolVars, faceVars,
-                                                                     gridFluxVarsCache, localSubFaceIdx, lateralFaceHasDirichletPressure,
-                                                                     lateralFaceHasBJS)
-               * transportingVelocity * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);
+        return StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedLateralMomentum(problem, fvGeometry, element, scvf, elemVolVars, faceVars,
+                                                                     gridFluxVarsCache, localSubFaceIdx, lateralFaceBoundaryTypes)
+               * transportingVelocity * lateralFace.directionSign() * lateralFace.area() * 0.5 * extrusionFactor_(elemVolVars, lateralFace);
     }
 
     /*!
@@ -419,7 +417,7 @@ private:
      *              |      ||      | curr. ::
      *              |      ||      | scvf  ::       :: staggered half-control-volume (neighbor element)
      *              |      ||      x~~~~>  ::
-     *              |      ||      | vel.  ::       # normal staggered faces over which fluxes are calculated
+     *              |      ||      | vel.  ::       # lateral staggered faces over which fluxes are calculated
      *        scvf  |      ||      | Self  ::
      *              ---------#######:::::::::       x dof position
      *                 scvf
@@ -430,13 +428,15 @@ private:
                                                                     const FVElementGeometry& fvGeometry,
                                                                     const Element& element,
                                                                     const SubControlVolumeFace& scvf,
-                                                                    const SubControlVolumeFace& normalFace,
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const FaceVariables& faceVars,
                                                                     const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                                     const int localSubFaceIdx)
     {
-        FacePrimaryVariables normalDiffusiveFlux(0.0);
+        const auto eIdx = scvf.insideScvIdx();
+        const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+
+        FacePrimaryVariables lateralDiffusiveFlux(0.0);
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -444,11 +444,11 @@ private:
         // Get the volume variables of the own and the neighboring element. The neighboring
         // element is adjacent to the staggered face normal to the current scvf
         // where the dof of interest is located.
-        const auto& insideVolVars = elemVolVars[normalFace.insideScvIdx()];
-        const auto& outsideVolVars = elemVolVars[normalFace.outsideScvIdx()];
+        const auto& insideVolVars = elemVolVars[lateralFace.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[lateralFace.outsideScvIdx()];
 
         // Get the averaged viscosity at the staggered face normal to the current scvf.
-        const Scalar muAvg = normalFace.boundary()
+        const Scalar muAvg = lateralFace.boundary()
                              ? insideVolVars.effectiveViscosity()
                              : (insideVolVars.effectiveViscosity() + outsideVolVars.effectiveViscosity()) * 0.5;
 
@@ -458,31 +458,31 @@ private:
             // thus no further calculations are required.
             if (!scvf.boundary())
             {
-                // For the normal gradient, get the velocities perpendicular to the velocity at the current scvf.
+                // For the velocityGrad_ji gradient, get the velocities perpendicular to the velocity at the current scvf.
                 // The inner one is located at staggered face within the own element,
                 // the outer one at the respective staggered face of the element on the other side of the
                 // current scvf.
-                const Scalar innerNormalVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
-                const Scalar outerNormalVelocity = faceVars.velocityNormalOutside(localSubFaceIdx);
+                const Scalar innerLateralVelocity = faceVars.velocityLateralInside(localSubFaceIdx);
+                const Scalar outerLateralVelocity = faceVars.velocityLateralOutside(localSubFaceIdx);
 
                 // Calculate the velocity gradient in positive coordinate direction.
-                const Scalar normalDeltaV = scvf.normalInPosCoordDir()
-                                            ? (outerNormalVelocity - innerNormalVelocity)
-                                            : (innerNormalVelocity - outerNormalVelocity);
+                const Scalar lateralDeltaV = scvf.normalInPosCoordDir()
+                                            ? (outerLateralVelocity - innerLateralVelocity)
+                                            : (innerLateralVelocity - outerLateralVelocity);
 
-                const Scalar normalGradient = normalDeltaV / scvf.pairData(localSubFaceIdx).normalDistance;
+                const Scalar velocityGrad_ji = lateralDeltaV / scvf.pairData(localSubFaceIdx).lateralDistance;
 
                 // Account for the orientation of the staggered normal face's outer normal vector.
-                normalDiffusiveFlux -= muAvg * normalGradient * normalFace.directionSign();
+                lateralDiffusiveFlux -= muAvg * velocityGrad_ji * lateralFace.directionSign();
             }
         }
 
         // Consider the shear stress caused by the gradient of the velocities parallel to our face of interest.
-        // If we have a Dirichlet condition for the pressure at the lateral face we assume to have a zero parallel velocity gradient
+        // If we have a Dirichlet condition for the pressure at the lateral face we assume to have a zero velocityGrad_ij velocity gradient
         // so we can skip the computation.
         if (!lateralFaceBoundaryTypes || !lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx))
         {
-            // For the parallel derivative, get the velocities at the current (own) scvf
+            // For the velocityGrad_ij derivative, get the velocities at the current (own) scvf
             // and at the parallel one at the neighboring scvf.
             const Scalar innerParallelVelocity = faceVars.velocitySelf();
 
@@ -495,7 +495,7 @@ private:
                 else
                 {
                     const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-                    return problem.bjsVelocity(element, scv, normalFace, innerParallelVelocity);
+                    return problem.bjsVelocity(element, scv, lateralFace, innerParallelVelocity);
                 }
             };
 
@@ -503,14 +503,14 @@ private:
 
             // The velocity gradient already accounts for the orientation
             // of the staggered face's outer normal vector.
-            const Scalar parallelGradient = (outerParallelVelocity - innerParallelVelocity)
-                                          / scvf.cellCenteredParallelDistance(localSubFaceIdx, 0);
+            const Scalar velocityGrad_ij = (outerParallelVelocity - innerParallelVelocity)
+                                          / scvf.parallelDofsDistance(localSubFaceIdx, 0);
 
-            normalDiffusiveFlux -= muAvg * parallelGradient;
+            lateralDiffusiveFlux -= muAvg * velocityGrad_ij;
         }
 
-        // Account for the area of the staggered normal face (0.5 of the coinciding scfv).
-        return normalDiffusiveFlux * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);
+        // Account for the area of the staggered lateral face (0.5 of the coinciding scfv).
+        return lateralDiffusiveFlux * lateralFace.area() * 0.5 * extrusionFactor_(elemVolVars, lateralFace);
     }
 
     /*!
@@ -567,14 +567,14 @@ private:
     {
         //    ________________
         //    --------#######o                 || frontal face of staggered half-control-volume
-        //    |      ||      | current scvf    #  localSubFace of interest, lies on lateral boundary
+        //    |      ||      | current scvf    #  lateralBoundaryFace of interest, lies on lateral boundary
         //    |      ||      |                 x  dof position
         //    |      ||      x~~~~> vel.Self   -- element boundaries
         //    |      ||      |                 __ domain boundary
         //    |      ||      |                 o  position at which the boundary conditions will be evaluated
         //    ----------------
 
-        return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos);
+        return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).virtualBoundaryFaceDofPos);
     };
 
     //! helper function to get the averaged extrusion factor for a face
@@ -591,20 +591,19 @@ private:
 
     //! if a turbulence model is used, ask the problem is a wall function shall be employed and get the flux accordingly
     template<bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<turbulenceModel, int> = 0>
-    bool incorporateWallFunction_(FacePrimaryVariables& normalFlux,
+    bool incorporateWallFunction_(FacePrimaryVariables& lateralFlux,
                                   const Problem& problem,
                                   const Element& element,
                                   const FVElementGeometry& fvGeometry,
                                   const SubControlVolumeFace& scvf,
-                                  const SubControlVolumeFace& normalFace,
-                                  const SubControlVolumeFace& localSubFace,
+                                  const SubControlVolumeFace& lateralBoundaryFace,
                                   const ElementVolumeVariables& elemVolVars,
                                   const ElementFaceVariables& elemFaceVars) const
     {
-        if (problem.useWallFunction(element, localSubFace, Indices::velocity(scvf.directionIndex())))
+        if (problem.useWallFunction(element, lateralBoundaryFace, Indices::velocity(scvf.directionIndex())))
         {
-            normalFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, localSubFace)[Indices::velocity(scvf.directionIndex())]
-                                               * elemVolVars[normalFace.insideScvIdx()].extrusionFactor() * normalFace.area() * 0.5;
+            lateralFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
+                                               * elemVolVars[lateralBoundaryFace.insideScvIdx()].extrusionFactor() * lateralBoundaryFace.area() * 0.5;
             return true;
         }
         else
