@@ -71,6 +71,8 @@ struct NonEquilibriumModelTraits : public ET
     static constexpr NusseltFormulation nusseltFormulation() { return nf; }
     static constexpr SherwoodFormulation sherwoodFormulation() { return sf; }
 
+    static_assert(!(ET::enableEnergyBalance() && therm), "It is not possible to use a nonisothermal model assuming local thermal equilibrium in combination with a model using thermal non-equilibrium");
+
     using Indices = NonEquilbriumIndices<typename ET::Indices, numEnergyEqFluid(), numEnergyEqSolid(), numEq()>;
 };
 

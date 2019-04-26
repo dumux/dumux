@@ -87,7 +87,11 @@
 #include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/iofields.hh>
+#include <dumux/porousmediumflow/nonequilibrium/model.hh>
+#include <dumux/porousmediumflow/nonequilibrium/volumevariables.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
+
 
 #include "volumevariables.hh"
 
@@ -177,6 +181,133 @@ struct IOFields<TypeTag, TTag::TwoPTwoCNI> { using type = EnergyIOFields<TwoPNCI
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
+
+} // end namespace Properties
+
+template<class TwoPTwoCModelTraits>
+struct TwoPTwoCUnconstrainedModelTraits : public TwoPTwoCModelTraits
+{
+    static constexpr int numConstraintEq() { return 0; }
+};
+
+namespace Properties {
+//////////////////////////////////////////////////////////////////
+// Type tags
+//////////////////////////////////////////////////////////////////
+namespace TTag {
+struct TwoPTwoCNonEquil { using InheritsFrom = std::tuple<NonEquilibrium, TwoPTwoC>; };
+} // end namespace TTag
+
+/////////////////////////////////////////////////
+// Properties for the non-equilibrium TwoPTwoC model
+/////////////////////////////////////////////////
+
+template<class TypeTag>
+struct EquilibriumLocalResidual<TypeTag, TTag::TwoPTwoCNonEquil> { using type = CompositionalLocalResidual<TypeTag>; };
+
+//! Set the vtk output fields specific to this model
+template<class TypeTag>
+struct EquilibriumIOFields<TypeTag, TTag::TwoPTwoCNonEquil> { using type = TwoPNCIOFields; };
+
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPTwoCNonEquil>
+{
+private:
+    using EquiTraits = GetPropType<TypeTag, Properties::EquilibriumModelTraits>;
+    static constexpr bool enableTNE = getPropValue<TypeTag, Properties::EnableThermalNonEquilibrium>();
+    static constexpr bool enableCNE = getPropValue<TypeTag, Properties::EnableChemicalNonEquilibrium>();
+    static constexpr int numEF = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr int numES = getPropValue<TypeTag, Properties::NumEnergyEqSolid>();
+    static constexpr auto nf = getPropValue<TypeTag, Properties::NusseltFormulation>();
+    static constexpr auto ns = getPropValue<TypeTag, Properties::SherwoodFormulation>();
+
+    using NonEquilTraits = NonEquilibriumModelTraits<EquiTraits, enableCNE, enableTNE, numEF, numES, nf, ns>;
+public:
+    using type = NonEquilTraits;
+};
+
+//! Set equilibrium model traits
+template<class TypeTag>
+struct EquilibriumModelTraits<TypeTag, TTag::TwoPTwoCNonEquil>
+{
+private:
+     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+     using EquilibriumTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
+public:
+    using type = TwoPTwoCUnconstrainedModelTraits<EquilibriumTraits>;
+};
+
+//! In case we do not assume full thermal non-equilibrium (e.g. only an energy balance for the solid phase and a fluid mixture) one needs a law for calculating the thermal conductivity of the fluid mixture
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNonEquil>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = ThermalConductivitySimpleFluidLumping<Scalar, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>;
+};
+
+//! Use the nonequilibrium volume variables together with the 2p2c vol vars
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPTwoCNonEquil>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+
+    static constexpr bool useConstraintSolver = getPropValue<TypeTag, Properties::UseConstraintSolver>();
+
+    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using EquilibriumVolVars = TwoPTwoCVolumeVariables<Traits, useConstraintSolver>;
+public:
+    using type = NonEquilibriumVolumeVariables<Traits, EquilibriumVolVars>;
+};
+
+/////////////////////////////////////////////////
+// Properties for the non-equilibrium nonisothermal TwoPTwoC model which assumes thermal equilibrium but chemical nonequilibrium
+/////////////////////////////////////////////////
+
+namespace TTag {
+struct TwoPTwoCNINonEquil { using InheritsFrom = std::tuple<TwoPTwoCNonEquil>; };
+} // end namespace TTag
+
+//! Set the non-isothermal model traits with the nonequilibrium model traits as isothermal traits
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::TwoPTwoCNINonEquil>
+{
+private:
+    private:
+    using EquiTraits = GetPropType<TypeTag, Properties::EquilibriumModelTraits>;
+    static constexpr bool enableTNE = getPropValue<TypeTag, Properties::EnableThermalNonEquilibrium>();
+    static constexpr bool enableCNE = getPropValue<TypeTag, Properties::EnableChemicalNonEquilibrium>();
+    static constexpr int numEF = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr int numES = getPropValue<TypeTag, Properties::NumEnergyEqSolid>();
+    static constexpr auto nf = getPropValue<TypeTag, Properties::NusseltFormulation>();
+    static constexpr auto ns = getPropValue<TypeTag, Properties::SherwoodFormulation>();
+
+    using IsothermalTraits = NonEquilibriumModelTraits<EquiTraits, enableCNE, enableTNE, numEF, numES, nf, ns>;
+public:
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
+};
+
+//! Set the equilibrium IO fields which are in that case the nonisothermal io fields
+template<class TypeTag>
+struct EquilibriumIOFields<TypeTag, TTag::TwoPTwoCNINonEquil>
+{
+private:
+    using NonisothermalIOFields = EnergyIOFields<TwoPNCIOFields>;
+public:
+    using type = NonisothermalIOFields;
+};
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNINonEquil> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux
