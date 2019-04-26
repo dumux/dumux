@@ -267,9 +267,9 @@ public:
     *
     * \param localSubFaceIdx The local index of the subface
     */
-    bool hasOuterNormal(const int localSubFaceIdx) const
+    bool hasOuterLateral(const int localSubFaceIdx) const
     {
-        return pairData(localSubFaceIdx).hasNormalNeighbor;
+        return pairData(localSubFaceIdx).hasOuterLateral;
     }
 
    /*!
@@ -330,7 +330,7 @@ public:
     * \param localSubFaceIdx The local index of the subface
     * \param parallelDegreeIdx The index describing how many faces away from the self
     */
-    Scalar cellCenteredParallelDistance(const int localSubFaceIdx, const int parallelDegreeIdx) const
+    Scalar parallelDofsDistance(const int localSubFaceIdx, const int parallelDegreeIdx) const
     {
         if (parallelDegreeIdx == 0)
             return (faceLength(localSubFaceIdx) + pairData(localSubFaceIdx).parallelCellWidths[0]) * 0.5;
