@@ -32,7 +32,7 @@
  #include <dune/grid/io/file/vtk.hh>
  #include <dune/istl/io.hh>
 
-#include "channeltestproblem.hh"
+#include "liddrivenchanneltestproblem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -166,10 +166,15 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
+    problem->createAnalyticalSolution();
+
     // initialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
+    vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
+    vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");
+    vtkWriter.addFaceField(problem->getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
     vtkWriter.write(restartTime);
 
     // the assembler with time loop for instationary problem

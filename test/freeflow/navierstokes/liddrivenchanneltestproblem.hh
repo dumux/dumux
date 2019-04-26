@@ -101,6 +101,9 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+
 public:
     ChannelTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
@@ -183,6 +186,84 @@ public:
         return values;
     }
 
+
+    /*!
+     * \brief Return the analytical solution of the problem at a given position
+     *
+     * \param globalPos The global position
+     */
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    {
+        PrimaryVariables values;
+
+        values[Indices::pressureIdx] = 1.1e+5;
+        values[Indices::velocityXIdx] = inletVelocity_*globalPos[1]/this->fvGridGeometry().bBoxMax()[1];
+        values[Indices::velocityYIdx] = 0.0;
+
+        return values;
+    }
+
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    void createAnalyticalSolution()
+    {
+        analyticalPressure_.resize(this->fvGridGeometry().numCellCenterDofs());
+        analyticalVelocity_.resize(this->fvGridGeometry().numCellCenterDofs());
+        analyticalVelocityOnFace_.resize(this->fvGridGeometry().numFaceDofs());
+
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto ccDofIdx = scv.dofIndex();
+                auto ccDofPosition = scv.dofPosition();
+                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
+
+                // velocities on faces
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    const auto faceDofIdx = scvf.dofIndex();
+                    const auto faceDofPosition = scvf.center();
+                    const auto dirIdx = scvf.directionIndex();
+                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
+                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
+                }
+
+                analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
+
+                for(int dirIdx = 0; dirIdx < ModelTraits::dim(); ++dirIdx)
+                    analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
+            }
+        }
+    }
+
+   /*!
+     * \brief Returns the analytical solution for the pressure
+     */
+    auto& getAnalyticalPressureSolution() const
+    {
+        return analyticalPressure_;
+    }
+
+   /*!
+     * \brief Returns the analytical solution for the velocity
+     */
+    auto& getAnalyticalVelocitySolution() const
+    {
+        return analyticalVelocity_;
+    }
+
+   /*!
+     * \brief Returns the analytical solution for the velocity at the faces
+     */
+    auto& getAnalyticalVelocitySolutionOnFace() const
+    {
+        return analyticalVelocityOnFace_;
+    }
+
    /*!
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
@@ -226,11 +307,11 @@ public:
 
         if(isInlet(globalPos))
         {
-            const auto& y = globalPos[1];
-            const auto& yMax = this->fvGridGeometry().bBoxMax()[1];
-            const auto& vMax = inletVelocity_;
-            values[Indices::velocityXIdx] = 4 * vMax * y * (yMax - y)/(yMax * yMax);
+            values[Indices::velocityXIdx] = inletVelocity_*globalPos[1]/this->fvGridGeometry().bBoxMax()[1];
         }
+
+        if (globalPos[1] > (this->fvGridGeometry().bBoxMax()[1] - eps_))
+            values[Indices::velocityXIdx] = inletVelocity_;
 
 #if NONISOTHERMAL
         values[Indices::temperatureIdx] = 283.15;
@@ -283,6 +364,9 @@ private:
     Scalar inletVelocity_;
     TimeLoopPtr timeLoop_;
     Scalar cellSizeY_;
+    std::vector<Scalar> analyticalPressure_;
+    std::vector<VelocityVector> analyticalVelocity_;
+    std::vector<VelocityVector> analyticalVelocityOnFace_;
 };
 } //end namespace
 
