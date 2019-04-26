@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup NonEquilibriumModel
- * \brief Adds I/O fields specific to non-isothermal models
+ * \brief Adds I/O fields specific to non-equilibrium models
  */
 
 #ifndef DUMUX_NONEQUILBRIUM_OUTPUT_FIELDS_HH
@@ -29,12 +29,17 @@
 
 namespace Dumux {
 
+template<class ModelTraits, class EquilibriumIOFields, bool enableThermalNonEquilibrium>
+class NonEquilibriumIOFieldsImplementation;
+
+template<class ModelTraits, class EquilibriumIOFields>
+using NonEquilibriumIOFields =  NonEquilibriumIOFieldsImplementation<ModelTraits, EquilibriumIOFields, ModelTraits::enableThermalNonEquilibrium()>;
 /*!
  * \ingroup NonEquilibriumModel
- * \brief Adds I/O fields specific to non-isothermal models
+ * \brief Adds I/O fields specific to non-equilibrium models with chemical and thermal nonequilbirum or thermal non-equilibrium only
  */
 template<class ModelTraits, class EquilibriumIOFields>
-class NonEquilibriumIOFields
+class NonEquilibriumIOFieldsImplementation<ModelTraits, EquilibriumIOFields, true>
 {
 public:
     template <class OutputModule>
@@ -58,6 +63,31 @@ public:
             out.addVolumeVariable( [i](const auto& v){ return v.nusseltNumber(i); }, "nusseltNumber_" + FluidSystem::phaseName(i) );
             out.addVolumeVariable( [i](const auto& v){ return v.prandtlNumber(i); }, "prandtlNumber_" + FluidSystem::phaseName(i) );
         }
+    }
+};
+
+template<class ModelTraits, class EquilibriumIOFields>
+class NonEquilibriumIOFieldsImplementation<ModelTraits, EquilibriumIOFields, false>
+{
+public:
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
+    {
+        using FluidSystem = typename OutputModule::VolumeVariables::FluidSystem;
+
+        EquilibriumIOFields::initOutputModule(out);
+
+        for (int i = 0; i < ModelTraits::numFluidPhases(); ++i)
+        {
+            out.addVolumeVariable( [i](const auto& v){ return v.reynoldsNumber(i); }, "reynoldsNumber_" + FluidSystem::phaseName(i) );
+        }
+    }
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
+    {
+        initOutputModule(out);
     }
 };
 

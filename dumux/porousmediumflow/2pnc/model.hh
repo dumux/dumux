@@ -128,6 +128,8 @@ struct TwoPNCModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
     static constexpr bool enableEnergyBalance() { return false; }
+    static constexpr bool enableThermalNonEquilibrium() { return false; }
+    static constexpr bool enableChemicalNonEquilibrium() { return false; }
 
     static constexpr bool useMoles() { return useMol; }
     static constexpr bool setMoleFractionsForFirstPhase() { return setMoleFractionForFP; }

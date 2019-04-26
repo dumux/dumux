@@ -1,0 +1,23 @@
+[TimeLoop]
+DtInitial =1e-2 # [s]
+TEnd = 1e4 # [s]
+
+[Grid]
+UpperRight = 10 10
+Cells = 20 10
+
+[Problem]
+Name = chemicalnonequilibrium
+EnableGravity = false
+
+[SpatialParams]
+aWettingNonWettingA1 = -1.603e-01
+aWettingNonWettingA2 = 1.429e-05
+aWettingNonWettingA3 = 1.915e-01
+meanPoreSize = 5e-4
+factorMassTransfer = 0.5
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790
