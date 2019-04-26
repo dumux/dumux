@@ -114,6 +114,9 @@ class EnergyLocalResidualImplementation<TypeTag, true>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum { energyEqIdx = Indices::energyEqIdx };
@@ -184,6 +187,22 @@ public:
     {
         flux[energyEqIdx] += fluxVars.heatConductionFlux();
     }
+
+    /*!
+     * \brief heat transfer between the phases for nonequilibrium models
+     *
+     * \param source The source which ought to be simulated
+     * \param element An element which contains part of the control volume
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars The volume variables of the current element
+     * \param scv The sub-control volume over which we integrate the source term
+     */
+    static void computeSourceEnergy(NumEqVector& source,
+                                    const Element& element,
+                                    const FVElementGeometry& fvGeometry,
+                                    const ElementVolumeVariables& elemVolVars,
+                                    const SubControlVolume &scv)
+    {}
 };
 
 } // end namespace Dumux
