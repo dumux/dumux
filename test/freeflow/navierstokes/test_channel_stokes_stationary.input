@@ -12,12 +12,17 @@ InletVelocity = 1
 EnableGravity = false
 
 [ Newton ]
+EnableShiftCriterion = false
+EnableSIMPLEAbsoluteResidualCriterion = true
 MaxSteps = 150
 MaxRelativeShift = 1e-8
 TargetSteps = 100
 
 [Vtk]
 WriteFaceData = false
+
+[Component]
+LiquidKinematicViscosity = 1
 
 [Assembly]
 NumericDifference.BaseEpsilon =  1e-8
@@ -30,5 +35,12 @@ NumericDifference.PriVarMagnitude = 1e5 # pressure is in the order of 1e5
 [Face.Assembly]
 NumericDifference.PriVarMagnitude = 1 # velocity is in the order of 1
 
-[Algorithm]
-AlgorithmType = 2
+[LinearSolver2]
+schurGMResRestart = 100
+schurResidualReduction = 1e-10
+schurVerbosity = 0
+schurMaxIter = 2000
+precVerbosityA = 0
+precVerbositySchurAppr = 0
+precMaxIter = 2000
+precResidReduction = 1e-13
