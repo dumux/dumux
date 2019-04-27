@@ -172,8 +172,8 @@ int main (int argc, char *argv[]) try
                 std::cout << " Normal Dof Index: \n";
                 for(int i = 0; i < scvf.pairData().size(); i++)
                 {
-                    std::cout << " | normal inner dofIdx "<< i <<": " << std::setw(3) << scvf.pairData(i).normalPair.first << "\n";
-                    std::cout << " | normal outer dofIdx "<< i <<": " << std::setw(3) << scvf.pairData(i).normalPair.second << "\n";
+                    std::cout << " | normal inner dofIdx "<< i <<": " << std::setw(3) << scvf.pairData(i).lateralPair.first << "\n";
+                    std::cout << " | normal outer dofIdx "<< i <<": " << std::setw(3) << scvf.pairData(i).lateralPair.second << "\n";
                 }
 
                 std::cout << " Parallel Dof Index: \n";
@@ -204,7 +204,7 @@ int main (int argc, char *argv[]) try
                 {
                     for(int j = 0; j < fvGridGeometry.upwindStencilOrder(); j++)
                     {
-                        std::cout << " | Cell Centered Parallel Distance "<< j << " on axis " << i << ": "<< std::setw(3) << scvf.cellCenteredParallelDistance(i,j) << "\n";
+                        std::cout << " | Cell Centered Parallel Distance "<< j << " on axis " << i << ": "<< std::setw(3) << scvf.parallelDofsDistance(i,j) << "\n";
                     }
                 }
                 std::cout << std::endl;
