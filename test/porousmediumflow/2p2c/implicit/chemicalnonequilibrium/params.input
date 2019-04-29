@@ -1,6 +1,7 @@
 [TimeLoop]
-DtInitial =1e-2 # [s]
+DtInitial = 1e3 # [s]
 TEnd = 1e4 # [s]
+CheckPointInterval = 2e3 # [s]
 
 [Grid]
 UpperRight = 10 10
@@ -21,3 +22,6 @@ factorMassTransfer = 0.5
 SolidDensity = 2700
 SolidThermalConductivity = 2.8
 SolidHeatCapacity = 790
+
+[Newton]
+MaxRelativeShift = 1e-12

@@ -7,7 +7,7 @@ dune_add_test(NAME test_2p2c_nonequilibrium_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_nonequilibrium_box-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_nonequilibrium_box-00029.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_nonequilibrium_box-00005.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_nonequilibrium_box params.input -Problem.Name test_2p2c_nonequilibrium_box")
 
 dune_add_test(NAME test_2p2c_nonequilibrium_tpfa
@@ -17,5 +17,5 @@ dune_add_test(NAME test_2p2c_nonequilibrium_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_nonequilibrium_tpfa-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_nonequilibrium_tpfa-00029.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_nonequilibrium_tpfa-00005.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_nonequilibrium_tpfa params.input -Problem.Name test_2p2c_nonequilibrium_tpfa")
