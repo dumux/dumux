@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup ShallowWater
- * \brief Compute the boundary fluxes based on the Riemann invariants
+ * \brief Compute boundary conditions (cell state) via Riemann invariants
  *
  */
 #ifndef DUMUX_SHALLOWWATER_BOUNDARYFLUXES_HH
@@ -32,6 +32,9 @@
 namespace Dumux {
 namespace ShallowWater {
 
+/*!
+ * \brief compute the cell state for fixed water depth boundary.
+ */
 template<class Scalar, class GlobalPosition>
 std::array<Scalar,3> fixedWaterDepthBoundary(Scalar waterDepthBoundary,
                                              Scalar waterDepthLeft,
@@ -45,8 +48,8 @@ std::array<Scalar,3> fixedWaterDepthBoundary(Scalar waterDepthBoundary,
 
 {
     std::array<Scalar,3> cellStateRight;
-
     cellStateRight[0] = waterDepthBoundary;
+    using std::sqrt;
 
     auto uboundIn = nxy[0] * velocityXLeft  + nxy[1] * velocityYLeft ;
     auto uboundQut =  uboundIn + 2.0 * sqrt(9.81 * waterDepthLeft) - 2.0 * sqrt(9.81 * cellStateRight[0]);
@@ -56,6 +59,9 @@ std::array<Scalar,3> fixedWaterDepthBoundary(Scalar waterDepthBoundary,
     return cellStateRight;
 }
 
+/*!
+ * \brief compute the cell state for a fixed discharge boundary.
+ */
 template<class Scalar, class GlobalPosition>
 std::array<Scalar,3> fixedDischargeBoundary(Scalar dischargeBoundary,
                                             Scalar waterDepthLeft,

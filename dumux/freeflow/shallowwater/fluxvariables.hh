@@ -49,6 +49,16 @@ class ShallowWaterFluxVariables
     using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
     //using DiffusionType = GetPropType<TypeTag, Properties::DiffusionType>;
 
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
+
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+
     static constexpr bool enableAdvection = ModelTraits::enableAdvection();
     static constexpr bool enableDiffusion = ModelTraits::enableDiffusion();
 
@@ -59,19 +69,16 @@ public:
      * \brief Returns the advective flux computed by the Riemann solver
      *
      */
-    NumEqVector advectiveFlux() const
+    NumEqVector advectiveFlux(const Problem& problem,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const ElementVolumeVariables& elemVolVars,
+                              const SubControlVolumeFace& scvf) const
     {
-
         NumEqVector fluxVector(0.0);
         if (enableAdvection)
         {
-
-             return AdvectionType::flux(this->problem(),
-                                        this->element(),
-                                        this->fvGeometry(),
-                                        this->elemVolVars(),
-                                        this->scvFace(),
-                                        this->elemFluxVarsCache());
+            return AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
         }
         else
         {
@@ -83,18 +90,16 @@ public:
      * \brief Returns the diffusive flux (e.g. diffusion of tracer)
      *
      */
-    NumEqVector diffusiveFlux() const
+    NumEqVector diffusiveFlux(const Problem& problem,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const ElementVolumeVariables& elemVolVars,
+                              const SubControlVolumeFace& scvf) const
     {
         NumEqVector fluxVector(0.0);
         if (enableDiffusion)
         {
-             /*return DiffusionType::flux(this->problem(),
-                                          this->element(),
-                                          this->fvGeometry(),
-                                          this->elemVolVars(),
-                                          this->scvFace(),
-                                          this->elemFluxVarsCache());
-            */
+            // TODO: add diffusive flux (e.g. tracer and viscosity)
             return fluxVector;
         }
 

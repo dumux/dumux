@@ -51,6 +51,7 @@ class ShallowWaterResidual : public GetPropType<TypeTag, Properties::BaseLocalRe
     using Element = typename GridView::template Codim<0>::Entity;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
 
 public:
 
@@ -96,11 +97,11 @@ public:
                             const SubControlVolumeFace& scvf,
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-
         NumEqVector flux(0.0);
-        auto numFlux = AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
-        //auto turbFlux = DiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
-        flux = numFlux; //+ turbFlux;
+        FluxVariables fluxVars;
+        auto advectiveFlux = fluxVars.advectiveFlux(problem, element, fvGeometry, elemVolVars, scvf);
+        auto diffusiveFlux = fluxVars.diffusiveFlux(problem, element, fvGeometry, elemVolVars, scvf);
+        flux = advectiveFlux + diffusiveFlux;
 
         return flux;
     }
