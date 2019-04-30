@@ -81,13 +81,19 @@ namespace Dumux {
  * \ingroup ShallowWaterModel
  * \brief Specifies a number properties of shallow water models.
  */
-template <class TypeTag>
 struct ShallowWaterModelTraits
 {
     using Indices = ShallowWaterIndices;
 
     static constexpr int numEq() { return 3; }
     static constexpr int numPhases() { return 1; }
+
+    //! Enable advection
+    static constexpr bool enableAdvection() { return true; }
+
+    //! Enable diffusion
+    static constexpr bool enableDiffusion() { return false; }
+
 };
 
 /*!
@@ -147,7 +153,7 @@ struct EnableThermalNonEquilibrium<TypeTag, TTag::ShallowWater> { static constex
 //////////////////////////////////////////////////////////////////
 
 template<class TypeTag>
-struct ModelTraits<TypeTag, TTag::ShallowWater> {using type = ShallowWaterModelTraits<TypeTag>;};
+struct ModelTraits<TypeTag, TTag::ShallowWater> {using type = ShallowWaterModelTraits;};
 
 template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::ShallowWater> {using type = ShallowWaterResidual<TypeTag>;};
