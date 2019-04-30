@@ -31,6 +31,7 @@
 #include <dumux/freeflow/shallowwater/model.hh>
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/flux/shallowwater/riemannproblem.hh>
+#include <dumux/flux/shallowwater/exactriemann.hh>
 
 
 namespace Dumux
@@ -120,7 +121,8 @@ class DamBreakProblem : public ShallowWaterProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
     enum {
         // copy some indices for convenience
@@ -140,6 +142,58 @@ public:
     : ParentType(fvGridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
+
+        exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
+        exactVelocityX_.resize(fvGridGeometry->numDofs(), 0.0);
+
+    }
+
+    //! Get the analytical water depth
+    const std::vector<Scalar>& getExactWaterDepth()
+    {
+        return exactWaterDepth_;
+    }
+
+    //! Get the analytical velocity
+    const std::vector<Scalar>& getExactVelocityX()
+    {
+        return exactVelocityX_;
+    }
+
+    //! Udpate the analytical solution
+    void updateAnalyticalSolution(const SolutionVector& curSol,
+                                  const GridVariables& gridVariables,
+                                  const Scalar time)
+    {
+        //compute solution for all elements
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(gridVariables.curGridVolVars());
+            elemVolVars.bindElement(element, fvGeometry, curSol);
+
+            auto elemId = this->fvGridGeometry().elementMapper().index(element);
+            const auto& globalPos = element.geometry().center();
+
+            //compute the position s and the initial water depth at the gate, velocities are zero
+            Scalar s = (globalPos[0] - gatePosition_)/time;
+            Scalar waterDepthLeft =  initialWaterDepthLeft_;
+            Scalar waterDepthRight =  initialWaterDepthRight_;
+
+            ShallowWater::RiemannSolution<Scalar> riemannResult = ShallowWater::exactRiemann(waterDepthLeft,
+                                                                                             waterDepthRight,
+                                                                                             0.0,
+                                                                                             0.0,
+                                                                                             0.0,
+                                                                                             0.0,
+                                                                                             9.81,
+                                                                                             s);
+
+            exactWaterDepth_[elemId] = riemannResult.waterDepth;
+            exactVelocityX_[elemId] = riemannResult.velocityX;
+        }
     }
 
     /*!
@@ -183,7 +237,6 @@ public:
      * \param elemVolVars
      * \param scvf
      */
-
     NeumannFluxes neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,
@@ -256,20 +309,20 @@ public:
 
         PrimaryVariables values(0.0);
 
-        values[0] = 1.0;
+        values[0] = initialWaterDepthRight_;
         values[1] = 0.0;
         values[2] = 0.0;
 
         // water level on the left side of the gate
         if (globalPos[0] < 10.0 + eps_)
         {
-            values[0] = 4.0;
+            values[0] = initialWaterDepthLeft_;
         }
 
         //water level on the right side of the gate
         else
         {
-            values[0] = 1.0;
+            values[0] = initialWaterDepthRight_;
         }
 
         return values;
@@ -280,6 +333,13 @@ public:
 
 private:
 
+    std::vector<Scalar> exactWaterDepth_;
+    std::vector<Scalar> exactVelocityX_;
+
+    static constexpr Scalar initialWaterDepthLeft_ = 4.0;
+    static constexpr Scalar initialWaterDepthRight_ = 1.0;
+    static constexpr Scalar channelLenght_ = 20.0;
+    static constexpr Scalar gatePosition_ = 10.0;
 
     static constexpr Scalar eps_ = 1.0e-6;
     std::string name_;
