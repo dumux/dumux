@@ -30,6 +30,15 @@
 namespace Dumux {
 namespace ShallowWater{
 
+template<typename Scalar>
+struct RiemannSolution {
+    std::array<Scalar,3> flux;
+    Scalar waterDepth;
+    Scalar velocityX;
+    Scalar velocityY;
+};
+
+
 /*!
  * \ingroup ShallowWater
  * \brief Exact Riemann solver for Shallow water equations.
@@ -46,15 +55,17 @@ namespace ShallowWater{
  * \param vl velocityY on the left side
  * \param vr velocityY on the right side
  * \param grav gravity constant
+ * \param s sample point (default = 0 since x = 0 for flux computation)
  */
 template<class Scalar>
-std::array<Scalar,3> exactRiemann(const Scalar& dl,
-                                  const Scalar& dr,
-                                  const Scalar& ul,
-                                  const Scalar& ur,
-                                  const Scalar& vl,
-                                  const Scalar& vr,
-                                  const Scalar& grav)
+RiemannSolution<Scalar> exactRiemann(const Scalar& dl,
+                                     const Scalar& dr,
+                                     const Scalar& ul,
+                                     const Scalar& ur,
+                                     const Scalar& vl,
+                                     const Scalar& vr,
+                                     const Scalar& grav,
+                                     const Scalar& s = 0.0)
 {
 
         Scalar fl = 0.0; //function fl
@@ -66,7 +77,6 @@ std::array<Scalar,3> exactRiemann(const Scalar& dl,
         Scalar cr = 0.0; //celerity sqrt(g*h) right side
         Scalar c = 0.0; //celerity
         Scalar cs = 0.0; //celerity
-        Scalar s = 0.0; //sample point
         Scalar dcrit = 0.0; //critical water depth
         Scalar dmin = 0.0; //minimum depth
         Scalar gel = 0.0; //gravity component
@@ -101,9 +111,6 @@ std::array<Scalar,3> exactRiemann(const Scalar& dl,
         cl = sqrt(grav * max(dl,0.0));
         cr = sqrt(grav * max(dr,0.0));
         dcrit = (ur - ul) - 2.0*(cl+cr);
-
-        //we use s as 0.0 since we are at the x = 0
-        s = 0.0;
 
         // dry case
         if ((dl <= 0)||(dr <= 0)||(dcrit >= 0))
@@ -448,13 +455,16 @@ std::array<Scalar,3> exactRiemann(const Scalar& dl,
             }
         }
         //============================== Flux computation ===================
-        std::array<Scalar,3> flux;
+        RiemannSolution<Scalar> result;
 
-        flux[0] = d*u;
-        flux[1] = d * u * u + 0.5 * grav * d * d;
-        flux[2] = d*u*v;
+        result.flux[0] = d * u;
+        result.flux[1] = d * u * u + 0.5 * grav * d * d;
+        result.flux[2] = d * u * v;
+        result.waterDepth = d;
+        result.velocityX = u;
+        result.velocityY = v;
 
-        return flux;
+        return result;
 }
 
 } // end namespace ShallowWater

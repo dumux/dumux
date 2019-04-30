@@ -136,6 +136,9 @@ int main(int argc, char** argv) try
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
 
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables,x, problem->name());
+    vtkWriter.addField(problem->getExactWaterDepth(), "exactWaterDepth");
+    vtkWriter.addField(problem->getExactVelocityX(), "exactVelocityX");
+    problem->updateAnalyticalSolution(x,*gridVariables,0.0);
     IOFields::initOutputModule(vtkWriter);
     vtkWriter.write(0.0);
 
@@ -164,6 +167,9 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
         nonLinearSolver.solve(x,*timeLoop);
+
+        // update the analytical solution
+        problem->updateAnalyticalSolution(x,*gridVariables,timeLoop->time()+timeLoop->timeStepSize());
 
         // make the new solution the old solution
         xOld = x;

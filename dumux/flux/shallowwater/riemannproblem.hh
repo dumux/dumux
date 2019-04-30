@@ -73,9 +73,7 @@ std::array<Scalar,3> riemannProblem(Scalar waterDepthLeft,
                                     Scalar gravity,
                                     GlobalPosition nxy)
 {
-    std::array<Scalar,3> riemannFlux;
     using std::max;
-
 
     //Hydrostatic reconstrucion after Audusse
     Scalar dzl = max(0.0,bedSurfaceRight - bedSurfaceLeft);
@@ -98,18 +96,18 @@ std::array<Scalar,3> riemannProblem(Scalar waterDepthLeft,
     velocityXRight =  nxy[0] * tempFlux + nxy[1] * velocityYRight;
     velocityYRight = -nxy[1] * tempFlux + nxy[0] * velocityYRight;
 
-    riemannFlux = ShallowWater::exactRiemann(waterDepthLeftReconstructed,
-                                             waterDepthRightReconstructed,
-                                             velocityXLeft,
-                                             velocityXRight,
-                                             velocityYLeft,
-                                             velocityYRight,
-                                             gravity);
+    ShallowWater::RiemannSolution<Scalar> riemannResult = ShallowWater::exactRiemann(waterDepthLeftReconstructed,
+                                                                                     waterDepthRightReconstructed,
+                                                                                     velocityXLeft,
+                                                                                     velocityXRight,
+                                                                                     velocityYLeft,
+                                                                                     velocityYRight,
+                                                                                     gravity);
 
     //redo rotation
-    tempFlux = riemannFlux[1];
-    riemannFlux[1] = nxy[0] * tempFlux - nxy[1] * riemannFlux[2];
-    riemannFlux[2] = nxy[1] * tempFlux + nxy[0] * riemannFlux[2];
+    tempFlux = riemannResult.flux[1];
+    riemannResult.flux[1] = nxy[0] * tempFlux - nxy[1] * riemannResult.flux[2];
+    riemannResult.flux[2] = nxy[1] * tempFlux + nxy[0] * riemannResult.flux[2];
 
     //Add reconstruction flux from Audusse reconstruction
     Scalar hgzl = 0.5 * (waterDepthLeftReconstructed + waterDepthLeft) * (waterDepthLeftReconstructed - waterDepthLeft);
@@ -125,9 +123,9 @@ std::array<Scalar,3> riemannProblem(Scalar waterDepthLeft,
     */
 
     std::array<Scalar,3> localFlux{0.0,0.0,0.0};
-    localFlux[0] = riemannFlux[0] * mobility;
-    localFlux[1] = riemannFlux[1] - hdxzl;
-    localFlux[2] = riemannFlux[2] - hdyzl;
+    localFlux[0] = riemannResult.flux[0] * mobility;
+    localFlux[1] = riemannResult.flux[1] - hdxzl;
+    localFlux[2] = riemannResult.flux[2] - hdyzl;
 
     return localFlux;
 }

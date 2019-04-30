@@ -2,9 +2,9 @@
 Name = damBreak
 
 [TimeLoop]
-TEnd = 1.5 # [s]
-MaxTimeStepSize = 0.01 # [s]
-DtInitial = 0.01 # [s]
+TEnd = 1.0 # [s]
+MaxTimeStepSize = 0.005 # [s]
+DtInitial = 0.005 # [s]
 
 [Grid]
 Positions0 = 0.0 20.0
