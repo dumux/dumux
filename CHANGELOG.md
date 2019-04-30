@@ -12,6 +12,19 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 - The GridManager now support reading unstructured grids and data from vtu/vtp files (ASCII, XML format) sequential
   This means for UGGrid and FoamGrid you can now specify a grid in such a format in the input file
   `Grid.File = mygrid.vtu` / `Grid.File = mygrid.vtp` and the associated data is available in the grid data object
+- __Freeflow__: A second order approximation of the convective term of all navier-stokes based models is now available.
+  This can be enabled using the property UpwindSchemeOrder. This property defaults to a first order upwinding approximation,
+  the method used for all models in release/3.0. If this property is set to `2`, a second order flux limiter method will be used.
+  Various flux limiter functions have been implemented to maintain the monotonicity of this discretization. Per default the 
+  `Minmod` flux limiter is used, but `Vanleer`, `Vanalbada`, `Superbee`, `Umist`, `Mclimiter`, and `Wahyd` based flux limiters 
+  are also available. These can be specified using the input file entry `Flux.DifferencingScheme`. These methods are also 
+  implemented for non-uniform structured grids (e.g. YaspGrid - TensorProductCoordinates). Per default, a scheme assuming a 
+  uniform grid is used, but two other methods, `Li` and `Hou`, are both available for adaptations to non-uniform grids.
+  These can be specified using the input file entry `Flux.TVDApproach`. 
+- __RANS__: The called RANS model, defined in the properties system, will specify, via the model traits,
+  which RANS problem implementation should be used. In each problem file, the initial and boundary conditions can be 
+  set using templated functions based on the model type. Examples of these functions exist in the RANS based tests. 
+  No further preprocessor macros are required. 
 
 ### Immediate interface changes not allowing/requiring a deprecation period
 
