@@ -114,12 +114,8 @@ public:
         const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
         const auto& elemVolVars = fluxVars.elemVolVars();
         const auto& scvf = fluxVars.scvFace();
-        const auto& insideScv = fluxVars.fvGeometry().scv(scvf.insideScvIdx());
-        const auto& outsideScv = fluxVars.fvGeometry().scv(scvf.outsideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
-        const auto& outsideVolVars = elemVolVars[outsideScv];
-        auto insideEnthalpy = insideVolVars.enthalpy(phaseIdx);
-        auto outsideEnthalpy = outsideVolVars.enthalpy(phaseIdx);
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
@@ -129,9 +125,9 @@ public:
             //we need the upwind enthalpy. Even better would be the componentEnthalpy
             auto enthalpy = 0.0;
             if (diffusiveFluxes[compIdx] > 0)
-                enthalpy += insideEnthalpy;
+                enthalpy += insideVolVars.enthalpy(phaseIdx);
             else
-                enthalpy += outsideEnthalpy;
+                enthalpy += outsideVolVars.enthalpy(phaseIdx);
             flux[energyEq0Idx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx)*enthalpy;
         }
     }
@@ -265,12 +261,8 @@ public:
         const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
         const auto& elemVolVars = fluxVars.elemVolVars();
         const auto& scvf = fluxVars.scvFace();
-        const auto& insideScv = fluxVars.fvGeometry().scv(scvf.insideScvIdx());
-        const auto& outsideScv = fluxVars.fvGeometry().scv(scvf.outsideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
-        const auto& outsideVolVars = elemVolVars[outsideScv];
-        auto insideEnthalpy = insideVolVars.enthalpy(phaseIdx);
-        auto outsideEnthalpy = outsideVolVars.enthalpy(phaseIdx);
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
@@ -280,9 +272,9 @@ public:
             // we need the upwind enthalpy. Even better would be the componentEnthalpy
             auto enthalpy = 0.0;
             if (diffusiveFluxes[compIdx] > 0)
-                enthalpy += insideEnthalpy;
+                enthalpy += insideVolVars.enthalpy(phaseIdx);
             else
-                enthalpy += outsideEnthalpy;
+                enthalpy += outsideVolVars.enthalpy(phaseIdx);
             flux[energyEq0Idx+phaseIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx)*enthalpy;
         }
     }
