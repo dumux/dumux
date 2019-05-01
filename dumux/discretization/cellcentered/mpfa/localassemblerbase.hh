@@ -156,7 +156,7 @@ class InteractionVolumeAssemblerBase
             // gravitational acceleration on this face
             const auto& curLocalScvf = iv.localScvf(faceIdx);
             const auto& curGlobalScvf = fvGeometry().scvf(curLocalScvf.gridScvfIndex());
-            const auto& gravity = problem().gravityAtPos(curGlobalScvf.ipGlobal());
+            const auto& gravity = problem().spatialParams().gravity(curGlobalScvf.ipGlobal());
 
             // get permeability tensor in "positive" sub volume
             const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();

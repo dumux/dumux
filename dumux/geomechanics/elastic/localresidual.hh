@@ -128,7 +128,7 @@ public:
         static const bool gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
         if (gravity)
         {
-            const auto& g = problem.gravityAtPos(scv.center());
+            const auto& g = problem.spatialParams().gravity(scv.center());
             for (int dir = 0; dir < GridView::dimensionworld; ++dir)
                 source[Indices::momentum(dir)] += elemVolVars[scv].solidDensity()*g[dir];
         }

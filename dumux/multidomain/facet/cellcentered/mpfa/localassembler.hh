@@ -147,7 +147,7 @@ public:
             // gravitational acceleration on this face
             const auto& curLocalScvf = iv.localScvf(faceIdx);
             const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.gridScvfIndex());
-            const auto& gravity = this->problem().gravityAtPos(curGlobalScvf.ipGlobal());
+            const auto& gravity = this->problem().spatialParams().gravity(curGlobalScvf.ipGlobal());
             const auto curIsInteriorBoundary = curLocalScvf.isOnInteriorBoundary();
             const Scalar curXiFactor = curIsInteriorBoundary ? (curGlobalScvf.boundary() ? 1.0 : xi) : 1.0;
 
