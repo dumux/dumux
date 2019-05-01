@@ -45,40 +45,37 @@ namespace ShallowWater {
  * \tparam Scalar the scalar type for scalar physical quantities
  * \param valueLeft The value on the left side
  * \param valueRight The value on the right side
- * \param upperLimit Where to start the limit the function (mobility < 1)
- * \param lowerLimit Where the limit should reach zero (mobility < 0)
+ * \param upperH Where to start the limit the function (mobility < 1)
+ * \param lowerH Where the limit should reach zero (mobility < 0)
  */
 template<class Scalar>
-static Scalar fluxLimiterLET(const Scalar& valueLeft,
-                             const Scalar& valueRight,
-                             const Scalar& upperH,
-                             const Scalar& lowerH)
+static Scalar fluxLimiterLET(const Scalar valueLeft,
+                             const Scalar valueRight,
+                             const Scalar upperH,
+                             const Scalar lowerH)
 {
+    using std::pow;
+    using std::min;
+    using std::max;
 
-        Scalar krw = 1.0;
-        Scalar sw = 0.0;
-        Scalar letL = 2.0;
-        Scalar letT = 2.0;
-        Scalar letE = 1.0;
-        Scalar h = 0.0;
-        Scalar mobility = 1.0;
-        using std::pow;
-        using std::min;
-        using std::max;
+    const auto h = (valueLeft + valueRight)*0.5;
 
-        h = (valueLeft+valueRight)*0.5;
+    Scalar mobility = 1.0;
+    if (h < upperH)
+    {
+        const auto sw = max(min(h*(1.0/upperH) - lowerH, 1.0), 0.0);
 
-        if (h < upperH)
-        {
-            sw = min(h * (1.0/upperH) - (lowerH),1.0);
-            sw = max(sw,0.0);
-            sw = min(sw,1.0);
+        // LET-model for mobility
+        // constexpr Scalar krw = 1.0;
+        // constexpr Scalar letL = 2.0;
+        // constexpr Scalar letT = 2.0;
+        // constexpr Scalar letE = 1.0;
+        // mobility = (krw * pow(sw, letL))/(pow(sw, letL) + letE * pow(1.0 - sw, letT));
 
-            //LET-model for mobility
-            mobility = (krw * pow(sw, letL))/(pow(sw, letL) + letE * pow(1.0 - sw, letT));
-        }
+        mobility = (sw*sw)/(sw*sw + (1-sw)*(1-sw));
+    }
 
-        return mobility;
+    return mobility;
 }
 
 } // end namespace ShallowWater
