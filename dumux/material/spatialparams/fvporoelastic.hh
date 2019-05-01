@@ -26,6 +26,7 @@
 
 #include <memory>
 
+#include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
@@ -82,11 +83,31 @@ class FVSpatialParamsPoroElastic
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
+    enum { dimWorld = GridView::dimensionworld };
+
 public:
     //! The constructor
     FVSpatialParamsPoroElastic(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : fvGridGeometry_(fvGridGeometry)
-    {}
+    , gravity_(0.0)
+    {
+        const bool enableGravity = getParam<bool>("Problem.EnableGravity");
+        if (enableGravity)
+            gravity_[dimWorld-1]  = -9.81;
+    }
+
+    /*!
+     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
+     *
+     * The default behaviour is a constant gravity vector;
+     * if the <tt>Problem.EnableGravity</tt> parameter is true,
+     * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$,
+     * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
+     *
+     * \param pos the spatial position at which to evaulate the gravity vector
+     */
+    const GlobalPosition& gravity(const GlobalPosition &pos) const
+    { return gravity_; }
 
     /*!
      * \brief Function for defining the porosity.
@@ -304,6 +325,7 @@ protected:
 
 private:
     std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
+    GlobalPosition gravity_; //!< The gravity vector
 };
 } // end namespace Dumux
 #endif
