@@ -19,34 +19,14 @@
 #ifndef DUMUX_FLUX_SHALLOW_WATER_FLUX_HH
 #define DUMUX_FLUX_SHALLOW_WATER_FLUX_HH
 
-#include <dumux/common/math.hh>
-#include <dumux/common/parameters.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/flux/shallowwater/riemannproblem.hh>
 
-namespace Dumux{
+namespace Dumux {
 
-template<class TypeTag>
+template<class NumEqVector>
 class ShallowWaterFlux
 {
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 
@@ -62,16 +42,16 @@ public:
      *
      * \todo The choice of the Riemann solver should be more flexible
      */
+    template<class Problem, class FVElementGeometry, class ElementVolumeVariables>
     static NumEqVector flux(const Problem& problem,
-                            const Element& element,
+                            const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolumeFace& scvf)
+                            const typename FVElementGeometry::SubControlVolumeFace& scvf)
     {
 
         //Get the inside and outside volume variables
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         const auto& nxy = scvf.unitOuterNormal();
 
