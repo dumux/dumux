@@ -59,35 +59,36 @@ namespace ShallowWater {
  * \param bedSurfaceLeft surface of the bed on the left side
  * \param bedSurfaceRight surface of the bed on the right side
  * \param grav gravity constant
+ * \param nxy the normal vector
  *
  */
 template<class Scalar, class GlobalPosition>
-std::array<Scalar,3> riemannProblem(Scalar waterDepthLeft,
-                                    Scalar waterDepthRight,
+std::array<Scalar,3> riemannProblem(const Scalar waterDepthLeft,
+                                    const Scalar waterDepthRight,
                                     Scalar velocityXLeft,
                                     Scalar velocityXRight,
                                     Scalar velocityYLeft,
                                     Scalar velocityYRight,
-                                    Scalar bedSurfaceLeft,
-                                    Scalar bedSurfaceRight,
-                                    Scalar gravity,
-                                    GlobalPosition nxy)
+                                    const Scalar bedSurfaceLeft,
+                                    const Scalar bedSurfaceRight,
+                                    const Scalar gravity,
+                                    const GlobalPosition& nxy)
 {
     using std::max;
 
-    //Hydrostatic reconstrucion after Audusse
-    Scalar dzl = max(0.0,bedSurfaceRight - bedSurfaceLeft);
-    Scalar waterDepthLeftReconstructed = max(0.0, waterDepthLeft - dzl);
-    Scalar dzr = max(0.0,bedSurfaceLeft - bedSurfaceRight);
-    Scalar waterDepthRightReconstructed = max(0.0, waterDepthRight - dzr);
+    // hydrostatic reconstrucion after Audusse
+    const Scalar dzl = max(0.0, bedSurfaceRight - bedSurfaceLeft);
+    const Scalar waterDepthLeftReconstructed = max(0.0, waterDepthLeft - dzl);
+    const Scalar dzr = max(0.0, bedSurfaceLeft - bedSurfaceRight);
+    const Scalar waterDepthRightReconstructed = max(0.0, waterDepthRight - dzr);
 
-    //compute the mobility of the flux with the fluxlimiter
-    Scalar mobility = ShallowWater::fluxLimiterLET(waterDepthLeftReconstructed,
-                                                   waterDepthRightReconstructed,
-                                                   0.001,
-                                                   0.00001);
+    // compute the mobility of the flux with the fluxlimiter
+    const Scalar mobility = ShallowWater::fluxLimiterLET(waterDepthLeftReconstructed,
+                                                         waterDepthRightReconstructed,
+                                                         0.001,
+                                                         0.00001);
 
-    //make rotation of the flux we compute an 1d flux
+    // make rotation of the flux we compute an 1d flux
     Scalar tempFlux = velocityXLeft;
     velocityXLeft =  nxy[0] * tempFlux + nxy[1] * velocityYLeft;
     velocityYLeft = -nxy[1] * tempFlux + nxy[0] * velocityYLeft;
@@ -96,23 +97,23 @@ std::array<Scalar,3> riemannProblem(Scalar waterDepthLeft,
     velocityXRight =  nxy[0] * tempFlux + nxy[1] * velocityYRight;
     velocityYRight = -nxy[1] * tempFlux + nxy[0] * velocityYRight;
 
-    ShallowWater::RiemannSolution<Scalar> riemannResult = ShallowWater::exactRiemann(waterDepthLeftReconstructed,
-                                                                                     waterDepthRightReconstructed,
-                                                                                     velocityXLeft,
-                                                                                     velocityXRight,
-                                                                                     velocityYLeft,
-                                                                                     velocityYRight,
-                                                                                     gravity);
+    auto riemannResult = ShallowWater::exactRiemann(waterDepthLeftReconstructed,
+                                                    waterDepthRightReconstructed,
+                                                    velocityXLeft,
+                                                    velocityXRight,
+                                                    velocityYLeft,
+                                                    velocityYRight,
+                                                    gravity);
 
     //redo rotation
     tempFlux = riemannResult.flux[1];
     riemannResult.flux[1] = nxy[0] * tempFlux - nxy[1] * riemannResult.flux[2];
     riemannResult.flux[2] = nxy[1] * tempFlux + nxy[0] * riemannResult.flux[2];
 
-    //Add reconstruction flux from Audusse reconstruction
-    Scalar hgzl = 0.5 * (waterDepthLeftReconstructed + waterDepthLeft) * (waterDepthLeftReconstructed - waterDepthLeft);
-    Scalar hdxzl = gravity * nxy[0] * hgzl;
-    Scalar hdyzl = gravity * nxy[1] * hgzl;
+    // Add reconstruction flux from Audusse reconstruction
+    const Scalar hgzl = 0.5 * (waterDepthLeftReconstructed + waterDepthLeft) * (waterDepthLeftReconstructed - waterDepthLeft);
+    const Scalar hdxzl = gravity * nxy[0] * hgzl;
+    const Scalar hdyzl = gravity * nxy[1] * hgzl;
 
     /*Right side is computed from the other side otherwise the
       following "non-symetric" fluxes are needed:
@@ -122,7 +123,7 @@ std::array<Scalar,3> riemannProblem(Scalar waterDepthLeft,
       Scalar hdyzrhdyzr = gravity * nxy[1] * hgzr;
     */
 
-    std::array<Scalar,3> localFlux{0.0,0.0,0.0};
+    std::array<Scalar, 3> localFlux;
     localFlux[0] = riemannResult.flux[0] * mobility;
     localFlux[1] = riemannResult.flux[1] - hdxzl;
     localFlux[2] = riemannResult.flux[2] - hdyzl;

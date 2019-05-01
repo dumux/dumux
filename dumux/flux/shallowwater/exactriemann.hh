@@ -58,413 +58,385 @@ struct RiemannSolution {
  * \param s sample point (default = 0 since x = 0 for flux computation)
  */
 template<class Scalar>
-RiemannSolution<Scalar> exactRiemann(const Scalar& dl,
-                                     const Scalar& dr,
-                                     const Scalar& ul,
-                                     const Scalar& ur,
-                                     const Scalar& vl,
-                                     const Scalar& vr,
-                                     const Scalar& grav,
-                                     const Scalar& s = 0.0)
+RiemannSolution<Scalar> exactRiemann(const Scalar dl,
+                                     const Scalar dr,
+                                     const Scalar ul,
+                                     const Scalar ur,
+                                     const Scalar vl,
+                                     const Scalar vr,
+                                     const Scalar grav,
+                                     const Scalar s = 0.0)
 {
+    RiemannSolution<Scalar> sol;
+    sol.waterDepth = 0.0; // d (Toro)
+    sol.velocityX = 0.0; // u (Toro)
+    sol.velocityY = 0.0; // v (Toro)
 
-        Scalar fl = 0.0; //function fl
-        Scalar fr = 0.0; //function fr
-        Scalar fld = 0.0; //function fl derivative
-        Scalar frd = 0.0; //function fr derivative
-        Scalar us = 0.0; //ustar
-        Scalar cl = 0.0; //celerity sqrt(g*h) left side
-        Scalar cr = 0.0; //celerity sqrt(g*h) right side
-        Scalar c = 0.0; //celerity
-        Scalar cs = 0.0; //celerity
-        Scalar dcrit = 0.0; //critical water depth
-        Scalar dmin = 0.0; //minimum depth
-        Scalar gel = 0.0; //gravity component
-        Scalar ger = 0.0; //gravity component
-        Scalar ges = 0.0; //gravity component
-        Scalar ds = 0.0; //water depth
-        Scalar d0 = 0.0; //start point for Newton method
-        Scalar cha = 0.0; //variable for Newton method
-        Scalar sl = 0.0; //shock left
-        Scalar sr = 0.0; //shock right
-        Scalar shl = 0.0; //wave speed ad head left
-        Scalar shr = 0.0; //wave speed ad head right
-        Scalar stl = 0.0; //wave speed at tail left
-        Scalar str = 0.0; // wave speed at tail right
-        int maxsteps = 200; //maximum steps for the Newton method
-        Scalar tol = 1.0E-12; //tolerance for the Newton method
-        Scalar d = 0.0; // water depth
-        Scalar u = 0.0; //velocityX
-        Scalar v = 0.0; //celocityY
-        Scalar ql = 0.0; //flux left
-        Scalar qr = 0.0; //flux right
-        Scalar ssl = 0.0; //wave speed ssl
-        Scalar ssr = 0.0; //wave speed ssr
+    constexpr int maxsteps = 200; //maximum steps for the Newton method
+    constexpr Scalar tol = 1.0E-12; //tolerance for the Newton method
 
-        using std::sqrt;
-        using std::max;
-        using std::min;
-        using std::pow;
-        using std::abs;
+    using std::sqrt;
+    using std::max;
+    using std::min;
+    using std::abs;
 
-        //================== Exact Riemann solver
-        cl = sqrt(grav * max(dl,0.0));
-        cr = sqrt(grav * max(dr,0.0));
-        dcrit = (ur - ul) - 2.0*(cl+cr);
+    //================== Exact Riemann solver
+    const auto cl = sqrt(grav * max(dl, 0.0)); //celerity sqrt(g*h) left side
+    const auto cr = sqrt(grav * max(dr, 0.0)); //celerity sqrt(g*h) right side
+    const auto dcrit = (ur - ul) - 2.0*(cl + cr); //critical water depth
 
-        // dry case
-        if ((dl <= 0)||(dr <= 0)||(dcrit >= 0))
+    // dry case
+    if ((dl <= 0) || (dr <= 0) || (dcrit >= 0))
+    {
+        //left side is dry
+        if(dl <= 0)
         {
-            //left side is dry
-            if(dl <= 0)
+            const auto shr = ur + cr; //wave speed at head right
+
+            if (s >= shr)
             {
-                shr = ur + cr;
+                sol.waterDepth = dr;
+                sol.velocityX = ur;
+                sol.velocityY = vr;
 
-                if (s >= shr)
-                {
-                    d = dr;
-                    u = ur;
-                    v = vr;
-
-                }
-
-                else
-                {
-
-                    str = ur -2.0*cr;
-
-                    if(s >= str){
-                        u = (ur - 2.0 *cr + 2.0*s)/3.0;
-                        c = (-ur + 2.0*cr +s )/3.0;
-                        d = c*c/grav;
-                        v = vr;
-
-                    }
-
-                    else
-                    {
-                        d = dl;
-                        u = ul;
-                        v = vl;
-                    }
-                }
             }
 
             else
             {
-                //right side is dry
-                if(dr <= 0)
-                {
-                    shl = ul -cl;
 
-                    if(s <= shl)
-                    {
-                        d = dl;
-                        u = ul;
-                        v = vl;
-                    }
+                const auto str = ur - 2.0*cr; //wave speed at tail right
 
-                    else
-                    {
-                        stl = ul + 2.0 *cl;
+                if(s >= str){
+                    sol.velocityX = (ur - 2.0 *cr + 2.0*s)/3.0;
+                    const auto c = (-ur + 2.0*cr +s )/3.0;
+                    sol.waterDepth = c*c/grav;
+                    sol.velocityY = vr;
 
-                        if ( s <= stl)
-                        {
-                            u = (ul + 2.0 *cl + 2.0*s)/3.0;
-                            c = (ul + 2.0*cl -s)/3.0;
-                            d = c*c/grav;
-                            v = vl;
-                        }
-
-                        else
-                        {
-                            d = dr;
-                            u = ur;
-                            v = vr;
-                        }
-                    }
                 }
 
-                //middle state is dry
                 else
                 {
-                    shl = ul - cl;
-                    ssl = ul + 2.0 * cl;
-                    ssr = ur - 2.0 * cr;
-                    shr = ur + cr;
-
-                    if(s <= shl)
-                    {
-                        d = dl;
-                        u = ul;
-                        v = vl;
-                    }
-
-                    if((s > shl)&&(s <= ssl))
-                    {
-                        u = (ul + 2.0 * cl + 2.0*s)/3.0;
-                        c = (ul + 2.0*cl-s)/3.0;
-                        d = c*c/grav;
-                        v = vl;
-                    }
-
-                    if((s > ssl)and (s<= ssr))
-                    {
-                        d = 0.0;
-                        u = 0.0;
-                        v = 0.0;
-                    }
-
-                    if ((s > ssr ) &&(s <= shr))
-                    {
-                        u = (ur - 2.0*cr + 2.0 *s)/3.0;
-                        c = (-ur + 2.0*cr +s)/3.0;
-                        d = c*c/grav;
-                        v = vr;
-                    }
-
-                    if(s > shr)
-                    {
-                        d = dr;
-                        u = ur;
-                        v = vr;
-                    }
+                    sol.waterDepth = dl;
+                    sol.velocityX = ul;
+                    sol.velocityY = vl;
                 }
             }
         }
 
-        // wet case
         else
         {
-            //Get a starting value for the Newton-Raphson method
-            ds = (1.0/grav) * pow(0.5 * (cl + cr) - 0.25 * (ul - ur),2.0);
-
-            //default is Two-Rarefaction  as starting value, if ds > dmin we use two-shock
-            dmin = min(dl,dr);
-
-            if (ds > dmin)
+            //right side is dry
+            if(dr <= 0)
             {
-                gel = sqrt(0.5*grav * (ds+dl)/(ds*dl));
-                ger = sqrt(0.5*grav * (ds+dr)/(ds*dr));
-                ds = (gel * dl + ger * dr - (ur-ul))/(gel + ger);
-            }
+                const auto shl = ul-cl; //wave speed at head left
 
-            //Start Newton-Raphson loop ds = hstar
-            ds = max(ds,tol);
-            d0 = ds;
-
-            for (int i=0; i <= maxsteps; ++i)
-            {
-                //Compute fl,fr,fld,frd
-
-                //first left side
-                if (ds <= dl)
+                if(s <= shl)
                 {
-                    c = sqrt(grav * ds);
-                    fl = 2.0 * (c-cl);
-                    fld = grav/c;
+                    sol.waterDepth = dl;
+                    sol.velocityX = ul;
+                    sol.velocityY = vl;
                 }
 
                 else
                 {
-                    ges = sqrt(0.5 * grav * (ds+dl)/(ds*dl));
-                    fl = (ds - dl) * ges;
-                    fld = ges - 0.25 * grav * (ds - dl)/(ges * ds * ds);
+                    const auto stl = ul + 2.0 *cl; //wave speed at tail left
+
+                    if ( s <= stl)
+                    {
+                        sol.velocityX = (ul + 2.0 *cl + 2.0*s)/3.0;
+                        const auto c = (ul + 2.0*cl - s)/3.0;
+                        sol.waterDepth = c*c/grav;
+                        sol.velocityY = vl;
+                    }
+
+                    else
+                    {
+                        sol.waterDepth = dr;
+                        sol.velocityX = ur;
+                        sol.velocityY = vr;
+                    }
                 }
-
-                //second right side
-                if (ds <= dr)
-                {
-                    c = sqrt(grav * ds);
-                    fr = 2.0 * (c-cr);
-                    frd = grav/c;
-                }
-
-                else
-                {
-                    ges = sqrt(0.5 * grav * (ds+dr)/(ds*dr));
-                    fr = (ds - dr) * ges;
-                    frd = ges - 0.25 * grav * (ds - dr)/(ges * ds * ds);
-                }
-
-                ds -= (fl + fr + ur - ul)/(fld + frd);
-                cha =  abs(ds - d0)/(0.5*(ds+d0));
-
-                if (cha <= tol)
-                {
-                    break;
-                }
-
-                if (ds < 0.0)
-                {
-                    ds = tol;
-                }
-
-                d0 = ds;
             }
 
-            //compute ustar (us)
+            //middle state is dry
+            else
+            {
+                const auto shl = ul - cl; //wave speed at head left
+                const auto shr = ur + cr; //wave speed at head right
+                const auto ssl = ul + 2.0 * cl;
+                const auto ssr = ur - 2.0 * cr;
+
+                if(s <= shl)
+                {
+                    sol.waterDepth = dl;
+                    sol.velocityX = ul;
+                    sol.velocityY = vl;
+                }
+
+                if((s > shl) && (s <= ssl))
+                {
+                    sol.velocityX = (ul + 2.0 * cl + 2.0*s)/3.0;
+                    const auto c = (ul + 2.0*cl - s)/3.0;
+                    sol.waterDepth = c*c/grav;
+                    sol.velocityY = vl;
+                }
+
+                if((s > ssl) && (s <= ssr))
+                {
+                    sol.waterDepth = 0.0;
+                    sol.velocityX = 0.0;
+                    sol.velocityY = 0.0;
+                }
+
+                if ((s > ssr ) && (s <= shr))
+                {
+                    sol.velocityX = (ur - 2.0*cr + 2.0*s)/3.0;
+                    const auto c = (-ur + 2.0*cr + s)/3.0;
+                    sol.waterDepth = c*c/grav;
+                    sol.velocityY = vr;
+                }
+
+                if(s > shr)
+                {
+                    sol.waterDepth = dr;
+                    sol.velocityX = ur;
+                    sol.velocityY = vr;
+                }
+            }
+        }
+    }
+
+    // wet case
+    else
+    {
+        // Get a starting value for the Newton-Raphson method
+        const auto tmp = 0.5 * (cl + cr) - 0.25 * (ul - ur);
+        auto ds = (1.0/grav) * tmp * tmp; // water depth
+
+        //default is Two-Rarefaction  as starting value, if ds > dmin we use two-shock
+        const auto dmin = min(dl, dr); // minimum depth
+
+        if (ds > dmin)
+        {
+            const auto gel = sqrt(0.5*grav * (ds+dl)/(ds*dl));
+            const auto ger = sqrt(0.5*grav * (ds+dr)/(ds*dr));
+            ds = (gel * dl + ger * dr - (ur-ul))/(gel + ger);
+        }
+
+        //Start Newton-Raphson loop ds = hstar
+        ds = max(ds, tol);
+        auto d0 = ds;
+
+        Scalar fl = 0.0, fr = 0.0, fld = 0.0, frd = 0.0;
+
+        for (int i=0; i <= maxsteps; ++i)
+        {
+            //Compute fl,fr,fld,frd
+
+            //first left side
             if (ds <= dl)
             {
-                c = sqrt(grav * ds);
+                const auto c = sqrt(grav * ds);
                 fl = 2.0 * (c-cl);
+                fld = grav/c;
             }
 
             else
             {
-                ges = sqrt(0.5 * grav * (ds+dl)/(ds*dl));
+                const auto ges = sqrt(0.5 * grav * (ds+dl)/(ds*dl));
                 fl = (ds - dl) * ges;
+                fld = ges - 0.25 * grav * (ds - dl)/(ges * ds * ds);
             }
 
+            //second right side
             if (ds <= dr)
             {
-                c = sqrt(grav * ds);
+                const auto c = sqrt(grav * ds);
                 fr = 2.0 * (c-cr);
+                frd = grav/c;
             }
 
             else
             {
-                ges = sqrt(0.5 * grav * (ds+dr)/(ds*dr));
+                const auto ges = sqrt(0.5 * grav * (ds+dr)/(ds*dr));
                 fr = (ds - dr) * ges;
+                frd = ges - 0.25 * grav * (ds - dr)/(ges * ds * ds);
             }
 
-            //exact Riemann solver sstar = ustar
-            us = 0.5 * (ul + ur) + 0.5 * (fr-fl);
-            cs = sqrt(grav * ds);
+            ds -= (fl + fr + ur - ul)/(fld + frd);
+            const auto cha = abs(ds - d0)/(0.5*(ds + d0));
 
-            /***********************  computation of u and d *******************/
-            //left wave
-            if (s <= us)
+            if (cha <= tol)
             {
-                v = vl;
-                //left shock
-                if (ds >= dl)
+                break;
+            }
+
+            if (ds < 0.0)
+            {
+                ds = tol;
+            }
+
+            d0 = ds;
+        }
+
+        //compute ustar (us)
+        if (ds <= dl)
+        {
+            const auto c = sqrt(grav * ds);
+            fl = 2.0 * (c-cl);
+        }
+
+        else
+        {
+            const auto ges = sqrt(0.5*grav*(ds + dl)/(ds*dl));
+            fl = (ds - dl) * ges;
+        }
+
+        if (ds <= dr)
+        {
+            const auto c = sqrt(grav * ds);
+            fr = 2.0 * (c-cr);
+        }
+
+        else
+        {
+            const auto ges = sqrt(0.5*grav*(ds + dr)/(ds*dr));
+            fr = (ds - dr) * ges;
+        }
+
+        //exact Riemann solver sstar = ustar
+        const auto us = 0.5*(ul + ur) + 0.5*(fr - fl); // u_star
+        const auto cs = sqrt(grav*ds); // c_star
+
+        /***********************  computation of u and d *******************/
+        //left wave
+        if (s <= us)
+        {
+            sol.velocityY = vl;
+            //left shock
+            if (ds >= dl)
+            {
+                const auto ql = sqrt((ds + dl)*ds/(2.0*dl*dl)); // flux left
+                const auto sl = ul - cl*ql; // shock left
+
+                //left side of shock
+                if(s <= sl)
                 {
-                    ql = sqrt((ds + dl)*ds/(2.0*dl*dl));
-                    sl = ul - cl * ql;
-
-                    //left side of shock
-                    if(s <= sl)
-                    {
-                        d = dl;
-                        u = ul;
-                    }
-
-                    //right side of shock
-                    else
-                    {
-                        d = ds;
-                        u = us;
-                    }
+                    sol.waterDepth = dl;
+                    sol.velocityX = ul;
                 }
 
-                //left rarefaction
+                //right side of shock
                 else
                 {
-                    shl = ul -cl;
-
-                    //right side of rarefaction
-                    if (s <= shl)
-                    {
-                        d = dl;
-                        u = ul;
-                    }
-
-                    else
-                    {
-                        stl = us -cs;
-
-                        //inside the rarefaction
-                        if(s <= stl)
-                        {
-                            u = (ul + 2.0*cl + 2.0 * s)/3.0;
-                            c = (ul + 2.0* cl -s)/3.0;
-                            d = c*c/grav;
-                        }
-
-                        //inside the star region
-                        else
-                        {
-                            d = ds;
-                            u = us;
-                        }
-                    }
+                    sol.waterDepth = ds;
+                    sol.velocityX = us;
                 }
             }
 
-            //right wave
+            //left rarefaction
             else
             {
-                v = vr;
+                const auto shl = ul-cl; //wave speed at head left
 
-                //right shock
-                if(ds >= dr)
+                //right side of rarefaction
+                if (s <= shl)
                 {
-                    qr = sqrt((ds +dr)* ds /(2.0*dr*dr));
-                    sr = ur  + cr * qr;
-
-                    //right side of shock
-                    if(s >= sr)
-                    {
-                        d = dr;
-                        u = ur;
-                    }
-
-                    //left side of shock
-                    else
-                    {
-                        d = ds;
-                        u = us;
-                    }
-
-                //right rarefaction
+                    sol.waterDepth = dl;
+                    sol.velocityX = ul;
                 }
 
                 else
                 {
-                    shr  = ur + cr;
+                    const auto stl = us -cs; //wave speed at tail left
 
-                    //right side of Rarefaction
-                    if (s >= shr)
+                    //inside the rarefaction
+                    if(s <= stl)
                     {
-                        d = dr;
-                        u = ur;
+                        sol.velocityX = (ul + 2.0*cl + 2.0 * s)/3.0;
+                        const auto c = (ul + 2.0* cl - s)/3.0;
+                        sol.waterDepth = c*c/grav;
                     }
 
+                    //inside the star region
                     else
                     {
-                        str = us + cs;
-
-                        //inside the rarefaction
-                        if(s>=str)
-                        {
-                            u = (ur -2.0 * cr + 2.0 * s)/3.0;
-                            c = (-ur + 2.0 * cr + s)/3.0;
-                            d = c*c/grav;
-
-                        }
-
-                        //inside the star region
-                        else
-                        {
-                            d = ds;
-                            u = us;
-                        }
+                        sol.waterDepth = ds;
+                        sol.velocityX = us;
                     }
                 }
             }
         }
-        //============================== Flux computation ===================
-        RiemannSolution<Scalar> result;
 
-        result.flux[0] = d * u;
-        result.flux[1] = d * u * u + 0.5 * grav * d * d;
-        result.flux[2] = d * u * v;
-        result.waterDepth = d;
-        result.velocityX = u;
-        result.velocityY = v;
+        //right wave
+        else
+        {
+            sol.velocityY = vr;
 
-        return result;
+            //right shock
+            if(ds >= dr)
+            {
+                const auto qr = sqrt((ds + dr)*ds /(2.0*dr*dr)); // flux right
+                const auto sr = ur + cr*qr; // shock right
+
+                //right side of shock
+                if(s >= sr)
+                {
+                    sol.waterDepth = dr;
+                    sol.velocityX = ur;
+                }
+
+                //left side of shock
+                else
+                {
+                    sol.waterDepth = ds;
+                    sol.velocityX = us;
+                }
+
+            //right rarefaction
+            }
+
+            else
+            {
+                const auto shr  = ur + cr; //wave speed at head right
+
+                //right side of Rarefaction
+                if (s >= shr)
+                {
+                    sol.waterDepth = dr;
+                    sol.velocityX = ur;
+                }
+
+                else
+                {
+                    const auto str = us + cs; //wave speed at tail right
+
+                    //inside the rarefaction
+                    if(s>=str)
+                    {
+                        sol.velocityX = (ur - 2.0*cr + 2.0*s)/3.0;
+                        const auto c = (-ur + 2.0*cr + s)/3.0;
+                        sol.waterDepth = c*c/grav;
+
+                    }
+
+                    //inside the star region
+                    else
+                    {
+                        sol.waterDepth = ds;
+                        sol.velocityX = us;
+                    }
+                }
+            }
+        }
+    }
+    //============================== Flux computation ===================
+
+    sol.flux[0] = sol.waterDepth * sol.velocityX;
+    sol.flux[1] = sol.waterDepth * sol.velocityX * sol.velocityX + 0.5 * grav * sol.waterDepth * sol.waterDepth;
+    sol.flux[2] = sol.waterDepth * sol.velocityX * sol.velocityY;
+
+    return sol;
 }
 
 } // end namespace ShallowWater
