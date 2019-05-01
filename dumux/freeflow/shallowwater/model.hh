@@ -187,7 +187,9 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::ShallowWater> {using type = ShallowWaterIOFields;};
 
 template<class TypeTag>
-struct AdvectionType<TypeTag, TTag::ShallowWater> {using type = ShallowWaterFlux<TypeTag>;};
+struct AdvectionType<TypeTag, TTag::ShallowWater>
+{ using type = ShallowWaterFlux< GetPropType<TypeTag, Properties::NumEqVector> >; };
+
 //template<class TypeTag> struct DiffusionType<TypeTag, TTag::ShallowWater> {using type = ShallowWaterExactRiemannSolver<TypeTag>;};
 
 } // end properties
