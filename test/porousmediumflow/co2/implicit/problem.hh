@@ -474,7 +474,7 @@ private:
         else // mass-fraction formulation
             values[switchIdx] = moleFracLiquidCO2*FluidSystem::molarMass(CO2Idx)/meanM;
 
-        values[pressureIdx] = 1.0e5 - densityW*this->gravity()[dimWorld-1]*(depthBOR_ - globalPos[dimWorld-1]);
+        values[pressureIdx] = 1.0e5 - densityW*this->spatialParams().gravity(globalPos)[dimWorld-1]*(depthBOR_ - globalPos[dimWorld-1]);
 
 #if !ISOTHERMAL
         values[temperatureIdx] = temp;

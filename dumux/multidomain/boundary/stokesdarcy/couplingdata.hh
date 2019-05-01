@@ -455,7 +455,7 @@ protected:
         const Scalar mu = context.volVars.viscosity(darcyPhaseIdx);
         const Scalar rho = context.volVars.density(darcyPhaseIdx);
         const Scalar distance = (context.element.geometry().center() - scvf.center()).two_norm();
-        const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).gravity()[scvf.directionIndex()];
+        const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).spatialParams().gravity(scvf.center())[scvf.directionIndex()];
         const Scalar interfacePressure = ((scvf.directionSign() * velocity * (mu/darcyPermeability(element, scvf))) + rho * g) * distance + cellCenterPressure;
         return interfacePressure;
     }
@@ -480,7 +480,7 @@ protected:
         const Scalar mu = context.volVars.viscosity(darcyPhaseIdx);
         const Scalar rho = context.volVars.density(darcyPhaseIdx);
         const Scalar distance = (context.element.geometry().center() - scvf.center()).two_norm();
-        const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).gravity()[scvf.directionIndex()];
+        const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).spatialParams().gravity(scvf.center())[scvf.directionIndex()];
 
         // get the Forchheimer coefficient
         Scalar cF = 0.0;

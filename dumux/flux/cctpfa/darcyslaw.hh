@@ -179,7 +179,7 @@ class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>
             const auto pOutside = outsideVolVars.pressure(phaseIdx);
 
             const auto& tij = fluxVarsCache.advectionTij();
-            const auto& g = problem.gravityAtPos(scvf.ipGlobal());
+            const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
 
             //! compute alpha := n^T*K*g
             const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
@@ -350,7 +350,7 @@ public:
             }();
 
             const auto& tij = fluxVarsCache.advectionTij();
-            const auto& g = problem.gravityAtPos(scvf.ipGlobal());
+            const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
 
             // Obtain inside and outside pressures
             const auto pInside = insideVolVars.pressure(phaseIdx);

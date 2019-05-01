@@ -123,7 +123,7 @@ public:
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
         if (enableGravity)
             flux -= rho*scvf.area()*insideVolVars.extrusionFactor()
-                    *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), problem.gravityAtPos(scvf.center()));
+                    *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), problem.spatialParams().gravity(scvf.center()));
 
         return flux;
     }

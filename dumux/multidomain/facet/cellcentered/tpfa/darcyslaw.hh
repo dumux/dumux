@@ -201,7 +201,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
         if (gravity)
         {
             // compute alpha := n^T*K*g and add to flux (use arithmetic mean for density)
-            const auto& g = problem.gravityAtPos(scvf.ipGlobal());
+            const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
             const auto rho = 0.5*(insideVolVars.density(phaseIdx) + facetVolVars.density(phaseIdx));
             const auto rhoTimesArea = rho*scvf.area();
             const auto alpha_inside = rhoTimesArea*insideVolVars.extrusionFactor()

@@ -312,7 +312,7 @@ public:
         PrimaryVariables values(0.0);
         values.setState(initialPhasePresence_);
 
-        values[pressureIdx] = pressure_ + 1000. * this->gravity()[1] * (globalPos[1] - this->fvGridGeometry().bBoxMax()[1]);
+        values[pressureIdx] = pressure_ + 1000. * this->spatialParams().gravity(globalPos)[1] * (globalPos[1] - this->fvGridGeometry().bBoxMax()[1]);
         values[switchIdx] = initialSw_;
 
 #if NONISOTHERMAL

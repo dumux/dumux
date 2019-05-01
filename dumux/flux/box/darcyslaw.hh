@@ -117,7 +117,7 @@ public:
         }
 
         if (enableGravity)
-            gradP.axpy(-rho, problem.gravityAtPos(scvf.center()));
+            gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
 
         // apply the permeability and return the flux
         return -1.0*vtmv(scvf.unitOuterNormal(), K, gradP)*scvf.area();

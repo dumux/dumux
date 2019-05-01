@@ -194,7 +194,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         const auto depth = this->fvGridGeometry().bBoxMax()[dimWorld-1] - globalPos[dimWorld-1];
-        const auto g = this->gravityAtPos(globalPos)[dimWorld-1];
+        const auto g = this->spatialParams().gravity(globalPos)[dimWorld-1];
 
         PrimaryVariables values;
         values[pressureIdx] = 1e5 + 1000*g*depth;

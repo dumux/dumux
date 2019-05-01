@@ -186,7 +186,7 @@ public:
         {
             // do averaging for the density over all neighboring elements
             const auto rho = (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
-            const auto& g = this->problem(domainI).gravityAtPos(scvf.ipGlobal());
+            const auto& g = this->problem(domainI).spatialParams().gravity(scvf.ipGlobal());
 
             //! compute alpha := n^T*K*g
             const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();

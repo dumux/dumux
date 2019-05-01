@@ -94,7 +94,7 @@ public:
             const auto rhoAverage = phi*rhoFluid + (1.0 - phi*vv.solidDensity());
 
             // add body force
-            const auto& g = problem.gravityAtPos(scv.center());
+            const auto& g = problem.spatialParams().gravity(scv.center());
             for (int dir = 0; dir < GridView::dimensionworld; ++dir)
                 source[ Indices::momentum(dir) ] += rhoAverage*g[dir];
         }

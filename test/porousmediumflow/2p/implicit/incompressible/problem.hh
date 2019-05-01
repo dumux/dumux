@@ -171,7 +171,7 @@ public:
         Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
 
         // hydrostatic pressure scaled by alpha
-        values[pressureH2OIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
+        values[pressureH2OIdx] = 1e5 - factor*densityW*this->spatialParams().gravity(globalPos)[1]*depth;
         values[saturationDNAPLIdx] = 0.0;
 
         return values;
@@ -216,7 +216,7 @@ public:
         Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
 
         // hydrostatic pressure
-        values[pressureH2OIdx] = 1e5 - densityW*this->gravity()[1]*depth;
+        values[pressureH2OIdx] = 1e5 - densityW*this->spatialParams().gravity(globalPos)[1]*depth;
         values[saturationDNAPLIdx] = 0;
         return values;
     }

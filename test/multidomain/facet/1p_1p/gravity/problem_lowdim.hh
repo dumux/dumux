@@ -158,7 +158,7 @@ public:
     //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        const auto g = this->gravityAtPos(globalPos)[dimWorld-1];
+        const auto g = this->spatialParams().gravity(globalPos)[dimWorld-1];
         const auto h = 1.0 - (3.0-globalPos[dimWorld-1])*g;
         return PrimaryVariables(h);
     }
