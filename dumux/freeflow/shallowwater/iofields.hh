@@ -27,7 +27,7 @@
 #include <dumux/io/name.hh>
 #include <string>
 
-namespace Dumux{
+namespace Dumux {
 
 /*!
  * \ingroup ShallowWaterModel

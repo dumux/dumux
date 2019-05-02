@@ -54,6 +54,7 @@ public:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         const auto& nxy = scvf.unitOuterNormal();
+        const auto gravity = problem.spatialParams().gravity(scvf.center());
 
         auto riemannFlux = ShallowWater::riemannProblem(insideVolVars.waterDepth(),
                                                         outsideVolVars.waterDepth(),
@@ -63,7 +64,7 @@ public:
                                                         outsideVolVars.velocity(1),
                                                         insideVolVars.bedSurface(),
                                                         outsideVolVars.bedSurface(),
-                                                        insideVolVars.gravity(),
+                                                        gravity,
                                                         nxy);
 
         NumEqVector localFlux(0.0);

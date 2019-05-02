@@ -34,8 +34,8 @@
 #include <dumux/flux/shallowwater/exactriemann.hh>
 
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ShallowWaterTests
  * \brief A simple dam break test for the shallow water equations
@@ -45,22 +45,21 @@ class DamBreakProblem;
 
 
 // Specify the properties for the problem
-namespace Properties{
+namespace Properties {
 
 // Create new type tags
-namespace TTag
-{
-struct ShallowWaterModel{ using InheritsFrom = std::tuple<ShallowWater>; };
-struct DamBreakWet{ using InheritsFrom = std::tuple<ShallowWaterModel, CCTpfaModel>; };
+namespace TTag {
+struct DamBreakWet { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
 } // end namespace TTag
 
 template<class TypeTag>
-struct Grid<TypeTag, TTag::ShallowWaterModel>
+struct Grid<TypeTag, TTag::DamBreakWet>
 { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::ShallowWaterModel>{ using type = Dumux::DamBreakProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::DamBreakWet>
+{ using type = Dumux::DamBreakProblem<TypeTag>; };
 
 // Set the spatial parameters
 template<class TypeTag>
@@ -74,17 +73,18 @@ public:
 };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::ShallowWaterModel> { static constexpr bool value = true; };
+struct EnableFVGridGeometryCache<TypeTag, TTag::DamBreakWet>
+{ static constexpr bool value = true; };
 
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::ShallowWaterModel> { static constexpr bool value = false; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::DamBreakWet>
+{ static constexpr bool value = false; };
 
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::ShallowWaterModel> { static constexpr bool value = false; };
-
+struct EnableGridFluxVariablesCache<TypeTag, TTag::DamBreakWet>
+{ static constexpr bool value = false; };
 
 } // end namespace Properties
-
 
 
 /*!
@@ -109,8 +109,7 @@ template <class TypeTag>
 class DamBreakProblem : public ShallowWaterProblem<TypeTag>
 {
     using ParentType = ShallowWaterProblem<TypeTag>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -121,31 +120,15 @@ class DamBreakProblem : public ShallowWaterProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-
-    enum {
-        // copy some indices for convenience
-        massBalanceIdx = Indices::massBalanceIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx,
-
-        // Grid and world dimension
-        dimWorld = FVGridGeometry::GridView::dimensionworld,
-
-    };
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     DamBreakProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
-
         exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
         exactVelocityX_.resize(fvGridGeometry->numDofs(), 0.0);
-
     }
 
     //! Get the analytical water depth
@@ -161,6 +144,7 @@ public:
     }
 
     //! Udpate the analytical solution
+    template<class SolutionVector, class GridVariables>
     void updateAnalyticalSolution(const SolutionVector& curSol,
                                   const GridVariables& gridVariables,
                                   const Scalar time)
@@ -174,25 +158,26 @@ public:
             auto elemVolVars = localView(gridVariables.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, curSol);
 
-            auto elemId = this->fvGridGeometry().elementMapper().index(element);
             const auto& globalPos = element.geometry().center();
 
             //compute the position s and the initial water depth at the gate, velocities are zero
-            Scalar s = (globalPos[0] - gatePosition_)/time;
-            Scalar waterDepthLeft =  initialWaterDepthLeft_;
-            Scalar waterDepthRight =  initialWaterDepthRight_;
+            const Scalar s = (globalPos[0] - gatePosition_)/time;
+            const Scalar waterDepthLeft =  initialWaterDepthLeft_;
+            const Scalar waterDepthRight =  initialWaterDepthRight_;
+            const auto gravity = this->spatialParams().gravity(globalPos);
 
-            ShallowWater::RiemannSolution<Scalar> riemannResult = ShallowWater::exactRiemann(waterDepthLeft,
-                                                                                             waterDepthRight,
-                                                                                             0.0,
-                                                                                             0.0,
-                                                                                             0.0,
-                                                                                             0.0,
-                                                                                             9.81,
-                                                                                             s);
+            auto riemannResult = ShallowWater::exactRiemann(waterDepthLeft,
+                                                            waterDepthRight,
+                                                            0.0,
+                                                            0.0,
+                                                            0.0,
+                                                            0.0,
+                                                            gravity,
+                                                            s);
 
-            exactWaterDepth_[elemId] = riemannResult.waterDepth;
-            exactVelocityX_[elemId] = riemannResult.velocityX;
+            const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+            exactWaterDepth_[eIdx] = riemannResult.waterDepth;
+            exactVelocityX_[eIdx] = riemannResult.velocityX;
         }
     }
 
@@ -251,6 +236,7 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& nxy = scvf.unitOuterNormal();
+        const auto gravity = this->spatialParams().gravity(scvf.center());
 
         auto riemannFlux = ShallowWater::riemannProblem(insideVolVars.waterDepth(),
                                                         insideVolVars.waterDepth(),
@@ -260,33 +246,14 @@ public:
                                                         -insideVolVars.velocity(1),
                                                         insideVolVars.bedSurface(),
                                                         insideVolVars.bedSurface(),
-                                                        insideVolVars.gravity(),
+                                                        gravity,
                                                         nxy);
 
-        values[massBalanceIdx] = riemannFlux[0];
-        values[velocityXIdx]   = riemannFlux[1];
-        values[velocityYIdx]   = riemannFlux[2];
+        values[Indices::massBalanceIdx] = riemannFlux[0];
+        values[Indices::velocityXIdx]   = riemannFlux[1];
+        values[Indices::velocityYIdx]   = riemannFlux[2];
 
         return values;
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet boundary
-     *        segment. For the shallow water equations we do a weak
-     *        imposition of boundary conditions. You may use this for
-     *        supercritical flow.
-     *
-     * \param globalPos The position for which the Dirichlet value is set
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
-    {
-
-        PrimaryVariables values(0.0);
-
-        return values;
-
     }
 
     // \}
@@ -326,7 +293,6 @@ public:
         }
 
         return values;
-
     };
 
     // \}

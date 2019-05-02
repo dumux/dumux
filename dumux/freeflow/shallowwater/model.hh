@@ -93,7 +93,6 @@ struct ShallowWaterModelTraits
 
     //! Enable diffusion
     static constexpr bool enableDiffusion() { return false; }
-
 };
 
 /*!
@@ -111,9 +110,7 @@ struct ShallowWaterVolumeVariablesTraits
     using ModelTraits = MT;
 };
 
-///////////////////////////////////////////////////////////////////////////
-// properties for the shallow water model
-///////////////////////////////////////////////////////////////////////////
+
 namespace Properties {
 
 //! Type tag for shallow water equation model inherits from model properties
@@ -121,45 +118,21 @@ namespace TTag {
 struct ShallowWater { using InheritsFrom = std::tuple<ModelProperties>; };
 }// end namespace TTag
 
-//! The grid flux variables cache with an empty ShallowWaterFluxVariablesCacheFiller
-template<class TypeTag>
-struct GridFluxVariablesCache<TypeTag, TTag::ShallowWater>
-{
-private:
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-    using FluxVariablesCacheFiller = GetPropType<TypeTag, Properties::FluxVariablesCacheFiller>;
-public:
-    using type = CCTpfaGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
-};
-
-
 //////////////////////////////////////////////////////////////////
-// Make new type tags
+// Define properties
 //////////////////////////////////////////////////////////////////
 
 template<class TypeTag>
-struct SolutionDependentAdvection<TypeTag, TTag::ShallowWater> { static constexpr bool value = true; };
-template<class TypeTag>
-struct SolutionDependentMolecularDiffusion<TypeTag, TTag::ShallowWater> { static constexpr bool value = false; };
-template<class TypeTag>
-struct SolutionDependentHeatConduction<TypeTag, TTag::ShallowWater> { static constexpr bool value = false; };
-template<class TypeTag>
-struct EnableThermalNonEquilibrium<TypeTag, TTag::ShallowWater> { static constexpr bool value = false; };
-
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
+struct ModelTraits<TypeTag, TTag::ShallowWater>
+{ using type = ShallowWaterModelTraits; };
 
 template<class TypeTag>
-struct ModelTraits<TypeTag, TTag::ShallowWater> {using type = ShallowWaterModelTraits;};
+struct LocalResidual<TypeTag, TTag::ShallowWater>
+{ using type = ShallowWaterResidual<TypeTag>; };
 
 template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::ShallowWater> {using type = ShallowWaterResidual<TypeTag>;};
-
-template<class TypeTag>
-struct FluxVariables<TypeTag, TTag::ShallowWater> {using type = ShallowWaterFluxVariables<TypeTag>;};
+struct FluxVariables<TypeTag, TTag::ShallowWater>
+{ using type = ShallowWaterFluxVariables<TypeTag>; };
 
 template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::ShallowWater>
@@ -167,24 +140,22 @@ struct VolumeVariables<TypeTag, TTag::ShallowWater>
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-
     using Traits = ShallowWaterVolumeVariablesTraits<PV, MT>;
 public:
     using type = ShallowWaterVolumeVariables<Traits>;
 };
 
-
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::ShallowWater>
-{
-    using type = FluxVariablesCaching::EmptyCache< GetPropType<TypeTag, Properties::Scalar> >;
-};
+{ using type = FluxVariablesCaching::EmptyCache< GetPropType<TypeTag, Properties::Scalar> >; };
 
 template<class TypeTag>
-struct FluxVariablesCacheFiller<TypeTag, TTag::ShallowWater> { using type = FluxVariablesCaching::EmptyCacheFiller; };
+struct FluxVariablesCacheFiller<TypeTag, TTag::ShallowWater>
+{ using type = FluxVariablesCaching::EmptyCacheFiller; };
 
 template<class TypeTag>
-struct IOFields<TypeTag, TTag::ShallowWater> {using type = ShallowWaterIOFields;};
+struct IOFields<TypeTag, TTag::ShallowWater>
+{ using type = ShallowWaterIOFields; };
 
 template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::ShallowWater>

@@ -24,9 +24,7 @@
 #ifndef DUMUX_FREEFLOW_SHALLOW_WATER_INDICES_HH
 #define DUMUX_FREEFLOW_SHALLOW_WATER_INDICES_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux{
+namespace Dumux {
 
 // \{
 /*!
@@ -37,7 +35,6 @@ namespace Dumux{
  */
 struct ShallowWaterIndices
 {
-
     static constexpr int dimXIdx = 0; //!< Index of the x-component of a vector of size dim
     static constexpr int dimYIdx = 1; //!< Index of the y-component of a vector of size dim
 
@@ -49,7 +46,6 @@ struct ShallowWaterIndices
     static constexpr int velocityXIdx = momentumXBalanceIdx; //!< Index of the velocity in a solution vector
     static constexpr int velocityYIdx = momentumYBalanceIdx; //!< Index of the velocity in a solution vector
     static constexpr int velocityOffset = velocityXIdx; //!< Offset vor the velocity index
-
 };
 
 // \}

@@ -28,7 +28,7 @@
 #include <dumux/common/properties.hh>
 #include "model.hh"
 
-namespace Dumux{
+namespace Dumux {
 
 /*!
  * \ingroup ShallowWaterModel
@@ -39,11 +39,6 @@ class ShallowWaterProblem : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
@@ -53,10 +48,12 @@ public:
      *
      * \param fvGridGeometry The finite volume grid geometry
      * \param spatialParams The spatial parameter class
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
     ShallowWaterProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                        std::shared_ptr<SpatialParams> spatialParams)
-    : ParentType(fvGridGeometry)
+                        std::shared_ptr<SpatialParams> spatialParams,
+                        const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
     , spatialParams_(spatialParams)
     {}
 
@@ -66,9 +63,11 @@ public:
      * \param fvGridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    ShallowWaterProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    ShallowWaterProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                        const std::string& paramGroup = "")
     : ShallowWaterProblem(fvGridGeometry,
-                          std::make_shared<SpatialParams>(fvGridGeometry))
+                          std::make_shared<SpatialParams>(fvGridGeometry),
+                          paramGroup)
     {}
 
 
@@ -82,11 +81,8 @@ public:
     // \}
 
 
-protected:
-    GlobalPosition gravity_;
-
-    // material properties
-    std::shared_ptr<SpatialParams> spatialParams_;
+private:
+    std::shared_ptr<SpatialParams> spatialParams_; //!< the spatial parameters
 };
 
 } // end namespace Dumux
