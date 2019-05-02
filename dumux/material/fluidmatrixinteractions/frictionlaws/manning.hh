@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include"nikuradse.hh"
 
 namespace Dumux {
 /*!
@@ -37,42 +38,32 @@ namespace Dumux {
  * The LET mobility model is used to limit the friction for small water depths.
  */
 
-template <typename RF>
-class FrictionLawManning
+template <typename Scalar>
+class FrictionLawManning : FrictionLawNikuradse
 {
 public:
     /*!
-     * \brief  The friction law after Manning.
-     * \param volVars volume variables
+     * \brief Compute the friction ustar_h.
+     *
+     * \param h water depth.
+     * \param ks the Strickler friction value.
      */
 
-    template<class VolumeVariables>
-    RF computeUstarH(const VolumeVariables& volVars, RF ks)
+    Scalar computeUstarH(const Scalar h,const Scalar ks, const Scalar gravity)
     {
         using std::pow;
-        using std::min;
-        using std::max
-        RF ustar_h = 0.0;
-        RF rough_h = pow(25.68/(1.0/ks),6.0);
+        using std::log;
 
-        // Limit the friction for small water depths with the LET model.
-        // ???Proberply timo will complain about the names???
-        const RF letL = 0.0;
-        const RF letT = 2.0;
-        const RF letE = 1.0;
-        RF mobility = 1.0;
-        RF krw = 1.0;
-        RF sw = 0.0;
-        auto minUpperH = rough_h * 2.0;
-        sw = min(volVars::getH * (1.0/minUpperH),1.0);
-        sw = max(0.0,sw);
-        mobility = (krw * pow(sw,letL))/(pow(sw,letL) + letE * pow(1.0-sw,letT));
-        rough_h = rough_h * (1.0 - mobility);
+        Scalar ustar_h = 0.0;
+        Scalar rough_h = pow(25.68/(1.0/ks),6.0);
 
-        auto cfric = pow((volVars::getH + rough_h),1.0/6.0) * 1.0/(ks);
-        ustar_h = volVars::getGravity / pow(cfric,2.0);
+        rough_h = limitRoughH(rough_h, h);
+
+        auto cfric = pow((h + rough_h),1.0/6.0) * 1.0/(ks);
+        ustar_h = gravity / pow(cfric,2.0);
         return ustar_h;
     }
+
 };
 
 } // end namespace Dumux
