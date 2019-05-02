@@ -24,8 +24,6 @@
 #ifndef DUMUX_FREEFLOW_SHALLOW_WATER_VOLUME_VARIABLES_HH
 #define DUMUX_FREEFLOW_SHALLOW_WATER_VOLUME_VARIABLES_HH
 
-#include <dumux/common/properties.hh>
-
 namespace Dumux {
 
 /*!
@@ -38,17 +36,6 @@ class ShallowWaterVolumeVariables
     using Indices =  typename Traits::ModelTraits::Indices;
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
-   enum {
-        // indices for primary variables
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
-        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
-        waterdepthIdx = Indices::waterdepthIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx,
-        velocityOffset = Indices::velocityOffset
-    };
-
 public:
     using PrimaryVariables = typename Traits::PrimaryVariables;
 
@@ -60,12 +47,11 @@ public:
     {
 
         priVars_ = elemSol[scv.localDofIndex()];
-        gravity_ =  problem.spatialParams().gravityAtPos(element.geometry().center());
         bedSurface_ = problem.spatialParams().bedSurface(element,scv);
     }
 
      /*!
-     * \brief Return the intrusion factor (dummy variable).
+     * \brief Return the extrusion factor (dummy variable).
      *
      */
     Scalar extrusionFactor() const
@@ -77,7 +63,7 @@ public:
      */
     Scalar waterDepth() const
     {
-        return priVars_[waterdepthIdx];
+        return priVars_[Indices::waterdepthIdx];
     }
 
     /*!
@@ -88,7 +74,7 @@ public:
     Scalar velocity(int directionIndex) const
     {
 
-        return priVars_[velocityOffset + directionIndex];
+        return priVars_[Indices::velocityOffset + directionIndex];
     }
 
     /*!
@@ -100,20 +86,9 @@ public:
         return bedSurface_;
     }
 
-
-    /*!
-     * \brief Return the gravity constant.
-     *
-     */
-    Scalar gravity() const
-    {
-      return gravity_;
-    }
-
 private:
     PrimaryVariables priVars_;
     Scalar bedSurface_;
-    Scalar gravity_;
 };
 
 } // end namespace Dumux

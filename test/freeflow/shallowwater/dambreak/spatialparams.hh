@@ -26,8 +26,7 @@
 
 #include <dumux/material/spatialparams/fv.hh>
 
-namespace Dumux{
-
+namespace Dumux {
 
 /*!
  * \ingroup ShallowWaterTests
@@ -39,20 +38,13 @@ class DamBreakSpatialParams
 : public FVSpatialParams<FVGridGeometry, Scalar,
                          DamBreakSpatialParams<FVGridGeometry, Scalar>>
 {
+    using ThisType = DamBreakSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using IndexSet = typename GridView::IndexSet;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ThisType = DamBreakSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
-
-    enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld
-    };
-
-    using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     DamBreakSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -71,7 +63,7 @@ public:
     *
     * \return gravity constant
     */
-    Scalar gravityAtPos(const GlobalPosition& globalPos) const
+    Scalar gravity(const GlobalPosition& globalPos) const
     {
         return gravity_;
     }
@@ -83,20 +75,16 @@ public:
     * \return the bed surface
     */
     Scalar bedSurface(const Element& element,
-              const SubControlVolume& scv) const
+                      const SubControlVolume& scv) const
     {
         // todo depends on index e.g. eIdx = scv.elementIndex();
         return 0.0;
     }
 
-
-
 private:
-
     static constexpr Scalar gravity_ = 9.81;
-
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -25,8 +25,6 @@
 #define DUMUX_FREEFLOW_SHALLOW_WATER_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/assembly/fvlocalresidual.hh>
-#include <dune/common/hybridutilities.hh>
 
 namespace Dumux{
 
@@ -35,10 +33,10 @@ namespace Dumux{
  * \brief Element-wise calculation of the residual for the shallow water equations
  */
 template<class TypeTag>
-class ShallowWaterResidual : public GetPropType<TypeTag, Properties::BaseLocalResidual>
+class ShallowWaterResidual
+: public GetPropType<TypeTag, Properties::BaseLocalResidual>
 {
     using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -50,7 +48,6 @@ class ShallowWaterResidual : public GetPropType<TypeTag, Properties::BaseLocalRe
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
 
 public:
@@ -77,7 +74,6 @@ public:
         storage[Indices::massBalanceIdx] = volVars.waterDepth();
         storage[Indices::momentumXBalanceIdx] = volVars.waterDepth() * volVars.velocity(0);
         storage[Indices::momentumYBalanceIdx] = volVars.waterDepth() * volVars.velocity(1);
-
         return storage;
     }
 
@@ -99,10 +95,8 @@ public:
     {
         NumEqVector flux(0.0);
         FluxVariables fluxVars;
-        auto advectiveFlux = fluxVars.advectiveFlux(problem, element, fvGeometry, elemVolVars, scvf);
-        auto diffusiveFlux = fluxVars.diffusiveFlux(problem, element, fvGeometry, elemVolVars, scvf);
-        flux = advectiveFlux + diffusiveFlux;
-
+        flux += fluxVars.advectiveFlux(problem, element, fvGeometry, elemVolVars, scvf);
+        flux += fluxVars.diffusiveFlux(problem, element, fvGeometry, elemVolVars, scvf);
         return flux;
     }
 };

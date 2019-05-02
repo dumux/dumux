@@ -27,7 +27,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 
-namespace Dumux{
+namespace Dumux {
 
 /*!
  * \ingroup ShallowWaterModel
@@ -36,13 +36,11 @@ namespace Dumux{
  */
 template<class TypeTag>
 class ShallowWaterFluxVariables
-: public FluxVariablesBase<GetPropType<TypeTag,
-                           Properties::Problem>,
+: public FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
                            typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView,
                            typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView,
                            typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView>
 {
-    //using ParentType = FluxVariablesBase<TypeTag>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -62,7 +60,6 @@ class ShallowWaterFluxVariables
     static constexpr bool enableAdvection = ModelTraits::enableAdvection();
     static constexpr bool enableDiffusion = ModelTraits::enableDiffusion();
 
-
 public:
 
     /*!
@@ -75,15 +72,10 @@ public:
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolumeFace& scvf) const
     {
-        NumEqVector fluxVector(0.0);
         if (enableAdvection)
-        {
             return AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
-        }
-        else
-        {
-            return fluxVector;
-        }
+
+        return NumEqVector(0.0);
     }
 
     /*!
@@ -96,17 +88,11 @@ public:
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolumeFace& scvf) const
     {
-        NumEqVector fluxVector(0.0);
+        // TODO: add diffusive flux (e.g. tracer and viscosity)
         if (enableDiffusion)
-        {
-            // TODO: add diffusive flux (e.g. tracer and viscosity)
-            return fluxVector;
-        }
+            return NumEqVector(0.0);
 
-        else
-        {
-            return fluxVector;
-        }
+        return NumEqVector(0.0);
     }
 };
 

@@ -26,8 +26,7 @@
 #define DUMUX_SHALLOWWATER_BOUNDARYFLUXES_HH
 
 #include <array>
-#include <algorithm>
-#include <dumux/common/math.hh>
+#include <cmath>
 
 namespace Dumux {
 namespace ShallowWater {
@@ -36,23 +35,24 @@ namespace ShallowWater {
  * \brief compute the cell state for fixed water depth boundary.
  */
 template<class Scalar, class GlobalPosition>
-std::array<Scalar,3> fixedWaterDepthBoundary(Scalar waterDepthBoundary,
-                                             Scalar waterDepthLeft,
-                                             Scalar waterDepthRight,
-                                             Scalar velocityXLeft,
-                                             Scalar velocityXRight,
-                                             Scalar velocityYLeft,
-                                             Scalar velocityYRight,
-                                             Scalar gravity,
-                                             GlobalPosition nxy)
+std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
+                                              const Scalar waterDepthLeft,
+                                              const Scalar waterDepthRight,
+                                              const Scalar velocityXLeft,
+                                              const Scalar velocityXRight,
+                                              const Scalar velocityYLeft,
+                                              const Scalar velocityYRight,
+                                              const Scalar gravity,
+                                              const GlobalPosition& nxy)
 
 {
-    std::array<Scalar,3> cellStateRight;
+    std::array<Scalar, 3> cellStateRight;
     cellStateRight[0] = waterDepthBoundary;
-    using std::sqrt;
 
-    auto uboundIn = nxy[0] * velocityXLeft  + nxy[1] * velocityYLeft ;
-    auto uboundQut =  uboundIn + 2.0 * sqrt(9.81 * waterDepthLeft) - 2.0 * sqrt(9.81 * cellStateRight[0]);
+    using std::sqrt;
+    const auto uboundIn = nxy[0] * velocityXLeft  + nxy[1] * velocityYLeft;
+    const auto uboundQut =  uboundIn + 2.0 * sqrt(9.81 * waterDepthLeft) - 2.0 * sqrt(9.81 * cellStateRight[0]);
+
     cellStateRight[1] = (nxy[0] * uboundQut); // we only use the normal part
     cellStateRight[2] = (nxy[1] * uboundQut); // we only use the normal part
 
@@ -63,45 +63,46 @@ std::array<Scalar,3> fixedWaterDepthBoundary(Scalar waterDepthBoundary,
  * \brief compute the cell state for a fixed discharge boundary.
  */
 template<class Scalar, class GlobalPosition>
-std::array<Scalar,3> fixedDischargeBoundary(Scalar dischargeBoundary,
-                                            Scalar waterDepthLeft,
-                                            Scalar waterDepthRight,
-                                            Scalar velocityXLeft,
-                                            Scalar velocityXRight,
-                                            Scalar velocityYLeft,
-                                            Scalar velocityYRight,
-                                            Scalar gravity,
-                                            GlobalPosition nxy,
-                                            Scalar faceVolume)
+std::array<Scalar, 3> fixedDischargeBoundary(const Scalar dischargeBoundary,
+                                             const Scalar waterDepthLeft,
+                                             const Scalar waterDepthRight,
+                                             const Scalar velocityXLeft,
+                                             const Scalar velocityXRight,
+                                             const Scalar velocityYLeft,
+                                             const Scalar velocityYRight,
+                                             const Scalar gravity,
+                                             const GlobalPosition& nxy,
+                                             const Scalar faceVolume)
 {
-    std::array<Scalar,3> cellStateRight;
-    using std::pow;
+    std::array<Scalar, 3> cellStateRight;
     using std::abs;
     using std::sqrt;
 
-    //olny impose if abs(q) > 0
-    if (abs(dischargeBoundary) > 1.0E-9){
-        auto qlocal =  (dischargeBoundary) /faceVolume;
-        auto uboundIn = nxy[0] * velocityXLeft + nxy[1] * velocityYLeft;
-        auto alphal = uboundIn + 2.0 * sqrt(9.81 * waterDepthLeft);
+    // only impose if abs(q) > 0
+    if (abs(dischargeBoundary) > 1.0e-9)
+    {
+        const auto qlocal =  dischargeBoundary/faceVolume;
+        const auto uboundIn = nxy[0]*velocityXLeft + nxy[1]*velocityYLeft;
+        const auto alphal = uboundIn + 2.0*sqrt(9.81 * waterDepthLeft);
 
         //initial guess for hstar solved with newton
-        Scalar hstar = 0.1;
-        Scalar tol_hstar = 1.0E-12;
-        Scalar ink_hstar = 1.0E-9;
-        int maxstep_hstar = 30;
+        constexpr Scalar tol_hstar = 1.0E-12;
+        constexpr Scalar ink_hstar = 1.0E-9;
+        constexpr int maxstep_hstar = 30;
 
-        for(int i = 0; i < maxstep_hstar; ++i){
+        Scalar hstar = 0.1;
+        for (int i = 0; i < maxstep_hstar; ++i)
+        {
             Scalar f_hstar = alphal - qlocal/hstar - 2 * sqrt(9.81 * hstar);
             Scalar df_hstar = (f_hstar -(alphal - qlocal/(hstar + ink_hstar) - 2 * sqrt(9.81 * (hstar+ink_hstar))))/ink_hstar;
             Scalar dx_hstar = -f_hstar/df_hstar;
             hstar = max(hstar - dx_hstar,0.001);
 
-            if (pow(dx_hstar,2.0) < tol_hstar){
+            if (dx_hstar*dx_hstar < tol_hstar)
                 break;
-            }
         }
-        auto qinner = (nxy[0] * waterDepthLeft * velocityYLeft) - (nxy[1] * waterDepthLeft * velocityXLeft);
+
+        const auto qinner = (nxy[0] * waterDepthLeft * velocityYLeft) - (nxy[1] * waterDepthLeft * velocityXLeft);
         cellStateRight[0] = hstar;
         cellStateRight[1] = (nxy[0] * qlocal - nxy[1] * qinner)/hstar;
         cellStateRight[2] = (nxy[1] * qlocal + nxy[0] * qinner)/hstar;
