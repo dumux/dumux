@@ -1,0 +1,17 @@
+[Problem]
+Name = damBreak
+
+[TimeLoop]
+TEnd = 1.0 # [s]
+MaxTimeStepSize = 0.005 # [s]
+DtInitial = 0.005 # [s]
+
+[Grid]
+Positions0 = 0.0 20.0
+Positions1 = 0.0 5.0
+Cells0 = 100
+Cells1 = 25
+
+[Newton]
+EnablePartialReassembly = true
+
