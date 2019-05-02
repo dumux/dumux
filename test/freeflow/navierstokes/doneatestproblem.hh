@@ -101,6 +101,11 @@ public:
     DoneaTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
+        using CellArray = std::array<unsigned int, dimWorld>;
+        const CellArray numCells = getParam<CellArray>("Grid.Cells");
+        cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
+        cellSizeY_ = this->fvGridGeometry().bBoxMax()[1] / numCells[1];
+
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         createAnalyticalSolution_();
@@ -186,7 +191,9 @@ public:
         // set Dirichlet values for the velocity and pressure everywhere
         values.setDirichlet(Indices::velocityXIdx);
         values.setDirichlet(Indices::velocityYIdx);
-        values.setDirichletCell(Indices::pressureIdx);
+
+        if (isLowerLeftCell_(globalPos))
+            values.setDirichletCell(Indices::pressureIdx);
 
         return values;
     }
@@ -313,12 +320,19 @@ private:
         }
      }
 
+    bool isLowerLeftCell_(const GlobalPosition& globalPos) const
+    {
+        return globalPos[0] < (0.5*cellSizeX_ + eps_) && globalPos[1] < (0.5*cellSizeY_ + eps_);
+    }
+
     Scalar eps_;
     bool printL2Error_;
     std::vector<Scalar> analyticalPressure_;
     std::vector<VelocityVector> analyticalVelocity_;
     std::vector<VelocityVector> analyticalVelocityOnFace_;
     Scalar kinematicViscosity_;
+    Scalar cellSizeX_;
+    Scalar cellSizeY_;
 };
 } //end namespace
 
