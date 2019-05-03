@@ -210,7 +210,7 @@ public:
 
         // hydrostatic pressure
         Scalar densityW = 1000;
-        values[Indices::pressureIdx] = 1e5 + densityW*(this->gravity()*globalPos);
+        values[Indices::pressureIdx] = 1e5 + densityW*(this->spatialParams().gravity(globalPos)*globalPos);
         values[Indices::saturationIdx] = 0.0;
 
         return values;

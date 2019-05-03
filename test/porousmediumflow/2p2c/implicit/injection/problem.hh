@@ -333,7 +333,7 @@ private:
 
         Scalar densityW = FluidSystem::H2O::liquidDensity(temperature_, 1e5);
 
-        Scalar pl = 1e5 - densityW*this->gravity()[1]*(depthBOR_ - globalPos[1]);
+        Scalar pl = 1e5 - densityW*this->spatialParams().gravity(globalPos)[1]*(depthBOR_ - globalPos[1]);
         Scalar moleFracLiquidN2 = pl*0.95/BinaryCoeff::H2O_N2::henry(temperature_);
         Scalar moleFracLiquidH2O = 1.0 - moleFracLiquidN2;
 
