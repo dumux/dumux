@@ -1,10 +1,12 @@
 [TimeLoop]
-DtInitial = 1e-1 # [s]
-TEnd = 1e-1 # [s]
+DtInitial = 1e-3 # [s]
+TEnd = 0.15 # [s]
+HaveMaxTimeStepSize = true
+MaxTimeStepSize = 1e-3
 
 [Grid]
 UpperRight = 1 1
-Cells = 10 10
+Cells = 50 50
 
 [Problem]
 Name = test_liddrivencavity_re1 # name passed to the output routines

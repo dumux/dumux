@@ -1,14 +1,14 @@
 [TimeLoop]
 DtInitial = 1e-2 # [s]
-TEnd = 1e-2 # [s]
+TEnd = 2 # [s]
 
 [Grid]
 UpperRight = 10 1
-Cells = 10 10
+Cells = 100 50
 
 [Problem]
 Name = test_channel_navierstokes # name passed to the output routines
-InletVelocity = 1
+InletVelocity = 1000
 EnableGravity = false
 
 [Component]
