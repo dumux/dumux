@@ -90,9 +90,9 @@ public:
         coarseMaterialParams_.setPe(1e4);
         coarseMaterialParams_.setLambda(2.0);
 
-        aWettingNonWettingA1_ = getParam<Scalar>("SpatialParams.aWettingNonWettingA1");
-        aWettingNonWettingA2_ = getParam<Scalar>("SpatialParams.aWettingNonWettingA2");
-        aWettingNonWettingA3_ = getParam<Scalar>("SpatialParams.aWettingNonWettingA3");
+        aWettingNonWettingA1_ = getParam<Scalar>("SpatialParams.WettingNonWettingAreaA1");
+        aWettingNonWettingA2_ = getParam<Scalar>("SpatialParams.WettingNonWettingAreaA2");
+        aWettingNonWettingA3_ = getParam<Scalar>("SpatialParams.WettingNonWettingAreaA3");
 
         // wetting-non wetting: surface which goes to zero on the edges, but is a polynomial
         aWettingNonWettingSurfaceParams_.setA1(aWettingNonWettingA1_);
@@ -102,8 +102,8 @@ public:
         using TwoPLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
         pcMax_ = TwoPLaw::pc(coarseMaterialParams_, /*sw = */0.0);
         aWettingNonWettingSurfaceParams_.setPcMax(pcMax_);
-        characteristicLength_ =getParam<Scalar>("SpatialParams.meanPoreSize");
-        factorMassTransfer_ = getParam<Scalar>("SpatialParams.factorMassTransfer");
+        characteristicLength_ =getParam<Scalar>("SpatialParams.MeanPoreSize");
+        factorMassTransfer_ = getParam<Scalar>("SpatialParams.MassTransferFactor");
     }
 
     template<class ElementSolution>
