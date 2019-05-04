@@ -12,11 +12,11 @@ Name = chemicalnonequilibrium
 EnableGravity = false
 
 [SpatialParams]
-aWettingNonWettingA1 = -1.603e-01
-aWettingNonWettingA2 = 1.429e-05
-aWettingNonWettingA3 = 1.915e-01
-meanPoreSize = 5e-4
-factorMassTransfer = 0.5
+WettingNonWettingAreaA1 = -1.603e-01
+WettingNonWettingAreaA2 = 1.429e-05
+WettingNonWettingAreaA3 = 1.915e-01
+MeanPoreSize = 5e-4
+MassTransferFactor = 0.5
 
 [Component]
 SolidDensity = 2700
