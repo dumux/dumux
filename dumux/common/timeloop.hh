@@ -157,7 +157,7 @@ public:
         time_ = startTime;
         endTime_ = tEnd;
 
-        lastTimeStepSize_ = 0.0;
+        previousTimeStepSize_ = 0.0;
         userSetMaxTimeStepSize_ = std::numeric_limits<Scalar>::max();
         timeStepIdx_ = 0;
         finished_ = false;
@@ -178,7 +178,7 @@ public:
     {
         timeStepIdx_++;
         time_ += timeStepSize_;
-        lastTimeStepSize_ = timeStepSize_;
+        previousTimeStepSize_ = timeStepSize_;
 
         // compute how long the last time step took
         const auto cpuTime = wallClockTime();
@@ -342,7 +342,7 @@ public:
                       << std::setprecision( 6 ) << timeStepWallClockTime_ << " seconds. "
                       << "Wall clock time: " << std::setprecision( 3 ) << cpuTime
                       << ", time: " << std::setprecision( 5 ) << time_
-                      << ", time step size: " << std::setprecision( 8 ) << lastTimeStepSize_
+                      << ", time step size: " << std::setprecision( 8 ) << previousTimeStepSize_
                       << std::endl;
         }
     }
@@ -384,7 +384,7 @@ protected:
     Scalar endTime_;
 
     Scalar timeStepSize_;
-    Scalar lastTimeStepSize_;
+    Scalar previousTimeStepSize_;
     Scalar userSetMaxTimeStepSize_;
     Scalar timeAfterLastTimeStep_, timeStepWallClockTime_;
     int timeStepIdx_;
