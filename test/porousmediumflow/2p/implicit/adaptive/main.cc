@@ -47,7 +47,8 @@
 #include <dumux/discretization/method.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_ug.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 
 #include <dumux/adaptive/adapt.hh>
 #include <dumux/adaptive/markelements.hh>
