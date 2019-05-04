@@ -24,6 +24,7 @@
 #ifndef DUMUX_MATRIX_CONVERTER
 #define DUMUX_MATRIX_CONVERTER
 
+#include <cmath>
 #include <dune/common/indices.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/istl/bvector.hh>
@@ -86,6 +87,9 @@ private:
         // lambda function to fill the occupation pattern
         auto addIndices = [&occupationPattern](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
         {
+            using std::abs;
+            static const Scalar eps = getParam<Scalar>("MatrixConverter.DeletePatternEntriesBelowAbsThreshold", -1.0);
+
             using BlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
             const auto blockSizeI = BlockType::rows;
             const auto blockSizeJ = BlockType::cols;
@@ -93,7 +97,8 @@ private:
                 for(auto col = row->begin(); col != row->end(); ++col)
                     for(std::size_t i = 0; i < blockSizeI; ++i)
                         for(std::size_t j = 0; j < blockSizeJ; ++j)
-                            occupationPattern.add(startRow + row.index()*blockSizeI + i, startCol + col.index()*blockSizeJ + j);
+                            if(abs(subMatrix[row.index()][col.index()][i][j]) > eps)
+                                occupationPattern.add(startRow + row.index()*blockSizeI + i, startCol + col.index()*blockSizeJ + j);
         };
 
         // fill the pattern
@@ -132,6 +137,9 @@ private:
         // lambda function to copy the values
         auto copyValues = [&M](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
         {
+            using std::abs;
+            static const Scalar eps = getParam<Scalar>("MatrixConverter.DeletePatternEntriesBelowAbsThreshold", -1.0);
+
             using BlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
             const auto blockSizeI = BlockType::rows;
             const auto blockSizeJ = BlockType::cols;
@@ -139,7 +147,8 @@ private:
                 for (auto col = row->begin(); col != row->end(); ++col)
                     for (std::size_t i = 0; i < blockSizeI; ++i)
                         for (std::size_t j = 0; j < blockSizeJ; ++j)
-                            M[startRow + row.index()*blockSizeI + i][startCol + col.index()*blockSizeJ + j] = subMatrix[row.index()][col.index()][i][j];
+                            if(abs(subMatrix[row.index()][col.index()][i][j]) > eps)
+                                M[startRow + row.index()*blockSizeI + i][startCol + col.index()*blockSizeJ + j] = subMatrix[row.index()][col.index()][i][j];
 
         };
 
