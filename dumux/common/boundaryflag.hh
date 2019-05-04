@@ -26,24 +26,14 @@
 
 #include <cstddef>
 
-// ALUGrid specific includes
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#endif
-
-// dune-subgrid specific includes
-#if HAVE_DUNE_SUBGRID
-#include <dune/subgrid/subgrid.hh>
-#endif
-
-
 namespace Dumux {
 
 /*!
  * \file
  * \ingroup Common
  * \brief Boundary flag to store e.g. in sub control volume faces
- * \tparam Grid the type of the gri
+ * \note Can be specialized for each grid manager (in the gridmanager headers)
+ * \tparam Grid the type of the grid
  */
 template<class Grid>
 class BoundaryFlag
@@ -65,52 +55,6 @@ public:
 private:
     value_type flag_;
 };
-
-
-#if HAVE_DUNE_ALUGRID && DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-//! alu uses boundary id
-template<int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
-class BoundaryFlag<Dune::ALUGrid<dim, dimworld, elType, refinementType>>
-{
-public:
-    BoundaryFlag() : flag_(-1) {}
-
-    template<class Intersection>
-    BoundaryFlag(const Intersection& i) : flag_(-1)
-    {
-        if (i.boundary())
-            flag_ = i.impl().boundaryId();
-    }
-
-    using value_type = int;
-
-    value_type get() const { return flag_; }
-
-private:
-    int flag_;
-};
-#endif
-
-#if HAVE_DUNE_SUBGRID
-//! dune-subgrid doesn't have this implemented
-template<int dim, class HostGrid>
-class BoundaryFlag<Dune::SubGrid<dim, HostGrid>>
-{
-public:
-    BoundaryFlag() : flag_(-1) {}
-
-    template<class Intersection>
-    BoundaryFlag(const Intersection& i) : flag_(-1) {}
-
-    using value_type = int;
-
-    value_type get() const
-    { DUNE_THROW(Dune::NotImplemented, "Sub-grid doesn't implement boundary segment indices!"); }
-
-private:
-    int flag_;
-};
-#endif
 
 }  // end namespace Dumux
 
