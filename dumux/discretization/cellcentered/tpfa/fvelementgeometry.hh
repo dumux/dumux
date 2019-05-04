@@ -467,39 +467,18 @@ private:
                 if (handledScvf[intersection.indexInInside()])
                     continue;
 
-            // this catches inner and periodic scvfs
-            const auto& scvfNeighborVolVarIndices = neighborVolVarIndices[scvfCounter];
-            if (scvfNeighborVolVarIndices[0] < fvGridGeometry().gridView().size(0))
+            if (intersection.neighbor())
             {
-                // only create subcontrol faces where the outside element is the bound element
-                if (dim == dimWorld)
+                // this catches inner and periodic scvfs
+                const auto& scvfNeighborVolVarIndices = neighborVolVarIndices[scvfCounter];
+                if (scvfNeighborVolVarIndices[0] < fvGridGeometry().gridView().size(0))
                 {
-                    if (scvfNeighborVolVarIndices[0] == fvGridGeometry().elementMapper().index(*elementPtr_))
+                    // only create subcontrol faces where the outside element is the bound element
+                    if (dim == dimWorld)
                     {
-                        ScvfGridIndexStorage scvIndices({eIdx, scvfNeighborVolVarIndices[0]});
-                        neighborScvfs_.emplace_back(intersection,
-                                                    intersection.geometry(),
-                                                    scvFaceIndices[scvfCounter],
-                                                    scvIndices,
-                                                    false);
-
-                        neighborScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
-                    }
-                }
-                // for network grids we can't use the intersection.outside() index as we can't assure that the
-                // first intersection with this indexInInside is the one that has our bound element as outside
-                // instead we check if the bound element's index is in the outsideScvIndices of the candidate scvf
-                // (will be optimized away for dim == dimWorld)
-                else
-                {
-                    for (unsigned outsideScvIdx = 0; outsideScvIdx < scvfNeighborVolVarIndices.size(); ++outsideScvIdx)
-                    {
-                        if (scvfNeighborVolVarIndices[outsideScvIdx] == fvGridGeometry().elementMapper().index(*elementPtr_))
+                        if (scvfNeighborVolVarIndices[0] == fvGridGeometry().elementMapper().index(*elementPtr_))
                         {
-                            ScvfGridIndexStorage scvIndices;
-                            scvIndices.resize(scvfNeighborVolVarIndices.size() + 1);
-                            scvIndices[0] = eIdx;
-                            std::copy(scvfNeighborVolVarIndices.begin(), scvfNeighborVolVarIndices.end(), scvIndices.begin()+1);
+                            ScvfGridIndexStorage scvIndices({eIdx, scvfNeighborVolVarIndices[0]});
                             neighborScvfs_.emplace_back(intersection,
                                                         intersection.geometry(),
                                                         scvFaceIndices[scvfCounter],
@@ -507,15 +486,39 @@ private:
                                                         false);
 
                             neighborScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
-                            break;
                         }
                     }
-                }
+                    // for network grids we can't use the intersection.outside() index as we can't assure that the
+                    // first intersection with this indexInInside is the one that has our bound element as outside
+                    // instead we check if the bound element's index is in the outsideScvIndices of the candidate scvf
+                    // (will be optimized away for dim == dimWorld)
+                    else
+                    {
+                        for (unsigned outsideScvIdx = 0; outsideScvIdx < scvfNeighborVolVarIndices.size(); ++outsideScvIdx)
+                        {
+                            if (scvfNeighborVolVarIndices[outsideScvIdx] == fvGridGeometry().elementMapper().index(*elementPtr_))
+                            {
+                                ScvfGridIndexStorage scvIndices;
+                                scvIndices.resize(scvfNeighborVolVarIndices.size() + 1);
+                                scvIndices[0] = eIdx;
+                                std::copy(scvfNeighborVolVarIndices.begin(), scvfNeighborVolVarIndices.end(), scvIndices.begin()+1);
+                                neighborScvfs_.emplace_back(intersection,
+                                                            intersection.geometry(),
+                                                            scvFaceIndices[scvfCounter],
+                                                            scvIndices,
+                                                            false);
 
-                // for surface and network grids mark that we handled this face
-                if (dim < dimWorld)
-                    handledScvf[intersection.indexInInside()] = true;
-                scvfCounter++;
+                                neighborScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
+                                break;
+                            }
+                        }
+                    }
+
+                    // for surface and network grids mark that we handled this face
+                    if (dim < dimWorld)
+                        handledScvf[intersection.indexInInside()] = true;
+                    scvfCounter++;
+                }
             }
 
             // only increase counter for boundary intersections
