@@ -180,41 +180,40 @@ public:
 
         //obtain parameters for interfacial area constitutive relations
         const auto& aWettingNonWettingSurfaceParams = problem.spatialParams().aWettingNonWettingSurfaceParams(element, scv, elemSol);
-        const auto& aNonWettingSolidSurfaceParams = problem.spatialParams().aNonWettingSolidSurfaceParams(element, scv, elemSol);
 
         const Scalar pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
         const Scalar Sw = fluidState.saturation(phase0Idx);
 
-        Scalar awn;
-
         using AwnSurface = typename Problem::SpatialParams::AwnSurface;
-        awn = AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc );
+        const auto awn = AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc);
         interfacialArea_[phase0Idx][phase1Idx] = awn;
         interfacialArea_[phase1Idx][phase0Idx] = interfacialArea_[phase0Idx][phase1Idx];
         interfacialArea_[phase0Idx][phase0Idx] = 0.;
 
         using AnsSurface = typename Problem::SpatialParams::AnsSurface;
-        Scalar ans = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams,Sw, pc);
+        const auto& aNonWettingSolidSurfaceParams = problem.spatialParams().aNonWettingSolidSurfaceParams(element, scv, elemSol);
+        const auto ans = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams, Sw, pc);
 
-        // Switch for using a a_{wn} relations that has some "maximum capillary pressure" as parameter            // That value is obtained by regularization of the pc(Sw) function.
-#if USE_PCMAX
-        const Scalar pcMax = problem.spatialParams().pcMax(element, scv, elemSol);
-        //I know the solid surface from the pore network. But it is more consistent to use the fitvalue.
-        using AnsSurface = typename Problem::SpatialParams::AnsSurface;
-        solidSurface_ = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams, /*Sw=*/0., pcMax);
+        // Switch for using a a_{wn} relations that has some "maximum capillary pressure" as parameter
+        // That value is obtained by regularization of the pc(Sw) function.
+        static const bool computeAwsFromAnsAndPcMax = getParam<bool>("SpatialParams.ComputeAwsFromAnsAndPcMax", true);
+        if (computeAwsFromAnsAndPcMax)
+        {
+            // I know the solid surface from the pore network. But it is more consistent to use the fit value.
+            const Scalar pcMax = aWettingNonWettingSurfaceParams.pcMax();
+            const auto solidSurface = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams, /*Sw=*/0., pcMax);
+            interfacialArea_[phase0Idx][sPhaseIdx] = solidSurface - ans;
+        }
+        else
+        {
+            using AwsSurface = typename Problem::SpatialParams::AwsSurface;
+            const auto& aWettingSolidSurfaceParams = problem.spatialParams().aWettingSolidSurfaceParams(element, scv, elemSol);
+            interfacialArea_[phase0Idx][sPhaseIdx] = AwsSurface::interfacialArea(aWettingSolidSurfaceParams, materialParams, Sw, pc);
+        }
 
-        const Scalar aws = solidSurface_ - ans;
-        interfacialArea_[phase0Idx][sPhaseIdx] = aws;
         interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
         interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;
-#else
-        using AwsSurface = typename Problem::SpatialParams::AwsSurface;
-        const auto& aWettingSolidSurfaceParams = problem.spatialParams().aWettingSolidSurfaceParams(element, scv, elemSol);
-        const auto aws = AwsSurface::interfacialArea(aWettingSolidSurfaceParams,materialParams, Sw, pc);
-        interfacialArea_[phase0Idx][sPhaseIdx] = aws ;
-        interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
-        interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;
-#endif
+
         interfacialArea_[phase1Idx][sPhaseIdx] = ans;
         interfacialArea_[sPhaseIdx][phase1Idx] = interfacialArea_[phase1Idx][sPhaseIdx];
         interfacialArea_[phase1Idx][phase1Idx] = 0.;
@@ -259,7 +258,6 @@ private:
 
     Scalar characteristicLength_;
     Scalar factorEnergyTransfer_;
-    Scalar solidSurface_ ;
     InterfacialAreasArray interfacialArea_;
 };
 
@@ -720,46 +718,43 @@ public:
                                const Scv& scv)
     {
         // obtain (standard) material parameters (needed for the residual saturations)
-       const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
         //obtain parameters for interfacial area constitutive relations
         const auto& aWettingNonWettingSurfaceParams = problem.spatialParams().aWettingNonWettingSurfaceParams(element, scv, elemSol);
-        const auto& aNonWettingSolidSurfaceParams = problem.spatialParams().aNonWettingSolidSurfaceParams(element, scv, elemSol);
 
         const Scalar pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
         const Scalar Sw = fluidState.saturation(phase0Idx);
 
-        Scalar awn;
-
         using AwnSurface = typename Problem::SpatialParams::AwnSurface;
-        awn = AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc );
+        const auto awn = AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc);
         interfacialArea_[phase0Idx][phase1Idx] = awn;
         interfacialArea_[phase1Idx][phase0Idx] = interfacialArea_[phase0Idx][phase1Idx];
         interfacialArea_[phase0Idx][phase0Idx] = 0.;
 
         using AnsSurface = typename Problem::SpatialParams::AnsSurface;
-        Scalar ans = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams,Sw, pc);
+        const auto& aNonWettingSolidSurfaceParams = problem.spatialParams().aNonWettingSolidSurfaceParams(element, scv, elemSol);
+        const auto ans = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams, Sw, pc);
 
         // Switch for using a a_{wn} relations that has some "maximum capillary pressure" as parameter.
         // That value is obtained by regularization of the pc(Sw) function.
-#if USE_PCMAX
-        const Scalar pcMax = problem.spatialParams().pcMax(element, scv, elemSol);
-        // I know the solid surface from the pore network. But it is more consistent to use the fit value.
-        using AnsSurface = typename Problem::SpatialParams::AnsSurface;
-        solidSurface_ = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams, /*Sw=*/0., pcMax);
+        static const bool computeAwsFromAnsAndPcMax = getParam<bool>("SpatialParams.ComputeAwsFromAnsAndPcMax", true);
+        if (computeAwsFromAnsAndPcMax)
+        {
+            // I know the solid surface from the pore network. But it is more consistent to use the fit value.
+            const Scalar pcMax = aWettingNonWettingSurfaceParams.pcMax();
+            const auto solidSurface = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams, /*Sw=*/0., pcMax);
+            interfacialArea_[phase0Idx][sPhaseIdx] = solidSurface - ans;
+        }
+        else
+        {
+            using AwsSurface = typename Problem::SpatialParams::AwsSurface;
+            const auto& aWettingSolidSurfaceParams = problem.spatialParams().aWettingSolidSurfaceParams(element, scv, elemSol);
+            interfacialArea_[phase0Idx][sPhaseIdx] = AwsSurface::interfacialArea(aWettingSolidSurfaceParams, materialParams, Sw, pc);
+        }
 
-        const Scalar aws = solidSurface_ - ans;
-        interfacialArea_[phase0Idx][sPhaseIdx] = aws;
         interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
         interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;
-#else
-        using AwsSurface = typename Problem::SpatialParams::AwsSurface;
-        const auto& aWettingSolidSurfaceParams = problem.spatialParams().aWettingSolidSurfaceParams();
-        const auto aws = AwsSurface::interfacialArea(aWettingSolidSurfaceParams,materialParams, Sw, pc );
-        interfacialArea_[phase0Idx][sPhaseIdx] = aws ;
-        interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
-        interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;
-#endif
 
         interfacialArea_[phase1Idx][sPhaseIdx] = ans;
         interfacialArea_[sPhaseIdx][phase1Idx] = interfacialArea_[phase1Idx][sPhaseIdx];
@@ -819,7 +814,6 @@ private:
     Scalar characteristicLength_;
     Scalar factorEnergyTransfer_;
     Scalar factorMassTransfer_;
-    Scalar solidSurface_ ;
     InterfacialAreasArray interfacialArea_;
 };
 
