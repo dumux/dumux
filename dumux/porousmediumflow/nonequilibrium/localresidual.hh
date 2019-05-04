@@ -331,7 +331,7 @@ public:
                     const Scalar diffCoeff = volVars.diffusionCoefficient(phaseIdx, compIdx);
 
                     //now compute the flux
-                    const Scalar compFluxIntoOtherPhase = factorMassTransfer * (xEquil-xNonEquil)*characteristicLength * awn * volVars.molarDensity(phaseIdx) * diffCoeff * sherwoodNumber;
+                    const Scalar compFluxIntoOtherPhase = factorMassTransfer * (xEquil-xNonEquil)/characteristicLength * awn * volVars.molarDensity(phaseIdx) * diffCoeff * sherwoodNumber;
 
                     componentIntoPhaseMassTransfer[phaseIdx][compIdx] += compFluxIntoOtherPhase;
                     componentIntoPhaseMassTransfer[compIdx][compIdx] += -compFluxIntoOtherPhase;
