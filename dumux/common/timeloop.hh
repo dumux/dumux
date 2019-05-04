@@ -283,6 +283,12 @@ public:
     { return timeStepIdx_; }
 
     /*!
+     * \brief The previous time step size
+     */
+    Scalar previousTimeStepSize() const
+    { return previousTimeStepSize_; }
+
+    /*!
      * \brief Specify whether the simulation is finished
      *
      * \param finished If true the simulation is considered finished
@@ -438,8 +444,16 @@ public:
             isCheckPoint_ = false;
         }
 
+        const auto previousTimeStepSize = this->previousTimeStepSize();
+
         // advance the time step like in the parent class
         TimeLoop<Scalar>::advanceTimeStep();
+
+        // if this is a check point we might have reduced the time step to reach this check point
+        // reset the time step size to the time step size before this time step
+        using std::max;
+        if (isCheckPoint_)
+            this->setTimeStepSize(max(dt, previousTimeStepSize));
     }
 
     /*!

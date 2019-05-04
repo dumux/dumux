@@ -142,6 +142,24 @@ int main(int argc, char* argv[]) try
 
     }
 
+    // check if time loops remembers time step before check point
+    {
+        if (mpiHelper.rank() == 0) std::cout << std::endl << "------- Test check point time loop ----------" << std::endl;
+        Dumux::CheckPointTimeLoop<double> timeLoop(tStart, dt, tEnd);
+        timeLoop.setCheckPoint(0.101);
+        timeLoop.start();
+        timeLoop.advanceTimeStep();
+        timeLoop.reportTimeStep();
+        timeLoop.advanceTimeStep();
+        timeLoop.reportTimeStep();
+        if (!(std::abs(timeLoop.timeStepSize()-0.1) < 1e-14))
+            DUNE_THROW(Dune::InvalidStateException, "Time Loop reduced time step size to " << timeLoop.timeStepSize()
+                         << " after check point unnecessarily!");
+
+        timeLoop.advanceTimeStep();
+        timeLoop.reportTimeStep();
+    }
+
     return 0;
 }
 // //////////////////////////////////
