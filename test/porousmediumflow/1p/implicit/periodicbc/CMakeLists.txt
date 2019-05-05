@@ -20,7 +20,7 @@ dune_add_test(NAME test_1p_periodic_tpfa_sequential
 
 dune_add_test(NAME test_1p_periodic_tpfa_parallel
               TARGET test_1p_periodic_tpfa
-              LABELS porousmediumflow 1p
+              LABELS porousmediumflow 1p parallel
               CMAKE_GUARD dune-spgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy

@@ -33,7 +33,7 @@ set_tests_properties(test_impesadaptiverestart PROPERTIES DEPENDS test_impesadap
 
 if(MPI_FOUND)
   dune_add_test(NAME test_impeswithamg
-                LABELS porousmediumflow 2p
+                LABELS porousmediumflow 2p parallel
                 SOURCES test_impeswithamg.cc
                 COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                 CMD_ARGS --script fuzzy
