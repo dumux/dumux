@@ -25,6 +25,7 @@ numericdifferentiation.hh
 optional.hh
 parameters.hh
 partial.hh
+pdesolver.hh
 pointsource.hh
 properties.hh
 quad.hh
