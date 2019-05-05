@@ -57,6 +57,7 @@ dune_add_test(NAME test_gridmanager_gmsh_3d_alu_sequential
 dune_add_test(NAME test_gridmanager_gmsh_3d_alu_parallel
               TARGET test_gridmanager_gmsh_3d_alu
               LABELS unit io parallel
+              TIMEOUT 300
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
@@ -82,6 +83,7 @@ dune_add_test(NAME test_gridmanager_gmsh_3d_ug_sequential
 dune_add_test(NAME test_gridmanager_gmsh_3d_ug_parallel
               TARGET test_gridmanager_gmsh_3d_ug
               LABELS unit io parallel
+              TIMEOUT 300
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
@@ -107,6 +109,7 @@ dune_add_test(NAME test_gridmanager_gmsh_e_markers_alu_sequential
 dune_add_test(NAME test_gridmanager_gmsh_e_markers_alu_parallel
               TARGET test_gridmanager_gmsh_e_markers_alu
               LABELS unit io parallel
+              TIMEOUT 300
               CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
@@ -134,6 +137,7 @@ dune_add_test(NAME test_gridmanager_gmsh_e_markers_ug_sequential
 dune_add_test(NAME test_gridmanager_gmsh_e_markers_ug_parallel
               TARGET test_gridmanager_gmsh_e_markers_ug
               LABELS unit io parallel
+              TIMEOUT 300
               CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
@@ -163,6 +167,7 @@ dune_add_test(NAME test_gridmanager_dgf_alu_sequential
 dune_add_test(NAME test_gridmanager_dgf_alu_parallel
               TARGET test_gridmanager_dgf_alu
               LABELS unit io parallel
+              TIMEOUT 300
               CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
@@ -194,6 +199,7 @@ dune_add_test(NAME test_gridmanager_dgf_ug_sequential
 dune_add_test(NAME test_gridmanager_dgf_ug_parallel
               TARGET test_gridmanager_dgf_ug
               LABELS unit io parallel
+              TIMEOUT 300
               CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
