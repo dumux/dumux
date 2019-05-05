@@ -44,6 +44,7 @@
 #include <dumux/common/typetraits/vector.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/timeloop.hh>
+#include <dumux/common/pdesolver.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/assembly/partialreassembler.hh>
@@ -87,8 +88,9 @@ using GetPVSwitch = Dune::Std::detected_or<int, DetectPVSwitch, Assembler>;
 template <class Assembler, class LinearSolver,
           class Reassembler = PartialReassembler<Assembler>,
           class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
-class NewtonSolver
+class NewtonSolver : public PDESolver<Assembler, LinearSolver>
 {
+    using ParentType = PDESolver<Assembler, LinearSolver>;
     using Scalar = typename Assembler::Scalar;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using SolutionVector = typename Assembler::ResidualType;
@@ -110,24 +112,23 @@ public:
                  std::shared_ptr<LinearSolver> linearSolver,
                  const Communication& comm = Dune::MPIHelper::getCollectiveCommunication(),
                  const std::string& paramGroup = "")
-    : endIterMsgStream_(std::ostringstream::out)
-    , assembler_(assembler)
-    , linearSolver_(linearSolver)
+    : ParentType(assembler, linearSolver)
+    , endIterMsgStream_(std::ostringstream::out)
     , comm_(comm)
     , paramGroup_(paramGroup)
     {
         initParams_(paramGroup);
 
         // set the linear system (matrix & residual) in the assembler
-        assembler_->setLinearSystem();
+        this->assembler().setLinearSystem();
 
         // set a different default for the linear solver residual reduction
         // within the Newton the linear solver doesn't need to solve too exact
-        linearSolver_->setResidualReduction(getParamFromGroup<Scalar>(paramGroup, "LinearSolver.ResidualReduction", 1e-6));
+        this->linearSolver().setResidualReduction(getParamFromGroup<Scalar>(paramGroup, "LinearSolver.ResidualReduction", 1e-6));
 
         // initialize the partial reassembler
         if (enablePartialReassembly_)
-            partialReassembler_ = std::make_unique<Reassembler>(*assembler_);
+            partialReassembler_ = std::make_unique<Reassembler>(this->assembler());
 
         if (hasPriVarsSwitch())
         {
@@ -135,8 +136,6 @@ public:
             priVarSwitch_ = std::make_unique<PrimaryVariableSwitch>(priVarSwitchVerbosity);
         }
     }
-
-    virtual ~NewtonSolver() {}
 
     //! the communicator for parallel runs
     const Communication& comm() const
@@ -210,9 +209,9 @@ public:
      * \brief Run the Newton method to solve a non-linear system.
      *        Does time step control when the Newton fails to converge
      */
-    void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop)
+    void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop) override
     {
-        if (assembler_->isStationaryProblem())
+        if (this->assembler().isStationaryProblem())
             DUNE_THROW(Dune::InvalidStateException, "Using time step control with stationary problem makes no sense!");
 
         // try solving the non-linear system
@@ -227,10 +226,10 @@ public:
             else if (!converged && i < maxTimeStepDivisions_)
             {
                 // set solution to previous solution
-                uCurrentIter = assembler_->prevSol();
+                uCurrentIter = this->assembler().prevSol();
 
                 // reset the grid variables to the previous solution
-                assembler_->resetTimeStep(uCurrentIter);
+                this->assembler().resetTimeStep(uCurrentIter);
 
                 if (verbose_)
                     std::cout << "Newton solver did not converge with dt = "
@@ -254,7 +253,7 @@ public:
      * \brief Run the Newton method to solve a non-linear system.
      *        The solver is responsible for all the strategic decisions.
      */
-    void solve(SolutionVector& uCurrentIter)
+    void solve(SolutionVector& uCurrentIter) override
     {
         const bool converged = solve_(uCurrentIter);
         if (!converged)
@@ -276,10 +275,10 @@ public:
         // write the initial residual if a convergence writer was set
         if (convergenceWriter_)
         {
-            assembler_->assembleResidual(u);
+            this->assembler().assembleResidual(u);
             SolutionVector delta(u);
             delta = 0; // dummy vector, there is no delta before solving the linear system
-            convergenceWriter_->write(u, delta, assembler_->residual());
+            convergenceWriter_->write(u, delta, this->assembler().residual());
         }
     }
 
@@ -332,7 +331,7 @@ public:
      */
     virtual void assembleLinearSystem(const SolutionVector& uCurrentIter)
     {
-        assembleLinearSystem_(*assembler_, uCurrentIter);
+        assembleLinearSystem_(this->assembler(), uCurrentIter);
 
         if (enablePartialReassembly_)
             partialReassembler_->report(comm_, endIterMsgStream_);
@@ -351,7 +350,7 @@ public:
      */
     void solveLinearSystem(SolutionVector& deltaU)
     {
-        auto& b = assembler_->residual();
+        auto& b = this->assembler().residual();
 
         try
         {
@@ -444,7 +443,7 @@ public:
                                                shift_*reassemblyShiftWeight_));
 
             updateDistanceFromLastLinearization_(uLastIter, deltaU);
-            partialReassembler_->computeColors(*assembler_,
+            partialReassembler_->computeColors(this->assembler(),
                                                distanceFromLastLinearization_,
                                                reassemblyThreshold);
 
@@ -473,7 +472,7 @@ public:
                 // If we get here, the convergence criterion does not require
                 // additional residual evaluations. Thus, the grid variables have
                 // not yet been updated to the new uCurrentIter.
-                assembler_->updateGridVariables(uCurrentIter);
+                this->assembler().updateGridVariables(uCurrentIter);
             }
         }
     }
@@ -662,25 +661,13 @@ protected:
 
     void computeResidualReduction_(const SolutionVector &uCurrentIter)
     {
-        residualNorm_ = assembler_->residualNorm(uCurrentIter);
+        residualNorm_ = this->assembler().residualNorm(uCurrentIter);
         reduction_ = residualNorm_;
         reduction_ /= initialResidual_;
     }
 
     bool enableResidualCriterion() const
     { return enableResidualCriterion_; }
-
-    const LinearSolver& linearSolver() const
-    { return *linearSolver_; }
-
-    LinearSolver& linearSolver()
-    { return *linearSolver_; }
-
-    const Assembler& assembler() const
-    { return *assembler_; }
-
-    Assembler& assembler()
-    { return *assembler_; }
 
     /*!
      * \brief Initialize the privar switch, noop if there is no priVarSwitch
@@ -695,9 +682,9 @@ protected:
         priVarSwitch_->reset(sol.size());
         priVarsSwitchedInLastIteration_ = false;
 
-        const auto& problem = assembler_->problem();
-        const auto& fvGridGeometry = assembler_->fvGridGeometry();
-        auto& gridVariables = assembler_->gridVariables();
+        const auto& problem = this->assembler().problem();
+        const auto& fvGridGeometry = this->assembler().fvGridGeometry();
+        auto& gridVariables = this->assembler().gridVariables();
         priVarSwitch_->updateBoundary(problem, fvGridGeometry, gridVariables, sol);
     }
 
@@ -713,9 +700,9 @@ protected:
     {
         // update the variable switch (returns true if the pri vars at at least one dof were switched)
         // for disabled grid variable caching
-        const auto& fvGridGeometry = assembler_->fvGridGeometry();
-        const auto& problem = assembler_->problem();
-        auto& gridVariables = assembler_->gridVariables();
+        const auto& fvGridGeometry = this->assembler().fvGridGeometry();
+        const auto& problem = this->assembler().problem();
+        auto& gridVariables = this->assembler().gridVariables();
 
         // invoke the primary variable switch
         priVarsSwitchedInLastIteration_ = priVarSwitch_->update(uCurrentIter, gridVariables,
@@ -853,8 +840,8 @@ private:
                 // if a convergence writer was specified compute residual and write output
                 if (convergenceWriter_)
                 {
-                    assembler_->assembleResidual(uCurrentIter);
-                    convergenceWriter_->write(uCurrentIter, deltaU, assembler_->residual());
+                    this->assembler().assembleResidual(uCurrentIter);
+                    convergenceWriter_->write(uCurrentIter, deltaU, this->assembler().residual());
                 }
 
                 // detect if the method has converged
@@ -905,7 +892,7 @@ private:
     auto assembleLinearSystem_(const A& assembler, const SolutionVector& uCurrentIter)
     -> typename std::enable_if_t<decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
     {
-        assembler_->assembleJacobianAndResidual(uCurrentIter, partialReassembler_.get());
+        this->assembler().assembleJacobianAndResidual(uCurrentIter, partialReassembler_.get());
     }
 
     //! assembleLinearSystem_ for assemblers that don't support partial reassembly
@@ -913,7 +900,7 @@ private:
     auto assembleLinearSystem_(const A& assembler, const SolutionVector& uCurrentIter)
     -> typename std::enable_if_t<!decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
     {
-        assembler_->assembleJacobianAndResidual(uCurrentIter);
+        this->assembler().assembleJacobianAndResidual(uCurrentIter);
     }
 
     /*!
@@ -999,10 +986,10 @@ private:
 
     virtual bool solveLinearSystem_(SolutionVector& deltaU)
     {
-        return solveLinearSystemImpl_(*linearSolver_,
-                                      assembler_->jacobian(),
+        return solveLinearSystemImpl_(this->linearSolver(),
+                                      this->assembler().jacobian(),
                                       deltaU,
-                                      assembler_->residual());
+                                      this->assembler().residual());
     }
 
     /*!
@@ -1233,9 +1220,6 @@ private:
         }
         return result;
     }
-
-    std::shared_ptr<Assembler> assembler_;
-    std::shared_ptr<LinearSolver> linearSolver_;
 
     //! The communication object
     Communication comm_;
