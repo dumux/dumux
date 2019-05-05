@@ -30,6 +30,9 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 - __GridManager__ Instead of always including all gridmanager specializations you can now only include the specialization that you need.
   For example, if you only use YaspGrid in your code, you only need to include `dumux/io/grid/gridmanager_yasp.hh`. The convenience header
   `dumux/io/grid/gridmanager.hh` still includes all specializations.
+- __Solver__ There is a new abstract base class PDESolver that is a class that does linearize & assemble, solve, update.
+  The NewtonSolver now derives from this class (interface is unchanged). A new class LinearPDESolver simplifies solving linear problems
+  by reducing the code in the main file and streamlining the terminal output to look like the Newton output.
 
 ### Immediate interface changes not allowing/requiring a deprecation period
 
