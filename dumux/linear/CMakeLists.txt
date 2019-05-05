@@ -4,6 +4,7 @@ amgparallelhelpers.hh
 amgtraits.hh
 linearsolveracceptsmultitypematrix.hh
 matrixconverter.hh
+pdesolver.hh
 scotchbackend.hh
 seqsolverbackend.hh
 solver.hh
