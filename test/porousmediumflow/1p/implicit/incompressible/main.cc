@@ -37,6 +37,7 @@
 #include <dune/grid/io/file/vtk.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/pdesolver.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -109,6 +110,9 @@ int main(int argc, char** argv) try
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
 
+    // start timer
+    Dune::Timer timer;
+
     // create the finite volume grid geometry
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
@@ -135,39 +139,16 @@ int main(int argc, char** argv) try
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 
-    // make assemble and attach linear system
+    // create assembler & linear solver
     using Assembler = FVAssembler<TypeTag, NUMDIFFMETHOD>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    auto A = std::make_shared<JacobianMatrix>();
-    auto r = std::make_shared<SolutionVector>();
-    assembler->setLinearSystem(A, r);
 
-    Dune::Timer timer;
-    // assemble the local jacobian and the residual
-    Dune::Timer assemblyTimer;
-    if (mpiHelper.rank() == 0) std::cout << "Assembling linear system ..." << std::flush;
-    assembler->assembleJacobianAndResidual(x);
-    assemblyTimer.stop();
-    if (mpiHelper.rank() == 0) std::cout << " took " << assemblyTimer.elapsed() << " seconds." << std::endl;
-
-    // we solve Ax = -r to save update and copy
-    (*r) *= -1.0;
-
-    // solve the linear system
-    Dune::Timer solverTimer;
     using LinearSolver = SSORCGBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
-    if (mpiHelper.rank() == 0) std::cout << "Solving linear system using " + linearSolver->name() + "..." << std::flush;
-    linearSolver->solve(*A, x, *r);
-    solverTimer.stop();
-    if (mpiHelper.rank() == 0) std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
-
-    // the grid variables need to be up to date for subsequent output
-    Dune::Timer updateTimer; std::cout << "Updating variables ..." << std::flush;
-    gridVariables->update(x);
-    updateTimer.elapsed(); std::cout << " took " << updateTimer.elapsed() << std::endl;
+    // solver the linear problem
+    LinearPDESolver<Assembler, LinearSolver> solver(assembler,  linearSolver);
+    solver.solve(x);
 
     // output result to vtk
     vtkWriter.write(1.0);
