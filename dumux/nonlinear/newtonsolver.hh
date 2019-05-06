@@ -184,6 +184,15 @@ public:
     { targetSteps_ = targetSteps; }
 
     /*!
+     * \brief Set the number of minimum iterations for the Newton
+     *        method.
+     *
+     * \param minSteps Minimum number of iterations
+     */
+    void setMinSteps(int minSteps)
+    { minSteps_ = minSteps; }
+
+    /*!
      * \brief Set the number of iterations after which the Newton
      *        method gives up.
      *
@@ -291,7 +300,16 @@ public:
      */
     virtual bool newtonProceed(const SolutionVector &uCurrentIter, bool converged)
     {
-        if (converged) {
+        if (isInitial_) {
+            // we always do two iterations when the current solution was the initial solution,
+            // because here the convergence criterion may not be defined well.
+            if(numSteps_ >= 1)
+                isInitial_ = false;
+            return true;
+        }
+        else if (numSteps_ < minSteps_)
+            return true;
+        else if (converged) {
             return false; // we are below the desired tolerance
         }
         else if (numSteps_ >= maxSteps_) {
@@ -734,6 +752,8 @@ protected:
 
     //! optimal number of iterations we want to achieve
     int targetSteps_;
+    //! minimum number of iterations we do
+    int minSteps_;
     //! maximum number of iterations we do before giving up
     int maxSteps_;
     //! actual number of steps done so far
@@ -1160,6 +1180,7 @@ private:
         setMaxAbsoluteResidual(getParamFromGroup<Scalar>(group, "Newton.MaxAbsoluteResidual"));
         setResidualReduction(getParamFromGroup<Scalar>(group, "Newton.ResidualReduction"));
         setTargetSteps(getParamFromGroup<int>(group, "Newton.TargetSteps"));
+        setMinSteps(getParamFromGroup<int>(group, "Newton.MinSteps"));
         setMaxSteps(getParamFromGroup<int>(group, "Newton.MaxSteps"));
 
         enablePartialReassembly_ = getParamFromGroup<bool>(group, "Newton.EnablePartialReassembly");
@@ -1280,6 +1301,9 @@ private:
 
     //! convergence writer
     std::shared_ptr<ConvergenceWriter> convergenceWriter_ = nullptr;
+
+    //! if we are in the very first Newton iterations (current solution was initial solution)
+    bool isInitial_ = true;
 };
 
 } // end namespace Dumux

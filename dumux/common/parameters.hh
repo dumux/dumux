@@ -305,6 +305,7 @@ private:
         params["Problem.EnableInertiaTerms"] = "true";
 
         // parameters in the Newton group
+        params["Newton.MinSteps"] = "0";
         params["Newton.MaxSteps"] = "18";
         params["Newton.TargetSteps"] = "10";
         params["Newton.UseLineSearch"] = "false";
