@@ -616,6 +616,38 @@ public:
     }
 
     /*!
+     * \brief Report the options and parameters this Newton is configured with
+     */
+    void reportParams(std::ostream& sout = std::cout) const
+    {
+        sout << "\nNewton solver configured with the following options and parameters:\n";
+        // options
+        if (useLineSearch_) sout << " -- Newton.UseLineSearch = true\n";
+        if (useChop_) sout << " -- Newton.EnableChop = true\n";
+        if (enablePartialReassembly_) sout << " -- Newton.EnablePartialReassembly = true\n";
+        if (enableAbsoluteResidualCriterion_) sout << " -- Newton.EnableAbsoluteResidualCriterion = true\n";
+        if (enableShiftCriterion_) sout << " -- Newton.EnableShiftCriterion = true (relative shift convergence criterion)\n";
+        if (enableResidualCriterion_) sout << " -- Newton.EnableResidualCriterion = true\n";
+        if (satisfyResidualAndShiftCriterion_) sout << " -- Newton.SatisfyResidualAndShiftCriterion = true\n";
+        // parameters
+        if (enableShiftCriterion_) sout << " -- Newton.MaxRelativeShift = " << shiftTolerance_ << '\n';
+        if (enableAbsoluteResidualCriterion_) sout << " -- Newton.MaxAbsoluteResidual = " << residualTolerance_ << '\n';
+        if (enableResidualCriterion_) sout << " -- Newton.ResidualReduction = " << reductionTolerance_ << '\n';
+        sout << " -- Newton.MinSteps = " << minSteps_ << '\n';
+        sout << " -- Newton.MaxSteps = " << maxSteps_ << '\n';
+        sout << " -- Newton.TargetSteps = " << targetSteps_ << '\n';
+        if (enablePartialReassembly_)
+        {
+            sout << " -- Newton.ReassemblyMinThreshold = " << reassemblyMinThreshold_ << '\n';
+            sout << " -- Newton.ReassemblyMaxThreshold = " << reassemblyMaxThreshold_ << '\n';
+            sout << " -- Newton.ReassemblyShiftWeight = " << reassemblyShiftWeight_ << '\n';
+        }
+        sout << " -- Newton.RetryTimeStepReductionFactor = " << retryTimeStepReductionFactor_ << '\n';
+        sout << " -- Newton.MaxTimeStepDivisions = " << maxTimeStepDivisions_ << '\n';
+        sout << std::endl;
+    }
+
+    /*!
      * \brief Suggest a new time-step size based on the old time-step
      *        size.
      *
@@ -1184,8 +1216,12 @@ private:
         maxTimeStepDivisions_ = getParamFromGroup<std::size_t>(group, "Newton.MaxTimeStepDivisions", 10);
         retryTimeStepReductionFactor_ = getParamFromGroup<Scalar>(group, "Newton.RetryTimeStepReductionFactor", 0.5);
 
-        verbosity_ = comm_.rank() == 0 ? 2 : 0;
+        verbosity_ = comm_.rank() == 0 ? getParamFromGroup<int>(group, "Newton.Verbosity", 2) : 0;
         numSteps_ = 0;
+
+        // output a parameter report
+        if (verbosity_ >= 2)
+            reportParams();
     }
 
     template<class Sol>
