@@ -35,12 +35,6 @@
 #ifndef DUMUX_EVAPORATION_ATMOSPHERE_PROBLEM_HH
 #define DUMUX_EVAPORATION_ATMOSPHERE_PROBLEM_HH
 
-// this sets that the relation using pc_max is used.
-// i.e. - only parameters for awn, ans are given,
-//      - the fit for ans involves the maximum value for pc, where Sw, awn are zero.
-// setting it here, because it impacts volume variables and spatialparameters
-#define USE_PCMAX 1
-
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/common/properties.hh>

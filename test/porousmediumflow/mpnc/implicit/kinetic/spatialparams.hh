@@ -128,9 +128,17 @@ public:
         materialParamsFF_.setPe(0.);
 
         // determine maximum capillary pressure for wetting-nonwetting surface
+        /* Of course physically there is no such thing as a maximum capillary pressure.
+         * The parametrization (VG/BC) goes to infinity and physically there is only one pressure
+         * for single phase conditions.
+         * Here, this is used for fitting the interfacial area surface: the capillary pressure,
+         * where the interfacial area is zero.
+         * Technically this value is obtained as the capillary pressure of saturation zero.
+         * This value of course only exists for the case of a regularized pc-Sw relation.
+         */
         using TwoPLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
-        pcMax_ = TwoPLaw::pc(materialParamsPM_, /*sw = */0.0);
-        aWettingNonWettingSurfaceParams_.setPcMax(pcMax_);
+        const auto pcMax = TwoPLaw::pc(materialParamsPM_, /*sw = */0.0);
+        aWettingNonWettingSurfaceParams_.setPcMax(pcMax);
 
         // wetting-non wetting: surface which goes to zero on the edges, but is a polynomial
         aWettingNonWettingSurfaceParams_.setA1(aWettingNonWettingA1_);
@@ -228,7 +236,7 @@ public:
         else if (inPM_(globalPos))
             return aWettingNonWettingSurfaceParams_ ;
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
-     }
+    }
 
     /*!\brief Returns a reference to the container object for the
      *        parametrization of the surface between non-Wetting and solid phase.
@@ -250,26 +258,24 @@ public:
         else if (inPM_(globalPos))
             return aNonWettingSolidSurfaceParams_ ;
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
-     }
+    }
 
-    /*!\brief Returns the maximum capillary pressure for the given pc-Sw curve
+    /*!\brief Returns a reference to the container object for the
+     *        parametrization of the surface between wetting and solid phase.
      *
-     * Of course physically there is no such thing as a maximum capillary pressure.
-     * The parametrization (VG/BC) goes to infinity and physically there is only one pressure
-     * for single phase conditions.
-     * Here, this is used for fitting the interfacial area surface: the capillary pressure,
-     * where the interfacial area is zero.
-     * Technically this value is obtained as the capillary pressure of saturation zero.
-     * This value of course only exists for the case of a regularized pc-Sw relation.
+     *        The position is determined based on the coordinate of
+     *        the vertex belonging to the considered sub-control volume.
      * \param element The finite element
      * \param scv The sub-control volume
      * \param elemSol The element solution
      */
     template<class ElementSolution>
-    const Scalar pcMax(const Element &element,
-                       const SubControlVolume &scv,
-                       const ElementSolution &elemSol) const
-    { return aWettingNonWettingSurfaceParams_.pcMax() ; }
+    const AwsSurfaceParams& aWettingSolidSurfaceParams(const Element &element,
+                                                       const SubControlVolume &scv,
+                                                       const ElementSolution &elemSol) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "wetting-solid-interface surface params");
+    }
 
     /*!
      * \brief Returns the characteristic length for the mass transfer.
@@ -367,8 +373,6 @@ private:
     AwnSurfaceParams aWettingNonWettingSurfaceParamsFreeFlow_;
     AnsSurfaceParams aNonWettingSolidSurfaceParamsFreeFlow_ ;
 
-    Scalar pcMax_ ;
-
     // Porous Medium Domain
     Scalar intrinsicPermeabilityPM_ ;
     Scalar porosityPM_ ;
@@ -401,6 +405,6 @@ private:
     std::vector<Scalar> gridVector_;
 };
 
-}
+} // end namespace Dumux
 
 #endif // GUARDIAN
