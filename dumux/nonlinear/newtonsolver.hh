@@ -31,6 +31,7 @@
 #include <iostream>
 #include <type_traits>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpicollectivecommunication.hh>
@@ -240,7 +241,7 @@ public:
                 // reset the grid variables to the previous solution
                 this->assembler().resetTimeStep(uCurrentIter);
 
-                if (verbose_)
+                if (verbosity_ >= 1)
                     std::cout << "Newton solver did not converge with dt = "
                               << timeLoop.timeStepSize() << " seconds. Retrying with time step of "
                               << timeLoop.timeStepSize() * retryTimeStepReductionFactor_ << " seconds\n";
@@ -499,7 +500,7 @@ public:
 
         ++numSteps_;
 
-        if (verbose_)
+        if (verbosity_ >= 1)
         {
             if (enableDynamicOutput_)
                 std::cout << '\r'; // move cursor to beginning of line
@@ -594,7 +595,7 @@ public:
      */
     void report(std::ostream& sout = std::cout) const
     {
-        if (verbose_)
+        if (verbosity_ >= 2)
             sout << '\n'
                  << "Newton statistics\n"
                  << "----------------------------------------------\n"
@@ -642,14 +643,28 @@ public:
     /*!
      * \brief Specifies if the Newton method ought to be chatty.
      */
+    DUNE_DEPRECATED_MSG("Has been replaced by setVerbosity(int). Will be removed after 3.1 release!")
     void setVerbose(bool val)
-    { verbose_ = val; }
+    { verbosity_ = val; }
 
     /*!
      * \brief Returns true if the Newton method ought to be chatty.
      */
+    DUNE_DEPRECATED_MSG("Has been replaced by int verbosity(). Will be removed after 3.1 release!")
     bool verbose() const
-    { return verbose_ ; }
+    { return verbosity_ ; }
+
+    /*!
+     * \brief Specifies the verbosity level
+     */
+    void setVerbosity(int val)
+    { verbosity_ = val; }
+
+    /*!
+     * \brief Return the verbosity level
+     */
+    int verbosity() const
+    { return verbosity_ ; }
 
     /*!
      * \brief Returns the parameter group
@@ -795,7 +810,7 @@ private:
                 if (numSteps_ > 0)
                     uLastIter = uCurrentIter;
 
-                if (verbose_ && enableDynamicOutput_)
+                if (verbosity_ >= 1 && enableDynamicOutput_)
                     std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r"
                               << std::flush;
 
@@ -817,7 +832,7 @@ private:
                 // http://en.wikipedia.org/wiki/ANSI_escape_code
                 const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
 
-                if (verbose_ && enableDynamicOutput_)
+                if (verbosity_ >= 1 && enableDynamicOutput_)
                     std::cout << "\rSolve: M deltax^k = r"
                               << clearRemainingLine << std::flush;
 
@@ -833,7 +848,7 @@ private:
                 ///////////////
                 // update
                 ///////////////
-                if (verbose_ && enableDynamicOutput_)
+                if (verbosity_ >= 1 && enableDynamicOutput_)
                     std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k"
                               << clearRemainingLine << std::flush;
 
@@ -874,7 +889,7 @@ private:
             // tell solver we converged successfully
             newtonSucceed();
 
-            if (verbose_) {
+            if (verbosity_ >= 1) {
                 const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
                 std::cout << "Assemble/solve/update time: "
                           <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
@@ -887,7 +902,7 @@ private:
         }
         catch (const NumericalProblem &e)
         {
-            if (verbose_)
+            if (verbosity_ >= 1)
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
 
             totalWastedIter_ += numSteps_;
@@ -1170,7 +1185,7 @@ private:
         maxTimeStepDivisions_ = getParamFromGroup<std::size_t>(group, "Newton.MaxTimeStepDivisions", 10);
         retryTimeStepReductionFactor_ = getParamFromGroup<Scalar>(group, "Newton.RetryTimeStepReductionFactor", 0.5);
 
-        verbose_ = comm_.rank() == 0;
+        verbosity_ = comm_.rank() == 0 ? 2 : 0;
         numSteps_ = 0;
     }
 
@@ -1235,8 +1250,8 @@ private:
     //! The communication object
     Communication comm_;
 
-    //! switches on/off verbosity
-    bool verbose_;
+    //! the verbosity level
+    int verbosity_;
 
     Scalar shiftTolerance_;
     Scalar reductionTolerance_;
