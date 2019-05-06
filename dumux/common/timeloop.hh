@@ -425,14 +425,14 @@ public:
 
         //! Check point management, TimeLoop::isCheckPoint() has to be called after this!
         // if we reached a periodic check point
-        if (periodicCheckPoints_ && Dune::FloatCmp::eq(nextTime, lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_, 1e-7))
+        if (periodicCheckPoints_ && Dune::FloatCmp::eq(nextTime - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_, 1e-7))
         {
             lastPeriodicCheckPoint_ += deltaPeriodicCheckPoint_;
             isCheckPoint_ = true;
         }
 
         // or a manually set check point
-        else if (!checkPoints_.empty() && Dune::FloatCmp::eq(nextTime, checkPoints_.front(), 1e-7))
+        else if (!checkPoints_.empty() && Dune::FloatCmp::eq(nextTime - checkPoints_.front(), 0.0, 1e-7))
         {
             checkPoints_.pop();
             isCheckPoint_ = true;
@@ -496,7 +496,7 @@ public:
                       << " seconds with the next check point at " << lastPeriodicCheckPoint_ + interval << " seconds." << std::endl;
 
         // check if the current time point is a check point
-        if (Dune::FloatCmp::eq(this->time(), lastPeriodicCheckPoint_, 1e-7))
+        if (Dune::FloatCmp::eq(this->time()-lastPeriodicCheckPoint_, 0.0, 1e-7))
             isCheckPoint_ = true;
 
         // make sure we respect this check point on the next time step
