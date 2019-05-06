@@ -595,15 +595,14 @@ public:
      */
     void report(std::ostream& sout = std::cout) const
     {
-        if (verbosity_ >= 2)
-            sout << '\n'
-                 << "Newton statistics\n"
-                 << "----------------------------------------------\n"
-                 << "-- Total Newton iterations:           " << totalWastedIter_ + totalSucceededIter_ << '\n'
-                 << "-- Total wasted Newton iterations:    " << totalWastedIter_ << '\n'
-                 << "-- Total succeeded Newton iterations: " << totalSucceededIter_ << '\n'
-                 << "-- Average iterations per solve:      " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
-                 << std::endl;
+        sout << '\n'
+             << "Newton statistics\n"
+             << "----------------------------------------------\n"
+             << "-- Total Newton iterations:           " << totalWastedIter_ + totalSucceededIter_ << '\n'
+             << "-- Total wasted Newton iterations:    " << totalWastedIter_ << '\n'
+             << "-- Total succeeded Newton iterations: " << totalSucceededIter_ << '\n'
+             << "-- Average iterations per solve:      " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
+             << std::endl;
     }
 
     /*!
