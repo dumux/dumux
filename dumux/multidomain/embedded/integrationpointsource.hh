@@ -74,6 +74,16 @@ public:
         return integrationElement_;
     }
 
+    void setQuadratureWeight(const Scalar w)
+    {
+        qpweight_ = w;
+    }
+
+    void setIntegrationElement(const Scalar ie)
+    {
+        integrationElement_ = ie;
+    }
+
     const std::vector<std::size_t>& elementIndices() const
     {
         return elementIndices_;
@@ -170,8 +180,10 @@ public:
                                 pointSourceMap.at(key).push_back(source);
                             else
                                 pointSourceMap.insert({key, {source}});
+
+                            // adjust the integration element
                             auto& s = pointSourceMap.at(key).back();
-                            s *= shapeValues[scv.indexInElement()];
+                            s.setIntegrationElement(shapeValues[scv.indexInElement()]*s.integrationElement());
                         }
                     }
                 }
