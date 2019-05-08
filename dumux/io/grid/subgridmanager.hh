@@ -33,6 +33,7 @@
 #include <dune/grid/io/file/dgfparser/dgfwriter.hh>
 
 #include <dumux/common/parameters.hh>
+#include <dumux/common/boundaryflag.hh>
 
 namespace Dumux {
 
@@ -97,6 +98,25 @@ public:
         // Return a unique pointer to the subgrid.
         return subgridPtr;
     }
+};
+
+//! dune-subgrid doesn't have this implemented
+template<int dim, class HostGrid>
+class BoundaryFlag<Dune::SubGrid<dim, HostGrid>>
+{
+public:
+    BoundaryFlag() : flag_(-1) {}
+
+    template<class Intersection>
+    BoundaryFlag(const Intersection& i) : flag_(-1) {}
+
+    using value_type = int;
+
+    value_type get() const
+    { DUNE_THROW(Dune::NotImplemented, "Sub-grid doesn't implement boundary segment indices!"); }
+
+private:
+    int flag_;
 };
 
 } // end namespace Dumux
