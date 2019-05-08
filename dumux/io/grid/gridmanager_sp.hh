@@ -34,8 +34,6 @@
 #include <dumux/io/grid/gridmanager_base.hh>
 #endif
 
-#include <dumux/common/boundaryflag.hh>
-
 namespace Dumux {
 
 #if HAVE_DUNE_SPGRID
@@ -97,25 +95,6 @@ public:
             DUNE_THROW(ParameterException, "Please supply a grid file in " << prefix << "Grid.File or " << prefix << "Grid.UpperRight/Cells.");
         }
     }
-};
-
-//! dune-subgrid doesn't have this implemented
-template<int dim, class HostGrid>
-class BoundaryFlag<Dune::SubGrid<dim, HostGrid>>
-{
-public:
-    BoundaryFlag() : flag_(-1) {}
-
-    template<class Intersection>
-    BoundaryFlag(const Intersection& i) : flag_(-1) {}
-
-    using value_type = int;
-
-    value_type get() const
-    { DUNE_THROW(Dune::NotImplemented, "Sub-grid doesn't implement boundary segment indices!"); }
-
-private:
-    int flag_;
 };
 
 #endif // HAVE_DUNE_SPGRID
