@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ShallowWaterTest
- * \brief Test for the shallow water model (wet dam break).
+ * \ingroup ShallowWaterTests
+ * \brief A test for the shallow water model (wet dam break).
  */
 #include <config.h>
 

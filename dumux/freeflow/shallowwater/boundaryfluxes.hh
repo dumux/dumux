@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ShallowWater
+ * \ingroup ShallowWaterModel
  * \brief Compute boundary conditions (cell state) via Riemann invariants
  *
  */

@@ -20,8 +20,7 @@
  * \file
  * \ingroup ShallowWaterModel
  *
- * \brief A two-dimesnional shallow water equations model
- *
+ * \brief A two-dimensional shallow water equations model
  * The two-dimensonal shallow water equations (SWEs) can be written as
  *
  * \f[

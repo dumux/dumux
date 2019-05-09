@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ShallowWater
- * \brief This file includes a unction to construct the Riemann problem
+ * \ingroup ShallowWaterFlux
+ * \brief This file includes a function to construct the Riemann problem
  *
  */
 #ifndef DUMUX_FLUX_SHALLOW_WATER_RIEMANN_PROBLEM_HH
@@ -32,7 +32,7 @@ namespace Dumux {
 namespace ShallowWater {
 
 /*!
- * \ingroup ShallowWater
+ * \ingroup ShallowWaterFlux
  * \brief Construct Riemann Problem and solve it
  *
  *
@@ -58,7 +58,7 @@ namespace ShallowWater {
  * \param velocityYRight velocityY on the right side
  * \param bedSurfaceLeft surface of the bed on the left side
  * \param bedSurfaceRight surface of the bed on the right side
- * \param grav gravity constant
+ * \param gravity gravity constant
  * \param nxy the normal vector
  *
  */
