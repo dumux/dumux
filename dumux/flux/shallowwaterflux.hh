@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup Flux
+ * \copydoc Dumux::ShallowWaterFlux
+ */
 #ifndef DUMUX_FLUX_SHALLOW_WATER_FLUX_HH
 #define DUMUX_FLUX_SHALLOW_WATER_FLUX_HH
 
@@ -24,6 +29,13 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup Flux
+ * \brief In contrast to the other fluxes provided by dumux this flux is independent
+ *        of the discretization scheme. Therefore no specialisation for the different
+ *        discretizations is needed.
+ *        The shallow water flux is computed by solving a riemann problem.
+ */
 template<class NumEqVector>
 class ShallowWaterFlux
 {

@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ShallowWaterTest
- * \brief Test for the Shallow water model (wet dam break).
+ * \ingroup ShallowWaterTests
+ * \brief A test for the Shallow water model (wet dam break).
  */
 #ifndef DUMUX_DAM_BREAK_TEST_PROBLEM_HH
 #define DUMUX_DAM_BREAK_TEST_PROBLEM_HH

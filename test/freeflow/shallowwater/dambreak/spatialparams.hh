@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ShallowWaterTest
+ * \ingroup ShallowWaterTests
  * \brief The spatial parameters for the dam break problem.
  */
 #ifndef DUMUX_DAM_BREAK_SPATIAL_PARAMETERS_HH

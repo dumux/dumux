@@ -32,7 +32,7 @@ namespace Dumux {
 
 /*!
  * \ingroup ShallowWaterModel
- * \brief ShallowWater problem base class.
+ * \brief Shallow water problem base class.
  */
 template<class TypeTag>
 class ShallowWaterProblem : public FVProblem<TypeTag>

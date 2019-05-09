@@ -30,8 +30,6 @@ namespace Dumux {
 /*!
  * \ingroup ShallowWaterModel
  * \brief The common indices for the shallow water equations model.
- *
- * \tparam PVOffset The first index in a primary variable vector.
  */
 struct ShallowWaterIndices
 {

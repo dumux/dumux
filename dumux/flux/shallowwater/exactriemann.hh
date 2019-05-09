@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ShallowWater
+ * \ingroup ShallowWaterFlux
  * \brief Function to compute the Riemann flux at the interface
  */
 #ifndef DUMUX_FLUX_SHALLOW_WATER_EXACT_RIEMANN_HH
@@ -40,7 +40,7 @@ struct RiemannSolution {
 
 
 /*!
- * \ingroup ShallowWater
+ * \ingroup ShallowWaterFlux
  * \brief Exact Riemann solver for Shallow water equations.
  *
  * This Riemann solver is described in the book

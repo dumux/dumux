@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup ShallowWaterModel
- * \copydoc Add I/O fields specific to shallow water
+ * \brief Add I/O fields specific to shallow water
  */
 #ifndef DUMUX_FREEFLOW_SHALLOW_WATER_IO_FIELDS_HH
 #define DUMUX_FREEFLOW_SHALLOW_WATER_IO_FIELDS_HH

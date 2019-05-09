@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ShallowWater
+ * \ingroup ShallowWaterFlux
  * \brief Function to limit the fluxes
  *
  */
@@ -32,7 +32,7 @@ namespace Dumux {
 namespace ShallowWater {
 
 /*!
- * \ingroup ShallowWater
+ * \ingroup ShallowWaterFlux
  * \brief Flux limiter function to scale fluxes for small water depths.
  *
  * This function acts like a kind of mobility, it limits the water flux

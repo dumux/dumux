@@ -243,6 +243,12 @@
      * \brief An energy equation adaptor for isothermal free-flow models
      * \copydetails ./freeflow/nonisothermal/model.hh
      */
+    /*!
+     * \ingroup FreeflowModels
+     * \defgroup ShallowWaterModel 2D shallow water model
+     * \brief Two-dimensional shallow water flow (depth-averaged)
+     * \copydetails ./freeflow/shallowwater/model.hh
+     */
 /*!
  * \defgroup Geomechanics Geomechanics Models
  * \brief Models for taking into account solid deformation
@@ -375,6 +381,11 @@
          * \defgroup RANSNCTests Reynolds-Averaged Navier-Stokes nc tests
          * \brief  Various tests using a single-phase Reynolds-Averaged Navier-Stokes flow with n components. The files are listed below.
          */
+        /*!
+         * \ingroup FreeflowTests
+         * \defgroup ShallowWaterTests 2D shallow water tests
+         * \brief Tests for the two-dimensional shallow water model. The files are listed below.
+         */
     /*!
      * \ingroup BenchmarksAndTests
      * \defgroup GeomechanicsTests Geomechanics Tests
@@ -470,6 +481,11 @@
      * \ingroup Flux
      * \defgroup StaggeredFlux Flux related to the staggered scheme
      * \brief Flux related to the staggered scheme
+     */
+    /*!
+     * \ingroup Flux
+     * \defgroup ShallowWaterFlux Flux related to the shallow water model
+     * \brief Flux related to the shallow water model
      */
 /* ***************** Material ******************/
 /*!
