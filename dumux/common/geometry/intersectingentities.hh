@@ -165,7 +165,7 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
 
             if (dimIntersection >= 2)
             {
-                const auto triangulation = triangulate<2, dimworld>(intersection);
+                const auto triangulation = triangulate<dimIntersection, dimworld>(intersection);
                 for (unsigned int i = 0; i < triangulation.size(); ++i)
                     intersections.emplace_back(eIdxA, eIdxB, std::move(triangulation[i]));
             }
