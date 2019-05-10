@@ -122,7 +122,7 @@ triangulate(const RandomAccessContainer& points)
                   "Triangulation expects Dune::FieldVector as point type");
 
     if (points.size() == 2)
-        return Triangulation<dim, dimWorld, ctype>({points[0], points[1]});
+        return Triangulation<dim, dimWorld, ctype>({ {points[0], points[1]} });
 
     //! \todo sort points and create polyline
     assert(points.size() > 1);
