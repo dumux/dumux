@@ -49,6 +49,13 @@ public:
     {}
 
     GridViewGeometricEntitySet(const GridView& gridView,
+                               const Mapper& mapper)
+    : gridView_(gridView)
+    , mapper_(mapper)
+    , entityMap_(std::make_shared<EntityMap<GridView, codim>>(gridView.grid(), mapper_))
+    {}
+
+    GridViewGeometricEntitySet(const GridView& gridView,
                                const Mapper& mapper,
                                std::shared_ptr<const EntityMap<GridView, codim>> entityMap)
     : gridView_(gridView)
