@@ -468,6 +468,7 @@ public:
         if (!checkPoints_.empty() && Dune::FloatCmp::le(checkPoints_.front() - nextTime, threshold))
             nextDt = checkPoints_.front() - this->time();
 
+        assert(nextDt > 0.0);
         this->setTimeStepSize(nextDt);
     }
 
