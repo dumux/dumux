@@ -39,25 +39,23 @@ namespace Dumux {
 template <class GridView, int codim = 0, class Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>>
 class GridViewGeometricEntitySet
 {
+    using EntityMap = Dumux::EntityMap<GridView, codim>;
 public:
     using Entity = typename GridView::template Codim<codim>::Entity;
 
     GridViewGeometricEntitySet(const GridView& gridView)
-    : gridView_(gridView)
-    , mapper_(gridView, Dune::mcmgLayout(Dune::Codim<codim>()))
-    , entityMap_(std::make_shared<EntityMap<GridView, codim>>(gridView.grid(), mapper_))
+    : GridViewGeometricEntitySet(gridView, Dune::mcmgLayout(Dune::Codim<codim>()))
     {}
 
-    GridViewGeometricEntitySet(const GridView& gridView,
-                               const Mapper& mapper)
+    GridViewGeometricEntitySet(const GridView& gridView, const Mapper& mapper)
     : gridView_(gridView)
     , mapper_(mapper)
-    , entityMap_(std::make_shared<EntityMap<GridView, codim>>(gridView.grid(), mapper_))
+    , entityMap_(std::make_shared<EntityMap>(gridView.grid(), mapper_))
     {}
 
     GridViewGeometricEntitySet(const GridView& gridView,
                                const Mapper& mapper,
-                               std::shared_ptr<const EntityMap<GridView, codim>> entityMap)
+                               std::shared_ptr<const EntityMap> entityMap)
     : gridView_(gridView)
     , mapper_(mapper)
     , entityMap_(entityMap)
@@ -106,7 +104,7 @@ public:
 private:
     GridView gridView_;
     Mapper mapper_;
-    std::shared_ptr<const EntityMap<GridView, codim>> entityMap_;
+    std::shared_ptr<const EntityMap> entityMap_;
 
 };
 
