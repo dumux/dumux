@@ -1,4 +1,5 @@
 add_input_file_links()
+dune_symlink_to_source_files(FILES polyline.vtp)
 
 dune_add_test(NAME test_vtkreader_3d
               SOURCES test_vtkreader.cc
@@ -52,6 +53,15 @@ dune_add_test(NAME test_vtkreader_1d
                                   ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p_richards_tpfatpfa_1d-reference.vtp test-1d"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p_richards_tpfatpfa_1d-reference.vtp
                                ${CMAKE_CURRENT_BINARY_DIR}/test-1d.vtp)
+
+dune_add_test(NAME test_vtkreader_1d_polyline
+              TARGET test_vtkreader_1d
+              LABELS unit io
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkreader_1d polyline.vtp test_polyline"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_vtkreader_1d_polyline-reference.vtp
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_polyline.vtp)
 
 dune_add_test(NAME test_vtk_staggeredfreeflowpvnames
               SOURCES test_vtk_staggeredfreeflowpvnames.cc
