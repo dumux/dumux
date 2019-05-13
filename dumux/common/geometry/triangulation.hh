@@ -116,13 +116,13 @@ inline Triangulation<dim, dimWorld, typename RandomAccessContainer::value_type::
 triangulate(const RandomAccessContainer& points)
 {
     using ctype = typename RandomAccessContainer::value_type::value_type;
-    using Point = Dune::FieldVector<ctype, 3>;
+    using Point = Dune::FieldVector<ctype, dimWorld>;
 
     static_assert(std::is_same<typename RandomAccessContainer::value_type, Point>::value,
                   "Triangulation expects Dune::FieldVector as point type");
 
     if (points.size() == 2)
-        return Triangulation<dim, dimWorld, ctype>({points[0], points[1]});
+        return Triangulation<dim, dimWorld, ctype>({ {points[0], points[1]} });
 
     //! \todo sort points and create polyline
     assert(points.size() > 1);
