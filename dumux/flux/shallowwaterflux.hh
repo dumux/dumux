@@ -31,10 +31,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Flux
- * \brief In contrast to the other fluxes provided by dumux this flux is independent
- *        of the discretization scheme. Therefore no specialisation for the different
- *        discretizations is needed.
- *        The shallow water flux is computed by solving a riemann problem.
+ * \brief Computes the shallow water flux by solving a riemann problem.
  */
 template<class NumEqVector>
 class ShallowWaterFlux
