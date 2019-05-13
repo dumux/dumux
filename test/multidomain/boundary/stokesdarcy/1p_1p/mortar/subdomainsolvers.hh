@@ -162,8 +162,10 @@ public:
 
         // initialize the vtk output module
         using IOFields = GetPropType<TypeTag, Properties::IOFields>;
+        using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
         vtkWriter_ = std::make_unique<OutputModule>(*gridVariables_, *x_, problem_->name());
         IOFields::initOutputModule(*vtkWriter_);
+        vtkWriter_->addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables_));
 
         // the assembler without time loop for stationary problem
         assembler_ = std::make_shared<Assembler>(problem_, fvGridGeometry_, gridVariables_);
@@ -189,7 +191,7 @@ public:
     std::shared_ptr<Problem> problemPointer()
     { return problem_; }
 
-    std::shared_ptr<SolutionVector>& solutionPointer()
+    std::shared_ptr<SolutionVector> solutionPointer()
     { return x_; }
 
 private:

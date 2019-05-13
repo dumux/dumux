@@ -61,7 +61,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DarcyOneP>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
+    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<0, Scalar> > ;
 };
 
 // Set the grid type
@@ -71,7 +71,7 @@ struct Grid<TypeTag, TTag::DarcyOneP>
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<Scalar, 2>>;
+    using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<Scalar, 3>>;
 };
 
 template<class TypeTag>
@@ -103,6 +103,8 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    static constexpr int dimWorld = GridView::dimensionworld;
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
 
 public:
@@ -150,12 +152,24 @@ public:
         BoundaryTypes values;
 
         values.setAllNeumann();
-        if (onLowerBoundary_(scv.dofPosition()) && element.geometry().center()[1] < 1.0)
+        if (onLowerBoundary_(scv.dofPosition()) && element.geometry().center()[dimWorld-1] < 1.0)
             values.setAllDirichlet();
-        if (onUpperBoundary_(scv.dofPosition()) && element.geometry().center()[1] > 1.0)
+        if (onUpperBoundary_(scv.dofPosition()) && element.geometry().center()[dimWorld-1] > 1.0)
             values.setAllDirichlet();
 
         return values;
+    }
+
+    /*!
+     * \brief TODO
+     */
+    NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
+    {
+        static const auto topSource = getParam<Scalar>("Problem.TopSource");
+        const auto xMax = this->fvGridGeometry().bBoxMax()[0];
+        if (globalPos[dimWorld-1] > 1.0 && !useHomogeneousSetup_)
+            return NumEqVector(topSource*(xMax - globalPos[0]));
+        return NumEqVector(0.0);
     }
 
     /*!
@@ -163,7 +177,14 @@ public:
      * \param globalPos The global position on the boundary
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-    { return initialAtPos(globalPos); }
+    {
+        static const auto topBoundaryPressure = getParam<Scalar>("Problem.TopBoundaryPressure");
+        static const auto bottomBoundaryPressure = getParam<Scalar>("Problem.BottomBoundaryPressure");
+        if (!useHomogeneousSetup_)
+            return globalPos[dimWorld-1] < 1.0 + eps_ ? PrimaryVariables(bottomBoundaryPressure)
+                                                      : PrimaryVariables(topBoundaryPressure);
+        return PrimaryVariables(0.0);
+    }
 
     /*!
      * \brief Evaluates the boundary conditions for a Neumann control volume.
@@ -181,18 +202,24 @@ public:
                         const ElementVolumeVariables& elemVolVars,
                         const SubControlVolumeFace& scvf) const
     {
-        if ( (onUpperBoundary_(scvf.ipGlobal()) && element.geometry().center()[1] < 1.0)
-             || (onLowerBoundary_(scvf.ipGlobal()) && element.geometry().center()[1] > 1.0) )
+        if ( (onLowerBoundary_(scvf.ipGlobal()) && element.geometry().center()[dimWorld-1] > 1.0)
+             || (onUpperBoundary_(scvf.ipGlobal()) && element.geometry().center()[dimWorld-1] < 1.0) )
         {
             auto flux = mortarProjector_().integrateMortarVariable(element);
             // turn it into flux per area
             flux /= scvf.area();
             // scale with fraction of this face with overlap area
             flux *= scvf.area() / mortarProjector_().overlapArea(element);
+            // scale with density (mortar variable is velocity)
+            flux *= elemVolVars[scvf.insideScvIdx()].density();
+
+            if (element.geometry().center()[dimWorld-1] > 1.0)
+                flux *= -1.0;
+
             return NumEqVector(flux);
         }
-
-        return NumEqVector(0.0);
+        else
+            return NumEqVector(0.0);
     }
 
     // \}
@@ -215,12 +242,18 @@ public:
         projector_ = p;
     }
 
+    //! TODO
+    void setUseHomogeneousSetup(bool value)
+    {
+        useHomogeneousSetup_ = value;
+    }
+
 private:
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_; }
+    { return globalPos[dimWorld-1] < this->fvGridGeometry().bBoxMin()[dimWorld-1] + eps_; }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
+    { return globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps_; }
 
     const Projector& mortarProjector_() const
     {
@@ -232,6 +265,8 @@ private:
     Scalar eps_;
     std::string problemName_;
     std::shared_ptr<const Projector> projector_;
+
+    bool useHomogeneousSetup_;
 };
 } // end namespace Dumux
 

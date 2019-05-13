@@ -49,7 +49,7 @@ class MortarStokesDarcyPreconditioner
     */
    virtual void apply (X& v, const Y& d)
    {
-       // TODO
+       v = d;
    }
 
    /*!

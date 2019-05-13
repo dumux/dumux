@@ -200,21 +200,31 @@ public:
         darcySolution_ = x;
     }
 
+    //! returns true if the element has an overlap with the mortar grid
+    bool hasOverlapWithMortar(const DarcyElement& darcyElement) const
+    {
+        const auto darcyElementIdx = darcyGridGeometry_->elementMapper().index(darcyElement);
+        return mortarToDarcyProjection_.find(darcyElementIdx) != mortarToDarcyProjection_.end();
+    }
+
     //! integrates the mortar variable over the overlap with a darcy element
     MortarScalar integrateMortarVariable(const DarcyElement& darcyElement) const
     {
+        assert(hasOverlapWithMortar(darcyElement));
         const auto darcyElementIdx = darcyGridGeometry_->elementMapper().index(darcyElement);
         const auto& projectionEntry = mortarToDarcyProjection_.at(darcyElementIdx);
 
         MortarScalar value = 0.0;
         for (const auto& entry : projectionEntry.otherDofToWeightMap)
             value += (*mortarSolution_)[entry.first]*entry.second;
+
         return value;
     }
 
     //! returns the overlap area between darcy and mortar domain
     Scalar overlapArea(const DarcyElement& darcyElement) const
     {
+        assert(hasOverlapWithMortar(darcyElement));
         const auto darcyElementIdx = darcyGridGeometry_->elementMapper().index(darcyElement);
         const auto& projectionEntry = mortarToDarcyProjection_.at(darcyElementIdx);
         return projectionEntry.overlapArea;

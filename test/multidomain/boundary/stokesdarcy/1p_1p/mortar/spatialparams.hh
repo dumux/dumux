@@ -81,7 +81,6 @@ public:
     Scalar beaversJosephCoeffAtPos(const GlobalPosition& globalPos) const
     { return alphaBJ_; }
 
-
 private:
     Scalar permeability_;
     Scalar alphaBJ_;

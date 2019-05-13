@@ -55,6 +55,11 @@ public:
 
     virtual void apply(const MortarSolution& x, MortarSolution& r) const
     {
+        std::shared_ptr<MortarSolution> p = std::make_shared<MortarSolution>(x);
+
+        projector_->setMortarSolutionPointer(p);
+        projector2_->setMortarSolutionPointer(p);
+
         darcySolver_->solve();
         darcySolver2_->solve();
 

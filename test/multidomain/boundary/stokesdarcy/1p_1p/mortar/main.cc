@@ -62,10 +62,10 @@ using StokesGridGeometry = Dumux::GetPropType<StokesTypeTag, Dumux::Properties::
 
 // Define grid an basis for mortar domain
 using MortarScalar = double;
-using MortarGrid = Dune::FoamGrid<1, 2>;
+using MortarGrid = Dune::FoamGrid<2, 3>;
 using MortarGridView = typename MortarGrid::LeafGridView;
 using MortarSolutionVector = Dune::BlockVector<Dune::FieldVector<MortarScalar, 1>>;
-using MortarFEBasis = Dune::Functions::LagrangeBasis<MortarGridView, 1>;
+using MortarFEBasis = Dune::Functions::LagrangeBasis<MortarGridView, 0>;
 
 // Projection operators
 using TheMortarDarcyProjector = Dumux::MortarDarcyProjector<MortarFEBasis, MortarSolutionVector,
@@ -115,8 +115,7 @@ int main(int argc, char** argv) try
 
     auto mortarSolution = std::make_shared<MortarSolutionVector>();
     mortarSolution->resize(feBasis->size());
-    for (auto& entry : *mortarSolution)
-        entry = -1;
+    *mortarSolution = 0.0;
 
     // create the projectors between mortar and sub-domains
     auto darcyProjector = std::make_shared<TheMortarDarcyProjector>(feBasis, darcySolver->gridGeometryPointer(), "Mortar");
@@ -132,35 +131,52 @@ int main(int argc, char** argv) try
     darcyProjector->setMortarSolutionPointer(mortarSolution);
     darcyProjector2->setMortarSolutionPointer(mortarSolution);
 
-    // write out mortar grid to vtk file
+    // write out initial solution
     Dune::VTKWriter<MortarGridView> mortarWriter(mortarGridView);
+    mortarWriter.addCellData(*mortarSolution, "flux");
     mortarWriter.write("mortar");
+    darcySolver->write(1.0);
+    darcy2Solver->write(1.0);
 
-    // using Operator = InterfaceOperator<DarcySolver1, TheMortarDarcyProjector,
-    //                                    DarcySolver2, TheMortarDarcyProjector>;
+    // compute pressure jump
+    using Operator = InterfaceOperator<DarcySolver1, TheMortarDarcyProjector,
+                                       DarcySolver2, TheMortarDarcyProjector>;
+    Operator op(darcySolver, darcyProjector, darcy2Solver, darcyProjector2);
+
+    darcySolver->problemPointer()->setUseHomogeneousSetup(false);
+    darcy2Solver->problemPointer()->setUseHomogeneousSetup(false);
+
+    MortarSolutionVector deltaP;
+    op.apply(*mortarSolution, deltaP);
+
     //
-    // double reduction = 1e-8;
-    // std::size_t maxIt = 100;
-    // bool verbose = false;
-    // Operator op(darcySolver, darcyProjector, darcy2Solver, darcyProjector2);
-    // MortarStokesDarcyPreconditioner<MortarSolutionVector> prec;
-    // Dune::CGSolver<MortarSolutionVector> cgSolver(op, prec, reduction, maxIt, verbose);
-    //
-    // MortarSolutionVector rhs;
-    // rhs.resize(mortarSolution->size());
-    // Dune::InverseOperatorResult result;
-    // cgSolver.apply(*mortarSolution, rhs, result);
-    //
-    // if (!result.converged)
-    //     DUNE_THROW(Dune::InvalidStateException, "Linear solver did not converge");
+    const double reduction = getParam<double>("InterfaceSolver.ResidualReduction");
+    const std::size_t maxIt = getParam<double>("InterfaceSolver.MaxIterations");
+    const bool verbose = getParam<double>("InterfaceSolver.Verbosity");
+
+    darcySolver->problemPointer()->setUseHomogeneousSetup(true);
+    darcy2Solver->problemPointer()->setUseHomogeneousSetup(true);
+
+    MortarStokesDarcyPreconditioner<MortarSolutionVector> prec;
+    Dune::CGSolver<MortarSolutionVector> cgSolver(op, prec, reduction, maxIt, verbose);
+
+    deltaP *= -1.0;
+    Dune::InverseOperatorResult result;
+    cgSolver.apply(*mortarSolution, deltaP, result);
+
+    if (!result.converged)
+        DUNE_THROW(Dune::InvalidStateException, "Linear solver did not converge");
 
     // solve the sub-domains
-    darcySolver->solve();
-    darcy2Solver->solve();
+    darcySolver->problemPointer()->setUseHomogeneousSetup(false);
+    darcy2Solver->problemPointer()->setUseHomogeneousSetup(false);
+    op.apply(*mortarSolution, deltaP);
+    std::cout << "DeltaP:\n" << deltaP << std::endl;
 
     // write solutions
     darcySolver->write(1.0);
     darcy2Solver->write(1.0);
+    mortarWriter.write("mortar");
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
