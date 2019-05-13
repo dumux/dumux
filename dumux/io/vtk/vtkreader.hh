@@ -258,17 +258,17 @@ private:
             const auto connectivity = parseDataArray_<std::vector<unsigned int>>(connectivityNode);
             const auto offsets = parseDataArray_<std::vector<unsigned int>>(offsetsNode);
 
-            if (verbose) std::cout << "Found " << offsets.size() << " element." << std::endl;
+            if (verbose) std::cout << "Found " << offsets.size() << " polylines." << std::endl;
 
             unsigned int lastOffset = 0;
             for (unsigned int i = 0; i < offsets.size(); ++i)
             {
-                const auto geomType = Dune::GeometryTypes::line;
+                // a polyline can have many points in the VTK format
+                // split the line in segments with two points
                 unsigned int offset = offsets[i];
-                std::vector<unsigned int> corners; corners.resize(offset-lastOffset);
-                for (unsigned int j = 0; j < offset-lastOffset; ++j)
-                    corners[Dune::VTK::renumber(geomType, j)] = connectivity[lastOffset+j];
-                factory.insertElement(geomType, std::move(corners));
+                for (unsigned int j = 0; j < offset-lastOffset-1; ++j)
+                    factory.insertElement(Dune::GeometryTypes::line,
+                        std::vector<unsigned int>({ connectivity[lastOffset+j], connectivity[lastOffset+j+1] }));
                 lastOffset = offset;
             }
         }
@@ -293,16 +293,83 @@ private:
         const XMLElement* cellDataNode = getDataNode_(pieceNode, DataType::cellData);
         if (cellDataNode != nullptr)
         {
-            const XMLElement* dataArray = cellDataNode->FirstChildElement("DataArray");
-            for (; dataArray != nullptr; dataArray = dataArray->NextSiblingElement("DataArray"))
+            const XMLElement* cellsNode = pieceNode->FirstChildElement("Cells");
+            const XMLElement* linesNode = pieceNode->FirstChildElement("Lines");
+
+            if (cellsNode)
             {
-                const char *attributeText = dataArray->Attribute("Name");
+                const XMLElement* dataArray = cellDataNode->FirstChildElement("DataArray");
+                for (; dataArray != nullptr; dataArray = dataArray->NextSiblingElement("DataArray"))
+                {
+                    const char *attributeText = dataArray->Attribute("Name");
 
-                if (attributeText == nullptr)
-                    DUNE_THROW(Dune::IOError, "Couldn't get Name attribute of a cell data array.");
+                    if (attributeText == nullptr)
+                        DUNE_THROW(Dune::IOError, "Couldn't get Name attribute of a cell data array.");
 
-                cellData[std::string(attributeText)] = parseDataArray_<std::vector<double>>(dataArray);
+                    cellData[std::string(attributeText)] = parseDataArray_<std::vector<double>>(dataArray);
+                }
             }
+            // for poly data
+            else if (linesNode)
+            {
+                // first parse all the cell data (each cell in this sense can be a polyline)
+                const XMLElement* dataArray = cellDataNode->FirstChildElement("DataArray");
+                if (dataArray)
+                {
+                    Data polyLineCellData;
+                    for (; dataArray != nullptr; dataArray = dataArray->NextSiblingElement("DataArray"))
+                    {
+                        const char *attributeText = dataArray->Attribute("Name");
+
+                        if (attributeText == nullptr)
+                            DUNE_THROW(Dune::IOError, "Couldn't get Name attribute of a cell data array.");
+
+                        polyLineCellData[std::string(attributeText)] = parseDataArray_<std::vector<double>>(dataArray);
+                    }
+
+                    // a polyline can have many points in the VTK format
+                    // we split the line in segments with two points
+                    // so we also need to duplicate the cell data to fit the increased line number
+                    const XMLElement* offsetsNode = findDataArray_(linesNode, "offsets");
+                    const auto offsets = parseDataArray_<std::vector<unsigned int>>(offsetsNode);
+
+                    if (offsets.size() != polyLineCellData.begin()->second.size())
+                        DUNE_THROW(Dune::IOError, "Expected the same number of cell data entries (is "
+                                                   << polyLineCellData.begin()->second.size()
+                                                   << ") as polylines (" << offsets.size() << ")!");
+
+                    // count the number of Dune cells to be able to resize the data vectors
+                    unsigned int lastOffset = 0;
+                    std::size_t numCells = 0;
+                    for (unsigned int i = 0; i < offsets.size(); ++i)
+                    {
+                        unsigned int offset = offsets[i];
+                        for (unsigned int j = 0; j < offset-lastOffset-1; ++j)
+                            ++numCells;
+                        lastOffset = offset;
+                    }
+
+                    // create the data arrays
+                    for (const auto& dArray : polyLineCellData)
+                    {
+                        cellData[dArray.first] = std::vector<double>(numCells);
+                        auto& cd = cellData[dArray.first];
+                        const auto& pd = dArray.second;
+
+                        lastOffset = 0;
+                        std::size_t cellIdx = 0;
+                        for (unsigned int i = 0; i < offsets.size(); ++i)
+                        {
+                            unsigned int offset = offsets[i];
+                            for (unsigned int j = 0; j < offset-lastOffset-1; ++j)
+                                cd[cellIdx++] = pd[i];
+                            lastOffset = offset;
+                        }
+                    }
+                }
+            }
+            else
+                DUNE_THROW(Dune::IOError, "No Cells or Lines element found in " << fileName_);
         }
 
         const XMLElement* pointDataNode = getDataNode_(pieceNode, DataType::pointData);
