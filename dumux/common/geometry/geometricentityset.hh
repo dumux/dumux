@@ -44,7 +44,7 @@ public:
     using Entity = typename GridView::template Codim<codim>::Entity;
 
     GridViewGeometricEntitySet(const GridView& gridView)
-    : GridViewGeometricEntitySet(gridView, Dune::mcmgLayout(Dune::Codim<codim>()))
+    : GridViewGeometricEntitySet(gridView, Mapper(gridView, Dune::mcmgLayout(Dune::Codim<codim>())))
     {}
 
     GridViewGeometricEntitySet(const GridView& gridView, const Mapper& mapper)
