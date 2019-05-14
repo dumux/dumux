@@ -57,11 +57,6 @@ class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
     using FluidSystem = typename VolumeVariables::FluidSystem;
     using Scalar = typename GridVariables::Scalar;
 
-    // TODO should be possible to get this
-    using Problem = typename std::decay_t<decltype(std::declval<GridVolumeVariables>().problem())>;
-    using BoundaryTypes = typename std::decay_t<decltype(std::declval<GridVolumeVariables>().problem()
-                                                         .boundaryTypes(std::declval<Element>(), std::declval<SubControlVolumeFace>()))>;
-
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
@@ -69,6 +64,9 @@ class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using ReferenceElements = Dune::ReferenceElements<typename GridView::ctype, dim>;
+
+    using Problem = typename GridVolumeVariables::Problem;
+    using BoundaryTypes = typename Problem::Traits::BoundaryTypes;
 
 public:
     using VelocityVector = typename ParentType::VelocityVector;
