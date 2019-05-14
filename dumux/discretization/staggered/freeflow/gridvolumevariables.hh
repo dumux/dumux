@@ -138,10 +138,12 @@ template<class Traits>
 class StaggeredGridVolumeVariables<Traits, /*cachingEnabled*/true>
 {
     using ThisType = StaggeredGridVolumeVariables<Traits, true>;
-    using Problem = typename Traits::Problem;
     using PrimaryVariables = typename Traits::VolumeVariables::PrimaryVariables;
 
 public:
+    //! export the problem type
+    using Problem = typename Traits::Problem;
+
     //! export the type of the indices
     using Indices = typename Traits::VolumeVariables::Indices;
 
@@ -220,10 +222,12 @@ template<class Traits>
 class StaggeredGridVolumeVariables<Traits, /*cachingEnabled*/false>
 {
     using ThisType = StaggeredGridVolumeVariables<Traits, false>;
-    using Problem = typename Traits::Problem;
     using PrimaryVariables = typename Traits::VolumeVariables::PrimaryVariables;
 
 public:
+    //! export the problem type
+    using Problem = typename Traits::Problem;
+
     //! export the type of the VolumeVariables
     using VolumeVariables = typename Traits::VolumeVariables;
 
