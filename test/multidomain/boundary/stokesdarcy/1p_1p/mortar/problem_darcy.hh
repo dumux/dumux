@@ -114,6 +114,12 @@ public:
     , eps_(1e-7)
     , isOnNegativeMortarSide_(getParamFromGroup<bool>(paramGroup, "Problem.IsOnNegativeMortarSide"))
     {
+        const auto mortarVariable = getParamFromGroup<std::string>("Mortar", "VariableType");
+        if (mortarVariable == "Pressure")
+            useDirichletAtInterface_ = true;
+        else if (mortarVariable == "Flux")
+            useDirichletAtInterface_ = false;
+
         problemName_  =  getParamFromGroup<std::string>(paramGroup, "Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
@@ -158,6 +164,10 @@ public:
         if (isOnNegativeMortarSide_ && onUpperBoundary_(scv.dofPosition()))
             values.setAllDirichlet();
 
+        if (useDirichletAtInterface_)
+            if (isOnMortarInterface(scv.dofPosition()))
+                values.setAllDirichlet();
+
         return values;
     }
 
@@ -178,11 +188,15 @@ public:
         if (isOnNegativeMortarSide_ && onUpperBoundary_(scvf.ipGlobal()))
             values.setAllDirichlet();
 
+        if (useDirichletAtInterface_)
+            if (isOnMortarInterface(scvf.ipGlobal()))
+                values.setAllDirichlet();
+
         return values;
     }
 
     /*!
-     * \brief TODO
+     * \brief Evaluate the source term at a given position.
      */
     NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
     {
@@ -194,16 +208,42 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet sub-control volume face.
-     * \param globalPos The global position on the boundary
+     * \brief Evaluates the boundary conditions for a Dirichlet sub-control volume face
+     * \note This overload is for the box scheme
+     */
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
+    {
+        if (useDirichletAtInterface_ && isOnMortarInterface(scv.dofPosition()))
+            return PrimaryVariables(computeMortarPressure_(element));
+        return dirichletAtPos(scv.dofPosition());
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Dirichlet sub-control volume face
+     * \note This overload is for cell-centered schemes
+     */
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        if (useDirichletAtInterface_ && isOnMortarInterface(scvf.ipGlobal()))
+            return PrimaryVariables(computeMortarPressure_(element));
+        return dirichletAtPos(scvf.ipGlobal());
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Dirichlet segment
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         static const auto topBoundaryPressure = getParam<Scalar>("Problem.TopBoundaryPressure");
         static const auto bottomBoundaryPressure = getParam<Scalar>("Problem.BottomBoundaryPressure");
         if (!useHomogeneousSetup_)
-            return !isOnNegativeMortarSide_  ? PrimaryVariables(bottomBoundaryPressure)
-                                             : PrimaryVariables(topBoundaryPressure);
+        {
+            if (!isOnNegativeMortarSide_ && onLowerBoundary_(globalPos))
+                return PrimaryVariables(bottomBoundaryPressure);
+            else if (isOnNegativeMortarSide_ && onUpperBoundary_(globalPos))
+                return  PrimaryVariables(topBoundaryPressure);
+        }
+
         return PrimaryVariables(0.0);
     }
 
@@ -223,14 +263,13 @@ public:
                         const ElementVolumeVariables& elemVolVars,
                         const SubControlVolumeFace& scvf) const
     {
-        if ( (isOnNegativeMortarSide_ && onLowerBoundary_(scvf.ipGlobal()) )
-             || (!isOnNegativeMortarSide_ && onUpperBoundary_(scvf.ipGlobal())) )
+        if ( isOnMortarInterface(scvf.ipGlobal()) )
         {
             auto flux = mortarProjector_().integrateMortarVariable(element);
             // turn it into flux per area
-            flux /= scvf.area();
+            flux /= mortarProjector_().overlapArea(element);
             // scale with fraction of this face with overlap area
-            flux *= scvf.area() / mortarProjector_().overlapArea(element);
+            flux *= scvf.area()/mortarProjector_().overlapArea(element);
             // scale with density (mortar variable is velocity)
             flux *= elemVolVars[scvf.insideScvIdx()].density();
 
@@ -263,19 +302,37 @@ public:
         projector_ = p;
     }
 
-    //! TODO
+    //! Set whether or not the homogeneous system is solved
     void setUseHomogeneousSetup(bool value)
     {
         useHomogeneousSetup_ = value;
     }
 
+    //! Returns true if a position if on the mortar interface
+    bool isOnMortarInterface(const GlobalPosition& globalPos) const
+    {
+        return (isOnNegativeMortarSide_ && onLowerBoundary_(globalPos))
+               || (!isOnNegativeMortarSide_ && onUpperBoundary_(globalPos));
+    }
+
 private:
+    //! computes the mortar pressure (if pressure coupling is used)
+    Scalar computeMortarPressure_(const Element& element) const
+    {
+        assert(mortarProjector_().hasOverlapWithMortar(element));
+        return mortarProjector_().integrateMortarVariable(element)
+              / mortarProjector_().overlapArea(element);
+    }
+
+    //! Returns true if position is on lower domain boundary
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[dimWorld-1] < this->fvGridGeometry().bBoxMin()[dimWorld-1] + eps_; }
 
+    //! Returns true if position is on upper domain boundary
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps_; }
 
+    //! Returns a const reference to the projector class
     const Projector& mortarProjector_() const
     {
         if (!projector_)
@@ -289,6 +346,7 @@ private:
 
     bool isOnNegativeMortarSide_;
     bool useHomogeneousSetup_;
+    bool useDirichletAtInterface_;
 };
 } // end namespace Dumux
 

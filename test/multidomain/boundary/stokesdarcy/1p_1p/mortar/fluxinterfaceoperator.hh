@@ -21,49 +21,49 @@
  * \ingroup TODO doc me.
  * \brief TODO doc me.
  */
-#ifndef DUMUX_STOKES_DARCY_MORTAR_INTERFACE_OPERATOR_HH
-#define DUMUX_STOKES_DARCY_MORTAR_INTERFACE_OPERATOR_HH
+#ifndef DUMUX_MORTAR_FLUX_INTERFACE_OPERATOR_HH
+#define DUMUX_MORTAR_FLUX_INTERFACE_OPERATOR_HH
 
 #include <dune/istl/operators.hh>
 
 namespace Dumux {
 
-// TODO REPLACE DARCY2 WITH STOKES SOLVER
-template<class DarcySolver, class MortarDarcyProjector,
-         class DarcySolver2, class MortarDarcyProjector2>
-class InterfaceOperator : public Dune::LinearOperator< typename MortarDarcyProjector::MortarSolution,
-                                                       typename MortarDarcyProjector::MortarSolution >
+template<class Solver1, class Projector1,
+         class Solver2, class Projector2>
+class FluxInterfaceOperator
+: public Dune::LinearOperator< typename Projector1::MortarSolution,
+                               typename Projector2::MortarSolution >
 {
-    using MortarSolution = typename MortarDarcyProjector::MortarSolution;
+    using MortarSolution = typename Projector1::MortarSolution;
     using FieldType =  typename MortarSolution::field_type;
 
     // make sure types of solution vectors of both projections are equal
-    static constexpr bool isSameMortarSol = std::is_same<typename MortarDarcyProjector2::MortarSolution,
-                                                         MortarSolution>::value;
+    static constexpr bool isSameMortarSol = std::is_same<typename Projector2::MortarSolution, MortarSolution>::value;
     static_assert(isSameMortarSol, "Subdomain projectors do not map to same mortar solution type");
 
 public:
-    explicit InterfaceOperator(std::shared_ptr<DarcySolver> darcySolver,
-                               std::shared_ptr<MortarDarcyProjector> projector,
-                               std::shared_ptr<DarcySolver2> darcySolver2,
-                               std::shared_ptr<MortarDarcyProjector2> projector2)
-    : darcySolver_(darcySolver)
-    , darcySolver2_(darcySolver2)
-    , projector_(projector)
+    explicit FluxInterfaceOperator(std::shared_ptr<Solver1> solver1,
+                                   std::shared_ptr<Projector1> projector1,
+                                   std::shared_ptr<Solver2> solver2,
+                                   std::shared_ptr<Projector2> projector2)
+    : solver1_(solver1)
+    , solver2_(solver2)
+    , projector1_(projector1)
     , projector2_(projector2)
     {}
 
+    //! apply operator to x:  \f$ y = A(x) \f$
     virtual void apply(const MortarSolution& x, MortarSolution& r) const
     {
+        // turn into shared_ptr to set it in projectors
         std::shared_ptr<MortarSolution> p = std::make_shared<MortarSolution>(x);
-
-        projector_->setMortarSolutionPointer(p);
+        projector1_->setMortarSolutionPointer(p);
         projector2_->setMortarSolutionPointer(p);
 
-        darcySolver_->solve();
-        darcySolver2_->solve();
+        solver1_->solve();
+        solver2_->solve();
 
-        r = projector_->projectInterfacePressures();
+        r = projector1_->projectInterfacePressures();
         r -= projector2_->projectInterfacePressures();
     }
 
@@ -80,16 +80,14 @@ public:
 
     //! Category of the solver (see SolverCategory::Category)
     virtual Dune::SolverCategory::Category category() const
-    {
-        return Dune::SolverCategory::sequential;
-    }
+    { return Dune::SolverCategory::sequential; }
 
 private:
-    std::shared_ptr<DarcySolver> darcySolver_;
-    std::shared_ptr<DarcySolver2> darcySolver2_;
+    std::shared_ptr<Solver1> solver1_;
+    std::shared_ptr<Solver2> solver2_;
 
-    std::shared_ptr<MortarDarcyProjector> projector_;
-    std::shared_ptr<MortarDarcyProjector2> projector2_;
+    std::shared_ptr<Projector1> projector1_;
+    std::shared_ptr<Projector2> projector2_;
 };
 
 } // end namespace Dumux

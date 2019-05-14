@@ -39,7 +39,6 @@
 
 #include <dumux/linear/seqsolverbackend.hh>
 
-#include "interfaceoperator.hh"
 #include "preconditioner.hh"
 
 #include "subdomainsolvers.hh"
@@ -47,10 +46,16 @@
 #include "problem_stokes.hh"
 
 #include "fluxprojector.hh"
+#include "pressureprojector.hh"
+#include "fluxinterfaceoperator.hh"
+#include "pressureinterfaceoperator.hh"
 
 // The type tags of the sub-domains
 using DarcyTypeTag = Dumux::Properties::TTag::DarcyOneP;
 using StokesTypeTag = Dumux::Properties::TTag::StokesOneP;
+
+// Solver classes
+using Solver = Dumux::DarcySolver<DarcyTypeTag>;
 
 // The solution vectors of the sub-domains
 using DarcySolutionVector = Dumux::GetPropType<DarcyTypeTag, Dumux::Properties::SolutionVector>;
@@ -64,6 +69,10 @@ using StokesGridGeometry = Dumux::GetPropType<StokesTypeTag, Dumux::Properties::
 using DarcyGridVariables = Dumux::GetPropType<DarcyTypeTag, Dumux::Properties::GridVariables>;
 using StokesGridVariables = Dumux::GetPropType<StokesTypeTag, Dumux::Properties::GridVariables>;
 
+// The grid variables of the sub-domains
+using DarcyFluxVariables = Dumux::GetPropType<DarcyTypeTag, Dumux::Properties::FluxVariables>;
+// using StokesGridVariables = Dumux::GetPropType<StokesTypeTag, Dumux::Properties::GridVariables>;
+
 // Define grid an basis for mortar domain
 using MortarScalar = double;
 using MortarGrid = Dune::FoamGrid<1, 2>;
@@ -76,12 +85,15 @@ struct MortarProjectorTraits
 {
     using MortarFEBasis = MortarSpaceBasis;
     using MortarSolutionVector = MortarSolution;
+
     using SubDomainGridGeometry = DarcyGridGeometry;
     using SubDomainGridVariables = DarcyGridVariables;
     using SubDomainSolutionVector = DarcySolutionVector;
+    using SubDomainFluxVariables = DarcyFluxVariables;
 };
 using TheMortarDarcyProjector = Dumux::MortarFluxProjector<MortarProjectorTraits>;
-
+using InterfaceOperator = Dumux::FluxInterfaceOperator<Solver, TheMortarDarcyProjector,
+                                                           Solver, TheMortarDarcyProjector>;
 // Set Projection property in Sub-problems
 namespace Dumux {
 namespace Properties {
@@ -109,10 +121,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // create sub-domain solvers (two times Darcy for now)
-    using DarcySolver1 = DarcySolver<DarcyTypeTag>;
-    using DarcySolver2 = DarcySolver<DarcyTypeTag>;
-    auto darcySolver = std::make_shared< DarcySolver1 >();
-    auto darcy2Solver = std::make_shared< DarcySolver2 >();
+    auto darcySolver = std::make_shared< Solver >();
+    auto darcy2Solver = std::make_shared< Solver >();
 
     darcySolver->init("Darcy");
     darcy2Solver->init("Darcy2");
@@ -150,9 +160,7 @@ int main(int argc, char** argv) try
     darcy2Solver->write(1.0);
 
     // compute pressure jump
-    using Operator = InterfaceOperator<DarcySolver1, TheMortarDarcyProjector,
-                                       DarcySolver2, TheMortarDarcyProjector>;
-    Operator op(darcySolver, darcyProjector, darcy2Solver, darcyProjector2);
+    InterfaceOperator op(darcySolver, darcyProjector, darcy2Solver, darcyProjector2);
 
     darcySolver->problemPointer()->setUseHomogeneousSetup(false);
     darcy2Solver->problemPointer()->setUseHomogeneousSetup(false);

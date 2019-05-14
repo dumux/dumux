@@ -15,6 +15,7 @@ Cells = 20
 
 [Mortar]
 ProjectionIntegrationOrder = 1
+VariableType = Pressure
 
 [InterfaceSolver]
 Verbosity = 3
