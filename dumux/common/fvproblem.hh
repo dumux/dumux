@@ -21,8 +21,8 @@
  * \ingroup Common
  * \brief Base class for all finite volume problems
  */
-#ifndef DUMUX_FV_PROBLEM_HH
-#define DUMUX_FV_PROBLEM_HH
+#ifndef DUMUX_COMMON_FV_PROBLEM_HH
+#define DUMUX_COMMON_FV_PROBLEM_HH
 
 #include <memory>
 #include <map>
@@ -49,35 +49,48 @@ template<class TypeTag>
 class FVProblem
 {
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using PointSource = GetPropType<TypeTag, Properties::PointSource>;
-    using PointSourceHelper = GetPropType<TypeTag, Properties::PointSourceHelper>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     enum {
         dim = GridView::dimension
     };
 
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
-    static constexpr bool isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box;
-    static constexpr bool isStaggered = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::staggered;
-
+    using PointSource = GetPropType<TypeTag, Properties::PointSource>;
+    using PointSourceHelper = GetPropType<TypeTag, Properties::PointSourceHelper>;
     using PointSourceMap = std::map<std::pair<std::size_t, std::size_t>,
-                                    std::vector<PointSource> >;
+    std::vector<PointSource> >;
+
+    using GridVolumeVariables = GetPropType<TypeTag, Properties::GridVolumeVariables>;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
+
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+
+    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isStaggered = FVGridGeometry::discMethod == DiscretizationMethod::staggered;
+
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
 public:
+    //! export traits of this problem
+    struct Traits
+    {
+        using Scalar = FVProblem::Scalar;
+        using PrimaryVariables = FVProblem::PrimaryVariables;
+        using NumEqVector = FVProblem::NumEqVector;
+        using BoundaryTypes = FVProblem::BoundaryTypes;
+
+    };
+
     /*!
      * \brief Constructor
      * \param fvGridGeometry The finite volume grid geometry
@@ -416,7 +429,7 @@ public:
             // Add the contributions to the dof source values
             // We divide by the volume. In the local residual this will be multiplied with the same
             // factor again. That's because the user specifies absolute values in kg/s.
-            const Scalar volume = scv.volume()*elemVolVars[scv].extrusionFactor();
+            const auto volume = scv.volume()*elemVolVars[scv].extrusionFactor();
 
             for (auto&& pointSource : pointSources)
             {
