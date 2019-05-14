@@ -188,6 +188,9 @@ public:
     std::shared_ptr<FVGridGeometry> gridGeometryPointer()
     { return fvGridGeometry_; }
 
+    std::shared_ptr<GridVariables> gridVariablesPointer()
+    { return gridVariables_; }
+
     std::shared_ptr<Problem> problemPointer()
     { return problem_; }
 
