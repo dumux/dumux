@@ -120,6 +120,12 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
     if (u*w < 0.0 - eps4)
         return false;
 
+    // check if point is on the line of one of the edges
+    if (u.two_norm2() < eps4)
+        return b*c < 0.0 + eps_*nnorm;
+    if (v.two_norm2() < eps4)
+        return a*c < 0.0 + eps_*nnorm;
+
     // now the point must be in the triangle (or on the faces)
     return true;
 }
