@@ -19,10 +19,10 @@
 /*!
  * \file
  * \ingroup ShallowWaterTests
- * \brief A test for the Shallow water model (wet dam break).
+ * \brief A test for the Shallow water model (rough channel).
  */
-#ifndef DUMUX_DAM_BREAK_TEST_PROBLEM_HH
-#define DUMUX_DAM_BREAK_TEST_PROBLEM_HH
+#ifndef DUMUX_ROUGH_CHANNEL_TEST_PROBLEM_HH
+#define DUMUX_ROUGH_CHANNEL_TEST_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -30,83 +30,89 @@
 
 #include <dumux/freeflow/shallowwater/model.hh>
 #include <dumux/freeflow/shallowwater/problem.hh>
-#include <dumux/flux/shallowwater/riemannproblem.hh>
-#include <dumux/flux/shallowwater/exactriemann.hh>
+#include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
+#include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
 
 
 namespace Dumux {
 
-/*!
- * \ingroup ShallowWaterTests
- * \brief A simple dam break test for the shallow water equations
- */
 template <class TypeTag>
-class DamBreakProblem;
-
+class RoughChannelProblem;
 
 // Specify the properties for the problem
 namespace Properties {
 
 // Create new type tags
 namespace TTag {
-struct DamBreakWet { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
+struct RoughChannel { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
 } // end namespace TTag
 
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DamBreakWet>
+struct Grid<TypeTag, TTag::RoughChannel>
 { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::DamBreakWet>
-{ using type = Dumux::DamBreakProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::RoughChannel>
+{ using type = Dumux::RoughChannelProblem<TypeTag>; };
 
 // Set the spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::DamBreakWet>
+struct SpatialParams<TypeTag, TTag::RoughChannel>
 {
 private:
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = DamBreakSpatialParams<FVGridGeometry, Scalar>;
+    using type = RoughChannelSpatialParams<FVGridGeometry, Scalar>;
 };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::DamBreakWet>
+struct EnableFVGridGeometryCache<TypeTag, TTag::RoughChannel>
 { static constexpr bool value = true; };
 
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::DamBreakWet>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::RoughChannel>
 { static constexpr bool value = false; };
 
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::DamBreakWet>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::RoughChannel>
 { static constexpr bool value = false; };
-
 } // end namespace Properties
 
-
 /*!
- * \ingroup Shallow water equations model
- * \ingroup ImplicitTestProblems
+ * \ingroup ShallowWaterTests
+ * \brief A simple flow in a rough channel with friction law after Manning.
  *
- * \brief A simple dam break test (1D wet dam break).
+ * The domain is 1000 meters long and 10 meters wide. At the left border a discharge
+ * boundary condition is applied and at the right border a water depth boundary condition.
+ * All other boundaries are set to no-flow. Normal flow is assumed, therefor the water depth
+ * at the right border can be calculated with the formular of Gaukler-Manning-Strickler.
  *
- * The domain is 20 meters long with a gate in the middle. On the left
- * side the water depth is 4 meters and on the right side the depth is 1 meter.
- * All boundaries are set to no-flow.
+ * \f[
+ * v_m = 1/n * R_{hy}^{2/3} * I_s^{1/2}
+ * \f]
+ *
+ * With the mean velocity
+ * \f[
+ * v_m = \frac{q}/{h}
+ * \f]
+ * the friction value n after Manning
+ * the hydraulic radius R_{hy} equal to the water depth h (because normal flow is assumed)
+ * the bed slope I_s and the unity inflow discharge q.
+ *
+ * Therefore h can be calculated with
+ *
+ * \f[
+ * h = \left(\frac{n*q}{\sqrt{I_s}} \right)^{3/5}
+ * \f]
+ *
+ * The formular of Gaukler Manning and Strickler is also used to calculate the analytic solution.
  *
  * This problem uses the \ref ShallowWaterModel
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_shallowwater -parameterFile test_shallowwater.input -TimeManager.TEnd 10</tt>
- *
- * where the initial time step is 0.01 seconds, and the end of the
- * simulation time is 10 seconds
  */
 template <class TypeTag>
-class DamBreakProblem : public ShallowWaterProblem<TypeTag>
+class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
 {
     using ParentType = ShallowWaterProblem<TypeTag>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -121,14 +127,17 @@ class DamBreakProblem : public ShallowWaterProblem<TypeTag>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:
-    DamBreakProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    RoughChannelProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
         exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
         exactVelocityX_.resize(fvGridGeometry->numDofs(), 0.0);
+        hBoundary_ = this->gauklerManningStrickler(discharge_,manningN_,bedSlope_);
     }
 
     //! Get the analytical water depth
@@ -143,12 +152,24 @@ public:
         return exactVelocityX_;
     }
 
+    //! Calculate the water depth with Gaukler-Manning-Strickler
+    Scalar gauklerManningStrickler(Scalar discharge, Scalar manningN, Scalar bedSlope)
+    {
+        using std::pow;
+        using std::abs;
+        using std::sqrt;
+
+         return std::pow(std::abs(discharge)*manningN/sqrt(bedSlope), 0.6);
+    }
+
     //! Udpate the analytical solution
     template<class SolutionVector, class GridVariables>
     void updateAnalyticalSolution(const SolutionVector& curSol,
                                   const GridVariables& gridVariables,
                                   const Scalar time)
     {
+        using std::pow;
+        using std::abs;
         //compute solution for all elements
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
@@ -158,26 +179,12 @@ public:
             auto elemVolVars = localView(gridVariables.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, curSol);
 
-            const auto& globalPos = element.geometry().center();
-
-            //compute the position s and the initial water depth at the gate, velocities are zero
-            const Scalar s = (globalPos[0] - gatePosition_)/time;
-            const Scalar waterDepthLeft =  initialWaterDepthLeft_;
-            const Scalar waterDepthRight =  initialWaterDepthRight_;
-            const auto gravity = this->spatialParams().gravity(globalPos);
-
-            auto riemannResult = ShallowWater::exactRiemann(waterDepthLeft,
-                                                            waterDepthRight,
-                                                            0.0,
-                                                            0.0,
-                                                            0.0,
-                                                            0.0,
-                                                            gravity,
-                                                            s);
+            Scalar h = this->gauklerManningStrickler(discharge_,manningN_,bedSlope_);
+            Scalar u = abs(discharge_)/h;
 
             const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
-            exactWaterDepth_[eIdx] = riemannResult.waterDepth;
-            exactVelocityX_[eIdx] = riemannResult.velocityX;
+            exactWaterDepth_[eIdx] = h;
+            exactVelocityX_[eIdx] = u;
         }
     }
 
@@ -192,7 +199,53 @@ public:
      * This is used as a prefix for files generated by the simulation.
      */
     const std::string& name() const
-    { return name_; }
+    {
+        return name_;
+    }
+
+     /*!
+     * \brief Evaluate the source term for all balance equations within a given
+     *        sub-control-volume.
+     *
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scv The sub control volume
+     *
+     * For this method, the \a values parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
+     */
+     NumEqVector source(const Element &element,
+               const FVElementGeometry& fvGeometry,
+               const ElementVolumeVariables& elemVolVars,
+               const SubControlVolume &scv) const
+    {
+        NumEqVector source(0.0);
+
+        const auto& globalPos = scv.center();
+        const auto& volVars = elemVolVars[scv];
+        const auto& elementIndex = scv.elementIndex();
+
+        const auto gravity = this->spatialParams().gravity(globalPos);
+        auto h = volVars.waterDepth();
+        auto u = volVars.velocity(0);
+        auto v = volVars.velocity(1);
+
+        auto ustarH = FrictionLawManning<Scalar>().computeUstarH(h,manningN_, gravity);
+        auto uv = sqrt(pow(u,2.0) + pow(v,2.0));
+
+        source[0] = 0.0;
+        source[1] = -ustarH * u * uv;
+        source[2] = -ustarH * v * uv;
+
+        return source;
+    }
 
 
     // \}
@@ -216,7 +269,12 @@ public:
     }
 
     /*!
-     * \brief Specifies the neumann bounday
+     * \brief Specifies the neumann boundary
+     *
+     *  We need the Riemann invariants to compute the values depending of the boundary type.
+     *  Since we use a weak imposition we do not have a dirichlet value. We impose fluxes
+     *  based on q, h, etc. computed with the Riemann invariants
+     *
      * \param element
      * \param fvGeometry
      * \param elemVolVars
@@ -229,34 +287,46 @@ public:
     {
         NeumannFluxes values(0.0);
 
-        //we need the Riemann invariants to compute the values depending of the boundary type
-        //since we use a weak imposition we do not have a dirichlet value. We impose fluxes
-        //based on q,h, etc. computed with the Riemann invariants
-
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& nxy = scvf.unitOuterNormal();
         const auto gravity = this->spatialParams().gravity(scvf.center());
+        std::vector<Scalar> boundaryStateVariables;
 
-
-        //left side q_in
-        if (scfv.center()[0] < 0.0 + eps_)
+        // impose discharge at the left side
+        if (scvf.center()[0] < 0.0 + eps_)
         {
-
+            boundaryStateVariables = ShallowWater::fixedDischargeBoundary(discharge_,
+                                                                          insideVolVars.waterDepth(),
+                                                                          insideVolVars.velocity(0),
+                                                                          insideVolVars.velocity(1),
+                                                                          nxy);
+        }
+        // impose water depth at the right side
+        else if (scvf.center()[0] > 100.0 - eps_)
+        {
+            boundaryStateVariables =  ShallowWater::fixedWaterDepthBoundary(hBoundary_,
+                                                                            insideVolVars.waterDepth(),
+                                                                            insideVolVars.velocity(0),
+                                                                            insideVolVars.velocity(1),
+                                                                            nxy);
         }
 
-
-        //right side fixed h
-        else if (scfv.center()[0] > 100.0 - eps_)
-
         // no flow boundary
+        else
+        {
+            boundaryStateVariables = {0,0,0};
+            boundaryStateVariables[0] = insideVolVars.waterDepth();
+            boundaryStateVariables[1] = -insideVolVars.velocity(0);
+            boundaryStateVariables[2] = -insideVolVars.velocity(1);
+        }
 
         auto riemannFlux = ShallowWater::riemannProblem(insideVolVars.waterDepth(),
-                                                        insideVolVars.waterDepth(),
+                                                        boundaryStateVariables[0],
                                                         insideVolVars.velocity(0),
-                                                        -insideVolVars.velocity(0),
+                                                        boundaryStateVariables[1],
                                                         insideVolVars.velocity(1),
-                                                        -insideVolVars.velocity(1),
+                                                        boundaryStateVariables[2],
                                                         insideVolVars.bedSurface(),
                                                         insideVolVars.bedSurface(),
                                                         gravity,
@@ -289,21 +359,10 @@ public:
 
         PrimaryVariables values(0.0);
 
-        values[0] = initialWaterDepthRight_;
+        values[0] = hBoundary_;
         values[1] = 0.0;
         values[2] = 0.0;
 
-        // water level on the left side of the gate
-        if (globalPos[0] < 10.0 + eps_)
-        {
-            values[0] = initialWaterDepthLeft_;
-        }
-
-        //water level on the right side of the gate
-        else
-        {
-            values[0] = initialWaterDepthRight_;
-        }
 
         return values;
     };
@@ -314,11 +373,14 @@ private:
 
     std::vector<Scalar> exactWaterDepth_;
     std::vector<Scalar> exactVelocityX_;
+    Scalar hBoundary_;
 
-    static constexpr Scalar initialWaterDepthLeft_ = 4.0;
-    static constexpr Scalar initialWaterDepthRight_ = 1.0;
-    static constexpr Scalar channelLenght_ = 20.0;
-    static constexpr Scalar gatePosition_ = 10.0;
+    static constexpr Scalar bedSlope_ = 0.001;
+    static constexpr Scalar manningN_ = 0.025;
+    static constexpr Scalar discharge_ = -1.0; // discharge at the inflow boundary
+    static constexpr Scalar channelLenght_ = 100.0;
+    static constexpr Scalar bedSurfaceLeft = 10.0;
+
 
     static constexpr Scalar eps_ = 1.0e-6;
     std::string name_;
