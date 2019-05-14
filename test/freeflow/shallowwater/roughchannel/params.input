@@ -1,0 +1,17 @@
+[Problem]
+Name = roughChannel
+
+[TimeLoop]
+TEnd = 3600.0 # [s]
+MaxTimeStepSize = 60.0 # [s]
+DtInitial = 1.0 # [s]
+
+[Grid]
+Positions0 = 0.0 1000.0
+Positions1 = 0.0 10.0
+Cells0 = 1000
+Cells1 = 10 
+
+[Newton]
+EnablePartialReassembly = true
+

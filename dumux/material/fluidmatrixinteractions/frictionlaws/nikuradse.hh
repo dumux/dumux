@@ -46,6 +46,7 @@ public:
      *
      * \param h water depth.
      * \param ks the Strickler friction value.
+     * \return ustar_h friction used for the source term in shallow water models.
      */
 
     Scalar computeUstarH(const Scalar h,const Scalar ks)
@@ -67,7 +68,7 @@ public:
      * We define a water depth minUpperH. If the water depth is
      * smaller, we start to limit the friciton.
      * So the friciton term get's not extreme large for small water
-     * depths
+     * depths.
      *
      * ------------------------- minUpperh -----------
      *
@@ -79,11 +80,11 @@ public:
      * /////////////////////////////////////////////////
      *
      * For the limiting the LET model is used, which is usually applied in the
-     * porouse media flow to limit the permeability due to the saturation. It employs
+     * porous media flow to limit the permeability due to the saturation. It employs
      * the three empirical paramaters L, E and T, which describe the limiting curve.
      *
      * \param rough_h roughness height of the representive structure (e.g. largest grain size).
-     * \params h water depth.
+     * \param h water depth.
      */
     Scalar limitRoughH(Scalar rough_h, const Scalar h)
     {
@@ -91,18 +92,17 @@ public:
         using std::min;
         using std::max;
 
-        const Scalar letL = 0.0; // empirical parameter of the LET model
-        const Scalar letT = 2.0; // empirical parameter of the LET model
-        const Scalar letE = 1.0; // empirical parameter of the LET model
-        Scalar mobility_max = 1.0; // maximal mobility
+        const Scalar letL = 0.0; //!< empirical parameter of the LET model
+        const Scalar letT = 2.0; //!< empirical parameter of the LET model
+        const Scalar letE = 1.0; //!< empirical parameter of the LET model
+        Scalar mobility_max = 1.0; //!< maximal mobility
 
         auto minUpperH = rough_h * 2.0;
         auto sw = min(h * (1.0/minUpperH),1.0);
         sw = max(0.0,sw);
-        auto mobility = (krw * pow(sw,letL))/(pow(sw,letL) + letE * pow(1.0-sw,letT));
+        auto mobility = (mobility_max * pow(sw,letL))/(pow(sw,letL) + letE * pow(1.0-sw,letT));
         return rough_h * (1.0 - mobility);
     }
-
 };
 
 } // end namespace Dumux
