@@ -119,6 +119,7 @@ class MortarProjectorBase
     {
         ScalarType overlapArea = 0;
         std::unordered_map<OtherGridIndex, OtherScalar> otherDofToWeightMap;
+        std::vector<OtherGridIndex> coupledElementIndices;
     };
 
 public:
@@ -211,8 +212,12 @@ public:
                     // if entry for dof doesn't exist yet, initialize to zero
                     if ( !containsIdx(mortarToSubDomainEntry.otherDofToWeightMap, mortarDofIdx) )
                         mortarToSubDomainEntry.otherDofToWeightMap[mortarDofIdx] = 0.0;
-
                     mortarToSubDomainEntry.otherDofToWeightMap[mortarDofIdx] += weight*ie*mortarShapeFunctionValues[i];
+
+                    if ( !std::count(mortarToSubDomainEntry.coupledElementIndices.begin(),
+                                     mortarToSubDomainEntry.coupledElementIndices.end(),
+                                     mortarElementIdx) )
+                        mortarToSubDomainEntry.coupledElementIndices.push_back(mortarElementIdx);
                 }
 
                 for (size_t i = 0; i < subDomainShapeValues.values.size(); i++)
@@ -222,8 +227,12 @@ public:
                     // if entry for dof doesn't exist yet, initialize to zero
                     if ( !containsIdx(subDomainToMortarEntry.otherDofToWeightMap, subDomainDofIdx) )
                         subDomainToMortarEntry.otherDofToWeightMap[subDomainDofIdx] = 0.0;
-
                     subDomainToMortarEntry.otherDofToWeightMap[subDomainDofIdx] += weight*ie*subDomainShapeValues.values[i].second;
+
+                    if ( !std::count(subDomainToMortarEntry.coupledElementIndices.begin(),
+                                     subDomainToMortarEntry.coupledElementIndices.end(),
+                                     subDomainElementIdx) )
+                        subDomainToMortarEntry.coupledElementIndices.push_back(subDomainElementIdx);
                 }
             }
         }
