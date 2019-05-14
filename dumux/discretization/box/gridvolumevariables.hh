@@ -58,9 +58,11 @@ template<class P, class VV, class Traits>
 class BoxGridVolumeVariables<P, VV, /*cachingEnabled*/true, Traits>
 {
     using ThisType = BoxGridVolumeVariables<P, VV, true, Traits>;
-    using Problem = typename Traits::Problem;
 
 public:
+    //! export the problem type
+    using Problem = typename Traits::Problem;
+
     //! export the volume variables type
     using VolumeVariables = typename Traits::VolumeVariables;
 
@@ -121,9 +123,11 @@ template<class P, class VV, class Traits>
 class BoxGridVolumeVariables<P, VV, /*cachingEnabled*/false, Traits>
 {
     using ThisType = BoxGridVolumeVariables<P, VV, false, Traits>;
-    using Problem = typename Traits::Problem;
 
 public:
+    //! export the problem type
+    using Problem = typename Traits::Problem;
+
     //! export the volume variables type
     using VolumeVariables = typename Traits::VolumeVariables;
 

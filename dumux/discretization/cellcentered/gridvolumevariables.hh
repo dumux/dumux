@@ -48,9 +48,11 @@ template<class Traits>
 class CCGridVolumeVariables<Traits, /*cachingEnabled*/true>
 {
     using ThisType = CCGridVolumeVariables<Traits, true>;
-    using Problem = typename Traits::Problem;
 
 public:
+    //! export the problem type
+    using Problem = typename Traits::Problem;
+
     //! export the volume variables type
     using VolumeVariables = typename Traits::VolumeVariables;
 
@@ -118,9 +120,11 @@ template<class Traits>
 class CCGridVolumeVariables<Traits, /*cachingEnabled*/false>
 {
     using ThisType = CCGridVolumeVariables<Traits, false>;
-    using Problem = typename Traits::Problem;
 
 public:
+    //! export the problem type
+    using Problem = typename Traits::Problem;
+
     //! export the volume variables type
     using VolumeVariables = typename Traits::VolumeVariables;
 
