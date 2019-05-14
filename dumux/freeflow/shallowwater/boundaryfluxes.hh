@@ -25,7 +25,7 @@
 #ifndef DUMUX_SHALLOWWATER_BOUNDARYFLUXES_HH
 #define DUMUX_SHALLOWWATER_BOUNDARYFLUXES_HH
 
-#include <array>
+#include <vector>
 #include <cmath>
 
 namespace Dumux {
@@ -35,18 +35,14 @@ namespace ShallowWater {
  * \brief compute the cell state for fixed water depth boundary.
  */
 template<class Scalar, class GlobalPosition>
-std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
-                                              const Scalar waterDepthLeft,
-                                              const Scalar waterDepthRight,
-                                              const Scalar velocityXLeft,
-                                              const Scalar velocityXRight,
-                                              const Scalar velocityYLeft,
-                                              const Scalar velocityYRight,
-                                              const Scalar gravity,
-                                              const GlobalPosition& nxy)
+std::vector<Scalar> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
+                                            const Scalar waterDepthLeft,
+                                            const Scalar velocityXLeft,
+                                            const Scalar velocityYLeft,
+                                            const GlobalPosition& nxy)
 
 {
-    std::array<Scalar, 3> cellStateRight;
+    std::vector<Scalar> cellStateRight(3);
     cellStateRight[0] = waterDepthBoundary;
 
     using std::sqrt;
@@ -63,25 +59,20 @@ std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
  * \brief compute the cell state for a fixed discharge boundary.
  */
 template<class Scalar, class GlobalPosition>
-std::array<Scalar, 3> fixedDischargeBoundary(const Scalar dischargeBoundary,
-                                             const Scalar waterDepthLeft,
-                                             const Scalar waterDepthRight,
-                                             const Scalar velocityXLeft,
-                                             const Scalar velocityXRight,
-                                             const Scalar velocityYLeft,
-                                             const Scalar velocityYRight,
-                                             const Scalar gravity,
-                                             const GlobalPosition& nxy,
-                                             const Scalar faceVolume)
+std::vector<Scalar> fixedDischargeBoundary(const Scalar qlocal,
+                                           const Scalar waterDepthLeft,
+                                           const Scalar velocityXLeft,
+                                           const Scalar velocityYLeft,
+                                           const GlobalPosition& nxy)
 {
-    std::array<Scalar, 3> cellStateRight;
+    std::vector<Scalar> cellStateRight(3);
     using std::abs;
     using std::sqrt;
+    using std::max;
 
     // only impose if abs(q) > 0
-    if (abs(dischargeBoundary) > 1.0e-9)
+    if (abs(qlocal) > 1.0e-9)
     {
-        const auto qlocal =  dischargeBoundary/faceVolume;
         const auto uboundIn = nxy[0]*velocityXLeft + nxy[1]*velocityYLeft;
         const auto alphal = uboundIn + 2.0*sqrt(9.81 * waterDepthLeft);
 

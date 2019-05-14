@@ -28,7 +28,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include"nikuradse.hh"
+#include "nikuradse.hh"
 
 namespace Dumux {
 /*!
@@ -39,27 +39,27 @@ namespace Dumux {
  */
 
 template <typename Scalar>
-class FrictionLawManning : FrictionLawNikuradse
+class FrictionLawManning : FrictionLawNikuradse<Scalar>
 {
 public:
     /*!
      * \brief Compute the friction ustar_h.
      *
      * \param h water depth.
-     * \param ks the Strickler friction value.
+     * \param manningN Mannings friction value.
+     * \return ustar_h friction used for the source term in shallow water models.
      */
 
-    Scalar computeUstarH(const Scalar h,const Scalar ks, const Scalar gravity)
+    Scalar computeUstarH(const Scalar h,const Scalar manningN, const Scalar gravity)
     {
         using std::pow;
-        using std::log;
 
         Scalar ustar_h = 0.0;
-        Scalar rough_h = pow(25.68/(1.0/ks),6.0);
+        Scalar rough_h = pow(25.68/(1.0/manningN),6.0);
 
-        rough_h = limitRoughH(rough_h, h);
+        rough_h = this->limitRoughH(rough_h, h);
 
-        auto cfric = pow((h + rough_h),1.0/6.0) * 1.0/(ks);
+        auto cfric = pow((h + rough_h),1.0/6.0) * 1.0/(manningN);
         ustar_h = gravity / pow(cfric,2.0);
         return ustar_h;
     }
