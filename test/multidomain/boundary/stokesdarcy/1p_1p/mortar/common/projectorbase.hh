@@ -84,6 +84,25 @@ evalShapeValues(const GridGeometry& gridGeometry,
 
     return result;
 }
+
+// evaluates the shape values within an element at a given position (overload for cc schemes)
+template<class Scalar, class GridGeometry,
+         std::enable_if_t<GridGeometry::discMethod != DiscretizationMethod::box, int> = 0 >
+SubDomainShapeFunctionValues<GridGeometry, Scalar>
+evalShapeValues(const GridGeometry& gridGeometry,
+                const typename GridGeometry::GridView::template Codim<0>::Entity& element,
+                const typename GridGeometry::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate& globalPos)
+{
+    const auto eIdx = gridGeometry.elementMapper().index(element);
+
+    using ResultType = SubDomainShapeFunctionValues<GridGeometry, Scalar>;
+    ResultType result;
+    result.values.resize(1);
+    result.values[0] = typename ResultType::DofToValuePair(eIdx, 1.0);
+
+    return result;
+}
+
 } // end namespace MortarProjectorDetail
 
 /*!
