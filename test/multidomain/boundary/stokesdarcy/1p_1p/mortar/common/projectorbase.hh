@@ -109,15 +109,20 @@ evalShapeValues(const GridGeometry& gridGeometry,
  * \ingroup TODO doc me.
  * \brief TODO doc me.
  */
-template< class MortarFEBasis, class MortarSolutionVector,
-          class SubDomainGridGeometry, class SubDomainSolutionVector >
+template< class Traits >
 class MortarProjectorBase
 {
+    using MortarFEBasis = typename Traits::MortarFEBasis;
+    using MortarSolutionVector = typename Traits::MortarSolutionVector;
+
     using MortarGridView = typename MortarFEBasis::GridView;
     using MortarElement = typename MortarGridView::template Codim<0>::Entity;
     using MortarElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<MortarGridView>;
     using MortarGridIndex = typename MortarElementMapper::Index;
     using MortarScalar = typename MortarSolutionVector::field_type;
+
+    using SubDomainGridGeometry = typename Traits::SubDomainGridGeometry;
+    using SubDomainSolutionVector = typename Traits::SubDomainSolutionVector;
 
     using SubDomainGridView = typename SubDomainGridGeometry::GridView;
     using SubDomainElement = typename SubDomainGridView::template Codim<0>::Entity;

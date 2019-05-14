@@ -40,41 +40,35 @@ namespace Dumux {
  * \ingroup TODO doc me.
  * \brief TODO doc me.
  */
-template< class MortarFEBasis, class MortarSolutionVector,
-          class SubDomainGridGeometry, class SubDomainSolutionVector,
-          DiscretizationMethod subDomainDM = SubDomainGridGeometry::discMethod>
+template< class Traits, DiscretizationMethod subDomainDM = Traits::SubDomainGridGeometry::discMethod>
 class MortarFluxProjector;
 
 /*!
  * \ingroup TODO doc me.
  * \brief TODO doc me.
  */
-template< class MortarFEBasis, class MortarSolutionVector,
-       class SubDomainGridGeometry, class SubDomainSolutionVector >
-class MortarFluxProjector< MortarFEBasis, MortarSolutionVector,
-                           SubDomainGridGeometry, SubDomainSolutionVector,
-                           DiscretizationMethod::box>
-: public MortarProjectorBase< MortarFEBasis, MortarSolutionVector,
-                              SubDomainGridGeometry, SubDomainSolutionVector >
+template< class Traits >
+class MortarFluxProjector< Traits, DiscretizationMethod::box >
+: public MortarProjectorBase< Traits >
 {
-    using ParentType = MortarProjectorBase< MortarFEBasis, MortarSolutionVector,
-                                            SubDomainGridGeometry, SubDomainSolutionVector >;
+    using ParentType = MortarProjectorBase< Traits >;
 
-    using Scalar = typename ParentType::Scalar;
-    static constexpr DiscretizationMethod subDomainDM = DiscretizationMethod::box;
 public:
+    //! export type used for scalar values
+    using Scalar = typename ParentType::Scalar;
 
     //! The constructor
-    MortarFluxProjector(std::shared_ptr<const MortarFEBasis> mortarFEBasis,
-                        std::shared_ptr<const SubDomainGridGeometry> subDomainGridGeometry,
+    MortarFluxProjector(std::shared_ptr<const typename Traits::MortarFEBasis> mortarFEBasis,
+                        std::shared_ptr<const typename Traits::SubDomainGridGeometry> subDomainGridGeometry,
+                        std::shared_ptr<const typename Traits::SubDomainGridVariables> subDomainGridVariables,
                         const std::string& paramGroup = "")
     : ParentType(mortarFEBasis, subDomainGridGeometry, paramGroup)
     {}
 
     //! projects the sub-domain interface pressures to mortar space
-    MortarSolutionVector projectInterfacePressures() const
+    typename Traits::MortarSolutionVector projectInterfacePressures() const
     {
-        MortarSolutionVector p;
+        typename Traits::MortarSolutionVector p;
         p.resize(this->mortarFEBasis_->gridView().size(0));
 
         for (const auto& element : elements(this->mortarFEBasis_->gridView()))
@@ -100,31 +94,29 @@ public:
  * \ingroup TODO doc me.
  * \brief TODO doc me.
  */
-template< class MortarFEBasis, class MortarSolutionVector,
-          class SubDomainGridGeometry, class SubDomainSolutionVector >
-class MortarFluxProjector< MortarFEBasis, MortarSolutionVector,
-                           SubDomainGridGeometry, SubDomainSolutionVector,
-                           DiscretizationMethod::cctpfa>
-: public MortarProjectorBase< MortarFEBasis, MortarSolutionVector,
-                              SubDomainGridGeometry, SubDomainSolutionVector >
+template< class Traits >
+class MortarFluxProjector< Traits, DiscretizationMethod::cctpfa >
+: public MortarProjectorBase< Traits >
 {
-    using ParentType = MortarProjectorBase< MortarFEBasis, MortarSolutionVector,
-                                            SubDomainGridGeometry, SubDomainSolutionVector >;
+    using ParentType = MortarProjectorBase< Traits >;
 
-    using SubDomainGridView = typename SubDomainGridGeometry::GridView;
+    using SubDomainGridView = typename Traits::SubDomainGridGeometry::GridView;
     using SubDomainGridIndex = typename IndexTraits<SubDomainGridView>::GridIndex;
-    static constexpr DiscretizationMethod subDomainDM = DiscretizationMethod::box;
 public:
 
     //! export type used for scalar values
     using typename ParentType::Scalar;
 
     //! The constructor
-    MortarFluxProjector(std::shared_ptr<const MortarFEBasis> mortarFEBasis,
-                        std::shared_ptr<const SubDomainGridGeometry> subDomainGridGeometry,
+    MortarFluxProjector(std::shared_ptr<const typename Traits::MortarFEBasis> mortarFEBasis,
+                        std::shared_ptr<const typename Traits::SubDomainGridGeometry> subDomainGridGeometry,
+                        std::shared_ptr<const typename Traits::SubDomainGridVariables> subDomainGridVariables,
                         const std::string& paramGroup = "")
     : ParentType(mortarFEBasis, subDomainGridGeometry, paramGroup)
+    , subDomainGridVariables_(subDomainGridVariables)
     {
+        const Scalar eps = 1.5e-7;
+
         // save to each sub-domain element the scvf index that couples to mortar
         for (const auto& mortarElement : elements(mortarFEBasis->gridView()))
         {
@@ -135,32 +127,35 @@ public:
 
             const auto mortarEG = mortarElement.geometry();
             const auto mortarElementCenter = mortarEG.center();
-
-            auto mortarElementEdge = mortarEG.corner(1) - mortarEG.corner(0);
+            const auto mortarElementCorner = mortarEG.corner(1);
+            auto mortarElementEdge = mortarElementCorner - mortarEG.corner(0);
             mortarElementEdge /= mortarElementEdge.two_norm();
 
             const auto& coupledSDElementIndices = it->second.coupledElementIndices;
             for (const auto& sdElementIdx : coupledSDElementIndices)
             {
-                auto& mapEntry = subDomainElementToCoupledScvfIndex_[sdElementIdx];
-                const auto subDomainElement = subDomainGridGeometry.element(sdElementIdx);
-
-                auto fvGeometry = localView(subDomainGridGeometry);
+                const auto subDomainElement = subDomainGridGeometry->element(sdElementIdx);
+                auto fvGeometry = localView(*subDomainGridGeometry);
                 fvGeometry.bind(subDomainElement);
 
                 using std::abs;
                 for (const auto& scvf : scvfs(fvGeometry))
                 {
-                    // mortar edge is normal to scvf it is a candidate
-                    if ( abs(scvf.unitOuterNormal()*mortarElementEdge) > 1e-8 )
+                    // check if face and mortar element are in the same plane (or parallel)
+                    if ( abs(scvf.unitOuterNormal()*mortarElementEdge) > eps )
                         continue;
 
+                    // make a connection vector between face center and point on mortar elem
                     auto d = scvf.center() - mortarElementCenter;
+                    if (d.two_norm() < eps)
+                        d = scvf.center() - mortarElementCorner;
                     d /= d.two_norm();
 
                     // it is a coupled face
-                    if ( abs(scvf.unitOuterNormal()*d) < 1e-8 )
+                    if ( abs(scvf.unitOuterNormal()*d) < eps )
                     {
+                        auto& mapEntry = subDomainElementToCoupledScvfIndex_[sdElementIdx];
+
                         if (!scvf.boundary())
                             DUNE_THROW(Dune::InvalidStateException, "Found non-boundary scvf to be coupling scvf!");
                         else if (mapEntry.size() == 0)
@@ -176,39 +171,63 @@ public:
     }
 
     //! projects the sub-domain interface pressures to mortar space
-    MortarSolutionVector projectInterfacePressures() const
+    typename Traits::MortarSolutionVector projectInterfacePressures() const
     {
-        DUNE_THROW(Dune::NotImplemented, "Tpfa reconstruction not yet implemented");
-
         // first compute all interface pressures in sub-domain
         std::unordered_map<SubDomainGridIndex, Scalar> sdPressures;
-
         for (const auto& entry : subDomainElementToCoupledScvfIndex_)
         {
             const auto sdElemIdx = entry.first;
-            const auto sdScvfIdx = entry.second;
+            const auto sdScvfIdx = entry.second[0];
             const auto sdElement = this->subDomainGridGeometry_->element(sdElemIdx);
 
-            // compute mortar flux for this element
-            const auto flux = this->integrateMortarVariable(sdElement);
-
             auto fvGeometry = localView(*this->subDomainGridGeometry_);
+            auto elemVolVars = localView(subDomainGridVariables_->curGridVolVars());
+
             fvGeometry.bindElement(sdElement);
+            elemVolVars.bindElement(sdElement, fvGeometry, *this->subDomainSolution_);
 
             const auto& scvf = fvGeometry.scvf(sdScvfIdx);
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto elemSol = elementSolution(sdElement,
-                                                 *this->subDomainSolution_,
-                                                 *this->subDomainGridGeometry_);
+            const auto& insideVolVars = elemVolVars[insideScv];
+            const auto& problem = elemVolVars.gridVolVars().problem();
 
-            // TODO: how to get K/rho/mu???
-            // const auto exFactor = problem.extrusionFactor(element, insideScv, elemSol);
-            // const auto k = problem.spatialParams().permeability(element, insideScv, elemSol);
-            // const auto ti = computeTpfaTransmissibility(scvf, insideScv, k, exFactor);
+            // flux = -ti*(pBoundary - pCell)
+            auto ti = computeTpfaTransmissibility(scvf,
+                                                  insideScv,
+                                                  insideVolVars.permeability(),
+                                                  insideVolVars.extrusionFactor());
+            ti *= insideVolVars.density()*insideVolVars.mobility();
+
+            auto flux = problem.neumann(sdElement, fvGeometry, elemVolVars, scvf)[0];
+            flux -= ti*insideVolVars.pressure();
+            sdPressures[sdElemIdx] = -1.0*flux/ti;
         }
+
+        // then integrate over mortar space
+        typename Traits::MortarSolutionVector p;
+        p.resize(this->mortarFEBasis_->gridView().size(0));
+
+        for (const auto& element : elements(this->mortarFEBasis_->gridView()))
+        {
+            const auto eIdx = this->mortarElementMapper_.index(element);
+            auto it = this->subDomainToMortarProjection_.find(eIdx);
+
+            // only proceed if there is an entry
+            if (it == this->subDomainToMortarProjection_.end())
+                continue;
+
+            Scalar elemPressure = 0.0;
+            for (const auto& dofToValuePair : it->second.otherDofToWeightMap)
+                elemPressure += sdPressures[dofToValuePair.first]*dofToValuePair.second;
+            p[eIdx] = elemPressure;
+        }
+
+        return p;
     }
 
 private:
+    std::shared_ptr<const typename Traits::SubDomainGridVariables> subDomainGridVariables_;
     std::unordered_map< SubDomainGridIndex, std::vector<SubDomainGridIndex> > subDomainElementToCoupledScvfIndex_;
 };
 

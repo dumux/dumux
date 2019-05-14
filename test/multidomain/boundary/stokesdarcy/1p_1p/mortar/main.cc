@@ -60,16 +60,27 @@ using StokesSolutionVector = Dumux::GetPropType<StokesTypeTag, Dumux::Properties
 using DarcyGridGeometry = Dumux::GetPropType<DarcyTypeTag, Dumux::Properties::FVGridGeometry>;
 using StokesGridGeometry = Dumux::GetPropType<StokesTypeTag, Dumux::Properties::FVGridGeometry>;
 
+// The grid variables of the sub-domains
+using DarcyGridVariables = Dumux::GetPropType<DarcyTypeTag, Dumux::Properties::GridVariables>;
+using StokesGridVariables = Dumux::GetPropType<StokesTypeTag, Dumux::Properties::GridVariables>;
+
 // Define grid an basis for mortar domain
 using MortarScalar = double;
 using MortarGrid = Dune::FoamGrid<1, 2>;
 using MortarGridView = typename MortarGrid::LeafGridView;
-using MortarSolutionVector = Dune::BlockVector<Dune::FieldVector<MortarScalar, 1>>;
-using MortarFEBasis = Dune::Functions::LagrangeBasis<MortarGridView, 0>;
+using MortarSolution = Dune::BlockVector<Dune::FieldVector<MortarScalar, 1>>;
+using MortarSpaceBasis = Dune::Functions::LagrangeBasis<MortarGridView, 0>;
 
 // Projection operators
-using TheMortarDarcyProjector = Dumux::MortarFluxProjector<MortarFEBasis, MortarSolutionVector,
-                                                           DarcyGridGeometry, DarcySolutionVector>;
+struct MortarProjectorTraits
+{
+    using MortarFEBasis = MortarSpaceBasis;
+    using MortarSolutionVector = MortarSolution;
+    using SubDomainGridGeometry = DarcyGridGeometry;
+    using SubDomainGridVariables = DarcyGridVariables;
+    using SubDomainSolutionVector = DarcySolutionVector;
+};
+using TheMortarDarcyProjector = Dumux::MortarFluxProjector<MortarProjectorTraits>;
 
 // Set Projection property in Sub-problems
 namespace Dumux {
@@ -111,15 +122,15 @@ int main(int argc, char** argv) try
     mortarGridManager.init("Mortar");
 
     const auto& mortarGridView = mortarGridManager.grid().leafGridView();
-    auto feBasis = std::make_shared<MortarFEBasis>(mortarGridView);
+    auto feBasis = std::make_shared<MortarSpaceBasis>(mortarGridView);
 
-    auto mortarSolution = std::make_shared<MortarSolutionVector>();
+    auto mortarSolution = std::make_shared<MortarSolution>();
     mortarSolution->resize(feBasis->size());
     *mortarSolution = 0.0;
 
     // create the projectors between mortar and sub-domains
-    auto darcyProjector = std::make_shared<TheMortarDarcyProjector>(feBasis, darcySolver->gridGeometryPointer(), "Mortar");
-    auto darcyProjector2 = std::make_shared<TheMortarDarcyProjector>(feBasis, darcy2Solver->gridGeometryPointer(), "Mortar");
+    auto darcyProjector = std::make_shared<TheMortarDarcyProjector>(feBasis, darcySolver->gridGeometryPointer(), darcySolver->gridVariablesPointer(), "Mortar");
+    auto darcyProjector2 = std::make_shared<TheMortarDarcyProjector>(feBasis, darcy2Solver->gridGeometryPointer(), darcy2Solver->gridVariablesPointer(),"Mortar");
 
     // let problem and projectors know about each other
     darcySolver->problemPointer()->setMortarProjector(darcyProjector);
@@ -146,7 +157,7 @@ int main(int argc, char** argv) try
     darcySolver->problemPointer()->setUseHomogeneousSetup(false);
     darcy2Solver->problemPointer()->setUseHomogeneousSetup(false);
 
-    MortarSolutionVector deltaP;
+    MortarSolution deltaP;
     op.apply(*mortarSolution, deltaP);
 
     //
@@ -157,8 +168,8 @@ int main(int argc, char** argv) try
     darcySolver->problemPointer()->setUseHomogeneousSetup(true);
     darcy2Solver->problemPointer()->setUseHomogeneousSetup(true);
 
-    MortarStokesDarcyPreconditioner<MortarSolutionVector> prec;
-    Dune::CGSolver<MortarSolutionVector> cgSolver(op, prec, reduction, maxIt, verbose);
+    MortarStokesDarcyPreconditioner<MortarSolution> prec;
+    Dune::CGSolver<MortarSolution> cgSolver(op, prec, reduction, maxIt, verbose);
 
     deltaP *= -1.0;
     Dune::InverseOperatorResult result;

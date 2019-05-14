@@ -45,7 +45,7 @@ namespace Properties {
 
 // Create new type tags
 namespace TTag {
-struct DarcyOneP { using InheritsFrom = std::tuple<OneP, BoxModel>; };
+struct DarcyOneP { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // create new property for projection operator
@@ -112,6 +112,7 @@ public:
                     const std::string& paramGroup)
     : ParentType(fvGridGeometry, paramGroup)
     , eps_(1e-7)
+    , isOnNegativeMortarSide_(getParamFromGroup<bool>(paramGroup, "Problem.IsOnNegativeMortarSide"))
     {
         problemName_  =  getParamFromGroup<std::string>(paramGroup, "Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
@@ -152,9 +153,29 @@ public:
         BoundaryTypes values;
 
         values.setAllNeumann();
-        if (onLowerBoundary_(scv.dofPosition()) && element.geometry().center()[dimWorld-1] < 1.0)
+        if (!isOnNegativeMortarSide_ && onLowerBoundary_(scv.dofPosition()))
             values.setAllDirichlet();
-        if (onUpperBoundary_(scv.dofPosition()) && element.geometry().center()[dimWorld-1] > 1.0)
+        if (isOnNegativeMortarSide_ && onUpperBoundary_(scv.dofPosition()))
+            values.setAllDirichlet();
+
+        return values;
+    }
+
+    /*!
+      * \brief Specifies which kind of boundary condition should be
+      *        used for which equation on a given boundary control volume.
+      *
+      * \param element The element
+      * \param scvf The boundary sub control volume face
+      */
+    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolumeFace &scvf) const
+    {
+        BoundaryTypes values;
+
+        values.setAllNeumann();
+        if (!isOnNegativeMortarSide_ && onLowerBoundary_(scvf.ipGlobal()))
+            values.setAllDirichlet();
+        if (isOnNegativeMortarSide_ && onUpperBoundary_(scvf.ipGlobal()))
             values.setAllDirichlet();
 
         return values;
@@ -167,7 +188,7 @@ public:
     {
         static const auto topSource = getParam<Scalar>("Problem.TopSource");
         const auto xMax = this->fvGridGeometry().bBoxMax()[0];
-        if (globalPos[dimWorld-1] > 1.0 && !useHomogeneousSetup_)
+        if (isOnNegativeMortarSide_ && !useHomogeneousSetup_)
             return NumEqVector(topSource*(xMax - globalPos[0]));
         return NumEqVector(0.0);
     }
@@ -181,8 +202,8 @@ public:
         static const auto topBoundaryPressure = getParam<Scalar>("Problem.TopBoundaryPressure");
         static const auto bottomBoundaryPressure = getParam<Scalar>("Problem.BottomBoundaryPressure");
         if (!useHomogeneousSetup_)
-            return globalPos[dimWorld-1] < 1.0 + eps_ ? PrimaryVariables(bottomBoundaryPressure)
-                                                      : PrimaryVariables(topBoundaryPressure);
+            return !isOnNegativeMortarSide_  ? PrimaryVariables(bottomBoundaryPressure)
+                                             : PrimaryVariables(topBoundaryPressure);
         return PrimaryVariables(0.0);
     }
 
@@ -202,8 +223,8 @@ public:
                         const ElementVolumeVariables& elemVolVars,
                         const SubControlVolumeFace& scvf) const
     {
-        if ( (onLowerBoundary_(scvf.ipGlobal()) && element.geometry().center()[dimWorld-1] > 1.0)
-             || (onUpperBoundary_(scvf.ipGlobal()) && element.geometry().center()[dimWorld-1] < 1.0) )
+        if ( (isOnNegativeMortarSide_ && onLowerBoundary_(scvf.ipGlobal()) )
+             || (!isOnNegativeMortarSide_ && onUpperBoundary_(scvf.ipGlobal())) )
         {
             auto flux = mortarProjector_().integrateMortarVariable(element);
             // turn it into flux per area
@@ -213,7 +234,7 @@ public:
             // scale with density (mortar variable is velocity)
             flux *= elemVolVars[scvf.insideScvIdx()].density();
 
-            if (element.geometry().center()[dimWorld-1] > 1.0)
+            if (isOnNegativeMortarSide_)
                 flux *= -1.0;
 
             return NumEqVector(flux);
@@ -266,6 +287,7 @@ private:
     std::string problemName_;
     std::shared_ptr<const Projector> projector_;
 
+    bool isOnNegativeMortarSide_;
     bool useHomogeneousSetup_;
 };
 } // end namespace Dumux

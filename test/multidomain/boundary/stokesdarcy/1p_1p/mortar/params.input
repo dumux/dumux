@@ -23,9 +23,11 @@ MaxIterations = 1000
 
 [Darcy.Problem]
 Name = darcy
+IsOnNegativeMortarSide = false
 
 [Darcy2.Problem]
 Name = darcy2
+IsOnNegativeMortarSide = true
 
 [Darcy.SpatialParams]
 Permeability = 1.0 # m^2
