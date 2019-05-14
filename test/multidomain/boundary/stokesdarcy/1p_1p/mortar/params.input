@@ -1,17 +1,17 @@
 [Darcy.Grid]
-LowerLeft = 0 0 0
-UpperRight = 1 1 1
-Cells = 5 5 2
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 20 20
 
 [Darcy2.Grid]
-LowerLeft = 0 0 1
-UpperRight = 1 1 2
-Cells = 5 5 2
+LowerLeft = 0 1
+UpperRight = 1 2
+Cells = 20 20
 
 [Mortar.Grid]
-LowerLeft = 0 0 1
-UpperRight = 1 1 1
-Cells = 5 5
+LowerLeft = 0 1
+UpperRight = 1 1
+Cells = 20
 
 [Mortar]
 ProjectionIntegrationOrder = 1
@@ -44,7 +44,7 @@ EnableGravity = false
 EnableInertiaTerms = false
 TopBoundaryPressure = 0.0
 BottomBoundaryPressure = 1.0
-TopSource = 0.0
+TopSource = 1.0
 
 [0.Component]
 LiquidDensity = 1

@@ -71,7 +71,7 @@ struct Grid<TypeTag, TTag::DarcyOneP>
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<Scalar, 3>>;
+    using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<Scalar, 2>>;
 };
 
 template<class TypeTag>

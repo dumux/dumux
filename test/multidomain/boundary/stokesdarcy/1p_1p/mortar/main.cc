@@ -62,7 +62,7 @@ using StokesGridGeometry = Dumux::GetPropType<StokesTypeTag, Dumux::Properties::
 
 // Define grid an basis for mortar domain
 using MortarScalar = double;
-using MortarGrid = Dune::FoamGrid<2, 3>;
+using MortarGrid = Dune::FoamGrid<1, 2>;
 using MortarGridView = typename MortarGrid::LeafGridView;
 using MortarSolutionVector = Dune::BlockVector<Dune::FieldVector<MortarScalar, 1>>;
 using MortarFEBasis = Dune::Functions::LagrangeBasis<MortarGridView, 0>;
