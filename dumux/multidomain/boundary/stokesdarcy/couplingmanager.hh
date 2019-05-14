@@ -135,7 +135,7 @@ public:
               std::shared_ptr<const Problem<darcyIdx>> darcyProblem,
               const SolutionVector& curSol)
     {
-        if(Dune::FloatCmp::ne(stokesProblem->gravity(), darcyProblem->gravity()))
+        if (Dune::FloatCmp::ne(stokesProblem->gravity(), darcyProblem->spatialParams().gravity({})))
             DUNE_THROW(Dune::InvalidStateException, "Both models must use the same gravity vector");
 
         this->setSubProblems(std::make_tuple(stokesProblem, stokesProblem, darcyProblem));
