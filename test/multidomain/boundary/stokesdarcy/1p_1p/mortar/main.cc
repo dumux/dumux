@@ -46,7 +46,7 @@
 #include "problem_darcy.hh"
 #include "problem_stokes.hh"
 
-#include "projector.hh"
+#include "fluxprojector.hh"
 
 // The type tags of the sub-domains
 using DarcyTypeTag = Dumux::Properties::TTag::DarcyOneP;
@@ -68,8 +68,8 @@ using MortarSolutionVector = Dune::BlockVector<Dune::FieldVector<MortarScalar, 1
 using MortarFEBasis = Dune::Functions::LagrangeBasis<MortarGridView, 0>;
 
 // Projection operators
-using TheMortarDarcyProjector = Dumux::MortarDarcyProjector<MortarFEBasis, MortarSolutionVector,
-                                                            DarcyGridGeometry, DarcySolutionVector>;
+using TheMortarDarcyProjector = Dumux::MortarFluxProjector<MortarFEBasis, MortarSolutionVector,
+                                                           DarcyGridGeometry, DarcySolutionVector>;
 
 // Set Projection property in Sub-problems
 namespace Dumux {
@@ -125,8 +125,8 @@ int main(int argc, char** argv) try
     darcySolver->problemPointer()->setMortarProjector(darcyProjector);
     darcy2Solver->problemPointer()->setMortarProjector(darcyProjector2);
 
-    darcyProjector->setDarcySolutionPointer(darcySolver->solutionPointer());
-    darcyProjector2->setDarcySolutionPointer(darcy2Solver->solutionPointer());
+    darcyProjector->setSubDomainSolutionPointer(darcySolver->solutionPointer());
+    darcyProjector2->setSubDomainSolutionPointer(darcy2Solver->solutionPointer());
 
     darcyProjector->setMortarSolutionPointer(mortarSolution);
     darcyProjector2->setMortarSolutionPointer(mortarSolution);
