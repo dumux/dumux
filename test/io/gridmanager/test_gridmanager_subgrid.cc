@@ -110,15 +110,29 @@ int main(int argc, char** argv) try
     CircleSelector<GlobalPosition> elementSelectorThree(center);
 
     // Create three different subgrids from the same hostgrid.
-    auto subgridPtrOne = SubgridManager<HostGrid>::makeGrid(hostGrid, elementSelectorOne, "SubGridOne");
-    auto subgridPtrTwo = SubgridManager<HostGrid>::makeGrid(hostGrid, elementSelectorTwo, "SubGridTwo");
-    auto subgridPtrThree = SubgridManager<HostGrid>::makeGrid(hostGrid, elementSelectorThree, "SubGridThree");
+    auto subgridPtrOne = SubgridManager<HostGrid>::makeGrid(hostGrid, elementSelectorOne);
+    auto subgridPtrTwo = SubgridManager<HostGrid>::makeGrid(hostGrid, elementSelectorTwo);
+    auto subgridPtrThree = SubgridManager<HostGrid>::makeGrid(hostGrid, elementSelectorThree);
 
     std::cout << "Constructing a host grid and three subgrids took "  << timer.elapsed() << " seconds.\n";
 
     // Write out the host grid and the subgrids.
-    Dune::VTKWriter<HostGrid::LeafGridView> vtkWriter(hostGrid.leafGridView());
-    vtkWriter.write("hostgrid");
+    {
+        Dune::VTKWriter<HostGrid::LeafGridView> vtkWriter(hostGrid.leafGridView());
+        vtkWriter.write("hostgrid");
+    }
+    {
+        Dune::VTKWriter<SubgridManager<HostGrid>::Grid::LeafGridView> vtkWriter(subgridPtrOne->leafGridView());
+        vtkWriter.write("subgrid_one");
+    }
+    {
+        Dune::VTKWriter<SubgridManager<HostGrid>::Grid::LeafGridView> vtkWriter(subgridPtrTwo->leafGridView());
+        vtkWriter.write("subgrid_two");
+    }
+    {
+        Dune::VTKWriter<SubgridManager<HostGrid>::Grid::LeafGridView> vtkWriter(subgridPtrThree->leafGridView());
+        vtkWriter.write("subgrid_three");
+    }
 
     return 0;
 }
