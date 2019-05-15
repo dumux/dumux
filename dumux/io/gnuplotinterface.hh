@@ -42,7 +42,7 @@
 #include <string>
 #include <vector>
 
-#include <dune/common/deprecated.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/stdstreams.hh>
 
 namespace Dumux {
@@ -244,7 +244,15 @@ public:
                           const std::string& fileName,
                           const std::string& options = "with lines")
     {
-        assert(x.size() == y.size());
+        if (x.empty() || y.empty())
+            DUNE_THROW(Dune::InvalidStateException, "Data vectors have to contain data!");
+
+        if (x.size() > y.size())
+            DUNE_THROW(Dune::InvalidStateException, "Non-matching data field sizes!");
+
+        if (x.size() != y.size())
+            std::cout << "GnuplotInterface warning: Added data fields of different size! "
+                      << "Only plotting the first " << x.size() << " elements.\n";
 
         // write data to file
         std::ofstream file;
@@ -435,5 +443,5 @@ private:
     std::string plotOptions_;
     std::string gnuplotPath_;
 };
-} // end of namespace
+} // end namespace Dumux
 #endif // DUMUX_GNUPLOT_INTERFACE_HH
