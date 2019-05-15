@@ -277,6 +277,29 @@ int main(int argc, char** argv) try
                              Properties::TTag::DarcyOnePBoxFlux, DarcySolverType<Properties::TTag::DarcyOnePBoxFlux>, fmv >();
         }
     }
+    else if (solver1Type == "Darcy" && solver2Type == "Stokes")
+    {
+        if (discScheme1 == "Tpfa")
+        {
+            if (mortarVariableType == "Pressure")
+                solveMortar< Properties::TTag::DarcyOnePTpfaPressure, DarcySolverType<Properties::TTag::DarcyOnePTpfaPressure>,
+                             Properties::TTag::StokesOnePPressure, StokesSolverType<Properties::TTag::StokesOnePPressure>, pmv >();
+            else
+                solveMortar< Properties::TTag::DarcyOnePTpfaFlux, DarcySolverType<Properties::TTag::DarcyOnePTpfaFlux>,
+                             Properties::TTag::StokesOnePFlux, StokesSolverType<Properties::TTag::StokesOnePFlux>, fmv >();
+        }
+
+        else if (discScheme1 == "Box")
+        {
+            if (mortarVariableType == "Pressure")
+                solveMortar< Properties::TTag::DarcyOnePBoxPressure, DarcySolverType<Properties::TTag::DarcyOnePBoxPressure>,
+                             Properties::TTag::StokesOnePPressure, StokesSolverType<Properties::TTag::StokesOnePPressure>, pmv >();
+            else
+                solveMortar< Properties::TTag::DarcyOnePBoxFlux, DarcySolverType<Properties::TTag::DarcyOnePBoxFlux>,
+                             Properties::TTag::StokesOnePFlux, StokesSolverType<Properties::TTag::StokesOnePFlux>, fmv >();
+        }
+
+    }
     else
         DUNE_THROW(Dune::InvalidStateException, "Solver combination not implemented!");
 

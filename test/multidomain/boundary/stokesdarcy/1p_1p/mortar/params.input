@@ -25,6 +25,7 @@ Grid.UpperRight = 1 2
 Grid.Cells = 20 20
 Problem.Name = darcy2
 Problem.IsOnNegativeMortarSide = true
+Problem.PressureDifference = 1e5
 SpatialParams.Permeability = 1.0 # m^2
 SpatialParams.AlphaBeaversJoseph = 1.0
 

@@ -46,6 +46,35 @@ class MortarPressureProjector;
  * \brief TODO doc me.
  */
 template< class Traits >
+class MortarPressureProjector< Traits, DiscretizationMethod::staggered>
+: public MortarProjectorBase< Traits >
+{
+    using ParentType = MortarProjectorBase< Traits >;
+
+public:
+    //! export type used for scalar values
+    using typename ParentType::Scalar;
+
+    //! The constructor
+    MortarPressureProjector(std::shared_ptr<const typename Traits::MortarFEBasis> mortarFEBasis,
+                            std::shared_ptr<const typename Traits::SubDomainGridGeometry> subDomainGridGeometry,
+                            std::shared_ptr<const typename Traits::SubDomainGridVariables> subDomainGridVariables,
+                            const std::string& paramGroup = "")
+    : ParentType(mortarFEBasis, subDomainGridGeometry, paramGroup)
+    {}
+
+    //! projects the sub-domain interface fluxes to mortar space
+    typename Traits::MortarSolutionVector projectInterfaceFluxes() const
+    {
+        DUNE_THROW(Dune::NotImplemented, "Staggered Projecter class");
+    }
+};
+
+/*!
+ * \ingroup TODO doc me.
+ * \brief TODO doc me.
+ */
+template< class Traits >
 class MortarPressureProjector< Traits, DiscretizationMethod::box>
 : public MortarProjectorBase< Traits >
 {

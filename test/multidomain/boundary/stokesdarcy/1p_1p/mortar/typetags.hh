@@ -102,5 +102,10 @@ struct MortarProjector<TypeTag, TTag::DarcyOnePMpfaFlux> { using type = typename
 template<class TypeTag>
 struct MortarProjector<TypeTag, TTag::DarcyOnePBoxFlux> { using type = typename FluxProjectorTraits<TypeTag>::type; };
 
+template<class TypeTag>
+struct MortarProjector<TypeTag, TTag::StokesOnePPressure> { using type = typename PressureProjectorTraits<TypeTag>::type; };
+template<class TypeTag>
+struct MortarProjector<TypeTag, TTag::StokesOnePFlux> { using type = typename FluxProjectorTraits<TypeTag>::type; };
+
 } // end namespace Properties
 } // end namespace Dumux

@@ -68,17 +68,18 @@ public:
         problem_ = std::make_shared<Problem>(fvGridGeometry_, paramGroup);
 
         // resize and initialize the given solution vector
-        x_[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry_->numCellCenterDofs());
-        x_[FVGridGeometry::faceIdx()].resize(fvGridGeometry_->numFaceDofs());
-        problem_->applyInitialSolution(x_);
+        x_ = std::make_shared<SolutionVector>();
+        (*x_)[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry_->numCellCenterDofs());
+        (*x_)[FVGridGeometry::faceIdx()].resize(fvGridGeometry_->numFaceDofs());
+        problem_->applyInitialSolution(*x_);
 
         // the grid variables
         gridVariables_ = std::make_shared<GridVariables>(problem_, fvGridGeometry_);
-        gridVariables_->init(x_);
+        gridVariables_->init(*x_);
 
         // initialize the vtk output module
         using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-        vtkWriter_ = std::make_unique<OutputModule>(*gridVariables_, x_, problem_->name());
+        vtkWriter_ = std::make_unique<OutputModule>(*gridVariables_, *x_, problem_->name());
         IOFields::initOutputModule(*vtkWriter_);
 
         // the assembler without time loop for stationary problem
@@ -89,20 +90,32 @@ public:
         newtonSolver_ = std::make_unique<NewtonSolver>(assembler_, linearSolver);
     }
 
+    //! Solve the system
     void solve()
     {
-        newtonSolver_->solve(x_);
+        newtonSolver_->solve(*x_);
     }
 
+    //! Write current state to disk
     void write(Scalar t)
     {
         vtkWriter_->write(t);
     }
 
+    //! Return a pointer to the grid geometry
     std::shared_ptr<FVGridGeometry> gridGeometryPointer()
     { return fvGridGeometry_; }
 
-    const SolutionVector& solution()
+    //! Return a pointer to the grid variables
+    std::shared_ptr<GridVariables> gridVariablesPointer()
+    { return gridVariables_; }
+
+    //! Return a pointer to the problem
+    std::shared_ptr<Problem> problemPointer()
+    { return problem_; }
+
+    //! Return a pointer to the solution
+    std::shared_ptr<SolutionVector> solutionPointer()
     { return x_; }
 
 private:
@@ -115,7 +128,7 @@ private:
     std::unique_ptr<NewtonSolver> newtonSolver_;
     std::unique_ptr<OutputModule> vtkWriter_;
 
-    SolutionVector x_;
+    std::shared_ptr<SolutionVector> x_;
 };
 
 

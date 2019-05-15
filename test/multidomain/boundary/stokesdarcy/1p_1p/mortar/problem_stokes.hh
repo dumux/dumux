@@ -91,6 +91,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
+    using Projector = GetPropType<TypeTag, Properties::MortarProjector>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -101,7 +102,14 @@ public:
     StokesSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup)
     : ParentType(fvGridGeometry, paramGroup)
     , eps_(1e-6)
+    , isOnNegativeMortarSide_(getParamFromGroup<bool>(paramGroup, "Problem.IsOnNegativeMortarSide"))
     {
+        const auto mortarVariable = getParamFromGroup<std::string>("Mortar", "VariableType");
+        if (mortarVariable == "Pressure")
+            useDirichletAtInterface_ = true;
+        else if (mortarVariable == "Flux")
+            useDirichletAtInterface_ = false;
+
         problemName_  =  getParamFromGroup<std::string>(paramGroup, "Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
@@ -228,6 +236,25 @@ public:
         return values;
     }
 
+    //! set the pointer to the projector class
+    void setMortarProjector(std::shared_ptr<const Projector> p)
+    {
+        projector_ = p;
+    }
+
+    //! Set whether or not the homogeneous system is solved
+    void setUseHomogeneousSetup(bool value)
+    {
+        useHomogeneousSetup_ = value;
+    }
+
+    //! Returns true if a position if on the mortar interface
+    bool isOnMortarInterface(const GlobalPosition& globalPos) const
+    {
+        return (isOnNegativeMortarSide_ && onLowerBoundary_(globalPos))
+               || (!isOnNegativeMortarSide_ && onUpperBoundary_(globalPos));
+    }
+
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_; }
@@ -243,6 +270,11 @@ private:
 
     Scalar eps_;
     std::string problemName_;
+    std::shared_ptr<const Projector> projector_;
+
+    bool isOnNegativeMortarSide_;
+    bool useHomogeneousSetup_;
+    bool useDirichletAtInterface_;
 };
 } // end namespace Dumux
 
