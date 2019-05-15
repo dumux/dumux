@@ -1,53 +1,48 @@
-[Darcy.Grid]
-LowerLeft = 0 0
-UpperRight = 1 1
-Cells = 20 20
-
-[Darcy2.Grid]
-LowerLeft = 0 1
-UpperRight = 1 2
-Cells = 20 20
-
-[Mortar.Grid]
-LowerLeft = 0 1
-UpperRight = 1 1
-Cells = 20
-
-[Mortar]
-ProjectionIntegrationOrder = 1
-VariableType = Pressure
-
-[InterfaceSolver]
-Verbosity = 3
-ResidualReduction = 1e-8
-MaxIterations = 1000
-
-[Darcy.Problem]
-Name = darcy
-IsOnNegativeMortarSide = false
-
-[Darcy2.Problem]
-Name = darcy2
-IsOnNegativeMortarSide = true
-
-[Darcy.SpatialParams]
-Permeability = 1.0 # m^2
-AlphaBeaversJoseph = 1.0
-
-[Darcy2.SpatialParams]
-Permeability = 1.0 # m^2
-AlphaBeaversJoseph = 1.0
-
-[Vtk]
-AddVelocity = 1
-OutputName = stokesdarcy
-
+# some parameters common to all problem
 [Problem]
 EnableGravity = false
 EnableInertiaTerms = false
 TopBoundaryPressure = 0.0
 BottomBoundaryPressure = 1.0
-TopSource = 1.0
+TopSource = 0.0
+
+[Domain1]
+SolverType = Darcy
+DiscretizationScheme = Box
+Grid.LowerLeft = 0 0
+Grid.UpperRight = 1 1
+Grid.Cells = 20 20
+Problem.Name = darcy1
+Problem.IsOnNegativeMortarSide = false
+SpatialParams.Permeability = 1.0 # m^2
+SpatialParams.AlphaBeaversJoseph = 1.0
+
+[Domain2]
+SolverType = Darcy
+DiscretizationScheme = Tpfa
+Grid.LowerLeft = 0 1
+Grid.UpperRight = 1 2
+Grid.Cells = 20 20
+Problem.Name = darcy2
+Problem.IsOnNegativeMortarSide = true
+SpatialParams.Permeability = 1.0 # m^2
+SpatialParams.AlphaBeaversJoseph = 1.0
+
+[Mortar]
+Grid.LowerLeft = 0 1
+Grid.UpperRight = 1 1
+Grid.Cells = 20
+ProjectionIntegrationOrder = 1
+VariableType = Flux
+
+[InterfaceSolver]
+Verbosity = 2
+ResidualReduction = 1e-8
+MaxIterations = 1000
+
+[Vtk]
+OutputName = mortarcoupling
+AddVelocity = 1
 
 [0.Component]
 LiquidDensity = 1

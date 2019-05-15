@@ -23,89 +23,163 @@
  */
 #include <config.h>
 #include <iostream>
+#include <type_traits>
 
 #include <dune/common/timer.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
-
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/foamgrid/foamgrid.hh>
-
-#include <dune/functions/functionspacebases/lagrangebasis.hh>
+#include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/partial.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
-
-#include "preconditioner.hh"
-
+#include "typetags.hh"
 #include "subdomainsolvers.hh"
-#include "problem_darcy.hh"
-#include "problem_stokes.hh"
 
-#include "fluxprojector.hh"
-#include "pressureprojector.hh"
 #include "fluxinterfaceoperator.hh"
 #include "pressureinterfaceoperator.hh"
+#include "fluxpreconditioner.hh"
+#include "pressurepreconditioner.hh"
 
-// The type tags of the sub-domains
-using DarcyTypeTag = Dumux::Properties::TTag::DarcyOneP;
-using StokesTypeTag = Dumux::Properties::TTag::StokesOneP;
-
-// Solver classes
-using Solver = Dumux::DarcySolver<DarcyTypeTag>;
-
-// The solution vectors of the sub-domains
-using DarcySolutionVector = Dumux::GetPropType<DarcyTypeTag, Dumux::Properties::SolutionVector>;
-using StokesSolutionVector = Dumux::GetPropType<StokesTypeTag, Dumux::Properties::SolutionVector>;
-
-// The grid geometries of the sub-domains
-using DarcyGridGeometry = Dumux::GetPropType<DarcyTypeTag, Dumux::Properties::FVGridGeometry>;
-using StokesGridGeometry = Dumux::GetPropType<StokesTypeTag, Dumux::Properties::FVGridGeometry>;
-
-// The grid variables of the sub-domains
-using DarcyGridVariables = Dumux::GetPropType<DarcyTypeTag, Dumux::Properties::GridVariables>;
-using StokesGridVariables = Dumux::GetPropType<StokesTypeTag, Dumux::Properties::GridVariables>;
-
-// The grid variables of the sub-domains
-using DarcyFluxVariables = Dumux::GetPropType<DarcyTypeTag, Dumux::Properties::FluxVariables>;
-// using StokesGridVariables = Dumux::GetPropType<StokesTypeTag, Dumux::Properties::GridVariables>;
-
-// Define grid an basis for mortar domain
-using MortarScalar = double;
-using MortarGrid = Dune::FoamGrid<1, 2>;
-using MortarGridView = typename MortarGrid::LeafGridView;
-using MortarSolution = Dune::BlockVector<Dune::FieldVector<MortarScalar, 1>>;
-using MortarSpaceBasis = Dune::Functions::LagrangeBasis<MortarGridView, 0>;
-
-// Projection operators
-struct MortarProjectorTraits
-{
-    using MortarFEBasis = MortarSpaceBasis;
-    using MortarSolutionVector = MortarSolution;
-
-    using SubDomainGridGeometry = DarcyGridGeometry;
-    using SubDomainGridVariables = DarcyGridVariables;
-    using SubDomainSolutionVector = DarcySolutionVector;
-    using SubDomainFluxVariables = DarcyFluxVariables;
-};
-using TheMortarDarcyProjector = Dumux::MortarFluxProjector<MortarProjectorTraits>;
-using InterfaceOperator = Dumux::FluxInterfaceOperator<Solver, TheMortarDarcyProjector,
-                                                           Solver, TheMortarDarcyProjector>;
-// Set Projection property in Sub-problems
-namespace Dumux {
-namespace Properties {
-
+////////////////////////////////////////////
+// Some aliases etc to be used in solve() //
+////////////////////////////////////////////
 template<class TypeTag>
-struct MortarProjector<TypeTag, DarcyTypeTag> { using type = TheMortarDarcyProjector; };
+using DarcySolverType = Dumux::DarcySolver<TypeTag>;
+template<class TypeTag>
+using StokesSolverType = Dumux::StokesSolver<TypeTag>;
 
-// TODO: STOKES PROJECTOR
+template<class TypeTag1, class Solver1, class TypeTag2, class Solver2>
+using FluxInterfaceOperator = Dumux::FluxInterfaceOperator< Solver1, Dumux::GetPropType<TypeTag1, Dumux::Properties::MortarProjector>,
+                                                            Solver2, Dumux::GetPropType<TypeTag2, Dumux::Properties::MortarProjector> >;
 
-} // end namespace Properties
-} // end namespace Dumux
+template<class TypeTag1, class Solver1, class TypeTag2, class Solver2>
+using PressureInterfaceOperator = Dumux::PressureInterfaceOperator< Solver1, Dumux::GetPropType<TypeTag1, Dumux::Properties::MortarProjector>,
+                                                                    Solver2, Dumux::GetPropType<TypeTag2, Dumux::Properties::MortarProjector> >;
 
+// enum class for mortar variable types
+enum class MortarVariableType { pressure, flux };
+
+// translate mortar variable into variable name for output
+std::string getMortarVariableName(MortarVariableType mv)
+{ return mv == MortarVariableType::pressure ? "p" : "flux"; }
+
+// alias that selects the preconditioner depending on mortar variable
+template<MortarVariableType mv>
+using Preconditioner = std::conditional_t< mv == MortarVariableType::pressure,
+                                           Dumux::MortarPressurePreconditioner<typename Dumux::MortarSpaceTraits::SolutionVector>,
+                                           Dumux::MortarFluxPreconditioner<typename Dumux::MortarSpaceTraits::SolutionVector> >;
+
+// alias that selects the right operator depending on mortar variable
+template<class TT1, class S1, class TT2, class S2, MortarVariableType mv>
+using InterfaceOperator = std::conditional_t< mv == MortarVariableType::pressure,
+                                              PressureInterfaceOperator<TT1, S1, TT2, S2>,
+                                              FluxInterfaceOperator<TT1, S1, TT2, S2> >;
+
+
+
+/////////////////////////////////
+// The iterative solve routine //
+/////////////////////////////////
+template< class TypeTag1, class Solver1,
+          class TypeTag2, class Solver2, MortarVariableType mv >
+void solveMortar()
+{
+    using namespace Dumux;
+
+    // create sub-domain solvers
+    auto solver1 = std::make_shared< Solver1 >();
+    auto solver2 = std::make_shared< Solver2 >();
+
+    solver1->init("Domain1");
+    solver2->init("Domain2");
+
+    // make mortar grid, function space basis and solution
+    using MortarGrid = typename MortarSpaceTraits::Grid;
+    using MortarGridView = typename MortarSpaceTraits::GridView;
+    GridManager<MortarGrid> mortarGridManager;
+    mortarGridManager.init("Mortar");
+
+    const auto& mortarGridView = mortarGridManager.grid().leafGridView();
+    auto feBasis = std::make_shared<typename MortarSpaceTraits::FEBasis>(mortarGridView);
+
+    using MortarSolution = typename MortarSpaceTraits::SolutionVector;
+    auto mortarSolution = std::make_shared<MortarSolution>();
+    mortarSolution->resize(feBasis->size());
+    *mortarSolution = 0.0;
+
+    // create the projectors between mortar and sub-domains
+    using Projector1 = Dumux::GetPropType<TypeTag1, Properties::MortarProjector>;
+    using Projector2 = Dumux::GetPropType<TypeTag2, Properties::MortarProjector>;
+
+    auto projector1 = std::make_shared<Projector1>(feBasis, solver1->gridGeometryPointer(), solver1->gridVariablesPointer(), "Mortar");
+    auto projector2 = std::make_shared<Projector2>(feBasis, solver2->gridGeometryPointer(), solver2->gridVariablesPointer(), "Mortar");
+
+    // let problem and projectors know about each other
+    solver1->problemPointer()->setMortarProjector(projector1);
+    solver2->problemPointer()->setMortarProjector(projector2);
+
+    projector1->setSubDomainSolutionPointer(solver1->solutionPointer());
+    projector2->setSubDomainSolutionPointer(solver2->solutionPointer());
+
+    projector1->setMortarSolutionPointer(mortarSolution);
+    projector2->setMortarSolutionPointer(mortarSolution);
+
+    // create vtk writer for mortar grid
+    auto mortarWriter = std::make_shared<Dune::VTKWriter<MortarGridView>>(mortarGridView);
+    Dune::VTKSequenceWriter<MortarGridView> mortarSequenceWriter(mortarWriter, "mortar");
+    mortarSequenceWriter.addCellData(*mortarSolution, getMortarVariableName(mv));
+
+    // write out initial solution
+    mortarSequenceWriter.write(0.0);
+    solver1->write(0.0);
+    solver2->write(0.0);
+
+    // create interface operator
+    using Operator = InterfaceOperator<TypeTag1, Solver1, TypeTag2, Solver2, mv>;
+    Operator op(solver1, projector1, solver2, projector2);
+
+    // first compute the jump in mortar variable
+    solver1->problemPointer()->setUseHomogeneousSetup(false);
+    solver2->problemPointer()->setUseHomogeneousSetup(false);
+
+    MortarSolution deltaMortarVariable;
+    op.apply(*mortarSolution, deltaMortarVariable);
+
+    // Solve the homogeneous problem with CG solver
+    const double reduction = getParam<double>("InterfaceSolver.ResidualReduction");
+    const std::size_t maxIt = getParam<double>("InterfaceSolver.MaxIterations");
+    const int verbosity = getParam<int>("InterfaceSolver.Verbosity");
+
+    solver1->problemPointer()->setUseHomogeneousSetup(true);
+    solver2->problemPointer()->setUseHomogeneousSetup(true);
+
+    Preconditioner<mv> prec;
+    Dune::CGSolver<MortarSolution> cgSolver(op, prec, reduction, maxIt, verbosity);
+
+    deltaMortarVariable *= -1.0;
+    Dune::InverseOperatorResult result;
+    cgSolver.apply(*mortarSolution, deltaMortarVariable, result);
+
+    if (!result.converged)
+        DUNE_THROW(Dune::InvalidStateException, "CG solver did not converge");
+
+    // solve the sub-domains again to get the right output
+    solver1->problemPointer()->setUseHomogeneousSetup(false);
+    solver2->problemPointer()->setUseHomogeneousSetup(false);
+    op.apply(*mortarSolution, deltaMortarVariable);
+
+    // write solutions
+    mortarSequenceWriter.write(1.0);
+    solver1->write(1.0);
+    solver2->write(1.0);
+}
+
+///////////////////////////////////////////////////////////////////
+// Main Program. Selects the solvers etc to be passed to solve() //
+///////////////////////////////////////////////////////////////////
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
@@ -120,82 +194,92 @@ int main(int argc, char** argv) try
     // parse command line arguments and input file
     Parameters::init(argc, argv);
 
-    // create sub-domain solvers (two times Darcy for now)
-    auto darcySolver = std::make_shared< Solver >();
-    auto darcy2Solver = std::make_shared< Solver >();
+    // get solver types of the two subdomains
+    const auto solver1Type = getParam<std::string>("Domain1.SolverType");
+    const auto solver2Type = getParam<std::string>("Domain2.SolverType");
 
-    darcySolver->init("Darcy");
-    darcy2Solver->init("Darcy2");
+    // discretization scheme used in the sub-domains
+    const auto discScheme1 = getParam<std::string>("Domain1.DiscretizationScheme");
+    const auto discScheme2 = getParam<std::string>("Domain2.DiscretizationScheme");
 
-    // make mortar grid, function space basis and solution
-    GridManager<MortarGrid> mortarGridManager;
-    mortarGridManager.init("Mortar");
+    // determine what the mortar variable is
+    const auto mortarVariableType = getParam<std::string>("Mortar.VariableType");
 
-    const auto& mortarGridView = mortarGridManager.grid().leafGridView();
-    auto feBasis = std::make_shared<MortarSpaceBasis>(mortarGridView);
+    //////////////////////////////////////////
+    // Check validity of the specifications //
+    //////////////////////////////////////////
+    for (unsigned int i = 0; i < 2; ++i)
+    {
+        const auto& s = i == 0 ? solver1Type : solver2Type;
+        const auto& d = i == 0 ? discScheme1 : discScheme2;
 
-    auto mortarSolution = std::make_shared<MortarSolution>();
-    mortarSolution->resize(feBasis->size());
-    *mortarSolution = 0.0;
+        if (s != "Darcy" && s != "Stokes")
+            DUNE_THROW(Dune::InvalidStateException, "Invalid solver type -" << s << "- provided!");
 
-    // create the projectors between mortar and sub-domains
-    auto darcyProjector = std::make_shared<TheMortarDarcyProjector>(feBasis, darcySolver->gridGeometryPointer(), darcySolver->gridVariablesPointer(), "Mortar");
-    auto darcyProjector2 = std::make_shared<TheMortarDarcyProjector>(feBasis, darcy2Solver->gridGeometryPointer(), darcy2Solver->gridVariablesPointer(),"Mortar");
+        if (s == "Darcy" && d != "Tpfa" && d != "Mpfa" && d != "Box")
+            DUNE_THROW(Dune::InvalidStateException, "Invalid Darcy discretization scheme -" << d << "- provided!");
+        else if (s == "Stokes" && d != "Staggered")
+            DUNE_THROW(Dune::InvalidStateException, "Invalid Stokes discretization scheme -" << d << "- provided!");
+    }
 
-    // let problem and projectors know about each other
-    darcySolver->problemPointer()->setMortarProjector(darcyProjector);
-    darcy2Solver->problemPointer()->setMortarProjector(darcyProjector2);
+    // check validity of mortar variable specification
+    if (mortarVariableType != "Pressure" && mortarVariableType != "Flux")
+        DUNE_THROW(Dune::InvalidStateException, "Invalid mortar variable type -" << mortarVariableType << "- provided!");
 
-    darcyProjector->setSubDomainSolutionPointer(darcySolver->solutionPointer());
-    darcyProjector2->setSubDomainSolutionPointer(darcy2Solver->solutionPointer());
 
-    darcyProjector->setMortarSolutionPointer(mortarSolution);
-    darcyProjector2->setMortarSolutionPointer(mortarSolution);
+    ///////////////////////////////////////////////////////////////////////
+    // Select the classes depending on input file setup and call solve() //
+    ///////////////////////////////////////////////////////////////////////
 
-    // write out initial solution
-    Dune::VTKWriter<MortarGridView> mortarWriter(mortarGridView);
-    mortarWriter.addCellData(*mortarSolution, "flux");
-    mortarWriter.write("mortar");
-    darcySolver->write(1.0);
-    darcy2Solver->write(1.0);
+    static constexpr MortarVariableType pmv = MortarVariableType::pressure;
+    static constexpr MortarVariableType fmv = MortarVariableType::flux;
 
-    // compute pressure jump
-    InterfaceOperator op(darcySolver, darcyProjector, darcy2Solver, darcyProjector2);
+    // darcy-darcy type coupling
+    if (solver1Type == "Darcy" && solver2Type == "Darcy")
+    {
+        if (discScheme1 == "Tpfa" && discScheme2 == "Tpfa")
+        {
+            if (mortarVariableType == "Pressure")
+                solveMortar< Properties::TTag::DarcyOnePTpfaPressure, DarcySolverType<Properties::TTag::DarcyOnePTpfaPressure>,
+                             Properties::TTag::DarcyOnePTpfaPressure, DarcySolverType<Properties::TTag::DarcyOnePTpfaPressure>, pmv >();
+            else
+                solveMortar< Properties::TTag::DarcyOnePTpfaFlux, DarcySolverType<Properties::TTag::DarcyOnePTpfaFlux>,
+                             Properties::TTag::DarcyOnePTpfaFlux, DarcySolverType<Properties::TTag::DarcyOnePTpfaFlux>, fmv >();
+        }
 
-    darcySolver->problemPointer()->setUseHomogeneousSetup(false);
-    darcy2Solver->problemPointer()->setUseHomogeneousSetup(false);
+        else if (discScheme1 == "Box" && discScheme2 == "Box")
+        {
+            if (mortarVariableType == "Pressure")
+                solveMortar< Properties::TTag::DarcyOnePBoxPressure, DarcySolverType<Properties::TTag::DarcyOnePBoxPressure>,
+                             Properties::TTag::DarcyOnePBoxPressure, DarcySolverType<Properties::TTag::DarcyOnePBoxPressure>, pmv >();
+            else
+                solveMortar< Properties::TTag::DarcyOnePBoxFlux, DarcySolverType<Properties::TTag::DarcyOnePBoxFlux>,
+                             Properties::TTag::DarcyOnePBoxFlux, DarcySolverType<Properties::TTag::DarcyOnePBoxFlux>, fmv >();
+        }
 
-    MortarSolution deltaP;
-    op.apply(*mortarSolution, deltaP);
+        else if (discScheme1 == "Box" && discScheme2 == "Tpfa")
+        {
+            if (mortarVariableType == "Pressure")
+                solveMortar< Properties::TTag::DarcyOnePBoxPressure, DarcySolverType<Properties::TTag::DarcyOnePBoxPressure>,
+                             Properties::TTag::DarcyOnePTpfaPressure, DarcySolverType<Properties::TTag::DarcyOnePTpfaPressure>, pmv >();
+            else
+                solveMortar< Properties::TTag::DarcyOnePBoxFlux, DarcySolverType<Properties::TTag::DarcyOnePBoxFlux>,
+                             Properties::TTag::DarcyOnePTpfaFlux, DarcySolverType<Properties::TTag::DarcyOnePTpfaFlux>, fmv >();
+        }
 
-    //
-    const double reduction = getParam<double>("InterfaceSolver.ResidualReduction");
-    const std::size_t maxIt = getParam<double>("InterfaceSolver.MaxIterations");
-    const bool verbose = getParam<double>("InterfaceSolver.Verbosity");
+        else if (discScheme1 == "Tpfa" && discScheme2 == "Box")
+        {
+            if (mortarVariableType == "Pressure")
+                solveMortar< Properties::TTag::DarcyOnePTpfaPressure, DarcySolverType<Properties::TTag::DarcyOnePTpfaPressure>,
+                             Properties::TTag::DarcyOnePBoxPressure, DarcySolverType<Properties::TTag::DarcyOnePBoxPressure>, pmv >();
+            else
+                solveMortar< Properties::TTag::DarcyOnePTpfaFlux, DarcySolverType<Properties::TTag::DarcyOnePTpfaFlux>,
+                             Properties::TTag::DarcyOnePBoxFlux, DarcySolverType<Properties::TTag::DarcyOnePBoxFlux>, fmv >();
+        }
+    }
+    else
+        DUNE_THROW(Dune::InvalidStateException, "Solver combination not implemented!");
 
-    darcySolver->problemPointer()->setUseHomogeneousSetup(true);
-    darcy2Solver->problemPointer()->setUseHomogeneousSetup(true);
-
-    MortarStokesDarcyPreconditioner<MortarSolution> prec;
-    Dune::CGSolver<MortarSolution> cgSolver(op, prec, reduction, maxIt, verbose);
-
-    deltaP *= -1.0;
-    Dune::InverseOperatorResult result;
-    cgSolver.apply(*mortarSolution, deltaP, result);
-
-    if (!result.converged)
-        DUNE_THROW(Dune::InvalidStateException, "Linear solver did not converge");
-
-    // solve the sub-domains
-    darcySolver->problemPointer()->setUseHomogeneousSetup(false);
-    darcy2Solver->problemPointer()->setUseHomogeneousSetup(false);
-    op.apply(*mortarSolution, deltaP);
-    std::cout << "DeltaP:\n" << deltaP << std::endl;
-
-    // write solutions
-    darcySolver->write(1.0);
-    darcy2Solver->write(1.0);
-    mortarWriter.write("mortar");
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

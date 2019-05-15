@@ -65,6 +65,8 @@ public:
 
         r = projector1_->projectInterfacePressures();
         r -= projector2_->projectInterfacePressures();
+
+        std::cout << "Norm_delta_p: " << r.two_norm() << std::endl;
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$

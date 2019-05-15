@@ -28,11 +28,12 @@
 
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/ccmpfa.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "spatialparams.hh"
+#include "spatialparams_darcy.hh"
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -43,14 +44,17 @@ class DarcySubProblem;
 
 namespace Properties {
 
-// Create new type tags
-namespace TTag {
-struct DarcyOneP { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
-} // end namespace TTag
-
 // create new property for projection operator
 template<class TypeTag, class MyTypeTag>
 struct MortarProjector { using type = UndefinedProperty; };
+
+// Create new type tags
+namespace TTag {
+struct DarcyOneP { using InheritsFrom = std::tuple<OneP>; };
+struct DarcyOnePTpfa { using InheritsFrom = std::tuple<DarcyOneP, CCTpfaModel>; };
+struct DarcyOnePMpfa { using InheritsFrom = std::tuple<DarcyOneP, CCMpfaModel>; };
+struct DarcyOnePBox { using InheritsFrom = std::tuple<DarcyOneP, BoxModel>; };
+} // end namespace TTag
 
 // Set the problem property
 template<class TypeTag>
@@ -79,7 +83,7 @@ struct SpatialParams<TypeTag, TTag::DarcyOneP>
 {
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePDarcySpatialParams<FVGridGeometry, Scalar>;
 };
 } // end namespace Properties
 
@@ -108,9 +112,13 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
 
 public:
+    //! export spatial parameters type
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
+
     DarcySubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                    std::shared_ptr<SpatialParams> spatialParams,
                     const std::string& paramGroup)
-    : ParentType(fvGridGeometry, paramGroup)
+    : ParentType(fvGridGeometry, spatialParams, paramGroup)
     , eps_(1e-7)
     , isOnNegativeMortarSide_(getParamFromGroup<bool>(paramGroup, "Problem.IsOnNegativeMortarSide"))
     {
@@ -268,8 +276,6 @@ public:
             auto flux = mortarProjector_().integrateMortarVariable(element);
             // turn it into flux per area
             flux /= mortarProjector_().overlapArea(element);
-            // scale with fraction of this face with overlap area
-            flux *= scvf.area()/mortarProjector_().overlapArea(element);
             // scale with density (mortar variable is velocity)
             flux *= elemVolVars[scvf.insideScvIdx()].density();
 

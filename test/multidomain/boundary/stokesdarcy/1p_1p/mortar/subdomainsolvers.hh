@@ -106,8 +106,6 @@ public:
     { return x_; }
 
 private:
-    bool isStationary_;
-
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager_;
     std::shared_ptr<FVGridGeometry> fvGridGeometry_;
     std::shared_ptr<Problem> problem_;
@@ -128,6 +126,7 @@ class DarcySolver
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using OutputModule = VtkOutputModule<GridVariables, SolutionVector>;
@@ -149,7 +148,8 @@ public:
         fvGridGeometry_->update();
 
         // the problem (initial and boundary conditions)
-        problem_ = std::make_shared<Problem>(fvGridGeometry_, paramGroup);
+        auto params = std::make_shared<SpatialParams>(fvGridGeometry_, paramGroup);
+        problem_ = std::make_shared<Problem>(fvGridGeometry_, params, paramGroup);
 
         // resize and initialize the given solution vector
         x_ = std::make_shared<SolutionVector>();
@@ -175,31 +175,35 @@ public:
         newtonSolver_ = std::make_unique<NewtonSolver>(assembler_, linearSolver);
     }
 
+    //! Solve the system
     void solve()
     {
         newtonSolver_->solve(*x_);
     }
 
+    //! Write current state to disk
     void write(Scalar t)
     {
         vtkWriter_->write(t);
     }
 
+    //! Return a pointer to the grid geometry
     std::shared_ptr<FVGridGeometry> gridGeometryPointer()
     { return fvGridGeometry_; }
 
+    //! Return a pointer to the grid variables
     std::shared_ptr<GridVariables> gridVariablesPointer()
     { return gridVariables_; }
 
+    //! Return a pointer to the problem
     std::shared_ptr<Problem> problemPointer()
     { return problem_; }
 
+    //! Return a pointer to the solution
     std::shared_ptr<SolutionVector> solutionPointer()
     { return x_; }
 
 private:
-    bool isStationary_;
-
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager_;
     std::shared_ptr<FVGridGeometry> fvGridGeometry_;
     std::shared_ptr<Problem> problem_;

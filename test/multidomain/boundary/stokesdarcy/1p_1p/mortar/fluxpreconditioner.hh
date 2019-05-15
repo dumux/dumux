@@ -21,15 +21,15 @@
  * \ingroup TODO doc me.
  * \brief TODO doc me.
  */
-#ifndef DUMUX_STOKES_DARCY_MORTAR_PRECONDITIONER_HH
-#define DUMUX_STOKES_DARCY_MORTAR_PRECONDITIONER_HH
+#ifndef DUMUX_STOKES_DARCY_MORTAR_FLUX_PRECONDITIONER_HH
+#define DUMUX_STOKES_DARCY_MORTAR_FLUX_PRECONDITIONER_HH
 
 #include <dune/istl/preconditioner.hh>
 
 namespace Dumux {
 
 template<class MortarSolutionVector>
-class MortarStokesDarcyPreconditioner
+class MortarFluxPreconditioner
 : public Dune::Preconditioner<MortarSolutionVector, MortarSolutionVector>
 {
     using X = MortarSolutionVector;

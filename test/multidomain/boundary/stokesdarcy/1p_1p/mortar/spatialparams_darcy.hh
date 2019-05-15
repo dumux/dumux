@@ -19,11 +19,11 @@
 /*!
  * \file
  * \ingroup BoundaryTests
- * \brief The spatial parameters class for the test problem using the 1p cc model.
+ * \brief The spatial parameters class for the test problem using the 1p model.
  */
 
-#ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
-#define DUMUX_1P_TEST_SPATIALPARAMS_HH
+#ifndef DUMUX_1P_DARCY_SPATIALPARAMS_HH
+#define DUMUX_1P_DARCY_SPATIALPARAMS_HH
 
 #include <dumux/material/spatialparams/fv1p.hh>
 
@@ -36,13 +36,13 @@ namespace Dumux
  *        1p cc model.
  */
 template<class FVGridGeometry, class Scalar>
-class OnePSpatialParams
+class OnePDarcySpatialParams
 : public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             OnePSpatialParams<FVGridGeometry, Scalar>>
+                             OnePDarcySpatialParams<FVGridGeometry, Scalar>>
 {
     using GridView = typename FVGridGeometry::GridView;
     using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           OnePSpatialParams<FVGridGeometry, Scalar>>;
+                                           OnePDarcySpatialParams<FVGridGeometry, Scalar>>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -51,11 +51,12 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    OnePDarcySpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                           const std::string& paramGroup)
+    : ParentType(fvGridGeometry)
     {
-        permeability_ = getParam<Scalar>("Darcy.SpatialParams.Permeability");
-        alphaBJ_ = getParam<Scalar>("Darcy.SpatialParams.AlphaBeaversJoseph");
+        permeability_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Permeability");
+        alphaBJ_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.AlphaBeaversJoseph");
     }
 
     /*!
