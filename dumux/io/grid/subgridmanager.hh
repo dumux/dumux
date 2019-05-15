@@ -29,11 +29,14 @@
 #include <memory>
 
 #include <dune/subgrid/subgrid.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/grid/io/file/dgfparser/dgfwriter.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundaryflag.hh>
+
+// TODO: remove this after 3.1 is released
+#include <dune/grid/io/file/vtk.hh>
+// TODO: remove this after 3.1 is released
+#include <dune/grid/io/file/dgfparser/dgfwriter.hh>
 
 namespace Dumux {
 
@@ -71,24 +74,32 @@ public:
         // choose which elements to add to the subgrid.
         auto hostGridView = subgridPtr->getHostGrid().leafGridView();
         for (const auto& e : elements(hostGridView))
-            if(selector(e))
+            if (selector(e))
                 elementsForSubgrid.insert(globalIDset.template id<0>(e));
 
         subgridPtr->insertSetPartial(elementsForSubgrid);
         subgridPtr->createEnd();
 
+        // TODO: remove this after 3.1 is released
         // If desired, write out the final subgrid as a dgf file.
-        if(getParamFromGroup<bool>(modelParamGroup, "Grid.WriteSubGridToDGF", false))
+        if (getParamFromGroup<bool>(modelParamGroup, "Grid.WriteSubGridToDGF", false))
         {
+            std::cerr << "Deprecation warning: SubGridManager: Grid.WriteSubGridToDGF is deprecated."
+                      << "Use Dune::VTKWriter to write out your grid manually." << std::endl;
+
             const auto postfix = getParamFromGroup<std::string>(modelParamGroup, "Problem.Name", "");
             const std::string name = postfix == "" ? "subgrid" : "subgrid_" + postfix;
             Dune::DGFWriter<typename Grid::LeafGridView> writer(subgridPtr->leafGridView());
             writer.write(name + ".dgf");
         }
 
+        // TODO: remove this after 3.1 is released
         // If desired, write out the hostgrid as vtk file.
-        if(getParamFromGroup<bool>(modelParamGroup, "Grid.WriteSubGridToVtk", false))
+        if (getParamFromGroup<bool>(modelParamGroup, "Grid.WriteSubGridToVtk", false))
         {
+            std::cerr << "Deprecation warning: SubGridManager: Grid.WriteSubGridToVtk is deprecated."
+                      << "Use Dune::VTKWriter to write out your grid manually." << std::endl;
+
             const auto postfix = getParamFromGroup<std::string>(modelParamGroup, "Problem.Name", "");
             const std::string name = postfix == "" ? "subgrid" : "subgrid_" + postfix;
             Dune::VTKWriter<typename Grid::LeafGridView> vtkWriter(subgridPtr->leafGridView());

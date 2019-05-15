@@ -8,5 +8,3 @@ Positions1 = 0 1
 Cells0 = 1
 Cells1 = 1
 Refinement = 4
-
-WriteSubGridToVtk = true
