@@ -50,12 +50,14 @@ namespace Dumux {
  * - Refinement : the number of global refines to apply initially.
  *
  */
-template<class ct, int dim>
-class GridManager<Dune::YaspGrid<dim, Dune::EquidistantCoordinates<ct, dim> >>
-: public GridManagerBase<Dune::YaspGrid<dim, Dune::EquidistantCoordinates<ct, dim> > >
+template<class Coordinates, int dim>
+class GridManager<Dune::YaspGrid<dim, Coordinates>>
+: public GridManagerBase<Dune::YaspGrid<dim, Coordinates>>
 {
+    using ct = typename Dune::YaspGrid<dim, Coordinates>::ctype;
+    using GlobalPosition = Dune::FieldVector<ct, dim>;
 public:
-    using Grid = typename Dune::YaspGrid<dim, Dune::EquidistantCoordinates<ct, dim> >;
+    using Grid = typename Dune::YaspGrid<dim, Coordinates>;
     using ParentType = GridManagerBase<Grid>;
 
     /*!
@@ -74,9 +76,8 @@ public:
         // Then look for the necessary keys to construct from the input file
         else if (hasParamInGroup(modelParamGroup, "Grid.UpperRight"))
         {
-
             // get the upper right corner coordinates
-            const auto upperRight = getParamFromGroup<Dune::FieldVector<ct, dim>>(modelParamGroup, "Grid.UpperRight");
+            const auto upperRight = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.UpperRight");
 
             // number of cells in each direction
             std::array<int, dim> cells; cells.fill(1);
@@ -90,18 +91,8 @@ public:
             const int overlap =  getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
 
             // make the grid
-            if (!hasParamInGroup(modelParamGroup, "Grid.Partitioning"))
-            {
-                // construct using default load balancing
-                ParentType::gridPtr() = std::make_shared<Grid>(upperRight, cells, periodic, overlap);
-            }
-            else
-            {
-                // construct using user defined partitioning
-                const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
-                Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
-                ParentType::gridPtr() = std::make_shared<Grid>(upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
-            }
+            ParentType::gridPtr() = createGrid_(modelParamGroup, upperRight, cells, periodic, overlap, Coordinates{});
+
             postProcessing_(modelParamGroup);
         }
 
@@ -118,102 +109,55 @@ public:
 
 private:
     /*!
-     * \brief Postprocessing for YaspGrid
+     * \brief Create a grid with zero offset
      */
-    void postProcessing_(const std::string& modelParamGroup)
+    std::unique_ptr<Grid> createGrid_(const std::string& modelParamGroup,
+                                      const GlobalPosition& upperRight,
+                                      const std::array<int, dim>& cells,
+                                      const std::bitset<dim>& periodic,
+                                      const int overlap,
+                                      Dune::EquidistantCoordinates<ct, dim>) const
     {
-        // Check if should refine the grid
-        bool keepPhysicalOverlap = getParamFromGroup<bool>(modelParamGroup, "Grid.KeepPhysicalOverlap", true);
-        ParentType::grid().refineOptions(keepPhysicalOverlap);
-        ParentType::maybeRefineGrid(modelParamGroup);
-        ParentType::loadBalance();
-    }
-};
-
-/*!
- * \brief Provides a grid manager for YaspGrids with non-zero offset
- *        from information in the input file
- *
- * All keys are expected to be in group GridParameterGroup.
- * The following keys are recognized:
- * - LowerLeft : lower left corner coordinates
- * - UpperRight : upper right corner coordinates
- * - Cells : the number of cells in each direction
- * - Periodic : true or false for each direction
- * - Overlap : overlap size in cells
- * - Partitioning : a non-standard load-balancing, number of processors per direction
- * - KeepPyhsicalOverlap : whether to keep the physical overlap
- *     in physical size or in number of cells upon refinement
- * - Refinement : the number of global refines to apply initially.
- *
- */
-template<class ct, int dim>
-class GridManager<Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ct, dim>>>
-: public GridManagerBase<Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ct, dim>>>
-{
-public:
-    using Grid = typename Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ct, dim>>;
-    using ParentType = GridManagerBase<Grid>;
-
-    /*!
-     * \brief Make the grid. This is implemented by specializations of this method.
-     */
-    void init(const std::string& modelParamGroup = "")
-    {
-        // First try to create it from a DGF file in GridParameterGroup.File
-        if (hasParamInGroup(modelParamGroup, "Grid.File"))
+        if (!hasParamInGroup(modelParamGroup, "Grid.Partitioning"))
         {
-            ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
-            postProcessing_(modelParamGroup);
-            return;
+            // construct using default load balancing
+            return std::make_unique<Grid>(upperRight, cells, periodic, overlap);
         }
-
-        // Then look for the necessary keys to construct from the input file
-        else if (hasParamInGroup(modelParamGroup, "Grid.UpperRight"))
-        {
-            using GlobalPosition = Dune::FieldVector<ct, dim>;
-            const auto upperRight = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.UpperRight");
-            const auto lowerLeft = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.LowerLeft", GlobalPosition(0.0));
-
-            // number of cells in each direction
-            std::array<int, dim> cells; cells.fill(1);
-            cells = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Cells", cells);
-
-            // \todo TODO periodic boundaries with yasp (the periodicity concept of yasp grid is currently not supported, use dune-spgrid)
-            // const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
-            const std::bitset<dim> periodic;
-
-            // get the overlap dependent on some template parameters
-            const int overlap = getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
-
-            // make the grid
-            if (!hasParamInGroup(modelParamGroup, "Grid.Partitioning"))
-            {
-                // construct using default load balancing
-                ParentType::gridPtr() = std::make_shared<Grid>(lowerLeft, upperRight, cells, periodic, overlap);
-            }
-            else
-            {
-                // construct using user defined partitioning
-                const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
-                Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
-                ParentType::gridPtr() = std::make_shared<Grid>(lowerLeft, upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
-            }
-            postProcessing_(modelParamGroup);
-        }
-
-        // Didn't find a way to construct the grid
         else
         {
-            const auto prefix = modelParamGroup == "" ? modelParamGroup : modelParamGroup + ".";
-            DUNE_THROW(ParameterException, "Please supply one of the parameters "
-                                           << prefix + "Grid.UpperRight"
-                                           << ", or a grid file in " << prefix + "Grid.File");
-
+            // construct using user defined partitioning
+            const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
+            Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
+            return std::make_unique<Grid>(upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
         }
     }
 
-private:
+    /*!
+     * \brief Create a grid with non-zero offset
+     */
+    std::unique_ptr<Grid> createGrid_(const std::string& modelParamGroup,
+                                      const GlobalPosition& upperRight,
+                                      const std::array<int, dim>& cells,
+                                      const std::bitset<dim>& periodic,
+                                      const int overlap,
+                                      Dune::EquidistantOffsetCoordinates<ct, dim>) const
+    {
+        const auto lowerLeft = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.LowerLeft", GlobalPosition(0.0));
+
+        if (!hasParamInGroup(modelParamGroup, "Grid.Partitioning"))
+        {
+            // construct using default load balancing
+            return std::make_unique<Grid>(lowerLeft, upperRight, cells, periodic, overlap);
+        }
+        else
+        {
+            // construct using user defined partitioning
+            const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
+            Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
+            return std::make_unique<Grid>(lowerLeft, upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
+        }
+    }
+
     /*!
      * \brief Postprocessing for YaspGrid
      */
