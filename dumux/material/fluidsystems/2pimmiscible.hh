@@ -89,10 +89,13 @@ public:
 
         if (!Fluid0::isGas() && !Fluid1::isGas())
         {
-            if (phaseIdx == phase0Idx)
-                return Components::IsAqueous<typename Fluid0::Component>::value ? IOName::aqueousPhase() : IOName::naplPhase();
+            static const auto name0 = Components::IsAqueous<typename Fluid0::Component>::value ? IOName::aqueousPhase() : IOName::naplPhase();
+            static const auto name1 = Components::IsAqueous<typename Fluid1::Component>::value ? IOName::aqueousPhase() : IOName::naplPhase();
+
+            if (name0 != name1)
+                return (phaseIdx == phase0Idx) ? name0 : name1;
             else
-                return Components::IsAqueous<typename Fluid1::Component>::value ? IOName::aqueousPhase() : IOName::naplPhase();
+                return (phaseIdx == phase0Idx) ? name0 + "_0" : name1 + "_1";
         }
         else
         {
