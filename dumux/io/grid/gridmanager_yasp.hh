@@ -40,7 +40,8 @@ namespace Dumux {
  * All keys are expected to be in group GridParameterGroup.
  * The following keys are recognized:
  * - File : a DGF file to load the coarse grid from
- * - UpperRight : extension of the domain
+ * - LowerLeft : lower left corner of the domain (only for EquidistantOffsetCoordinates, otherwise 0-origin)
+ * - UpperRight : upper right corner of the domain
  * - Cells : the number of cells in each direction
  * - Periodic : true or false for each direction
  * - Overlap : overlap size in cells
