@@ -131,12 +131,12 @@ public:
                                    const auto pvIdx)
         {
             res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
-            for (const auto& scvJ : scvs(this->fvGeometry()))
-            {
-                jac[scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
-                if (scvI.localDofIndex() == scvJ.localDofIndex())
-                    jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
-            }
+
+            auto& row = jac[scvI.dofIndex()];
+            for (auto col = row.begin(); col != row.end(); ++col)
+                row[col.index()][eqIdx] = 0.0;
+
+            jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
 
             // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
             if (this->assembler().fvGridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
@@ -166,12 +166,11 @@ public:
                                    const auto eqIdx,
                                    const auto pvIdx)
         {
-            for (const auto& scvJ : scvs(this->fvGeometry()))
-            {
-                jac[scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
-                if (scvI.localDofIndex() == scvJ.localDofIndex())
-                    jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
-            }
+            auto& row = jac[scvI.dofIndex()];
+            for (auto col = row.begin(); col != row.end(); ++col)
+                row[col.index()][eqIdx] = 0.0;
+
+            jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
         };
 
         this->asImp_().evalDirichletBoundaries(applyDirichlet);
