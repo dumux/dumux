@@ -1060,6 +1060,7 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::kernel>
     { return FVGridGeometry<id>::discMethod == DiscretizationMethod::box; }
 
     static_assert(!isBox<bulkIdx>() && !isBox<lowDimIdx>(), "The kernel coupling method is only implemented for the tpfa method");
+    static_assert(Dune::Capabilities::isCartesian<typename GridView<bulkIdx>::Grid>::v, "The kernel coupling method is only implemented for structured grids");
 
     enum {
         bulkDim = GridView<bulkIdx>::dimension,
@@ -1086,6 +1087,10 @@ public:
     {
         ParentType::init(bulkProblem, lowDimProblem, curSol);
         computeLowDimVolumeFractions();
+
+        const auto refinement = getParamFromGroup<int>(bulkProblem->paramGroup(), "Grid.Refinement", 0);
+        if (refinement > 0)
+            DUNE_THROW(Dune::NotImplemented, "The current intersection detection may likely fail for refined grids.");
     }
 
     /*!
@@ -1402,9 +1407,10 @@ private:
                              const CylIntegration& cylIntegration, int embeddings)
     {
         // Monte-carlo integration on the cylinder defined by line and radius
-        static const auto min = getParam<GlobalPosition>("Tissue.Grid.LowerLeft");
-        static const auto max = getParam<GlobalPosition>("Tissue.Grid.UpperRight");
-        static const auto cells = getParam<GlobalPosition>("Tissue.Grid.Cells");
+        static const auto bulkParamGroup = this->problem(bulkIdx).paramGroup();
+        static const auto min = getParamFromGroup<GlobalPosition>(bulkParamGroup, "Grid.LowerLeft");
+        static const auto max = getParamFromGroup<GlobalPosition>(bulkParamGroup, "Grid.UpperRight");
+        static const auto cells = getParamFromGroup<GlobalPosition>(bulkParamGroup, "Grid.Cells");
         const auto cylSamples = cylIntegration.size();
         const auto& a = line.corner(0);
         const auto& b = line.corner(1);
