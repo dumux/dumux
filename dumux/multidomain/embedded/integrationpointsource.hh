@@ -28,6 +28,7 @@
 #define DUMUX_INTEGRATION_POINTSOURCE_HH
 
 #include <type_traits>
+#include <dune/common/deprecated.hh>
 #include <dune/common/reservedvector.hh>
 #include <dumux/common/pointsource.hh>
 #include <dumux/discretization/method.hh>
@@ -47,21 +48,40 @@ class IntegrationPointSource : public IdPointSource<GlobalPosition, SourceValues
 
 public:
     //! Constructor for integration point sources
+    DUNE_DEPRECATED_MSG("Call constructor with a single element index instead!")
     IntegrationPointSource(GlobalPosition pos, SourceValues values, IdType id,
                            Scalar qpweight, Scalar integrationElement,
                            const std::vector<std::size_t>& elementIndices)
       : ParentType(pos, values, id),
         qpweight_(qpweight), integrationElement_(integrationElement),
-        elementIndices_(elementIndices) {}
+        elementIndex_(elementIndices[0]) {}
 
     //! Constructor for integration point sources, when there is no
     // value known at the time of initialization
+    DUNE_DEPRECATED_MSG("Call constructor with a single element index instead!")
     IntegrationPointSource(GlobalPosition pos, IdType id,
                            Scalar qpweight, Scalar integrationElement,
                            const std::vector<std::size_t>& elementIndices)
       : ParentType(pos, id),
         qpweight_(qpweight), integrationElement_(integrationElement),
-        elementIndices_(elementIndices) {}
+        elementIndex_(elementIndices[0]) {}
+
+    //! Constructor for integration point sources
+    IntegrationPointSource(GlobalPosition pos, SourceValues values, IdType id,
+                           Scalar qpweight, Scalar integrationElement,
+                           std::size_t elementIndex)
+      : ParentType(pos, values, id),
+        qpweight_(qpweight), integrationElement_(integrationElement),
+        elementIndex_(elementIndex) {}
+
+    //! Constructor for integration point sources, when there is no
+    // value known at the time of initialization
+    IntegrationPointSource(GlobalPosition pos, IdType id,
+                           Scalar qpweight, Scalar integrationElement,
+                           std::size_t elementIndex)
+      : ParentType(pos, id),
+        qpweight_(qpweight), integrationElement_(integrationElement),
+        elementIndex_(elementIndex) {}
 
 
     Scalar quadratureWeight() const
@@ -84,10 +104,15 @@ public:
         integrationElement_ = ie;
     }
 
-    const std::vector<std::size_t>& elementIndices() const
+    DUNE_DEPRECATED_MSG("Use elementIndex() instead, which returns a single index!")
+    std::vector<std::size_t> elementIndices() const
     {
-        return elementIndices_;
+        return std::vector<std::size_t>({elementIndex_});
     }
+
+    //! The index of the element this integration point source is associated with
+    std::size_t elementIndex() const
+    { return elementIndex_; }
 
     //! Convenience = operator overload modifying only the values
     IntegrationPointSource& operator= (const SourceValues& values)
@@ -106,7 +131,7 @@ public:
 private:
     Scalar qpweight_;
     Scalar integrationElement_;
-    std::vector<std::size_t> elementIndices_;
+    std::size_t elementIndex_;
 };
 
 /*!
@@ -120,82 +145,77 @@ public:
     //! calculate a DOF index to point source map from given vector of point sources
     template<class FVGridGeometry, class PointSource, class PointSourceMap>
     static void computePointSourceMap(const FVGridGeometry& fvGridGeometry,
-                                      std::vector<PointSource>& sources,
+                                      const std::vector<PointSource>& sources,
                                       PointSourceMap& pointSourceMap)
     {
-        for (auto&& source : sources)
+        for (const auto& source : sources)
         {
-            // compute in which elements the point source falls
-            const auto& entities = source.elementIndices();
-            // split the source values equally among all concerned entities
-            source.setEmbeddings(source.embeddings()*entities.size());
+            // get the index of the element in which the point source falls
+            const auto eIdx = source.elementIndex();
             // loop over all intersected elements
-            for (unsigned int eIdx : entities)
+            if constexpr(FVGridGeometry::discMethod == DiscretizationMethod::box)
             {
-                if constexpr(FVGridGeometry::discMethod == DiscretizationMethod::box)
+                // check in which subcontrolvolume(s) we are
+                const auto element = fvGridGeometry.boundingBoxTree().entitySet().entity(eIdx);
+                auto fvGeometry = localView(fvGridGeometry);
+                fvGeometry.bindElement(element);
+                const auto& globalPos = source.position();
+
+                static const bool boxPointSourceLumping = getParam<bool>("MixedDimension.EnableBoxPointSourceLumping", true);
+                if (boxPointSourceLumping)
                 {
-                    // check in which subcontrolvolume(s) we are
-                    const auto element = fvGridGeometry.boundingBoxTree().entitySet().entity(eIdx);
-                    auto fvGeometry = localView(fvGridGeometry);
-                    fvGeometry.bindElement(element);
-                    const auto globalPos = source.position();
+                    // loop over all sub control volumes and check if the point source is inside
+                    constexpr int dim = FVGridGeometry::GridView::dimension;
+                    Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
+                    for (auto&& scv : scvs(fvGeometry))
+                        if (intersectsPointGeometry(globalPos, scv.geometry()))
+                            scvIndices.push_back(scv.indexInElement());
 
-                    static const bool boxPointSourceLumping = getParam<bool>("MixedDimension.EnableBoxPointSourceLumping", true);
-                    if (boxPointSourceLumping)
+                    // for all scvs that where tested positiv add the point sources
+                    // to the element/scv to point source map
+                    for (auto scvIdx : scvIndices)
                     {
-                        // loop over all sub control volumes and check if the point source is inside
-                        constexpr int dim = FVGridGeometry::GridView::dimension;
-                        Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
-                        for (auto&& scv : scvs(fvGeometry))
-                            if (intersectsPointGeometry(globalPos, scv.geometry()))
-                                scvIndices.push_back(scv.indexInElement());
-
-                        // for all scvs that where tested positiv add the point sources
-                        // to the element/scv to point source map
-                        for (auto scvIdx : scvIndices)
-                        {
-                            const auto key = std::make_pair(eIdx, scvIdx);
-                            if (pointSourceMap.count(key))
-                                pointSourceMap.at(key).push_back(source);
-                            else
-                                pointSourceMap.insert({key, {source}});
-                            // split equally on the number of matched scvs
-                            auto& s = pointSourceMap.at(key).back();
-                            s.setEmbeddings(scvIndices.size()*s.embeddings());
-                        }
-                    }
-                    // distribute the sources according to the basis function weights
-                    else
-                    {
-                        using Scalar = std::decay_t<decltype(source.values()[0])>;
-                        using ShapeValues = std::vector<typename Dune::FieldVector<Scalar, 1>>;
-                        ShapeValues shapeValues;
-                        const auto& localBasis = fvGeometry.feLocalBasis();
-                        const auto ipLocal = element.geometry().local(globalPos);
-                        localBasis.evaluateFunction(ipLocal, shapeValues);
-                        for (auto&& scv : scvs(fvGeometry))
-                        {
-                            const auto key = std::make_pair(eIdx, scv.indexInElement());
-                            if (pointSourceMap.count(key))
-                                pointSourceMap.at(key).push_back(source);
-                            else
-                                pointSourceMap.insert({key, {source}});
-
-                            // adjust the integration element
-                            auto& s = pointSourceMap.at(key).back();
-                            s.setIntegrationElement(shapeValues[scv.indexInElement()]*s.integrationElement());
-                        }
+                        const auto key = std::make_pair(eIdx, scvIdx);
+                        if (pointSourceMap.count(key))
+                            pointSourceMap.at(key).push_back(source);
+                        else
+                            pointSourceMap.insert({key, {source}});
+                        // split equally on the number of matched scvs
+                        auto& s = pointSourceMap.at(key).back();
+                        s.setEmbeddings(scvIndices.size()*s.embeddings());
                     }
                 }
+                // distribute the sources according to the basis function weights
                 else
                 {
-                    // add the pointsource to the DOF map
-                    const auto key = std::make_pair(eIdx, /*scvIdx=*/ 0);
-                    if (pointSourceMap.count(key))
-                        pointSourceMap.at(key).push_back(source);
-                    else
-                        pointSourceMap.insert({key, {source}});
+                    using Scalar = std::decay_t<decltype(source.values()[0])>;
+                    using ShapeValues = std::vector<typename Dune::FieldVector<Scalar, 1>>;
+                    ShapeValues shapeValues;
+                    const auto& localBasis = fvGeometry.feLocalBasis();
+                    const auto ipLocal = element.geometry().local(globalPos);
+                    localBasis.evaluateFunction(ipLocal, shapeValues);
+                    for (auto&& scv : scvs(fvGeometry))
+                    {
+                        const auto key = std::make_pair(eIdx, scv.indexInElement());
+                        if (pointSourceMap.count(key))
+                            pointSourceMap.at(key).push_back(source);
+                        else
+                            pointSourceMap.insert({key, {source}});
+
+                        // adjust the integration element
+                        auto& s = pointSourceMap.at(key).back();
+                        s.setIntegrationElement(shapeValues[scv.indexInElement()]*s.integrationElement());
+                    }
                 }
+            }
+            else
+            {
+                // add the pointsource to the DOF map
+                const auto key = std::make_pair(eIdx, /*scvIdx=*/ 0);
+                if (pointSourceMap.count(key))
+                    pointSourceMap.at(key).push_back(source);
+                else
+                    pointSourceMap.insert({key, {source}});
             }
         }
     }
