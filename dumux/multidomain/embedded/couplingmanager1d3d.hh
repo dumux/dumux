@@ -421,9 +421,9 @@ public:
                 {
                     const auto id = this->idCounter_++;
 
-                    this->pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, integrationElement*surfaceFraction, std::vector<std::size_t>({bulkElementIdx}));
+                    this->pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, integrationElement*surfaceFraction, bulkElementIdx);
                     this->pointSources(bulkIdx).back().setEmbeddings(bulkElementIndices.size());
-                    this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement*surfaceFraction, std::vector<std::size_t>({lowDimElementIdx}));
+                    this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement*surfaceFraction, lowDimElementIdx);
                     this->pointSources(lowDimIdx).back().setEmbeddings(bulkElementIndices.size());
 
                     // pre compute additional data used for the evaluation of
@@ -848,9 +848,9 @@ public:
                     {
                         const auto id = this->idCounter_++;
 
-                        this->pointSources(bulkIdx).emplace_back(circlePos, id, qpweight, integrationElement, std::vector<std::size_t>({bulkElementIdx}));
+                        this->pointSources(bulkIdx).emplace_back(circlePos, id, qpweight, integrationElement, bulkElementIdx);
                         this->pointSources(bulkIdx).back().setEmbeddings(circleBulkElementIndices[k].size());
-                        this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement, std::vector<std::size_t>({lowDimElementIdx}));
+                        this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement, lowDimElementIdx);
                         this->pointSources(lowDimIdx).back().setEmbeddings(circleBulkElementIndices[k].size());
 
                         // pre compute additional data used for the evaluation of
@@ -1222,7 +1222,7 @@ public:
 
                 // place a point source at the intersection center
                 const auto center = intersectionGeometry.center();
-                this->pointSources(lowDimIdx).emplace_back(center, id, surfaceFactor, intersectionGeometry.volume(), std::vector<std::size_t>({lowDimElementIdx}));
+                this->pointSources(lowDimIdx).emplace_back(center, id, surfaceFactor, intersectionGeometry.volume(), lowDimElementIdx);
                 this->pointSources(lowDimIdx).back().setEmbeddings(is.neighbor(0));
 
                 // pre compute additional data used for the evaluation of
