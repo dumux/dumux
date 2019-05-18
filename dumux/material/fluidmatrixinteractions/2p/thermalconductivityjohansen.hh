@@ -21,8 +21,8 @@
  * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  */
-#ifndef THERMALCONDUCTIVITY_JOHANSEN_HH
-#define THERMALCONDUCTIVITY_JOHANSEN_HH
+#ifndef DUMUX_MATERIAL_THERMALCONDUCTIVITY_JOHANSEN_HH
+#define DUMUX_MATERIAL_THERMALCONDUCTIVITY_JOHANSEN_HH
 
 #include <cmath>
 #include <algorithm>
