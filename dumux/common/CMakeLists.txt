@@ -8,6 +8,7 @@ boundaryconditions.hh
 boundaryflag.hh
 boundarytypes.hh
 boundingboxtree.hh
+cubicspline.hh
 defaultmappertraits.hh
 defaultusagemessage.hh
 dimensionlessnumbers.hh
