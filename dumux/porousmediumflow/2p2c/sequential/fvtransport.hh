@@ -968,7 +968,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
         Scalar viscosityWBound = FluidSystem::viscosity(BCfluidState, wPhaseIdx);
         Scalar viscosityNWBound = FluidSystem::viscosity(BCfluidState, nPhaseIdx);
         if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
-            pcBound = BCfluidState.capillaryPressure();
+            pcBound = (BCfluidState.pressure(nPhaseIdx) - BCfluidState.pressure(wPhaseIdx));
         // average
         double densityW_mean = (densityWI + densityWBound) / 2;
         double densityNW_mean = (densityNWI + densityNWBound) / 2;

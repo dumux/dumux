@@ -24,6 +24,7 @@
 #ifndef DUMUX_2P2CPROPERTIES_HH
 #define DUMUX_2P2CPROPERTIES_HH
 
+#include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/sequential/transportproperties.hh>
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
@@ -38,9 +39,6 @@ class VariableClass;
 
 template<class TypeTag>
 class CellData2P2C;
-
-template<class Scalar, class FluidSystem>
-class TwoPTwoCFluidState;
 
 template <class TypeTag>
 struct SequentialTwoPTwoCIndices;
@@ -137,7 +135,7 @@ struct BoundaryMobility<TypeTag, TTag::SequentialTwoPTwoC> //!< Saturation scale
 
 SET_TYPE_PROP(SequentialTwoPTwoC, Variables, VariableClass<TypeTag>);
 SET_TYPE_PROP(SequentialTwoPTwoC, CellData, CellData2P2C<TypeTag>);
-SET_TYPE_PROP(SequentialTwoPTwoC, FluidState, TwoPTwoCFluidState<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, FluidSystem)>);
+SET_TYPE_PROP(SequentialTwoPTwoC, FluidState, CompositionalFluidState<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, FluidSystem)>);
 
 
 //! The spatial parameters to be employed.
