@@ -25,7 +25,6 @@
 #ifndef DUMUX_ELEMENTDATA2P2C_HH
 #define DUMUX_ELEMENTDATA2P2C_HH
 
-#include <dumux/material/fluidstates/2p2c.hh>
 #include "fluxdata.hh"
 
 namespace Dumux {
@@ -294,23 +293,25 @@ public:
 
     /*** b) from fluidstate ***/
 
-    //! \copydoc TwoPTwoCFluidState::setSaturation()
+    //! DOC ME!
     void setSaturation(int phaseIdx, Scalar value)
     {
         fluidState_->setSaturation(phaseIdx, value);
+        fluidState_->setSaturation(1-phaseIdx, 1.0-value);
     }
-    //! \copydoc TwoPTwoCFluidState::saturation()
+
+    //! DOC ME!
     const Scalar saturation(int phaseIdx) const
     {
         return fluidState_->saturation(phaseIdx);
     }
 
-    //! \copydoc TwoPTwoCFluidState::setViscosity()
+    //! DOC ME!
     void setViscosity(int phaseIdx, Scalar value)
     {
         fluidState_->setViscosity(phaseIdx, value);
     }
-    //! \copydoc TwoPTwoCFluidState::viscosity()
+    //! DOC ME!
     const Scalar viscosity(int phaseIdx) const
     {
         return fluidState_->viscosity(phaseIdx);
@@ -324,31 +325,31 @@ public:
         return fluidState_->pressure(nPhaseIdx) - fluidState_->pressure(wPhaseIdx);
     }
 
-    //! \copydoc TwoPTwoCFluidState::density()
+    //! DOC ME!
     const Scalar density(int phaseIdx) const
     {
         return (fluidState_->density(phaseIdx));
     }
 
-    //! \copydoc TwoPTwoCFluidState::massFraction()
+    //! DOC ME!
     const Scalar massFraction(int phaseIdx, int compIdx) const
     {
         return fluidState_->massFraction(phaseIdx, compIdx);
     }
 
-    //! \copydoc TwoPTwoCFluidState::moleFraction()
+    //! DOC ME!
     const Scalar moleFraction(int phaseIdx, int compIdx) const
     {
         return fluidState_->moleFraction(phaseIdx, compIdx);
     }
 
-    //! \copydoc TwoPTwoCFluidState::temperature()
+    //! DOC ME!
     const Scalar temperature(int phaseIdx) const
     {
         return fluidState_->temperature(phaseIdx);
     }
 
-    //! \copydoc TwoPTwoCFluidState::phaseMassFraction()
+    //! DOC ME!
     const Scalar phaseMassFraction(int phaseIdx) const
     {
         return fluidState_->phaseMassFraction(phaseIdx);

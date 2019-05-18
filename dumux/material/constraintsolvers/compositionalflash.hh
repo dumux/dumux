@@ -118,16 +118,8 @@ public:
         // get mole fraction from equilibrium constants
         fluidState.setMoleFraction(phase0Idx, comp0Idx, ((1. - k11) / (k10 - k11)));
         fluidState.setMoleFraction(phase1Idx, comp0Idx, (fluidState.moleFraction(phase0Idx,comp0Idx) * k10));
-
-        // transform mole to mass fractions
-        fluidState.setMassFraction(phase0Idx, comp0Idx,
-                (fluidState.moleFraction(phase0Idx, comp0Idx) * FluidSystem::molarMass(comp0Idx)
-                / ( fluidState.moleFraction(phase0Idx, comp0Idx) * FluidSystem::molarMass(comp0Idx)
-                    + (1. - fluidState.moleFraction(phase0Idx, comp0Idx)) * FluidSystem::molarMass(comp1Idx))));
-        fluidState.setMassFraction(phase1Idx, comp0Idx,
-                (fluidState.moleFraction(phase1Idx, comp0Idx) * FluidSystem::molarMass(comp0Idx)
-                / ( fluidState.moleFraction(phase1Idx, comp0Idx) * FluidSystem::molarMass(comp0Idx)
-                    + (1. - fluidState.moleFraction(phase1Idx, comp0Idx)) * FluidSystem::molarMass(comp1Idx))));
+        fluidState.setMoleFraction(phase0Idx, comp1Idx, 1.0 - fluidState.moleFraction(phase0Idx,comp0Idx));
+        fluidState.setMoleFraction(phase1Idx, comp1Idx, 1.0 - fluidState.moleFraction(phase1Idx,comp0Idx));
 
         // mass equilibrium ratios K for in case first phase is reference phase
         Scalar K10 = fluidState.massFraction(phase1Idx, comp0Idx) / fluidState.massFraction(phase0Idx, comp0Idx);
@@ -136,37 +128,25 @@ public:
         // phase mass fraction Nu (ratio of phase mass to total phase mass) of first phase
         Scalar Nu0 = 1. + ((Z0 * (K10 - 1.)) + ((1. - Z0) * (K11 - 1.))) / ((K11 - 1.) * (K10 - 1.));
 
+        // an array of the phase mass fractions from which we will compute the saturations
+        std::array<Scalar, 2> phaseMassFraction;
+
         // check phase presence
         if (Nu0 > 0. && Nu0 < 1.) // two phases present
-            fluidState.setNu(phase0Idx, Nu0);
+            phaseMassFraction[phase0Idx] = Nu0;
         else if (Nu0 <= 0.) // only second phase present
         {
-            fluidState.setNu(phase0Idx, 0.);
+            phaseMassFraction[phase0Idx] = 0.0; // no first phase
             fluidState.setMassFraction(phase1Idx,comp0Idx, Z0); // assign complete mass dissolved into second phase
-
-            // transform and store as mole fraction
-            fluidState.setMoleFraction(phase1Idx,comp0Idx,
-                                       (Z0 / FluidSystem::molarMass(comp0Idx)) / ((Z0 / FluidSystem::molarMass(comp0Idx)) + ((1- Z0) / FluidSystem::molarMass(comp1Idx))));
         }
         else // only first phase present
         {
-            fluidState.setNu(phase0Idx, 1.); // no second phase
+            phaseMassFraction[phase0Idx] = 1.0; // no second phase
             fluidState.setMassFraction(phase0Idx, comp0Idx, Z0); // assign complete mass dissolved into first phase
-
-            // transform and store as mole fraction
-            fluidState.setMoleFraction(phase0Idx, comp0Idx,
-                                       (Z0 / FluidSystem::molarMass(comp0Idx)) / ((Z0 / FluidSystem::molarMass(comp0Idx)) + ((1- Z0) / FluidSystem::molarMass(comp1Idx))));
         }
 
-        // complete array of mass fractions
-        fluidState.setMassFraction(phase0Idx, comp1Idx, 1. - fluidState.massFraction(phase0Idx,comp0Idx));
-        fluidState.setMassFraction(phase1Idx, comp1Idx, 1. - fluidState.massFraction(phase1Idx,comp0Idx));
-        // complete array of mole fractions
-        fluidState.setMoleFraction(phase0Idx, comp1Idx, 1. - fluidState.moleFraction(phase0Idx,comp0Idx));
-        fluidState.setMoleFraction(phase1Idx, comp1Idx, 1. - fluidState.moleFraction(phase1Idx,comp0Idx));
-
         // complete phase mass fractions
-        fluidState.setNu(phase1Idx, 1. - fluidState.phaseMassFraction(phase0Idx));
+        phaseMassFraction[phase1Idx] = 1.0 - phaseMassFraction[phase0Idx];
 
         // get densities with correct composition
         fluidState.setDensity(phase0Idx, FluidSystem::density(fluidState, phase0Idx));
@@ -174,10 +154,11 @@ public:
         fluidState.setMolarDensity(phase0Idx, FluidSystem::molarDensity(fluidState, phase0Idx));
         fluidState.setMolarDensity(phase1Idx, FluidSystem::molarDensity(fluidState, phase1Idx));
 
-        Scalar sw = fluidState.phaseMassFraction(phase0Idx) / fluidState.density(phase0Idx);
-        sw /= (fluidState.phaseMassFraction(phase0Idx) / fluidState.density(phase0Idx)
-                    + fluidState.phaseMassFraction(phase1Idx) / fluidState.density(phase1Idx));
+        Scalar sw = phaseMassFraction[phase0Idx] / fluidState.density(phase0Idx);
+        sw /= (phaseMassFraction[phase0Idx] / fluidState.density(phase0Idx)
+                    + phaseMassFraction[phase1Idx] / fluidState.density(phase1Idx));
         fluidState.setSaturation(phase0Idx, sw);
+        fluidState.setSaturation(phase1Idx, 1.0-sw);
     }
 
     /*!
@@ -264,23 +245,8 @@ public:
         // get mole fraction from equilibrium constants
         fluidState.setMoleFraction(phase0Idx,comp0Idx, ((1. - k11) / (k10 - k11)));
         fluidState.setMoleFraction(phase1Idx,comp0Idx, (fluidState.moleFraction(phase0Idx,comp0Idx) * k10));
-
-        // transform mole to mass fractions
-        fluidState.setMassFraction(phase0Idx, comp0Idx,
-                (fluidState.moleFraction(phase0Idx,comp0Idx) * FluidSystem::molarMass(comp0Idx)
-                / ( fluidState.moleFraction(phase0Idx,comp0Idx) * FluidSystem::molarMass(comp0Idx)
-                    + (1. - fluidState.moleFraction(phase0Idx,comp0Idx)) * FluidSystem::molarMass(comp1Idx))));
-        fluidState.setMassFraction(phase1Idx,comp0Idx,
-                (fluidState.moleFraction(phase1Idx,comp0Idx) * FluidSystem::molarMass(comp0Idx)
-                / ( fluidState.moleFraction(phase1Idx,comp0Idx) * FluidSystem::molarMass(comp0Idx)
-                    + (1. - fluidState.moleFraction(phase1Idx,comp0Idx)) * FluidSystem::molarMass(comp1Idx))));
-
-        // complete array of mass fractions
-        fluidState.setMassFraction(phase0Idx, comp1Idx, 1. - fluidState.massFraction(phase0Idx,comp0Idx));
-        fluidState.setMassFraction(phase1Idx, comp1Idx, 1. - fluidState.massFraction(phase1Idx,comp0Idx));
-        // complete array of mole fractions
-        fluidState.setMoleFraction(phase0Idx, comp1Idx, 1. - fluidState.moleFraction(phase0Idx,comp0Idx));
-        fluidState.setMoleFraction(phase1Idx, comp1Idx, 1. - fluidState.moleFraction(phase1Idx,comp0Idx));
+        fluidState.setMoleFraction(phase0Idx, comp1Idx, 1.0 - fluidState.moleFraction(phase0Idx,comp0Idx));
+        fluidState.setMoleFraction(phase1Idx, comp1Idx, 1.0 - fluidState.moleFraction(phase1Idx,comp0Idx));
 
         // get densities with correct composition
         fluidState.setDensity(phase0Idx, FluidSystem::density(fluidState, phase0Idx));
@@ -290,6 +256,7 @@ public:
 
         // set saturation
         fluidState.setSaturation(phase0Idx, saturation);
+        fluidState.setSaturation(phase1Idx, 1.0-saturation);
     }
 //@}
 };
