@@ -27,10 +27,21 @@
 #ifndef DUMUX_PROPERTIES_HH
 #define DUMUX_PROPERTIES_HH
 
+// explicitly guard the include so that the property system
+// header doesn't need to be opened and checked all the time
 #ifndef DUMUX_PROPERTY_SYSTEM_HH
 #include <dumux/common/properties/propertysystem.hh>
-#include <dumux/common/properties/propertysystemmacros.hh>
+
+// remove this after release 3.1 to disable macros per default
+#ifndef DUMUX_ENABLE_OLD_PROPERTY_MACROS
+#define DUMUX_ENABLE_OLD_PROPERTY_MACROS 1
 #endif
+
+// remove this after release 3.2 to remove macros completely
+#if DUMUX_ENABLE_OLD_PROPERTY_MACROS
+#include <dumux/common/properties/propertysystemmacros.hh>
+#endif // DUMUX_ENABLE_OLD_PROPERTY_MACROS
+#endif // DUMUX_PROPERTY_SYSTEM_HH
 
 namespace Dumux {
 namespace Properties {
