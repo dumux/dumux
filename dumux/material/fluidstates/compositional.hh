@@ -125,6 +125,19 @@ public:
     }
 
     /*!
+     * \brief Returns the phase mass fraction, i.e. phase mass per total mass \f$\mathrm{[kg/kg]}\f$.
+     * \param phaseIdx the index of the phase
+     */
+    Scalar phaseMassFraction(int phaseIdx)
+    {
+        Scalar totalMass = 0.0;
+        for (int pIdx = 0; pIdx < numPhases; ++pIdx)
+            totalMass += saturation(pIdx)*density(pIdx);
+
+        return saturation(phaseIdx)*density(phaseIdx) / totalMass;
+    }
+
+    /*!
      * \brief The average molar mass \f$\overline M_\alpha\f$ of phase \f$\alpha\f$ in \f$\mathrm{[kg/mol]}\f$
      *
      * The average molar mass is the mean mass of a mole of the
