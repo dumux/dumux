@@ -701,6 +701,41 @@ public:
 
         return IterativePreconditionedSolverImpl::template solveWithGMRes<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
+
+    std::string name() const
+    {
+        return "ILUn preconditioned GMRes solver";
+    }
+};
+
+/*!
+ * \ingroup Linear
+ * \brief Solver for simple block-diagonal matrices (e.g. from explicit time stepping schemes)
+ *
+ * Solver: Single Jacobi iteration
+ * Preconditioner: Unity
+ */
+class ExplicitDiagonalSolver : public LinearSolver
+{
+public:
+    using LinearSolver::LinearSolver;
+
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    bool solve(const Matrix& A, Vector& x, const Vector& b)
+    {
+        Vector rhs(b);
+        Dune::SeqJac<Matrix, Vector, Vector, precondBlockLevel> jac(A, 1, 1.0);
+        jac.pre(x, rhs);
+        jac.apply(x, rhs);
+        jac.post(x);
+        return true;
+    }
+
+    std::string name() const
+    {
+        return "Explicit diagonal matrix solver";
+    }
 };
 
 #if HAVE_SUPERLU
