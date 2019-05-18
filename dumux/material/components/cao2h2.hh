@@ -25,7 +25,6 @@
 #define DUMUX_CAO2H2_HH
 
 #include <dumux/common/exceptions.hh>
-#include <dune/common/deprecated.hh>
 
 #include <cmath>
 #include <iostream>
