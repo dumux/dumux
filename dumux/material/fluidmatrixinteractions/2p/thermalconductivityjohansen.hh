@@ -99,6 +99,10 @@ public:
     template<class VolumeVariables>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
     {
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+        static_assert(FluidSystem::numPhases == 2, "ThermalConductivitySomerton only works for two-phase fluid systems!");
+        // TODO: there should be an assertion that the indices are correct and 0 is actually the wetting phase!
+
         const Scalar sw = volVars.saturation(Indices::wPhaseIdx);
         const Scalar lambdaW = volVars.fluidThermalConductivity(Indices::wPhaseIdx);
         const Scalar lambdaN = volVars.fluidThermalConductivity(Indices::nPhaseIdx);
