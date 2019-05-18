@@ -26,6 +26,7 @@
 
 #include <algorithm>
 
+#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -38,27 +39,32 @@ class ThermalConductivityAverage
 {
 public:
     /*!
-     * \brief Relation for a simple effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
-     *
-     * \param volVars volume variables
-     * \param spatialParams spatial parameters
-     * \param element element (to be passed to spatialParams)
-     * \param fvGeometry fvGeometry (to be passed to spatialParams)
-     * \param scv scv (to be passed to spatialParams)
-     *
-     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry, class SubControlVolume>
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    DUNE_DEPRECATED_MSG("Signature deprecated. Use signature with volume variables only!")
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
                                                const SpatialParams& spatialParams,
                                                const Element& element,
                                                const FVGeometry& fvGeometry,
-                                               const SubControlVolume& scv)
+                                               const typename FVGeometry::SubControlVolume& scv)
+    {
+        return effectiveThermalConductivity(volVars);
+    }
+
+    /*!
+     * \brief Relation for a simple effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     *
+     * \param volVars volume variables
+     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     */
+    template<class VolumeVariables>
+    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
     {
         //Get the thermal conductivities and the porosity from the volume variables
-        Scalar lambdaW = volVars.fluidThermalConductivity(0);
-        Scalar lambdaSolid = volVars.solidThermalConductivity();
-        Scalar porosity = volVars.porosity();
+        const Scalar lambdaW = volVars.fluidThermalConductivity(0);
+        const Scalar lambdaSolid = volVars.solidThermalConductivity();
+        const Scalar porosity = volVars.porosity();
 
         return lambdaSolid*(1-porosity) + lambdaW*porosity;
     }

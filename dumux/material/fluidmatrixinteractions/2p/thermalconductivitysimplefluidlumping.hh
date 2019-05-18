@@ -27,6 +27,8 @@
 #include <assert.h>
 #include <algorithm>
 
+#include <dune/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -40,29 +42,35 @@ class ThermalConductivitySimpleFluidLumping
 
 public:
     /*!
-     * \brief Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
-     *
-     * \param volVars volume variables
-     * \param spatialParams spatial parameters
-     * \param element element (to be passed to spatialParams)
-     * \param fvGeometry fvGeometry (to be passed to spatialParams)
-     * \param scv the sub-control volume
-     * \todo TODO: Fix this law for changing wettability
-     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry, class SubControlVolume>
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    DUNE_DEPRECATED_MSG("Signature deprecated. Use signature with volume variables only!")
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
                                                const SpatialParams& spatialParams,
                                                const Element& element,
                                                const FVGeometry& fvGeometry,
-                                               SubControlVolume& scv)
+                                               const typename FVGeometry::SubControlVolume& scv)
+    {
+        return effectiveThermalConductivity(volVars);
+    }
+
+    /*!
+     * \brief Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     *
+     * \param volVars volume variables
+     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     * \todo TODO: Fix this law for changing wettability
+     */
+    template<class VolumeVariables>
+    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
     {
         using FluidSystem = typename VolumeVariables::FluidSystem;
-        Scalar sw = volVars.saturation(FluidSystem::phase0Idx);
-        Scalar lambdaW = volVars.fluidThermalConductivity(FluidSystem::phase0Idx);
-        Scalar lambdaN = volVars.fluidThermalConductivity(FluidSystem::phase1Idx);
-        Scalar lambdaSolid = volVars.solidThermalConductivity();
-        Scalar porosity = volVars.porosity();
+        const Scalar sw = volVars.saturation(FluidSystem::phase0Idx);
+        const Scalar lambdaW = volVars.fluidThermalConductivity(FluidSystem::phase0Idx);
+        const Scalar lambdaN = volVars.fluidThermalConductivity(FluidSystem::phase1Idx);
+        const Scalar lambdaSolid = volVars.solidThermalConductivity();
+        const Scalar porosity = volVars.porosity();
 
         return effectiveThermalConductivity(sw, lambdaW, lambdaN, lambdaSolid, porosity);
     }
