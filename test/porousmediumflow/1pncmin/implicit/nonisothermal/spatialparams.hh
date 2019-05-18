@@ -28,9 +28,6 @@
 
 #include <dumux/material/spatialparams/fv1p.hh>
 
-#include <dumux/material/fluidmatrixinteractions/mineralization/effectivesoliddensity.hh>
-#include <dumux/material/fluidmatrixinteractions/mineralization/effectivesolidheatcapacity.hh>
-
 namespace Dumux {
 
 /*!

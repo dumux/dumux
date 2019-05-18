@@ -1,4 +1,0 @@
-install(FILES
-effectivesoliddensity.hh
-effectivesolidheatcapacity.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/mineralization)
