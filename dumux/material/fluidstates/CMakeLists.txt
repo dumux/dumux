@@ -1,5 +1,4 @@
 install(FILES
-2p2c.hh
 adapter.hh
 compositional.hh
 immiscible.hh
