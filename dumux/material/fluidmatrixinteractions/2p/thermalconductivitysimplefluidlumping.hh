@@ -21,8 +21,8 @@
  * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  */
-#ifndef THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
-#define THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
+#ifndef DUMUX_MATERIAL_THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
+#define DUMUX_MATERIAL_THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
 
 #include <assert.h>
 #include <algorithm>

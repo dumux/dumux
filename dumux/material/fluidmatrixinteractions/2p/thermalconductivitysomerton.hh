@@ -21,8 +21,8 @@
  * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  */
-#ifndef THERMALCONDUCTIVITY_SOMERTON_HH
-#define THERMALCONDUCTIVITY_SOMERTON_HH
+#ifndef DUMUX_MATERIAL_THERMALCONDUCTIVITY_SOMERTON_HH
+#define DUMUX_MATERIAL_THERMALCONDUCTIVITY_SOMERTON_HH
 
 #include <algorithm>
 #include <cmath>

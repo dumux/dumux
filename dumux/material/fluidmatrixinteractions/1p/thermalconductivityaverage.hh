@@ -21,8 +21,8 @@
  * \ingroup Fluidmatrixinteractions
  * \brief Reation for a simple effective thermal conductivity
  */
-#ifndef THERMALCONDUCTIVITY_AVERAGE_HH
-#define THERMALCONDUCTIVITY_AVERAGE_HH
+#ifndef DUMUX_MATERIAL_THERMALCONDUCTIVITY_AVERAGE_HH
+#define DUMUX_MATERIAL_THERMALCONDUCTIVITY_AVERAGE_HH
 
 #include <algorithm>
 
