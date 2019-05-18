@@ -21,8 +21,8 @@
  * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective diffusion coefficient
  */
-#ifndef DIFFUSIVITY_CONSTANT_TORTUOSITY_HH
-#define DIFFUSIVITY_CONSTANT_TORTUOSITY_HH
+#ifndef DUMUX_MATERIAL_DIFFUSIVITY_CONSTANT_TORTUOSITY_HH
+#define DUMUX_MATERIAL_DIFFUSIVITY_CONSTANT_TORTUOSITY_HH
 
 #include <dumux/common/parameters.hh>
 

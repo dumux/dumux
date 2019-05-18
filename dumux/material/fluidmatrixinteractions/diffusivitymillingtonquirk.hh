@@ -21,8 +21,8 @@
  * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective diffusion coefficient
  */
-#ifndef DIFFUSIVITY_MILLINGTON_QUIRK_HH
-#define DIFFUSIVITY_MILLINGTON_QUIRK_HH
+#ifndef DUMUX_MATERIAL_DIFFUSIVITY_MILLINGTON_QUIRK_HH
+#define DUMUX_MATERIAL_DIFFUSIVITY_MILLINGTON_QUIRK_HH
 
 #include <cmath>
 
