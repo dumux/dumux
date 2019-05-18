@@ -61,13 +61,20 @@ public:
     template<class VolumeVariables>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
     {
-        //Get the thermal conductivities and the porosity from the volume variables
-        const Scalar lambdaW = volVars.fluidThermalConductivity(0);
+        constexpr int numFluidPhases = VolumeVariables::numFluidPhases();
+
+        // Get the thermal conductivities and the porosity from the volume variables
+        Scalar lambdaFluid = 0.0;
+        for (int phaseIdx = 0; phaseIdx < numFluidPhases; ++phaseIdx)
+            lambdaFluid += volVars.fluidThermalConductivity(phaseIdx)*volVars.saturation(phaseIdx);
+
         const Scalar lambdaSolid = volVars.solidThermalConductivity();
         const Scalar porosity = volVars.porosity();
 
-        return lambdaSolid*(1-porosity) + lambdaW*porosity;
+        return lambdaSolid*(1-porosity) + lambdaFluid*porosity;
     }
 };
+
 } // end namespace Dumux
+
 #endif
