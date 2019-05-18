@@ -75,7 +75,7 @@ public:
 
     /*! \name Acess to primary variables */
     //@{
-    //! \copydoc TwoPTwoCFluidState::pressure()
+    //! DOC ME!
     Scalar pressure(int phaseIdx)
     {
         if(fluidStateType_ == simple)
@@ -85,7 +85,7 @@ public:
         else
             return this->fluidState_->pressure(phaseIdx);
     }
-    //! \copydoc TwoPTwoCFluidState::pressure()
+    //! DOC ME!
     const Scalar pressure(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -144,7 +144,7 @@ public:
 
     /*! \name Acess to secondary variables */
     //@{
-    //! \copydoc TwoPTwoCFluidState::setSaturation()
+    //! DOC ME!
     void setSaturation(int phaseIdx, Scalar value)
     {
         if(fluidStateType_ == simple)
@@ -153,9 +153,12 @@ public:
             manipulateSimpleFluidState().setPresentPhaseIdx((value==0.) ? nPhaseIdx : wPhaseIdx);
         }
         else
+        {
             manipulateFluidState().setSaturation(phaseIdx, value);
+            manipulateFluidState().setSaturation(1-phaseIdx, 1.0-value);
+        }
     }
-    //! \copydoc TwoPTwoCFluidState::saturation()
+    //! DOC ME!
     const Scalar saturation(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -166,7 +169,7 @@ public:
             return this->fluidState_->saturation(phaseIdx);
     }
 
-    //! \copydoc TwoPTwoCFluidState::setViscosity()
+    //! DOC ME!
     void setViscosity(int phaseIdx, Scalar value)
     {
         if(fluidStateType_ == simple)
@@ -177,7 +180,7 @@ public:
         else
             manipulateFluidState().setViscosity(phaseIdx, value);
     }
-    //! \copydoc TwoPTwoCFluidState::viscosity()
+    //! DOC ME!
     const Scalar viscosity(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -191,7 +194,7 @@ public:
     }
 
 
-    //! \copydoc TwoPTwoCFluidState::capillaryPressure()
+    //! DOC ME!
     const Scalar capillaryPressure() const
     {
         if(fluidStateType_ == simple)
@@ -200,7 +203,7 @@ public:
             return this->fluidState_->pressure(nPhaseIdx) - this->fluidState_->pressure(wPhaseIdx);
     }
 
-    //! \copydoc TwoPTwoCFluidState::density()
+    //! DOC ME!
     const Scalar density(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -211,7 +214,7 @@ public:
             return this->fluidState_->density(phaseIdx);
     }
 
-    //! \copydoc TwoPTwoCFluidState::massFraction()
+    //! DOC ME!
     const Scalar massFraction(int phaseIdx, int compIdx) const
     {
         if(fluidStateType_ == simple)
@@ -222,7 +225,7 @@ public:
             return this->fluidState_->massFraction(phaseIdx, compIdx);
     }
 
-    //! \copydoc TwoPTwoCFluidState::moleFraction()
+    //! DOC ME!
     const Scalar moleFraction(int phaseIdx, int compIdx) const
     {
         if(fluidStateType_ == simple)
@@ -232,7 +235,7 @@ public:
         else
             return this->fluidState_->moleFraction(phaseIdx, compIdx);
     }
-    //! \copydoc TwoPTwoCFluidState::temperature()
+    //! DOC ME!
     const Scalar temperature(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -243,7 +246,7 @@ public:
             return this->fluidState_->temperature(phaseIdx);
     }
 
-    //! \copydoc TwoPTwoCFluidState::phaseMassFraction()
+    //! DOC ME!
     const Scalar phaseMassFraction(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
