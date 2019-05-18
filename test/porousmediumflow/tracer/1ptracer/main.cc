@@ -24,9 +24,6 @@
 
 #include <config.h>
 
-#include "problem_1p.hh"
-#include "problem_tracer.hh"
-
 #include <ctime>
 #include <iostream>
 
@@ -40,12 +37,16 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/pdesolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
+
+#include "problem_1p.hh"
+#include "problem_tracer.hh"
 
 int main(int argc, char** argv) try
 {
@@ -83,6 +84,7 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
     // setup & solve 1p problem on this grid
     ////////////////////////////////////////////////////////////
+    Dune::Timer timer;
 
     //! create the finite volume grid geometry
     using FVGridGeometry = GetPropType<OnePTypeTag, Properties::FVGridGeometry>;
@@ -94,13 +96,8 @@ int main(int argc, char** argv) try
     auto problemOneP = std::make_shared<OnePProblem>(fvGridGeometry);
 
     //! the solution vector
-    using JacobianMatrix = GetPropType<OnePTypeTag, Properties::JacobianMatrix>;
     using SolutionVector = GetPropType<OnePTypeTag, Properties::SolutionVector>;
     SolutionVector p(leafGridView.size(0));
-
-    //! the linear system
-    auto A = std::make_shared<JacobianMatrix>();
-    auto r = std::make_shared<SolutionVector>();
 
     //! the grid variables
     using OnePGridVariables = GetPropType<OnePTypeTag, Properties::GridVariables>;
@@ -110,28 +107,14 @@ int main(int argc, char** argv) try
     //! the assembler
     using OnePAssembler = FVAssembler<OnePTypeTag, DiffMethod::analytic>;
     auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, fvGridGeometry, onePGridVariables);
-    assemblerOneP->setLinearSystem(A, r);
 
-    Dune::Timer timer;
-    // assemble the local jacobian and the residual
-    Dune::Timer assemblyTimer; std::cout << "Assembling linear system ..." << std::flush;
-    assemblerOneP->assembleJacobianAndResidual(p);
-    assemblyTimer.stop(); std::cout << " took " << assemblyTimer.elapsed() << " seconds." << std::endl;
+    //! the linear solver
+    using OnePLinearSolver = UMFPackBackend;
+    auto onePLinearSolver = std::make_shared<OnePLinearSolver>();
 
-    // we solve Ax = -r
-    (*r) *= -1.0;
-
-    //! solve the 1p problem
-    using LinearSolver = UMFPackBackend;
-    Dune::Timer solverTimer; std::cout << "Solving linear system ..." << std::flush;
-    auto linearSolver = std::make_shared<LinearSolver>();
-    linearSolver->solve(*A, p, *r);
-    solverTimer.stop(); std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
-
-    //! update the grid variables
-    Dune::Timer updateTimer; std::cout << "Updating variables ..." << std::flush;
-    onePGridVariables->update(p);
-    updateTimer.elapsed(); std::cout << " took " << updateTimer.elapsed() << std::endl;
+    //! the pde system solver
+    LinearPDESolver<OnePAssembler, OnePLinearSolver> onePSolver(assemblerOneP, onePLinearSolver);
+    onePSolver.solve(p);
 
     //! write output to vtk
     using GridView = GetPropType<OnePTypeTag, Properties::GridView>;
@@ -202,7 +185,7 @@ int main(int argc, char** argv) try
     tracerProblem->spatialParams().setVolumeFlux(volumeFlux);
 
     //! the solution vector
-    SolutionVector x(leafGridView.size(0));
+    SolutionVector x;
     tracerProblem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -210,6 +193,14 @@ int main(int argc, char** argv) try
     using GridVariables = GetPropType<TracerTypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(tracerProblem, fvGridGeometry);
     gridVariables->init(x);
+
+    //! intialize the vtk output module
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, tracerProblem->name());
+    using IOFields = GetPropType<TracerTypeTag, Properties::IOFields>;
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+    using VelocityOutput = GetPropType<TracerTypeTag, Properties::VelocityOutput>;
+    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
+    vtkWriter.write(0.0);
 
     //! get some time loop parameters
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
@@ -223,15 +214,13 @@ int main(int argc, char** argv) try
     //! the assembler with time loop for instationary problem
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
     auto assembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, gridVariables, timeLoop);
-    assembler->setLinearSystem(A, r);
 
-    //! intialize the vtk output module
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, tracerProblem->name());
-    using IOFields = GetPropType<TracerTypeTag, Properties::IOFields>;
-    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-    using VelocityOutput = GetPropType<TracerTypeTag, Properties::VelocityOutput>;
-    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    vtkWriter.write(0.0);
+    //! the linear solver
+    using TracerLinearSolver = ExplicitDiagonalSolver;
+    auto linearSolver = std::make_shared<TracerLinearSolver>();
+
+    //! the pde system solver
+    LinearPDESolver<TracerAssembler, TracerLinearSolver> solver(assembler, linearSolver);
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // run instationary non-linear simulation
@@ -246,29 +235,8 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
-        Dune::Timer assembleTimer;
-        assembler->assembleJacobianAndResidual(x);
-        assembleTimer.stop();
-
-        // solve the linear system A(xOld-xNew) = r
-        Dune::Timer solveTimer;
-        SolutionVector xDelta(x);
-        linearSolver->solve(*A, xDelta, *r);
-        solveTimer.stop();
-
-        // update solution and grid variables
-        updateTimer.reset();
-        x -= xDelta;
-        gridVariables->update(x);
-        updateTimer.stop();
-
-        // statistics
-        const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
-        std::cout << "Assemble/solve/update time: "
-                  <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
-                  <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
-                  <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
-                  <<  std::endl;
+        // assemble, solve, update
+        solver.solve(x);
 
         // make the new solution the old solution
         xOld = x;
@@ -302,12 +270,12 @@ int main(int argc, char** argv) try
     return 0;
 
 }
-catch (Dumux::ParameterException &e)
+catch (const Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;
     return 1;
 }
-catch (Dune::DGFException & e)
+catch (const Dune::DGFException & e)
 {
     std::cerr << "DGF exception thrown (" << e <<
                  "). Most likely, the DGF file name is wrong "
@@ -316,7 +284,7 @@ catch (Dune::DGFException & e)
                  << " ---> Abort!" << std::endl;
     return 2;
 }
-catch (Dune::Exception &e)
+catch (const Dune::Exception &e)
 {
     std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
     return 3;
