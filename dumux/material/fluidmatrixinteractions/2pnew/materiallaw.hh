@@ -27,22 +27,10 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/material/fluidmatrixinteractions/2pnew/efftoabsdefaultpolicy.hh>
-#include <dumux/material/fluidmatrixinteractions/2pnew/defaultregularization.hh>
+#include <dumux/material/fluidmatrixinteractions/2pnew/regularization.hh>
 
 namespace Dumux {
 namespace FluidMatrix {
-
-/*!
- * \ingroup Fluidmatrixinteractions
- * \brief A tag to turn off regularization and it's overhead
- */
-struct NoRegularization
-{
-    //! Init does nothing
-    template<typename... Args> void init(Args&&...) {}
-    //! No parameters
-    template<class S> struct Params {};
-};
 
 /*!
  * \ingroup Fluidmatrixinteractions
@@ -59,7 +47,9 @@ template<class ScalarType,
          class EffToAbsPolicy = TwoPEffToAbsDefaultPolicy>
 class TwoPMaterialLaw
 {
+    using NoRegularization = NoTwoPRegularization<ScalarType>;
 public:
+
     using Scalar = ScalarType;
     using BaseLawParams = typename BaseLaw::template Params<Scalar>;
     using EffToAbsParams = typename EffToAbsPolicy::template Params<Scalar>;
@@ -68,9 +58,8 @@ public:
     /*!
      * \brief Return whether this law is regularized
      */
-    template<class R = Regularization>
     static constexpr bool isRegularized()
-    { return !std::is_same<R, NoRegularization>::value; }
+    { return !std::is_same<Regularization, NoRegularization>::value; }
 
     /*!
      * \brief Deleted default constructor (so we are never in an undefined state)
@@ -103,48 +92,35 @@ public:
     }
 
     /*!
-     * \brief The non-regularized capillary pressure-saturation curve
+     * \brief The capillary pressure-saturation curve
      */
-    template<class R = Regularization, typename std::enable_if_t<!isRegularized<R>(), int> = 0>
-    Scalar pc(const Scalar sw) const
-    {
-        return BaseLaw::pc(EffToAbsPolicy::swToSwe(sw, effToAbsParams_), baseParams_);
-    }
-
-    /*!
-     * \brief The regularized capillary pressure-saturation curve
-     */
-    template<class R = Regularization, typename std::enable_if_t<isRegularized<R>(), int> = 0>
+    template<bool enableRegularization = isRegularized()>
     Scalar pc(const Scalar sw) const
     {
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
-        const auto regularized = regularization_.pc(swe);
-        if (regularized)
-            return regularized.value();
+        if (enableRegularization)
+        {
+            const auto regularized = regularization_.pc(swe);
+            if (regularized)
+                return regularized.value();
+        }
 
         return BaseLaw::pc(swe, baseParams_);
     }
 
     /*!
-     * \brief The non-regularized partial derivative of the capillary pressure w.r.t. the saturation
+     * \brief The partial derivative of the capillary pressure w.r.t. the saturation
      */
-    template<class R = Regularization, typename std::enable_if_t<!isRegularized<R>(), int> = 0>
-    Scalar dpc_dsw(const Scalar sw) const
-    {
-        return BaseLaw::dpc_dswe(EffToAbsPolicy::swToSwe(sw, effToAbsParams_), baseParams_)
-                * EffToAbsPolicy::dswe_dsw(effToAbsParams_);
-    }
-
-    /*!
-     * \brief The regularized partial derivative of the capillary pressure w.r.t. the saturation
-     */
-    template<class R = Regularization, typename std::enable_if_t<isRegularized<R>(), int> = 0>
+    template<bool enableRegularization = isRegularized()>
     Scalar dpc_dsw(const Scalar sw) const
     {
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
-        const auto regularized = regularization_.dpc_dsw(swe);
-        if (regularized)
-            return regularized.value()*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
+        if (enableRegularization)
+        {
+            const auto regularized = regularization_.dpc_dsw(swe);
+            if (regularized)
+                return regularized.value()*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
+        }
 
         return BaseLaw::dpc_dswe(swe, baseParams_)*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
     }
@@ -154,144 +130,105 @@ public:
      */
     Scalar endPointPc() const
     {
-        return BaseLaw::endPointPc();
+        return BaseLaw::endPointPc(baseParams_);
     }
 
     /*!
-     * \brief The non-regularized saturation-capillary pressure curve
+     * \brief The saturation-capillary pressure curve
      */
-    template<class R = Regularization, typename std::enable_if_t<!isRegularized<R>(), int> = 0>
+    template<bool enableRegularization = isRegularized()>
     Scalar sw(const Scalar pc) const
     {
+        if (enableRegularization)
+        {
+            const auto regularized = regularization_.sw(pc);
+            if (regularized)
+                return EffToAbsPolicy::sweToSw(regularized.value(), effToAbsParams_);
+        }
+
         return EffToAbsPolicy::sweToSw(BaseLaw::sw(pc, baseParams_), effToAbsParams_);
     }
 
     /*!
-     * \brief The regularized saturation-capillary pressure curve
+     * \brief The partial derivative of the saturation to the capillary pressure
      */
-    template<class R = Regularization, typename std::enable_if_t<isRegularized<R>(), int> = 0>
-    Scalar sw(const Scalar pc) const
+    template<bool enableRegularization = isRegularized()>
+    Scalar dsw_dpc(const Scalar pc) const
     {
-        const auto regularized = regularization_.sw(pc);
-        if (regularized)
-            return EffToAbsPolicy::sweToSw(regularized.value(), effToAbsParams_);
+        if (enableRegularization)
+        {
+            const auto regularized = regularization_.dsw_dpc(pc);
+            if (regularized)
+                return regularized.value()*EffToAbsPolicy::dsw_dswe(effToAbsParams_);
+        }
 
-        return sw<NoRegularization>(pc);
+        return BaseLaw::dswe_dpc(pc, baseParams_)*EffToAbsPolicy::dsw_dswe(effToAbsParams_);
     }
 
     /*!
-     * \brief The non-regularized partial derivative of the saturation to the capillary pressure
+     * \brief The relative permeability for the wetting phase
      */
-    template<class R = Regularization, typename std::enable_if_t<!isRegularized<R>(), int> = 0>
-    Scalar dsw_dpc(const Scalar pc)
-    {
-        return BaseLaw::dswe_dpc(pc, baseParams_)
-                * EffToAbsPolicy::dsw_dswe(effToAbsParams_);
-    }
-
-    /*!
-     * \brief The regularized partial derivative of the saturation to the capillary pressure
-     */
-    template<class R = Regularization, typename std::enable_if_t<isRegularized<R>(), int> = 0>
-    Scalar dsw_dpc(const Scalar pc)
-    {
-        const auto regularized = regularization_.dsw_dpc(pc);
-        if (regularized)
-            return regularized.value()*EffToAbsPolicy::dsw_dswe(effToAbsParams_);
-
-        return dsw_dpc<NoRegularization>(pc);
-    }
-
-    /*!
-     * \brief The non-regularized relative permeability for the wetting phase
-     */
-    template<class R = Regularization, typename std::enable_if_t<!isRegularized<R>(), int> = 0>
-    Scalar krw(const Scalar sw)
-    {
-        return BaseLaw::krw(EffToAbsPolicy::swToSwe(sw, effToAbsParams_), baseParams_);
-    }
-
-    /*!
-     * \brief The regularized relative permeability for the wetting phase
-     */
-    template<class R = Regularization, typename std::enable_if_t<isRegularized<R>(), int> = 0>
-    Scalar krw(const Scalar sw)
+    template<bool enableRegularization = isRegularized()>
+    Scalar krw(const Scalar sw) const
     {
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
-        const auto regularized = regularization_.krw(swe);
-        if (regularized)
-            return regularized.value();
+        if (enableRegularization)
+        {
+            const auto regularized = regularization_.krw(swe);
+            if (regularized)
+                return regularized.value();
+        }
 
         return BaseLaw::krw(swe, baseParams_);
     }
 
     /*!
-     * \brief The non-regularized derivative of the relative permeability for the wetting phase w.r.t. saturation
+     * \brief The derivative of the relative permeability for the wetting phase w.r.t. saturation
      */
-    template<class R = Regularization, typename std::enable_if_t<!isRegularized<R>(), int> = 0>
-    Scalar dkrw_dsw(const Scalar sw)
-    {
-        return BaseLaw::dkrw_dswe(EffToAbsPolicy::swToSwe(sw, effToAbsParams_), baseParams_)
-                * EffToAbsPolicy::dswe_dsw(effToAbsParams_);
-    }
-
-    /*!
-     * \brief The regularized derivative of the relative permeability for the wetting phase w.r.t. saturation
-     */
-    template<class R = Regularization, typename std::enable_if_t<isRegularized<R>(), int> = 0>
-    Scalar dkrw_dsw(const Scalar sw)
+    template<bool enableRegularization = isRegularized()>
+    Scalar dkrw_dsw(const Scalar sw) const
     {
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
-        const auto regularized = regularization_.dkrw_dswe(swe);
-        if (regularized)
-            return regularized.value()*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
+        if (enableRegularization)
+        {
+            const auto regularized = regularization_.dkrw_dswe(swe);
+            if (regularized)
+                return regularized.value()*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
+        }
 
         return BaseLaw::dkrw_dswe(swe, baseParams_)*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
     }
 
     /*!
-     * \brief The non-regularized relative permeability for the non-wetting phase
+     * \brief The relative permeability for the non-wetting phase
      */
-    template<class R = Regularization, typename std::enable_if_t<!isRegularized<R>(), int> = 0>
-    Scalar krn(const Scalar sw)
-    {
-        return BaseLaw::krw(EffToAbsPolicy::swToSwe(sw, effToAbsParams_), baseParams_);
-    }
-
-    /*!
-     * \brief The regularized relative permeability for the non-wetting phase
-     */
-    template<class R = Regularization, typename std::enable_if_t<isRegularized<R>(), int> = 0>
-    Scalar krn(const Scalar sw)
+    template<bool enableRegularization = isRegularized()>
+    Scalar krn(const Scalar sw) const
     {
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
-        const auto regularized = regularization_.krn(swe);
-        if (regularized)
-            return regularized.value();
+        if (enableRegularization)
+        {
+            const auto regularized = regularization_.krn(swe);
+            if (regularized)
+                return regularized.value();
+        }
 
         return BaseLaw::krw(swe, baseParams_);
     }
 
     /*!
-     * \brief The non-regularized derivative of the relative permeability for the non-wetting phase w.r.t. saturation
+     * \brief The derivative of the relative permeability for the non-wetting phase w.r.t. saturation
      */
-    template<class R = Regularization, typename std::enable_if_t<!isRegularized<R>(), int> = 0>
-    Scalar dkrn_dsw(const Scalar sw)
-    {
-        return BaseLaw::dkrn_dswe(EffToAbsPolicy::swToSwe(sw, effToAbsParams_), baseParams_)
-                * EffToAbsPolicy::dswe_dsw(effToAbsParams_);
-    }
-
-    /*!
-     * \brief The regularized derivative of the relative permeability for the non-wetting phase w.r.t. saturation
-     */
-    template<class R = Regularization, typename std::enable_if_t<isRegularized<R>(), int> = 0>
-    Scalar dkrn_dsw(const Scalar sw)
+    template<bool enableRegularization = isRegularized()>
+    Scalar dkrn_dsw(const Scalar sw) const
     {
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
-        const auto regularized = regularization_.dkrn_dswe(swe);
-        if (regularized)
-            return regularized.value();
+        if (enableRegularization)
+        {
+            const auto regularized = regularization_.dkrn_dswe(swe);
+            if (regularized)
+                return regularized.value();
+        }
 
         return BaseLaw::dkrn_dswe(swe, baseParams_)*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
     }
