@@ -58,9 +58,9 @@ public:
     template<class MaterialLaw>
     void init(const MaterialLaw* m, const std::string& paramGroup)
     {
-        const auto numPoints = getParam<std::size_t>(paramGroup + ".Spline.NumPoints", 10);
-        minSwThreshold_ = getParam<Scalar>(paramGroup + ".Spline.MinSw", 0.1);
-        maxSwThreshold_ = getParam<Scalar>(paramGroup + ".Spline.MaxSw", 1.0);
+        const auto numPoints = getParamFromGroup<std::size_t>(paramGroup, "Spline.NumPoints", 10);
+        minSwThreshold_ = getParamFromGroup<Scalar>(paramGroup, "Spline.MinSw", 0.1);
+        maxSwThreshold_ = getParamFromGroup<Scalar>(paramGroup, "Spline.MaxSw", 1.0);
 
         initSpline_(m, numPoints);
     }

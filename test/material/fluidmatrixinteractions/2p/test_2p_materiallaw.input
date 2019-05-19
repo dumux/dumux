@@ -1,3 +1,6 @@
 [MaterialLaw]
 VgAlpha = 2.956e-4
 Vgn = 1.5
+Spline.NumPoints = 40
+Spline.MinSw = 0.1
+Spline.MaxSw = 0.9
