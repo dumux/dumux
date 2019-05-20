@@ -52,6 +52,16 @@ struct CheckOverlapSize<DiscretizationMethod::box>
     { return gridView.comm().size() <= 1 || gridView.overlapSize(0) == 0; }
 };
 
+//! specialization for the finite element method which requires an overlap size of 0
+//! \note Overloads for bases that require overlap regions can be defined in the future
+template<>
+struct CheckOverlapSize<DiscretizationMethod::fem>
+{
+    template<class FEBasis>
+    static bool isValid(const FEBasis& feBasis) noexcept
+    { return feBasis.gridView().comm().size() <= 1 || feBasis.gridView().overlapSize(0) == 0; }
+};
+
 } // end namespace Dumux
 
 #endif
