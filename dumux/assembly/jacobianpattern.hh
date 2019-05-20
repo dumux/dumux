@@ -159,6 +159,51 @@ auto getJacobianPattern(const GridGeometry& gridGeometry)
     return pattern;
 }
 
+/*!
+ * \ingroup Assembly
+ * \brief Helper function to generate Jacobian pattern for finite element scheme
+ */
+template<class FEBasis>
+Dune::MatrixIndexSet getFEJacobianPattern(const FEBasis& feBasis)
+{
+    const auto numDofs = feBasis.size();
+
+    Dune::MatrixIndexSet pattern;
+    pattern.resize(numDofs, numDofs);
+
+    // matrix pattern for implicit Jacobians
+    for (const auto& element : elements(feBasis.gridView()))
+    {
+        auto localView = feBasis.localView();
+        localView.bind(element);
+
+        const auto& finiteElement = localView.tree().finiteElement();
+        const auto numLocalDofs = finiteElement.localBasis().size();
+        for (size_t i = 0; i < numLocalDofs; i++)
+        {
+            const auto dofIdxI = localView.index(i);
+            for (size_t j = 0; j < numLocalDofs; j++)
+            {
+                const auto dofIdxJ = localView.index(j);
+                pattern.add(dofIdxI, dofIdxJ);
+            }
+        }
+    }
+
+    return pattern;
+}
+
+/*!
+ * \ingroup Assembly
+ * \brief Helper function to generate Jacobian pattern for finite element scheme
+ * \note This interface is for compatibility with the other schemes. The pattern
+ *       in fem is the same independent of the time discretization scheme.
+ */
+template<bool isImplicit, class GridGeometry,
+         typename std::enable_if_t<(GridGeometry::discMethod == DiscretizationMethod::fem), int> = 0>
+Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
+{ return getFEJacobianPattern(gridGeometry.feBasis()); }
+
 } // namespace Dumux
 
 #endif
