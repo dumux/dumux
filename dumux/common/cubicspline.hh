@@ -124,15 +124,14 @@ public:
      */
     Scalar eval(const Scalar x) const
     {
-        if (x < x_[0])
+        if (x <= x_[0])
             return coeff_[0] + evalDerivative(x_[0])*(x - x_[0]);
         else if (x > x_[numPoints_-1])
             return coeff_[(numPoints_-1)*4] + evalDerivative(x_[numPoints_-1])*(x - x_[numPoints_-1]);
         else
         {
             const auto lookUpIndex = std::distance(x_.begin(), std::lower_bound(x_.begin(), x_.end(), x));
-            if (lookUpIndex == 0)
-                return coeff_[0];
+            assert(lookUpIndex != 0);
 
             // get coefficients
             const auto* coeff = coeff_.data() + (lookUpIndex-1)*4;
@@ -150,15 +149,14 @@ public:
      */
     Scalar evalDerivative(const Scalar x) const
     {
-        if (x < x_[0])
+        if (x <= x_[0])
             return coeff_[1]/(x_[1] - x_[0]);
         else if (x > x_[numPoints_-1])
             return coeff_[(numPoints_-1)*4 + 1]/(x_[numPoints_-1] - x_[numPoints_-2]);
         else
         {
             const auto lookUpIndex = std::distance(x_.begin(), std::lower_bound(x_.begin(), x_.end(), x));
-            if (lookUpIndex == 0)
-                return coeff_[1]/(x_[1] - x_[0]);
+            assert(lookUpIndex != 0);
 
             // get coefficients
             const auto* coeff = coeff_.data() + (lookUpIndex-1)*4;
