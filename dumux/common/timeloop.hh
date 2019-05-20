@@ -157,7 +157,7 @@ public:
         time_ = startTime;
         endTime_ = tEnd;
 
-        lastTimeStepSize_ = 0.0;
+        previousTimeStepSize_ = 0.0;
         userSetMaxTimeStepSize_ = std::numeric_limits<Scalar>::max();
         timeStepIdx_ = 0;
         finished_ = false;
@@ -178,7 +178,7 @@ public:
     {
         timeStepIdx_++;
         time_ += timeStepSize_;
-        lastTimeStepSize_ = timeStepSize_;
+        previousTimeStepSize_ = timeStepSize_;
 
         // compute how long the last time step took
         const auto cpuTime = wallClockTime();
@@ -283,6 +283,12 @@ public:
     { return timeStepIdx_; }
 
     /*!
+     * \brief The previous time step size
+     */
+    Scalar previousTimeStepSize() const
+    { return previousTimeStepSize_; }
+
+    /*!
      * \brief Specify whether the simulation is finished
      *
      * \param finished If true the simulation is considered finished
@@ -342,7 +348,7 @@ public:
                       << std::setprecision( 6 ) << timeStepWallClockTime_ << " seconds. "
                       << "Wall clock time: " << std::setprecision( 3 ) << cpuTime
                       << ", time: " << std::setprecision( 5 ) << time_
-                      << ", time step size: " << std::setprecision( 8 ) << lastTimeStepSize_
+                      << ", time step size: " << std::setprecision( 8 ) << previousTimeStepSize_
                       << std::endl;
         }
     }
@@ -384,7 +390,7 @@ protected:
     Scalar endTime_;
 
     Scalar timeStepSize_;
-    Scalar lastTimeStepSize_;
+    Scalar previousTimeStepSize_;
     Scalar userSetMaxTimeStepSize_;
     Scalar timeAfterLastTimeStep_, timeStepWallClockTime_;
     int timeStepIdx_;
@@ -415,18 +421,18 @@ public:
     void advanceTimeStep() override
     {
         const auto dt = this->timeStepSize();
-        const auto nextTime = this->time()+dt;
+        const auto newTime = this->time()+dt;
 
         //! Check point management, TimeLoop::isCheckPoint() has to be called after this!
         // if we reached a periodic check point
-        if (periodicCheckPoints_ && Dune::FloatCmp::eq(nextTime, lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_, 1e-7))
+        if (periodicCheckPoints_ && Dune::FloatCmp::eq(newTime - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_, 1e-7))
         {
             lastPeriodicCheckPoint_ += deltaPeriodicCheckPoint_;
             isCheckPoint_ = true;
         }
 
         // or a manually set check point
-        else if (!checkPoints_.empty() && Dune::FloatCmp::eq(nextTime, checkPoints_.front(), 1e-7))
+        else if (!checkPoints_.empty() && Dune::FloatCmp::eq(newTime - checkPoints_.front(), 0.0, 1e-7))
         {
             checkPoints_.pop();
             isCheckPoint_ = true;
@@ -438,8 +444,32 @@ public:
             isCheckPoint_ = false;
         }
 
+        const auto previousTimeStepSize = this->previousTimeStepSize();
+
         // advance the time step like in the parent class
         TimeLoop<Scalar>::advanceTimeStep();
+
+        // if this is a check point we might have reduced the time step to reach this check point
+        // reset the time step size to the time step size before this time step
+        using std::max;
+        if (isCheckPoint_)
+            this->setTimeStepSize(max(dt, previousTimeStepSize));
+
+        // if there is a check point soon check if the time step after the next time step would be smaller
+        // than 20% of the next time step, if yes increase the suggested next time step to exactly reach the check point
+        // (in the limits of the maximum time step size)
+        auto nextDt = this->timeStepSize();
+        const auto threshold = 0.2*nextDt;
+        const auto nextTime = this->time() + nextDt;
+
+        if (periodicCheckPoints_ && Dune::FloatCmp::le(lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - nextTime, threshold))
+            nextDt = lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - this->time();
+
+        if (!checkPoints_.empty() && Dune::FloatCmp::le(checkPoints_.front() - nextTime, threshold))
+            nextDt = checkPoints_.front() - this->time();
+
+        assert(nextDt > 0.0);
+        this->setTimeStepSize(nextDt);
     }
 
     /*!
@@ -482,7 +512,7 @@ public:
                       << " seconds with the next check point at " << lastPeriodicCheckPoint_ + interval << " seconds." << std::endl;
 
         // check if the current time point is a check point
-        if (Dune::FloatCmp::eq(this->time(), lastPeriodicCheckPoint_, 1e-7))
+        if (Dune::FloatCmp::eq(this->time()-lastPeriodicCheckPoint_, 0.0, 1e-7))
             isCheckPoint_ = true;
 
         // make sure we respect this check point on the next time step
