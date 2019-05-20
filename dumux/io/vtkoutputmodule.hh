@@ -344,16 +344,17 @@ private:
                         velocityOutput_->calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
 
 #ifdef DUMUXFENICS
-                // write velocity for exchange with Fenics
+                // write velocity and liquid pressure for exchange with Fenics
                 if (name() == "test_stokes1p2cdarcy2p2chorizontal_darcy") // TODO make more general
                 {
-                    std::ofstream vpmForFenics;
-                    vpmForFenics.open ("vpmForFenics.csv", std::ios_base::app);
+                    std::ofstream pmDataForFenics;
+                    pmDataForFenics.open ("pmDataForFenics.csv", std::ios_base::app);
                     // write to output file
-                    vpmForFenics << eIdxGlobal << ","
+                    pmDataForFenics << eIdxGlobal << ","
                             << velocity[1][eIdxGlobal][0] << ","
-                            << velocity[1][eIdxGlobal][1] << "\n";
-                    vpmForFenics.close();
+                            << velocity[1][eIdxGlobal][1] << ","
+                            << volVarScalarData[3][eIdxGlobal] << "\n"; // TODO use index instead of '3'
+                    pmDataForFenics.close();
                 }
 #endif
 
