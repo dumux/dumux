@@ -452,6 +452,11 @@
      * \defgroup StaggeredDiscretization Staggered FV scheme
      * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets.
      */
+    /*!
+     * \ingroup Discretization
+     * \defgroup FEMDiscretization Finite element method
+     * \brief The finite element method
+     */
 /* ***************** Flux ******************/
 /*!
  * \defgroup Flux Flux
