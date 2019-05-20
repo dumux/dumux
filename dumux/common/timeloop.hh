@@ -451,25 +451,28 @@ public:
 
         // if this is a check point we might have reduced the time step to reach this check point
         // reset the time step size to the time step size before this time step
-        using std::max;
-        if (isCheckPoint_)
-            this->setTimeStepSize(max(dt, previousTimeStepSize));
+        if (!this->willBeFinished())
+        {
+            using std::max;
+            if (isCheckPoint_)
+                this->setTimeStepSize(max(dt, previousTimeStepSize));
 
-        // if there is a check point soon check if the time step after the next time step would be smaller
-        // than 20% of the next time step, if yes increase the suggested next time step to exactly reach the check point
-        // (in the limits of the maximum time step size)
-        auto nextDt = this->timeStepSize();
-        const auto threshold = 0.2*nextDt;
-        const auto nextTime = this->time() + nextDt;
+            // if there is a check point soon check if the time step after the next time step would be smaller
+            // than 20% of the next time step, if yes increase the suggested next time step to exactly reach the check point
+            // (in the limits of the maximum time step size)
+            auto nextDt = this->timeStepSize();
+            const auto threshold = 0.2*nextDt;
+            const auto nextTime = this->time() + nextDt;
 
-        if (periodicCheckPoints_ && Dune::FloatCmp::le(lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - nextTime, threshold))
-            nextDt = lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - this->time();
+            if (periodicCheckPoints_ && Dune::FloatCmp::le(lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - nextTime, threshold))
+                nextDt = lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - this->time();
 
-        if (!checkPoints_.empty() && Dune::FloatCmp::le(checkPoints_.front() - nextTime, threshold))
-            nextDt = checkPoints_.front() - this->time();
+            if (!checkPoints_.empty() && Dune::FloatCmp::le(checkPoints_.front() - nextTime, threshold))
+                nextDt = checkPoints_.front() - this->time();
 
-        assert(nextDt > 0.0);
-        this->setTimeStepSize(nextDt);
+            assert(nextDt > 0.0);
+            this->setTimeStepSize(nextDt);
+        }
     }
 
     /*!
