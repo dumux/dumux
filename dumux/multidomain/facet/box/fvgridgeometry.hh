@@ -35,7 +35,7 @@
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/basefvgridgeometry.hh>
+#include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/box/subcontrolvolume.hh>
 
@@ -92,10 +92,10 @@ class BoxFacetCouplingFVGridGeometry;
  */
 template<class Scalar, class GV, class Traits>
 class BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>
-: public BaseFVGridGeometry<BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>, GV, Traits>
+: public BaseGridGeometry<GV, Traits>
 {
     using ThisType = BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>;
-    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
@@ -350,10 +350,10 @@ private:
  */
 template<class Scalar, class GV, class Traits>
 class BoxFacetCouplingFVGridGeometry<Scalar, GV, false, Traits>
-: public BaseFVGridGeometry<BoxFacetCouplingFVGridGeometry<Scalar, GV, false, Traits>, GV, Traits>
+: public BaseGridGeometry<GV, Traits>
 {
     using ThisType = BoxFacetCouplingFVGridGeometry<Scalar, GV, false, Traits>;
-    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
