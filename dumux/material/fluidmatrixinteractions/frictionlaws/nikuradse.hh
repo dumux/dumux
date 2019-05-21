@@ -44,12 +44,12 @@ public:
     /*!
      * \brief Compute the friction ustar_h.
      *
-     * \param h water depth.
+     * \param waterDepth water depth.
      * \param ks the Strickler friction value.
      * \return ustar_h friction used for the source term in shallow water models.
      */
 
-    Scalar computeUstarH(const Scalar h,const Scalar ks)
+    Scalar computeUstarH(const Scalar waterDepth,const Scalar ks)
     {
         using std::pow;
         using std::log;
@@ -57,8 +57,8 @@ public:
         Scalar ustar_h = 0.0;
         Scalar rough_h = ks;
 
-        rough_h = limitRoughH(rough_h, h);
-        ustar_h = pow(0.41,2.0)/pow(log((12*(h + rough_h))/ks),2.0);
+        rough_h = limitRoughH(rough_h, waterDepth);
+        ustar_h = pow(0.41,2.0)/pow(log((12*(waterDepth + rough_h))/ks),2.0);
         return ustar_h;
     }
 
@@ -84,9 +84,9 @@ public:
      * the three empirical paramaters L, E and T, which describe the limiting curve.
      *
      * \param rough_h roughness height of the representive structure (e.g. largest grain size).
-     * \param h water depth.
+     * \param waterDepth water depth.
      */
-    Scalar limitRoughH(Scalar rough_h, const Scalar h)
+    Scalar limitRoughH(Scalar rough_h, const Scalar waterDepth)
     {
         using std::pow;
         using std::min;
@@ -98,7 +98,7 @@ public:
         Scalar mobility_max = 1.0; //!< maximal mobility
 
         auto minUpperH = rough_h * 2.0;
-        auto sw = min(h * (1.0/minUpperH),1.0);
+        auto sw = min(waterDepth * (1.0/minUpperH),1.0);
         sw = max(0.0,sw);
         auto mobility = (mobility_max * pow(sw,letL))/(pow(sw,letL) + letE * pow(1.0-sw,letT));
         return rough_h * (1.0 - mobility);

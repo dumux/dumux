@@ -25,7 +25,7 @@
 #ifndef DUMUX_SHALLOWWATER_BOUNDARYFLUXES_HH
 #define DUMUX_SHALLOWWATER_BOUNDARYFLUXES_HH
 
-#include <vector>
+#include <array>
 #include <cmath>
 
 namespace Dumux {
@@ -35,14 +35,14 @@ namespace ShallowWater {
  * \brief compute the cell state for fixed water depth boundary.
  */
 template<class Scalar, class GlobalPosition>
-std::vector<Scalar> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
+std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
                                             const Scalar waterDepthLeft,
                                             const Scalar velocityXLeft,
                                             const Scalar velocityYLeft,
                                             const GlobalPosition& nxy)
 
 {
-    std::vector<Scalar> cellStateRight(3);
+    std::array<Scalar, 3> cellStateRight;
     cellStateRight[0] = waterDepthBoundary;
 
     using std::sqrt;
@@ -59,13 +59,13 @@ std::vector<Scalar> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
  * \brief compute the cell state for a fixed discharge boundary.
  */
 template<class Scalar, class GlobalPosition>
-std::vector<Scalar> fixedDischargeBoundary(const Scalar qlocal,
+std::array<Scalar, 3> fixedDischargeBoundary(const Scalar qlocal,
                                            const Scalar waterDepthLeft,
                                            const Scalar velocityXLeft,
                                            const Scalar velocityYLeft,
                                            const GlobalPosition& nxy)
 {
-    std::vector<Scalar> cellStateRight(3);
+    std::array<Scalar, 3> cellStateRight;
     using std::abs;
     using std::sqrt;
     using std::max;
