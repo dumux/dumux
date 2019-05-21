@@ -238,19 +238,6 @@ public:
         const auto& nxy = scvf.unitOuterNormal();
         const auto gravity = this->spatialParams().gravity(scvf.center());
 
-
-        //left side q_in
-        if (scfv.center()[0] < 0.0 + eps_)
-        {
-
-        }
-
-
-        //right side fixed h
-        else if (scfv.center()[0] > 100.0 - eps_)
-
-        // no flow boundary
-
         auto riemannFlux = ShallowWater::riemannProblem(insideVolVars.waterDepth(),
                                                         insideVolVars.waterDepth(),
                                                         insideVolVars.velocity(0),

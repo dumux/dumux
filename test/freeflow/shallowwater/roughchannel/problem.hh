@@ -137,7 +137,8 @@ public:
         name_ = getParam<std::string>("Problem.Name");
         exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
         exactVelocityX_.resize(fvGridGeometry->numDofs(), 0.0);
-        hBoundary_ = this->gauklerManningStrickler(discharge_,manningN_,bedSlope_);
+        constManningN_ = this->spatialParams().frictionValue();
+        hBoundary_ = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
     }
 
     //! Get the analytical water depth
@@ -165,8 +166,7 @@ public:
     //! Udpate the analytical solution
     template<class SolutionVector, class GridVariables>
     void updateAnalyticalSolution(const SolutionVector& curSol,
-                                  const GridVariables& gridVariables,
-                                  const Scalar time)
+                                  const GridVariables& gridVariables)
     {
         using std::pow;
         using std::abs;
@@ -175,11 +175,9 @@ public:
         {
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
-
             auto elemVolVars = localView(gridVariables.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, curSol);
-
-            Scalar h = this->gauklerManningStrickler(discharge_,manningN_,bedSlope_);
+            Scalar h = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
             Scalar u = abs(discharge_)/h;
 
             const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
@@ -233,11 +231,11 @@ public:
         const auto& elementIndex = scv.elementIndex();
 
         const auto gravity = this->spatialParams().gravity(globalPos);
+        const auto manningN = this->spatialParams().frictionValue(globalPos);
         auto h = volVars.waterDepth();
         auto u = volVars.velocity(0);
         auto v = volVars.velocity(1);
-
-        auto ustarH = FrictionLawManning<Scalar>().computeUstarH(h,manningN_, gravity);
+        auto ustarH = FrictionLawManning<Scalar>().computeUstarH(h,manningN,gravity);
         auto uv = sqrt(pow(u,2.0) + pow(v,2.0));
 
         source[0] = 0.0;
@@ -291,7 +289,7 @@ public:
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& nxy = scvf.unitOuterNormal();
         const auto gravity = this->spatialParams().gravity(scvf.center());
-        std::vector<Scalar> boundaryStateVariables;
+        std::array<Scalar, 3> boundaryStateVariables;
 
         // impose discharge at the left side
         if (scvf.center()[0] < 0.0 + eps_)
@@ -374,9 +372,9 @@ private:
     std::vector<Scalar> exactWaterDepth_;
     std::vector<Scalar> exactVelocityX_;
     Scalar hBoundary_;
+    Scalar constManningN_; // analytic solution is only available for const friction.
 
     static constexpr Scalar bedSlope_ = 0.001;
-    static constexpr Scalar manningN_ = 0.025;
     static constexpr Scalar discharge_ = -1.0; // discharge at the inflow boundary
     static constexpr Scalar channelLenght_ = 100.0;
     static constexpr Scalar bedSurfaceLeft = 10.0;

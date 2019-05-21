@@ -68,6 +68,24 @@ public:
         return gravity_;
     }
 
+    /*! \brief Define the friction value.
+    *
+    * \return friction value
+    */
+    Scalar frictionValue(const GlobalPosition& globalPos) const
+    {
+        return frictionValue_;
+    }
+
+    /*! \brief Define the friction value.
+    *
+    * \return friction value
+    */
+    Scalar frictionValue() const
+    {
+        return frictionValue_;
+    }
+
     /*! \brief Define the bed surface
     *
     * \param element The current element
@@ -84,7 +102,7 @@ public:
 private:
     static constexpr Scalar gravity_ = 9.81;
     static constexpr Scalar bedSlope_ = 0.001;
-    static constexpr Scalar frictionValue_ = 0.02;
+    static constexpr Scalar frictionValue_ = 0.025;
 };
 
 } // end namespace Dumux
