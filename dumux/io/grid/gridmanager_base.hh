@@ -73,7 +73,9 @@ public:
     void init(const std::string& modelParamGroup = "")
     {
         DUNE_THROW(Dune::NotImplemented,
-            "The GridManager for grid type " << Dune::className<Grid>() << " is not implemented! Consider providing your own GridManager.");
+                    "The header with the GridManager specialization for grid type " << Dune::className<Grid>()
+                    << " is not included or no specialization has been implemented!"
+                    << " In case of the latter, consider providing your own GridManager.");
     }
 
     /*!
