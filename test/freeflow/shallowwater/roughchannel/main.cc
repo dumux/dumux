@@ -110,7 +110,7 @@ int main(int argc, char** argv) try
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables,x, problem->name());
     vtkWriter.addField(problem->getExactWaterDepth(), "exactWaterDepth");
     vtkWriter.addField(problem->getExactVelocityX(), "exactVelocityX");
-    problem->updateAnalyticalSolution(x,*gridVariables,0.0);
+    problem->updateAnalyticalSolution(x,*gridVariables);
     IOFields::initOutputModule(vtkWriter);
     vtkWriter.write(0.0);
 
@@ -141,7 +141,7 @@ int main(int argc, char** argv) try
         nonLinearSolver.solve(x,*timeLoop);
 
         // update the analytical solution
-        problem->updateAnalyticalSolution(x,*gridVariables,timeLoop->time()+timeLoop->timeStepSize());
+        problem->updateAnalyticalSolution(x,*gridVariables);
 
         // make the new solution the old solution
         xOld = x;
