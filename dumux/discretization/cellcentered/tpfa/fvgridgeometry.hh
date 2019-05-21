@@ -32,7 +32,7 @@
 #include <dumux/common/defaultmappertraits.hh>
 
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/basefvgridgeometry.hh>
+#include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
@@ -86,10 +86,10 @@ class CCTpfaFVGridGeometry;
  */
 template<class GV, class Traits>
 class CCTpfaFVGridGeometry<GV, true, Traits>
-: public BaseFVGridGeometry<CCTpfaFVGridGeometry<GV, true, Traits>, GV, Traits>
+: public BaseGridGeometry<GV, Traits>
 {
     using ThisType = CCTpfaFVGridGeometry<GV, true, Traits>;
-    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ParentType = BaseGridGeometry<GV, Traits>;
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using Element = typename GV::template Codim<0>::Entity;
@@ -362,10 +362,10 @@ private:
  */
 template<class GV, class Traits>
 class CCTpfaFVGridGeometry<GV, false, Traits>
-: public BaseFVGridGeometry<CCTpfaFVGridGeometry<GV, false, Traits>, GV, Traits>
+: public BaseGridGeometry<GV, Traits>
 {
     using ThisType = CCTpfaFVGridGeometry<GV, false, Traits>;
-    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ParentType = BaseGridGeometry<GV, Traits>;
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
 
     using GridIndexType = typename IndexTraits<GV>::GridIndex;

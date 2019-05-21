@@ -34,7 +34,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/defaultmappertraits.hh>
-#include <dumux/discretization/basefvgridgeometry.hh>
+#include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>
@@ -80,10 +80,10 @@ class BoxFVGridGeometry;
  */
 template<class Scalar, class GV, class Traits>
 class BoxFVGridGeometry<Scalar, GV, true, Traits>
-: public BaseFVGridGeometry<BoxFVGridGeometry<Scalar, GV, true, Traits>, GV, Traits>
+: public BaseGridGeometry<GV, Traits>
 {
     using ThisType = BoxFVGridGeometry<Scalar, GV, true, Traits>;
-    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
@@ -353,10 +353,10 @@ private:
  */
 template<class Scalar, class GV, class Traits>
 class BoxFVGridGeometry<Scalar, GV, false, Traits>
-: public BaseFVGridGeometry<BoxFVGridGeometry<Scalar, GV, false, Traits>, GV, Traits>
+: public BaseGridGeometry<GV, Traits>
 {
     using ThisType = BoxFVGridGeometry<Scalar, GV, false, Traits>;
-    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
 
     static const int dim = GV::dimension;
