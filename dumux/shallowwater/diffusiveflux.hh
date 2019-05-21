@@ -77,7 +77,7 @@ class SweDiffusiveFlux
         const auto& nxy = scvf.unitOuterNormal();
 
         //For now assume a constant given background viscosity visc_h = 1.0e-6
-        Scalar visc_h_bg = 1.0e-4;
+        Scalar visc_h_bg = 1.0e-6;
 
         //For now assume a turbulence model based on just the background eddy viscosity
         Scalar turbulence_model = 1;
@@ -118,13 +118,13 @@ class SweDiffusiveFlux
 
         if (turbulence_model > 0){
 
-          //Compute dx, dy
-          //dx = xr - xl;
-          //dy = yr - yl;
-
-          //compute the gradients
-          grad_u_s = (ur-ul)/dist;
-          grad_v_s = (vr-vl)/dist;
+          //Compute the gradients
+          //Only if both cells have sufficient water
+          //Does this result in problems with differentiability?
+          if (hl > 0.01 & hr > 0.01){
+            grad_u_s = (ur-ul)/dist;
+            grad_v_s = (vr-vl)/dist;
+          }
 
           //constant viscosity
           if(turbulence_model == 1){
@@ -146,20 +146,10 @@ class SweDiffusiveFlux
             //The roughness heights
             ks_l = problem.spatialParams().ks(element, insideScv);
             ks_r = problem.spatialParams().ks(element, outsideScv);
-            //ks_l = 0.05;
-            //ks_r = 0.05;
-            //std::cout << "ks = " << ks_l << std::endl;
-
-            //Use maximum or average ks?
-            //Scalar ks = std::max(ks_l,ks_r);
 
             //The frictionlaws
             auto frictionlaw_l =  problem.spatialParams().frictionlaw(element, insideScv);
             auto frictionlaw_r =  problem.spatialParams().frictionlaw(element, outsideScv);
-            //frictionlaw_l = 3;
-            //frictionlaw_r = 3;
-
-            //std::cout << "law = " << frictionlaw_l << std::endl;
 
             //Gravity
             Scalar grav_l = insideVolVars.getGravity();
@@ -171,15 +161,13 @@ class SweDiffusiveFlux
             //cf_l = insideVolVars.getFrictionUstarH();
             //cf_r = outsideVolVars.getFrictionUstarH();
 
-            //std::cout << "cf = " << cf_l << std::endl;
-
             //Velocity magnitude
             Scalar uvmag_l = std::sqrt(std::pow(ul,2.0) + std::pow(vl,2.0));
             Scalar uvmag_r = std::sqrt(std::pow(ur,2.0) + std::pow(vr,2.0));
 
             //Add Elder contribution nu_t = (kappa/6)*ustar*h = (kappa/6)*cf*|u|*h
             //kappa/ 6.0 --> 0.41/6 --> ~ 0.067 --> better named as c_eld
-            // alpha_t ranges between 0.2 and 1.0 for most applications
+            //alpha_t ranges between 0.2 and 1.0 for most applications
             Scalar c_eld = 0.41 / 6.0;
             viscosity_l += c_eld * cf_l * uvmag_l * hl;
             viscosity_r += c_eld * cf_r * uvmag_r * hr;
@@ -192,19 +180,16 @@ class SweDiffusiveFlux
             Scalar uvav = std::max(0.001, 0.5 * (uvmag_l+uvmag_r));
             f_eld_u = std::abs(uav)/uvav;
             f_eld_v = std::abs(vav)/uvav;
-
-            //std::cout << "visc = " << viscosity_l << std::endl;
           }
 
           //compute the diffusive fluxes (should these depend on the length of the edge?)
-          F_u = 0.5*(viscosity_l * hl + viscosity_r * hr) * grad_u_s; // * (1.0+nxy[0]*nxy[0]);
-          F_v = 0.5*(viscosity_l * hl + viscosity_r * hr) * grad_v_s; // * nxy[0]*nxy[1];
-          G_u = 0.5*(viscosity_l * hl + viscosity_r * hr) * grad_u_s; // * nxy[0]*nxy[1];
-          G_v = 0.5*(viscosity_l * hl + viscosity_r * hr) * grad_v_s; // * (1.0+nxy[1]*nxy[1]);
+          F_u = 0.5*(viscosity_l * hl + viscosity_r * hr) * grad_u_s * (1.0 + nxy[0]*nxy[0]);
+          F_v = 0.5*(viscosity_l * hl + viscosity_r * hr) * grad_v_s * nxy[0]*nxy[1];
+          G_u = 0.5*(viscosity_l * hl + viscosity_r * hr) * grad_u_s * nxy[0]*nxy[1];
+          G_v = 0.5*(viscosity_l * hl + viscosity_r * hr) * grad_v_s * (1.0 + nxy[1]*nxy[1]);
 
         }
 
-        std::cout << "F_u " << F_u << " F_v " << F_v << " G_u " << G_u << " G_v " << G_v << std::endl;
         //The actual stress term / diffusion flux for this edge
         //note the use of the Elder coefficient, which is one when not using the Elder turbulence model
         Scalar diff_u = f_eld_u*(F_u + G_u);
@@ -215,10 +200,8 @@ class SweDiffusiveFlux
 
         //The contribution to the total flux
         flux[0] = 0.0;
-        flux[1] = diff_u * scvf.area() * mobility[1] / insideScv.volume();
-        flux[2] = diff_v * scvf.area() * mobility[2] / insideScv.volume();
-
-        std::cout << "F_u " << F_u << " F_v " << F_v << " G_u " << G_u << " G_v " << G_v << std::endl;
+        flux[1] = -diff_u * scvf.area() * mobility[1]; // / insideScv.volume();
+        flux[2] = -diff_v * scvf.area() * mobility[2]; // / insideScv.volume();
 
         return flux;
     }
