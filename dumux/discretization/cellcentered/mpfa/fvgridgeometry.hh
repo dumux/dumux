@@ -31,7 +31,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/basefvgridgeometry.hh>
+#include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
 
 namespace Dumux {
@@ -68,10 +68,10 @@ void checkOverlapSizeCCMpfa(const GridView& gridView)
  */
 template<class GV, class Traits>
 class CCMpfaFVGridGeometry<GV, Traits, true>
-: public BaseFVGridGeometry<CCMpfaFVGridGeometry<GV, Traits, true>, GV, Traits>
+: public BaseGridGeometry<GV, Traits>
 {
     using ThisType = CCMpfaFVGridGeometry<GV, Traits, true>;
-    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ParentType = BaseGridGeometry<GV, Traits>;
 
     static constexpr int dim = GV::dimension;
     static constexpr int dimWorld = GV::dimensionworld;
@@ -438,10 +438,10 @@ private:
  */
 template<class GV, class Traits>
 class CCMpfaFVGridGeometry<GV, Traits, false>
-: public BaseFVGridGeometry<CCMpfaFVGridGeometry<GV, Traits, false>, GV, Traits>
+: public BaseGridGeometry<GV, Traits>
 {
     using ThisType = CCMpfaFVGridGeometry<GV, Traits, false>;
-    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ParentType = BaseGridGeometry<GV, Traits>;
 
     static constexpr int dim = GV::dimension;
     static constexpr int dimWorld = GV::dimensionworld;
