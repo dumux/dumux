@@ -33,7 +33,6 @@
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
 
-
 namespace Dumux {
 
 template <class TypeTag>
@@ -228,14 +227,13 @@ public:
 
         const auto& globalPos = scv.center();
         const auto& volVars = elemVolVars[scv];
-        const auto& elementIndex = scv.elementIndex();
 
         const auto gravity = this->spatialParams().gravity(globalPos);
         const auto manningN = this->spatialParams().frictionValue(globalPos);
         auto h = volVars.waterDepth();
         auto u = volVars.velocity(0);
         auto v = volVars.velocity(1);
-        auto ustarH = FrictionLawManning<Scalar>().computeUstarH(h,manningN,gravity);
+        auto ustarH = FrictionLawManning<Scalar>(manningN,gravity).computeUstarH(h);
         auto uv = sqrt(pow(u,2.0) + pow(v,2.0));
 
         source[0] = 0.0;
