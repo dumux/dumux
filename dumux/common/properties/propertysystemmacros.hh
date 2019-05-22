@@ -38,6 +38,12 @@
  */
 #ifndef DUMUX_PROPERTY_SYSTEM_MACROS_HH
 #define DUMUX_PROPERTY_SYSTEM_MACROS_HH
+#warning "Property macros are deprecated and will be removed after release 3.2. \
+If you are not using property macros you can disable this warning by \
+setting DUMUX_ENABLE_OLD_PROPERTY_MACROS to 0 (false) when configuring DuMux. \
+DUMUX_ENABLE_OLD_PROPERTY_MACROS defaults to 1 (true) until release 3.1. \
+After release 3.1 it will default to 0 (false) so you will have to manually \
+enable property macros in order to use them."
 
 #include <dumux/common/properties/propertysystem.hh>
 
