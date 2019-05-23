@@ -482,8 +482,7 @@ public:
                 // Wilke method (Reid et al.):
                 Scalar muResult = 0;
                 const Scalar mu[numComponents] = {
-                    H2O::gasViscosity(T,
-                                      H2O::vaporPressure(T)),
+                    H2O::gasViscosity(T, p),
                     Air::gasViscosity(T, p)
                 };
 
