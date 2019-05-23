@@ -38,7 +38,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/common/defaultmappertraits.hh>
-#include <dumux/discretization/basefvgridgeometry.hh>
+#include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
 #include "fvelementgeometry.hh"
@@ -96,10 +96,10 @@ class BoxDfmFVGridGeometry;
  */
 template<class Scalar, class GV, class Traits>
 class BoxDfmFVGridGeometry<Scalar, GV, true, Traits>
-: public BaseFVGridGeometry<BoxDfmFVGridGeometry<Scalar, GV, true, Traits>, GV, Traits>
+: public BaseGridGeometry<GV, Traits>
 {
     using ThisType = BoxDfmFVGridGeometry<Scalar, GV, true, Traits>;
-    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename GV::IndexSet::IndexType;
 
     using Element = typename GV::template Codim<0>::Entity;
@@ -400,10 +400,10 @@ private:
  */
 template<class Scalar, class GV, class Traits>
 class BoxDfmFVGridGeometry<Scalar, GV, false, Traits>
-: public BaseFVGridGeometry<BoxDfmFVGridGeometry<Scalar, GV, false, Traits>, GV, Traits>
+: public BaseGridGeometry<GV, Traits>
 {
     using ThisType = BoxDfmFVGridGeometry<Scalar, GV, false, Traits>;
-    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename GV::IndexSet::IndexType;
 
     static const int dim = GV::dimension;
