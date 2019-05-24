@@ -79,11 +79,12 @@ template<class Geometry1, class Geometry2, int dim2 = Geometry2::mydimension>
 class DefaultPolicyChooser
 {
     static constexpr int dimworld = Geometry1::coorddimension;
+    static constexpr int isDim = std::min( int(Geometry1::mydimension), int(Geometry2::mydimension) );
     static_assert(dimworld == int(Geometry2::coorddimension), "Geometries must have the same coordinate dimension!");
-    static_assert(dim2 == 1 || dim2 == 2, "No chooser class specialization available for given dimensions");
+    static_assert(isDim == 1 || isDim == 2, "No chooser class specialization available for given dimensions");
     using ctype = typename Dune::PromotionTraits<typename Geometry1::ctype, typename Geometry2::ctype>::PromotedType;
 public:
-    using type = std::conditional_t< dim2 == 2,
+    using type = std::conditional_t< isDim == 2,
                                      PolygonPolicy<ctype, Geometry1::coorddimension>,
                                      SegmentPolicy<ctype, Geometry1::coorddimension> >;
 };
@@ -207,7 +208,6 @@ public:
     //! Determine if the two geometries intersect and compute the intersection geometry
     static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
     {
-        static_assert(int(dim1) >= int(dim2), "Geometries must be ordered such that dim1 >= dim2");
         static_assert(dimworld == Geometry2::coorddimension, "Can only intersect geometries of same coordinate dimension");
         DUNE_THROW(Dune::NotImplemented, "Geometry intersection detection with intersection computation not implemented for dimworld = "
                                           << dimworld << ", dim1 = " << dim1 << ", dim2 = " << dim2);
@@ -340,6 +340,31 @@ private:
 
 /*!
  * \ingroup Geometry
+ * \brief A class for segment--polygon intersection in 2d space
+ */
+template <class Geometry1, class Geometry2, class Policy>
+class GeometryIntersection<Geometry1, Geometry2, Policy, 2, 1, 2>
+: public GeometryIntersection<Geometry2, Geometry1, Policy, 2, 2, 1>
+{
+    using Base = GeometryIntersection<Geometry2, Geometry1, Policy, 2, 2, 1>;
+
+public:
+    /*!
+     * \brief Colliding segment and convex polygon
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection If the geometries collide intersection holds the
+     *        corner points of the intersection object in global coordinates.
+     * \note This forwards to the polygon-segment specialization with swapped arguments.
+     */
+    template<class P = Policy>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, typename Base::Intersection& intersection)
+    {
+        return Base::intersection(geo2, geo1, intersection);
+    }
+};
+
+/*!
+ * \ingroup Geometry
  * \brief A class for polyhedron--segment intersection in 3d space
  */
 template <class Geometry1, class Geometry2, class Policy>
@@ -468,6 +493,30 @@ private:
 
 /*!
  * \ingroup Geometry
+ * \brief A class for segment--polyhedron intersection in 3d space
+ */
+template <class Geometry1, class Geometry2, class Policy>
+class GeometryIntersection<Geometry1, Geometry2, Policy, 3, 1, 3>
+: public GeometryIntersection<Geometry2, Geometry1, Policy, 3, 3, 1>
+{
+    using Base = GeometryIntersection<Geometry2, Geometry1, Policy, 3, 3, 1>;
+public:
+    /*!
+     * \brief Colliding segment and convex polyhedron
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection If the geometries collide intersection holds the
+     *        corner points of the intersection object in global coordinates.
+     * \note This forwards to the polyhedron-segment specialization with swapped arguments.
+     */
+    template<class P = Policy>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, typename Base::Intersection& intersection)
+    {
+        return Base::intersection(geo2, geo1, intersection);
+    }
+};
+
+/*!
+ * \ingroup Geometry
  * \brief A class for polyhedron--polygon intersection in 3d space
  */
 template <class Geometry1, class Geometry2, class Policy>
@@ -492,7 +541,7 @@ private:
 
 public:
     /*!
-     * \brief Colliding segment and convex polyhedron
+     * \brief Colliding polygon and convex polyhedron
      * \note First we find the vertex candidates for the intersection region as follows:
      *       Add triangle vertices that are inside the tetrahedron
      *       Add tetrahedron vertices that are inside the triangle
@@ -634,6 +683,30 @@ public:
     {
         static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
         DUNE_THROW(Dune::NotImplemented, "Polyhedron-polygon intersection detection only implemented for polygon-like intersections");
+    }
+};
+
+/*!
+ * \ingroup Geometry
+ * \brief A class for polygon--polyhedron intersection in 3d space
+ */
+template <class Geometry1, class Geometry2, class Policy>
+class GeometryIntersection<Geometry1, Geometry2, Policy, 3, 2, 3>
+: public GeometryIntersection<Geometry2, Geometry1, Policy, 3, 3, 2>
+{
+    using Base = GeometryIntersection<Geometry2, Geometry1, Policy, 3, 3, 2>;
+public:
+    /*!
+     * \brief Colliding polygon and convex polyhedron
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection If the geometries collide intersection holds the
+     *        corner points of the intersection object in global coordinates.
+     * \note This forwards to the polyhedron-polygon specialization with swapped arguments.
+     */
+    template<class P = Policy>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, typename Base::Intersection& intersection)
+    {
+        return Base::intersection(geo2, geo1, intersection);
     }
 };
 
@@ -905,6 +978,30 @@ private:
         ip.axpy(w, c);
         is = ip;
         return true;
+    }
+};
+
+/*!
+ * \ingroup Geometry
+ * \brief A class for segment--polygon intersection in 3d space
+ */
+template <class Geometry1, class Geometry2, class Policy>
+class GeometryIntersection<Geometry1, Geometry2, Policy, 3, 1, 2>
+: public GeometryIntersection<Geometry2, Geometry1, Policy, 3, 2, 1>
+{
+    using Base = GeometryIntersection<Geometry2, Geometry1, Policy, 3, 2, 1>;
+public:
+    /*!
+     * \brief Colliding segment and convex polygon
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection If the geometries collide intersection holds the
+     *        corner points of the intersection object in global coordinates.
+     * \note This forwards to the polyhedron-polygon specialization with swapped arguments.
+     */
+    template<class P = Policy>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, typename Base::Intersection& intersection)
+    {
+        return Base::intersection(geo2, geo1, intersection);
     }
 };
 
