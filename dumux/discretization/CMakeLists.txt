@@ -2,6 +2,7 @@ add_subdirectory(box)
 add_subdirectory(cellcentered)
 add_subdirectory(fem)
 add_subdirectory(staggered)
+add_subdirectory(projection)
 
 install(FILES
 basefvgridgeometry.hh
