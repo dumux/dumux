@@ -228,6 +228,22 @@ private:
     Intersections intersections_;
 };
 
+/*!
+ * \ingroup MultiDomain
+ * \brief Creates the glue object containing the intersections
+ *        between two grids obtained from given grid geometries.
+ * \param domainGridGeometry The grid geometry of the domain
+ * \param targetGridGeometry The grid geometry of the target domain
+ * \return The glue object containing the intersections
+ */
+template<class DomainGG, class TargetGG>
+MultiDomainGlue< typename DomainGG::GridView, typename TargetGG::GridView,
+                 typename DomainGG::ElementMapper, typename TargetGG::ElementMapper >
+makeGlue(const DomainGG& domainGridGeometry, const TargetGG& targetGridGeometry)
+{
+    return {domainGridGeometry.boundingBoxTree(), targetGridGeometry.boundingBoxTree()};
+}
+
 } // end namespace Dumux
 
 #endif
