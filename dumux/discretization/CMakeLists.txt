@@ -13,6 +13,7 @@ elementsolution.hh
 evalgradients.hh
 evalsolution.hh
 fluxstencil.hh
+functionspacebasis.hh
 fvgridvariables.hh
 fvproperties.hh
 localview.hh
