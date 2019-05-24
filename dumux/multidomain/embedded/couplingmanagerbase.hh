@@ -104,7 +104,7 @@ class EmbeddedCouplingManagerBase
 
     using CouplingStencil = std::vector<std::size_t>;
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
-    using GlueType = MixedDimensionGlue<GridView<bulkIdx>, GridView<lowDimIdx>, ElementMapper<bulkIdx>, ElementMapper<lowDimIdx>>;
+    using GlueType = MultiDomainGlue<GridView<lowDimIdx>, GridView<bulkIdx>, ElementMapper<lowDimIdx>, ElementMapper<bulkIdx>>;
 
 public:
     //! export traits
@@ -482,8 +482,7 @@ protected:
         const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).fvGridGeometry();
 
         // intersect the bounding box trees
-        glue_->build(bulkFvGridGeometry.boundingBoxTree(),
-                     lowDimFvGridGeometry.boundingBoxTree());
+        glue_->build(lowDimFvGridGeometry.boundingBoxTree(), bulkFvGridGeometry.boundingBoxTree());
     }
 
     template<class Geometry, class GlobalPosition>
