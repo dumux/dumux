@@ -33,6 +33,7 @@
 
 #include <dune/common/timer.hh>
 #include <dune/common/iteratorrange.hh>
+#include <dune/common/promotiontraits.hh>
 #include <dune/geometry/affinegeometry.hh>
 #include <dune/geometry/type.hh>
 
@@ -82,9 +83,12 @@ class Intersection
     static constexpr int dimTarget = TargetGridView::dimension;
     static constexpr int dimIs = std::min(dimDomain, dimTarget);
 
-    using Scalar = typename DomainGridView::ctype;
-    using Geometry = Dune::AffineGeometry<Scalar, dimIs, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using ctypeDomain = typename DomainGridView::ctype;
+    using ctypeTarget = typename TargetGridView::ctype;
+    using ctype = typename Dune::PromotionTraits<ctypeDomain, ctypeTarget>::PromotedType;
+
+    using Geometry = Dune::AffineGeometry<ctype, dimIs, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<ctype, dimWorld>;
 
 public:
     Intersection(const DomainTree& domainTree, const TargetTree& targetTree)
@@ -149,9 +153,12 @@ class MultiDomainGlue
     using TargetEntitySet = GridViewGeometricEntitySet<TargetGridView, 0, TargetMapper>;
     using TargetTree = BoundingBoxTree<TargetEntitySet>;
 
-    using Scalar = typename DomainGridView::ctype;
+    using ctypeDomain = typename DomainGridView::ctype;
+    using ctypeTarget = typename TargetGridView::ctype;
+    using ctype = typename Dune::PromotionTraits<ctypeDomain, ctypeTarget>::PromotedType;
+
     enum { dimWorld = DomainGridView::dimensionworld };
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<ctype, dimWorld>;
 
 public:
     // export intersection container type
