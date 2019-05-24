@@ -25,7 +25,7 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_FV_GRID_GEOMETRY
 
 #include <dumux/common/indextraits.hh>
-#include <dumux/discretization/basefvgridgeometry.hh>
+#include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/method.hh>
 
@@ -176,10 +176,10 @@ class StaggeredFVGridGeometry;
  */
 template<class GV, class Traits>
 class StaggeredFVGridGeometry<GV, true, Traits>
-: public BaseFVGridGeometry<StaggeredFVGridGeometry<GV, true, Traits>, GV, Traits>
+: public BaseGridGeometry<GV, Traits>
 {
     using ThisType = StaggeredFVGridGeometry<GV, true, Traits>;
-    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
     using Element = typename GV::template Codim<0>::Entity;
@@ -434,10 +434,10 @@ private:
  */
 template<class GV, class Traits>
 class StaggeredFVGridGeometry<GV, false, Traits>
-: public BaseFVGridGeometry<StaggeredFVGridGeometry<GV, false, Traits>, GV, Traits>
+: public BaseGridGeometry<GV, Traits>
 {
     using ThisType = StaggeredFVGridGeometry<GV, false, Traits>;
-    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
     using Element = typename GV::template Codim<0>::Entity;
