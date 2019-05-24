@@ -10,6 +10,7 @@ fvassembler.hh
 fvgridgeometry.hh
 fvgridvariables.hh
 fvproblem.hh
+glue.hh
 newtonsolver.hh
 staggeredcouplingmanager.hh
 staggeredtraits.hh
