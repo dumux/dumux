@@ -11,6 +11,7 @@ boundingboxtree.hh
 cubicspline.hh
 defaultmappertraits.hh
 defaultusagemessage.hh
+deprecated.hh
 dimensionlessnumbers.hh
 dumuxmessage.hh
 entitymap.hh
