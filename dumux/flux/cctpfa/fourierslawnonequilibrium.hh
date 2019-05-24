@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FOURIERS_LAW_NONEQUILIBRIUM_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_FOURIERS_LAW_NONEQUILIBRIUM_HH
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
@@ -117,7 +118,8 @@ public:
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
            if (numEnergyEqFluid < ModelTraits::numFluidPhases())
             {
-                insideLambda += ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
+                insideLambda += Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
+                                  insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
             }
             else //numEnergyEqFluid >1
             {
@@ -150,7 +152,8 @@ public:
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
            if (numEnergyEqFluid < ModelTraits::numFluidPhases())
             {
-                outsideLambda += ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
+                outsideLambda += Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
+                                   outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
             }
             else
             {

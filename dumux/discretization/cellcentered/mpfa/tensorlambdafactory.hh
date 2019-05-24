@@ -33,6 +33,8 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>
 
+#include <dumux/common/deprecated.hh> // effective thermal conductivity interface
+
 namespace Dumux {
 
 /*!
@@ -87,11 +89,8 @@ public:
                    const auto& volVars,
                    const auto& fvGeometry,
                    const auto& scv)
-               { return ThermalConductivityModel::effectiveThermalConductivity(volVars,
-                                                                               problem.spatialParams(),
-                                                                               element,
-                                                                               fvGeometry,
-                                                                               scv); };
+               { return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
+                          volVars, problem.spatialParams(), element, fvGeometry, scv); };
     }
 };
 

@@ -181,8 +181,7 @@ public:
         const auto densityS = volVars.solidDensity();
         const auto heatCapacityS = volVars.solidHeatCapacity();
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
-        const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
-                                                                                                         someElement, someFvGeometry, someScv);
+        const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars);
         using std::max;
         time = max(time, 1e-10);
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
