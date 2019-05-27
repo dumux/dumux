@@ -52,10 +52,7 @@ struct FunctionSpaceBasisTraits;
 template<class GridGeometry, std::enable_if_t<GridGeometry::discMethod != DiscretizationMethod::fem, int> = 0>
 typename FunctionSpaceBasisTraits<GridGeometry>::GlobalBasis
 getFunctionSpaceBasis(const GridGeometry& gridGeometry)
-{
-    using BasisType = typename FunctionSpaceBasisTraits<GridGeometry>::GlobalBasis;
-    return BasisType(gridGeometry.gridView());
-}
+{ return {gridGeometry.gridView()}; }
 
 /*!
  * \ingroup Discretization
