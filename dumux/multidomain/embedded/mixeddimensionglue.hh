@@ -26,11 +26,14 @@
 #define DUMUX_MULTIDOMAIN_MIXEDDIMENSION_GLUE_HH
 
 #include <dumux/multidomain/glue.hh>
+#include <dune/grid/common/mcmgmapper.hh>
 
 namespace Dumux {
 
 // forward declaration
-template<class BulkGridView, class LowDimGridView, class BulkMapper, class LowDimMapper>
+template<class BulkGridView, class LowDimGridView,
+         class BulkMapper = Dune::MultipleCodimMultipleGeomTypeMapper<BulkGridView>,
+         class LowDimMapper = Dune::MultipleCodimMultipleGeomTypeMapper<LowDimGridView>>
 class DUNE_DEPRECATED_MSG("Use MultiDomainGlue instead. Will be removed after 3.1!")
 MixedDimensionGlue
 : public MultiDomainGlue<LowDimGridView, BulkGridView, LowDimMapper, BulkMapper>
