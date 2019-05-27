@@ -2,7 +2,7 @@ dune_symlink_to_source_files(FILES "params.input")
 
 dune_add_test(NAME test_projection_2d1d
               SOURCES test_projection_2d1d.cc
-              CMAKE_GUARD "( dune-foamgrid_FOUND )"
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-functions_FOUND )"
               LABELS unit discretization
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzyData
