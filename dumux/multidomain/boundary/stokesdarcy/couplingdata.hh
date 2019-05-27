@@ -31,6 +31,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -423,7 +424,8 @@ protected:
     {
         using ThermalConductivityModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ThermalConductivityModel>;
         const auto& problem = this->couplingManager().problem(darcyIdx);
-        return ThermalConductivityModel::effectiveThermalConductivity(volVars, problem.spatialParams(), fvGeometry.fvGridGeometry().element(scv), fvGeometry, scv);
+        return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
+                 volVars, problem.spatialParams(), fvGeometry.fvGridGeometry().element(scv), fvGeometry, scv);
     }
 
     /*!

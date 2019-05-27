@@ -21,11 +21,13 @@
  * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  */
-#ifndef THERMALCONDUCTIVITY_SOMERTON_HH
-#define THERMALCONDUCTIVITY_SOMERTON_HH
+#ifndef DUMUX_MATERIAL_THERMALCONDUCTIVITY_SOMERTON_HH
+#define DUMUX_MATERIAL_THERMALCONDUCTIVITY_SOMERTON_HH
 
 #include <algorithm>
 #include <cmath>
+
+#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -61,13 +63,22 @@ class ThermalConductivitySomerton
 public:
     /*!
      * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
+     */
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    DUNE_DEPRECATED_MSG("Signature deprecated. Use signature with volume variables only!")
+    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
+                                               const SpatialParams& spatialParams,
+                                               const Element& element,
+                                               const FVGeometry& fvGeometry,
+                                               const typename FVGeometry::SubControlVolume& scv)
+    {
+        return effectiveThermalConductivity(volVars);
+    }
+
+    /*!
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
      *
      * \param volVars volume variables
-     * \param spatialParams spatial parameters
-     * \param element element (to be passed to spatialParams)
-     * \param fvGeometry fvGeometry (to be passed to spatialParams)
-     * \param scv the sub control volume (to be passed to spatialParams)
-     *
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
      *
      * This gives an interpolation of the effective thermal conductivities of a porous medium
@@ -76,12 +87,8 @@ public:
      * fluid conductivities and interpolated with the square root of the wetting saturation.
      * See f.e. Ebigbo, A.: Thermal Effects of Carbon Dioxide Sequestration in the Subsurface, Diploma thesis \cite ebigbo2005 .
      */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
-    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
-                                               const SpatialParams& spatialParams,
-                                               const Element& element,
-                                               const FVGeometry& fvGeometry,
-                                               const typename FVGeometry::SubControlVolume& scv)
+    template<class VolumeVariables>
+    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
     {
         using FluidSystem = typename VolumeVariables::FluidSystem;
         static_assert(FluidSystem::numPhases == 2, "ThermalConductivitySomerton only works for two-phase fluid systems!");

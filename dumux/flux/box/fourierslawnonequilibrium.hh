@@ -29,8 +29,10 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/deprecated.hh>
 
 #include <dumux/discretization/method.hh>
+
 
 namespace Dumux {
 
@@ -81,8 +83,10 @@ public:
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
             if (numEnergyEqFluid < ModelTraits::numFluidPhases())
             {
-                insideLambda += ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
-                outsideLambda += ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
+                insideLambda += Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
+                                  insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
+                outsideLambda += Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
+                                   outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
             }
             else
             {

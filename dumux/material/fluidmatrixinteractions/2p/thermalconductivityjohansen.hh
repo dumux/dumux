@@ -21,11 +21,13 @@
  * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  */
-#ifndef THERMALCONDUCTIVITY_JOHANSEN_HH
-#define THERMALCONDUCTIVITY_JOHANSEN_HH
+#ifndef DUMUX_MATERIAL_THERMALCONDUCTIVITY_JOHANSEN_HH
+#define DUMUX_MATERIAL_THERMALCONDUCTIVITY_JOHANSEN_HH
 
 #include <cmath>
 #include <algorithm>
+
+#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -66,14 +68,23 @@ class ThermalConductivityJohansen
 {
 public:
     /*!
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 <BR>
+     */
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    DUNE_DEPRECATED_MSG("Signature deprecated. Use signature with volume variables only!")
+    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
+                                               const SpatialParams& spatialParams,
+                                               const Element& element,
+                                               const FVGeometry& fvGeometry,
+                                               const typename FVGeometry::SubControlVolume& scv)
+    {
+        return effectiveThermalConductivity(volVars);
+    }
+
+    /*!
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 .
      *
      * \param volVars volume variables
-     * \param spatialParams spatial parameters
-     * \param element element (to be passed to spatialParams)
-     * \param fvGeometry fvGeometry (to be passed to spatialParams)
-     * \param scv the sub control volume (to be passed to spatialParams)
-     *
      * \return Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 <BR>
      *
      * This formulation is semi-empirical and fitted to quartz sand.
@@ -85,13 +96,13 @@ public:
      *                    of Sci. and Technol., Trondheim. (Draft Transl. 637. 1977. U.S. Army
      *                    Corps of Eng., Cold Regions Res. and Eng. Lab., Hanover, NH.) \cite johansen1977
      */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry, class SubControlVolume>
-    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
-                                               const SpatialParams& spatialParams,
-                                               const Element& element,
-                                               const FVGeometry& fvGeometry,
-                                               const SubControlVolume& scv)
+    template<class VolumeVariables>
+    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
     {
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+        static_assert(FluidSystem::numPhases == 2, "ThermalConductivitySomerton only works for two-phase fluid systems!");
+        // TODO: there should be an assertion that the indices are correct and 0 is actually the wetting phase!
+
         const Scalar sw = volVars.saturation(Indices::wPhaseIdx);
         const Scalar lambdaW = volVars.fluidThermalConductivity(Indices::wPhaseIdx);
         const Scalar lambdaN = volVars.fluidThermalConductivity(Indices::nPhaseIdx);

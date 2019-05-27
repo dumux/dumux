@@ -21,11 +21,12 @@
  * \ingroup Fluidmatrixinteractions
  * \brief Reation for a simple effective thermal conductivity
  */
-#ifndef THERMALCONDUCTIVITY_AVERAGE_HH
-#define THERMALCONDUCTIVITY_AVERAGE_HH
+#ifndef DUMUX_MATERIAL_THERMALCONDUCTIVITY_AVERAGE_HH
+#define DUMUX_MATERIAL_THERMALCONDUCTIVITY_AVERAGE_HH
 
 #include <algorithm>
 
+#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -38,30 +39,42 @@ class ThermalConductivityAverage
 {
 public:
     /*!
-     * \brief Relation for a simple effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
-     *
-     * \param volVars volume variables
-     * \param spatialParams spatial parameters
-     * \param element element (to be passed to spatialParams)
-     * \param fvGeometry fvGeometry (to be passed to spatialParams)
-     * \param scv scv (to be passed to spatialParams)
-     *
-     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry, class SubControlVolume>
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    DUNE_DEPRECATED_MSG("Signature deprecated. Use signature with volume variables only!")
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
                                                const SpatialParams& spatialParams,
                                                const Element& element,
                                                const FVGeometry& fvGeometry,
-                                               const SubControlVolume& scv)
+                                               const typename FVGeometry::SubControlVolume& scv)
     {
-        //Get the thermal conductivities and the porosity from the volume variables
-        Scalar lambdaW = volVars.fluidThermalConductivity(0);
-        Scalar lambdaSolid = volVars.solidThermalConductivity();
-        Scalar porosity = volVars.porosity();
+        return effectiveThermalConductivity(volVars);
+    }
 
-        return lambdaSolid*(1-porosity) + lambdaW*porosity;
+    /*!
+     * \brief Relation for a simple effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     *
+     * \param volVars volume variables
+     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     */
+    template<class VolumeVariables>
+    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
+    {
+        constexpr int numFluidPhases = VolumeVariables::numFluidPhases();
+
+        // Get the thermal conductivities and the porosity from the volume variables
+        Scalar lambdaFluid = 0.0;
+        for (int phaseIdx = 0; phaseIdx < numFluidPhases; ++phaseIdx)
+            lambdaFluid += volVars.fluidThermalConductivity(phaseIdx)*volVars.saturation(phaseIdx);
+
+        const Scalar lambdaSolid = volVars.solidThermalConductivity();
+        const Scalar porosity = volVars.porosity();
+
+        return lambdaSolid*(1-porosity) + lambdaFluid*porosity;
     }
 };
+
 } // end namespace Dumux
+
 #endif

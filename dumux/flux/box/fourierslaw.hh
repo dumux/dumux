@@ -28,6 +28,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -67,8 +68,10 @@ public:
         const auto& outsideVolVars = elemVolVars[outsideScv];
 
         // effective diffusion tensors
-        auto insideLambda = ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
-        auto outsideLambda = ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
+        auto insideLambda = Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
+                              insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
+        auto outsideLambda = Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
+                              outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
 
         // scale by extrusion factor
         insideLambda *= insideVolVars.extrusionFactor();

@@ -21,11 +21,13 @@
  * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  */
-#ifndef THERMALCONDUCTIVITY_SOMERTON_3P_HH
-#define THERMALCONDUCTIVITY_SOMERTON_3P_HH
+#ifndef DUMUX_MATERIAL_THERMALCONDUCTIVITY_SOMERTON_3P_HH
+#define DUMUX_MATERIAL_THERMALCONDUCTIVITY_SOMERTON_3P_HH
 
 #include <algorithm>
 #include <cmath>
+
+#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -66,12 +68,22 @@ class ThermalConductivitySomerton
 public:
     /*!
      * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) extended for a three phase system
+     */
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    DUNE_DEPRECATED_MSG("Signature deprecated. Use signature with volume variables only!")
+    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
+                                               const SpatialParams& spatialParams,
+                                               const Element& element,
+                                               const FVGeometry& fvGeometry,
+                                               const typename FVGeometry::SubControlVolume& scv)
+    {
+        return effectiveThermalConductivity(volVars);
+    }
+
+    /*!
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) extended for a three phase system
      *
      * \param volVars volume variables
-     * \param spatialParams spatial parameters
-     * \param element element (to be passed to spatialParams)
-     * \param fvGeometry fvGeometry (to be passed to spatialParams)
-     * \param scv The sub control volume
      *
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
      *
@@ -80,22 +92,18 @@ public:
      * These two effective conductivities are computed as geometric mean of the solid and the
      * fluid conductivities and interpolated with the square root of the wetting saturation.
      */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
-    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
-                                               const SpatialParams& spatialParams,
-                                               const Element& element,
-                                               const FVGeometry& fvGeometry,
-                                               const typename FVGeometry::SubControlVolume& scv)
+    template<class VolumeVariables>
+    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
     {
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
-        Scalar sw = volVars.saturation(FluidSystem::wPhaseIdx);
-        Scalar sn = volVars.saturation(FluidSystem::nPhaseIdx);
-        Scalar lambdaW = volVars.fluidThermalConductivity(FluidSystem::wPhaseIdx);
-        Scalar lambdaN = volVars.fluidThermalConductivity(FluidSystem::nPhaseIdx);
-        Scalar lambdaG = volVars.fluidThermalConductivity(FluidSystem::gPhaseIdx);
-        Scalar lambdaSolid = volVars.solidThermalConductivity();
-        Scalar porosity = volVars.porosity();
+        const Scalar sw = volVars.saturation(FluidSystem::wPhaseIdx);
+        const Scalar sn = volVars.saturation(FluidSystem::nPhaseIdx);
+        const Scalar lambdaW = volVars.fluidThermalConductivity(FluidSystem::wPhaseIdx);
+        const Scalar lambdaN = volVars.fluidThermalConductivity(FluidSystem::nPhaseIdx);
+        const Scalar lambdaG = volVars.fluidThermalConductivity(FluidSystem::gPhaseIdx);
+        const Scalar lambdaSolid = volVars.solidThermalConductivity();
+        const Scalar porosity = volVars.porosity();
 
         return effectiveThermalConductivity(sw, sn, lambdaW, lambdaN, lambdaG, lambdaSolid, porosity);
     }
@@ -131,10 +139,10 @@ public:
 //        const Scalar lSn = 0.65; //pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaN, porosity);
 //        const Scalar lSg = 0.35; //pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaG, porosity);
         // porosity weighted geometric mean
-        Scalar lSw = pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaW, porosity);
-        Scalar lSn = pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaN, porosity);
-        Scalar lSg = pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaG, porosity);
-        Scalar lambdaEff = lSg + sqrt(satW) * (lSw - lSg) + sqrt(satN) * (lSn -lSg);
+        const Scalar lSw = pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaW, porosity);
+        const Scalar lSn = pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaN, porosity);
+        const Scalar lSg = pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaG, porosity);
+        const Scalar lambdaEff = lSg + sqrt(satW) * (lSw - lSg) + sqrt(satN) * (lSn -lSg);
 
         return lambdaEff;
 
