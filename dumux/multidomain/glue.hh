@@ -36,6 +36,7 @@
 #include <dune/common/promotiontraits.hh>
 #include <dune/geometry/affinegeometry.hh>
 #include <dune/geometry/type.hh>
+#include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/common/geometry/geometricentityset.hh>
 #include <dumux/common/geometry/boundingboxtree.hh>
