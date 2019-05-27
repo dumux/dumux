@@ -67,9 +67,14 @@ public:
     //! delete default constructor
     Projector() = delete;
 
-    //! Constructor
-    Projector(Matrix&& M, Matrix&& P)
-    : M_(std::move(M)) , P_(std::move(P))
+    /*!
+     * \brief Constructor. Receives the mass and projection
+     *        matrix that define the linear system describing
+     *        the L2-projection from a function space into another.
+     */
+    Projector(Matrix&& massMatrix, Matrix&& projectionMatrix)
+    : massMat_(std::move(massMatrix))
+    , projMat_(std::move(projectionMatrix))
     {}
 
     /*!
@@ -81,21 +86,21 @@ public:
     void project(const DomainSolution& u, TargetSolution& up) const
     {
         // be picky about size of u
-        if ( u.size() != P_.M())
+        if ( u.size() != projMat_.M())
             DUNE_THROW(Dune::InvalidStateException, "Vector size mismatch" );
 
-        up.resize(M_.N());
+        up.resize(massMat_.N());
 
         auto rhs = up;
-        P_.mv(u, rhs);
+        projMat_.mv(u, rhs);
 
         SSORCGBackend solver;
-        solver.solve(M_, up, rhs);
+        solver.solve(massMat_, up, rhs);
     }
 
 private:
-    Matrix M_;
-    Matrix P_;
+    Matrix massMat_;
+    Matrix projMat_;
 };
 
 /*!
