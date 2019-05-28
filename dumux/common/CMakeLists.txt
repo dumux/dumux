@@ -9,6 +9,7 @@ boundaryflag.hh
 boundarytypes.hh
 boundingboxtree.hh
 cubicspline.hh
+cubicsplinehermitebasis.hh
 defaultmappertraits.hh
 defaultusagemessage.hh
 deprecated.hh
