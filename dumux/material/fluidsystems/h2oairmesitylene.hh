@@ -349,9 +349,9 @@ public:
          */
         Scalar muResult;
         const Scalar mu[numComponents] = {
-            H2O::gasViscosity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)),
+            H2O::gasViscosity(fluidState.temperature(phaseIdx), H2O::vaporPressure(fluidState.temperature(phaseIdx))),
             Air::gasViscosity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)),
-            NAPL::gasViscosity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx))
+            NAPL::gasViscosity(fluidState.temperature(phaseIdx), NAPL::vaporPressure(fluidState.temperature(phaseIdx)))
         };
         // molar masses
         const Scalar M[numComponents] = {
