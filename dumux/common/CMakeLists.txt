@@ -24,6 +24,7 @@ intersectionmapper.hh
 intrange.hh
 loggingparametertree.hh
 math.hh
+monotonecubicspline.hh
 numericdifferentiation.hh
 optional.hh
 parameters.hh
