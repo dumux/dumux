@@ -48,13 +48,27 @@ The following headers need to be included in the main file:
 ```
 
 The grid adaptation is prepared during the initialization by the following steps:
-* instantiate indicator & data transfer, read parameters for indicator (ll. 111-115)
-* do initial refinement around sources/BCs (l. 118)
-* refine up to the maximum level (ll. 121-137)
-* do refinement for the initial conditions using the indicator (ll. 140-144)
-* update grid data after adaption (ll. 147-152)
+1. **Instantiate indicator (l. 114):**
+The indicator is saturation-dependent and defined in the file dumux/porousmediumflow/2p/gridadaptindicator.hh.
+It allows to set the minimum and maximum allowed refinement levels via the input parameters
+`Adaptive.MinLevel` and `Adaptive.MaxLevel`.
+2. **Instantiate data transfer (l. 154):**
+The data transfer performs the transfer of data on a grid from before to after adaptation and is defined in the
+file dumux/porousmediumflow/2p/griddatatransfer.hh.
+Its main functions are to store and reconstruct the primary variables.
+3. **Set the indicator for the initial refinement around sources/BCs (l. 118):**
+We use the GridAdaptInitializationIndicator defined in dumux/adaptive/initializationindicator.hh.
+4. **Refine up to the maximum level (ll. 121-137):**
+For every level, the indicator used for the refinement/coarsening is calculated.
+If any grid cells have to be adapted, the gridvariables and the pointsourcemap are updated.
+5. **Do refinement for the initial conditions using the indicator (ll. 140-144):**
+Depending on the initial conditions, another grid adaptation might be necessary.
+The gridadaptindicator uses the input parameters `Adaptive.RefineTolerance` and `Adaptive.CoarsenTolerance` for this step.
+For further details on the indicator calculations see dumux/porousmediumflow/2p/gridadaptindicator.hh, ll. 116.
+Afterwards, the marked elements are adapted.
+6. **Update grid data after adaption (ll. 147-152):**
+In case of a grid adaptation, the gridvariables and the pointsourcemap are updated.
 
-The indicator ...
 
 During the time loop, the refinement indicator is computed (l. 191) and the respective elements to be refined are marked (ll. 194-196).
 
@@ -68,16 +82,22 @@ In case of grid adaptation, the following updates are necessary (ll. 201-205):
 ```
 
 ### problem.hh
-...
+A non-conforming grid such as ALUGrid has to be chosen in the problem file:
+```C++
+  //! Use non-conforming refinement
+  template<class TypeTag>
+  struct Grid<TypeTag, TTag::TwoPAdaptivePointSource> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
+```
+
 
 ### params.input
 The following parameters in the `[Adaptive]` parameter group determine the grid adaptation behavior:
-* `RefineAtDirichletBC`: ...
-* `RefineAtFluxBC`: ...
-* `MinLevel`: ...
-* `MaxLevel`: ...
-* `CoarsenTolerance`: ...
-* `RefineTolerance`: ...
+* `RefineAtDirichletBC`: If to refine at Dirichlet boundaries
+* `RefineAtFluxBC`: If to refine at Neumann/Robin boundaries
+* `MinLevel`: Minimum allowed refinement level, used by the indicators
+* `MaxLevel`: Maximum allowed refinement level, used by the indicators
+* `CoarsenTolerance`
+* `RefineTolerance`
 
 ## Solution
 ![](test_2p_pointsource_adaptive.png)
