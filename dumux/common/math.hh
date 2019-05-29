@@ -562,6 +562,26 @@ struct LinearTable
 
 } // end namespace InterpolationPolicy
 
+/*!
+ * \ingroup Common
+ * \brief Generates linearly spaced vectors
+ *
+ * \param begin The first value in the vector
+ * \param end The last value in the vector
+ * \param samples The size of the vector
+ */
+template <class Scalar>
+std::vector<Scalar> linspace(const Scalar begin, const Scalar end, std::size_t samples)
+{
+    using std::max;
+    samples = max(std::size_t{2}, samples); // only makes sense for 2 or more samples
+    const Scalar delta = (end-begin)/static_cast<Scalar>(samples-1);
+    std::vector<Scalar> vec(samples);
+    for (std::size_t i = 0; i < samples; ++i)
+        vec[i] = begin + i*delta;
+    return vec;
+}
+
 
 /*!
  * \ingroup Common
