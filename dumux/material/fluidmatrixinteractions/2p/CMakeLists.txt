@@ -13,6 +13,8 @@ regularizedlinearmaterial.hh
 regularizedlinearmaterialparams.hh
 regularizedvangenuchten.hh
 regularizedvangenuchtenparams.hh
+splinelaw.hh
+splinelawparams.hh
 thermalconductivityjohansen.hh
 thermalconductivitysimplefluidlumping.hh
 thermalconductivitysomerton.hh
