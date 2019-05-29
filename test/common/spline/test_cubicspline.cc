@@ -29,17 +29,9 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
+#include <dumux/common/math.hh>
 #include <dumux/common/cubicspline.hh>
 #include <dumux/io/gnuplotinterface.hh>
-
-std::vector<double> linspace(const double begin, const double end, const double samples)
-{
-    const double delta = (end-begin)/static_cast<double>(samples-1);
-    std::vector<double> vec(samples);
-    for (int i = 0; i < samples; ++i)
-        vec[i] = begin + i*delta;
-    return vec;
-}
 
 template<class Function>
 std::vector<double> eval(const Function& f, const std::vector<double>& x)
@@ -58,12 +50,12 @@ int main(int argc, char** argv)
     const auto df = [](double x){ return -2.0*x/(( 1.0 + x*x )*( 1.0 + x*x )); };
 
     // create some test samples
-    const auto testPoints = linspace(-4.0, 4.0, 1000);
+    const auto testPoints = Dumux::linspace(-4.0, 4.0, 1000);
     const auto ref = eval(f, testPoints);
     const auto refDeriv = eval(df, testPoints);
 
     // create the spline sample points
-    const auto samplePoints = linspace(-4.0, 4.0, 15);
+    const auto samplePoints = Dumux::linspace(-4.0, 4.0, 15);
     const auto y = eval(f, samplePoints);
 
     // create the spline
@@ -86,7 +78,7 @@ int main(int argc, char** argv)
         DUNE_THROW(Dune::Exception, "Maximum error in spline interpolation too large!");
 
     // plot with Gnuplot (plot a bit more so we can see the linear extension)
-    const auto plotPoints = linspace(-8.0, 8.0, 1000);
+    const auto plotPoints = Dumux::linspace(-8.0, 8.0, 1000);
     const auto refPlot = eval(f, plotPoints);
     const auto refDerivPlot = eval(df, plotPoints);
     const auto resultPlot = eval([&](const double x) { return spline.eval(x); }, plotPoints);
