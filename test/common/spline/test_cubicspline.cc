@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     const auto y = eval(f, samplePoints);
 
     // create the spline
-    Dumux::CubicSpline spline(samplePoints, y);
+    Dumux::CubicSpline<double> spline(samplePoints, y);
 
     // evaluate spline and derivative
     const auto result = eval([&](const double x) { return spline.eval(x); }, testPoints);
