@@ -14,4 +14,4 @@ Cells1 = 25
 
 [Newton]
 EnablePartialReassembly = true
-
+EnableDynamicOutput = false

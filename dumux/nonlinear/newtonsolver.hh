@@ -492,8 +492,11 @@ public:
 
         if (verbose_)
         {
+            if (enableDynamicOutput_)
+                std::cout << '\r'; // move cursor to beginning of line
+
             auto width = std::to_string(maxSteps_).size();
-            std::cout << "\rNewton iteration " << std::setw(width) << numSteps_ << " done";
+            std::cout << "Newton iteration " << std::setw(width) << numSteps_ << " done";
 
             auto formatFlags = std::cout.flags();
             auto prec = std::cout.precision();
@@ -781,10 +784,9 @@ private:
                 if (numSteps_ > 0)
                     uLastIter = uCurrentIter;
 
-                if (verbose_) {
+                if (verbose_ && enableDynamicOutput_)
                     std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r"
                               << std::flush;
-                }
 
                 ///////////////
                 // assemble
@@ -804,11 +806,9 @@ private:
                 // http://en.wikipedia.org/wiki/ANSI_escape_code
                 const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
 
-                if (verbose_) {
-                    std::cout << "\rSolve: M deltax^k = r";
-                    std::cout << clearRemainingLine
-                              << std::flush;
-                }
+                if (verbose_ && enableDynamicOutput_)
+                    std::cout << "\rSolve: M deltax^k = r"
+                              << clearRemainingLine << std::flush;
 
                 // solve the resulting linear equation system
                 solveTimer.start();
@@ -822,11 +822,9 @@ private:
                 ///////////////
                 // update
                 ///////////////
-                if (verbose_) {
-                    std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
-                    std::cout << clearRemainingLine;
-                    std::cout.flush();
-                }
+                if (verbose_ && enableDynamicOutput_)
+                    std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k"
+                              << clearRemainingLine << std::flush;
 
                 updateTimer.start();
                 // update the current solution (i.e. uOld) with the delta
@@ -1137,6 +1135,7 @@ private:
         enableShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableShiftCriterion");
         enableResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableResidualCriterion") || enableAbsoluteResidualCriterion_;
         satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.SatisfyResidualAndShiftCriterion");
+        enableDynamicOutput_ = getParamFromGroup<bool>(group, "Newton.EnableDynamicOutput", true);
 
         if (!enableShiftCriterion_ && !enableResidualCriterion_)
         {
@@ -1242,6 +1241,7 @@ private:
     bool enableShiftCriterion_;
     bool enableResidualCriterion_;
     bool satisfyResidualAndShiftCriterion_;
+    bool enableDynamicOutput_;
 
     //! the parameter group for getting parameters from the parameter tree
     std::string paramGroup_;
