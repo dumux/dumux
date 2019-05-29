@@ -12,6 +12,7 @@ Name = test_sincos_unsteady # name passed to the output routines
 EnableGravity = false
 PrintL2Error = true
 EnableInertiaTerms = true
+IsStationary = false
 
 [Component]
 LiquidDensity = 1.0

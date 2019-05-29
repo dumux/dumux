@@ -22,6 +22,7 @@
  * \brief Test for the instationary staggered grid Navier-Stokes model
  *        with analytical solution.
  */
+
 #include <config.h>
 
 #include <ctime>
@@ -50,10 +51,11 @@
 /*!
 * \brief Creates analytical solution.
 * Returns a tuple of the analytical solution for the pressure, the velocity and the velocity at the faces
+* \param time the time at which to evaluate the analytical solution
 * \param problem the problem for which to evaluate the analytical solution
 */
-template<class Problem>
-auto createAnalyticalSolution(const Problem& problem)
+template<class Scalar, class Problem>
+auto createAnalyticalSolution(const Scalar time, const Problem& problem)
 {
     const auto& fvGridGeometry = problem.fvGridGeometry();
     using GridView = typename std::decay_t<decltype(fvGridGeometry)>::GridView;
@@ -61,7 +63,6 @@ auto createAnalyticalSolution(const Problem& problem)
     static constexpr auto dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
 
-    using Scalar = double;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     std::vector<Scalar> analyticalPressure;
@@ -81,7 +82,7 @@ auto createAnalyticalSolution(const Problem& problem)
         {
             auto ccDofIdx = scv.dofIndex();
             auto ccDofPosition = scv.dofPosition();
-            auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition);
+            auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition, time);
 
             // velocities on faces
             for (auto&& scvf : scvfs(fvGeometry))
@@ -89,7 +90,7 @@ auto createAnalyticalSolution(const Problem& problem)
                 const auto faceDofIdx = scvf.dofIndex();
                 const auto faceDofPosition = scvf.center();
                 const auto dirIdx = scvf.directionIndex();
-                const auto analyticalSolutionAtFace = problem.analyticalSolution(faceDofPosition);
+                const auto analyticalSolutionAtFace = problem.analyticalSolution(faceDofPosition, time);
                 analyticalVelocityOnFace[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
             }
 
@@ -136,12 +137,41 @@ auto createSource(const Problem& problem)
     return source;
 }
 
+template<class Problem, class SolutionVector, class FVGridGeometry>
+void printL2Error(const Problem& problem, const SolutionVector& x, const FVGridGeometry& fvGridGeometry)
+{
+    using namespace Dumux;
+    using Scalar = double;
+    using TypeTag = Properties::TTag::SincosTest;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+
+    using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
+    const auto l2error = L2Error::calculateL2Error(*problem, x);
+    const int numCellCenterDofs = fvGridGeometry->numCellCenterDofs();
+    const int numFaceDofs = fvGridGeometry->numFaceDofs();
+    std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
+                << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
+                << std::scientific
+                << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
+                << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
+                << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
+                << std::endl;
+
+    // write the norm into a log file
+    std::ofstream logFile;
+    logFile.open(problem->name() + ".log", std::ios::app);
+    logFile << "[ConvergenceTest] L2(p) = " << l2error.first[Indices::pressureIdx] << " L2(vx) = " << l2error.first[Indices::velocityXIdx] << " L2(vy) = " << l2error.first[Indices::velocityYIdx] << std::endl;
+    logFile.close();
+}
+
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::SincosSteadyTest;
+    using TypeTag = Properties::TTag::SincosTest;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -169,15 +199,28 @@ int main(int argc, char** argv) try
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
+    // get some time loop parameters
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
+    // instantiate time loop
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
+
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
+    problem->updateTimeStepSize(timeLoop->timeStepSize());
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x;
     x[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
     x[FVGridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
+    problem->applyInitialSolution(x);
+    auto xOld = x;
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -195,16 +238,17 @@ int main(int argc, char** argv) try
     vtkWriter.addField(sourceX, "sourceX");
     vtkWriter.addField(sourceY, "sourceY");
 
-    auto analyticalSolution = createAnalyticalSolution(*problem);
+    auto analyticalSolution = createAnalyticalSolution(timeLoop->time(), *problem);
     vtkWriter.addField(std::get<0>(analyticalSolution), "pressureExact");
     vtkWriter.addField(std::get<1>(analyticalSolution), "velocityExact");
     vtkWriter.addFaceField(std::get<2>(analyticalSolution), "faceVelocityExact");
-
     vtkWriter.write(0.0);
+
+    const bool isStationary = getParam<bool>("Problem.IsStationary");
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
+    auto assembler = isStationary ? std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables) : std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
@@ -214,42 +258,69 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    const bool printL2Error = getParam<bool>("Problem.PrintL2Error");
+    const bool shouldPrintL2Error = getParam<bool>("Problem.PrintL2Error");
 
-    // linearize & solve
-    Dune::Timer timer;
-    nonLinearSolver.solve(x);
-
-    if (printL2Error)
+    if (isStationary)
     {
-        using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-        using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-        using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+        // linearize & solve
+        Dune::Timer timer;
+        nonLinearSolver.solve(x);
 
-        using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-        using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-        const auto l2error = L2Error::calculateL2Error(*problem, x);
-        const int numCellCenterDofs = fvGridGeometry->numCellCenterDofs();
-        const int numFaceDofs = fvGridGeometry->numFaceDofs();
-        std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                  << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
-                  << std::scientific
-                  << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
-                  << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                  << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
-                  << std::endl;
+        if (shouldPrintL2Error)
+        {
+            printL2Error(problem, x, fvGridGeometry);
+        }
+
+        // write vtk output
+        analyticalSolution = createAnalyticalSolution(timeLoop->time(), *problem);
+        vtkWriter.write(1.0);
+
+        timer.stop();
+
+        const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+        std::cout << "Simulation took " << timer.elapsed() << " seconds on "
+                << comm.size() << " processes.\n"
+                << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
     }
+    else
+    {
+        // time loop
+        timeLoop->start(); do
+        {
+            // set previous solution for storage evaluations
+            assembler->setPreviousSolution(xOld);
 
-    // write vtk output
-    analyticalSolution = createAnalyticalSolution(*problem);
-    vtkWriter.write(1.0);
+            // solve the non-linear system with time step control
+            nonLinearSolver.solve(x, *timeLoop);
 
-    timer.stop();
+            // make the new solution the old solution
+            xOld = x;
+            gridVariables->advanceTimeStep();
 
-    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
-    std::cout << "Simulation took " << timer.elapsed() << " seconds on "
-              << comm.size() << " processes.\n"
-              << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
+            if (shouldPrintL2Error)
+            {
+                printL2Error(problem, x, fvGridGeometry);
+            }
+
+            // advance to the time loop to the next step
+            timeLoop->advanceTimeStep();
+            problem->updateTime(timeLoop->time());
+            analyticalSolution = createAnalyticalSolution(timeLoop->time(), *problem);
+
+            // write vtk output
+            vtkWriter.write(timeLoop->time());
+
+            // report statistics of this time step
+            timeLoop->reportTimeStep();
+
+            // set new dt as suggested by newton solver
+            timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+            problem->updateTimeStepSize(timeLoop->timeStepSize());
+
+        } while (!timeLoop->finished());
+
+        timeLoop->finalize(leafGridView.comm());
+    }
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
