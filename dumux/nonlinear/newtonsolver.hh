@@ -31,6 +31,7 @@
 #include <iostream>
 #include <type_traits>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpicollectivecommunication.hh>
@@ -183,6 +184,15 @@ public:
     { targetSteps_ = targetSteps; }
 
     /*!
+     * \brief Set the number of minimum iterations for the Newton
+     *        method.
+     *
+     * \param minSteps Minimum number of iterations
+     */
+    void setMinSteps(int minSteps)
+    { minSteps_ = minSteps; }
+
+    /*!
      * \brief Set the number of iterations after which the Newton
      *        method gives up.
      *
@@ -231,7 +241,7 @@ public:
                 // reset the grid variables to the previous solution
                 this->assembler().resetTimeStep(uCurrentIter);
 
-                if (verbose_)
+                if (verbosity_ >= 1)
                     std::cout << "Newton solver did not converge with dt = "
                               << timeLoop.timeStepSize() << " seconds. Retrying with time step of "
                               << timeLoop.timeStepSize() * retryTimeStepReductionFactor_ << " seconds\n";
@@ -290,12 +300,12 @@ public:
      */
     virtual bool newtonProceed(const SolutionVector &uCurrentIter, bool converged)
     {
-        if (numSteps_ < 2)
-            return true; // we always do at least two iterations
-        else if (converged) {
+        if (numSteps_ < minSteps_)
+            return true;
+        else if (converged)
             return false; // we are below the desired tolerance
-        }
-        else if (numSteps_ >= maxSteps_) {
+        else if (numSteps_ >= maxSteps_)
+        {
             // We have exceeded the allowed number of steps. If the
             // maximum relative shift was reduced by a factor of at least 4,
             // we proceed even if we are above the maximum number of steps.
@@ -490,7 +500,7 @@ public:
 
         ++numSteps_;
 
-        if (verbose_)
+        if (verbosity_ >= 1)
         {
             if (enableDynamicOutput_)
                 std::cout << '\r'; // move cursor to beginning of line
@@ -585,15 +595,14 @@ public:
      */
     void report(std::ostream& sout = std::cout) const
     {
-        if (verbose_)
-            sout << '\n'
-                 << "Newton statistics\n"
-                 << "----------------------------------------------\n"
-                 << "-- Total Newton iterations:           " << totalWastedIter_ + totalSucceededIter_ << '\n'
-                 << "-- Total wasted Newton iterations:    " << totalWastedIter_ << '\n'
-                 << "-- Total succeeded Newton iterations: " << totalSucceededIter_ << '\n'
-                 << "-- Average iterations per solve:      " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
-                 << std::endl;
+        sout << '\n'
+             << "Newton statistics\n"
+             << "----------------------------------------------\n"
+             << "-- Total Newton iterations:           " << totalWastedIter_ + totalSucceededIter_ << '\n'
+             << "-- Total wasted Newton iterations:    " << totalWastedIter_ << '\n'
+             << "-- Total succeeded Newton iterations: " << totalSucceededIter_ << '\n'
+             << "-- Average iterations per solve:      " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
+             << std::endl;
     }
 
     /*!
@@ -604,6 +613,38 @@ public:
         totalWastedIter_ = 0;
         totalSucceededIter_ = 0;
         numConverged_ = 0;
+    }
+
+    /*!
+     * \brief Report the options and parameters this Newton is configured with
+     */
+    void reportParams(std::ostream& sout = std::cout) const
+    {
+        sout << "\nNewton solver configured with the following options and parameters:\n";
+        // options
+        if (useLineSearch_) sout << " -- Newton.UseLineSearch = true\n";
+        if (useChop_) sout << " -- Newton.EnableChop = true\n";
+        if (enablePartialReassembly_) sout << " -- Newton.EnablePartialReassembly = true\n";
+        if (enableAbsoluteResidualCriterion_) sout << " -- Newton.EnableAbsoluteResidualCriterion = true\n";
+        if (enableShiftCriterion_) sout << " -- Newton.EnableShiftCriterion = true (relative shift convergence criterion)\n";
+        if (enableResidualCriterion_) sout << " -- Newton.EnableResidualCriterion = true\n";
+        if (satisfyResidualAndShiftCriterion_) sout << " -- Newton.SatisfyResidualAndShiftCriterion = true\n";
+        // parameters
+        if (enableShiftCriterion_) sout << " -- Newton.MaxRelativeShift = " << shiftTolerance_ << '\n';
+        if (enableAbsoluteResidualCriterion_) sout << " -- Newton.MaxAbsoluteResidual = " << residualTolerance_ << '\n';
+        if (enableResidualCriterion_) sout << " -- Newton.ResidualReduction = " << reductionTolerance_ << '\n';
+        sout << " -- Newton.MinSteps = " << minSteps_ << '\n';
+        sout << " -- Newton.MaxSteps = " << maxSteps_ << '\n';
+        sout << " -- Newton.TargetSteps = " << targetSteps_ << '\n';
+        if (enablePartialReassembly_)
+        {
+            sout << " -- Newton.ReassemblyMinThreshold = " << reassemblyMinThreshold_ << '\n';
+            sout << " -- Newton.ReassemblyMaxThreshold = " << reassemblyMaxThreshold_ << '\n';
+            sout << " -- Newton.ReassemblyShiftWeight = " << reassemblyShiftWeight_ << '\n';
+        }
+        sout << " -- Newton.RetryTimeStepReductionFactor = " << retryTimeStepReductionFactor_ << '\n';
+        sout << " -- Newton.MaxTimeStepDivisions = " << maxTimeStepDivisions_ << '\n';
+        sout << std::endl;
     }
 
     /*!
@@ -633,14 +674,28 @@ public:
     /*!
      * \brief Specifies if the Newton method ought to be chatty.
      */
+    DUNE_DEPRECATED_MSG("Has been replaced by setVerbosity(int). Will be removed after 3.1 release!")
     void setVerbose(bool val)
-    { verbose_ = val; }
+    { verbosity_ = val; }
 
     /*!
      * \brief Returns true if the Newton method ought to be chatty.
      */
+    DUNE_DEPRECATED_MSG("Has been replaced by int verbosity(). Will be removed after 3.1 release!")
     bool verbose() const
-    { return verbose_ ; }
+    { return verbosity_ ; }
+
+    /*!
+     * \brief Specifies the verbosity level
+     */
+    void setVerbosity(int val)
+    { verbosity_ = val; }
+
+    /*!
+     * \brief Return the verbosity level
+     */
+    int verbosity() const
+    { return verbosity_ ; }
 
     /*!
      * \brief Returns the parameter group
@@ -726,6 +781,8 @@ protected:
 
     //! optimal number of iterations we want to achieve
     int targetSteps_;
+    //! minimum number of iterations we do
+    int minSteps_;
     //! maximum number of iterations we do before giving up
     int maxSteps_;
     //! actual number of steps done so far
@@ -784,7 +841,7 @@ private:
                 if (numSteps_ > 0)
                     uLastIter = uCurrentIter;
 
-                if (verbose_ && enableDynamicOutput_)
+                if (verbosity_ >= 1 && enableDynamicOutput_)
                     std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r"
                               << std::flush;
 
@@ -806,7 +863,7 @@ private:
                 // http://en.wikipedia.org/wiki/ANSI_escape_code
                 const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
 
-                if (verbose_ && enableDynamicOutput_)
+                if (verbosity_ >= 1 && enableDynamicOutput_)
                     std::cout << "\rSolve: M deltax^k = r"
                               << clearRemainingLine << std::flush;
 
@@ -822,7 +879,7 @@ private:
                 ///////////////
                 // update
                 ///////////////
-                if (verbose_ && enableDynamicOutput_)
+                if (verbosity_ >= 1 && enableDynamicOutput_)
                     std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k"
                               << clearRemainingLine << std::flush;
 
@@ -863,7 +920,7 @@ private:
             // tell solver we converged successfully
             newtonSucceed();
 
-            if (verbose_) {
+            if (verbosity_ >= 1) {
                 const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
                 std::cout << "Assemble/solve/update time: "
                           <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
@@ -876,7 +933,7 @@ private:
         }
         catch (const NumericalProblem &e)
         {
-            if (verbose_)
+            if (verbosity_ >= 1)
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
 
             totalWastedIter_ += numSteps_;
@@ -1148,6 +1205,7 @@ private:
         setMaxAbsoluteResidual(getParamFromGroup<Scalar>(group, "Newton.MaxAbsoluteResidual"));
         setResidualReduction(getParamFromGroup<Scalar>(group, "Newton.ResidualReduction"));
         setTargetSteps(getParamFromGroup<int>(group, "Newton.TargetSteps"));
+        setMinSteps(getParamFromGroup<int>(group, "Newton.MinSteps"));
         setMaxSteps(getParamFromGroup<int>(group, "Newton.MaxSteps"));
 
         enablePartialReassembly_ = getParamFromGroup<bool>(group, "Newton.EnablePartialReassembly");
@@ -1158,8 +1216,12 @@ private:
         maxTimeStepDivisions_ = getParamFromGroup<std::size_t>(group, "Newton.MaxTimeStepDivisions", 10);
         retryTimeStepReductionFactor_ = getParamFromGroup<Scalar>(group, "Newton.RetryTimeStepReductionFactor", 0.5);
 
-        verbose_ = comm_.rank() == 0;
+        verbosity_ = comm_.rank() == 0 ? getParamFromGroup<int>(group, "Newton.Verbosity", 2) : 0;
         numSteps_ = 0;
+
+        // output a parameter report
+        if (verbosity_ >= 2)
+            reportParams();
     }
 
     template<class Sol>
@@ -1223,8 +1285,8 @@ private:
     //! The communication object
     Communication comm_;
 
-    //! switches on/off verbosity
-    bool verbose_;
+    //! the verbosity level
+    int verbosity_;
 
     Scalar shiftTolerance_;
     Scalar reductionTolerance_;
