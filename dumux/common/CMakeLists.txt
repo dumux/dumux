@@ -9,6 +9,7 @@ boundaryflag.hh
 boundarytypes.hh
 boundingboxtree.hh
 cubicspline.hh
+cubicsplinehermitebasis.hh
 defaultmappertraits.hh
 defaultusagemessage.hh
 deprecated.hh
@@ -23,6 +24,7 @@ intersectionmapper.hh
 intrange.hh
 loggingparametertree.hh
 math.hh
+monotonecubicspline.hh
 numericdifferentiation.hh
 optional.hh
 parameters.hh
