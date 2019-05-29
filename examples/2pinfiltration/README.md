@@ -4,16 +4,21 @@ You need [ALUGrid][0] in order to compile and run it.
 # Two-phase flow with infiltration and adaptive grid
 
 ## Problem set-up
-Soil contamination problem where DNAPL infiltrates a fully water saturated medium.
+This example models a soil contamination problem where DNAPL infiltrates a fully water saturated medium.
 
-...
+The two-dimensional model domain is 6m x 4m and contains a lens with a lower permeability for 1m ≤ x ≤ 3m and 2m ≤ y ≤ 4m.
+A linear pressure gradient is given as a Dirichlet boundary condition at the left and the right boundary.
+Neumann boundary conditions are set at the upper and lower boundary.
+DNAPL enters the model domain at the upper boundary for 1.75m ≤ x ≤ 2m with a rate of 0.04kg/ms.
+In addition, the DNAPL is injected at a point source at x = 0.502 and y = 3.02 with a rate of 0.1kg/s.
 
 
 ## Infiltration (point source)
 ### problem.hh
-The point sources are specified in the problem.hh file by the addPointSources method, in which you can add an arbitrary number of point sources to the vector of point sources.
-To instantiate a point source the position and the infiltration values are needed.
-For the definition of the PointSource class see dumux/common/pointsource.hh
+The point sources are specified in the problem.hh file by the `addPointSources` method.
+You can add an arbitrary number of point sources to the vector of point sources.
+To instantiate a point source, the position and the infiltration values are needed.
+For the definition of the `PointSource` class see dumux/common/pointsource.hh
 ```C++
 void addPointSources(std::vector<PointSource>& pointSources) const
 {
@@ -23,12 +28,12 @@ void addPointSources(std::vector<PointSource>& pointSources) const
 ```
 
 ### main.cc
-In the main.cc file the computePointSourceMap method deals with the point sources. It must be called during the initialisation (l. 97) and after each refinement of the mesh (ll. 135, 151 and 205).
+The `computePointSourceMap` method is called from the main.cc file to compute the point sources. It must be called during the initialisation (l. 97) and after each refinement of the mesh (ll. 135, 151 and 205).
 ```C++
 problem->computePointSourceMap();
 ```
-The computePointSourceMap method is inherited from the fvproblem and therefore specified in the dumux/common/fvproblem.hh.
-It calls the addPointSource method specified in the problem.hh file.
+The `computePointSourceMap` method is inherited from the fvproblem and therefore specified in the dumux/common/fvproblem.hh.
+It calls the `addPointSources` method specified in the problem.hh file.
 
 ## Adaptive grid
 ### main.cc
