@@ -54,13 +54,13 @@ namespace Dumux {
   } // end namespace TTag
 
   //! Use non-conforming refinement
-  // #if HAVE_DUNE_ALUGRID TODO
-  // template<class TypeTag>
-  // struct Grid<TypeTag, TTag::TwoPAdaptivePointSource> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
-  // #else
+  #if HAVE_DUNE_ALUGRID
+  template<class TypeTag>
+  struct Grid<TypeTag, TTag::TwoPAdaptivePointSource> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
+  #else
   template<class TypeTag>
   struct Grid<TypeTag, TTag::TwoPAdaptivePointSource> { using type = Dune::YaspGrid<2>; };
-  // #endif
+  #endif
 
   template<class TypeTag>
   struct Problem<TypeTag, TTag::TwoPAdaptivePointSource> { using type = PointSourceTestProblem<TypeTag>; };
