@@ -74,6 +74,8 @@ The following parameters in the `[Adaptive]` parameter group determine the grid 
 * `CoarsenTolerance`: ...
 * `RefineTolerance`: ...
 
+## Solution
+![](test_2p_pointsource_adaptive.png)
 
 
 [0]: https://gitlab.dune-project.org/extensions/dune-alugrid
