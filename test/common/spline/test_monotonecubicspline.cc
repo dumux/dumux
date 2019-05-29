@@ -94,7 +94,7 @@ int main(int argc, char** argv)
     const auto resultPlot = eval([&](const double x) { return spline.eval(x); }, plotPoints);
     const auto resultDerivPlot = eval([&](const double x) { return spline.evalDerivative(x); }, plotPoints);
 
-    Dumux::GnuplotInterface<double> gnuplot(false);
+    Dumux::GnuplotInterface<double> gnuplot(/*persist=*/false);
     gnuplot.addDataSetToPlot(plotPoints, refPlot, "exp_reference");
     gnuplot.addDataSetToPlot(plotPoints, refDerivPlot, "exp_reference_derivative");
     gnuplot.addDataSetToPlot(plotPoints, resultPlot, "monotspline");
